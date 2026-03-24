@@ -1,8 +1,20 @@
-[*.{js,jsx,mjs,cjs,ts,tsx,mts,cts,vue,css,scss,sass,less,styl}]
+# https://editorconfig.org
+
+# Top-most config file, stop searching parent directories
+root = true
+
+# Default for all files
+[*]
 charset = utf-8
-indent_size = 2
-indent_style = space
-insert_final_newline = true
-trim_trailing_whitespace = true
+# Force LF (Unix), prevent CRLF pollution from Windows
 end_of_line = lf
-max_line_length = 100
+indent_style = space
+indent_size = 2
+# POSIX standard: newline at end of file
+insert_final_newline = true
+# Remove trailing whitespace
+trim_trailing_whitespace = true
+
+# Markdown exception: allow trailing spaces for line breaks
+[*.md]
+trim_trailing_whitespace = false
