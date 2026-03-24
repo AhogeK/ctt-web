@@ -1,6 +1,4 @@
-<script setup lang="ts">
-// Home page placeholder
-</script>
+<script setup lang="ts"></script>
 
 <template>
   <main>
