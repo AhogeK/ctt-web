@@ -15,6 +15,7 @@
     "lint:oxlint": "oxlint . --fix",
     "lint:eslint": "eslint . --fix --cache",
     "format": "oxfmt --write src/",
+    "format:check": "oxfmt --check src/",
     "prepare": "simple-git-hooks"
   },
   "dependencies": {
@@ -53,6 +54,7 @@
     "@vue/test-utils": "^2.4.6",
     "@vue/tsconfig": "^0.8.1",
     "eslint": "^10.0.2",
+    "eslint-config-prettier": "^10.1.8",
     "eslint-plugin-oxlint": "~1.50.0",
     "eslint-plugin-playwright": "^2.8.0",
     "eslint-plugin-vue": "~10.8.0",
@@ -78,9 +80,9 @@
     "pre-commit": "pnpm lint-staged"
   },
   "lint-staged": {
-    "*.{ts,vue,js}": [
-      "oxlint --fix",
-      "oxfmt --write"
+    "*.{ts,vue,js,tsx,jsx}": [
+      "oxfmt --write",
+      "oxlint --fix"
     ]
   }
 }
