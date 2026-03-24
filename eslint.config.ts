@@ -31,13 +31,33 @@ export default defineConfigWithVueTs(
   },
 
   {
-    ...pluginPlaywright.configs['flat/recommended'],
+    name: 'tests/playwright',
     files: ['e2e/**/*.{test,spec}.{js,ts,jsx,tsx}'],
+    plugins: {
+      playwright: pluginPlaywright,
+    },
+    rules: {
+      ...pluginPlaywright.configs['flat/recommended'].rules,
+      'playwright/no-networkidle': 'error',
+      'playwright/no-wait-for-timeout': 'error',
+      'playwright/no-element-handle': 'error',
+      'playwright/no-skipped-test': 'warn',
+    },
   },
 
   {
-    ...pluginVitest.configs.recommended,
-    files: ['src/**/__tests__/*'],
+    name: 'tests/vitest',
+    files: ['src/**/__tests__/*.[jt]s?(x)', 'src/**/*.spec.[jt]s?(x)'],
+    plugins: {
+      vitest: pluginVitest,
+    },
+    rules: {
+      ...pluginVitest.configs.recommended.rules,
+      'vitest/consistent-test-it': ['error', { fn: 'it' }],
+      'vitest/no-focused-tests': 'error',
+      'vitest/prefer-strict-equal': 'warn',
+      'vitest/expect-expect': 'error',
+    },
   },
 
   ...pluginOxlint.buildFromOxlintConfigFile('.oxlintrc.json'),
