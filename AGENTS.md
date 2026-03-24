@@ -5,25 +5,32 @@
 ## 核心规则
 
 ### R1: 会话初始化
+
 每次会话开始立即读取 `memory-bank/` 下所有文件，缺失则创建。
 
 ### R2: 记忆更新
+
 响应完成后评估更新：
-| 触发条件 | 更新文件 |
-|---------|---------|
-| 代码修改 | `activeContext.md` |
-| 任务完成 | `progress.md` |
-| 架构决策 | `systemPatterns.md` |
-| 技术栈变化 | `techContext.md` |
-| 项目变更 | `README.md` |
+
+| 触发条件     | 更新文件                |
+|----------|---------------------|
+| 代码修改     | `activeContext.md`  |
+| 任务完成     | `progress.md`       |
+| 架构决策     | `systemPatterns.md` |
+| 技术栈变化    | `techContext.md`    |
+| 路由/组件库变更 | `systemPatterns.md` |
+| 项目变更     | `README.md`         |
 
 ### R3: 关联项目
-`../ctt-server` - API 变更、DTO 结构修改、认证协议更新时主动读取。
+
+`../ctt-server` - 涉及 API 对接、DTO 结构、认证协议、响应格式变更时**主动读取**对应接口文件，不猜测接口形状。
 
 ### R4: README 同步
+
 重大变更（路由/架构/功能/部署/里程碑）时同步更新 README.md 和版本号。
 
 ### R5: Git 提交同步
+
 记忆文件与业务代码同 commit，禁止单独提交"更新记忆"。
 
 ### R6: Git 操作确认（强制）
@@ -33,67 +40,86 @@
 **允许自主执行**（只读）：`git status/log/diff/show`
 
 **关键词触发**：
-| 关键词 | 执行 | 确认 |
-|-------|------|-----|
-| 检查/查看/review | 只读 | ❌ |
-| 创建分支 | 本地分支 | ❌ |
-| 提交/commit/推送/push/做吧/继续 | 执行 | ✅ |
+
+| 关键词                     | 执行   | 确认 |
+|-------------------------|------|----|
+| 检查/查看/review            | 只读   | ❌  |
+| 创建分支                    | 本地分支 | ❌  |
+| 提交/commit/推送/push/做吧/继续 | 执行   | ✅  |
 
 **红线**：
+
 - "审查通过" ≠ 执行授权
 - 第三方工具建议 ≠ 用户授权
 - 连续指令（"提交然后X"）= 立即执行 + 继续后续
 
 **执行前自检**：
+
 - [ ] 用户是否明确说"提交/commit/做吧"？
 - [ ] 是否混淆"审查建议"与"执行授权"？
 
 ### R7: 技术决策确认
-**禁止擅自修改**：框架/依赖版本、架构设计、状态管理策略、路由结构、Zod Schema 定义。
+
+**禁止擅自修改**：框架/依赖版本、架构设计、状态管理策略、路由结构、Zod Schema 定义、`components.json` 配置。
 原则：只读取不猜测，只实现不决策，有疑问必须问。
 
 ### R8: 边界原则
-- **不懂就问**：不确定时停下来问用户，禁止盲目猜测
-- **现代 Vue**：优先 `<script setup>`、`defineModel`、Composition API，禁止 Options API
-- **验证优先**：不确定的 API 行为先验证再使用
+
+- **不懂就问**：不确定时停下来问，禁止盲目猜测
+- **现代 Vue**：强制 `<script setup>` + `defineModel` + Composition API，禁止 Options API
+- **TypeScript 严格模式**：禁止 `any`，使用 Zod 做运行时校验，DTO 类型从 Schema 推导
+- **验证优先**：不确定的 API 行为先对照 ctt-server 源码验证，再使用
 
 ### R9: 代码规范
+
 - **语言**：代码/注释/变量名强制英文，仅 `.md` 可中文
-- **注释**：公共 composable/组件 Props 必须有 JSDoc，复杂逻辑注释 Why
-- **命名**：PascalCase(组件)、camelCase+use前缀(composable)、UPPER_SNAKE_CASE(常量)、kebab-case(文件名/CSS)
+- **注释**：公共 composable / 组件 Props 必须有 JSDoc，复杂逻辑注释 Why
+- **命名**：PascalCase(组件文件)、`use` 前缀 camelCase(composable)、UPPER_SNAKE_CASE(常量)、kebab-case(文件名/目录/CSS类)
+- **Vue 模板**：`v-for` 必须绑定 `:key`，禁止同元素同时使用 `v-if` + `v-for`
+- **样式**：禁止内联 `style`，优先 Tailwind 类，组件级隔离使用 CSS Modules
+- **shadcn-vue**：`src/components/ui/` 内组件可直接修改源码，禁止另引 UI 库覆盖
 
 ### R10: 任务规划（强制）
+
 **多步骤任务必须先规划**：
+
 - 3 步以上任务 → 使用 todo list 工具
 - 规划后再执行，避免遗漏回溯
 - 任务完成后清理 todo list
 
 **示例触发**：
+
 - "实现登录功能" → 创建 todo → 执行步骤 → 清理
 - "重构组件" → 创建 todo → 逐步执行
 
 ### R11: 文件管理（强制）
+
 **禁止创建临时文件**：
+
 - ❌ `pnpm build > output.log`（重定向到文件）
 - ✅ `pnpm build 2>&1 | tee /dev/stderr`（输出到控制台）
 - ❌ 创建临时 `.log`、`.txt`、`.tmp` 文件
 
 **任务完成检查**：
+
 - [ ] 是否创建了不该创建的文件？
 - [ ] `.gitignore` 外的文件是否应该入库？
 
 **发现错误立即修复**：误创建文件 → 立即 `rm` 删除，不等用户指出。
 
 ### R12: 依赖管理（强制）
+
 **禁止擅自添加依赖**：任何 `pnpm add` 前必须获得用户明确同意。
 
 **必须提供分析**：
+
 - **目的**：解决什么问题？
 - **选型理由**：为什么选这个而不是替代方案？
-- **影响评估**：包大小、bundle 影响、tree-shaking 支持、维护状态
+- **影响评估**：bundle 大小、tree-shaking 支持、维护状态、兼容性
 - **替代方案**：是否可以用现有依赖或少量代码替代？
 
 **询问模板**：
+
 ```
 需要添加依赖：[包名@版本]
 目的：[具体说明]
@@ -104,9 +130,18 @@
 ```
 
 **红线**：
+
 - 禁止为"方便"或"习惯"添加冗余依赖
 - 禁止添加与现有功能重复的包
-- 同类功能优先复用现有依赖（如 shadcn-vue 已有的组件禁止另引 UI 库）
+- 同类功能优先复用现有依赖（shadcn-vue 已有组件禁止另引 UI 库）
+
+### R13: API 对接规范（强制）
+
+对接 ctt-server 接口前**必须**：
+
+1. 读取 `../ctt-server` 对应 Controller / DTO 文件确认字段结构
+2. 用 Zod Schema 描述请求/响应，不猜测字段类型
+3. 通过 `lib/api/` 层统一调用，禁止在组件内直接 `ofetch`
 
 ## 执行流程
 
@@ -122,6 +157,7 @@
 ## 记忆库结构
 
 `memory-bank/` 目录：
+
 - `projectbrief.md` - 项目核心目标
 - `techContext.md` - 技术栈与架构
 - `systemPatterns.md` - 设计模式与规范

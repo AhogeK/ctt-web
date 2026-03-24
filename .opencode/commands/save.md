@@ -31,7 +31,9 @@ description: 主动记忆 - 保存项目状态和变更到记忆库（防止 AI 
 ## 触发场景
 
 - 完成重要任务 / 做出关键决策
-- 遇到并解决问题（如 Hydration mismatch、类型错误、构建问题）
+- 遇到并解决问题（Hydration mismatch、类型错误、构建失败、Zod Schema 不匹配）
+- 新增或修改路由结构 / shadcn-vue 组件
+- 确认 ctt-server 接口字段结构后定义了新的 Zod Schema
 - 切换 feature 上下文 / 长时间对话
 - 用户明确要求保存
 
