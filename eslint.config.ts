@@ -21,6 +21,14 @@ export default defineConfigWithVueTs(
   ...pluginVue.configs['flat/essential'],
   vueTsConfigs.recommended,
 
+  // Allow shadcn-vue single-word component names (Button, Card, etc.)
+  {
+    name: 'app/vue-rules',
+    rules: {
+      'vue/multi-word-component-names': 'off',
+    },
+  },
+
   {
     ...pluginPlaywright.configs['flat/recommended'],
     files: ['e2e/**/*.{test,spec}.{js,ts,jsx,tsx}'],

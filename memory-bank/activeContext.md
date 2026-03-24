@@ -2,31 +2,22 @@
 
 ## Current Status
 
-**Phase**: Project scaffold — initial setup
+**Phase**: Scaffold complete — ready for feature development
+**Version**: 0.1.0-beta.1 (2025-03-24)
 
 ## What Was Just Done
 
-- Technology stack finalized (Vite 8 + Vue 3 + VoidZero toolchain)
-- package.json dependencies established
-- README written
-- CONVENTIONS.md, AGENTS.md, memory-bank initialized
-- Git repository initialized and pushed to GitHub
-- MIT License added via GitHub API
+- Scaffold setup completed (Vite 8 + Vue 3 + Tailwind CSS v4 + shadcn-vue)
+- Oxlint + ESLint toolchain configured and verified
+- AGENTS.md updated with R14 (版本号管理)
+- Version bumped: 0.0.0 → 0.1.0
 
 ## Current Focus
 
-Setting up project scaffold:
-- [ ] vite.config.ts
-- [ ] tsconfig.json (strict mode)
-- [ ] tailwind.config / CSS entry
-- [ ] oxlint.json
-- [ ] .oxfmtrc / oxfmt config
-- [ ] eslint.config.ts (supplemental)
-- [ ] src/ directory structure
-- [ ] Router setup
-- [ ] Pinia store stubs
-- [ ] API layer (ofetch instance)
-- [ ] i18n setup (zh-CN / en-US)
+Ready for next phase:
+- Authentication flow (login/logout)
+- Dashboard layout
+- API integration with ctt-server
 
 ## Known Blockers
 
@@ -34,6 +25,13 @@ None currently.
 
 ## Recent Decisions
 
-- Oxlint as primary linter; ESLint retained only for @vitest/eslint-plugin and eslint-plugin-playwright
-- pnpm via corepack for reproducible installs
-- TanStack Query for all server state; Pinia only for auth + theme
+- Oxlint as primary linter; ESLint for type-aware rules
+- `vue/multi-word-component-names` disabled (shadcn-vue convention)
+- oxfmt as sole formatter (no Prettier)
+
+## Version History
+
+| Version | Date | Change |
+|---------|------|--------|
+| 0.1.0 | 2025-03-24 | Scaffold complete, ready for development |
+| 0.0.0 | - | Initial project creation |
