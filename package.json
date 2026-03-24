@@ -80,7 +80,12 @@
     "pre-commit": "pnpm lint-staged"
   },
   "lint-staged": {
-    "*.{ts,vue,js,tsx,jsx}": [
+    "src/**/*.{ts,js,vue,tsx,jsx}": [
+      "oxfmt --write",
+      "oxlint --fix"
+    ],
+    "{src/**/__tests__/*,e2e/**/*.spec}.{ts,js}": [
+      "eslint --fix --cache",
       "oxfmt --write",
       "oxlint --fix"
     ]
