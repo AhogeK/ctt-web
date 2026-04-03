@@ -15,18 +15,14 @@ function isAuthenticated(): boolean {
  * Setup global router guards for authentication and progress bar.
  */
 export function setupRouterGuards(router: Router) {
-  // Before-navigation guard
   router.beforeEach((to, _from, next) => {
-    // Set page title from route meta
     const title = to.meta.title
     if (title) {
       document.title = `${title} - CTT`
     }
 
-    // Start progress bar
     NProgress.start()
 
-    // Authentication check
     if (to.meta.requiresAuth && !isAuthenticated()) {
       next({ name: 'Login', query: { redirect: to.fullPath } })
       return
@@ -35,7 +31,6 @@ export function setupRouterGuards(router: Router) {
     next()
   })
 
-  // After-navigation guard
   router.afterEach(() => {
     NProgress.done()
   })

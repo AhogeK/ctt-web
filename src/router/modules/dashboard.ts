@@ -4,8 +4,8 @@ const dashboardRoutes: RouteRecordRaw[] = [
   {
     path: '/dashboard',
     name: 'Dashboard',
-    component: () => import('@/layouts/DashboardLayout.vue'),
-    meta: { title: 'Dashboard', requiresAuth: true, layout: 'dashboard' },
+    component: () => import('@/layouts/AppLayout.vue'),
+    meta: { title: 'Dashboard', requiresAuth: true, layout: 'app' },
     children: [
       {
         path: '',

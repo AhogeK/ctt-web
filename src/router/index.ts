@@ -14,8 +14,14 @@ const constantRoutes: RouteRecordRaw[] = [
   {
     path: '/',
     name: 'home',
-    component: () => import('@/views/HomeView.vue'),
+    component: () => import('@/layouts/AppLayout.vue'),
     meta: { title: 'Home' },
+    children: [
+      {
+        path: '',
+        component: () => import('@/views/HomeView.vue'),
+      },
+    ],
   },
   {
     path: '/:pathMatch(.*)*',

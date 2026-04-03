@@ -4,8 +4,8 @@ const settingsRoutes: RouteRecordRaw[] = [
   {
     path: '/settings',
     name: 'Settings',
-    component: () => import('@/layouts/DefaultLayout.vue'),
-    meta: { title: 'Settings', requiresAuth: true, layout: 'default' },
+    component: () => import('@/layouts/AppLayout.vue'),
+    meta: { title: 'Settings', requiresAuth: true, layout: 'app' },
     children: [
       {
         path: 'profile',
