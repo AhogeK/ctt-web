@@ -58,15 +58,77 @@ Every TanStack Query usage must render error state:
 </template>
 ```
 
+## Router Architecture
+
+### Directory Structure
+
+```
+src/
+├── router/
+│   ├── index.ts           # Core router with auto-import
+│   ├── guard.ts           # Global guards (auth + progress bar)
+│   └── modules/           # Feature-based route slices
+│       ├── auth.ts        # Authentication routes
+│       ├── dashboard.ts   # Dashboard routes
+│       └── settings.ts    # Settings routes
+├── layouts/               # Layout templates
+│   ├── DefaultLayout.vue  # Standard app shell
+│   ├── BlankLayout.vue    # Minimal layout (login, 404)
+│   └── DashboardLayout.vue # Dashboard with charts area
+└── types/
+    └── vue-router.d.ts    # Type-safe RouteMeta
+```
+
+### Route Meta Type Definition
+
+```typescript
+interface RouteMeta {
+  title: string              // Page title (required)
+  requiresAuth?: boolean     // Authentication required
+  roles?: string[]          // RBAC roles
+  layout?: 'default' | 'blank' | 'dashboard'
+  hideInMenu?: boolean      // Hide from sidebar
+}
+```
+
+### Auto-Import Pattern
+
+```typescript
+// src/router/index.ts
+const routeModules = import.meta.glob('./modules/*.ts', { eager: true })
+
+const featureRoutes: RouteRecordRaw[] = []
+Object.keys(routeModules).forEach((key) => {
+  const mod = (routeModules[key] as { default: RouteRecordRaw[] }).default || []
+  featureRoutes.push(...mod)
+})
+```
+
+### Route Guards
+
+- **Authentication**: Redirects to `/login` if `requiresAuth` and no token
+- **Page Title**: Sets `document.title` from `to.meta.title`
+- **Progress Bar**: NProgress starts on `beforeEach`, stops on `afterEach`
+
+### Code Splitting
+
+All route components use lazy loading:
+```typescript
+component: () => import('@/features/auth/views/LoginView.vue')
+```
+
+---
+
 ## Route Structure
 
 ```
-/                   → redirect to /dashboard
+/                   → Home (constant route)
 /login              → AuthPage (public)
 /dashboard          → DashboardPage (auth required)
 /devices            → DeviceListPage (auth required)
 /leaderboard        → LeaderboardPage (auth required)
 /settings           → SettingsPage (auth required)
+/:pathMatch(.*)*    → 404 Not Found
 ```
 
 ## Forbidden Patterns
