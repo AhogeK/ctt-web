@@ -1,6 +1,6 @@
 {
   "name": "ctt-web",
-  "version": "0.1.1-beta.1",
+  "version": "0.2.0-beta.1",
   "private": true,
   "type": "module",
   "scripts": {
@@ -28,6 +28,7 @@
     "clsx": "^2.1.1",
     "echarts": "^6.0.0",
     "lucide-vue-next": "^1.0.0",
+    "nprogress": "^0.2.0",
     "ofetch": "^1.5.1",
     "pinia": "^3.0.4",
     "reka-ui": "^2.9.3",
@@ -47,6 +48,7 @@
     "@tsconfig/node24": "^24.0.4",
     "@types/jsdom": "^28.0.1",
     "@types/node": "^25.5.0",
+    "@types/nprogress": "^0.2.3",
     "@vitejs/plugin-vue": "^6.0.5",
     "@vitest/coverage-v8": "^4.1.2",
     "@vitest/eslint-plugin": "^1.6.14",
