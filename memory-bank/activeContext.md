@@ -21,6 +21,11 @@
   - Added title meta to home route
   - All type checks passing (TS5101 deprecation warnings are config-level, not router issues)
   - Production build succeeds (dist/ generated)
+- **Cherry-pick non-AI commits to master (2026-04-03)**:
+  - Cherry-picked 10 non-AI commits from develop to master (skipped memory-bank docs)
+  - Master now has: types, layouts, router modules, guard, views, version bump (0.2.0-beta.2)
+  - Master remains clean: NO AI files (.agents/, memory-bank/, AGENTS.md, etc.)
+  - Develop retains AI files for continued development
 - Scaffold setup completed (Vite 8 + Vue 3 + Tailwind CSS v4 + shadcn-vue)
 - Oxlint + ESLint toolchain configured and verified
 - AGENTS.md updated with R14 (版本号管理)
@@ -60,3 +65,5 @@ None currently.
 | 2025-04-01 | develop | Created from master for AI-assisted development |
 | 2025-04-01 | master | Cleaned AI files (AGENTS.md, memory-bank/) |
 | 2025-04-01 | master | Cherry-picked dependency update from develop (ccc40f0 → e9bc662) |
+| 2026-04-03 | master | Cherry-picked 10 Vue Router commits from develop (types, layouts, router, views, version) |
+| 2026-04-03 | develop | Retains AI files (memory-bank/) for continued development |
