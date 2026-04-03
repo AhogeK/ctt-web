@@ -40,3 +40,7 @@ __screenshots__/
 
 test-results/
 playwright-report/
+
+# Test artifacts
+src/__tests__/*.d.ts
+src/__tests__/*.js
