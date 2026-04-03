@@ -4,7 +4,7 @@ const authRoutes: RouteRecordRaw[] = [
   {
     path: '/auth',
     name: 'AuthLayout',
-    component: () => import('@/layouts/BlankLayout.vue'),
+    component: () => import('@/layouts/AuthLayout.vue'),
     redirect: '/auth/login',
     meta: { title: 'Authentication', hideInMenu: true },
     children: [
@@ -12,13 +12,13 @@ const authRoutes: RouteRecordRaw[] = [
         path: 'login',
         name: 'Login',
         component: () => import('@/features/auth/views/LoginView.vue'),
-        meta: { title: 'Login', requiresAuth: false, layout: 'blank' },
+        meta: { title: 'Login', requiresAuth: false, layout: 'auth' },
       },
       {
         path: 'register',
         name: 'Register',
         component: () => import('@/features/auth/views/RegisterView.vue'),
-        meta: { title: 'Register', requiresAuth: false, layout: 'blank' },
+        meta: { title: 'Register', requiresAuth: false, layout: 'auth' },
       },
     ],
   },
