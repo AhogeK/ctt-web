@@ -72,11 +72,49 @@ src/
 │       ├── dashboard.ts   # Dashboard routes
 │       └── settings.ts    # Settings routes
 ├── layouts/               # Layout templates
-│   ├── DefaultLayout.vue  # Standard app shell
-│   ├── BlankLayout.vue    # Minimal layout (login, 404)
-│   └── DashboardLayout.vue # Dashboard with charts area
+│   ├── AuthLayout.vue     # Minimal layout for login/register
+│   └── AppLayout.vue      # Main app shell with sidebar + charts slot
 └── types/
     └── vue-router.d.ts    # Type-safe RouteMeta
+```
+
+### Layout Switching Pattern
+
+Routes specify layout via `meta.layout`:
+```typescript
+// Auth routes use AuthLayout
+{ path: '/login', meta: { layout: 'auth' } }
+
+// App routes use AppLayout
+{ path: '/dashboard', meta: { layout: 'app' } }
+```
+
+AppLayout renders sidebar on desktop (≥768px), Sheet on mobile.
+
+### Mobile Responsive Pattern
+
+```vue
+<!-- AppLayout.vue -->
+<SidebarProvider>
+  <Sidebar class="hidden md:flex" />
+  <Sheet class="md:hidden">
+    <SheetContent side="left">
+      <!-- Mobile sidebar content -->
+    </SheetContent>
+  </Sheet>
+</SidebarProvider>
+```
+
+Breakpoint: 768px (Tailwind `md:`)
+
+### Charts Slot Pattern
+
+AppLayout provides named slot for dashboard charts:
+```vue
+<template #charts>
+  <HeatmapChart />
+  <LanguagePieChart />
+</template>
 ```
 
 ### Route Meta Type Definition

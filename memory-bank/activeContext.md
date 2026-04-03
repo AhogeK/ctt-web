@@ -2,11 +2,26 @@
 
 ## Current Status
 
-**Phase**: Router architecture complete — ready for feature implementation
-**Version**: 0.2.0-beta.2 (2026-04-03)
+**Phase**: Layout system refactor complete — ready for feature implementation
+**Version**: 0.2.0-beta.3 (2026-04-04)
 
 ## What Was Just Done
 
+- **Layout system refactor (2026-04-04)**:
+  - Consolidated 3 legacy layouts → 2 modern layouts (AuthLayout, AppLayout)
+  - Installed shadcn-vue sidebar component + sheet component
+  - Mobile responsive at 768px breakpoint (SidebarProvider + Sheet pattern)
+  - Charts slot added to AppLayout for dashboard flexibility
+  - Legacy layouts removed: DefaultLayout, BlankLayout, DashboardLayout
+- **Layout system critical fixes (2026-04-04)**:
+  - Fixed vue-router.d.ts type definition: `layout?: 'auth' | 'app'` (was `'default' | 'blank' | 'dashboard'`)
+  - Added AppLayout wrapper to Home route using nested routing pattern
+  - Removed 5 redundant WHAT comments from guard.ts
+  - Cleaned SidebarProvider.vue: removed commented code, added type assertion explanation
+  - Fixed SidebarMenuSubItem.vue + SidebarMenuItem.vue: changed `<li>` to `<div>` for HTML semantic compliance
+  - Fixed SidebarMenuButton.vue: added required TooltipContent attributes with template ref for collision-boundary
+  - **Migrated to TypeScript 6.0+ module resolution**: removed deprecated `baseUrl` from tsconfig.app.json, using Vite `resolve.tsconfigPaths: true` to read path aliases
+  - All verification passed: type-check (0 errors), lint (0 errors)
 - **Vue Router architecture implementation (2026-04-03)**:
   - Created `src/types/vue-router.d.ts` with type-safe RouteMeta
   - Created 3 layout components: DefaultLayout, BlankLayout, DashboardLayout
@@ -37,7 +52,7 @@
 
 ## Current Focus
 
-**Phase**: Router architecture complete — ready for feature implementation
+**Phase**: Layout system fixes complete — ready for atomic commits
 **Priority**: Implement actual auth forms, dashboard charts, and settings pages
 
 ## Known Blockers
@@ -54,7 +69,8 @@ None currently.
 
 | Version | Date | Change |
 |---------|------|--------|
-| 0.2.0 | 2026-04-03 | Router architecture complete (feature-based routing) |
+| 0.2.0-beta.3 | 2026-04-04 | Layout system refactor (AuthLayout + AppLayout) |
+| 0.2.0-beta.2 | 2026-04-03 | Router architecture complete (feature-based routing) |
 | 0.1.0 | 2025-03-24 | Scaffold complete, ready for development |
 | 0.0.0 | - | Initial project creation |
 
