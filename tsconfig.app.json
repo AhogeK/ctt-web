@@ -11,11 +11,13 @@
     "noUnusedParameters": true,
     "noFallthroughCasesInSwitch": true,
 
-    /* Path mapping for cleaner imports. */
-    "baseUrl": ".",
+    /* Path Aliases - Vite reads via resolve.tsconfigPaths (TypeScript 6.0+) */
     "paths": {
       "@/*": ["./src/*"]
     },
+
+    /* Explicit types for Node.js and Vite client */
+    "types": ["node", "vite/client"],
 
     /* `vue-tsc --build` produces a .tsbuildinfo file for incremental type-checking.
        Specified here to keep it out of the root directory. */
