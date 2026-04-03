@@ -9,7 +9,7 @@ declare module 'vue-router' {
     /** RBAC role permissions required to access this route */
     roles?: string[]
     /** Layout template to use for this route */
-    layout?: 'default' | 'blank' | 'dashboard'
+    layout?: 'auth' | 'app'
     /** Whether to hide this route from sidebar navigation */
     hideInMenu?: boolean
   }
