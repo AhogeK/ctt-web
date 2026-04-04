@@ -10,7 +10,7 @@ import { z } from 'zod'
  */
 export const LoginRequestSchema = z.object({
   // Email is validated as proper format and normalized to lowercase by server
-  email: z.string().email('Invalid email format').min(1, 'Email is required'),
+  email: z.email('Invalid email format').min(1, 'Email is required'),
   // Strong password policy enforced by server's @StrongPassword annotation
   password: z.string().min(8, 'Password must be at least 8 characters'),
   // Device ID is required for device binding - server uses @NotBlank validation
@@ -29,7 +29,7 @@ export const LoginRequestSchema = z.object({
  */
 export const LoginResponseSchema = z.object({
   // User unique identifier in UUID format
-  userId: z.string().uuid('Invalid user ID format'),
+  userId: z.uuid('Invalid user ID format'),
   // JWT access token for authenticating API requests
   accessToken: z.string().min(1, 'Access token is required'),
   // Refresh token for token renewal flow
