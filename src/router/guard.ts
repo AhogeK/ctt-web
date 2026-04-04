@@ -1,34 +1,47 @@
 import type { Router } from 'vue-router'
 import NProgress from 'nprogress'
 import 'nprogress/nprogress.css'
-
-/**
- * Check if user is authenticated.
- * Currently uses localStorage as placeholder.
- * TODO: Replace with Pinia auth store check
- */
-function isAuthenticated(): boolean {
-  return !!localStorage.getItem('token')
-}
+import { useAuthStore } from '@/stores/auth'
 
 /**
  * Setup global router guards for authentication and progress bar.
+ *
+ * Uses Vue Router 4 return pattern instead of deprecated next() callback.
+ * Return values:
+ * - `true` or `undefined`: allow navigation
+ * - `false`: cancel navigation
+ * - Route object: redirect to specified route
  */
 export function setupRouterGuards(router: Router) {
-  router.beforeEach((to, _from, next) => {
+  router.beforeEach(async (to) => {
+    NProgress.start()
+
     const title = to.meta.title
     if (title) {
       document.title = `${title} - CTT`
     }
 
-    NProgress.start()
+    const authStore = useAuthStore()
+    const requiresAuth = to.meta.requiresAuth !== false
 
-    if (to.meta.requiresAuth && !isAuthenticated()) {
-      next({ name: 'Login', query: { redirect: to.fullPath } })
-      return
+    // Redirect unauthenticated users to login, preserving intended destination
+    // for post-login navigation
+    if (requiresAuth && !authStore.isAuthenticated) {
+      return {
+        name: 'Login',
+        query: { redirect: to.fullPath },
+      }
     }
 
-    next()
+    // Prevent authenticated users from accessing auth pages (login/register)
+    // to avoid unnecessary auth flow
+    if (to.name === 'Login' || to.name === 'Register') {
+      if (authStore.isAuthenticated) {
+        return { path: '/' }
+      }
+    }
+
+    return true
   })
 
   router.afterEach(() => {
