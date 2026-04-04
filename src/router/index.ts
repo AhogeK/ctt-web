@@ -41,6 +41,22 @@ const router = createRouter({
   },
 })
 
+// Handle chunk load errors (e.g., new deployment deleted old files)
+router.onError((error, to) => {
+  const isChunkLoadFailed =
+    error.message.includes('Failed to fetch dynamically imported module') ||
+    error.message.includes('Importing a module script failed')
+
+  if (isChunkLoadFailed && !to.query.retried) {
+    console.warn('[Router] New version detected, reloading page...', error)
+    const targetPath = to.fullPath
+    const separator = targetPath.includes('?') ? '&' : '?'
+    globalThis.location.href = `${targetPath}${separator}retried=1`
+  } else if (isChunkLoadFailed) {
+    console.error('[Router] Chunk load failed after retry, manual refresh required:', error)
+  }
+})
+
 setupRouterGuards(router)
 
 export default router
