@@ -3,7 +3,7 @@
 ## Current Status
 
 **Phase**: Layout system refactor complete — ready for feature implementation
-**Version**: 0.2.0-beta.3 (2026-04-04)
+**Version**: 0.4.0-beta.1 (2026-04-05)
 
 ## What Was Just Done
 
@@ -69,6 +69,8 @@ None currently.
 
 | Version | Date | Change |
 |---------|------|--------|
+| 0.4.0-beta.1 | 2026-04-05 | Lazy loading implementation (TanStack Query + route guards) |
+| 0.3.0-beta.1 | 2026-04-04 | Auth module complete (JWT + forms) |
 | 0.2.0-beta.3 | 2026-04-04 | Layout system refactor (AuthLayout + AppLayout) |
 | 0.2.0-beta.2 | 2026-04-03 | Router architecture complete (feature-based routing) |
 | 0.1.0 | 2025-03-24 | Scaffold complete, ready for development |

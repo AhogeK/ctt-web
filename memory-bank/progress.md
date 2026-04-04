@@ -7,13 +7,14 @@
 | Project Scaffold  | ✅ Complete    | 0.1.0          |
 | Router Architecture| ✅ Complete    | 0.2.0-beta.2   |
 | Layout System     | ✅ Complete    | 0.2.0-beta.3   |
-| Auth Module       | ⏳ Pending      | 0.2.0          |
-| Dashboard         | ⏳ Pending      | 0.2.0          |
-| Device Management | ⏳ Pending      | 0.2.0          |
-| Leaderboard       | ⏳ Pending      | 0.3.0          |
-| Settings          | ⏳ Pending      | 0.3.0          |
-| i18n (zh/en)      | ⏳ Pending      | 0.3.0          |
-| E2E Test Coverage | ⏳ Pending      | 0.4.0          |
+| Auth Module       | ✅ Complete    | 0.3.0-beta.1   |
+| Lazy Loading + Chunk Optimization | ✅ Complete | 0.4.0-beta.1 |
+| Dashboard         | ⏳ Pending      | 0.4.0          |
+| Device Management | ⏳ Pending      | 0.4.0          |
+| Leaderboard       | ⏳ Pending      | 0.5.0          |
+| Settings          | ⏳ Pending      | 0.5.0          |
+| i18n (zh/en)      | ⏳ Pending      | 0.5.0          |
+| E2E Test Coverage | ⏳ Pending      | 0.6.0          |
 | Production Deploy | ⏳ Pending      | 1.0.0          |
 
 ## Completed
@@ -29,6 +30,9 @@
 - [x] MIT License added
 - [x] Router architecture (feature-based routing, type-safe meta, guards)
 - [x] Layout system refactor (AuthLayout + AppLayout, mobile responsive)
+- [x] Auth module (JWT login, token management, router guards)
+- [x] Lazy loading (TanStack Query integration, route-level code splitting)
+- [x] Chunk optimization (feature-based manual chunks: auth, dashboard, settings)
 
 ## In Progress
 
