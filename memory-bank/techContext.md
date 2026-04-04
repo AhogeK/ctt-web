@@ -4,7 +4,7 @@
 
 | Layer          | Technology                         | Version     |
 |----------------|------------------------------------|-------------|
-| Build          | Vite + Rolldown                    | ^8.0        |
+| Build          | Vite + Rolldown                    | ^8.0 (beta) |
 | Framework      | Vue 3 + TypeScript Strict          | ^3.5        |
 | Routing        | Vue Router                         | ^4          |
 | Server State   | TanStack Query                     | ^5          |
@@ -13,7 +13,7 @@
 | Styles         | Tailwind CSS + @tailwindcss/vite   | ^4          |
 | Charts         | Apache ECharts + vue-echarts       | ^6 / ^8     |
 | HTTP           | ofetch                             | ^1          |
-| Validation     | Vee-Validate + Zod                 | ^4 / ^4     |
+| Validation     | Vee-Validate + Zod                 | ^4 / ^4.3.6 |
 | Icons          | @iconify/vue                       | ^5          |
 | i18n           | Vue I18n                           | ^11         |
 | Package Mgr    | pnpm (via corepack)                | ^10         |

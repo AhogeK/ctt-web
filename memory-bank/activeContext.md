@@ -2,10 +2,20 @@
 
 ## Current Status
 
-**Phase**: Layout system refactor complete — ready for feature implementation
-**Version**: 0.4.0-beta.1 (2026-04-05)
+**Phase**: Lazy loading + chunk optimization complete — ready for dashboard implementation
+**Version**: 0.4.0-beta.2 (2026-04-05)
 
 ## What Was Just Done
+
+- **Critical fixes (2026-04-05)**:
+  - Router guard: `window` → `globalThis` (Oxlint lint fix, SSR-safe)
+  - Zod v4 migration: `z.string().email()` → `z.email()` (API schema updates)
+  - Vite 8 config: `rollupOptions` → `rolldownOptions` (Rolldown engine)
+- **Lazy loading implementation (2026-04-05)**:
+  - Route-level code splitting with dynamic imports
+  - TanStack Query integration for auth state
+  - Feature-based manual chunks (auth, dashboard, settings)
+  - Chunk size optimization verified
 
 - **Layout system refactor (2026-04-04)**:
   - Consolidated 3 legacy layouts → 2 modern layouts (AuthLayout, AppLayout)
@@ -69,6 +79,7 @@ None currently.
 
 | Version | Date | Change |
 |---------|------|--------|
+| 0.4.0-beta.2 | 2026-04-05 | Critical fixes (globalThis, Zod v4, Vite rolldownOptions) |
 | 0.4.0-beta.1 | 2026-04-05 | Lazy loading implementation (TanStack Query + route guards) |
 | 0.3.0-beta.1 | 2026-04-04 | Auth module complete (JWT + forms) |
 | 0.2.0-beta.3 | 2026-04-04 | Layout system refactor (AuthLayout + AppLayout) |
