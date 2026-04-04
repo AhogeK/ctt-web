@@ -2,7 +2,12 @@ import { createTestingPinia } from '@pinia/testing'
 import { setActivePinia } from 'pinia'
 import { describe, it, expect, beforeEach, vi, afterEach } from 'vitest'
 import { useAuthStore } from '../auth'
-import type { LoginResponse } from '@/lib/schemas/auth.schema'
+import { login as loginApi } from '@/lib/api/auth'
+import type { LoginResponse, LoginRequest } from '@/lib/schemas/auth.schema'
+
+vi.mock('@/lib/api/auth', () => ({
+  login: vi.fn<(credentials: LoginRequest) => Promise<LoginResponse>>(),
+}))
 
 describe('Auth Store', () => {
   beforeEach(() => {
@@ -202,6 +207,54 @@ describe('Auth Store', () => {
       // Both instances share the same state
       expect(store2.accessToken).toBe('shared-token')
       expect(store2.isAuthenticated).toBe(true)
+    })
+  })
+
+  describe('login action', () => {
+    it('calls login API and updates auth state', async () => {
+      const store = useAuthStore()
+      const mockResponse: LoginResponse = {
+        accessToken: 'test-token',
+        refreshToken: 'test-refresh',
+        userId: 'user-123',
+        expiresIn: 3600,
+        tokenType: 'Bearer',
+      }
+
+      vi.mocked(loginApi).mockResolvedValue(mockResponse)
+
+      const credentials: LoginRequest = {
+        email: 'test@example.com',
+        password: 'password123',
+        deviceId: 'device-1',
+      }
+
+      const result = await store.login(credentials)
+
+      expect(loginApi).toHaveBeenCalledWith(credentials)
+      expect(result).toStrictEqual(mockResponse)
+      expect(store.accessToken).toBe('test-token')
+      expect(store.refreshToken).toBe('test-refresh')
+      expect(store.userId).toBe('user-123')
+      expect(store.isAuthenticated).toBe(true)
+    })
+
+    it('propagates error when login API fails', async () => {
+      const store = useAuthStore()
+
+      vi.mocked(loginApi).mockRejectedValue(new Error('Invalid credentials'))
+
+      const credentials: LoginRequest = {
+        email: 'test@example.com',
+        password: 'wrong',
+        deviceId: 'device-1',
+      }
+
+      await expect(store.login(credentials)).rejects.toThrow('Invalid credentials')
+
+      // State should remain unchanged after failed login
+      expect(store.accessToken).toBeNull()
+      expect(store.isAuthenticated).toBe(false)
     })
   })
 })
