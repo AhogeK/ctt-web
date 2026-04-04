@@ -155,6 +155,40 @@ All route components use lazy loading:
 component: () => import('@/features/auth/views/LoginView.vue')
 ```
 
+Vite `manualChunks` configuration for feature-based splitting:
+```typescript
+// vite.config.ts
+manualChunks: (id) => {
+  if (id.includes('node_modules')) return 'vendor'
+  if (id.includes('src/features/auth')) return 'feature-auth'
+  if (id.includes('src/features/dashboard')) return 'feature-dashboard'
+  if (id.includes('src/features/settings')) return 'feature-settings'
+}
+```
+
+Build output:
+- `vendor.js` — Third-party dependencies (Vue, TanStack Query, etc.)
+- `feature-auth.js` — Authentication module
+- `feature-dashboard.js` — Dashboard analytics
+- `feature-settings.js` — Settings pages
+
+### Chunk Load Error Handling
+
+Auto-reload mechanism for stale chunks after deployment:
+```typescript
+router.onError((error, to) => {
+  const isChunkLoadFailed = error.message.includes('Failed to fetch dynamically imported module')
+    || error.message.includes('Importing a module script failed');
+
+  if (isChunkLoadFailed && !to.query.retried) {
+    // First failure: reload with ?retried=1 to force fresh fetch
+    window.location.href = `${to.fullPath}?retried=1`;
+  }
+});
+```
+
+Pattern: `?retried=1` query param prevents infinite reload loop.
+
 ---
 
 ## Route Structure
