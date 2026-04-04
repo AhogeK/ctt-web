@@ -1,8 +1,8 @@
 # ctt-web
 
 [![License](https://img.shields.io/badge/license-MIT-green.svg)](LICENSE)
-[![Vue](https://img.shields.io/badge/Vue-3.x-42b883.svg)](https://vuejs.org/)
-[![Vite](https://img.shields.io/badge/Vite-8.x-646cff.svg)](https://vite.dev/)
+[![Vue](https://img.shields.io/badge/Vue-3.5-42b883.svg)](https://vuejs.org/)
+[![Vite](https://img.shields.io/badge/Vite-8-646cff.svg)](https://vitejs.dev/)
 [![pnpm](https://img.shields.io/badge/pnpm-10.x-f69220.svg)](https://pnpm.io/)
 
 Web dashboard frontend for [CTT Server](https://github.com/AhogeK/ctt-server) — the cloud sync backend of
@@ -15,11 +15,11 @@ visualization.
 
 | Layer          | Technology                                      |
 |----------------|-------------------------------------------------|
-| Framework      | Vue 3 + TypeScript (Strict)                     |
+| Framework      | Vue 3.5 + TypeScript 6.0 (Strict, modern module resolution) |
 | Build          | Vite 8 (Rolldown engine)                        |
-| Routing        | Vue Router 4                                    |
+| Routing        | Vue Router 5 (feature-based routing, type-safe meta) |
 | Server State   | TanStack Query v5                               |
-| Global State   | Pinia 3                                         |
+| Global State   | Pinia 3 (auth store with JWT token management)  |
 | UI             | Radix Vue + shadcn-vue + Tailwind CSS v4        |
 | Charts         | Apache ECharts + vue-echarts                    |
 | HTTP           | ofetch                                          |
@@ -34,6 +34,31 @@ visualization.
 | E2E Test       | Playwright                                      |
 | Type Check     | vue-tsc (standalone CI step)                    |
 
+## ✅ Implemented Features
+
+| Feature | Description |
+|---------|-------------|
+| Authentication | JWT login, token management, router guards |
+| Layout System | AuthLayout + AppLayout, mobile responsive sidebar |
+| Routing | Feature-based modules, type-safe meta, NProgress |
+| Form Validation | Vee-Validate + Zod, real-time feedback |
+
+## 📦 Version
+
+Current: `0.3.0-beta.1` (2026-04-04) — Auth module complete
+
+## 🗺 Project Structure
+
+```
+src/
+├── features/       # Feature modules (auth/, dashboard/, settings/)
+├── layouts/        # Layout components (AuthLayout, AppLayout)
+├── components/     # Shared components (ui/, app/)
+├── lib/            # Core utilities (api/, schemas/)
+├── stores/         # Pinia stores (auth)
+├── router/         # Vue Router + guards
+└── views/          # Top-level views
+```
 
 ## 🔗 Related Projects
 
