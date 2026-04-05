@@ -1,4 +1,5 @@
 import 'vue-router'
+import type { RouteName } from '@/router/route-names'
 
 declare module 'vue-router' {
   interface RouteMeta {
@@ -12,5 +13,7 @@ declare module 'vue-router' {
     layout?: 'auth' | 'app'
     /** Whether to hide this route from sidebar navigation */
     hideInMenu?: boolean
+    /** Type-safe route name for meta configuration */
+    name?: RouteName
   }
 }
