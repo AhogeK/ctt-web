@@ -44,10 +44,11 @@ visualization.
 | Form Validation | Vee-Validate + Zod, real-time feedback |
 | Lazy Loading | Route-level code splitting, dynamic imports |
 | Chunk Optimization | Feature-based manual chunks (auth, dashboard, settings) |
+| **Exception Handling** | ErrorBoundary component, global error handlers, 404View with navigation, Sonner toast notifications |
 
 ## 📦 Version
 
-Current: `0.4.0-beta.3` (2026-04-05) — Route names constants (eliminated magic strings)
+Current: `0.4.0-beta.5` (2026-04-05) — Exception handling infrastructure (ErrorBoundary, 404View, global handlers, toast)
 
 ## 🗺 Project Structure
 
