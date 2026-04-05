@@ -1,6 +1,7 @@
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest'
 import { createRouter, createWebHistory, type RouteRecordRaw } from 'vue-router'
 import { setupRouterGuards } from '../guard'
+import { RouteNames } from '../route-names'
 
 const { mockNProgressStart, mockNProgressDone } = vi.hoisted(() => {
   return {
@@ -23,25 +24,25 @@ describe('Router Guards', () => {
   const testRoutes: RouteRecordRaw[] = [
     {
       path: '/',
-      name: 'Home',
+      name: RouteNames.HOME,
       component: { template: '<div>Home</div>' },
       meta: { title: 'Home' },
     },
     {
       path: '/dashboard',
-      name: 'Dashboard',
+      name: RouteNames.DASHBOARD,
       component: { template: '<div>Dashboard</div>' },
       meta: { title: 'Dashboard', requiresAuth: true },
     },
     {
       path: '/auth/login',
-      name: 'Login',
+      name: RouteNames.LOGIN,
       component: { template: '<div>Login</div>' },
       meta: { title: 'Login', requiresAuth: false },
     },
     {
       path: '/auth/register',
-      name: 'Register',
+      name: RouteNames.REGISTER,
       component: { template: '<div>Register</div>' },
       meta: { title: 'Register', requiresAuth: false },
     },
@@ -49,7 +50,7 @@ describe('Router Guards', () => {
       path: '/public',
       name: 'Public',
       component: { template: '<div>Public</div>' },
-      meta: { requiresAuth: false },
+      meta: { title: 'Public', requiresAuth: false },
     },
     {
       path: '/no-title',
@@ -143,7 +144,7 @@ describe('Router Guards', () => {
       await router.push('/dashboard')
       await router.isReady()
 
-      expect(router.currentRoute.value.name).toBe('Login')
+      expect(router.currentRoute.value.name).toBe(RouteNames.LOGIN)
     })
 
     it('preserves original path as redirect query param', async () => {
@@ -171,7 +172,7 @@ describe('Router Guards', () => {
       await router.push('/dashboard')
       await router.isReady()
 
-      expect(router.currentRoute.value.name).toBe('Dashboard')
+      expect(router.currentRoute.value.name).toBe(RouteNames.DASHBOARD)
       expect(router.currentRoute.value.path).toBe('/dashboard')
     })
   })
@@ -192,7 +193,7 @@ describe('Router Guards', () => {
       await router.push('/auth/login')
       await router.isReady()
 
-      expect(router.currentRoute.value.name).toBe('Login')
+      expect(router.currentRoute.value.name).toBe(RouteNames.LOGIN)
     })
 
     it('allows unauthenticated user to access Register page', async () => {
@@ -201,7 +202,7 @@ describe('Router Guards', () => {
       await router.push('/auth/register')
       await router.isReady()
 
-      expect(router.currentRoute.value.name).toBe('Register')
+      expect(router.currentRoute.value.name).toBe(RouteNames.REGISTER)
     })
 
     it('allows authenticated user to access public route', async () => {
