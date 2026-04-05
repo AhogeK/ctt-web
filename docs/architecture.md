@@ -72,24 +72,25 @@ Each route module follows a consistent pattern:
 ```typescript
 // src/router/modules/auth.ts
 import type { RouteRecordRaw } from 'vue-router'
+import { RouteNames } from '../route-names'
 
 const authRoutes: RouteRecordRaw[] = [
   {
     path: '/auth',
-    name: 'AuthLayout',
+    name: RouteNames.AUTH_LAYOUT,
     component: () => import('@/layouts/AuthLayout.vue'),
-    redirect: '/auth/login',
+    redirect: { name: RouteNames.LOGIN },
     meta: { title: 'Authentication', hideInMenu: true },
     children: [
       {
-        path: 'login',
-        name: 'Login',
+        path: '/login',
+        name: RouteNames.LOGIN,
         component: () => import('@/features/auth/views/LoginView.vue'),
         meta: { title: 'Login', requiresAuth: false, layout: 'auth' },
       },
       {
-        path: 'register',
-        name: 'Register',
+        path: '/register',
+        name: RouteNames.REGISTER,
         component: () => import('@/features/auth/views/RegisterView.vue'),
         meta: { title: 'Register', requiresAuth: false, layout: 'auth' },
       },
@@ -99,6 +100,35 @@ const authRoutes: RouteRecordRaw[] = [
 
 export default authRoutes
 ```
+
+### Absolute Child Paths Pattern
+
+When defining child routes, use **absolute paths** (starting with `/`) instead of relative paths:
+
+```typescript
+// ✅ Correct: Absolute child path
+{
+  path: '/login',  // Resolves to /login (clean URL)
+  component: () => import('@/features/auth/views/LoginView.vue'),
+}
+
+// ❌ Avoid: Relative child path
+{
+  path: 'login',  // Resolves to /auth/login (nested URL)
+  component: () => import('@/features/auth/views/LoginView.vue'),
+}
+```
+
+**Benefits:**
+
+- Cleaner URLs (`/login` instead of `/auth/login`)
+- Independent navigation (URL doesn't expose internal module structure)
+- Product-friendly (matches industry-standard URL patterns)
+- Backward compatible (still renders in parent AuthLayout)
+
+**How it works:**
+
+In Vue Router, child routes with paths starting with `/` are treated as **root paths**, bypassing parent path concatenation. The child still renders in the parent's `<router-view>`, maintaining layout hierarchy while exposing clean URLs.
 
 ### Route Meta Fields
 
@@ -180,22 +210,22 @@ build: {
 
 ### Chunk Groups
 
-| Chunk            | Contents                              | Load Trigger         |
-|------------------|---------------------------------------|----------------------|
-| `vendor`         | All `node_modules` dependencies       | Initial load         |
-| `feature-auth`   | Auth views, components, logic         | Navigate to `/auth`  |
+| Chunk               | Contents                           | Load Trigger             |
+|---------------------|------------------------------------|--------------------------|
+| `vendor`            | All `node_modules` dependencies    | Initial load             |
+| `feature-auth`      | Auth views, components, logic      | Navigate to `/auth`      |
 | `feature-dashboard` | Dashboard views, charts, analytics | Navigate to `/dashboard` |
-| `feature-settings` | Settings views, forms, API key UI  | Navigate to `/settings` |
+| `feature-settings`  | Settings views, forms, API key UI  | Navigate to `/settings`  |
 
 ## State Management
 
 ### Layer Separation
 
-| State Type   | Tool           | Use Case                                    |
-|--------------|----------------|---------------------------------------------|
+| State Type       | Tool           | Use Case                                          |
+|------------------|----------------|---------------------------------------------------|
 | **Server State** | TanStack Query | API data, caching, refetching, optimistic updates |
-| **Global State** | Pinia          | Auth session, theme, UI state               |
-| **URL State** | Vue Router     | Filters, pagination, search params          |
+| **Global State** | Pinia          | Auth session, theme, UI state                     |
+| **URL State**    | Vue Router     | Filters, pagination, search params                |
 
 ### Auth Store (Pinia)
 
@@ -328,11 +358,11 @@ export function setupRouterGuards(router: Router) {
 
 ### Error Boundary Hierarchy
 
-| Level    | Location        | Scope                          | Purpose                                    |
-|----------|-----------------|--------------------------------|--------------------------------------------|
-| **Root** | `App.vue`       | Entire application             | Catch-all for uncaught rendering errors    |
-| **Layout** | `AppLayout.vue` | Main content area (slot)       | Isolate page failures, keep nav functional |
-| **Feature** | Feature views   | Individual components          | Optional, for critical feature isolation   |
+| Level       | Location        | Scope                    | Purpose                                    |
+|-------------|-----------------|--------------------------|--------------------------------------------|
+| **Root**    | `App.vue`       | Entire application       | Catch-all for uncaught rendering errors    |
+| **Layout**  | `AppLayout.vue` | Main content area (slot) | Isolate page failures, keep nav functional |
+| **Feature** | Feature views   | Individual components    | Optional, for critical feature isolation   |
 
 ### ErrorBoundary Component
 
