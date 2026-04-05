@@ -31,17 +31,18 @@ function handleGoBack() {
       <h1 class="text-8xl font-bold text-primary/20">404</h1>
 
       <!-- Page title -->
-      <h2 class="mt-4 text-3xl font-bold text-foreground">页面未找到</h2>
+      <h2 class="mt-4 text-3xl font-bold text-foreground">Page Not Found</h2>
 
       <!-- Helpful description -->
       <p class="mt-4 max-w-md text-muted-foreground">
-        您访问的页面不存在或已被移除。请检查链接是否正确，或使用下方按钮返回有效页面。
+        The page you are looking for does not exist or has been removed. Please check the URL or use
+        the buttons below to return to a valid page.
       </p>
 
       <!-- Action buttons -->
       <div class="mt-8 flex flex-col gap-3 sm:flex-row sm:gap-4">
-        <Button variant="default" @click="handleGoHome"> 返回首页 </Button>
-        <Button variant="outline" @click="handleGoBack"> 返回上一页 </Button>
+        <Button variant="default" @click="handleGoHome"> Go Home </Button>
+        <Button variant="outline" @click="handleGoBack"> Go Back </Button>
       </div>
     </div>
   </div>

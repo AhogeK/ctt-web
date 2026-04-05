@@ -94,8 +94,10 @@ function handleReset() {
     <div class="flex items-start gap-4">
       <TriangleAlert class="h-6 w-6 text-destructive shrink-0 mt-0.5" />
       <div class="flex-1 min-w-0">
-        <h3 class="text-lg font-semibold text-destructive mb-2">组件渲染出错了</h3>
-        <p class="text-sm text-muted-foreground mb-4">请尝试刷新页面或联系管理员</p>
+        <h3 class="text-lg font-semibold text-destructive mb-2">Component Render Error</h3>
+        <p class="text-sm text-muted-foreground mb-4">
+          Please refresh the page or contact administrator
+        </p>
 
         <!-- Error details in development mode -->
         <details
@@ -103,7 +105,7 @@ function handleReset() {
           class="mb-4 text-xs bg-muted/50 rounded p-3"
         >
           <summary class="cursor-pointer font-medium text-muted-foreground mb-2">
-            错误详情 (仅开发环境可见)
+            Error Details (Development Mode Only)
           </summary>
           <div class="space-y-2 overflow-auto">
             <div>
@@ -122,7 +124,7 @@ function handleReset() {
         </details>
 
         <!-- Retry button -->
-        <Button variant="outline" size="sm" @click="handleReset"> 尝试恢复 </Button>
+        <Button variant="outline" size="sm" @click="handleReset"> Try Again </Button>
       </div>
     </div>
   </div>
