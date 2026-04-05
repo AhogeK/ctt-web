@@ -1,4 +1,5 @@
 import { createRouter, createWebHistory, type RouteRecordRaw } from 'vue-router'
+import { RouteNames } from './route-names'
 import { setupRouterGuards } from './guard'
 
 const routeModules = import.meta.glob('./modules/*.ts', { eager: true })
@@ -13,7 +14,7 @@ Object.keys(routeModules).forEach((key) => {
 const constantRoutes: RouteRecordRaw[] = [
   {
     path: '/',
-    name: 'home',
+    name: RouteNames.HOME,
     component: () => import('@/layouts/AppLayout.vue'),
     meta: { title: 'Home' },
     children: [
@@ -25,7 +26,7 @@ const constantRoutes: RouteRecordRaw[] = [
   },
   {
     path: '/:pathMatch(.*)*',
-    name: 'NotFound',
+    name: RouteNames.NOT_FOUND,
     component: () => import('@/views/Exception/404View.vue'),
     meta: { title: 'Not Found', hideInMenu: true },
   },
