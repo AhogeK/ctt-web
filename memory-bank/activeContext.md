@@ -2,9 +2,28 @@
 
 ## Current Status
 
-**Phase**: Lazy loading + chunk optimization complete — ready for dashboard implementation
-**Version**: 0.4.0-beta.2 (2026-04-05)
+**Phase**: Exception handling infrastructure complete — ready for dashboard implementation
+**Version**: 0.4.0-beta.5 (2026-04-05)
 
+- **Exception handling infrastructure (2026-04-05)**:
+  - **404View refactored**: Uses RouteNames.HOME, shadcn-vue Button, professional Chinese copy
+  - **ErrorBoundary created**: `src/components/app/ErrorBoundary.vue` with `onErrorCaptured`, retry mechanism, DEV mode error details
+  - **Toaster integrated**: App.vue with Sonner Toaster (top-right, expand mode, rich colors)
+  - **Global error handlers**: main.ts with `app.config.errorHandler` + `unhandledrejection` listener
+  - **AppLayout protected**: ErrorBoundary wraps main content slot (sidebar remains functional on crash)
+  - **All verification passed**: type-check (0 errors), lint (0 errors)
+- **Sonner Toaster integration (2026-04-05)**:
+  - Integrated Toaster component into App.vue for global toast notifications
+  - Positioned at top-right with expand mode and rich colors
+  - Uses custom icons from Sonner.vue (success, info, warning, error, loading, close)
+  - Provides centralized notification system for entire application
+- **ErrorBoundary component (2026-04-05)**:
+  - Created `src/components/app/ErrorBoundary.vue` for error containment
+  - Uses `onErrorCaptured` to catch rendering errors in child components
+  - Displays fallback UI with retry mechanism
+  - Shows error details in development mode only
+  - Prevents white-screen crashes in production
+  - Follows Vue 3 Composition API best practices (shallowRef for primitives, ref for objects)
 - **Git operations (2026-04-05)**:
   - Pushed develop to origin (9 commits: fb6ad91..13c6ace)
   - Cherry-picked 8 non-AI commits to master:
@@ -96,6 +115,8 @@ None currently.
 
 | Version | Date | Change |
 |---------|------|--------|
+| 0.4.0-beta.5 | 2026-04-05 | Exception handling infrastructure (404View, ErrorBoundary, Toaster, global handlers) |
+| 0.4.0-beta.4 | 2026-04-05 | ErrorBoundary component created |
 | 0.4.0-beta.3 | 2026-04-05 | Route names constants (eliminated magic strings) |
 | 0.4.0-beta.2 | 2026-04-05 | Critical fixes (globalThis, Zod v4, Vite rolldownOptions) |
 | 0.4.0-beta.1 | 2026-04-05 | Lazy loading implementation (TanStack Query + route guards) |

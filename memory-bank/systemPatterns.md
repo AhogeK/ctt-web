@@ -14,6 +14,7 @@
 - Emits: `defineEmits<{ ... }>()`
 - Two-way binding: `defineModel`
 - Headless UI logic via Radix Vue; styling via Tailwind
+- Error containment: Wrap route views with ErrorBoundary to prevent white-screen crashes
 
 ## State Management Layers
 
@@ -45,6 +46,28 @@ export const fetchStats = (params: StatsParams) =>
 ```
 
 ## Error Handling Pattern
+
+### ErrorBoundary Component
+
+Wrap route views with ErrorBoundary to catch rendering errors:
+
+```vue
+<!-- AppLayout.vue -->
+<template>
+  <ErrorBoundary>
+    <RouterView />
+  </ErrorBoundary>
+</template>
+```
+
+Features:
+- Catches errors from child components via `onErrorCaptured`
+- Displays fallback UI with retry mechanism
+- Shows error details in development mode only
+- Prevents white-screen crashes in production
+- Configurable error propagation (`stopPropagation` prop)
+
+### TanStack Query Error State
 
 Every TanStack Query usage must render error state:
 

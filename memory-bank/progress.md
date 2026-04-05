@@ -33,6 +33,7 @@
 - [x] Auth module (JWT login, token management, router guards)
 - [x] Lazy loading (TanStack Query integration, route-level code splitting)
 - [x] Chunk optimization (feature-based manual chunks: auth, dashboard, settings)
+- [x] Error handling (ErrorBoundary component with retry mechanism)
 
 ## In Progress
 
