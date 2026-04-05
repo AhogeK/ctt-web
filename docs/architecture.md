@@ -323,3 +323,218 @@ export function setupRouterGuards(router: Router) {
 - **Progress bar**: NProgress start/stop for visual feedback
 - **Auth check**: Redirect unauthenticated users to Login
 - **Redirect preservation**: Store target path in query param for post-login redirect
+
+## Exception Handling Architecture
+
+### Error Boundary Hierarchy
+
+| Level    | Location        | Scope                          | Purpose                                    |
+|----------|-----------------|--------------------------------|--------------------------------------------|
+| **Root** | `App.vue`       | Entire application             | Catch-all for uncaught rendering errors    |
+| **Layout** | `AppLayout.vue` | Main content area (slot)       | Isolate page failures, keep nav functional |
+| **Feature** | Feature views   | Individual components          | Optional, for critical feature isolation   |
+
+### ErrorBoundary Component
+
+```vue
+<!-- src/components/app/ErrorBoundary.vue -->
+<script setup lang="ts">
+interface Props {
+  /** Whether to stop error propagation to parent error boundaries */
+  stopPropagation?: boolean
+}
+
+const props = withDefaults(defineProps<Props>(), {
+  stopPropagation: true,
+})
+
+const hasError = shallowRef(false)
+const errorInfo = ref<Error | null>(null)
+
+onErrorCaptured((error, instance, info) => {
+  hasError.value = true
+  errorInfo.value = error
+  console.error('[ErrorBoundary Captured]', error, { instance, info })
+  return !props.stopPropagation // false = stop propagation
+})
+
+function handleReset() {
+  hasError.value = false
+  errorInfo.value = null
+}
+</script>
+
+<template>
+  <div v-if="hasError" class="error-boundary">
+    <h3>Component Render Error</h3>
+    <p>Please refresh the page or contact administrator</p>
+    <details v-if="isDev && errorInfo">
+      <!-- Error details in development mode -->
+    </details>
+    <Button @click="handleReset">Try Again</Button>
+  </div>
+  <slot v-else />
+</template>
+```
+
+### Error Flow Diagram
+
+```
+┌─────────────────────────────────────────────────────────────────┐
+│                         App.vue                                  │
+│  ┌───────────────────────────────────────────────────────────┐  │
+│  │ ErrorBoundary (Root)                                       │  │
+│  │  ┌─────────────────────────────────────────────────────┐  │  │
+│  │  │ RouterView                                           │  │  │
+│  │  │  ┌───────────────────────────────────────────────┐  │  │  │
+│  │  │  │ AppLayout.vue                                  │  │  │  │
+│  │  │  │  ┌─────────────────────────────────────────┐  │  │  │  │
+│  │  │  │  │ Sidebar + Header (unprotected)          │  │  │  │  │
+│  │  │  │  └─────────────────────────────────────────┘  │  │  │  │
+│  │  │  │  ┌─────────────────────────────────────────┐  │  │  │  │
+│  │  │  │  │ ErrorBoundary (Layout)                  │  │  │  │  │
+│  │  │  │  │  ┌───────────────────────────────────┐  │  │  │  │  │
+│  │  │  │  │  │ Main Content (slot)               │  │  │  │  │  │
+│  │  │  │  │  │  ┌─────────────────────────────┐  │  │  │  │  │  │
+│  │  │  │  │  │  │ Feature View Component     │  │  │  │  │  │  │
+│  │  │  │  │  │  │  ❌ Error thrown here       │  │  │  │  │  │  │
+│  │  │  │  │  │  └─────────────────────────────┘  │  │  │  │  │  │
+│  │  │  │  │  └───────────────────────────────────┘  │  │  │  │  │
+│  │  │  │  └─────────────────────────────────────────┘  │  │  │  │
+│  │  │  └───────────────────────────────────────────────┘  │  │  │
+│  │  └─────────────────────────────────────────────────────┘  │  │
+│  └───────────────────────────────────────────────────────────┘  │
+│  Toaster (Sonner)                                               │
+└─────────────────────────────────────────────────────────────────┘
+
+Error propagation: Feature → Layout Boundary → Root Boundary → Global Handler
+```
+
+### Router Chunk Load Errors
+
+```typescript
+// src/router/index.ts
+router.onError((error, to) => {
+  const isChunkLoadFailed =
+    error.message.includes('Failed to fetch dynamically imported module') ||
+    error.message.includes('Importing a module script failed')
+
+  if (isChunkLoadFailed && !to.query.retried) {
+    console.warn('[Router] New version detected, reloading page...', error)
+    const targetPath = to.fullPath
+    const separator = targetPath.includes('?') ? '&' : '?'
+    globalThis.location.href = `${targetPath}${separator}retried=1`
+  } else if (isChunkLoadFailed) {
+    console.error('[Router] Chunk load failed after retry, manual refresh required:', error)
+  }
+})
+```
+
+Handles deployment-induced failures when old chunks are deleted after new deployment.
+
+### 404View
+
+```vue
+<!-- src/views/Exception/404View.vue -->
+<script setup lang="ts">
+import { useRouter } from 'vue-router'
+import { RouteNames } from '@/router/route-names'
+
+const router = useRouter()
+
+function handleGoHome() {
+  router.push({ name: RouteNames.HOME })
+}
+
+function handleGoBack() {
+  router.back()
+}
+</script>
+
+<template>
+  <div class="flex min-h-screen flex-col items-center justify-center">
+    <h1 class="text-8xl font-bold text-primary/20">404</h1>
+    <h2 class="mt-4 text-3xl font-bold">Page Not Found</h2>
+    <p class="mt-4 max-w-md text-muted-foreground">
+      The page you are looking for does not exist or has been removed.
+    </p>
+    <div class="mt-8 flex gap-4">
+      <Button variant="default" @click="handleGoHome">Go Home</Button>
+      <Button variant="outline" @click="handleGoBack">Go Back</Button>
+    </div>
+  </div>
+</template>
+```
+
+Route configuration:
+
+```typescript
+// src/router/index.ts
+{
+  path: '/:pathMatch(.*)*',
+  name: RouteNames.NOT_FOUND,
+  component: () => import('@/views/Exception/404View.vue'),
+  meta: { title: 'Not Found', hideInMenu: true },
+}
+```
+
+### Global Error Handlers
+
+```typescript
+// src/main.ts
+function handleVueError(err: unknown, instance: unknown, info: string): void {
+  // TODO: Integrate with Sentry/Datadog for production error tracking
+  console.error('[Vue Global Error]', { error: err, component: instance, info })
+}
+
+function handleUnhandledRejection(event: PromiseRejectionEvent): void {
+  // TODO: Integrate with Sentry/Datadog for production error tracking
+  console.error('[Unhandled Promise Rejection]', event.reason)
+  event.preventDefault()
+}
+
+app.config.errorHandler = handleVueError
+window.addEventListener('unhandledrejection', handleUnhandledRejection)
+```
+
+### Toast Notifications (Sonner)
+
+```vue
+<!-- src/App.vue -->
+<template>
+  <ErrorBoundary>
+    <RouterView />
+  </ErrorBoundary>
+  <Toaster position="top-right" :expand="true" rich-colors />
+</template>
+```
+
+Usage in components:
+
+```typescript
+import { toast } from 'vue-sonner'
+
+// Success notification
+toast.success('API key created successfully')
+
+// Error notification
+toast.error('Failed to save settings')
+
+// Promise-based (shows loading → success/error)
+toast.promise(saveSettings(), {
+  loading: 'Saving...',
+  success: 'Settings saved',
+  error: 'Failed to save',
+})
+```
+
+### Best Practices
+
+1. **Wrap critical sections**: Use ErrorBoundary around components that may fail (data fetching, complex rendering)
+2. **Keep navigation functional**: Layout-level boundary ensures sidebar/header remain usable during page errors
+3. **Provide retry options**: `handleReset()` allows users to attempt recovery without full page refresh
+4. **Log with prefixes**: Use `[ErrorBoundary Captured]`, `[Router]`, `[Vue Global Error]` for easy log filtering
+5. **Dev mode details**: Show error stack in development, hide in production for security
+6. **Chunk error recovery**: Auto-reload on deployment-induced chunk failures with single retry
+7. **Type-safe navigation**: Use `RouteNames` constants for 404 navigation actions
+8. **TODO integration**: Mark Sentry/Datadog integration points for future production monitoring
