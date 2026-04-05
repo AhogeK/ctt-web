@@ -1,6 +1,7 @@
 import type { Router } from 'vue-router'
 import NProgress from 'nprogress'
 import 'nprogress/nprogress.css'
+import { RouteNames } from './route-names'
 
 /**
  * Check if user is authenticated.
@@ -24,7 +25,7 @@ export function setupRouterGuards(router: Router) {
     NProgress.start()
 
     if (to.meta.requiresAuth && !isAuthenticated()) {
-      next({ name: 'Login', query: { redirect: to.fullPath } })
+      next({ name: RouteNames.LOGIN, query: { redirect: to.fullPath } })
       return
     }
 
