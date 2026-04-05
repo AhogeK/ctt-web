@@ -2,6 +2,7 @@ import type { Router } from 'vue-router'
 import NProgress from 'nprogress'
 import 'nprogress/nprogress.css'
 import { useAuthStore } from '@/stores/auth'
+import { RouteNames } from './route-names'
 
 /**
  * Setup global router guards for authentication and progress bar.
@@ -28,14 +29,14 @@ export function setupRouterGuards(router: Router) {
     // for post-login navigation
     if (requiresAuth && !authStore.isAuthenticated) {
       return {
-        name: 'Login',
+        name: RouteNames.LOGIN,
         query: { redirect: to.fullPath },
       }
     }
 
     // Prevent authenticated users from accessing auth pages (login/register)
     // to avoid unnecessary auth flow
-    if (to.name === 'Login' || to.name === 'Register') {
+    if (to.name === RouteNames.LOGIN || to.name === RouteNames.REGISTER) {
       if (authStore.isAuthenticated) {
         return { path: '/' }
       }
