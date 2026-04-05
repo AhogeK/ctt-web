@@ -44,7 +44,7 @@ visualization.
 | Form Validation | Vee-Validate + Zod, real-time feedback |
 | Lazy Loading | Route-level code splitting, dynamic imports |
 | Chunk Optimization | Feature-based manual chunks (auth, dashboard, settings) |
-| **Exception Handling** | ErrorBoundary component, global error handlers, 404View with navigation, Sonner toast notifications |
+| **Exception Handling** | Hierarchical ErrorBoundary (App.vue → AppLayout.vue), global handlers, 404View, Sonner toast |
 
 ## 📦 Version
 

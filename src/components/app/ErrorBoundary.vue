@@ -47,6 +47,12 @@ const errorInfo = ref<Error | null>(null)
 const componentInstance = ref<ComponentPublicInstance | null>(null)
 
 /**
+ * Check if running in development mode
+ * Cannot use import.meta.env.DEV directly in template
+ */
+const isDev = import.meta.env.DEV
+
+/**
  * Error capture handler
  *
  * Sets error state, logs to console with prefix, and controls propagation
@@ -100,10 +106,7 @@ function handleReset() {
         </p>
 
         <!-- Error details in development mode -->
-        <details
-          v-if="import.meta.env.DEV && errorInfo"
-          class="mb-4 text-xs bg-muted/50 rounded p-3"
-        >
+        <details v-if="isDev && errorInfo" class="mb-4 text-xs bg-muted/50 rounded p-3">
           <summary class="cursor-pointer font-medium text-muted-foreground mb-2">
             Error Details (Development Mode Only)
           </summary>
