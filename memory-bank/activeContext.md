@@ -10,7 +10,7 @@
   - **ErrorBoundary created**: `src/components/app/ErrorBoundary.vue` with `onErrorCaptured`, retry mechanism, DEV mode error details
   - **Toaster integrated**: App.vue with Sonner Toaster (top-right, expand mode, rich colors)
   - **Global error handlers**: main.ts with `app.config.errorHandler` + `unhandledrejection` listener
-  - **AppLayout protected**: ErrorBoundary wraps main content slot (sidebar remains functional on crash)
+  - **Hierarchical ErrorBoundary**: App.vue → AppLayout.vue (outer catches router errors, inner catches view errors)
   - **All verification passed**: type-check (0 errors), lint (0 errors)
 - **Sonner Toaster integration (2026-04-05)**:
   - Integrated Toaster component into App.vue for global toast notifications
