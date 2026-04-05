@@ -40,14 +40,14 @@ visualization.
 |---------|-------------|
 | Authentication | JWT login, token management, router guards |
 | Layout System | AuthLayout + AppLayout, mobile responsive sidebar |
-| Routing | Feature-based modules, type-safe meta, NProgress |
+| Routing | Feature-based modules, type-safe meta, NProgress, **route name constants** |
 | Form Validation | Vee-Validate + Zod, real-time feedback |
 | Lazy Loading | Route-level code splitting, dynamic imports |
 | Chunk Optimization | Feature-based manual chunks (auth, dashboard, settings) |
 
 ## 📦 Version
 
-Current: `0.4.0-beta.1` (2026-04-05) — Lazy loading implementation
+Current: `0.4.0-beta.3` (2026-04-05) — Route names constants (eliminated magic strings)
 
 ## 🗺 Project Structure
 
