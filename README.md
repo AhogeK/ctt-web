@@ -13,42 +13,42 @@ visualization.
 
 ## ✨ Tech Stack
 
-| Layer          | Technology                                      |
-|----------------|-------------------------------------------------|
+| Layer          | Technology                                                  |
+|----------------|-------------------------------------------------------------|
 | Framework      | Vue 3.5 + TypeScript 6.0 (Strict, modern module resolution) |
-| Build          | Vite 8 (Rolldown engine)                        |
-| Routing        | Vue Router 5 (feature-based routing, type-safe meta) |
-| Server State   | TanStack Query v5                               |
-| Global State   | Pinia 3 (auth store with JWT token management)  |
-| UI             | Radix Vue + shadcn-vue + Tailwind CSS v4        |
-| Charts         | Apache ECharts + vue-echarts                    |
-| HTTP           | ofetch                                          |
-| Validation     | Vee-Validate + Zod                              |
-| Icons          | Iconify Vue                                     |
-| i18n           | Vue I18n v11                                    |
-| Package Manger | pnpm v10 (via corepack)                         |
-| Lint           | Oxlint v1 (primary) + ESLint                    |
-| Format         | Oxfmt (100% Prettier compatible)                |
-| Git Hooks      | simple-git-hooks + lint-staged                  |
-| Unit Test      | Vitest 4 + Testing Library Vue                  |
-| E2E Test       | Playwright                                      |
-| Type Check     | vue-tsc (standalone CI step)                    |
+| Build          | Vite 8 (Rolldown engine)                                    |
+| Routing        | Vue Router 5 (feature-based routing, type-safe meta)        |
+| Server State   | TanStack Query v5                                           |
+| Global State   | Pinia 3 (auth store with JWT token management)              |
+| UI             | Radix Vue + shadcn-vue + Tailwind CSS v4                    |
+| Charts         | Apache ECharts + vue-echarts                                |
+| HTTP           | ofetch                                                      |
+| Validation     | Vee-Validate + Zod                                          |
+| Icons          | Iconify Vue                                                 |
+| i18n           | Vue I18n v11                                                |
+| Package Manger | pnpm v10 (via corepack)                                     |
+| Lint           | Oxlint v1 (primary) + ESLint                                |
+| Format         | Oxfmt (100% Prettier compatible)                            |
+| Git Hooks      | simple-git-hooks + lint-staged                              |
+| Unit Test      | Vitest 4 + Testing Library Vue                              |
+| E2E Test       | Playwright                                                  |
+| Type Check     | vue-tsc (standalone CI step)                                |
 
 ## ✅ Implemented Features
 
-| Feature | Description |
-|---------|-------------|
-| Authentication | JWT login, token management, router guards |
-| Layout System | AuthLayout + AppLayout, mobile responsive sidebar |
-| Routing | Feature-based modules, type-safe meta, NProgress, **route name constants** |
-| Form Validation | Vee-Validate + Zod, real-time feedback |
-| Lazy Loading | Route-level code splitting, dynamic imports |
-| Chunk Optimization | Feature-based manual chunks (auth, dashboard, settings) |
-| **Exception Handling** | Hierarchical ErrorBoundary (App.vue → AppLayout.vue), global handlers, 404View, Sonner toast |
+| Feature                | Description                                                                                          |
+|------------------------|------------------------------------------------------------------------------------------------------|
+| Authentication         | JWT login, token management, router guards                                                           |
+| Layout System          | AuthLayout + AppLayout, mobile responsive sidebar                                                    |
+| Routing                | Feature-based modules, type-safe meta, NProgress, **route name constants**, **absolute child paths** |
+| Form Validation        | Vee-Validate + Zod, real-time feedback                                                               |
+| Lazy Loading           | Route-level code splitting, dynamic imports                                                          |
+| Chunk Optimization     | Feature-based manual chunks (auth, dashboard, settings)                                              |
+| **Exception Handling** | Hierarchical ErrorBoundary (App.vue → AppLayout.vue), global handlers, 404View, Sonner toast         |
 
 ## 📦 Version
 
-Current: `0.4.0-beta.5` (2026-04-05) — Exception handling infrastructure (ErrorBoundary, 404View, global handlers, toast)
+Current: `0.4.0-beta.7` (2026-04-06) — Route path optimization (absolute child paths), exception handling infrastructure
 
 ## 🗺 Project Structure
 
