@@ -5,8 +5,12 @@
 **Phase**: Lazy loading + chunk optimization complete — ready for dashboard implementation
 **Version**: 0.4.0-beta.2 (2026-04-05)
 
-## What Was Just Done
-
+- **Route names constants implementation (2026-04-05)**:
+  - Created `src/router/route-names.ts` as Single Source of Truth for route identifiers
+  - Refactored all router modules to use `RouteNames` constants (eliminated magic strings)
+  - Updated `src/types/vue-router.d.ts` with `RouteName` type
+  - Updated test file with route name constants
+  - All verification passed: type-check (0 errors), lint (0 errors), 15 tests passing
 - **Critical fixes (2026-04-05)**:
   - Router guard: `window` → `globalThis` (Oxlint lint fix, SSR-safe)
   - Zod v4 migration: `z.string().email()` → `z.email()` (API schema updates)
@@ -79,6 +83,7 @@ None currently.
 
 | Version | Date | Change |
 |---------|------|--------|
+| 0.4.0-beta.3 | 2026-04-05 | Route names constants (eliminated magic strings) |
 | 0.4.0-beta.2 | 2026-04-05 | Critical fixes (globalThis, Zod v4, Vite rolldownOptions) |
 | 0.4.0-beta.1 | 2026-04-05 | Lazy loading implementation (TanStack Query + route guards) |
 | 0.3.0-beta.1 | 2026-04-04 | Auth module complete (JWT + forms) |
