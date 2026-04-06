@@ -58,6 +58,22 @@
   - Single source of truth (types derived from Zod)
   - Catches backend typos/changes at network boundary
 
+### TanStack Query (Server State Management)
+
+- Location: `src/lib/query.ts`
+- Purpose: Separate server state from client state (Pinia)
+- Key Configuration:
+  - staleTime: 30s - Data fresh window, uses cache without network calls
+  - gcTime: 5min - Inactive data retention before garbage collection
+  - refetchOnWindowFocus: false - Prevent API flooding from tab switching
+  - retry: 1 - Fail-Fast behavior (default is 3)
+- Integration: VueQueryPlugin registered in main.ts after Pinia and Router
+- Benefits:
+  - Automatic caching and deduplication
+  - Background refetch (SWR pattern)
+  - Loading and error state management
+  - Reduces Pinia boilerplate (no more isLoading, isError)
+
 ## Key Architectural Decisions
 
 - Server State (API data) → TanStack Query only, never Pinia

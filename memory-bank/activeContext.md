@@ -22,6 +22,16 @@
   - Follows defensive programming pattern
   - TypeScript types derived from Zod schemas via z.infer<>
 
+- **TanStack Query Configuration (2026-04-07)**:
+  - Created `src/lib/query.ts` with global QueryClient instance
+  - Configured default staleTime: 30s (data considered fresh)
+  - Configured gcTime: 5min (inactive data garbage collection)
+  - Disabled refetchOnWindowFocus (prevent API flooding)
+  - Set retry: 1 (Fail-Fast behavior)
+  - Enabled refetchOnMount and refetchOnReconnect
+  - Registered VueQueryPlugin in main.ts
+  - Enables Server State vs Client State separation
+
 - **Route path optimization (2026-04-06)**:
   - Login route: `/auth/login` → `/login` (absolute child path)
   - Register route: `/auth/register` → `/register` (absolute child path)
