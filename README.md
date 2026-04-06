@@ -48,7 +48,7 @@ visualization.
 
 ## 📦 Version
 
-Current: `0.4.0-beta.7` (2026-04-06) — Route path optimization (absolute child paths), exception handling infrastructure
+Current: `0.5.0-beta.1` (2026-04-06) — API layer architecture (unified ofetch instance with JWT auth, global error handling, CustomEvent decoupling)
 
 ## 🗺 Project Structure
 
