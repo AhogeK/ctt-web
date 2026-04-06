@@ -2,9 +2,15 @@
 
 ## Current Status
 
-**Phase**: Exception handling infrastructure complete — ready for dashboard implementation
-**Version**: 0.4.0-beta.5 (2026-04-05)
+**Phase**: Route path optimization complete — ready for dashboard implementation
+**Version**: 0.4.0-beta.7 (2026-04-06)
 
+- **Route path optimization (2026-04-06)**:
+  - Login route: `/auth/login` → `/login` (absolute child path)
+  - Register route: `/auth/register` → `/register` (absolute child path)
+  - All tests updated and passing (54 tests)
+  - Build successful (503ms)
+  - Type check passed (0 errors)
 - **Exception handling infrastructure (2026-04-05)**:
   - **404View refactored**: Uses RouteNames.HOME, shadcn-vue Button, professional Chinese copy
   - **ErrorBoundary created**: `src/components/app/ErrorBoundary.vue` with `onErrorCaptured`, retry mechanism, DEV mode error details
@@ -115,6 +121,8 @@ None currently.
 
 | Version | Date | Change |
 |---------|------|--------|
+| 0.4.0-beta.7 | 2026-04-06 | Route path optimization (login/register absolute paths) |
+| 0.4.0-beta.6 | 2026-04-06 | Route path optimization preparation |
 | 0.4.0-beta.5 | 2026-04-05 | Exception handling infrastructure (404View, ErrorBoundary, Toaster, global handlers) |
 | 0.4.0-beta.4 | 2026-04-05 | ErrorBoundary component created |
 | 0.4.0-beta.3 | 2026-04-05 | Route names constants (eliminated magic strings) |
