@@ -48,7 +48,7 @@ visualization.
 
 ## 📦 Version
 
-Current: `0.5.0-beta.1` (2026-04-06) — API layer architecture (unified ofetch instance with JWT auth, global error handling, CustomEvent decoupling)
+Current: `0.5.0-beta.2` (2026-04-07) — Zod Schema runtime validation (API response validation with factory functions) (unified ofetch instance with JWT auth, global error handling, CustomEvent decoupling)
 
 ## 🗺 Project Structure
 
