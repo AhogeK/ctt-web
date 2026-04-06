@@ -10,13 +10,13 @@ const authRoutes: RouteRecordRaw[] = [
     meta: { title: 'Authentication', hideInMenu: true },
     children: [
       {
-        path: 'login',
+        path: '/login',
         name: RouteNames.LOGIN,
         component: () => import('@/features/auth/views/LoginView.vue'),
         meta: { title: 'Login', requiresAuth: false, layout: 'auth' },
       },
       {
-        path: 'register',
+        path: '/register',
         name: RouteNames.REGISTER,
         component: () => import('@/features/auth/views/RegisterView.vue'),
         meta: { title: 'Register', requiresAuth: false, layout: 'auth' },
