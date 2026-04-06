@@ -2,11 +2,13 @@ import './assets/main.css'
 
 import { createApp } from 'vue'
 import { createPinia } from 'pinia'
+import { VueQueryPlugin } from '@tanstack/vue-query'
 
 import App from './App.vue'
 import router from './router'
 import { Toaster } from '@/components/ui/sonner'
 import { UNAUTHORIZED_EVENT } from '@/lib/api/instance'
+import { vueQueryOptions } from '@/lib/query'
 import { useAuthStore } from '@/stores/auth'
 import { RouteNames } from '@/router/route-names'
 
@@ -65,6 +67,7 @@ app.config.errorHandler = handleVueError
 
 app.use(createPinia())
 app.use(router)
+app.use(VueQueryPlugin, vueQueryOptions)
 app.component('Toaster', Toaster)
 
 globalThis.addEventListener('unhandledrejection', handleUnhandledRejection)
