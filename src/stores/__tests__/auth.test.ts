@@ -11,6 +11,8 @@ vi.mock('@/lib/api/auth', () => ({
 
 describe('Auth Store', () => {
   beforeEach(() => {
+    // Clear localStorage to ensure clean state for each test
+    localStorage.clear()
     // Create fresh testing Pinia instance for each test with vi.fn spy
     setActivePinia(
       createTestingPinia({

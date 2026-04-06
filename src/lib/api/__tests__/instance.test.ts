@@ -1,7 +1,6 @@
-import { createTestingPinia } from '@pinia/testing'
-import { setActivePinia } from 'pinia'
 import { describe, it, expect, beforeEach, vi, afterEach } from 'vitest'
-import { useAuthStore } from '@/stores/auth'
+import { toast } from 'vue-sonner'
+import { UNAUTHORIZED_EVENT } from '../instance'
 
 /* eslint-disable @typescript-eslint/no-explicit-any */
 
@@ -10,6 +9,7 @@ const capturedConfig = vi.hoisted(() => ({
   timeout: 0,
   credentials: '',
   onRequest: null as ((context: any) => Promise<void>) | null,
+  onResponseError: null as ((context: any) => Promise<void>) | null,
 }))
 
 const mockFetchInstance = vi.hoisted(() => ({
@@ -24,26 +24,26 @@ vi.mock('ofetch', () => ({
       capturedConfig.timeout = config.timeout
       capturedConfig.credentials = config.credentials
       capturedConfig.onRequest = config.onRequest
+      capturedConfig.onResponseError = config.onResponseError
       return mockFetchInstance
     }),
+  },
+}))
+
+vi.mock('vue-sonner', () => ({
+  toast: {
+    error: vi.fn<() => void>(),
+    success: vi.fn<() => void>(),
+    info: vi.fn<() => void>(),
   },
 }))
 
 vi.stubEnv('VITE_API_BASE_URL', 'https://api.example.com')
 
 describe('API Instance', () => {
-  let authStore: ReturnType<typeof useAuthStore>
-
   beforeEach(() => {
     vi.clearAllMocks()
-
-    setActivePinia(
-      createTestingPinia({
-        createSpy: vi.fn,
-        stubActions: false,
-      }),
-    )
-    authStore = useAuthStore()
+    localStorage.clear()
   })
 
   afterEach(() => {
@@ -85,9 +85,8 @@ describe('API Instance', () => {
   describe('Request Interceptor (onRequest)', () => {
     it('adds Bearer Authorization header when access token exists', async () => {
       vi.resetModules()
+      localStorage.setItem('access_token', 'test-access-token')
       await import('../instance')
-
-      authStore.accessToken = 'test-access-token'
 
       const mockContext = {
         request: new Request('https://api.example.com/test'),
@@ -106,9 +105,8 @@ describe('API Instance', () => {
 
     it('preserves existing headers when adding Authorization', async () => {
       vi.resetModules()
+      localStorage.setItem('access_token', 'token-123')
       await import('../instance')
-
-      authStore.accessToken = 'token-123'
 
       const existingHeaders = new Headers()
       existingHeaders.set('Content-Type', 'application/json')
@@ -133,9 +131,8 @@ describe('API Instance', () => {
 
     it('skips Authorization header when no access token', async () => {
       vi.resetModules()
+      localStorage.removeItem('access_token')
       await import('../instance')
-
-      authStore.accessToken = null
 
       const mockContext = {
         request: new Request('https://api.example.com/test'),
@@ -154,9 +151,8 @@ describe('API Instance', () => {
 
     it('does not modify headers when accessToken is empty string', async () => {
       vi.resetModules()
+      localStorage.setItem('access_token', '')
       await import('../instance')
-
-      authStore.accessToken = ''
 
       const mockContext = {
         request: new Request('https://api.example.com/test'),
@@ -173,11 +169,10 @@ describe('API Instance', () => {
       expect(headers.has('Authorization')).toBe(false)
     })
 
-    it('gets auth store lazily inside interceptor', async () => {
+    it('reads token lazily from localStorage inside interceptor', async () => {
       vi.resetModules()
+      localStorage.removeItem('access_token')
       await import('../instance')
-
-      authStore.accessToken = null
 
       const mockContext1 = {
         request: new Request('https://api.example.com/test1'),
@@ -189,7 +184,7 @@ describe('API Instance', () => {
       }
       expect((mockContext1.options.headers as Headers).has('Authorization')).toBe(false)
 
-      authStore.accessToken = 'new-token'
+      localStorage.setItem('access_token', 'new-token')
 
       const mockContext2 = {
         request: new Request('https://api.example.com/test2'),
@@ -208,9 +203,8 @@ describe('API Instance', () => {
   describe('Error Handling', () => {
     it('interceptor does not throw on successful header modification', async () => {
       vi.resetModules()
+      localStorage.setItem('access_token', 'valid-token')
       await import('../instance')
-
-      authStore.accessToken = 'valid-token'
 
       const mockContext = {
         request: new Request('https://api.example.com/test'),
@@ -226,9 +220,8 @@ describe('API Instance', () => {
 
     it('interceptor handles Headers constructor with various input types', async () => {
       vi.resetModules()
+      localStorage.setItem('access_token', 'token')
       await import('../instance')
-
-      authStore.accessToken = 'token'
 
       const mockContext = {
         request: new Request('https://api.example.com/test'),
@@ -243,6 +236,162 @@ describe('API Instance', () => {
 
       const headers = mockContext.options.headers as Headers
       expect(headers.get('Authorization')).toBe('Bearer token')
+    })
+  })
+
+  describe('Response Error Interceptor (onResponseError)', () => {
+    beforeEach(async () => {
+      vi.resetModules()
+      vi.spyOn(console, 'warn').mockImplementation(vi.fn())
+      vi.spyOn(window, 'dispatchEvent').mockImplementation(vi.fn())
+      vi.spyOn(Storage.prototype, 'removeItem').mockImplementation(vi.fn())
+      await import('../instance')
+    })
+
+    afterEach(() => {
+      vi.restoreAllMocks()
+    })
+
+    it('should handle 401 by clearing token and dispatching event', async () => {
+      const mockResponse = {
+        status: 401,
+        _data: { message: 'Unauthorized' },
+        url: 'https://api.example.com/test',
+      }
+      const mockContext = { response: mockResponse }
+
+      if (capturedConfig.onResponseError) {
+        await capturedConfig.onResponseError(mockContext)
+      }
+
+      expect(Storage.prototype.removeItem).toHaveBeenCalledWith('access_token')
+      expect(window.dispatchEvent).toHaveBeenCalled()
+      const dispatchedEvent = (window.dispatchEvent as ReturnType<typeof vi.fn>).mock
+        .calls[0]![0] as CustomEvent
+      expect(dispatchedEvent.type).toBe(UNAUTHORIZED_EVENT)
+      expect(toast.error).toHaveBeenCalledWith('Authentication expired. Please log in again.')
+    })
+
+    it('should handle 403 by showing permission denied toast', async () => {
+      const mockResponse = {
+        status: 403,
+        _data: { message: 'Forbidden' },
+        url: 'https://api.example.com/test',
+      }
+      const mockContext = { response: mockResponse }
+
+      if (capturedConfig.onResponseError) {
+        await capturedConfig.onResponseError(mockContext)
+      }
+
+      expect(toast.error).toHaveBeenCalledWith(
+        'Permission denied. You do not have access to this resource.',
+      )
+      expect(Storage.prototype.removeItem).not.toHaveBeenCalled()
+      expect(window.dispatchEvent).not.toHaveBeenCalled()
+    })
+
+    it('should handle 404 by logging console warning', async () => {
+      const mockResponse = {
+        status: 404,
+        _data: { message: 'Not Found', path: '/api/users/999' },
+        url: 'https://api.example.com/test',
+      }
+      const mockContext = { response: mockResponse }
+
+      if (capturedConfig.onResponseError) {
+        await capturedConfig.onResponseError(mockContext)
+      }
+
+      expect(console.warn).toHaveBeenCalledWith('Resource not found:', mockResponse._data)
+      expect(toast.error).not.toHaveBeenCalled()
+      expect(Storage.prototype.removeItem).not.toHaveBeenCalled()
+      expect(window.dispatchEvent).not.toHaveBeenCalled()
+    })
+
+    it('should skip handling for 422 Unprocessable Entity', async () => {
+      const mockResponse = {
+        status: 422,
+        _data: { errors: { email: 'Invalid email format' } },
+        url: 'https://api.example.com/test',
+      }
+      const mockContext = { response: mockResponse }
+
+      if (capturedConfig.onResponseError) {
+        await capturedConfig.onResponseError(mockContext)
+      }
+
+      expect(toast.error).not.toHaveBeenCalled()
+      expect(Storage.prototype.removeItem).not.toHaveBeenCalled()
+      expect(window.dispatchEvent).not.toHaveBeenCalled()
+      expect(console.warn).not.toHaveBeenCalled()
+    })
+
+    it('should handle 500+ server errors by showing toast', async () => {
+      const mockResponse = {
+        status: 500,
+        _data: { message: 'Internal Server Error' },
+        url: 'https://api.example.com/test',
+      }
+      const mockContext = { response: mockResponse }
+
+      if (capturedConfig.onResponseError) {
+        await capturedConfig.onResponseError(mockContext)
+      }
+
+      expect(toast.error).toHaveBeenCalledWith('Server error. Please try again later.')
+      expect(Storage.prototype.removeItem).not.toHaveBeenCalled()
+      expect(window.dispatchEvent).not.toHaveBeenCalled()
+    })
+
+    it('should handle 503 Service Unavailable', async () => {
+      const mockResponse = {
+        status: 503,
+        _data: { message: 'Service Unavailable' },
+        url: 'https://api.example.com/test',
+      }
+      const mockContext = { response: mockResponse }
+
+      if (capturedConfig.onResponseError) {
+        await capturedConfig.onResponseError(mockContext)
+      }
+
+      expect(toast.error).toHaveBeenCalledWith('Server error. Please try again later.')
+      expect(Storage.prototype.removeItem).not.toHaveBeenCalled()
+    })
+
+    it('should not show toast for other 4xx errors (handled by default case)', async () => {
+      const mockResponse = {
+        status: 400,
+        _data: { message: 'Bad Request' },
+        url: 'https://api.example.com/test',
+      }
+      const mockContext = { response: mockResponse }
+
+      if (capturedConfig.onResponseError) {
+        await capturedConfig.onResponseError(mockContext)
+      }
+
+      expect(toast.error).not.toHaveBeenCalled()
+      expect(Storage.prototype.removeItem).not.toHaveBeenCalled()
+      expect(window.dispatchEvent).not.toHaveBeenCalled()
+    })
+
+    it('should handle 401 with custom event details', async () => {
+      const mockResponse = {
+        status: 401,
+        _data: { message: 'Token expired', expiredAt: '2024-01-01' },
+        url: 'https://api.example.com/test',
+      }
+      const mockContext = { response: mockResponse }
+
+      if (capturedConfig.onResponseError) {
+        await capturedConfig.onResponseError(mockContext)
+      }
+
+      expect(window.dispatchEvent).toHaveBeenCalledTimes(1)
+      const event = (window.dispatchEvent as ReturnType<typeof vi.fn>).mock.calls[0]![0]
+      expect(event instanceof CustomEvent).toBe(true)
     })
   })
 })
