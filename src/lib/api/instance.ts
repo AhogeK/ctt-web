@@ -1,5 +1,5 @@
 import { ofetch, type FetchOptions } from 'ofetch'
-import { useAuthStore } from '@/stores/auth'
+import { toast } from 'vue-sonner'
 
 /**
  * Base API URL from environment variable, fallback to '/api' for proxy setup.
@@ -8,16 +8,31 @@ import { useAuthStore } from '@/stores/auth'
 const BASE_URL = import.meta.env.VITE_API_BASE_URL || '/api'
 
 /**
+ * Custom event name dispatched when a 401 Unauthorized response is received.
+ * Allows external listeners (e.g., main.ts) to handle authentication failures
+ * without direct coupling to this module.
+ *
+ * Usage:
+ * ```ts
+ * globalThis.addEventListener(UNAUTHORIZED_EVENT, () => {
+ *   // Handle unauthorized (e.g., redirect to login)
+ * })
+ * ```
+ */
+export const UNAUTHORIZED_EVENT = 'api:unauthorized'
+
+/**
  * Centralized ofetch instance for all API requests.
  *
  * Configuration:
  * - Base URL: Environment-configured API endpoint
  * - Timeout: 30 seconds to prevent hanging requests
  * - Credentials: 'include' for CORS cookie handling
- * - Request interceptor: Auto-injects Authorization header when token exists
+ * - Request interceptor: Auto-injects Authorization header from localStorage
+ * - Response error interceptor: Global error handling with toast notifications
  *
- * Note: Auth store is accessed lazily inside interceptor to avoid
- * Pinia initialization timing issues (store must be created after Pinia setup).
+ * Note: Token is read from localStorage to avoid circular dependency with Pinia store.
+ * Auth store persists token to localStorage, and this module reads it directly.
  */
 export const apiFetch = ofetch.create({
   baseURL: BASE_URL,
@@ -26,17 +41,56 @@ export const apiFetch = ofetch.create({
 
   /**
    * Request interceptor that injects Authorization header for authenticated requests.
-   * Gets auth store lazily to avoid Pinia initialization timing issues.
+   * Reads token directly from localStorage to avoid circular dependency with auth store.
    */
   async onRequest({ options }) {
-    // Get store lazily - Pinia must be initialized before store access
-    const authStore = useAuthStore()
+    const accessToken = localStorage.getItem('access_token')
 
-    // Only add Authorization header if access token exists
-    if (authStore.accessToken) {
+    if (accessToken) {
       const headers = new Headers(options.headers)
-      headers.set('Authorization', `Bearer ${authStore.accessToken}`)
+      headers.set('Authorization', `Bearer ${accessToken}`)
       options.headers = headers
+    }
+  },
+
+  /**
+   * Response error interceptor for global error handling.
+   *
+   * Error handling strategy:
+   * - 401: Clear token, show toast, dispatch UNAUTHORIZED_EVENT for external handling
+   * - 403: Show permission denied toast
+   * - 404: Console warning only (let components handle missing resources)
+   * - 422: Skip handling (let form validation components handle validation errors)
+   * - 500+: Show server error toast
+   *
+   * @param response - The HTTP error response
+   */
+  async onResponseError({ response }) {
+    const status = response.status
+
+    switch (status) {
+      case 401:
+        localStorage.removeItem('access_token')
+        toast.error('Authentication expired. Please log in again.')
+        globalThis.dispatchEvent(new CustomEvent(UNAUTHORIZED_EVENT))
+        break
+
+      case 403:
+        toast.error('Permission denied. You do not have access to this resource.')
+        break
+
+      case 404:
+        console.warn('Resource not found:', response._data)
+        break
+
+      case 422:
+        break
+
+      default:
+        if (status >= 500) {
+          toast.error('Server error. Please try again later.')
+        }
+        break
     }
   },
 })
