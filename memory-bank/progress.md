@@ -34,6 +34,7 @@
 - [x] Lazy loading (TanStack Query integration, route-level code splitting)
 - [x] Chunk optimization (feature-based manual chunks: auth, dashboard, settings)
 - [x] Error handling (ErrorBoundary component with retry mechanism)
+- [x] API layer architecture (unified ofetch instance, JWT auth interceptor, global error handling, CustomEvent decoupling)
 
 ## In Progress
 

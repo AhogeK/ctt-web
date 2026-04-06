@@ -2,8 +2,16 @@
 
 ## Current Status
 
-**Phase**: Route path optimization complete — ready for dashboard implementation
-**Version**: 0.4.0-beta.7 (2026-04-06)
+**Phase**: API layer architecture complete — ready for dashboard implementation
+**Version**: 0.5.0-beta.1 (2026-04-06)
+
+- **API layer architecture (2026-04-06)**:
+  - **`src/lib/api/instance.ts` refactored**: Added `onResponseError` interceptor with global error handling (401/403/500), CustomEvent decoupling, localStorage token retrieval
+  - **`src/stores/auth.ts` updated**: Added localStorage persistence with `STORAGE_KEYS` constants, token restoration on initialization
+  - **`src/main.ts` updated**: Added 401 event listener that clears auth state and redirects to login with redirect query param
+  - **`.env` created**: Added `VITE_API_BASE_URL` configuration
+  - **Architecture pattern**: API 401 → CustomEvent → main.ts listener → authStore.clearAuth() + router redirect
+  - All verification passed: type-check (0 errors), lint (0 warnings), format clean
 
 - **Route path optimization (2026-04-06)**:
   - Login route: `/auth/login` → `/login` (absolute child path)

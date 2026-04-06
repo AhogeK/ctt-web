@@ -38,6 +38,14 @@
 - GitHub OAuth: supported via ctt-server OAuth flow
 - Device API keys: managed in devices section (for plugin pairing display)
 
+## API Layer Architecture
+
+- **HTTP Client**: `ofetch` instance in `src/lib/api/instance.ts`
+- **Token Injection**: Request interceptor reads from localStorage, injects `Authorization: Bearer <token>`
+- **Error Handling**: Global `onResponseError` interceptor handles 401/403/500 with toast notifications
+- **Decoupling**: CustomEvent (`api:unauthorized`) dispatched on 401, listened in `main.ts` for auth cleanup + redirect
+- **Token Persistence**: localStorage with `ctt_` prefix keys (`ctt_access_token`, `ctt_refresh_token`, `ctt_user_id`)
+
 ## Key Architectural Decisions
 
 - Server State (API data) → TanStack Query only, never Pinia
