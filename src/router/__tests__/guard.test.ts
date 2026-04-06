@@ -35,13 +35,13 @@ describe('Router Guards', () => {
       meta: { title: 'Dashboard', requiresAuth: true },
     },
     {
-      path: '/auth/login',
+      path: '/login',
       name: RouteNames.LOGIN,
       component: { template: '<div>Login</div>' },
       meta: { title: 'Login', requiresAuth: false },
     },
     {
-      path: '/auth/register',
+      path: '/register',
       name: RouteNames.REGISTER,
       component: { template: '<div>Register</div>' },
       meta: { title: 'Register', requiresAuth: false },
@@ -190,7 +190,7 @@ describe('Router Guards', () => {
     it('allows unauthenticated user to access Login page', async () => {
       localStorage.removeItem('token')
 
-      await router.push('/auth/login')
+      await router.push('/login')
       await router.isReady()
 
       expect(router.currentRoute.value.name).toBe(RouteNames.LOGIN)
@@ -199,7 +199,7 @@ describe('Router Guards', () => {
     it('allows unauthenticated user to access Register page', async () => {
       localStorage.removeItem('token')
 
-      await router.push('/auth/register')
+      await router.push('/register')
       await router.isReady()
 
       expect(router.currentRoute.value.name).toBe(RouteNames.REGISTER)
