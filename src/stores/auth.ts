@@ -4,6 +4,16 @@ import { login as loginApi } from '@/lib/api/auth'
 import type { LoginRequest, LoginResponse } from '@/lib/schemas/auth.schema'
 
 /**
+ * localStorage key constants for auth token persistence.
+ * Exported for use by API instance to avoid circular dependency with this store.
+ */
+export const STORAGE_KEYS = {
+  ACCESS_TOKEN: 'ctt_access_token',
+  REFRESH_TOKEN: 'ctt_refresh_token',
+  USER_ID: 'ctt_user_id',
+} as const
+
+/**
  * Authentication store for managing JWT tokens and user session state.
  *
  * Responsibilities:
@@ -11,6 +21,8 @@ import type { LoginRequest, LoginResponse } from '@/lib/schemas/auth.schema'
  * - Track authentication status via token presence
  * - Provide token access for API request interceptor
  * - Handle logout by clearing all auth state
+ * - Persist tokens to localStorage for cross-session persistence
+ * - Restore tokens from localStorage on store initialization
  */
 export const useAuthStore = defineStore('auth', () => {
   // Access token for API authentication, null when not logged in
@@ -25,6 +37,21 @@ export const useAuthStore = defineStore('auth', () => {
   // Token expiration timestamp in milliseconds
   const tokenExpiry = ref<number | null>(null)
 
+  // Restore tokens from localStorage on store initialization
+  const storedAccessToken = localStorage.getItem(STORAGE_KEYS.ACCESS_TOKEN)
+  const storedRefreshToken = localStorage.getItem(STORAGE_KEYS.REFRESH_TOKEN)
+  const storedUserId = localStorage.getItem(STORAGE_KEYS.USER_ID)
+
+  if (storedAccessToken) {
+    accessToken.value = storedAccessToken
+  }
+  if (storedRefreshToken) {
+    refreshToken.value = storedRefreshToken
+  }
+  if (storedUserId) {
+    userId.value = storedUserId
+  }
+
   /**
    * Computed property indicating whether user has valid authentication.
    * True when access token exists and hasn't expired.
@@ -37,6 +64,7 @@ export const useAuthStore = defineStore('auth', () => {
 
   /**
    * Stores authentication data from successful login response.
+   * Persists tokens to localStorage for cross-session persistence.
    * Calculates expiry timestamp from expiresIn seconds.
    */
   function setAuth(response: LoginResponse): void {
@@ -45,10 +73,15 @@ export const useAuthStore = defineStore('auth', () => {
     userId.value = response.userId
     // Convert expiresIn (seconds) to absolute timestamp (milliseconds)
     tokenExpiry.value = Date.now() + response.expiresIn * 1000
+
+    localStorage.setItem(STORAGE_KEYS.ACCESS_TOKEN, response.accessToken)
+    localStorage.setItem(STORAGE_KEYS.REFRESH_TOKEN, response.refreshToken)
+    localStorage.setItem(STORAGE_KEYS.USER_ID, response.userId)
   }
 
   /**
    * Clears all authentication state on logout or token invalidation.
+   * Removes persisted tokens from localStorage.
    * Resets all refs to null, effectively ending the session.
    */
   function clearAuth(): void {
@@ -56,6 +89,10 @@ export const useAuthStore = defineStore('auth', () => {
     refreshToken.value = null
     userId.value = null
     tokenExpiry.value = null
+
+    localStorage.removeItem(STORAGE_KEYS.ACCESS_TOKEN)
+    localStorage.removeItem(STORAGE_KEYS.REFRESH_TOKEN)
+    localStorage.removeItem(STORAGE_KEYS.USER_ID)
   }
 
   /**

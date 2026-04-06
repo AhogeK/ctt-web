@@ -6,6 +6,9 @@ import { createPinia } from 'pinia'
 import App from './App.vue'
 import router from './router'
 import { Toaster } from '@/components/ui/sonner'
+import { UNAUTHORIZED_EVENT } from '@/lib/api/instance'
+import { useAuthStore } from '@/stores/auth'
+import { RouteNames } from '@/router/route-names'
 
 /**
  * Global error handler for Vue component errors.
@@ -37,6 +40,25 @@ function handleUnhandledRejection(event: PromiseRejectionEvent): void {
   event.preventDefault()
 }
 
+/**
+ * Global handler for API 401 unauthorized events.
+ * Catches custom events dispatched by API instance when it receives 401 responses.
+ * Clears authentication state and redirects to login page with current path as redirect target.
+ *
+ * @param _event - The CustomEvent dispatched by API instance (no detail payload)
+ */
+function handleUnauthorized(_event: Event): void {
+  const authStore = useAuthStore()
+  authStore.clearAuth()
+
+  // Redirect to login with current path for post-login redirect
+  const currentPath = router.currentRoute.value.fullPath
+  void router.push({
+    name: RouteNames.LOGIN,
+    query: { redirect: currentPath },
+  })
+}
+
 const app = createApp(App)
 
 app.config.errorHandler = handleVueError
@@ -45,6 +67,7 @@ app.use(createPinia())
 app.use(router)
 app.component('Toaster', Toaster)
 
-window.addEventListener('unhandledrejection', handleUnhandledRejection)
+globalThis.addEventListener('unhandledrejection', handleUnhandledRejection)
+globalThis.addEventListener(UNAUTHORIZED_EVENT, handleUnauthorized)
 
 app.mount('#app')
