@@ -13,6 +13,15 @@
   - **Architecture pattern**: API 401 → CustomEvent → main.ts listener → authStore.clearAuth() + router redirect
   - All verification passed: type-check (0 errors), lint (0 warnings), format clean
 
+- **Zod Schema Architecture (2026-04-07)**:
+  - Created `src/lib/schemas/api.schema.ts` with common API response schemas
+  - `ApiErrorSchema` - Standard error response matching instance.ts interceptor
+  - `createApiResponseSchema<T>` - Factory for wrapped responses ({ code, message, data })
+  - `createPagedResponseSchema<T>` - Factory for paginated responses (items, total, page, pageSize)
+  - Enables runtime validation + end-to-end type safety
+  - Follows defensive programming pattern
+  - TypeScript types derived from Zod schemas via z.infer<>
+
 - **Route path optimization (2026-04-06)**:
   - Login route: `/auth/login` → `/login` (absolute child path)
   - Register route: `/auth/register` → `/register` (absolute child path)

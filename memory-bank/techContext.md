@@ -46,6 +46,18 @@
 - **Decoupling**: CustomEvent (`api:unauthorized`) dispatched on 401, listened in `main.ts` for auth cleanup + redirect
 - **Token Persistence**: localStorage with `ctt_` prefix keys (`ctt_access_token`, `ctt_refresh_token`, `ctt_user_id`)
 
+### Zod Runtime Validation
+
+- Location: `src/lib/schemas/api.schema.ts`
+- Purpose: Runtime validation of API responses to prevent undefined/null errors
+- Pattern: Factory functions for generic response wrappers
+- Integration: Use `.parse()` method in API layer before returning to components
+- Benefits:
+  - Fail-fast on backend schema changes
+  - Clear error messages for debugging
+  - Single source of truth (types derived from Zod)
+  - Catches backend typos/changes at network boundary
+
 ## Key Architectural Decisions
 
 - Server State (API data) → TanStack Query only, never Pinia
