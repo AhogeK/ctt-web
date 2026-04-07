@@ -32,6 +32,24 @@
   - Registered VueQueryPlugin in main.ts
   - Enables Server State vs Client State separation
 
+- **Pinia Store Initialization (2026-04-07)**:
+  - Created `src/stores/theme.ts` for theme management (dark/light/auto)
+  - Refactored `src/stores/auth.ts` with VueUse `useStorage` for automatic persistence
+  - Auth Store: JWT token + userId persistence with expiry tracking
+  - Theme Store: Dark mode with system preference detection
+  - Uses VueUse utilities: `useStorage`, `useDark` for cross-tab synchronization
+  - isAuthenticated computed property for reactive auth state
+
+- **Token Refresh Implementation (2026-04-07)**:
+  - Added `refresh()` API function in `src/lib/api/auth.ts`
+  - Added `refreshAccessToken()` in `src/stores/auth.ts` with Promise deduping
+  - Solves Thundering Herd problem: concurrent 401s → single refresh request
+  - Promise lock pattern: `activeRefreshPromise` module-scoped variable
+  - All concurrent callers share same promise, preventing refresh storm
+  - Fail-fast security: clear auth state on any refresh failure
+  - Fallback logic: keeps existing refresh token if response lacks new one
+  - Comprehensive test coverage: 7 test cases covering all edge cases
+
 - **Route path optimization (2026-04-06)**:
   - Login route: `/auth/login` → `/login` (absolute child path)
   - Register route: `/auth/register` → `/register` (absolute child path)

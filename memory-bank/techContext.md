@@ -74,6 +74,22 @@
   - Loading and error state management
   - Reduces Pinia boilerplate (no more isLoading, isError)
 
+### Pinia State Management
+
+- Location: `src/stores/`
+- Stores:
+  - `auth.ts` - Authentication state (JWT tokens, userId, expiry)
+  - `theme.ts` - Theme preference (dark/light/auto with system detection)
+  - `counter.ts` - Example store (reference only)
+- VueUse Integration:
+  - `useStorage` - Automatic localStorage sync with reactivity
+  - `useDark` - System preference detection and DOM class sync
+- Benefits:
+  - Cross-tab synchronization via storage events
+  - Automatic persistence without manual localStorage calls
+  - Type-safe state management
+  - Computed properties for derived state (isAuthenticated)
+
 ## Key Architectural Decisions
 
 - Server State (API data) → TanStack Query only, never Pinia
