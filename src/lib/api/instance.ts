@@ -44,7 +44,7 @@ export const apiFetch = ofetch.create({
    * Reads token directly from localStorage to avoid circular dependency with auth store.
    */
   async onRequest({ options }) {
-    const accessToken = localStorage.getItem('access_token')
+    const accessToken = localStorage.getItem('ctt_access_token')
 
     if (accessToken) {
       const headers = new Headers(options.headers)
@@ -70,7 +70,7 @@ export const apiFetch = ofetch.create({
 
     switch (status) {
       case 401:
-        localStorage.removeItem('access_token')
+        localStorage.removeItem('ctt_access_token')
         toast.error('Authentication expired. Please log in again.')
         globalThis.dispatchEvent(new CustomEvent(UNAUTHORIZED_EVENT))
         break
