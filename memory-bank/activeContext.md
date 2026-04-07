@@ -49,7 +49,17 @@
   - Fail-fast security: clear auth state on any refresh failure
   - Fallback logic: keeps existing refresh token if response lacks new one
   - Comprehensive test coverage: 7 test cases covering all edge cases
+
+- **Code Cleanup: Removed scaffold demo store (2026-04-07)**:
+  - Deleted `src/stores/counter.ts` (12 lines)
+  - No imports of counter store in codebase
+  - Project uses auth and theme stores for business logic
   - Comprehensive test coverage: 7 test cases covering all edge cases
+
+- **Code Cleanup: Removed scaffold demo store (2026-04-07)**:
+  - Deleted `src/stores/counter.ts` (12 lines)
+  - No imports of counter store in codebase
+  - Project uses auth and theme stores for business logic
 
 - **Critical Bug Fix: localStorage key mismatch (2026-04-07)**:
   - Fixed `src/lib/api/instance.ts` localStorage key from 'access_token' to 'ctt_access_token'
