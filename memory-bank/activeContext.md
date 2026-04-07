@@ -49,6 +49,13 @@
   - Fail-fast security: clear auth state on any refresh failure
   - Fallback logic: keeps existing refresh token if response lacks new one
   - Comprehensive test coverage: 7 test cases covering all edge cases
+  - Comprehensive test coverage: 7 test cases covering all edge cases
+
+- **Critical Bug Fix: localStorage key mismatch (2026-04-07)**:
+  - Fixed `src/lib/api/instance.ts` localStorage key from 'access_token' to 'ctt_access_token'
+  - Fixes critical bug: all authenticated requests were missing Authorization header
+  - Affects onRequest interceptor (line 47) and 401 error handler (line 73)
+  - Aligns with STORAGE_KEYS.ACCESS_TOKEN from auth.ts
 
 - **Route path optimization (2026-04-06)**:
   - Login route: `/auth/login` → `/login` (absolute child path)
