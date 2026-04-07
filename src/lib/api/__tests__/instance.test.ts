@@ -85,7 +85,7 @@ describe('API Instance', () => {
   describe('Request Interceptor (onRequest)', () => {
     it('adds Bearer Authorization header when access token exists', async () => {
       vi.resetModules()
-      localStorage.setItem('access_token', 'test-access-token')
+      localStorage.setItem('ctt_access_token', 'test-access-token')
       await import('../instance')
 
       const mockContext = {
@@ -105,7 +105,7 @@ describe('API Instance', () => {
 
     it('preserves existing headers when adding Authorization', async () => {
       vi.resetModules()
-      localStorage.setItem('access_token', 'token-123')
+      localStorage.setItem('ctt_access_token', 'token-123')
       await import('../instance')
 
       const existingHeaders = new Headers()
@@ -131,7 +131,7 @@ describe('API Instance', () => {
 
     it('skips Authorization header when no access token', async () => {
       vi.resetModules()
-      localStorage.removeItem('access_token')
+      localStorage.removeItem('ctt_access_token')
       await import('../instance')
 
       const mockContext = {
@@ -151,7 +151,7 @@ describe('API Instance', () => {
 
     it('does not modify headers when accessToken is empty string', async () => {
       vi.resetModules()
-      localStorage.setItem('access_token', '')
+      localStorage.setItem('ctt_access_token', '')
       await import('../instance')
 
       const mockContext = {
@@ -171,7 +171,7 @@ describe('API Instance', () => {
 
     it('reads token lazily from localStorage inside interceptor', async () => {
       vi.resetModules()
-      localStorage.removeItem('access_token')
+      localStorage.removeItem('ctt_access_token')
       await import('../instance')
 
       const mockContext1 = {
@@ -184,7 +184,7 @@ describe('API Instance', () => {
       }
       expect((mockContext1.options.headers as Headers).has('Authorization')).toBe(false)
 
-      localStorage.setItem('access_token', 'new-token')
+      localStorage.setItem('ctt_access_token', 'new-token')
 
       const mockContext2 = {
         request: new Request('https://api.example.com/test2'),
@@ -203,7 +203,7 @@ describe('API Instance', () => {
   describe('Error Handling', () => {
     it('interceptor does not throw on successful header modification', async () => {
       vi.resetModules()
-      localStorage.setItem('access_token', 'valid-token')
+      localStorage.setItem('ctt_access_token', 'valid-token')
       await import('../instance')
 
       const mockContext = {
@@ -220,7 +220,7 @@ describe('API Instance', () => {
 
     it('interceptor handles Headers constructor with various input types', async () => {
       vi.resetModules()
-      localStorage.setItem('access_token', 'token')
+      localStorage.setItem('ctt_access_token', 'token')
       await import('../instance')
 
       const mockContext = {
@@ -264,7 +264,7 @@ describe('API Instance', () => {
         await capturedConfig.onResponseError(mockContext)
       }
 
-      expect(Storage.prototype.removeItem).toHaveBeenCalledWith('access_token')
+      expect(Storage.prototype.removeItem).toHaveBeenCalledWith('ctt_access_token')
       expect(window.dispatchEvent).toHaveBeenCalled()
       const dispatchedEvent = (window.dispatchEvent as ReturnType<typeof vi.fn>).mock
         .calls[0]![0] as CustomEvent
