@@ -1,7 +1,11 @@
 import { ref, computed } from 'vue'
 import { defineStore } from 'pinia'
-import { login as loginApi } from '@/lib/api/auth'
+import { useStorage } from '@vueuse/core'
+import { login as loginApi, refresh as refreshApi } from '@/lib/api/auth'
 import type { LoginRequest, LoginResponse } from '@/lib/schemas/auth.schema'
+
+// Promise lock to prevent concurrent refresh requests (Thundering Herd)
+let activeRefreshPromise: Promise<string> | null = null
 
 /**
  * localStorage key constants for auth token persistence.
@@ -21,50 +25,28 @@ export const STORAGE_KEYS = {
  * - Track authentication status via token presence
  * - Provide token access for API request interceptor
  * - Handle logout by clearing all auth state
- * - Persist tokens to localStorage for cross-session persistence
- * - Restore tokens from localStorage on store initialization
+ * - Persist tokens to localStorage automatically via useStorage
  */
 export const useAuthStore = defineStore('auth', () => {
-  // Access token for API authentication, null when not logged in
-  const accessToken = ref<string | null>(null)
+  // 1. Reactive persistent storage with useStorage (auto-syncs with localStorage)
+  const accessToken = useStorage<string | null>(STORAGE_KEYS.ACCESS_TOKEN, null)
+  const refreshToken = useStorage<string | null>(STORAGE_KEYS.REFRESH_TOKEN, null)
+  const userId = useStorage<string | null>(STORAGE_KEYS.USER_ID, null)
 
-  // Refresh token for token renewal flow
-  const refreshToken = ref<string | null>(null)
-
-  // User ID from login response
-  const userId = ref<string | null>(null)
-
-  // Token expiration timestamp in milliseconds
+  // 2. Token expiry (not persisted, calculated on login)
   const tokenExpiry = ref<number | null>(null)
 
-  // Restore tokens from localStorage on store initialization
-  const storedAccessToken = localStorage.getItem(STORAGE_KEYS.ACCESS_TOKEN)
-  const storedRefreshToken = localStorage.getItem(STORAGE_KEYS.REFRESH_TOKEN)
-  const storedUserId = localStorage.getItem(STORAGE_KEYS.USER_ID)
-
-  if (storedAccessToken) {
-    accessToken.value = storedAccessToken
-  }
-  if (storedRefreshToken) {
-    refreshToken.value = storedRefreshToken
-  }
-  if (storedUserId) {
-    userId.value = storedUserId
-  }
-
-  /**
-   * Computed property indicating whether user has valid authentication.
-   * True when access token exists and hasn't expired.
-   */
+  // 3. Computed: authentication status
   const isAuthenticated = computed(() => {
     if (!accessToken.value) return false
     if (!tokenExpiry.value) return true // No expiry info means assume valid
     return Date.now() < tokenExpiry.value
   })
 
+  // 4. Actions
   /**
    * Stores authentication data from successful login response.
-   * Persists tokens to localStorage for cross-session persistence.
+   * useStorage automatically persists tokens to localStorage.
    * Calculates expiry timestamp from expiresIn seconds.
    */
   function setAuth(response: LoginResponse): void {
@@ -73,15 +55,11 @@ export const useAuthStore = defineStore('auth', () => {
     userId.value = response.userId
     // Convert expiresIn (seconds) to absolute timestamp (milliseconds)
     tokenExpiry.value = Date.now() + response.expiresIn * 1000
-
-    localStorage.setItem(STORAGE_KEYS.ACCESS_TOKEN, response.accessToken)
-    localStorage.setItem(STORAGE_KEYS.REFRESH_TOKEN, response.refreshToken)
-    localStorage.setItem(STORAGE_KEYS.USER_ID, response.userId)
   }
 
   /**
    * Clears all authentication state on logout or token invalidation.
-   * Removes persisted tokens from localStorage.
+   * Setting useStorage refs to null automatically removes from localStorage.
    * Resets all refs to null, effectively ending the session.
    */
   function clearAuth(): void {
@@ -89,10 +67,6 @@ export const useAuthStore = defineStore('auth', () => {
     refreshToken.value = null
     userId.value = null
     tokenExpiry.value = null
-
-    localStorage.removeItem(STORAGE_KEYS.ACCESS_TOKEN)
-    localStorage.removeItem(STORAGE_KEYS.REFRESH_TOKEN)
-    localStorage.removeItem(STORAGE_KEYS.USER_ID)
   }
 
   /**
@@ -105,6 +79,57 @@ export const useAuthStore = defineStore('auth', () => {
     return response
   }
 
+  /**
+   * Refreshes access token using refresh token with concurrency control.
+   *
+   * Uses Promise deduping pattern to prevent multiple concurrent refresh requests
+   * when multiple 401 responses occur simultaneously (Thundering Herd problem).
+   *
+   * Example: If 3 API calls fail with 401 at the same time, only 1 refresh request
+   * is sent to the server. All 3 callers wait for the same promise and receive
+   * the same new access token.
+   *
+   * @returns Promise resolving to the new access token
+   * @throws Error if no refresh token available or refresh API fails
+   */
+  async function refreshAccessToken(): Promise<string> {
+    // Guard 1: No refresh token available, clear auth state
+    if (!refreshToken.value) {
+      clearAuth()
+      throw new Error('No refresh token available')
+    }
+
+    // Guard 2: If refresh is already in progress, wait for it to complete
+    // This prevents concurrent refresh requests (Thundering Herd)
+    if (activeRefreshPromise) {
+      return activeRefreshPromise
+    }
+
+    // Create the refresh promise and store it as a lock
+    activeRefreshPromise = (async () => {
+      try {
+        // Safe to capture here because activeRefreshPromise lock prevents concurrent modifications
+        const currentRefreshToken = refreshToken.value!
+        const response = await refreshApi({ refreshToken: currentRefreshToken })
+
+        accessToken.value = response.accessToken
+        refreshToken.value = response.refreshToken || currentRefreshToken
+
+        return response.accessToken
+      } catch (error) {
+        // Refresh failed (token expired, blacklisted, or network error)
+        // Security: Fail fast and force re-login rather than retrying
+        clearAuth()
+        throw error
+      } finally {
+        // Always release the lock after request completes
+        activeRefreshPromise = null
+      }
+    })()
+
+    return activeRefreshPromise
+  }
+
   return {
     accessToken,
     refreshToken,
@@ -114,5 +139,6 @@ export const useAuthStore = defineStore('auth', () => {
     setAuth,
     clearAuth,
     login,
+    refreshAccessToken,
   }
 })
