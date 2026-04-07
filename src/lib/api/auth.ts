@@ -42,3 +42,22 @@ export async function logout(refreshToken: string): Promise<void> {
     body: { refreshToken },
   })
 }
+
+/**
+ * Refreshes access token using refresh token.
+ *
+ * Endpoint: POST /api/v1/auth/refresh
+ *
+ * @param refreshToken - The refresh token to exchange for new access token
+ * @returns Parsed response with new accessToken and optionally new refreshToken
+ * @throws Zod validation error if response doesn't match expected schema
+ */
+export async function refresh(params: { refreshToken: string }): Promise<LoginResponse> {
+  const response = await apiFetch<LoginResponse>('/api/v1/auth/refresh', {
+    method: 'POST',
+    body: params,
+  })
+
+  // Validate response structure to ensure type safety
+  return LoginResponseSchema.parse(response)
+}
