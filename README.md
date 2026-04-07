@@ -19,7 +19,7 @@ visualization.
 | Build          | Vite 8 (Rolldown engine)                                    |
 | Routing        | Vue Router 5 (feature-based routing, type-safe meta)        |
 | Server State   | TanStack Query v5                                           |
-| Global State   | Pinia 3 (auth store with JWT token management)              |
+| Global State   | Pinia 3 (auth + theme stores with VueUse persistence)       |
 | UI             | Radix Vue + shadcn-vue + Tailwind CSS v4                    |
 | Charts         | Apache ECharts + vue-echarts                                |
 | HTTP           | ofetch                                                      |
@@ -45,11 +45,12 @@ visualization.
 | Lazy Loading            | Route-level code splitting, dynamic imports                                                          |
 | Chunk Optimization      | Feature-based manual chunks (auth, dashboard, settings)                                              |
 | **Exception Handling**  | Hierarchical ErrorBoundary (App.vue → AppLayout.vue), global handlers, 404View, Sonner toast         |
+| Token Refresh           | JWT refresh with concurrency control, Promise deduping, Thundering Herd prevention                   |
 | Server State Management | TanStack Query v5 with 30s staleTime, SWR pattern, automatic caching                                 |
 
 ## 📦 Version
 
-Current: `0.5.0-beta.2` (2026-04-07) — Zod Schema runtime validation (API response validation with factory functions) (unified ofetch instance with JWT auth, global error handling, CustomEvent decoupling)
+Current: `0.5.0-beta.3` (2026-04-07) — Token refresh with Promise deduping (Thundering Herd prevention)
 
 ## 🗺 Project Structure
 
