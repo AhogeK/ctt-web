@@ -50,11 +50,25 @@
   - Fallback logic: keeps existing refresh token if response lacks new one
   - Comprehensive test coverage: 7 test cases covering all edge cases
 
+- **Test Infrastructure Setup (2026-04-07)**:
+  - Configured Vitest + @testing-library/vue + jest-dom
+  - Created src/test/setup.ts with auto-cleanup and browser API mocks
+  - Updated vitest.config.ts with globals: true and setupFiles
+  - Mocked matchMedia and ResizeObserver for Radix UI / Shadcn support
+  - Added proper type parameters to all vi.fn() calls
+
 - **Code Cleanup: Removed scaffold demo store (2026-04-07)**:
   - Deleted `src/stores/counter.ts` (12 lines)
   - No imports of counter store in codebase
   - Project uses auth and theme stores for business logic
   - Comprehensive test coverage: 7 test cases covering all edge cases
+
+- **Test Infrastructure Setup (2026-04-07)**:
+  - Configured Vitest + @testing-library/vue + jest-dom
+  - Created src/test/setup.ts with auto-cleanup and browser API mocks
+  - Updated vitest.config.ts with globals: true and setupFiles
+  - Mocked matchMedia and ResizeObserver for Radix UI / Shadcn support
+  - Added proper type parameters to all vi.fn() calls
 
 - **Code Cleanup: Removed scaffold demo store (2026-04-07)**:
   - Deleted `src/stores/counter.ts` (12 lines)
