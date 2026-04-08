@@ -180,7 +180,7 @@ describe('Auth Store', () => {
       const result = await store.login(mockCredentials)
 
       expect(authApi.login).toHaveBeenCalledWith(mockCredentials)
-      expect(result).toEqual(mockResponse)
+      expect(result).toStrictEqual(mockResponse)
       expect(store.accessToken).toBe('token')
     })
 
