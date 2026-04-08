@@ -50,7 +50,7 @@ visualization.
 
 ## 📦 Version
 
-Current: `0.5.0-beta.8` (2026-04-08) — Playwright E2E enhanced with trace/video/screenshot debugging
+Current: `0.5.0-beta.9` (2026-04-09) — Test fixture factories with Faker.js for auth and API responses
 
 ## 🗺 Project Structure
 
