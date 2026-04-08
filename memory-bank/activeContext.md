@@ -2,8 +2,15 @@
 
 ## Current Status
 
-**Phase**: API layer architecture complete — ready for dashboard implementation
-**Version**: 0.5.0-beta.1 (2026-04-06)
+**Phase**: E2E testing infrastructure enhanced — ready for dashboard implementation
+**Version**: 0.5.0-beta.8 (2026-04-08)
+
+- **Playwright E2E Enhancement (2026-04-08)**:
+  - Added `video: 'retain-on-failure'` - Records all tests, retains only failures
+  - Added `screenshot: 'only-on-failure'` - Captures screenshots on test failures
+  - Existing `trace: 'on-first-retry'` - Captures trace on first retry for debugging
+  - Enables zero-cost debugging: trace/video/screenshot only generated on failures
+  - CI/Local differentiation already present: retries, workers, forbidOnly
 
 - **API layer architecture (2026-04-06)**:
   - **`src/lib/api/instance.ts` refactored**: Added `onResponseError` interceptor with global error handling (401/403/500), CustomEvent decoupling, localStorage token retrieval
