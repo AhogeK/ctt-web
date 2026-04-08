@@ -50,7 +50,7 @@ visualization.
 
 ## 📦 Version
 
-Current: `0.5.0-beta.6` (2026-04-07) — Token refresh with Promise deduping (Thundering Herd prevention)
+Current: `0.5.0-beta.7` (2026-04-07) — Token refresh with Promise deduping (Thundering Herd prevention)
 
 ## 🗺 Project Structure
 
@@ -117,6 +117,14 @@ pnpm preview
 ## 🧪 Testing
 
 ### Unit Tests (Vitest)
+
+### Test Infrastructure
+
+- **Setup**: `src/test/setup.ts` auto-cleanup + browser API mocks
+- **Environment**: jsdom with matchMedia + ResizeObserver mocks for Radix UI / shadcn-vue
+- **Globals**: Vitest globals enabled (no import needed for describe/it/expect)
+- **Assertions**: @testing-library/jest-dom provides semantic matchers (toBeInTheDocument, etc.)
+
 
 ```sh
 pnpm test:unit
