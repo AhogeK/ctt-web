@@ -50,7 +50,7 @@ visualization.
 
 ## 📦 Version
 
-Current: `0.5.0-beta.7` (2026-04-07) — Token refresh with Promise deduping (Thundering Herd prevention)
+Current: `0.5.0-beta.8` (2026-04-08) — Playwright E2E enhanced with trace/video/screenshot debugging
 
 ## 🗺 Project Structure
 
