@@ -2,8 +2,18 @@
 
 ## Current Status
 
-**Phase**: E2E testing infrastructure enhanced — ready for dashboard implementation
-**Version**: 0.5.0-beta.8 (2026-04-08)
+**Phase**: Test fixture factories complete — ready for dashboard implementation
+**Version**: 0.5.0-beta.9 (2026-04-09)
+
+- **Test Fixture Factories (2026-04-09)**:
+  - Added `@faker-js/faker@^9.9.0` as devDependency for realistic random test data
+  - Created `src/test/factories/` with factory pattern architecture
+  - **Auth factories** (`auth.ts`): `buildLoginRequest()`, `buildLoginResponse()` — generates Zod-valid data with Partial<T> overrides
+  - **API response factories** (`api-response.ts`): `buildApiResponse()`, `buildPagedResponse()`, `buildApiError()` — matches Zod schema shapes from api.schema.ts
+  - **Barrel export** (`index.ts`): Single import point `@/test/factories`
+  - **19 unit tests** covering defaults, overrides, Zod validation, faker seed determinism, edge cases
+  - All 174 tests passing (11 test files), 0 lint warnings, 0 type errors
+  - Fixed 3 pre-existing `prefer-strict-equal` ESLint warnings
 
 - **Playwright E2E Enhancement (2026-04-08)**:
   - Added `video: 'retain-on-failure'` - Records all tests, retains only failures
