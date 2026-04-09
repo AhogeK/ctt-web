@@ -50,7 +50,7 @@ visualization.
 
 ## 📦 Version
 
-Current: `0.5.0-beta.9` (2026-04-09) — Test fixture factories with Faker.js for auth and API responses
+Current: `0.5.0-beta.10` (2026-04-09) — Conventional Commits with commitlint enforcement
 
 ## 🗺 Project Structure
 
