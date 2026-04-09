@@ -2,8 +2,15 @@
 
 ## Current Status
 
-**Phase**: Test fixture factories complete — ready for dashboard implementation
-**Version**: 0.5.0-beta.9 (2026-04-09)
+**Phase**: Conventional Commits enforced — ready for dashboard implementation
+**Version**: 0.5.0-beta.10 (2026-04-09)
+
+- **Conventional Commits Enforcement (2026-04-09)**:
+  - Created `.gitmessage` template with Conventional Commits format
+  - Added `@commitlint/cli` + `@commitlint/config-conventional` for commit validation
+  - Configured `commit-msg` hook via `simple-git-hooks` (rejected husky — already using simple-git-hooks)
+  - `commitlint.config.js` enforces type-enum, type-case, subject-max-length, scope-case
+  - Registered template locally: `git config commit.template .gitmessage`
 
 - **Test Fixture Factories (2026-04-09)**:
   - Added `@faker-js/faker@^9.9.0` as devDependency for realistic random test data
