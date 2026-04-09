@@ -2,8 +2,16 @@
 
 ## Current Status
 
-**Phase**: Conventional Commits enforced — ready for dashboard implementation
-**Version**: 0.5.0-beta.10 (2026-04-09)
+**Phase**: Development handbook published — ready for dashboard implementation
+**Version**: 0.5.0-beta.11 (2026-04-09)
+
+- **Development Handbook (2026-04-09)**:
+  - Created `docs/dev-handbook.md` (589 lines) covering:
+    - How to add routes (auto-discovery, RouteNames, RouteMeta, code examples)
+    - How to add API calls (3-step Zod validation pattern, error handling, consumption)
+    - How to write component tests (Vitest, Testing Library, mocking, factories)
+    - Conventional Commits format and commitlint enforcement
+  - All examples based on actual project patterns, no placeholders
 
 - **Conventional Commits Enforcement (2026-04-09)**:
   - Created `.gitmessage` template with Conventional Commits format
