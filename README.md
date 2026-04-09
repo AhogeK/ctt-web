@@ -50,7 +50,7 @@ visualization.
 
 ## 📦 Version
 
-Current: `0.5.0-beta.10` (2026-04-09) — Conventional Commits with commitlint enforcement
+Current: `0.5.0-beta.11` (2026-04-09) — Development handbook: routing, API, testing
 
 ## 🗺 Project Structure
 
