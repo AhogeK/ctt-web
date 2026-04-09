@@ -42,6 +42,8 @@
     "zod": "^4.3.6"
   },
   "devDependencies": {
+    "@commitlint/cli": "^20.5.0",
+    "@commitlint/config-conventional": "^20.5.0",
     "@faker-js/faker": "^9.9.0",
     "@pinia/testing": "^1.0.3",
     "@playwright/test": "^1.59.0",
@@ -82,7 +84,8 @@
     "node": "^20.19.0 || >=22.12.0"
   },
   "simple-git-hooks": {
-    "pre-commit": "pnpm lint-staged"
+    "pre-commit": "pnpm lint-staged",
+    "commit-msg": "npx --no -- commitlint --edit $1"
   },
   "lint-staged": {
     "src/**/*.{ts,js,vue,tsx,jsx}": [
