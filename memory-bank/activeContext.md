@@ -2,8 +2,15 @@
 
 ## Current Status
 
-**Phase**: Registration schema layer complete — ready for RegisterView implementation
-**Version**: 0.5.0-beta.12 (2026-04-11)
+**Phase**: Email verification schemas complete — ready for RegisterView + verification flow implementation
+**Version**: 0.5.0-beta.13 (2026-04-11)
+
+- **Email Verification Schemas (2026-04-11)**:
+  - Added `VerifyEmailParamSchema` — validates `token` query param for GET `/api/v1/auth/verify-email`
+  - Added `ResendVerificationRequestSchema` — validates email for POST `/api/v1/auth/resend-verification`, matches `ResendVerificationRequest` DTO (@NotBlank + @Email)
+  - Added `VerifyEmailParams` and `ResendVerificationRequest` inferred types
+  - 7 unit tests covering valid/empty/missing token and email validation
+  - All 209 tests passing (12 files), 0 type errors, 0 lint warnings
 
 - **Registration Schema Layer (2026-04-11)**:
   - Added `REGEX_DISPLAY_NAME` constant matching ctt-server `@Pattern` regex (CJK + Hiragana + Katakana + Hangul + alphanumeric + `_-`, 2-50 chars)
