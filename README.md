@@ -50,7 +50,7 @@ visualization.
 
 ## 📦 Version
 
-Current: `0.5.0-beta.12` (2026-04-11) — Registration schema layer: API contract + form validation
+Current: `0.5.0-beta.13` (2026-04-11) — Email verification schemas: token + resend validation
 
 ## 🗺 Project Structure
 
