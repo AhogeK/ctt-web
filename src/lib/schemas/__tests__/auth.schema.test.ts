@@ -4,6 +4,8 @@ import {
   RegisterFormSchema,
   RegisterRequestSchema,
   StrongPasswordSchema,
+  VerifyEmailParamSchema,
+  ResendVerificationRequestSchema,
 } from '../auth.schema'
 import type { RegisterForm, RegisterRequest } from '../auth.schema'
 
@@ -288,5 +290,79 @@ describe('Type inference', () => {
     expect(_typeCheck.email).toBe('test@example.com')
     expect(_typeCheck.displayName).toBe('Test')
     expect(_typeCheck.password).toBe('SecurePass1!')
+  })
+})
+
+describe('VerifyEmailParamSchema', () => {
+  it('accepts valid token', () => {
+    const validData = { token: 'abc123-verify-token' }
+    const result = VerifyEmailParamSchema.safeParse(validData)
+    expect(result.success).toBe(true)
+    if (!result.success) {
+      throw new Error(`Parse failed: ${JSON.stringify(result.error)}`)
+    }
+    expect(result.data.token).toBe('abc123-verify-token')
+  })
+
+  it('rejects empty token', () => {
+    const invalidData = { token: '' }
+    const result = VerifyEmailParamSchema.safeParse(invalidData)
+    expect(result.success).toBe(false)
+    if (result.success) {
+      throw new Error('Expected parse to fail but it succeeded')
+    }
+    expect(result.error.issues[0]?.path).toStrictEqual(['token'])
+  })
+
+  it('rejects missing token', () => {
+    const invalidData = {}
+    const result = VerifyEmailParamSchema.safeParse(invalidData)
+    expect(result.success).toBe(false)
+    if (result.success) {
+      throw new Error('Expected parse to fail but it succeeded')
+    }
+    expect(result.error.issues[0]?.path).toStrictEqual(['token'])
+  })
+})
+
+describe('ResendVerificationRequestSchema', () => {
+  it('accepts valid email', () => {
+    const validData = { email: 'user@example.com' }
+    const result = ResendVerificationRequestSchema.safeParse(validData)
+    expect(result.success).toBe(true)
+    if (!result.success) {
+      throw new Error(`Parse failed: ${JSON.stringify(result.error)}`)
+    }
+    expect(result.data.email).toBe('user@example.com')
+  })
+
+  it('rejects invalid email format', () => {
+    const invalidData = { email: 'not-an-email' }
+    const result = ResendVerificationRequestSchema.safeParse(invalidData)
+    expect(result.success).toBe(false)
+    if (result.success) {
+      throw new Error('Expected parse to fail but it succeeded')
+    }
+    expect(result.error.issues[0]?.path).toStrictEqual(['email'])
+  })
+
+  it('rejects missing email', () => {
+    const invalidData = {}
+    const result = ResendVerificationRequestSchema.safeParse(invalidData)
+    expect(result.success).toBe(false)
+    if (result.success) {
+      throw new Error('Expected parse to fail but it succeeded')
+    }
+    expect(result.error.issues[0]?.path).toStrictEqual(['email'])
+  })
+
+  it('rejects empty email', () => {
+    const invalidData = { email: '' }
+    const result = ResendVerificationRequestSchema.safeParse(invalidData)
+    expect(result.success).toBe(false)
+    if (result.success) {
+      throw new Error('Expected parse to fail but it succeeded')
+    }
+    expect(result.error.issues[0]?.path).toStrictEqual(['email'])
   })
 })

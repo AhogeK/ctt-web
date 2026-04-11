@@ -121,3 +121,37 @@ export const RegisterFormSchema = RegisterRequestSchema.extend({
 // Export inferred types for use in API layer and components
 export type RegisterRequest = z.infer<typeof RegisterRequestSchema>
 export type RegisterForm = z.infer<typeof RegisterFormSchema>
+
+// ==========================================
+// Email Verification Schemas
+// ==========================================
+
+/**
+ * Verify email query parameter schema.
+ *
+ * Backend endpoint: GET /api/v1/auth/verify-email?token=xxx
+ * The token is a plain string query parameter (no DTO on backend).
+ * Server validates: token existence, not expired (24h), not consumed, not revoked.
+ */
+export const VerifyEmailParamSchema = z.object({
+  // Verification token from email link — required, non-empty
+  token: z.string().min(1, 'Verification token is required'),
+})
+
+export type VerifyEmailParam = z.infer<typeof VerifyEmailParamSchema>
+
+/**
+ * Resend verification email request schema matching ctt-server ResendVerificationRequest DTO.
+ *
+ * Server-side validation (ResendVerificationRequest.java):
+ * - email: @NotBlank + @Email, server normalizes to lowercase via compact constructor
+ *
+ * Backend endpoint: POST /api/v1/auth/resend-verification
+ * Rate limited: 3 requests per minute per email.
+ */
+export const ResendVerificationRequestSchema = z.object({
+  // Email address to resend verification to, server normalizes to lowercase
+  email: z.email('Invalid email format').min(1, 'Email is required'),
+})
+
+export type ResendVerificationRequest = z.infer<typeof ResendVerificationRequestSchema>
