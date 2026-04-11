@@ -2,8 +2,21 @@
 
 ## Current Status
 
-**Phase**: Development handbook published — ready for dashboard implementation
-**Version**: 0.5.0-beta.11 (2026-04-09)
+**Phase**: Registration schema layer complete — ready for RegisterView implementation
+**Version**: 0.5.0-beta.12 (2026-04-11)
+
+- **Registration Schema Layer (2026-04-11)**:
+  - Added `REGEX_DISPLAY_NAME` constant matching ctt-server `@Pattern` regex (CJK + Hiragana + Katakana + Hangul + alphanumeric + `_-`, 2-50 chars)
+  - Added `StrongPasswordSchema` reusable fragment (8-32 chars, upper + lower + digit + special from `@$!%*?&`, character whitelist enforced)
+  - Added `RegisterRequestSchema` — exact backend contract (email with `.min(1)`, displayName with `.trim()`, password)
+  - Added `RegisterFormSchema` — extends API schema with `confirmPassword` + `.refine()` cross-field validation with `path: ['confirmPassword']` for precise error binding
+  - Added `RegisterRequest` and `RegisterForm` inferred types
+  - 26 unit tests covering regex boundaries, password policy (including character whitelist), email validation, displayName CJK/whitespace rejection, password mismatch path assertion, type inference with `z.infer`
+  - Dual agent code review (oracle × 2) identified and fixed 8 issues:
+    - **Critical**: Added password character whitelist regex `^[A-Za-z\d@$!%*?&]+$` to prevent server rejection of disallowed special chars
+    - **Important**: Removed redundant `.min(1)` from StrongPasswordSchema, added `.min(1)` to email, added `.trim()` to displayName, fixed test password isolation, replaced `ReturnType` with exported types
+    - **Nit**: Added Login Schemas section divider for consistency, shortened displayName error message
+  - All 202 tests passing (12 files), 0 type errors, 0 lint warnings
 
 - **Development Handbook (2026-04-09)**:
   - Created `docs/dev-handbook.md` (589 lines) covering:
