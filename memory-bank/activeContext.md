@@ -2,8 +2,16 @@
 
 ## Current Status
 
-**Phase**: Email verification schemas complete — ready for RegisterView + verification flow implementation
-**Version**: 0.5.0-beta.13 (2026-04-11)
+**Phase**: Auth API layer complete — ready for RegisterView + verification flow implementation
+**Version**: 0.5.0-beta.14 (2026-04-11)
+
+- **Auth API Layer (2026-04-11)**:
+  - Added `RestApiResponseSchema` to `api.schema.ts` — matches ctt-server `{ success, message, data, timestamp }` format
+  - Added `register()` — POST `/api/v1/auth/register` with Zod payload stripping (removes confirmPassword)
+  - Added `verifyEmail()` — GET `/api/v1/auth/verify-email?token=xxx` (backend uses GET, not POST)
+  - Added `resendVerification()` — POST `/api/v1/auth/resend-verification` (rate limited 3/min)
+  - 11 unit tests covering happy paths, Zod stripping, validation rejection, and backend validation passthrough
+  - All 220 tests passing (13 files), 0 type errors, 0 lint warnings
 
 - **Email Verification Schemas (2026-04-11)**:
   - Added `VerifyEmailParamSchema` — validates `token` query param for GET `/api/v1/auth/verify-email`
