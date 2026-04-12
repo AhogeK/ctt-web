@@ -93,3 +93,34 @@ export const createPagedResponseSchema = <T extends z.ZodTypeAny>(itemSchema: T)
 
 // Export inferred types for use in API layer and components
 export type ApiError = z.infer<typeof ApiErrorSchema>
+
+// ==========================================
+// REST API Response Schemas
+// ==========================================
+
+/**
+ * Standard REST API response schema matching ctt-server RestApiResponse<T>.
+ *
+ * Used by registration, email verification, and other endpoints that return
+ * a simple success/failure response without specific data payload.
+ *
+ * Structure: { success: boolean, message: string, data: T | null, timestamp: ISO8601 }
+ */
+export const RestApiResponseSchema = z.object({
+  // Operation success flag (true = success, false = error)
+  success: z.boolean(),
+  // Human-readable response message
+  message: z.string(),
+  // Response data payload (may be null for empty responses)
+  data: z.unknown().nullable().optional(),
+  // Response timestamp in ISO 8601 format
+  timestamp: z.iso.datetime(),
+})
+
+/**
+ * Empty response type for API endpoints that return only success/message.
+ *
+ * Used by register, verifyEmail, resendVerification, and other state-changing
+ * endpoints that don't return specific data on success.
+ */
+export type EmptyResponse = z.infer<typeof RestApiResponseSchema>
