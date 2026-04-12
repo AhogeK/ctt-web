@@ -50,7 +50,7 @@ visualization.
 
 ## 📦 Version
 
-Current: `0.5.0-beta.13` (2026-04-11) — Email verification schemas: token + resend validation
+Current: `0.5.0-beta.14` (2026-04-11) — Auth API layer: register, verify email, resend verification
 
 ## 🗺 Project Structure
 
