@@ -1,7 +1,9 @@
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest'
 import { createRouter, createWebHistory, type RouteRecordRaw } from 'vue-router'
+import { setActivePinia, createPinia } from 'pinia'
 import { setupRouterGuards } from '../guard'
 import { RouteNames } from '../route-names'
+import { STORAGE_KEYS } from '@/stores/auth'
 
 const { mockNProgressStart, mockNProgressDone } = vi.hoisted(() => {
   return {
@@ -60,6 +62,9 @@ describe('Router Guards', () => {
   ]
 
   beforeEach(() => {
+    // Initialize Pinia for store access
+    setActivePinia(createPinia())
+
     // Reset localStorage mock
     localStorage.clear()
 
@@ -82,7 +87,7 @@ describe('Router Guards', () => {
 
   describe('Document title setting', () => {
     it('sets document title from route meta title', async () => {
-      localStorage.setItem('token', 'valid-token')
+      localStorage.setItem(STORAGE_KEYS.ACCESS_TOKEN, 'valid-token')
 
       await router.push('/dashboard')
       await router.isReady()
@@ -139,7 +144,7 @@ describe('Router Guards', () => {
   describe('Protected route redirect', () => {
     it('redirects unauthenticated user to Login page', async () => {
       // No token in localStorage (unauthenticated)
-      localStorage.removeItem('token')
+      localStorage.removeItem(STORAGE_KEYS.ACCESS_TOKEN)
 
       await router.push('/dashboard')
       await router.isReady()
@@ -148,7 +153,7 @@ describe('Router Guards', () => {
     })
 
     it('preserves original path as redirect query param', async () => {
-      localStorage.removeItem('token')
+      localStorage.removeItem(STORAGE_KEYS.ACCESS_TOKEN)
 
       await router.push('/dashboard')
       await router.isReady()
@@ -157,7 +162,7 @@ describe('Router Guards', () => {
     })
 
     it('preserves full path including query params in redirect', async () => {
-      localStorage.removeItem('token')
+      localStorage.removeItem(STORAGE_KEYS.ACCESS_TOKEN)
 
       await router.push('/dashboard?tab=settings&id=123')
       await router.isReady()
@@ -167,7 +172,7 @@ describe('Router Guards', () => {
 
     it('allows authenticated user to access protected route', async () => {
       // Set token (authenticated)
-      localStorage.setItem('token', 'valid-token')
+      localStorage.setItem(STORAGE_KEYS.ACCESS_TOKEN, 'valid-token')
 
       await router.push('/dashboard')
       await router.isReady()
@@ -179,7 +184,7 @@ describe('Router Guards', () => {
 
   describe('Public route access', () => {
     it('allows unauthenticated user to access public route', async () => {
-      localStorage.removeItem('token')
+      localStorage.removeItem(STORAGE_KEYS.ACCESS_TOKEN)
 
       await router.push('/public')
       await router.isReady()
@@ -188,7 +193,7 @@ describe('Router Guards', () => {
     })
 
     it('allows unauthenticated user to access Login page', async () => {
-      localStorage.removeItem('token')
+      localStorage.removeItem(STORAGE_KEYS.ACCESS_TOKEN)
 
       await router.push('/login')
       await router.isReady()
@@ -197,7 +202,7 @@ describe('Router Guards', () => {
     })
 
     it('allows unauthenticated user to access Register page', async () => {
-      localStorage.removeItem('token')
+      localStorage.removeItem(STORAGE_KEYS.ACCESS_TOKEN)
 
       await router.push('/register')
       await router.isReady()
@@ -206,7 +211,7 @@ describe('Router Guards', () => {
     })
 
     it('allows authenticated user to access public route', async () => {
-      localStorage.setItem('token', 'valid-token')
+      localStorage.setItem(STORAGE_KEYS.ACCESS_TOKEN, 'valid-token')
 
       await router.push('/public')
       await router.isReady()
@@ -217,7 +222,7 @@ describe('Router Guards', () => {
 
   describe('Route without requiresAuth meta', () => {
     it('allows access when requiresAuth is not defined', async () => {
-      localStorage.removeItem('token')
+      localStorage.removeItem(STORAGE_KEYS.ACCESS_TOKEN)
 
       await router.push('/no-title')
       await router.isReady()
