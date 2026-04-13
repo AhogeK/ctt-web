@@ -17,6 +17,7 @@
 | Icons          | @iconify/vue                       | ^5          |
 | i18n           | Vue I18n                           | ^11         |
 | Package Mgr    | pnpm (via corepack)                | ^10         |
+| Design System  | DESIGN.md                          | Linear-style|
 
 ## Dev Toolchain (VoidZero Ecosystem)
 
@@ -97,3 +98,8 @@
 - Global state (auth session, theme) → Pinia
 - All API types defined as Zod schemas in `lib/schemas/`, aligned with ctt-server DTOs
 - `ofetch` instance in `lib/api/` is the single HTTP boundary
+ 
+## 设计系统
+
+视觉规范遵循根目录 `DESIGN.md`（Linear 风格，亮/暗双模式）。
+所有 UI 组件的颜色、字阶、间距、组件状态必须从该文件取值。

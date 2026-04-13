@@ -78,6 +78,7 @@
 - **Vue 模板**：`v-for` 必须绑定 `:key`，禁止同元素同时使用 `v-if` + `v-for`
 - **样式**：禁止内联 `style`，优先 Tailwind 类，组件级隔离使用 CSS Modules
 - **shadcn-vue**：`src/components/ui/` 内组件可直接修改源码，禁止另引 UI 库覆盖
+- **视觉规范**：所有 UI 开发严格遵循根目录 `DESIGN.md`，禁止引入文件外的颜色值、字阴影或自定义 spacing。亮/暗双模式均需覆盖。
 
 ### R10: 任务规划（强制）
 

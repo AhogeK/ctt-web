@@ -38,7 +38,7 @@
 
 ## In Progress
 
-- [ ] Project file scaffold (vite.config, tsconfig, src/ structure)
+- [ ] Auth pages premium redesign (3D effects, mesh gradients, isometric visuals) — AuthLayout.vue being redesigned
 
 ## Backlog
 

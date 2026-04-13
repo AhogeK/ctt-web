@@ -2,122 +2,85 @@
 
 ## Current Status
 
-**Phase**: Auth API layer complete — ready for RegisterView + verification flow implementation
-**Version**: 0.5.0-beta.14 (2026-04-11)
+**Phase**: Auth module review complete — all issues fixed, tests passing
+**Version**: 0.5.0-beta.23 (2026-04-12)
 
-- **Auth API Layer (2026-04-11)**:
-  - Added `RestApiResponseSchema` to `api.schema.ts` — matches ctt-server `{ success, message, data, timestamp }` format
-  - Added `register()` — POST `/api/v1/auth/register` with Zod payload stripping (removes confirmPassword)
-  - Added `verifyEmail()` — GET `/api/v1/auth/verify-email?token=xxx` (backend uses GET, not POST)
-  - Added `resendVerification()` — POST `/api/v1/auth/resend-verification` (rate limited 3/min)
-  - 11 unit tests covering happy paths, Zod stripping, validation rejection, and backend validation passthrough
-  - All 220 tests passing (13 files), 0 type errors, 0 lint warnings
+## Recent Changes (2026-04-12)
 
-- **Email Verification Schemas (2026-04-11)**:
-  - Added `VerifyEmailParamSchema` — validates `token` query param for GET `/api/v1/auth/verify-email`
-  - Added `ResendVerificationRequestSchema` — validates email for POST `/api/v1/auth/resend-verification`, matches `ResendVerificationRequest` DTO (@NotBlank + @Email)
-  - Added `VerifyEmailParams` and `ResendVerificationRequest` inferred types
-  - 7 unit tests covering valid/empty/missing token and email validation
-  - All 209 tests passing (12 files), 0 type errors, 0 lint warnings
+### Code Review Fixes
+- **systemPatterns.md**: 237 lines → 147 lines (AGENTS.md 200-line limit)
+- **instance.ts**: Hardcoded `'ctt_access_token'` → `STORAGE_KEYS.ACCESS_TOKEN`
+- **Type guards**: 5 `as` assertions → `isApiError()` checks in LoginView/RegisterView/VerifyEmailView/useResendVerification
+- **guard.ts**: Removed TODO, switched to Pinia auth store `isAuthenticated`
+- **PasswordStrengthMeter**: Added max32 + allowed chars rules (7 rules total)
+- **VerifyEmailView**: AUTH_004 precise error code check
+- **Docs sync**: DESIGN.md/api-error.ts added to techContext.md/architecture.md
 
-- **Registration Schema Layer (2026-04-11)**:
-  - Added `REGEX_DISPLAY_NAME` constant matching ctt-server `@Pattern` regex (CJK + Hiragana + Katakana + Hangul + alphanumeric + `_-`, 2-50 chars)
-  - Added `StrongPasswordSchema` reusable fragment (8-32 chars, upper + lower + digit + special from `@$!%*?&`, character whitelist enforced)
-  - Added `RegisterRequestSchema` — exact backend contract (email with `.min(1)`, displayName with `.trim()`, password)
-  - Added `RegisterFormSchema` — extends API schema with `confirmPassword` + `.refine()` cross-field validation with `path: ['confirmPassword']` for precise error binding
-  - Added `RegisterRequest` and `RegisterForm` inferred types
-  - 26 unit tests covering regex boundaries, password policy (including character whitelist), email validation, displayName CJK/whitespace rejection, password mismatch path assertion, type inference with `z.infer`
-  - Dual agent code review (oracle × 2) identified and fixed 8 issues:
-    - **Critical**: Added password character whitelist regex `^[A-Za-z\d@$!%*?&]+$` to prevent server rejection of disallowed special chars
-    - **Important**: Removed redundant `.min(1)` from StrongPasswordSchema, added `.min(1)` to email, added `.trim()` to displayName, fixed test password isolation, replaced `ReturnType` with exported types
-    - **Nit**: Added Login Schemas section divider for consistency, shortened displayName error message
-  - All 202 tests passing (12 files), 0 type errors, 0 lint warnings
+### Test Fixes
+- **auth.test.ts**: Zod validation error expectation (`/accessToken|invalid/i`)
+- **useResendVerification.test.ts**: Mock with `statusCode` for `isApiError` recognition
 
-- **Development Handbook (2026-04-09)**:
-  - Created `docs/dev-handbook.md` (589 lines) covering:
-    - How to add routes (auto-discovery, RouteNames, RouteMeta, code examples)
-    - How to add API calls (3-step Zod validation pattern, error handling, consumption)
-    - How to write component tests (Vitest, Testing Library, mocking, factories)
-    - Conventional Commits format and commitlint enforcement
-  - All examples based on actual project patterns, no placeholders
+### Verification
+- Type-check: 0 errors
+- Lint: 0 warnings
+- Tests: 285 passing (15 files)
+- Format: 180 files formatted
 
-- **Conventional Commits Enforcement (2026-04-09)**:
-  - Created `.gitmessage` template with Conventional Commits format
-  - Added `@commitlint/cli` + `@commitlint/config-conventional` for commit validation
-  - Configured `commit-msg` hook via `simple-git-hooks` (rejected husky — already using simple-git-hooks)
-  - `commitlint.config.js` enforces type-enum, type-case, subject-max-length, scope-case
-  - Registered template locally: `git config commit.template .gitmessage`
+## Previous Context
 
-- **Test Fixture Factories (2026-04-09)**:
-  - Added `@faker-js/faker@^9.9.0` as devDependency for realistic random test data
-  - Created `src/test/factories/` with factory pattern architecture
-  - **Auth factories** (`auth.ts`): `buildLoginRequest()`, `buildLoginResponse()` — generates Zod-valid data with Partial<T> overrides
-  - **API response factories** (`api-response.ts`): `buildApiResponse()`, `buildPagedResponse()`, `buildApiError()` — matches Zod schema shapes from api.schema.ts
-  - **Barrel export** (`index.ts`): Single import point `@/test/factories`
-  - **19 unit tests** covering defaults, overrides, Zod validation, faker seed determinism, edge cases
-  - All 174 tests passing (11 test files), 0 lint warnings, 0 type errors
-  - Fixed 3 pre-existing `prefer-strict-equal` ESLint warnings
+### Auth Module Component Extraction
+Extracted 5 components from AuthLayout.vue (1576 lines → modular):
 
-- **Playwright E2E Enhancement (2026-04-08)**:
-  - Added `video: 'retain-on-failure'` - Records all tests, retains only failures
-  - Added `screenshot: 'only-on-failure'` - Captures screenshots on test failures
-  - Existing `trace: 'on-first-retry'` - Captures trace on first retry for debugging
-  - Enables zero-cost debugging: trace/video/screenshot only generated on failures
-  - CI/Local differentiation already present: retries, workers, forbidOnly
+- **AuthDashboardMockup.vue** — Dashboard mockup + metrics card + terminal card composite (~200 lines), theme-aware, VueUse useTransition animations
+- **AuthMetricsCard.vue** — Animated counters with spring easing, sparkline bars, language distribution, VueUse useTransition
+- **AuthTerminalCard.vue** — Blinking cursor, command parsing, Berkeley Mono font, dark-themed terminal
+- **AuthCodePreview.vue** — CSS syntax highlighting, language label, theme support
+- **AuthFeatureShowcase.vue** — Feature cards grid, staggered entrance (80ms delay), spring hover lift, light/dark support
 
-- **API layer architecture (2026-04-06)**:
-  - **`src/lib/api/instance.ts` refactored**: Added `onResponseError` interceptor with global error handling (401/403/500), CustomEvent decoupling, localStorage token retrieval
-  - **`src/stores/auth.ts` updated**: Added localStorage persistence with `STORAGE_KEYS` constants, token restoration on initialization
-  - **`src/main.ts` updated**: Added 401 event listener that clears auth state and redirects to login with redirect query param
-  - **`.env` created**: Added `VITE_API_BASE_URL` configuration
-  - **Architecture pattern**: API 401 → CustomEvent → main.ts listener → authStore.clearAuth() + router redirect
-  - All verification passed: type-check (0 errors), lint (0 warnings), format clean
+All components follow DESIGN.md Linear-style design, Vue 3 Composition API, proper JSDoc.
 
-- **Zod Schema Architecture (2026-04-07)**:
-  - Created `src/lib/schemas/api.schema.ts` with common API response schemas
-  - `ApiErrorSchema` - Standard error response matching instance.ts interceptor
-  - `createApiResponseSchema<T>` - Factory for wrapped responses ({ code, message, data })
-  - `createPagedResponseSchema<T>` - Factory for paginated responses (items, total, page, pageSize)
-  - Enables runtime validation + end-to-end type safety
-  - Follows defensive programming pattern
-  - TypeScript types derived from Zod schemas via z.infer<>
+### Shared Error Utility
+- **api-error.ts** — `src/lib/utils/api-error.ts` created
+- Functions: `getErrorMessage()`, `isApiError()`, `mapApiErrorCode()`
+- Types: `ApiError`, `ApiErrorResponse`
+- Refactored `src/lib/utils.ts` → `src/lib/utils/index.ts` (directory structure)
+- All imports (`@/lib/utils`) continue working
 
-- **TanStack Query Configuration (2026-04-07)**:
-  - Created `src/lib/query.ts` with global QueryClient instance
-  - Configured default staleTime: 30s (data considered fresh)
-  - Configured gcTime: 5min (inactive data garbage collection)
-  - Disabled refetchOnWindowFocus (prevent API flooding)
-  - Set retry: 1 (Fail-Fast behavior)
-  - Enabled refetchOnMount and refetchOnReconnect
-  - Registered VueQueryPlugin in main.ts
-  - Enables Server State vs Client State separation
+### Login Tests Added
+- **auth.schema.test.ts** — +34 tests for LoginRequestSchema/LoginResponseSchema (67 total)
+- **auth.test.ts** — +8 tests for login API (mock HTTP, success/error/network cases)
+- **useDeviceId.test.ts** — 8 tests (UUID format, localStorage persistence, uniqueness)
+- **useResendVerification.test.ts** — 15 tests (countdown, error handling, concurrent calls)
 
-- **Pinia Store Initialization (2026-04-07)**:
-  - Created `src/stores/theme.ts` for theme management (dark/light/auto)
-  - Refactored `src/stores/auth.ts` with VueUse `useStorage` for automatic persistence
-  - Auth Store: JWT token + userId persistence with expiry tracking
-  - Theme Store: Dark mode with system preference detection
-  - Uses VueUse utilities: `useStorage`, `useDark` for cross-tab synchronization
-  - isAuthenticated computed property for reactive auth state
+Total: +65 new tests, 282 tests passing (13 files)
 
-- **Token Refresh Implementation (2026-04-07)**:
-  - Added `refresh()` API function in `src/lib/api/auth.ts`
-  - Added `refreshAccessToken()` in `src/stores/auth.ts` with Promise deduping
-  - Solves Thundering Herd problem: concurrent 401s → single refresh request
-  - Promise lock pattern: `activeRefreshPromise` module-scoped variable
-  - All concurrent callers share same promise, preventing refresh storm
-  - Fail-fast security: clear auth state on any refresh failure
-  - Fallback logic: keeps existing refresh token if response lacks new one
-  - Comprehensive test coverage: 7 test cases covering all edge cases
+### CSRF Protection Verification
+- **Backend CSRF**: DISABLED — Stateless JWT architecture (correct)
+- **OAuth CSRF**: ENABLED — State parameter via Redis (OAuthStateService)
+- **Frontend**: No CSRF token handling needed for JWT endpoints
+- **Security headers**: OWASP-compliant (CSP, X-Frame-Options, HSTS)
 
-- **Test Infrastructure Setup (2026-04-07)**:
-  - Configured Vitest + @testing-library/vue + jest-dom
-  - Created src/test/setup.ts with auto-cleanup and browser API mocks
-  - Updated vitest.config.ts with globals: true and setupFiles
-  - Mocked matchMedia and ResizeObserver for Radix UI / Shadcn support
-  - Added proper type parameters to all vi.fn() calls
+### Verification
+- Type-check: 0 errors
+- Lint: 0 warnings (oxlint + eslint)
+- Tests: 282 passing (13 files), 3 pre-existing failures in guard.test.ts
+- Format: all files formatted
 
-- **Test Fix: localStorage Key Mismatch (2026-04-07)**:
-  - Fixed src/lib/api/__tests__/instance.test.ts to use 'ctt_access_token'
-  - Aligned test expectations with STORAGE_KEYS.ACCESS_TOKEN
-  - All 19 instance tests now passing (100% pass rate)
+## Previous Context
+
+### Code Review Fixes (2026-04-12)
+- **CRITICAL**: Fixed router guard token key mismatch — `guard.ts` now uses `STORAGE_KEYS.ACCESS_TOKEN`
+- Removed meaningless numbered comments from `auth.ts`
+- Synced README.md version from `beta.18` to `beta.21`
+- Added Props JSDoc to PasswordStrengthMeter.vue, RegisterForm.vue, LoginForm.vue
+
+### AuthLayout.vue Premium Redesign (2026-04-12)
+- Wave 1-4: Shimmer removal, gradient border, theme consistency, metrics ticker, premium motion
+- Dots flicker fix: Added `@keyframes dots-glow` for dark mode
+- All DESIGN.md compliant, Inter Variable cv01/ss03
+
+### Auth Pages (2026-04-11-12)
+- RegisterView, RegisterForm, PasswordStrengthMeter, RegisterSuccessView, VerifyEmailView
+- useDeviceId, useResendVerification composables
+- Routes: /register, /register-success, /verify-email
+- All 220 tests passing before new additions
