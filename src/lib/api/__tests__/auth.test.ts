@@ -12,6 +12,129 @@ describe('auth API', () => {
     vi.clearAllMocks()
   })
 
+  describe('login', () => {
+    it('sends POST request with validated credentials and returns tokens', async () => {
+      vi.mocked(apiFetch).mockResolvedValue({
+        userId: 'a1b2c3d4-e5f6-7890-abcd-ef1234567890',
+        accessToken: 'mock-access-token-xyz',
+        refreshToken: 'mock-refresh-token-xyz',
+        expiresIn: 3600,
+        tokenType: 'Bearer',
+      })
+
+      const result = await authApi.login({
+        email: 'user@example.com',
+        password: 'SecurePass1!',
+        deviceId: 'device-001',
+      })
+
+      expect(apiFetch).toHaveBeenCalledWith('/api/v1/auth/login', {
+        method: 'POST',
+        body: {
+          email: 'user@example.com',
+          password: 'SecurePass1!',
+          deviceId: 'device-001',
+        },
+      })
+      expect(result.userId).toBe('a1b2c3d4-e5f6-7890-abcd-ef1234567890')
+      expect(result.accessToken).toBe('mock-access-token-xyz')
+      expect(result.refreshToken).toBe('mock-refresh-token-xyz')
+      expect(result.expiresIn).toBe(3600)
+      expect(result.tokenType).toBe('Bearer')
+    })
+
+    it('defaults tokenType to Bearer when not provided', async () => {
+      vi.mocked(apiFetch).mockResolvedValue({
+        userId: 'a1b2c3d4-e5f6-7890-abcd-ef1234567890',
+        accessToken: 'mock-access-token',
+        refreshToken: 'mock-refresh-token',
+        expiresIn: 7200,
+      })
+
+      const result = await authApi.login({
+        email: 'user@example.com',
+        password: 'SecurePass1!',
+        deviceId: 'device-001',
+      })
+
+      expect(result.tokenType).toBe('Bearer')
+    })
+
+    it('rejects invalid email format', async () => {
+      await expect(
+        authApi.login({
+          email: 'not-an-email',
+          password: 'SecurePass1!',
+          deviceId: 'device-001',
+        }),
+      ).rejects.toThrow('Invalid email format')
+    })
+
+    it('rejects missing password', async () => {
+      await expect(
+        authApi.login({
+          email: 'user@example.com',
+          password: '',
+          deviceId: 'device-001',
+        }),
+      ).rejects.toThrow('Password must be at least 8 characters')
+    })
+
+    it('rejects missing deviceId', async () => {
+      await expect(
+        authApi.login({
+          email: 'user@example.com',
+          password: 'SecurePass1!',
+          deviceId: '',
+        }),
+      ).rejects.toThrow('Device ID is required')
+    })
+
+    it('propagates API error on invalid credentials', async () => {
+      const apiError = new Error('Invalid email or password')
+      vi.mocked(apiFetch).mockRejectedValue(apiError)
+
+      await expect(
+        authApi.login({
+          email: 'user@example.com',
+          password: 'WrongPassword1!',
+          deviceId: 'device-001',
+        }),
+      ).rejects.toThrow('Invalid email or password')
+    })
+
+    it('propagates network error on connection failure', async () => {
+      const networkError = new TypeError('Failed to fetch')
+      vi.mocked(apiFetch).mockRejectedValue(networkError)
+
+      await expect(
+        authApi.login({
+          email: 'user@example.com',
+          password: 'SecurePass1!',
+          deviceId: 'device-001',
+        }),
+      ).rejects.toThrow('Failed to fetch')
+    })
+
+    it('rejects response missing required fields', async () => {
+      vi.mocked(apiFetch).mockResolvedValue({
+        userId: 'a1b2c3d4-e5f6-7890-abcd-ef1234567890',
+        // accessToken missing — should fail Zod validation
+        refreshToken: 'mock-refresh-token',
+        expiresIn: 3600,
+      })
+
+      // Zod validation should fail with specific field error
+      await expect(
+        authApi.login({
+          email: 'user@example.com',
+          password: 'SecurePass1!',
+          deviceId: 'device-001',
+        }),
+      ).rejects.toThrow(/accessToken|invalid/i)
+    })
+  })
+
   describe('register', () => {
     it('sends POST request with validated payload', async () => {
       vi.mocked(apiFetch).mockResolvedValue({

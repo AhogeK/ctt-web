@@ -1,13 +1,15 @@
 import { describe, it, expect } from 'vitest'
 import {
   REGEX_DISPLAY_NAME,
+  LoginRequestSchema,
+  LoginResponseSchema,
   RegisterFormSchema,
   RegisterRequestSchema,
   StrongPasswordSchema,
   VerifyEmailParamSchema,
   ResendVerificationRequestSchema,
 } from '../auth.schema'
-import type { RegisterForm, RegisterRequest } from '../auth.schema'
+import type { LoginRequest, LoginResponse, RegisterForm, RegisterRequest } from '../auth.schema'
 
 describe('REGEX_DISPLAY_NAME', () => {
   it('matches minimum length (2 chars)', () => {
@@ -267,7 +269,489 @@ describe('RegisterFormSchema', () => {
   })
 })
 
+describe('LoginRequestSchema', () => {
+  it('accepts valid login data', () => {
+    const validData = {
+      email: 'user@example.com',
+      password: 'SecurePass1!',
+      deviceId: 'device-uuid-123',
+    }
+    const result = LoginRequestSchema.safeParse(validData)
+
+    expect(result.success).toBe(true)
+    if (!result.success) {
+      throw new Error(`Parse failed: ${JSON.stringify(result.error)}`)
+    }
+    expect(result.data.email).toBe('user@example.com')
+    expect(result.data.password).toBe('SecurePass1!')
+    expect(result.data.deviceId).toBe('device-uuid-123')
+  })
+
+  it('rejects missing email', () => {
+    const invalidData = {
+      password: 'SecurePass1!',
+      deviceId: 'device-uuid-123',
+    }
+    const result = LoginRequestSchema.safeParse(invalidData)
+
+    expect(result.success).toBe(false)
+    if (result.success) {
+      throw new Error('Expected parse to fail but it succeeded')
+    }
+    expect(result.error.issues[0]?.path).toStrictEqual(['email'])
+  })
+
+  it('rejects empty email', () => {
+    const invalidData = {
+      email: '',
+      password: 'SecurePass1!',
+      deviceId: 'device-uuid-123',
+    }
+    const result = LoginRequestSchema.safeParse(invalidData)
+
+    expect(result.success).toBe(false)
+    if (result.success) {
+      throw new Error('Expected parse to fail but it succeeded')
+    }
+    expect(result.error.issues[0]?.path).toStrictEqual(['email'])
+  })
+
+  it('rejects invalid email format', () => {
+    const invalidData = {
+      email: 'not-an-email',
+      password: 'SecurePass1!',
+      deviceId: 'device-uuid-123',
+    }
+    const result = LoginRequestSchema.safeParse(invalidData)
+
+    expect(result.success).toBe(false)
+    if (result.success) {
+      throw new Error('Expected parse to fail but it succeeded')
+    }
+    expect(result.error.issues[0]?.path).toStrictEqual(['email'])
+  })
+
+  it('rejects missing password', () => {
+    const invalidData = {
+      email: 'user@example.com',
+      deviceId: 'device-uuid-123',
+    }
+    const result = LoginRequestSchema.safeParse(invalidData)
+
+    expect(result.success).toBe(false)
+    if (result.success) {
+      throw new Error('Expected parse to fail but it succeeded')
+    }
+    expect(result.error.issues[0]?.path).toStrictEqual(['password'])
+  })
+
+  it('rejects password too short (less than 8 chars)', () => {
+    const invalidData = {
+      email: 'user@example.com',
+      password: 'Short1!',
+      deviceId: 'device-uuid-123',
+    }
+    const result = LoginRequestSchema.safeParse(invalidData)
+
+    expect(result.success).toBe(false)
+    if (result.success) {
+      throw new Error('Expected parse to fail but it succeeded')
+    }
+    expect(result.error.issues[0]?.message).toContain('8 characters')
+  })
+
+  it('rejects missing deviceId', () => {
+    const invalidData = {
+      email: 'user@example.com',
+      password: 'SecurePass1!',
+    }
+    const result = LoginRequestSchema.safeParse(invalidData)
+
+    expect(result.success).toBe(false)
+    if (result.success) {
+      throw new Error('Expected parse to fail but it succeeded')
+    }
+    expect(result.error.issues[0]?.path).toStrictEqual(['deviceId'])
+  })
+
+  it('rejects empty deviceId', () => {
+    const invalidData = {
+      email: 'user@example.com',
+      password: 'SecurePass1!',
+      deviceId: '',
+    }
+    const result = LoginRequestSchema.safeParse(invalidData)
+
+    expect(result.success).toBe(false)
+    if (result.success) {
+      throw new Error('Expected parse to fail but it succeeded')
+    }
+    expect(result.error.issues[0]?.path).toStrictEqual(['deviceId'])
+  })
+
+  it('rejects wrong type for email (number instead of string)', () => {
+    const invalidData = {
+      email: 123,
+      password: 'SecurePass1!',
+      deviceId: 'device-uuid-123',
+    }
+    const result = LoginRequestSchema.safeParse(invalidData)
+
+    expect(result.success).toBe(false)
+  })
+
+  it('rejects wrong type for password (number instead of string)', () => {
+    const invalidData = {
+      email: 'user@example.com',
+      password: 12345678,
+      deviceId: 'device-uuid-123',
+    }
+    const result = LoginRequestSchema.safeParse(invalidData)
+
+    expect(result.success).toBe(false)
+  })
+
+  it('rejects wrong type for deviceId (number instead of string)', () => {
+    const invalidData = {
+      email: 'user@example.com',
+      password: 'SecurePass1!',
+      deviceId: 12345,
+    }
+    const result = LoginRequestSchema.safeParse(invalidData)
+
+    expect(result.success).toBe(false)
+  })
+
+  it('rejects completely empty object', () => {
+    const result = LoginRequestSchema.safeParse({})
+
+    expect(result.success).toBe(false)
+    if (result.success) {
+      throw new Error('Expected parse to fail but it succeeded')
+    }
+    expect(result.error.issues.length).toBeGreaterThanOrEqual(3)
+  })
+
+  it('accepts email with subdomain', () => {
+    const validData = {
+      email: 'user@sub.example.com',
+      password: 'SecurePass1!',
+      deviceId: 'device-uuid-123',
+    }
+    const result = LoginRequestSchema.safeParse(validData)
+
+    expect(result.success).toBe(true)
+  })
+
+  it('accepts password exactly 8 characters', () => {
+    const validData = {
+      email: 'user@example.com',
+      password: 'Pass1!aa',
+      deviceId: 'device-uuid-123',
+    }
+    const result = LoginRequestSchema.safeParse(validData)
+
+    expect(result.success).toBe(true)
+  })
+
+  it('accepts deviceId with special characters', () => {
+    const validData = {
+      email: 'user@example.com',
+      password: 'SecurePass1!',
+      deviceId: 'device-uuid_123.abc',
+    }
+    const result = LoginRequestSchema.safeParse(validData)
+
+    expect(result.success).toBe(true)
+  })
+})
+
+describe('LoginResponseSchema', () => {
+  it('accepts valid login response', () => {
+    const validData = {
+      userId: '550e8400-e29b-41d4-a716-446655440000',
+      accessToken: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.test.signature',
+      refreshToken: 'refresh-token-abc-123',
+      expiresIn: 3600,
+      tokenType: 'Bearer',
+    }
+    const result = LoginResponseSchema.safeParse(validData)
+
+    expect(result.success).toBe(true)
+    if (!result.success) {
+      throw new Error(`Parse failed: ${JSON.stringify(result.error)}`)
+    }
+    expect(result.data.userId).toBe('550e8400-e29b-41d4-a716-446655440000')
+    expect(result.data.accessToken).toBe('eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.test.signature')
+    expect(result.data.refreshToken).toBe('refresh-token-abc-123')
+    expect(result.data.expiresIn).toBe(3600)
+    expect(result.data.tokenType).toBe('Bearer')
+  })
+
+  it('defaults tokenType to Bearer when omitted', () => {
+    const validData = {
+      userId: '550e8400-e29b-41d4-a716-446655440000',
+      accessToken: 'access-token-xyz',
+      refreshToken: 'refresh-token-abc',
+      expiresIn: 7200,
+    }
+    const result = LoginResponseSchema.safeParse(validData)
+
+    expect(result.success).toBe(true)
+    if (!result.success) {
+      throw new Error(`Parse failed: ${JSON.stringify(result.error)}`)
+    }
+    expect(result.data.tokenType).toBe('Bearer')
+  })
+
+  it('rejects missing userId', () => {
+    const invalidData = {
+      accessToken: 'access-token-xyz',
+      refreshToken: 'refresh-token-abc',
+      expiresIn: 3600,
+    }
+    const result = LoginResponseSchema.safeParse(invalidData)
+
+    expect(result.success).toBe(false)
+    if (result.success) {
+      throw new Error('Expected parse to fail but it succeeded')
+    }
+    expect(result.error.issues[0]?.path).toStrictEqual(['userId'])
+  })
+
+  it('rejects invalid userId format (not UUID)', () => {
+    const invalidData = {
+      userId: 'not-a-uuid',
+      accessToken: 'access-token-xyz',
+      refreshToken: 'refresh-token-abc',
+      expiresIn: 3600,
+    }
+    const result = LoginResponseSchema.safeParse(invalidData)
+
+    expect(result.success).toBe(false)
+    if (result.success) {
+      throw new Error('Expected parse to fail but it succeeded')
+    }
+    expect(result.error.issues[0]?.message).toContain('user ID')
+  })
+
+  it('rejects missing accessToken', () => {
+    const invalidData = {
+      userId: '550e8400-e29b-41d4-a716-446655440000',
+      refreshToken: 'refresh-token-abc',
+      expiresIn: 3600,
+    }
+    const result = LoginResponseSchema.safeParse(invalidData)
+
+    expect(result.success).toBe(false)
+    if (result.success) {
+      throw new Error('Expected parse to fail but it succeeded')
+    }
+    expect(result.error.issues[0]?.path).toStrictEqual(['accessToken'])
+  })
+
+  it('rejects empty accessToken', () => {
+    const invalidData = {
+      userId: '550e8400-e29b-41d4-a716-446655440000',
+      accessToken: '',
+      refreshToken: 'refresh-token-abc',
+      expiresIn: 3600,
+    }
+    const result = LoginResponseSchema.safeParse(invalidData)
+
+    expect(result.success).toBe(false)
+    if (result.success) {
+      throw new Error('Expected parse to fail but it succeeded')
+    }
+    expect(result.error.issues[0]?.path).toStrictEqual(['accessToken'])
+  })
+
+  it('rejects missing refreshToken', () => {
+    const invalidData = {
+      userId: '550e8400-e29b-41d4-a716-446655440000',
+      accessToken: 'access-token-xyz',
+      expiresIn: 3600,
+    }
+    const result = LoginResponseSchema.safeParse(invalidData)
+
+    expect(result.success).toBe(false)
+    if (result.success) {
+      throw new Error('Expected parse to fail but it succeeded')
+    }
+    expect(result.error.issues[0]?.path).toStrictEqual(['refreshToken'])
+  })
+
+  it('rejects empty refreshToken', () => {
+    const invalidData = {
+      userId: '550e8400-e29b-41d4-a716-446655440000',
+      accessToken: 'access-token-xyz',
+      refreshToken: '',
+      expiresIn: 3600,
+    }
+    const result = LoginResponseSchema.safeParse(invalidData)
+
+    expect(result.success).toBe(false)
+    if (result.success) {
+      throw new Error('Expected parse to fail but it succeeded')
+    }
+    expect(result.error.issues[0]?.path).toStrictEqual(['refreshToken'])
+  })
+
+  it('rejects missing expiresIn', () => {
+    const invalidData = {
+      userId: '550e8400-e29b-41d4-a716-446655440000',
+      accessToken: 'access-token-xyz',
+      refreshToken: 'refresh-token-abc',
+    }
+    const result = LoginResponseSchema.safeParse(invalidData)
+
+    expect(result.success).toBe(false)
+    if (result.success) {
+      throw new Error('Expected parse to fail but it succeeded')
+    }
+    expect(result.error.issues[0]?.path).toStrictEqual(['expiresIn'])
+  })
+
+  it('rejects expiresIn as float (not integer)', () => {
+    const invalidData = {
+      userId: '550e8400-e29b-41d4-a716-446655440000',
+      accessToken: 'access-token-xyz',
+      refreshToken: 'refresh-token-abc',
+      expiresIn: 3600.5,
+    }
+    const result = LoginResponseSchema.safeParse(invalidData)
+
+    expect(result.success).toBe(false)
+    if (result.success) {
+      throw new Error('Expected parse to fail but it succeeded')
+    }
+  })
+
+  it('rejects expiresIn as zero', () => {
+    const invalidData = {
+      userId: '550e8400-e29b-41d4-a716-446655440000',
+      accessToken: 'access-token-xyz',
+      refreshToken: 'refresh-token-abc',
+      expiresIn: 0,
+    }
+    const result = LoginResponseSchema.safeParse(invalidData)
+
+    expect(result.success).toBe(false)
+    if (result.success) {
+      throw new Error('Expected parse to fail but it succeeded')
+    }
+  })
+
+  it('rejects expiresIn as negative number', () => {
+    const invalidData = {
+      userId: '550e8400-e29b-41d4-a716-446655440000',
+      accessToken: 'access-token-xyz',
+      refreshToken: 'refresh-token-abc',
+      expiresIn: -100,
+    }
+    const result = LoginResponseSchema.safeParse(invalidData)
+
+    expect(result.success).toBe(false)
+    if (result.success) {
+      throw new Error('Expected parse to fail but it succeeded')
+    }
+  })
+
+  it('rejects wrong type for userId (number instead of string)', () => {
+    const invalidData = {
+      userId: 12345,
+      accessToken: 'access-token-xyz',
+      refreshToken: 'refresh-token-abc',
+      expiresIn: 3600,
+    }
+    const result = LoginResponseSchema.safeParse(invalidData)
+
+    expect(result.success).toBe(false)
+  })
+
+  it('rejects wrong type for expiresIn (string instead of number)', () => {
+    const invalidData = {
+      userId: '550e8400-e29b-41d4-a716-446655440000',
+      accessToken: 'access-token-xyz',
+      refreshToken: 'refresh-token-abc',
+      expiresIn: '3600',
+    }
+    const result = LoginResponseSchema.safeParse(invalidData)
+
+    expect(result.success).toBe(false)
+  })
+
+  it('rejects completely empty object', () => {
+    const result = LoginResponseSchema.safeParse({})
+
+    expect(result.success).toBe(false)
+    if (result.success) {
+      throw new Error('Expected parse to fail but it succeeded')
+    }
+    expect(result.error.issues.length).toBeGreaterThanOrEqual(4)
+  })
+
+  it('accepts custom tokenType value', () => {
+    const validData = {
+      userId: '550e8400-e29b-41d4-a716-446655440000',
+      accessToken: 'access-token-xyz',
+      refreshToken: 'refresh-token-abc',
+      expiresIn: 3600,
+      tokenType: 'Custom',
+    }
+    const result = LoginResponseSchema.safeParse(validData)
+
+    expect(result.success).toBe(true)
+    if (!result.success) {
+      throw new Error(`Parse failed: ${JSON.stringify(result.error)}`)
+    }
+    expect(result.data.tokenType).toBe('Custom')
+  })
+
+  it('accepts large expiresIn value (e.g., 1 year in seconds)', () => {
+    const validData = {
+      userId: '550e8400-e29b-41d4-a716-446655440000',
+      accessToken: 'access-token-xyz',
+      refreshToken: 'refresh-token-abc',
+      expiresIn: 31536000, // 1 year in seconds
+    }
+    const result = LoginResponseSchema.safeParse(validData)
+
+    expect(result.success).toBe(true)
+    if (!result.success) {
+      throw new Error(`Parse failed: ${JSON.stringify(result.error)}`)
+    }
+    expect(result.data.expiresIn).toBe(31536000)
+  })
+})
+
 describe('Type inference', () => {
+  it('LoginRequest type has email, password, deviceId fields', () => {
+    const _typeCheck: LoginRequest = {
+      email: 'test@example.com',
+      password: 'SecurePass1!',
+      deviceId: 'device-123',
+    }
+    expect(_typeCheck.email).toBe('test@example.com')
+    expect(_typeCheck.password).toBe('SecurePass1!')
+    expect(_typeCheck.deviceId).toBe('device-123')
+  })
+
+  it('LoginResponse type has userId, accessToken, refreshToken, expiresIn, tokenType fields', () => {
+    const _typeCheck: LoginResponse = {
+      userId: '550e8400-e29b-41d4-a716-446655440000',
+      accessToken: 'access-token',
+      refreshToken: 'refresh-token',
+      expiresIn: 3600,
+      tokenType: 'Bearer',
+    }
+    expect(_typeCheck.userId).toBe('550e8400-e29b-41d4-a716-446655440000')
+    expect(_typeCheck.accessToken).toBe('access-token')
+    expect(_typeCheck.refreshToken).toBe('refresh-token')
+    expect(_typeCheck.expiresIn).toBe(3600)
+    expect(_typeCheck.tokenType).toBe('Bearer')
+  })
+
   it('RegisterRequest type has email, displayName, password fields', () => {
     const _typeCheck: RegisterRequest = {
       email: 'test@example.com',

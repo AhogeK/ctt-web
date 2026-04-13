@@ -1,6 +1,7 @@
-import { describe, it, expect } from 'vitest'
+import { describe, it, expect, vi } from 'vitest'
 import { mount } from '@vue/test-utils'
 import { createRouter, createMemoryHistory } from 'vue-router'
+import { createTestingPinia } from '@pinia/testing'
 import App from '../App.vue'
 import ErrorBoundary from '../components/app/ErrorBoundary.vue'
 import { Toaster } from '../components/ui/sonner'
@@ -33,7 +34,7 @@ describe('App.vue', () => {
 
     const wrapper = mount(App, {
       global: {
-        plugins: [router],
+        plugins: [router, createTestingPinia({ createSpy: vi.fn })],
         stubs: {
           ErrorBoundary: false,
         },
@@ -58,7 +59,7 @@ describe('App.vue', () => {
 
     const wrapper = mount(App, {
       global: {
-        plugins: [router],
+        plugins: [router, createTestingPinia({ createSpy: vi.fn })],
         stubs: {
           ErrorBoundary: false,
           Toaster: false,
@@ -83,7 +84,7 @@ describe('App.vue', () => {
 
     const wrapper = mount(App, {
       global: {
-        plugins: [router],
+        plugins: [router, createTestingPinia({ createSpy: vi.fn })],
         stubs: {
           ErrorBoundary: false,
           Toaster: false,
