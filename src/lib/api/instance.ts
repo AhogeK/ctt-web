@@ -1,5 +1,6 @@
 import { ofetch, type FetchOptions } from 'ofetch'
 import { toast } from 'vue-sonner'
+import { STORAGE_KEYS } from '@/stores/auth'
 
 /**
  * Base API URL from environment variable, fallback to '/api' for proxy setup.
@@ -44,7 +45,7 @@ export const apiFetch = ofetch.create({
    * Reads token directly from localStorage to avoid circular dependency with auth store.
    */
   async onRequest({ options }) {
-    const accessToken = localStorage.getItem('ctt_access_token')
+    const accessToken = localStorage.getItem(STORAGE_KEYS.ACCESS_TOKEN)
 
     if (accessToken) {
       const headers = new Headers(options.headers)
@@ -70,7 +71,7 @@ export const apiFetch = ofetch.create({
 
     switch (status) {
       case 401:
-        localStorage.removeItem('ctt_access_token')
+        localStorage.removeItem(STORAGE_KEYS.ACCESS_TOKEN)
         toast.error('Authentication expired. Please log in again.')
         globalThis.dispatchEvent(new CustomEvent(UNAUTHORIZED_EVENT))
         break
