@@ -10,16 +10,28 @@ const authRoutes: RouteRecordRaw[] = [
     meta: { title: 'Authentication', hideInMenu: true },
     children: [
       {
-        path: '/login',
+        path: 'login',
         name: RouteNames.LOGIN,
         component: () => import('@/features/auth/views/LoginView.vue'),
         meta: { title: 'Login', requiresAuth: false, layout: 'auth' },
       },
       {
-        path: '/register',
+        path: 'register',
         name: RouteNames.REGISTER,
         component: () => import('@/features/auth/views/RegisterView.vue'),
         meta: { title: 'Register', requiresAuth: false, layout: 'auth' },
+      },
+      {
+        path: 'register-success',
+        name: RouteNames.REGISTER_SUCCESS,
+        component: () => import('@/features/auth/views/RegisterSuccessView.vue'),
+        meta: { title: 'Check Your Email', requiresAuth: false, layout: 'auth' },
+      },
+      {
+        path: 'verify-email',
+        name: RouteNames.VERIFY_EMAIL,
+        component: () => import('@/features/auth/views/VerifyEmailView.vue'),
+        meta: { title: 'Verify Email', requiresAuth: false, layout: 'auth' },
       },
     ],
   },
