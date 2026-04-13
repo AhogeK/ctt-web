@@ -11,6 +11,8 @@ export const RouteNames = {
   AUTH_LAYOUT: 'auth-layout',
   LOGIN: 'login',
   REGISTER: 'register',
+  REGISTER_SUCCESS: 'register-success',
+  VERIFY_EMAIL: 'verify-email',
 
   // Dashboard
   DASHBOARD: 'dashboard',
