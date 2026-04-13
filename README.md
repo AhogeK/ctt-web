@@ -50,7 +50,7 @@ visualization.
 
 ## 📦 Version
 
-Current: `0.5.0-beta.14` (2026-04-11) — Auth API layer: register, verify email, resend verification
+Current: `0.5.0-beta.23` (2026-04-12) — Component extraction, shared error utility, login tests, CSRF verification
 
 ## 🗺 Project Structure
 
