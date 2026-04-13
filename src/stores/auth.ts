@@ -28,22 +28,18 @@ export const STORAGE_KEYS = {
  * - Persist tokens to localStorage automatically via useStorage
  */
 export const useAuthStore = defineStore('auth', () => {
-  // 1. Reactive persistent storage with useStorage (auto-syncs with localStorage)
   const accessToken = useStorage<string | null>(STORAGE_KEYS.ACCESS_TOKEN, null)
   const refreshToken = useStorage<string | null>(STORAGE_KEYS.REFRESH_TOKEN, null)
   const userId = useStorage<string | null>(STORAGE_KEYS.USER_ID, null)
 
-  // 2. Token expiry (not persisted, calculated on login)
   const tokenExpiry = ref<number | null>(null)
 
-  // 3. Computed: authentication status
   const isAuthenticated = computed(() => {
     if (!accessToken.value) return false
     if (!tokenExpiry.value) return true // No expiry info means assume valid
     return Date.now() < tokenExpiry.value
   })
 
-  // 4. Actions
   /**
    * Stores authentication data from successful login response.
    * useStorage automatically persists tokens to localStorage.

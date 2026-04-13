@@ -2,6 +2,7 @@ import { defineConfig } from 'vite'
 import vue from '@vitejs/plugin-vue'
 import tailwindcss from '@tailwindcss/vite'
 import vueDevTools from 'vite-plugin-vue-devtools'
+import { fileURLToPath } from 'node:url'
 
 // https://vite.dev/config/
 export default defineConfig({
@@ -12,7 +13,11 @@ export default defineConfig({
   ],
   resolve: {
     // Read path aliases from tsconfig.json (TypeScript 6.0+ recommended)
-    tsconfigPaths: true
+    tsconfigPaths: true,
+    // Explicit alias as fallback for Vite 8 / Rolldown resolution
+    alias: {
+      '@': fileURLToPath(new URL('./src', import.meta.url)),
+    },
   },
   build: {
     rolldownOptions: {

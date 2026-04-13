@@ -2,15 +2,7 @@ import type { Router } from 'vue-router'
 import NProgress from 'nprogress'
 import 'nprogress/nprogress.css'
 import { RouteNames } from './route-names'
-
-/**
- * Check if user is authenticated.
- * Currently uses localStorage as placeholder.
- * TODO: Replace with Pinia auth store check
- */
-function isAuthenticated(): boolean {
-  return !!localStorage.getItem('token')
-}
+import { useAuthStore } from '@/stores/auth'
 
 /**
  * Setup global router guards for authentication and progress bar.
@@ -24,7 +16,8 @@ export function setupRouterGuards(router: Router) {
 
     NProgress.start()
 
-    if (to.meta.requiresAuth && !isAuthenticated()) {
+    const authStore = useAuthStore()
+    if (to.meta.requiresAuth && !authStore.isAuthenticated) {
       next({ name: RouteNames.LOGIN, query: { redirect: to.fullPath } })
       return
     }
