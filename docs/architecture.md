@@ -320,6 +320,19 @@ export async function login(credentials: LoginRequest): Promise<LoginResponse> {
 }
 ```
 
+### API Error Utility
+
+- **Location**: `src/lib/utils/api-error.ts`
+- **Functions**:
+  - `getErrorMessage(error)` — Extracts user-friendly message from API errors
+  - `isApiError(error)` — Type guard for structured API error responses
+  - `mapApiErrorCode(code)` — Maps server error codes to localized messages
+- **Usage**: Centralized error handling across auth views (LoginView, RegisterView)
+- **Benefits**:
+  - Consistent error message formatting
+  - Type-safe error handling
+  - Single source for error code mapping
+
 ## Navigation Guards
 
 ```typescript
