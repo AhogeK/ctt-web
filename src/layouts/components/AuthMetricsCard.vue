@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { onMounted, ref } from 'vue'
+import { computed, onMounted, ref } from 'vue'
 import { useTransition } from '@vueuse/core'
 import { useCardTilt } from '@/composables/useCardTilt'
 
@@ -17,35 +17,47 @@ const sparklineData = [35, 55, 20, 70, 45, 85, 60, 40, 90, 50, 75, 30]
 
 /** Animated counter targets */
 const targetHours = 342
-const targetCommits = 2400
+const targetProjects = 28
 const targetStreak = 12
 
 /** Source refs that drive the animated transitions */
 const hoursSource = ref(0)
-const commitsSource = ref(0)
+const projectsSource = ref(0)
 const streakSource = ref(0)
 
+/** Spring-like overshoot cubic-bezier for premium feel */
+const springEasing: [number, number, number, number] = [0.34, 1.56, 0.64, 1]
+
 /** Smooth number transitions using VueUse useTransition with custom cubic-bezier curve */
-const animatedHours = useTransition(hoursSource, {
+const animatedHoursRaw = useTransition(hoursSource, {
   duration: 1500,
-  easing: [0.25, 0.1, 0.25, 1],
+  easing: springEasing,
 })
 
-const animatedCommits = useTransition(commitsSource, {
+const animatedProjectsRaw = useTransition(projectsSource, {
   duration: 1500,
-  easing: [0.25, 0.1, 0.25, 1],
+  easing: springEasing,
 })
 
-const animatedStreak = useTransition(streakSource, {
+const animatedStreakRaw = useTransition(streakSource, {
   duration: 1500,
-  easing: [0.25, 0.1, 0.25, 1],
+  easing: springEasing,
 })
 
-/** Trigger counter animations on mount by setting source values */
+/** Round to integers for clean display during animation */
+const animatedHours = computed(() => Math.round(animatedHoursRaw.value))
+const animatedProjects = computed(() => Math.round(animatedProjectsRaw.value))
+const animatedStreak = computed(() => Math.round(animatedStreakRaw.value))
+
+/** Trigger counter animations on mount with staggered delays */
 onMounted(() => {
   hoursSource.value = targetHours
-  commitsSource.value = targetCommits
-  streakSource.value = targetStreak
+  setTimeout(() => {
+    projectsSource.value = targetProjects
+  }, 150)
+  setTimeout(() => {
+    streakSource.value = targetStreak
+  }, 300)
 })
 </script>
 
@@ -79,9 +91,9 @@ onMounted(() => {
         </div>
         <div class="auth-metrics__counter">
           <span class="auth-metrics__counter-value auth-metrics__counter-value--accent">{{
-            animatedCommits
+            animatedProjects
           }}</span>
-          <span class="auth-metrics__counter-label">Commits</span>
+          <span class="auth-metrics__counter-label">Projects</span>
         </div>
         <div class="auth-metrics__counter">
           <span class="auth-metrics__counter-value auth-metrics__counter-value--green"
