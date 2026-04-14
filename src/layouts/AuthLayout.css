@@ -418,7 +418,9 @@
   background-image:
     linear-gradient(rgba(255, 255, 255, 0.02) 1px, transparent 1px),
     linear-gradient(90deg, rgba(255, 255, 255, 0.02) 1px, transparent 1px);
-  background-size: 32px 32px, 32px 32px;
+  background-size:
+    32px 32px,
+    32px 32px;
   pointer-events: none;
   z-index: -1;
   mask-image: radial-gradient(ellipse 90% 70% at 55% 50%, black 50%, transparent 100%);
@@ -428,8 +430,7 @@
 .auth-visual__stars {
   position: absolute;
   inset: 0;
-  background-image:
-    radial-gradient(circle, rgba(255, 255, 255, 0.22) 1px, transparent 1px);
+  background-image: radial-gradient(circle, rgba(255, 255, 255, 0.22) 1px, transparent 1px);
   background-size: 32px 32px;
   background-position: 16px 16px;
   pointer-events: none;
@@ -446,8 +447,7 @@
 }
 
 :root:not(.dark) .auth-visual__stars {
-  background-image:
-    radial-gradient(circle, rgba(94, 106, 210, 0.18) 1px, transparent 1px);
+  background-image: radial-gradient(circle, rgba(94, 106, 210, 0.18) 1px, transparent 1px);
   mask-image: radial-gradient(ellipse 90% 70% at 55% 50%, black 50%, transparent 100%);
   -webkit-mask-image: radial-gradient(ellipse 90% 70% at 55% 50%, black 50%, transparent 100%);
 }
