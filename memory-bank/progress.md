@@ -38,7 +38,8 @@
 
 ## In Progress
 
-- [ ] Auth pages premium redesign (3D effects, mesh gradients, isometric visuals) — AuthLayout.vue being redesigned
+- [x] Auth pages premium redesign (mesh gradients, isometric visuals) — AuthLayout.vue base visual effects complete at beta.41, PasswordStrengthMeter UX improved (neutral state when empty in 0.5.0-beta.32)
+- [x] AuthLayout.vue component split (0.5.0-beta.46) — 1773→52 lines, 4 child components + external CSS
 
 ## Backlog
 
