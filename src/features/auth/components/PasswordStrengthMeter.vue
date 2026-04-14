@@ -75,10 +75,13 @@ function textColor(rule: Rule): string {
     <!-- Progress bar: hidden when empty, shows colored bar with glow when active -->
     <div class="h-1.5 w-full overflow-hidden rounded-full bg-gray-100 dark:bg-white/6">
       <div
-        v-if="showProgress"
         class="h-full rounded-full transition-all duration-500 ease-out"
         :class="[strengthColor, { 'shadow-[0_0_8px_2px]': true, [glowColor]: true }]"
-        :style="{ width: `${strengthPercentage}%` }"
+        :style="{
+          width: showProgress ? `${strengthPercentage}%` : '0%',
+          opacity: showProgress ? 1 : 0,
+          maxHeight: showProgress ? '100%' : '0',
+        }"
       />
     </div>
 
