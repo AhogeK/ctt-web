@@ -21,6 +21,11 @@
       "sourceType": "github",
       "computedHash": "a2fe47d24b3fd8e52faef731fff099c557e698083cd644b2e5695cc4dd8c7715"
     },
+    "claude-api": {
+      "source": "anthropics/skills",
+      "sourceType": "github",
+      "computedHash": "930d658d9af0bbad9eb92b50a03b43c2a77ca6f41b1e198e188f2c1aea6f7b11"
+    },
     "doc-coauthoring": {
       "source": "anthropics/skills",
       "sourceType": "github",
