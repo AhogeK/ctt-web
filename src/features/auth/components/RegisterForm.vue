@@ -5,6 +5,7 @@ import { RegisterFormSchema, type RegisterRequest } from '@/lib/schemas/auth.sch
 import { FormField, FormItem, FormLabel, FormControl, FormMessage } from '@/components/ui/form'
 import { Input } from '@/components/ui/input'
 import { Button } from '@/components/ui/button'
+import { cn } from '@/lib/utils'
 import PasswordStrengthMeter from './PasswordStrengthMeter.vue'
 
 const emit = defineEmits<{
@@ -28,7 +29,7 @@ const onSubmit = form.handleSubmit((values) => {
 </script>
 
 <template>
-  <form @submit="onSubmit" class="flex flex-col gap-5">
+  <form @submit="onSubmit" class="flex flex-col gap-3 pt-6">
     <FormField v-slot="{ componentField }" name="email">
       <FormItem>
         <FormLabel
@@ -40,7 +41,15 @@ const onSubmit = form.handleSubmit((values) => {
           <Input
             type="email"
             placeholder="you@example.com"
-            class="h-11 rounded-md border border-[#d0d6e0] bg-[#f3f4f5] text-[#1a1a2e] placeholder:text-[#8a8f98] transition-all duration-200 focus:border-[#5e6ad2] focus:bg-white focus:ring-2 focus:ring-[#5e6ad2]/20 dark:border-white/[0.08] dark:bg-white/[0.02] dark:text-[#f7f8f8] dark:placeholder:text-[#62666d] dark:focus:border-[#5e6ad2] dark:focus:bg-white/[0.04] dark:focus:ring-[#5e6ad2]/25"
+            :class="
+              cn(
+                'h-11 rounded-md border border-[#d0d6e0] bg-[#f3f4f5] text-[#1a1a2e]',
+                'placeholder:text-[#8a8f98] transition-all duration-200',
+                'focus:border-[#5e6ad2] focus:bg-white focus:ring-2 focus:ring-[#5e6ad2]/20',
+                'dark:border-white/8 dark:bg-white/2 dark:text-[#f7f8f8] dark:placeholder:text-[#62666d]',
+                'dark:focus:border-[#5e6ad2] dark:focus:bg-white/4 dark:focus:ring-[#5e6ad2]/25',
+              )
+            "
             v-bind="componentField"
           />
         </FormControl>
@@ -58,7 +67,15 @@ const onSubmit = form.handleSubmit((values) => {
         <FormControl>
           <Input
             placeholder="Your name"
-            class="h-11 rounded-md border border-[#d0d6e0] bg-[#f3f4f5] text-[#1a1a2e] placeholder:text-[#8a8f98] transition-all duration-200 focus:border-[#5e6ad2] focus:bg-white focus:ring-2 focus:ring-[#5e6ad2]/20 dark:border-white/[0.08] dark:bg-white/[0.02] dark:text-[#f7f8f8] dark:placeholder:text-[#62666d] dark:focus:border-[#5e6ad2] dark:focus:bg-white/[0.04] dark:focus:ring-[#5e6ad2]/25"
+            :class="
+              cn(
+                'h-11 rounded-md border border-[#d0d6e0] bg-[#f3f4f5] text-[#1a1a2e]',
+                'placeholder:text-[#8a8f98] transition-all duration-200',
+                'focus:border-[#5e6ad2] focus:bg-white focus:ring-2 focus:ring-[#5e6ad2]/20',
+                'dark:border-white/8 dark:bg-white/2 dark:text-[#f7f8f8] dark:placeholder:text-[#62666d]',
+                'dark:focus:border-[#5e6ad2] dark:focus:bg-white/4 dark:focus:ring-[#5e6ad2]/25',
+              )
+            "
             v-bind="componentField"
           />
         </FormControl>
@@ -77,7 +94,15 @@ const onSubmit = form.handleSubmit((values) => {
           <Input
             type="password"
             placeholder="Create a strong password"
-            class="h-11 rounded-md border border-[#d0d6e0] bg-[#f3f4f5] text-[#1a1a2e] placeholder:text-[#8a8f98] transition-all duration-200 focus:border-[#5e6ad2] focus:bg-white focus:ring-2 focus:ring-[#5e6ad2]/20 dark:border-white/[0.08] dark:bg-white/[0.02] dark:text-[#f7f8f8] dark:placeholder:text-[#62666d] dark:focus:border-[#5e6ad2] dark:focus:bg-white/[0.04] dark:focus:ring-[#5e6ad2]/25"
+            :class="
+              cn(
+                'h-11 rounded-md border border-[#d0d6e0] bg-[#f3f4f5] text-[#1a1a2e]',
+                'placeholder:text-[#8a8f98] transition-all duration-200',
+                'focus:border-[#5e6ad2] focus:bg-white focus:ring-2 focus:ring-[#5e6ad2]/20',
+                'dark:border-white/8 dark:bg-white/2 dark:text-[#f7f8f8] dark:placeholder:text-[#62666d]',
+                'dark:focus:border-[#5e6ad2] dark:focus:bg-white/4 dark:focus:ring-[#5e6ad2]/25',
+              )
+            "
             v-bind="componentField"
           />
         </FormControl>
@@ -97,7 +122,15 @@ const onSubmit = form.handleSubmit((values) => {
           <Input
             type="password"
             placeholder="Repeat your password"
-            class="h-11 rounded-md border border-[#d0d6e0] bg-[#f3f4f5] text-[#1a1a2e] placeholder:text-[#8a8f98] transition-all duration-200 focus:border-[#5e6ad2] focus:bg-white focus:ring-2 focus:ring-[#5e6ad2]/20 dark:border-white/[0.08] dark:bg-white/[0.02] dark:text-[#f7f8f8] dark:placeholder:text-[#62666d] dark:focus:border-[#5e6ad2] dark:focus:bg-white/[0.04] dark:focus:ring-[#5e6ad2]/25"
+            :class="
+              cn(
+                'h-11 rounded-md border border-[#d0d6e0] bg-[#f3f4f5] text-[#1a1a2e]',
+                'placeholder:text-[#8a8f98] transition-all duration-200',
+                'focus:border-[#5e6ad2] focus:bg-white focus:ring-2 focus:ring-[#5e6ad2]/20',
+                'dark:border-white/8 dark:bg-white/2 dark:text-[#f7f8f8] dark:placeholder:text-[#62666d]',
+                'dark:focus:border-[#5e6ad2] dark:focus:bg-white/4 dark:focus:ring-[#5e6ad2]/25',
+              )
+            "
             v-bind="componentField"
           />
         </FormControl>
@@ -107,7 +140,13 @@ const onSubmit = form.handleSubmit((values) => {
 
     <Button
       type="submit"
-      class="group w-full h-11 mt-3 rounded-md bg-[#5e6ad2] text-white font-[510] text-base shadow-lg shadow-[#5e6ad2]/25 transition-all duration-200 hover:bg-[#7170ff] hover:shadow-[#7170ff]/30 hover:scale-[1.02] active:scale-[0.98]"
+      :class="
+        cn(
+          'group w-full h-11 mt-3 rounded-md bg-[#5e6ad2] text-white font-[510] text-base',
+          'shadow-lg shadow-[#5e6ad2]/25 transition-all duration-200',
+          'hover:bg-[#7170ff] hover:shadow-[#7170ff]/30 hover:scale-[1.02] active:scale-[0.98]',
+        )
+      "
       style="font-feature-settings: 'cv01', 'ss03'"
     >
       <span class="relative z-10">Create account</span>
