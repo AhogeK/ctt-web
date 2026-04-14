@@ -2,8 +2,53 @@
 
 ## Current Status
 
-**Phase**: Live Metrics card polish — fake metric removed, animation quality improved
-**Version**: 0.5.0-beta.56 (2026-04-14)
+**Phase**: Tailwind class strings refactored to cn() multi-line format
+**Version**: 0.5.0-beta.67 (2026-04-14)
+
+### Tailwind Class Strings → cn() Multi-Line (0.5.0-beta.67)
+- **Issue**: Long Tailwind class strings in Vue templates (300+ chars) exceed printWidth, hurt readability
+- **Root Cause**: oxfmt collapses class attribute string internal newlines into single line
+- **Fix**: Replaced `class="..."` with `:class="cn(...)"` multi-line arrays in LoginForm.vue and RegisterForm.vue
+- **Strategy**: Pure static strings use cn() for line-break preservation (oxfmt respects cn() multi-line structure)
+- **Result**: All lines under 100 chars, oxfmt preserves formatting, vue-tsc 0 errors
+
+### ESLint Max Line Length & Fix (0.5.0-beta.66)
+- **Issue**: Long Tailwind class strings in Vue templates (300+ chars) hurt readability
+- **Fix 1**: Added `vue/max-len` rule to `eslint.config.ts` (placed after `eslintConfigPrettier`)
+- **Fix 2**: Refactored long class strings in `LoginForm.vue` and `RegisterForm.vue` into multi-line format
+- **Config**: `code: 120, template: 120`, ignores comments/URLs/strings/template literals
+- **Result**: Zero long-line violations; future violations blocked by ESLint
+
+### Auth Form SonarQube Warning (0.5.0-beta.64)
+- **Issue**: SonarQube Web:S6853 warning on `FormLabel.vue` (false positive due to `<slot />`)
+- **Decision**: User prefers global warning suppression over inline `<!-- sonarqube-disable -->` comments
+- **Action**: Reverted inline suppression; user will configure global exclusion in SonarQube settings
+- **Result**: Clean code, zero inline suppression comments
+
+### Auth Form Label Color Fix (0.5.0-beta.62)
+- **Issue**: Form labels (Email, DisplayName, Password) turned red in light mode when field had validation errors
+- **Root Cause**: `FormLabel.vue` had `data-[error=true]:text-destructive` — shadcn default that applies red color on validation error
+- **Fix**: Removed `data-[error=true]:text-destructive` from FormLabel's class — labels keep their original `text-gray-600` / `dark:text-[#8a8f98]` color regardless of error state
+- **Result**: Labels stay neutral gray in light mode, only FormMessage shows red error text
+
+### Auth Form Zero-Jump Spacing (0.5.0-beta.61)
+- **Issue**: Validation warnings still caused slight layout jump — `min-h-[0.5rem]` (8px) insufficient for `text-sm` error text (~20px line-height)
+- **Fix 1**: Restored FormMessage to `min-h-[1.25rem]` (20px) — fully reserves space for error text, zero jump
+- **Fix 2**: Reduced form `gap-5` → `gap-3` (20px → 12px) to compensate, keeping fields紧凑
+- **Result**: Zero layout shift on validation, compact professional spacing
+
+### Auth Form Spacing Polish (0.5.0-beta.59)
+- **Issue**: "Email" label too close to subtitle ("Sign in to access your coding analytics dashboard") — visual hierarchy cramped
+- **Fix**: Added `pt-6` (24px) to LoginForm and RegisterForm `<form>` elements, creating breathing room between header subtitle and first field
+- **Result**: Improved visual hierarchy, consistent spacing across login/register
+
+### Auth Form Layout Shift Fix (0.5.0-beta.58)
+- **Issue**: Login/register input fields jump when validation warnings appear/disappear
+- **Root Cause 1**: FormMessage (vee-validate ErrorMessage) renders nothing when no error, causing grid row collapse in FormItem (grid gap-2)
+- **Fix 1**: Wrapped ErrorMessage in `<div class="min-h-[1.25rem]">` to always reserve one line of space (matching text-sm line-height)
+- **Root Cause 2**: PasswordStrengthMeter progress bar used `v-if="showProgress"` causing DOM insertion/removal jumps
+- **Fix 2**: Replaced v-if with CSS transitions (width, opacity, maxHeight) — bar always in DOM but visually hidden when empty
+- **Result**: Zero layout shift, smooth validation transitions, vue-tsc 0 errors
 
 ### Stale tsbuildinfo Cache Cleanup (0.5.0-beta.56)
 - **Issue**: 5× TS6053 "file not found" in tsconfig.app.json for deleted auth components
