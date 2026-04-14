@@ -50,7 +50,7 @@ visualization.
 
 ## 📦 Version
 
-Current: `0.5.0-beta.23` (2026-04-12) — Component extraction, shared error utility, login tests, CSRF verification
+Current: `0.5.0-beta.53` (2026-04-14) — Fixed `.auth-dashboard` missing `opacity: 0` initial state, ensuring all three cards are hidden during animation delay
 
 ## 🗺 Project Structure
 
