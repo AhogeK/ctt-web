@@ -13,11 +13,14 @@ const { name, formMessageId } = useFormField()
 </script>
 
 <template>
-  <ErrorMessage
-    :id="formMessageId"
-    data-slot="form-message"
-    as="p"
-    :name="toValue(name)"
-    :class="cn('text-destructive text-sm', props.class)"
-  />
+  <!-- Always-rendered wrapper reserves full line height to prevent layout shift -->
+  <div class="min-h-5">
+    <ErrorMessage
+      :id="formMessageId"
+      data-slot="form-message"
+      as="p"
+      :name="toValue(name)"
+      :class="cn('text-destructive text-sm', props.class)"
+    />
+  </div>
 </template>
