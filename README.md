@@ -50,7 +50,7 @@ visualization.
 
 ## 📦 Version
 
-Current: `0.5.0-beta.53` (2026-04-14) — Fixed `.auth-dashboard` missing `opacity: 0` initial state, ensuring all three cards are hidden during animation delay
+Current: `0.5.0-beta.57` (2026-04-14) — Confirmed TS6053 fix: `find . -name "*.tsbuildinfo" -delete` clears ALL stale cache (not just one file)
 
 ## 🗺 Project Structure
 
