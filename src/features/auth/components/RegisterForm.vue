@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import { watch } from 'vue'
 import { toTypedSchema } from '@vee-validate/zod'
 import { useForm, useFieldValue } from 'vee-validate'
 import { RegisterFormSchema, type RegisterRequest } from '@/lib/schemas/auth.schema'
@@ -7,6 +8,11 @@ import { Input } from '@/components/ui/input'
 import { Button } from '@/components/ui/button'
 import { cn } from '@/lib/utils'
 import PasswordStrengthMeter from './PasswordStrengthMeter.vue'
+
+const props = defineProps<{
+  /** Server-side field errors mapped to field names */
+  serverErrors?: Record<string, string>
+}>()
 
 const emit = defineEmits<{
   /** Emitted when form validation passes with user registration data */
@@ -18,6 +24,23 @@ const form = useForm({
 })
 
 const passwordValue = useFieldValue<string>('password')
+
+// Valid field names for server errors
+const VALID_FIELDS = ['email', 'displayName', 'password', 'confirmPassword'] as const
+
+// Apply server errors to form fields when they arrive
+watch(
+  () => props.serverErrors,
+  (errors) => {
+    if (!errors) return
+    for (const [field, message] of Object.entries(errors)) {
+      if (VALID_FIELDS.includes(field as (typeof VALID_FIELDS)[number])) {
+        form.setFieldError(field as (typeof VALID_FIELDS)[number], message)
+      }
+    }
+  },
+  { immediate: true },
+)
 
 const onSubmit = form.handleSubmit((values) => {
   emit('submit', {

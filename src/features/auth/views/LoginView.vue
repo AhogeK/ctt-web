@@ -1,16 +1,17 @@
 <script setup lang="ts">
-import { useRouter } from 'vue-router'
+import { useRouter, RouterLink } from 'vue-router'
 import { toast } from 'vue-sonner'
 import { useMutation } from '@tanstack/vue-query'
-import { RouterLink } from 'vue-router'
 import { login } from '@/lib/api/auth'
 import { useAuthStore } from '@/stores/auth'
 import { RouteNames } from '@/router/route-names'
-import { isApiError } from '@/lib/utils/api-error'
+import { isApiError, mapApiErrorCode } from '@/lib/utils/api-error'
+import { useCooldown } from '@/composables/useCooldown'
 import LoginForm from '../components/LoginForm.vue'
 
 const router = useRouter()
 const authStore = useAuthStore()
+const { countdown, start } = useCooldown()
 
 const mutation = useMutation({
   mutationFn: login,
@@ -21,12 +22,11 @@ const mutation = useMutation({
   onError: (error: unknown) => {
     if (isApiError(error)) {
       if (error.statusCode === 401) {
-        toast.error('Invalid credentials', {
-          description: 'Please check your email and password',
-        })
+        toast.error(mapApiErrorCode('invalid_credentials'))
       } else if (error.statusCode === 429) {
-        toast.error('Too many requests', {
-          description: 'Please wait a moment before trying again',
+        start()
+        toast.error(mapApiErrorCode('rate_limit_exceeded'), {
+          description: `Try again in ${countdown.value}s`,
         })
       } else {
         toast.error('Login failed', { description: error.message || 'Please try again later' })

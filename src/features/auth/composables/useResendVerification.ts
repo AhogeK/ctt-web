@@ -1,7 +1,7 @@
 import { ref, onUnmounted } from 'vue'
 import { toast } from 'vue-sonner'
 import { resendVerification } from '@/lib/api/auth'
-import { isApiError } from '@/lib/utils/api-error'
+import { isApiError, mapApiErrorCode } from '@/lib/utils/api-error'
 
 /**
  * Composable for resending email verification with cooldown countdown.
@@ -51,14 +51,12 @@ export function useResendVerification() {
       if (isApiError(error)) {
         if (error.statusCode === 429) {
           const retryAfter = 60
-          toast.error('Too many requests', {
+          toast.error(mapApiErrorCode('rate_limit_exceeded'), {
             description: `Please wait ${retryAfter} seconds before trying again`,
           })
           startCountdown(retryAfter)
         } else if (error.statusCode === 409 && error.error === 'USER_002') {
-          toast.info('Email already verified', {
-            description: 'Please proceed to login',
-          })
+          toast.info(mapApiErrorCode('USER_002'))
         } else {
           toast.error('Failed to resend verification email', {
             description: error.message || 'Please try again later',
