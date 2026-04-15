@@ -1,29 +1,34 @@
 <script setup lang="ts">
+import { ref } from 'vue'
 import { useRouter } from 'vue-router'
 import { toast } from 'vue-sonner'
 import { useMutation } from '@tanstack/vue-query'
 import { register } from '@/lib/api/auth'
 import { RouteNames } from '@/router/route-names'
-import { isApiError } from '@/lib/utils/api-error'
+import { isApiError, mapApiErrorCode } from '@/lib/utils/api-error'
+import { useCooldown } from '@/composables/useCooldown'
 import RegisterForm from '../components/RegisterForm.vue'
 
 const router = useRouter()
+const { countdown, isActive, start } = useCooldown()
+const serverErrors = ref<Record<string, string>>()
 
 const mutation = useMutation({
   mutationFn: register,
   onSuccess: () => {
+    serverErrors.value = undefined
     router.push({ name: RouteNames.REGISTER_SUCCESS })
   },
   onError: (error: unknown) => {
+    serverErrors.value = undefined
     if (isApiError(error)) {
       const data = error.data as { error?: string } | undefined
       if (error.statusCode === 409 && data?.error === 'USER_001') {
-        toast.error('This email is already registered', {
-          description: 'Please sign in or use a different email',
-        })
+        serverErrors.value = { email: mapApiErrorCode('USER_001') }
       } else if (error.statusCode === 429) {
-        toast.error('Too many requests', {
-          description: 'Please wait a moment before trying again',
+        start()
+        toast.error(mapApiErrorCode('rate_limit_exceeded'), {
+          description: isActive.value ? `Try again in ${countdown.value}s` : undefined,
         })
       } else {
         toast.error('Registration failed', {
@@ -83,7 +88,7 @@ const handleSubmit = (data: Parameters<typeof register>[0]) => {
     </div>
 
     <!-- Form -->
-    <RegisterForm @submit="handleSubmit" />
+    <RegisterForm :server-errors="serverErrors" @submit="handleSubmit" />
 
     <!-- Sign In Link -->
     <div class="pt-2 text-center">
