@@ -2,8 +2,39 @@
 
 ## Current Status
 
-**Phase**: Tailwind class strings refactored to cn() multi-line format
-**Version**: 0.5.0-beta.67 (2026-04-14)
+**Phase**: Auth spacing + Tailwind v4 specificity fix + error handling
+**Version**: 0.5.0-beta.68 (2026-04-15)
+
+### Tailwind v4 Specificity Fix + Auth Spacing (0.5.0-beta.68)
+- **Issue**: Tailwind spacing utilities (`mb-*`, `mt-*`, `space-y-*`) not applying — computed margin was 0px
+- **Root Cause**: Unlayered CSS reset `* { margin: 0 }` in `base.css` had higher specificity than Tailwind's `@layer utilities`
+- **Fix**: Removed `margin: 0` from unlayered reset; Tailwind v4 Preflight handles this correctly
+- **Result**: `mb-8`, `mb-10`, `mb-6` utilities now apply correctly (32px, 40px, 24px)
+- **Files**: `base.css`, `RegisterSuccessView.vue`, `VerifyEmailView.vue` (removed scoped CSS workaround)
+
+### Auth Spacing + Layout Consistency (0.5.0-beta.73)
+- **Issue 1**: RegisterSuccessView/VerifyEmailView elements cramped; Tailwind `space-y-*`/`mb-*` utilities not generating CSS
+- **Fix 1**: Added scoped `<style>` blocks with explicit margin/gap classes (`.auth-spacing-*`, `.resend-section`)
+- **Issue 2**: Resend section internal elements (title/input/button) stuck together
+- **Fix 2**: `.resend-section { display: flex; flex-direction: column; gap: 0.75rem }` — native CSS gap, no Tailwind dependency
+- **Issue 3**: Layout inconsistent with Login/Register (left panel was hidden)
+- **Fix 3**: Restored full AuthLayout left-right split for all auth pages — design consistency
+- **Result**: Left 3D cards + right form on all auth pages; proper spacing via scoped CSS
+
+### Auth Layout Fix (0.5.0-beta.69)
+- **Issue**: RegisterSuccessView and VerifyEmailView rendered inside AuthLayout's right panel, with left 3D cards still visible — cramped and inconsistent
+- **Fix 1**: Moved these two routes out of AuthLayout children to top-level routes (no parent layout)
+- **Fix 2**: Wrapped both views in centered layout (`flex min-h-screen items-center justify-center bg-[#0a0a0f]`)
+- **Result**: Clean centered pages matching auth visual style, no left panel interference
+
+### Error Mapping + Inline Server Errors (0.5.0-beta.68)
+- **Issue 1**: USER_001 (email already registered) showed as toast instead of inline form error
+- **Fix 1**: RegisterForm accepts `serverErrors` prop, watches it and calls `form.setFieldError()` to show inline on email field
+- **Issue 2**: 429 rate limit had no cooldown countdown in RegisterView/LoginView
+- **Fix 2**: Created `useCooldown` composable (generic countdown timer), added to both views
+- **Issue 3**: Hardcoded error messages instead of using `mapApiErrorCode` utility
+- **Fix 3**: RegisterView, LoginView, VerifyEmailView, useResendVerification all use `mapApiErrorCode`
+- **Result**: USER_001 → inline field error, 429 → toast with countdown, consistent error messages
 
 ### Tailwind Class Strings → cn() Multi-Line (0.5.0-beta.67)
 - **Issue**: Long Tailwind class strings in Vue templates (300+ chars) exceed printWidth, hurt readability
