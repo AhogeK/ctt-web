@@ -19,6 +19,14 @@ export default defineConfig({
       '@': fileURLToPath(new URL('./src', import.meta.url)),
     },
   },
+  server: {
+    proxy: {
+      '/api': {
+        target: 'http://192.168.5.178:8004/ctt-server',
+        changeOrigin: true,
+      },
+    },
+  },
   build: {
     rolldownOptions: {
       output: {
