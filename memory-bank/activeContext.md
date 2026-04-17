@@ -2,15 +2,79 @@
 
 ## Current Status
 
-**Phase**: Auth spacing + Tailwind v4 specificity fix + error handling
-**Version**: 0.5.0-beta.68 (2026-04-15)
+**Phase**: Self-learning skill creation
+**Version**: 0.5.0-beta.74 (2026-04-17)
 
-### Tailwind v4 Specificity Fix + Auth Spacing (0.5.0-beta.68)
-- **Issue**: Tailwind spacing utilities (`mb-*`, `mt-*`, `space-y-*`) not applying — computed margin was 0px
-- **Root Cause**: Unlayered CSS reset `* { margin: 0 }` in `base.css` had higher specificity than Tailwind's `@layer utilities`
-- **Fix**: Removed `margin: 0` from unlayered reset; Tailwind v4 Preflight handles this correctly
-- **Result**: `mb-8`, `mb-10`, `mb-6` utilities now apply correctly (32px, 40px, 24px)
-- **Files**: `base.css`, `RegisterSuccessView.vue`, `VerifyEmailView.vue` (removed scoped CSS workaround)
+### Self-Learning Skill Creation (0.5.0-beta.74)
+
+**Date**: 2026-04-17
+
+**Trigger**: Toast capture issue during beta.73 fix verification — toast disappeared too fast for screenshot
+
+**Solution**: Created `transient-ui-capture` skill documenting browser-use chain command pattern:
+- `browser-use click 20 && browser-use screenshot` — click triggers toast, screenshot captures immediately
+- Captures ephemeral UI elements (toast, animations, tooltips) that auto-dismiss
+
+**Files**:
+- `.agents/skills/transient-ui-capture/SKILL.md` — new skill file
+- `AGENTS.md` — added R15 (Self-Learning rule)
+
+**Verified**:
+- ✅ Skill file created with problem/solution structure
+- ✅ R15 added to AGENTS.md defining self-learning trigger conditions
+
+### Toast CSS Import Fix (0.5.0-beta.73)
+
+**Date**: 2026-04-17
+
+**Issue**: vue-sonner toast notifications appeared as plain text without styling - no background, borders, or visual feedback
+
+**Root Cause**: Missing CSS import for vue-sonner styles. The library requires explicit style import for proper toast appearance.
+
+**Fix**: Added `import 'vue-sonner/style.css'` to `src/main.ts` before app mount
+
+**Files**:
+- `src/main.ts` - added vue-sonner style import
+
+**Verified**:
+- ✅ Toast notifications display with proper styling (background, borders, shadows)
+- ✅ Light/dark mode toast variants work correctly
+- ✅ All existing toast calls (copy success, error messages) render properly
+
+## RegisterSuccessView Copy Fix + Email Truncation (0.5.0-beta.72)
+
+**Date**: 2026-04-17
+
+**Changes**:
+1. **useClipboard fix**: Changed from `useClipboard()` to `useClipboard({ source: emailRef })` per VueUse docs - `copied` ref now auto-updates
+2. **Email truncation**: `truncatedEmail` computed truncates local part to 15 chars + `...` + domain when > 30 chars total
+3. **Hover tooltip**: `title` attribute shows full email on hover
+
+**Files**:
+- `src/features/auth/views/RegisterSuccessView.vue` — useClipboard fix + truncation logic
+
+**Verified**:
+- ✅ Copy button icon changes (Copy → Check → Copy)
+- ✅ Toast "Email address copied!" appears
+- ✅ Long emails truncated display
+- ✅ Hover tooltip shows full email
+
+### RegisterSuccessView Email Display + Copy (0.5.0-beta.71)
+- **Issue**: Email address broke across lines, confusing users
+- **Fix**: Email on separate line with `whitespace-nowrap`, added click-to-copy button using VueUse `useClipboard` + `vue-sonner` toast
+- **Result**: Email never wraps, one-click copy with visual feedback (Copy → Check icon toggle)
+
+### RegisterSuccessView Email Flow Fix (0.5.0-beta.70)
+- **Issue**: User had to re-enter email in RegisterSuccessView for resend — redundant UX
+- **Root Cause**: RegisterView didn't pass email to RegisterSuccessView; email input field collected duplicate data
+- **Fix**: RegisterView passes email via route query; RegisterSuccessView displays email instead of input
+- **Result**: Streamlined UX — no email input needed after registration
+
+### Auth Error Mapping Style Polish (0.5.0-beta.69)
+- **Issue**: RegisterView 429 toast description used redundant `isActive.value` ternary (`isActive.value ? ... : undefined`), while LoginView used direct template literal — style inconsistency
+- **Root Cause**: `start()` always called before toast, so `countdown > 0` and `isActive` is always `true` — false branch unreachable
+- **Fix**: Removed ternary, aligned RegisterView with LoginView pattern. Removed unused `isActive` destructure from `useCooldown()`
+- **Result**: Both views use identical `description: \`Try again in ${countdown.value}s\`` pattern
 
 ### Auth Spacing + Layout Consistency (0.5.0-beta.73)
 - **Issue 1**: RegisterSuccessView/VerifyEmailView elements cramped; Tailwind `space-y-*`/`mb-*` utilities not generating CSS
@@ -103,134 +167,8 @@
   - Changed easing from `[0.25, 0.1, 0.25, 1]` to spring overshoot `[0.34, 1.56, 0.64, 1]`
 - **Result**: vue-tsc 0 errors, build passes, animation feels premium with staggered integer counting
 
-### Dashboard Initial State Fix (0.5.0-beta.53)
-- **Issue**: "最上面的卡面在刷新后的初始状态依旧在，理应三张卡初始都不在"
-- **Root Cause**: `.auth-dashboard` missing `opacity: 0` — animation has `animation-delay: 0.1s`, during delay element defaults to `opacity: 1` (visible)
-- **Fix**: Added `opacity: 0` to `.auth-dashboard` (line 527), matching `.auth-card-3d` which already had it
-- **Result**: All three cards hidden during animation delay, no flicker on page refresh
-
-### AuthMetricsCard.vue Easing Restoration (0.5.0-beta.52)
-- **Issue**: `easeOutQuart` function produced incorrect animation feel compared to original
-- **Fix**: Restored original `[0.25, 0.1, 0.25, 1]` cubic-bezier array, assigned to `easing` option (v14+ API)
-- **Result**: Animation matches original design, zero deprecation warnings
-
-### AuthMetricsCard.vue API Fix (0.5.0-beta.51)
-- **Issue**: `transition` option in `useTransition` is deprecated
-- **Fix**: Renamed `transition` to `easing` (VueUse v14+ API change)
-- **Result**: Zero deprecation warnings, build passes
-
-### AuthMetricsCard.vue Deprecation Fix (0.5.0-beta.50)
-- **Issue**: 3 warnings for deprecated `transition: [0.25, 0.1, 0.25, 1]` array syntax in `useTransition`
-- **Root Cause**: VueUse v14 deprecated cubic-bezier array syntax in favor of function-based easing
-- **Fix**: Defined local `easeOutQuart` function (`n => 1 - (1 - n) ** 4`) and passed it to `transition` option
-- **Result**: Zero deprecation warnings, identical animation behavior
-
-### WCAG Contrast False Positive Fix (0.5.0-beta.49)
-- **Issue**: Linter flagged `#9ca3af` text in `.auth-dashboard__url` as low contrast against `rgba(255,255,255,0.04)` background
-- **Root Cause**: Static analyzer cannot compute contrast on semi-transparent backgrounds, defaults to white assumption
-- **Fix**: Replaced `rgba(255,255,255,0.04)` with `rgb(34,35,36)` (opaque equivalent computed from card bg `rgb(25,26,27)` + overlay)
-- **Result**: Visual appearance unchanged, linter now correctly identifies dark background and passes contrast check
-
-### AuthLayout.css Linter Fixes (0.5.0-beta.48)
-- **8 errors fixed**: Declared `--sheen-x` / `--sheen-y` CSS custom properties at `.auth-root` level (set at runtime by `useCardTilt` composable, linter couldn't resolve them statically)
-- **4 warnings fixed**: Removed redundant `%` unit from `0%` values in `@keyframes mesh-shift` (`0%` → `0`)
-- **1 warning**: Contrast false positive on `#9ca3af` text — linter computed against transparent `rgba()` background instead of actual `rgb(25,26,27)` card background
-- **Result**: 13 → 0 problems in AuthLayout.css
-
-### Dead Code Cleanup (0.5.0-beta.47)
-- **Deleted 5 unused components** from `src/features/auth/components/`:
-  - `AuthDashboardMockup.vue` — 38 linter warnings (scoped `:root:not(.dark)` broken, contrast issues, deprecated symbols)
-  - `AuthFeatureShowcase.vue` — 1 linter warning (unused selector)
-  - `AuthCodePreview.vue` — unused
-  - `AuthMetricsCard.vue` — duplicate of `src/layouts/components/AuthMetricsCard.vue`
-  - `AuthTerminalCard.vue` — duplicate of `src/layouts/components/AuthTerminalCard.vue`
-- **Remaining active components**: `LoginForm.vue`, `RegisterForm.vue`, `PasswordStrengthMeter.vue`
-- **Result**: Zero linter warnings in auth components directory
-
-### AuthLayout.vue Component Split (0.5.0-beta.46)
-- **Problem**: 1773-line monolithic file (SonarQube complexity violation)
-- **Solution**: Extracted template into 4 child components, CSS to external file
-- **CSS Strategy**: `<style src="./AuthLayout.css">` (non-scoped) to preserve:
-  - `:root:not(.dark)` theme selectors (scoped would break with `[data-v-xxx]:root`)
-  - 3D perspective context (`.auth-visual` perspective + `.auth-3d-scene` preserve-3d)
-  - All dark/light mode variants in single stylesheet
-- **Components Created**:
-  - `AuthBackground.vue` (33 lines) — mesh gradient, noise SVG, 6 orbs
-  - `AuthDashboard.vue` (142 lines) — browser chrome, heatmap, stats, tilt
-  - `AuthMetricsCard.vue` (142 lines) — animated counters, sparkline, language bars, tilt
-  - `AuthTerminalCard.vue` (72 lines) — terminal stats, blinking cursor, tilt
-- **AuthLayout.vue**: 1773 → 52 lines (97% reduction)
-- **AuthLayout.css**: 1353 lines (extracted, non-scoped)
-- **Verification**: `pnpm build` passes (628ms), vue-tsc 0 errors
-
-### AuthLayout.vue SonarQube/IDE Warning Fixes (0.5.0-beta.45)
-- **Contrast Issues Fixed**:
-  - Line 1079: `.auth-dashboard__url` `#8a8f98` → `#9ca3af` (WCAG AA compliant)
-  - Line 1561: `.auth-metrics__lang-pct` `#8a8f98` → `#9ca3af` (consistent)
-  - Line 1659: `.auth-terminal__text` `#8a8f98` → `#9ca3af` (consistent)
-- **Float px Fixed**: Line 696 `padding: 1.5px` → `padding: 1px` (added comment)
-- **Documented Intentional**: `-webkit-mask-composite: xor` + `mask-composite: exclude` cross-browser pair
-- **Result**: Build passes, lint clean, visual unchanged
-
-### AuthTerminalCard.vue TS18048 Fix (0.5.0-beta.44)
-- **Issue**: `TS18048: '__VLS_ctx.lines' is possibly 'undefined'` — optional prop used directly in template
-- **Fix**: Added computed `terminalLines = computed(() => props.lines ?? [])`, replaced template usage
-- **Result**: vue-tsc passes, build clean
-
-### PasswordStrengthMeter.vue Lint Fixes (0.5.0-beta.43)
-- **Issues Fixed**:
-  1. `/[0-9]/` → `/\d/` (line 22) — concise character class syntax
-  2. `dark:bg-white/[0.06]` → `dark:bg-white/6` (line 69) — simplified Tailwind opacity
-- **Result**: Clean lint, build passes
-
-### useCardTilt.ts Lint Fixes (0.5.0-beta.42)
-- **Issues Fixed**:
-  1. `depthMultiplier = 1.0` → `depthMultiplier = 1` (zero fraction removed)
-  2. `lerp` function moved to module scope (lines 3-5)
-  3. Redundant `const tz = translateZ` eliminated, using `translateZ` directly
-- **Result**: Clean lint, build passes
-
-### AuthLayout 3D Card Effects (0.5.0-beta.41) — BASE STATE
-- Shared perspective `.auth-visual`, 3D scene `.auth-3d-scene` with `preserve-3d`
-- Z-layering: Dashboard +40px, Metrics 0, Terminal -60px; each with unique base rotation
-- Parallax: closer cards respond more (depthMultiplier: Dashboard 1.2x, Metrics 0.8x, Terminal 0.5x)
-- `useCardTilt` options API: `baseRotateX/Y/Z`, `translateZ`, `depthMultiplier` → computed `transform`
-
-### AuthLayout Left Panel Font Blur Fix (0.5.0-beta.39)
-- **User Feedback**: "左侧三张卡片里的字体变模糊了，原先不是这样的，原先非常清晰"
-- **Root Cause**: Two parent containers had redundant `perspective: 1000px`:
-  - `.auth-visual` (line 730) — promoted Dashboard + all children to GPU compositing layer
-  - `.auth-cards-container` (line 1100) — promoted Live Metrics + Terminal cards to GPU layer
-  - GPU compositing disables subpixel antialiasing in Chromium → font blur
-  - Child elements already have `transform: perspective(...) rotateX(...) rotateY(...)` — parent perspective was redundant
-- **Fix**: Removed `perspective: 1000px` from both parent containers
-  - `.auth-visual`: removed `perspective: 1000px` (child `.auth-dashboard` has its own perspective in transform)
-  - `.auth-cards-container`: removed `perspective: 1000px` (child `.auth-card-3d` has its own rotateX/Y)
-- **Result**: Fonts render sharply again, 3D tilt animations preserved (children handle their own perspective)
-
-### PasswordStrengthMeter Polish (beta.34 ~ beta.38)
-- Unified layout: icons always rendered (no v-if jump), neutral gray when empty
-- Empty password false-pass fix: `pwd.length > 0` guard on max-length and allowed-chars rules
-- Typography/spacing: caption-sized rules, proper hierarchy, DESIGN.md colors, breathing room
-
-## Recent Changes Summary (2026-04-13 ~ 2026-04-14)
-
-### Auth Visual Cards (beta.29 ~ beta.31)
-- Removed `backdrop-filter` from all auth cards (root cause of grid-lines-showing-through)
-- Negative z-index for grid (-1) and stars (-2) layers
-- Edge gradient mask on grid layer for soft fade
-
-### PasswordStrengthMeter (beta.32 ~ beta.38)
-- Complete redesign: hidden progress bar when empty, unified icon layout (no v-if jump)
-- Empty password false-pass fix: added `pwd.length > 0` guard to max-length and allowed-chars rules
-- Typography + spacing polish: caption-sized rules, proper hierarchy, DESIGN.md colors
-
-### AuthLayout Component Split (beta.46 ~ beta.53)
-- 1773-line monolith → 52 lines + 4 child components + external CSS
-- Dead code cleanup: deleted 5 unused auth components
-- Font blur fix: removed redundant parent `perspective` causing GPU compositing
-- Dashboard initial state: added `opacity: 0` to prevent pre-animation flicker
-
-### Code Review Fixes (2026-04-12)
-- Token key → `STORAGE_KEYS.ACCESS_TOKEN`, type guards → `isApiError()`, 7 password rules
-- systemPatterns.md pruned 237→147 lines
+### Auth Error Mapping (beta.68 ~ beta.69)
+- USER_001 → inline form error via `serverErrors` prop + `form.setFieldError()`
+- USER_002 → inline error message on VerifyEmailView
+- 429 → toast with cooldown countdown via `useCooldown` composable
+- Style polish: unified RegisterView/LoginView 429 toast pattern, removed redundant `isActive` ternary
