@@ -12,12 +12,13 @@ import RegisterForm from '../components/RegisterForm.vue'
 const router = useRouter()
 const { countdown, start } = useCooldown()
 const serverErrors = ref<Record<string, string>>()
+const registeredEmail = ref('')
 
 const mutation = useMutation({
   mutationFn: register,
   onSuccess: () => {
     serverErrors.value = undefined
-    router.push({ name: RouteNames.REGISTER_SUCCESS })
+    router.push({ name: RouteNames.REGISTER_SUCCESS, query: { email: registeredEmail.value } })
   },
   onError: (error: unknown) => {
     serverErrors.value = undefined
@@ -42,6 +43,7 @@ const mutation = useMutation({
 })
 
 const handleSubmit = (data: Parameters<typeof register>[0]) => {
+  registeredEmail.value = data.email
   mutation.mutate(data)
 }
 </script>
