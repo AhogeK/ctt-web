@@ -9,5 +9,6 @@ export default {
     'type-case': [2, 'always', 'lower-case'],
     'subject-max-length': [2, 'always', 72],
     'scope-case': [2, 'always', 'lower-case'],
+    'body-max-line-length': [0, 'always', 100],
   },
 }
