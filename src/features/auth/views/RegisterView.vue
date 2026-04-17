@@ -3,22 +3,27 @@ import { ref } from 'vue'
 import { useRouter } from 'vue-router'
 import { toast } from 'vue-sonner'
 import { useMutation } from '@tanstack/vue-query'
+import { useSessionStorage } from '@vueuse/core'
 import { register } from '@/lib/api/auth'
 import { RouteNames } from '@/router/route-names'
 import { isApiError, mapApiErrorCode } from '@/lib/utils/api-error'
 import { useCooldown } from '@/composables/useCooldown'
+import { SESSION_STORAGE_KEYS } from '@/stores/auth'
 import RegisterForm from '../components/RegisterForm.vue'
 
 const router = useRouter()
 const { countdown, start } = useCooldown()
 const serverErrors = ref<Record<string, string>>()
 const registeredEmail = ref('')
+// Write to sessionStorage (tab-scoped, no history leakage) - MUST be at top-level for VueUse
+const pendingEmail = useSessionStorage<string>(SESSION_STORAGE_KEYS.PENDING_VERIFICATION_EMAIL, null)
 
 const mutation = useMutation({
   mutationFn: register,
   onSuccess: () => {
     serverErrors.value = undefined
-    router.push({ name: RouteNames.REGISTER_SUCCESS, query: { email: registeredEmail.value } })
+    pendingEmail.value = registeredEmail.value
+    router.push({ name: RouteNames.REGISTER_SUCCESS })
   },
   onError: (error: unknown) => {
     serverErrors.value = undefined
