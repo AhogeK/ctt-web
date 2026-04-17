@@ -50,7 +50,7 @@ visualization.
 
 ## 📦 Version
 
-Current: `0.5.0-beta.75` (2026-04-17) — sessionStorage email passing
+Current: `0.5.0-beta.76` (2026-04-17) — Toast format fix + sessionStorage email passing
 
 ## 🗺 Project Structure
 
