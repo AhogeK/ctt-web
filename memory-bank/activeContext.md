@@ -2,8 +2,48 @@
 
 ## Current Status
 
-**Phase**: Self-learning skill creation
-**Version**: 0.5.0-beta.74 (2026-04-17)
+**Phase**: Bug fix — toast format consistency
+**Version**: 0.5.0-beta.76 (2026-04-17)
+
+### Toast Format Fix (0.5.0-beta.76)
+
+**Date**: 2026-04-17
+
+**Issue**: 2 tests in `useResendVerification.test.ts` failing — toast format mismatch
+
+**Root Cause**: Implementation used `mapApiErrorCode()` returning long strings as toast title, tests expected short title + description format
+
+**Fix**:
+- USER_002: `toast.info('Email already verified', { description: 'Please proceed to login' })`
+- 429: `toast.error('Too many requests', { description: 'Please wait ${retryAfter} seconds before trying again' })`
+
+**Files**:
+- `src/features/auth/composables/useResendVerification.ts` — direct toast calls, removed `mapApiErrorCode` import
+
+**Verified**:
+- ✅ All 293 tests pass (16 files)
+- ✅ type-check passes
+
+### sessionStorage Email Passing (0.5.0-beta.75)
+
+**Date**: 2026-04-17
+
+**Issue**: Email passed via URL query param (`?email=...`) leaked in browser history, referer headers, and server logs
+
+**Security Fix**: Replaced URL query param with sessionStorage for email passing between RegisterView → RegisterSuccessView
+
+**Files**:
+- `src/router/routes/auth.ts` — removed `email` from route query schema
+- `src/features/auth/views/RegisterView.vue` — store email in sessionStorage before navigation
+- `src/features/auth/views/RegisterSuccessView.vue` — read email from sessionStorage, clear after use
+- `src/features/auth/views/__tests__/RegisterView.test.ts` — updated tests for sessionStorage pattern
+- `src/features/auth/views/__tests__/RegisterSuccessView.test.ts` — updated tests for sessionStorage pattern
+
+**Verified**:
+- ✅ Email no longer appears in URL
+- ✅ sessionStorage cleared after reading
+- ✅ All tests pass
+- ✅ type-check passes
 
 ### Self-Learning Skill Creation (0.5.0-beta.74)
 
@@ -131,44 +171,3 @@
 - **Fix 1**: Restored FormMessage to `min-h-[1.25rem]` (20px) — fully reserves space for error text, zero jump
 - **Fix 2**: Reduced form `gap-5` → `gap-3` (20px → 12px) to compensate, keeping fields紧凑
 - **Result**: Zero layout shift on validation, compact professional spacing
-
-### Auth Form Spacing Polish (0.5.0-beta.59)
-- **Issue**: "Email" label too close to subtitle ("Sign in to access your coding analytics dashboard") — visual hierarchy cramped
-- **Fix**: Added `pt-6` (24px) to LoginForm and RegisterForm `<form>` elements, creating breathing room between header subtitle and first field
-- **Result**: Improved visual hierarchy, consistent spacing across login/register
-
-### Auth Form Layout Shift Fix (0.5.0-beta.58)
-- **Issue**: Login/register input fields jump when validation warnings appear/disappear
-- **Root Cause 1**: FormMessage (vee-validate ErrorMessage) renders nothing when no error, causing grid row collapse in FormItem (grid gap-2)
-- **Fix 1**: Wrapped ErrorMessage in `<div class="min-h-[1.25rem]">` to always reserve one line of space (matching text-sm line-height)
-- **Root Cause 2**: PasswordStrengthMeter progress bar used `v-if="showProgress"` causing DOM insertion/removal jumps
-- **Fix 2**: Replaced v-if with CSS transitions (width, opacity, maxHeight) — bar always in DOM but visually hidden when empty
-- **Result**: Zero layout shift, smooth validation transitions, vue-tsc 0 errors
-
-### Stale tsbuildinfo Cache Cleanup (0.5.0-beta.56)
-- **Issue**: 5× TS6053 "file not found" in tsconfig.app.json for deleted auth components
-- **Root Cause**: Multiple `.tsbuildinfo` cache files still referenced files removed in beta.47
-- **Fix**: `find . -name "*.tsbuildinfo" -delete` — must delete ALL cache files, not just one
-- **Result**: vue-tsc 0 errors
-
-### AuthMetricsCard.vue TypeScript Fix (0.5.0-beta.55)
-- **Issue**: TS2769 (no overload matches `useTransition`) + TS2345 (`Math.round` argument type mismatch)
-- **Root Cause**: `as const` made easing array `readonly [number, number, number, number]`, incompatible with VueUse's mutable `CubicBezierPoints` type → overload resolution fell through to array variant → `ComputedRef<number[]>` instead of `ComputedRef<number>`
-- **Fix**: Explicitly typed `springEasing: [number, number, number, number]` (mutable tuple)
-- **Result**: vue-tsc 0 errors
-
-### AuthMetricsCard.vue Metric + Animation Polish (0.5.0-beta.54)
-- **Issue 1**: "Commits" metric displayed but ctt-server has no commits API/stats endpoint — entirely hardcoded fake data
-- **Issue 2**: Counter animation showed decimals (e.g. "123.45h"), all three counters started simultaneously, basic ease-out felt cheap
-- **Fix**:
-  - Replaced "Commits" (2400) with "Projects" (28) — more aligned with CTT product semantics
-  - Wrapped `useTransition` results with `Math.round()` computed for clean integer display
-  - Staggered `onMounted` triggers: hours 0ms → projects 150ms → streak 300ms
-  - Changed easing from `[0.25, 0.1, 0.25, 1]` to spring overshoot `[0.34, 1.56, 0.64, 1]`
-- **Result**: vue-tsc 0 errors, build passes, animation feels premium with staggered integer counting
-
-### Auth Error Mapping (beta.68 ~ beta.69)
-- USER_001 → inline form error via `serverErrors` prop + `form.setFieldError()`
-- USER_002 → inline error message on VerifyEmailView
-- 429 → toast with cooldown countdown via `useCooldown` composable
-- Style polish: unified RegisterView/LoginView 429 toast pattern, removed redundant `isActive` ternary
