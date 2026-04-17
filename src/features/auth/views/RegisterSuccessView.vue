@@ -1,19 +1,27 @@
 <script setup lang="ts">
-import { computed } from 'vue'
+import { computed, onUnmounted } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
 import { MailOpen, AlertCircle, Copy, Check } from 'lucide-vue-next'
-import { useClipboard } from '@vueuse/core'
+import { useClipboard, useSessionStorage } from '@vueuse/core'
 import { toast } from 'vue-sonner'
 import { RouteNames } from '@/router/route-names'
 import { Button } from '@/components/ui/button'
 import { cn } from '@/lib/utils'
 import { useResendVerification } from '../composables/useResendVerification'
+import { SESSION_STORAGE_KEYS } from '@/stores/auth'
 
 const router = useRouter()
 const route = useRoute()
 const { resend, countdown, isPending } = useResendVerification()
 
-const email = route.query.email as string | undefined
+// Read email from sessionStorage first, fall back to query param
+const pendingEmail = useSessionStorage<string>(SESSION_STORAGE_KEYS.PENDING_VERIFICATION_EMAIL, null)
+const email = pendingEmail.value || (route.query.email as string | undefined)
+
+// Clear sessionStorage on unmount to prevent stale data
+onUnmounted(() => {
+  pendingEmail.value = null
+})
 
 // Truncate long emails for display (>30 chars), keep domain visible
 const truncatedEmail = computed(() => {

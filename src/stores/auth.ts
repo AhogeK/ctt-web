@@ -18,6 +18,14 @@ export const STORAGE_KEYS = {
 } as const
 
 /**
+ * Session-scoped storage keys (cleared when tab closes)
+ * Used for temporary data that shouldn't persist across sessions
+ */
+export const SESSION_STORAGE_KEYS = {
+  PENDING_VERIFICATION_EMAIL: 'ctt_pending_verification_email',
+} as const
+
+/**
  * Authentication store for managing JWT tokens and user session state.
  *
  * Responsibilities:
