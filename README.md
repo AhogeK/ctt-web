@@ -50,7 +50,7 @@ visualization.
 
 ## 📦 Version
 
-Current: `0.5.0-beta.57` (2026-04-14) — Confirmed TS6053 fix: `find . -name "*.tsbuildinfo" -delete` clears ALL stale cache (not just one file)
+Current: `0.5.0-beta.74` (2026-04-17) — Self-learning skill: transient-ui-capture
 
 ## 🗺 Project Structure
 
