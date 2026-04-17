@@ -10,7 +10,7 @@ import { useCooldown } from '@/composables/useCooldown'
 import RegisterForm from '../components/RegisterForm.vue'
 
 const router = useRouter()
-const { countdown, isActive, start } = useCooldown()
+const { countdown, start } = useCooldown()
 const serverErrors = ref<Record<string, string>>()
 
 const mutation = useMutation({
@@ -28,7 +28,7 @@ const mutation = useMutation({
       } else if (error.statusCode === 429) {
         start()
         toast.error(mapApiErrorCode('rate_limit_exceeded'), {
-          description: isActive.value ? `Try again in ${countdown.value}s` : undefined,
+          description: `Try again in ${countdown.value}s`,
         })
       } else {
         toast.error('Registration failed', {
@@ -67,9 +67,7 @@ const handleSubmit = (data: Parameters<typeof register>[0]) => {
             <polyline points="12 6 12 12 16 14" />
           </svg>
         </div>
-        <span
-          class="text-lg font-[510] text-gray-900 dark:text-[#f7f8f8]"
-          style="font-feature-settings: 'cv01', 'ss03'"
+        <span class="text-lg font-[510] text-gray-900 dark:text-[#f7f8f8]" style="font-feature-settings: 'cv01', 'ss03'"
           >CTT</span
         >
       </div>
@@ -79,10 +77,7 @@ const handleSubmit = (data: Parameters<typeof register>[0]) => {
       >
         Create your account
       </h1>
-      <p
-        class="text-base text-gray-500 dark:text-[#8a8f98]"
-        style="font-feature-settings: 'cv01', 'ss03'"
-      >
+      <p class="text-base text-gray-500 dark:text-[#8a8f98]" style="font-feature-settings: 'cv01', 'ss03'">
         Start tracking your coding time across all devices.
       </p>
     </div>
@@ -92,10 +87,7 @@ const handleSubmit = (data: Parameters<typeof register>[0]) => {
 
     <!-- Sign In Link -->
     <div class="pt-2 text-center">
-      <p
-        class="text-sm text-gray-500 dark:text-[#8a8f98]"
-        style="font-feature-settings: 'cv01', 'ss03'"
-      >
+      <p class="text-sm text-gray-500 dark:text-[#8a8f98]" style="font-feature-settings: 'cv01', 'ss03'">
         Already have an account?
         <RouterLink
           :to="{ name: RouteNames.LOGIN }"
