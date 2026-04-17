@@ -50,7 +50,7 @@ visualization.
 
 ## 📦 Version
 
-Current: `0.5.0-beta.74` (2026-04-17) — Self-learning skill: transient-ui-capture
+Current: `0.5.0-beta.75` (2026-04-17) — sessionStorage email passing
 
 ## 🗺 Project Structure
 
