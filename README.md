@@ -48,10 +48,6 @@ visualization.
 | Token Refresh           | JWT refresh with concurrency control, Promise deduping, Thundering Herd prevention                   |
 | Server State Management | TanStack Query v5 with 30s staleTime, SWR pattern, automatic caching                                 |
 
-## 📦 Version
-
-Current: `0.5.0-beta.76` (2026-04-17) — Toast format fix + sessionStorage email passing
-
 ## 🗺 Project Structure
 
 ```
