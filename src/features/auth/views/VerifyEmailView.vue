@@ -3,7 +3,7 @@ import { ref, onMounted, onUnmounted } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { CheckCircle2, AlertTriangle, Loader2 } from 'lucide-vue-next'
 import { verifyEmail } from '@/lib/api/auth'
-import { isApiError, mapApiErrorCode } from '@/lib/utils/api-error'
+import { isApiError } from '@/lib/utils/api-error'
 import { RouteNames } from '@/router/route-names'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -43,11 +43,8 @@ onMounted(async () => {
   } catch (error: unknown) {
     status.value = 'error'
     if (isApiError(error)) {
-      if (error.statusCode === 409 && error.error === 'USER_002') {
-        errorMessage.value = mapApiErrorCode('USER_002')
-      } else if (error.error === 'AUTH_004' || error.statusCode === 400) {
-        errorMessage.value =
-          'The verification link has expired or is invalid. Please request a new one.'
+      if (error.error === 'AUTH_004' || error.statusCode === 400) {
+        errorMessage.value = 'The verification link has expired or is invalid. Please request a new one.'
       } else {
         errorMessage.value = error.message || 'Verification failed. Please try again.'
       }
@@ -67,9 +64,7 @@ onUnmounted(() => {
     <!-- Loading State -->
     <template v-if="status === 'loading'">
       <div class="mb-8 relative flex h-16 w-16 items-center justify-center">
-        <div
-          class="absolute inset-0 rounded-full border-2 border-[#5e6ad2]/20 dark:border-[#5e6ad2]/30"
-        />
+        <div class="absolute inset-0 rounded-full border-2 border-[#5e6ad2]/20 dark:border-[#5e6ad2]/30" />
         <Loader2 class="h-8 w-8 animate-spin text-[#5e6ad2]" />
       </div>
       <div class="space-y-3">
@@ -79,10 +74,7 @@ onUnmounted(() => {
         >
           Verifying your email
         </h1>
-        <p
-          class="text-base text-gray-500 dark:text-[#8a8f98]"
-          style="font-feature-settings: 'cv01', 'ss03'"
-        >
+        <p class="text-base text-gray-500 dark:text-[#8a8f98]" style="font-feature-settings: 'cv01', 'ss03'">
           Please wait while we confirm your email address...
         </p>
       </div>
@@ -107,10 +99,7 @@ onUnmounted(() => {
         >
           Email verified!
         </h1>
-        <p
-          class="text-base text-gray-500 dark:text-[#8a8f98]"
-          style="font-feature-settings: 'cv01', 'ss03'"
-        >
+        <p class="text-base text-gray-500 dark:text-[#8a8f98]" style="font-feature-settings: 'cv01', 'ss03'">
           Your account is ready. Redirecting to login...
         </p>
       </div>
@@ -148,10 +137,7 @@ onUnmounted(() => {
         >
           Verification failed
         </h1>
-        <p
-          class="text-base text-gray-500 dark:text-[#8a8f98]"
-          style="font-feature-settings: 'cv01', 'ss03'"
-        >
+        <p class="text-base text-gray-500 dark:text-[#8a8f98]" style="font-feature-settings: 'cv01', 'ss03'">
           {{ errorMessage }}
         </p>
       </div>
@@ -163,10 +149,7 @@ onUnmounted(() => {
           )
         "
       >
-        <p
-          class="text-sm font-[510] text-gray-700 dark:text-[#d0d6e0]"
-          style="font-feature-settings: 'cv01', 'ss03'"
-        >
+        <p class="text-sm font-[510] text-gray-700 dark:text-[#d0d6e0]" style="font-feature-settings: 'cv01', 'ss03'">
           Need a new verification link?
         </p>
         <Input
