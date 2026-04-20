@@ -55,7 +55,7 @@ export function useResendVerification() {
             description: `Please wait ${retryAfter} seconds before trying again`,
           })
           startCountdown(retryAfter)
-        } else if (error.statusCode === 409 && error.error === 'USER_002') {
+        } else if (error.statusCode === 409 && error.error === 'USER_007') {
           toast.info('Email already verified', {
             description: 'Please proceed to login',
           })

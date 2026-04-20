@@ -4,8 +4,7 @@ import * as authApi from '@/lib/api/auth'
 import type { EmptyResponse } from '@/lib/schemas/api.schema'
 
 vi.mock('@/lib/api/auth', () => ({
-  resendVerification:
-    vi.fn<() => Promise<{ success: boolean; message: string; timestamp: string }>>(),
+  resendVerification: vi.fn<() => Promise<{ success: boolean; message: string; timestamp: string }>>(),
 }))
 
 vi.mock('vue-sonner', () => ({
@@ -93,9 +92,7 @@ describe('useResendVerification', () => {
       const pendingPromise = new Promise((resolve) => {
         resolvePromise = resolve
       })
-      vi.mocked(authApi.resendVerification).mockReturnValueOnce(
-        pendingPromise as Promise<EmptyResponse>,
-      )
+      vi.mocked(authApi.resendVerification).mockReturnValueOnce(pendingPromise as Promise<EmptyResponse>)
 
       const { resend, isPending } = useResendVerification()
 
@@ -220,10 +217,10 @@ describe('useResendVerification', () => {
       expect(countdown.value).toBe(60)
     })
 
-    it('handles 409 USER_002 error (email already verified)', async () => {
+    it('handles 409 USER_007 error (email already verified)', async () => {
       vi.mocked(authApi.resendVerification).mockRejectedValueOnce({
         statusCode: 409,
-        error: 'USER_002',
+        error: 'USER_007',
         message: 'Email already verified',
       })
 
@@ -236,7 +233,7 @@ describe('useResendVerification', () => {
       expect(countdown.value).toBe(0)
     })
 
-    it('handles 409 non-USER_002 error as generic error', async () => {
+    it('handles 409 non-USER_007 error as generic error', async () => {
       vi.mocked(authApi.resendVerification).mockRejectedValueOnce({
         statusCode: 409,
         error: 'OTHER_ERROR',
@@ -269,9 +266,7 @@ describe('useResendVerification', () => {
       const pendingPromise = new Promise((resolve) => {
         resolvePromise = resolve
       })
-      vi.mocked(authApi.resendVerification).mockReturnValue(
-        pendingPromise as Promise<EmptyResponse>,
-      )
+      vi.mocked(authApi.resendVerification).mockReturnValue(pendingPromise as Promise<EmptyResponse>)
 
       const { resend } = useResendVerification()
 
