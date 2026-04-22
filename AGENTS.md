@@ -143,8 +143,8 @@
 1. 读取 `../ctt-server` 对应 Controller / DTO 文件确认字段结构
 2. 用 Zod Schema 描述请求/响应，不猜测字段类型
 3. 通过 `lib/api/` 层统一调用，禁止在组件内直接 `ofetch`
-4. swagger-ui 测试地址：http://192.168.5.178:8004/ctt-server/swagger-ui/index.html
-5. mailpit 测试地址：http://192.168.5.178:8025/
+4. swagger-ui 测试地址：http://localhost:8080/ctt-server/swagger-ui/index.html
+5. mailpit 测试地址：http://localhost:8025/
 
 ### R14: 版本号管理（强制）
 
