@@ -22,7 +22,7 @@ export default defineConfig({
   server: {
     proxy: {
       '/api': {
-        target: 'http://192.168.5.178:8004/ctt-server',
+        target: 'http://localhost:8080/ctt-server',
         changeOrigin: true,
       },
     },
