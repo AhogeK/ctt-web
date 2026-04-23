@@ -8,7 +8,7 @@ import type { LoginRequest, LoginResponse } from '@/lib/schemas/auth.schema'
 export function buildLoginRequest(overrides: Partial<LoginRequest> = {}): LoginRequest {
   return {
     email: faker.internet.email(),
-    password: faker.internet.password({ length: 12 }),
+    password: 'TestPass1!',
     deviceId: faker.string.uuid(),
     ...overrides,
   }
