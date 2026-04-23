@@ -3,6 +3,7 @@ import { defineStore } from 'pinia'
 import { useStorage } from '@vueuse/core'
 import { login as loginApi, refresh as refreshApi } from '@/lib/api/auth'
 import type { LoginRequest, LoginResponse } from '@/lib/schemas/auth.schema'
+import { getOrCreateDeviceId } from '@/lib/utils/device'
 
 // Promise lock to prevent concurrent refresh requests (Thundering Herd)
 let activeRefreshPromise: Promise<string> | null = null
@@ -42,6 +43,13 @@ export const useAuthStore = defineStore('auth', () => {
 
   const tokenExpiry = ref<number | null>(null)
 
+  /**
+   * Device identifier for login requests and server-side device binding.
+   * Generated once via crypto.randomUUID() and persisted to localStorage.
+   * NOT cleared on logout — represents physical device, not user session.
+   */
+  const deviceId = ref<string>(getOrCreateDeviceId())
+
   const isAuthenticated = computed(() => {
     if (!accessToken.value) return false
     if (!tokenExpiry.value) return true // No expiry info means assume valid
@@ -75,10 +83,15 @@ export const useAuthStore = defineStore('auth', () => {
 
   /**
    * Performs login by calling API and storing auth data.
+   * DeviceId is transparently injected from store state — caller only provides email + password.
    * Throws original error for caller to handle (e.g., toast notification).
    */
-  async function login(credentials: LoginRequest): Promise<LoginResponse> {
-    const response = await loginApi(credentials)
+  async function login(credentials: Omit<LoginRequest, 'deviceId'>): Promise<LoginResponse> {
+    const payload: LoginRequest = {
+      ...credentials,
+      deviceId: deviceId.value,
+    }
+    const response = await loginApi(payload)
     setAuth(response)
     return response
   }
@@ -139,6 +152,7 @@ export const useAuthStore = defineStore('auth', () => {
     refreshToken,
     userId,
     tokenExpiry,
+    deviceId,
     isAuthenticated,
     setAuth,
     clearAuth,

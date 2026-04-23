@@ -6,24 +6,20 @@ import { FormField, FormItem, FormLabel, FormControl, FormMessage } from '@/comp
 import { Input } from '@/components/ui/input'
 import { Button } from '@/components/ui/button'
 import { cn } from '@/lib/utils'
-import { useDeviceId } from '../composables/useDeviceId'
 
 const emit = defineEmits<{
-  /** Emitted when form validation passes with user login credentials and device identifier */
-  submit: [data: { email: string; password: string; deviceId: string }]
+  /** Emitted when form validation passes with user login credentials */
+  submit: [data: { email: string; password: string }]
 }>()
 
 const form = useForm({
   validationSchema: toTypedSchema(LoginRequestSchema),
 })
 
-const { getDeviceId } = useDeviceId()
-
 const onSubmit = form.handleSubmit((values) => {
   emit('submit', {
     email: values.email,
     password: values.password,
-    deviceId: getDeviceId(),
   })
 })
 </script>
@@ -46,8 +42,8 @@ const onSubmit = form.handleSubmit((values) => {
                 'h-11 rounded-md border border-[#d0d6e0] bg-[#f3f4f5] text-[#1a1a2e]',
                 'placeholder:text-[#8a8f98] transition-all duration-200',
                 'focus:border-[#5e6ad2] focus:bg-white focus:ring-2 focus:ring-[#5e6ad2]/20',
-                'dark:border-white/[0.08] dark:bg-white/[0.02] dark:text-[#f7f8f8] dark:placeholder:text-[#62666d]',
-                'dark:focus:border-[#5e6ad2] dark:focus:bg-white/[0.04] dark:focus:ring-[#5e6ad2]/25',
+                'dark:border-white/8 dark:bg-white/2 dark:text-[#f7f8f8] dark:placeholder:text-[#62666d]',
+                'dark:focus:border-[#5e6ad2] dark:focus:bg-white/4 dark:focus:ring-[#5e6ad2]/25',
               )
             "
             v-bind="componentField"
@@ -73,8 +69,8 @@ const onSubmit = form.handleSubmit((values) => {
                 'h-11 rounded-md border border-[#d0d6e0] bg-[#f3f4f5] text-[#1a1a2e]',
                 'placeholder:text-[#8a8f98] transition-all duration-200',
                 'focus:border-[#5e6ad2] focus:bg-white focus:ring-2 focus:ring-[#5e6ad2]/20',
-                'dark:border-white/[0.08] dark:bg-white/[0.02] dark:text-[#f7f8f8] dark:placeholder:text-[#62666d]',
-                'dark:focus:border-[#5e6ad2] dark:focus:bg-white/[0.04] dark:focus:ring-[#5e6ad2]/25',
+                'dark:border-white/8 dark:bg-white/2 dark:text-[#f7f8f8] dark:placeholder:text-[#62666d]',
+                'dark:focus:border-[#5e6ad2] dark:focus:bg-white/4 dark:focus:ring-[#5e6ad2]/25',
               )
             "
             v-bind="componentField"

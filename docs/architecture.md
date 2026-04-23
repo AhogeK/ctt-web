@@ -231,11 +231,17 @@ build: {
 
 ```typescript
 // src/stores/auth.ts
+import { getOrCreateDeviceId } from '@/lib/utils/device'
+
 export const useAuthStore = defineStore('auth', () => {
   const accessToken = ref<string | null>(null)
   const refreshToken = ref<string | null>(null)
   const userId = ref<string | null>(null)
   const tokenExpiry = ref<number | null>(null)
+
+  // Device ID: represents physical device, NOT user session
+  // Persists across login/logout cycles, NOT cleared in clearAuth()
+  const deviceId = ref<string>(getOrCreateDeviceId())
 
   const isAuthenticated = computed(() => {
     if (!accessToken.value) return false
@@ -255,15 +261,18 @@ export const useAuthStore = defineStore('auth', () => {
     refreshToken.value = null
     userId.value = null
     tokenExpiry.value = null
+    // Note: deviceId is intentionally NOT cleared — represents physical device
   }
 
-  async function login(credentials: LoginRequest): Promise<LoginResponse> {
-    const response = await loginApi(credentials)
+  // Caller provides email + password only; deviceId injected transparently
+  async function login(credentials: Omit<LoginRequest, 'deviceId'>): Promise<LoginResponse> {
+    const payload: LoginRequest = { ...credentials, deviceId: deviceId.value }
+    const response = await loginApi(payload)
     setAuth(response)
     return response
   }
 
-  return { accessToken, refreshToken, userId, tokenExpiry, isAuthenticated, setAuth, clearAuth, login }
+  return { accessToken, refreshToken, userId, tokenExpiry, deviceId, isAuthenticated, setAuth, clearAuth, login }
 })
 ```
 

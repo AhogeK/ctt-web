@@ -165,7 +165,6 @@ describe('Auth Store', () => {
       const mockCredentials = {
         email: 'test@example.com',
         password: 'password123',
-        deviceId: 'device-1',
       }
       const mockResponse = {
         accessToken: 'token',
@@ -179,7 +178,10 @@ describe('Auth Store', () => {
 
       const result = await store.login(mockCredentials)
 
-      expect(authApi.login).toHaveBeenCalledWith(mockCredentials)
+      expect(authApi.login).toHaveBeenCalledWith({
+        ...mockCredentials,
+        deviceId: expect.any(String),
+      })
       expect(result).toStrictEqual(mockResponse)
       expect(store.accessToken).toBe('token')
     })
@@ -188,9 +190,7 @@ describe('Auth Store', () => {
       const mockError = new Error('Invalid credentials')
       vi.mocked(authApi.login).mockRejectedValue(mockError)
 
-      await expect(store.login({ email: 'test@example.com', password: 'wrong', deviceId: 'device-1' })).rejects.toThrow(
-        'Invalid credentials',
-      )
+      await expect(store.login({ email: 'test@example.com', password: 'wrong' })).rejects.toThrow('Invalid credentials')
     })
   })
 
