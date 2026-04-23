@@ -2,8 +2,38 @@
 
 ## Current Status
 
-**Phase**: Schema layer — strong password + literal tokenType
-**Version**: 0.5.0-beta.79 (2026-04-21)
+**Phase**: Auth — deviceId utility refactoring
+**Version**: 0.5.0-beta.80 (2026-04-23)
+
+### DeviceId Utility Refactoring (0.5.0-beta.80)
+
+**Date**: 2026-04-23
+
+**Changes**:
+1. Created `src/lib/utils/device.ts` — pure utility `getOrCreateDeviceId()` (SSR-safe, localStorage key `ctt-device-id`, `crypto.randomUUID()`)
+2. Refactored `authStore`: added `deviceId` state, `login()` now accepts `Omit<LoginRequest, 'deviceId'>` and transparently injects deviceId
+3. Simplified `LoginForm.vue`: removed `useDeviceId` import/usage, emit only `{ email, password }`
+4. Migrated `LoginView.vue`: uses `authStore.login()` instead of direct API call
+5. Deleted deprecated `useDeviceId.ts` composable + tests
+6. Updated `auth.test.ts`: login tests use new signature, API expectation includes injected deviceId
+
+**Files Modified**:
+- `src/lib/utils/device.ts` — new pure utility
+- `src/lib/utils/index.ts` — barrel export
+- `src/stores/auth.ts` — deviceId state + transparent login injection
+- `src/features/auth/components/LoginForm.vue` — simplified emit
+- `src/features/auth/views/LoginView.vue` — uses authStore.login()
+- `src/stores/__tests__/auth.test.ts` — updated login test signatures
+
+**Files Deleted**:
+- `src/features/auth/composables/useDeviceId.ts`
+- `src/features/auth/composables/__tests__/useDeviceId.test.ts`
+
+**Verified**:
+- ✅ All 289 tests pass (15 files — 2 test files deleted)
+- ✅ type-check passes (0 errors)
+- ✅ No remaining `useDeviceId` references in codebase
+- ✅ deviceId NOT cleared on logout (represents physical device)
 
 ### Auth Schema Strong Password + Literal Token Type (0.5.0-beta.79)
 
