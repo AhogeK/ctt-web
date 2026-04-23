@@ -77,13 +77,13 @@ export const RouteNames = {
 
 在 `src/types/vue-router.d.ts` 中定义，所有可用字段：
 
-| 字段 | 类型 | 必填 | 说明 |
-|------|------|------|------|
-| `title` | `string` | 是 | 页面标题，用于浏览器 tab 和导航菜单 |
-| `requiresAuth` | `boolean` | 否 | 是否需要认证，默认 `false` |
-| `roles` | `string[]` | 否 | RBAC 角色权限（预留） |
-| `layout` | `'auth' \| 'app'` | 否 | 使用的布局模板 |
-| `hideInMenu` | `boolean` | 否 | 是否在侧边栏隐藏此路由 |
+| 字段             | 类型                | 必填 | 说明                   |
+|----------------|-------------------|----|----------------------|
+| `title`        | `string`          | 是  | 页面标题，用于浏览器 tab 和导航菜单 |
+| `requiresAuth` | `boolean`         | 否  | 是否需要认证，默认 `false`    |
+| `roles`        | `string[]`        | 否  | RBAC 角色权限（预留）        |
+| `layout`       | `'auth' \| 'app'` | 否  | 使用的布局模板              |
+| `hideInMenu`   | `boolean`         | 否  | 是否在侧边栏隐藏此路由          |
 
 ### 1.5 注意事项
 
@@ -110,13 +110,13 @@ HTTP Client (apiFetch) → API Functions → Schemas (Zod)
 - **自动注入 Bearer token**：从 `localStorage` 读取 `ctt_access_token` 并设置 `Authorization` 头
 - **全局错误处理**（`onResponseError` 拦截器）：
 
-| 状态码 | 行为 |
-|--------|------|
-| 401 | 清除 token + toast 提示 + 派发 `api:unauthorized` 自定义事件 |
-| 403 | toast 提示 "Permission denied" |
-| 404 | `console.warn`（交由组件处理） |
-| 422 | 跳过（由表单验证组件处理） |
-| 500+ | toast 提示 "Server error" |
+| 状态码  | 行为                                                |
+|------|---------------------------------------------------|
+| 401  | 清除 token + toast 提示 + 派发 `api:unauthorized` 自定义事件 |
+| 403  | toast 提示 "Permission denied"                      |
+| 404  | `console.warn`（交由组件处理）                            |
+| 422  | 跳过（由表单验证组件处理）                                     |
+| 500+ | toast 提示 "Server error"                           |
 
 ### 2.2 步骤
 
@@ -257,14 +257,14 @@ const UsersPagedSchema = createPagedResponseSchema(UserSchema)
 
 ### 3.1 测试基础设施
 
-| 工具 | 版本 | 用途 |
-|------|------|------|
-| Vitest | 4 | 测试运行器 |
-| @vue/test-utils | 2 | Vue 组件挂载 |
-| @testing-library/vue | 8 | 语义化断言 |
-| @testing-library/jest-dom | 6 | 额外匹配器（toBeInTheDocument 等） |
-| @faker-js/faker | 9 | 测试数据生成 |
-| jsdom | 29 | 浏览器环境模拟 |
+| 工具                        | 版本 | 用途                         |
+|---------------------------|----|----------------------------|
+| Vitest                    | 4  | 测试运行器                      |
+| @vue/test-utils           | 2  | Vue 组件挂载                   |
+| @testing-library/vue      | 8  | 语义化断言                      |
+| @testing-library/jest-dom | 6  | 额外匹配器（toBeInTheDocument 等） |
+| @faker-js/faker           | 9  | 测试数据生成                     |
+| jsdom                     | 29 | 浏览器环境模拟                    |
 
 **关键配置**（`vitest.config.ts`）：
 
@@ -396,10 +396,12 @@ describe('Auth Store', () => {
     const result = await store.login({
       email: 'test@example.com',
       password: 'password123',
-      deviceId: 'device-1',
+      // deviceId injected transparently by store
     })
 
-    expect(authApi.login).toHaveBeenCalled()
+    expect(authApi.login).toHaveBeenCalledWith(
+      expect.objectContaining({ email: 'test@example.com', deviceId: expect.any(String) })
+    )
     expect(result).toStrictEqual(mockResponse)
     expect(store.accessToken).toBe('token')
   })
@@ -524,19 +526,19 @@ pnpm build && pnpm test:e2e       # CI — 必须先构建
 
 ### 4.2 可用类型
 
-| 类型 | 说明 | 示例 |
-|------|------|------|
-| `feat` | 新功能 | `feat(auth): add token refresh with concurrency control` |
-| `fix` | Bug 修复 | `fix(router): preserve query params in redirect` |
-| `docs` | 文档变更 | `docs: add development handbook` |
-| `style` | 代码格式（不影响功能） | `style: format imports with oxfmt` |
-| `refactor` | 重构（非新功能、非修复） | `refactor(api): extract error handling to interceptor` |
-| `perf` | 性能优化 | `perf: lazy load dashboard charts` |
-| `test` | 测试相关 | `test(auth): add concurrent refresh dedup test` |
-| `build` | 构建系统/外部依赖 | `build: upgrade vitest to v4` |
-| `ci` | CI 配置变更 | `ci: add playwright e2e workflow` |
-| `chore` | 其他不修改源码的变更 | `chore: update gitignore` |
-| `revert` | 撤销之前的提交 | `revert: feat(auth): add token refresh` |
+| 类型         | 说明           | 示例                                                       |
+|------------|--------------|----------------------------------------------------------|
+| `feat`     | 新功能          | `feat(auth): add token refresh with concurrency control` |
+| `fix`      | Bug 修复       | `fix(router): preserve query params in redirect`         |
+| `docs`     | 文档变更         | `docs: add development handbook`                         |
+| `style`    | 代码格式（不影响功能）  | `style: format imports with oxfmt`                       |
+| `refactor` | 重构（非新功能、非修复） | `refactor(api): extract error handling to interceptor`   |
+| `perf`     | 性能优化         | `perf: lazy load dashboard charts`                       |
+| `test`     | 测试相关         | `test(auth): add concurrent refresh dedup test`          |
+| `build`    | 构建系统/外部依赖    | `build: upgrade vitest to v4`                            |
+| `ci`       | CI 配置变更      | `ci: add playwright e2e workflow`                        |
+| `chore`    | 其他不修改源码的变更   | `chore: update gitignore`                                |
+| `revert`   | 撤销之前的提交      | `revert: feat(auth): add token refresh`                  |
 
 ### 4.3 示例
 
