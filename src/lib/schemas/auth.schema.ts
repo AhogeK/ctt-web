@@ -1,6 +1,33 @@
 import { z } from 'zod'
 
 // ==========================================
+// Shared Schemas
+// ==========================================
+
+/**
+ * Strong password validation matching ctt-server @StrongPassword annotation.
+ *
+ * Server-side regex: ^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{8,32}$
+ * - Minimum 8 characters, maximum 32
+ * - At least one uppercase letter [A-Z]
+ * - At least one lowercase letter [a-z]
+ * - At least one digit [0-9]
+ * - At least one special character (@$!%*?&)
+ * - Allowed characters: A-Z, a-z, 0-9, @$!%*?& only
+ *
+ * Reused by LoginRequestSchema, RegisterRequestSchema, and future ChangePassword/ResetPassword schemas.
+ */
+export const StrongPasswordSchema = z
+  .string()
+  .min(8, 'Password must be at least 8 characters')
+  .max(32, 'Password must not exceed 32 characters')
+  .regex(/[A-Z]/, 'Must contain at least one uppercase letter')
+  .regex(/[a-z]/, 'Must contain at least one lowercase letter')
+  .regex(/\d/, 'Must contain at least one digit')
+  .regex(/[@$!%*?&]/, 'Must contain at least one special character (@$!%*?&)')
+  .regex(/^[A-Za-z\d@$!%*?&]+$/, 'Password contains disallowed characters')
+
+// ==========================================
 // Login Schemas
 // ==========================================
 
@@ -15,8 +42,8 @@ import { z } from 'zod'
 export const LoginRequestSchema = z.object({
   // Email is validated as proper format and normalized to lowercase by server
   email: z.email('Invalid email format').min(1, 'Email is required'),
-  // Strong password policy enforced by server's @StrongPassword annotation
-  password: z.string().min(8, 'Password must be at least 8 characters'),
+  // Strong password policy: min 8, max 32, uppercase, lowercase, digit, special char (@$!%*?&), allowed chars only
+  password: StrongPasswordSchema,
   // Device ID is required for device binding - server uses @NotBlank validation
   deviceId: z.string().min(1, 'Device ID is required'),
 })
@@ -40,8 +67,8 @@ export const LoginResponseSchema = z.object({
   refreshToken: z.string().min(1, 'Refresh token is required'),
   // Token expiration duration in seconds
   expiresIn: z.number().int().positive('Expiration must be positive'),
-  // OAuth2 token type per RFC 6750 specification
-  tokenType: z.string().default('Bearer'),
+  // OAuth2 token type per RFC 6750 — only 'Bearer' is accepted
+  tokenType: z.literal('Bearer').default('Bearer'),
 })
 
 // Export inferred types for use in API layer and components
@@ -57,31 +84,7 @@ export type LoginResponse = z.infer<typeof LoginResponseSchema>
  * Allows: CJK (Chinese, Hiragana, Katakana, Korean), ASCII letters, digits, underscore, hyphen.
  * Length: 2-50 characters.
  */
-export const REGEX_DISPLAY_NAME =
-  /^[\u4e00-\u9fa5\u3040-\u309f\u30a0-\u30ff\uac00-\ud7afa-zA-Z0-9_-]{2,50}$/
-
-/**
- * Strong password validation matching ctt-server @StrongPassword annotation.
- *
- * Server-side regex: ^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{8,32}$
- * - Minimum 8 characters, maximum 32
- * - At least one uppercase letter [A-Z]
- * - At least one lowercase letter [a-z]
- * - At least one digit [0-9]
- * - At least one special character (@$!%*?&)
- * - Allowed characters: A-Z, a-z, 0-9, @$!%*?& only
- *
- * Reused by RegisterRequestSchema, and future ChangePassword/ResetPassword schemas.
- */
-export const StrongPasswordSchema = z
-  .string()
-  .min(8, 'Password must be at least 8 characters')
-  .max(32, 'Password must not exceed 32 characters')
-  .regex(/[A-Z]/, 'Must contain at least one uppercase letter')
-  .regex(/[a-z]/, 'Must contain at least one lowercase letter')
-  .regex(/\d/, 'Must contain at least one digit')
-  .regex(/[@$!%*?&]/, 'Must contain at least one special character (@$!%*?&)')
-  .regex(/^[A-Za-z\d@$!%*?&]+$/, 'Password contains disallowed characters')
+export const REGEX_DISPLAY_NAME = /^[\u4e00-\u9fa5\u3040-\u309f\u30a0-\u30ff\uac00-\ud7afa-zA-Z0-9_-]{2,50}$/
 
 /**
  * Registration request schema matching ctt-server UserRegisterRequest DTO.

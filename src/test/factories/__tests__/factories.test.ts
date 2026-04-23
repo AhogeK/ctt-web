@@ -9,11 +9,7 @@ import {
   buildApiError,
 } from '@/test/factories'
 import { LoginRequestSchema, LoginResponseSchema } from '@/lib/schemas/auth.schema'
-import {
-  ApiErrorSchema,
-  createApiResponseSchema,
-  createPagedResponseSchema,
-} from '@/lib/schemas/api.schema'
+import { ApiErrorSchema, createApiResponseSchema, createPagedResponseSchema } from '@/lib/schemas/api.schema'
 
 afterEach(() => {
   faker.seed()
@@ -75,14 +71,14 @@ describe('Auth Factories', () => {
         accessToken: 'custom-access-token',
         refreshToken: 'custom-refresh-token',
         expiresIn: 7200,
-        tokenType: 'Custom',
+        tokenType: 'Bearer',
       })
 
       expect(response.userId).toBe('00000000-0000-0000-0000-000000000001')
       expect(response.accessToken).toBe('custom-access-token')
       expect(response.refreshToken).toBe('custom-refresh-token')
       expect(response.expiresIn).toBe(7200)
-      expect(response.tokenType).toBe('Custom')
+      expect(response.tokenType).toBe('Bearer')
     })
 
     it('default tokenType is Bearer', () => {

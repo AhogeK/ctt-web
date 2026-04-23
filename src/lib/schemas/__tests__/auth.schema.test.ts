@@ -446,7 +446,7 @@ describe('LoginRequestSchema', () => {
   it('accepts password exactly 8 characters', () => {
     const validData = {
       email: 'user@example.com',
-      password: 'Pass1!aa',
+      password: 'Aa1!aaaa',
       deviceId: 'device-uuid-123',
     }
     const result = LoginRequestSchema.safeParse(validData)
@@ -463,6 +463,39 @@ describe('LoginRequestSchema', () => {
     const result = LoginRequestSchema.safeParse(validData)
 
     expect(result.success).toBe(true)
+  })
+
+  it('rejects password that is long enough but fails strong policy', () => {
+    const invalidData = {
+      email: 'user@example.com',
+      password: 'weakpassword', // 12 chars, all lowercase, no uppercase/digit/special
+      deviceId: 'device-uuid-123',
+    }
+    const result = LoginRequestSchema.safeParse(invalidData)
+
+    expect(result.success).toBe(false)
+    if (result.success) {
+      throw new Error('Expected parse to fail but it succeeded')
+    }
+    // Should reference strong password requirements (uppercase/lowercase/digit/special)
+    const message = result.error.issues[0]?.message
+    expect(message).toMatch(/uppercase|lowercase|digit|special/)
+  })
+
+  it('rejects password with disallowed special character', () => {
+    const invalidData = {
+      email: 'user@example.com',
+      password: 'SecurePass1^', // meets all requirements except ^ is not in allowed set @$!%*?&
+      deviceId: 'device-uuid-123',
+    }
+    const result = LoginRequestSchema.safeParse(invalidData)
+
+    expect(result.success).toBe(false)
+    if (result.success) {
+      throw new Error('Expected parse to fail but it succeeded')
+    }
+    // Error message should reference disallowed characters
+    expect(result.error.issues[0]?.message).toContain('special character')
   })
 })
 
@@ -691,23 +724,6 @@ describe('LoginResponseSchema', () => {
     expect(result.error.issues.length).toBeGreaterThanOrEqual(4)
   })
 
-  it('accepts custom tokenType value', () => {
-    const validData = {
-      userId: '550e8400-e29b-41d4-a716-446655440000',
-      accessToken: 'access-token-xyz',
-      refreshToken: 'refresh-token-abc',
-      expiresIn: 3600,
-      tokenType: 'Custom',
-    }
-    const result = LoginResponseSchema.safeParse(validData)
-
-    expect(result.success).toBe(true)
-    if (!result.success) {
-      throw new Error(`Parse failed: ${JSON.stringify(result.error)}`)
-    }
-    expect(result.data.tokenType).toBe('Custom')
-  })
-
   it('accepts large expiresIn value (e.g., 1 year in seconds)', () => {
     const validData = {
       userId: '550e8400-e29b-41d4-a716-446655440000',
@@ -722,6 +738,36 @@ describe('LoginResponseSchema', () => {
       throw new Error(`Parse failed: ${JSON.stringify(result.error)}`)
     }
     expect(result.data.expiresIn).toBe(31536000)
+  })
+
+  it('rejects non-Bearer tokenType (e.g., Basic)', () => {
+    const invalidData = {
+      userId: '550e8400-e29b-41d4-a716-446655440000',
+      accessToken: 'access-token-xyz',
+      refreshToken: 'refresh-token-abc',
+      expiresIn: 3600,
+      tokenType: 'Basic',
+    }
+    const result = LoginResponseSchema.safeParse(invalidData)
+
+    expect(result.success).toBe(false)
+    if (result.success) {
+      throw new Error('Expected parse to fail but it succeeded')
+    }
+    expect(result.error.issues[0]?.path).toStrictEqual(['tokenType'])
+  })
+
+  it('rejects lowercase bearer (case-sensitive)', () => {
+    const invalidData = {
+      userId: '550e8400-e29b-41d4-a716-446655440000',
+      accessToken: 'access-token-xyz',
+      refreshToken: 'refresh-token-abc',
+      expiresIn: 3600,
+      tokenType: 'bearer',
+    }
+    const result = LoginResponseSchema.safeParse(invalidData)
+
+    expect(result.success).toBe(false)
   })
 })
 
@@ -774,6 +820,19 @@ describe('Type inference', () => {
     expect(_typeCheck.email).toBe('test@example.com')
     expect(_typeCheck.displayName).toBe('Test')
     expect(_typeCheck.password).toBe('SecurePass1!')
+  })
+
+  it('tokenType infers as literal Bearer type', () => {
+    // Compile-time type check: TypeScript should infer 'Bearer' literal type, not generic string
+    const response: LoginResponse = {
+      userId: '550e8400-e29b-41d4-a716-446655440000',
+      accessToken: 'access-token',
+      refreshToken: 'refresh-token',
+      expiresIn: 3600,
+      tokenType: 'Bearer', // This must be exactly 'Bearer', not any string
+    }
+    // Verify the tokenType is correctly typed and assigned
+    expect(response.tokenType).toBe('Bearer')
   })
 })
 

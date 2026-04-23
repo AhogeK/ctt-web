@@ -57,7 +57,7 @@ describe('Auth Store', () => {
         refreshToken: 'new-refresh',
         userId: 'user-456',
         expiresIn: 3600,
-        tokenType: 'Bearer',
+        tokenType: 'Bearer' as const,
       }
 
       store.setAuth(mockResponse)
@@ -74,7 +74,7 @@ describe('Auth Store', () => {
         refreshToken: 'refresh',
         userId: 'user',
         expiresIn: 3600, // 1 hour
-        tokenType: 'Bearer',
+        tokenType: 'Bearer' as const,
       }
 
       const beforeExpiry = Date.now()
@@ -172,7 +172,7 @@ describe('Auth Store', () => {
         refreshToken: 'refresh',
         userId: 'user',
         expiresIn: 3600,
-        tokenType: 'Bearer',
+        tokenType: 'Bearer' as const,
       }
 
       vi.mocked(authApi.login).mockResolvedValue(mockResponse)
@@ -188,9 +188,9 @@ describe('Auth Store', () => {
       const mockError = new Error('Invalid credentials')
       vi.mocked(authApi.login).mockRejectedValue(mockError)
 
-      await expect(
-        store.login({ email: 'test@example.com', password: 'wrong', deviceId: 'device-1' }),
-      ).rejects.toThrow('Invalid credentials')
+      await expect(store.login({ email: 'test@example.com', password: 'wrong', deviceId: 'device-1' })).rejects.toThrow(
+        'Invalid credentials',
+      )
     })
   })
 
@@ -211,7 +211,7 @@ describe('Auth Store', () => {
         refreshToken: 'new-refresh-token',
         userId: 'user-123',
         expiresIn: 3600,
-        tokenType: 'Bearer',
+        tokenType: 'Bearer' as const,
       }
 
       localStorage.setItem(STORAGE_KEYS.REFRESH_TOKEN, 'old-refresh-token')
@@ -235,7 +235,7 @@ describe('Auth Store', () => {
         refreshToken: 'new-refresh',
         userId: 'user',
         expiresIn: 3600,
-        tokenType: 'Bearer',
+        tokenType: 'Bearer' as const,
       }
 
       localStorage.setItem(STORAGE_KEYS.REFRESH_TOKEN, 'refresh-token')
@@ -291,7 +291,7 @@ describe('Auth Store', () => {
         refreshToken: '', // Empty string triggers fallback
         userId: 'user',
         expiresIn: 3600,
-        tokenType: 'Bearer',
+        tokenType: 'Bearer' as const,
       }
 
       localStorage.setItem(STORAGE_KEYS.REFRESH_TOKEN, 'existing-refresh')
@@ -311,7 +311,7 @@ describe('Auth Store', () => {
         refreshToken: 'new-refresh',
         userId: 'user',
         expiresIn: 3600,
-        tokenType: 'Bearer',
+        tokenType: 'Bearer' as const,
       }
 
       localStorage.setItem(STORAGE_KEYS.REFRESH_TOKEN, 'refresh')
@@ -325,6 +325,7 @@ describe('Auth Store', () => {
       vi.mocked(authApi.refresh).mockResolvedValue({
         ...mockResponse,
         accessToken: 'another-new-token',
+        tokenType: 'Bearer' as const,
       })
       await store.refreshAccessToken()
 
