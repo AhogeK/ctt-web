@@ -47,13 +47,31 @@ export async function logout(refreshToken: string): Promise<void> {
 }
 
 /**
+ * Logs out user from all devices by invalidating all refresh tokens.
+ *
+ * Endpoint: POST /api/v1/auth/logout-all
+ * Rate limited: 5 requests per minute per user (enforced by backend).
+ * On rate limit exceeded, backend returns 429 with retryAfter header.
+ *
+ * No request body required — user ID is extracted from JWT by backend.
+ * Authentication: relies on interceptor to inject Bearer token.
+ *
+ * @throws Error if logout-all request fails (including 429 rate limit)
+ */
+export async function logoutAll(): Promise<void> {
+  await apiFetch('/api/v1/auth/logout-all', {
+    method: 'POST',
+  })
+}
+
+/**
  * Refreshes access token using refresh token.
  *
  * Endpoint: POST /api/v1/auth/refresh
  *
+ * @param params - Object containing the refresh token to use
  * @returns Parsed response with new accessToken and optionally new refreshToken
  * @throws Zod validation error if response doesn't match expected schema
- * @param params
  */
 export async function refresh(params: { refreshToken: string }): Promise<LoginResponse> {
   const response = await apiFetch<LoginResponse>('/api/v1/auth/refresh', {
