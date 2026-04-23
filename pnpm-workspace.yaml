@@ -1,5 +1,7 @@
+allowBuilds:
+  vue-demi: true
 overrides:
-  'vue': 'beta'
+  '@vue/compat': 'beta'
   '@vue/compiler-core': 'beta'
   '@vue/compiler-dom': 'beta'
   '@vue/compiler-sfc': 'beta'
@@ -11,7 +13,7 @@ overrides:
   '@vue/runtime-vapor': 'beta'
   '@vue/server-renderer': 'beta'
   '@vue/shared': 'beta'
-  '@vue/compat': 'beta'
+  'vue': 'beta'
 
 peerDependencyRules:
   allowAny:
