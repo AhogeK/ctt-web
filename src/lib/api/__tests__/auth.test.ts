@@ -317,4 +317,83 @@ describe('auth API', () => {
       expect(result.success).toBe(false)
     })
   })
+
+  describe('refresh', () => {
+    it('sends POST request with refreshToken and returns new tokens', async () => {
+      vi.mocked(apiFetch).mockResolvedValue({
+        userId: 'a1b2c3d4-e5f6-7890-abcd-ef1234567890',
+        accessToken: 'new-access-token',
+        refreshToken: 'new-refresh-token',
+        expiresIn: 3600,
+        tokenType: 'Bearer',
+      })
+
+      const result = await authApi.refresh({ refreshToken: 'old-refresh-token' })
+
+      expect(apiFetch).toHaveBeenCalledWith('/api/v1/auth/refresh', {
+        method: 'POST',
+        body: { refreshToken: 'old-refresh-token' },
+      })
+      expect(result.accessToken).toBe('new-access-token')
+      expect(result.refreshToken).toBe('new-refresh-token')
+      expect(result.expiresIn).toBe(3600)
+      expect(result.tokenType).toBe('Bearer')
+    })
+
+    it('defaults tokenType to Bearer when not provided', async () => {
+      vi.mocked(apiFetch).mockResolvedValue({
+        userId: 'a1b2c3d4-e5f6-7890-abcd-ef1234567890',
+        accessToken: 'new-access-token',
+        refreshToken: 'new-refresh-token',
+        expiresIn: 7200,
+      })
+
+      const result = await authApi.refresh({ refreshToken: 'old-refresh-token' })
+
+      expect(result.tokenType).toBe('Bearer')
+    })
+
+    it('rejects response missing required fields', async () => {
+      vi.mocked(apiFetch).mockResolvedValue({
+        userId: 'a1b2c3d4-e5f6-7890-abcd-ef1234567890',
+        accessToken: 'new-access-token',
+        expiresIn: 3600,
+      })
+
+      await expect(authApi.refresh({ refreshToken: 'old-refresh-token' })).rejects.toThrow(/refreshToken|invalid/i)
+    })
+
+    it('propagates API error on invalid refresh token', async () => {
+      const apiError = new Error('Invalid refresh token')
+      vi.mocked(apiFetch).mockRejectedValue(apiError)
+
+      await expect(authApi.refresh({ refreshToken: 'invalid-token' })).rejects.toThrow('Invalid refresh token')
+    })
+  })
+
+  describe('logoutAll', () => {
+    it('sends POST request without body', async () => {
+      vi.mocked(apiFetch).mockResolvedValue(undefined)
+
+      await authApi.logoutAll()
+
+      expect(apiFetch).toHaveBeenCalledWith('/api/v1/auth/logout-all', {
+        method: 'POST',
+      })
+    })
+
+    it('propagates API error on failure', async () => {
+      const apiError = new Error('Unauthorized')
+      vi.mocked(apiFetch).mockRejectedValue(apiError)
+
+      await expect(authApi.logoutAll()).rejects.toThrow('Unauthorized')
+    })
+
+    it('propagates rate limit error (429)', async () => {
+      const rateLimitError = new Error('Too many requests')
+      vi.mocked(apiFetch).mockRejectedValue(rateLimitError)
+
+      await expect(authApi.logoutAll()).rejects.toThrow('Too many requests')
+    })
+  })
 })
