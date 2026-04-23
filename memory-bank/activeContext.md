@@ -2,8 +2,32 @@
 
 ## Current Status
 
-**Phase**: Bug fix — toast format consistency
-**Version**: 0.5.0-beta.76 (2026-04-17)
+**Phase**: Schema layer — strong password + literal tokenType
+**Version**: 0.5.0-beta.79 (2026-04-21)
+
+### Auth Schema Strong Password + Literal Token Type (0.5.0-beta.79)
+
+**Date**: 2026-04-21
+
+**Changes**:
+1. `LoginRequestSchema.password`: `z.string().min(8)` → `StrongPasswordSchema` (aligned with backend `@StrongPassword`)
+2. `LoginResponseSchema.tokenType`: `z.string().default('Bearer')` → `z.literal('Bearer').default('Bearer')` (strict type inference)
+3. Tests: Added 7 new test cases (weak password rejection, disallowed chars, strong password acceptance, non-Bearer rejection x2, lowercase bearer rejection, literal type inference)
+4. Tests: Fixed 3 breaking tests (8-char strong password, custom tokenType → reject non-Bearer)
+5. Factory: `buildLoginRequest()` password → `'TestPass1!'` (deterministic strong password)
+6. Type fixes: 9 type errors in auth.test.ts + factories.test.ts fixed (`as const` assertions)
+
+**Files Modified**:
+- `src/lib/schemas/auth.schema.ts` — schema changes, StrongPasswordSchema moved before LoginRequestSchema
+- `src/lib/schemas/__tests__/auth.schema.test.ts` — 5 new tests + 3 fixed tests
+- `src/test/factories/auth.ts` — deterministic strong password
+- `src/test/factories/__tests__/factories.test.ts` — tokenType fix
+- `src/stores/__tests__/auth.test.ts` — 8 `as const` assertions for tokenType
+
+**Verified**:
+- ✅ All 297 tests pass (16 files)
+- ✅ type-check passes (0 errors)
+- ✅ Zod v4 API confirmed: `z.email()`, `z.uuid()` are correct (NOT `z.string().email()`)
 
 ### Toast Format Fix (0.5.0-beta.76)
 
