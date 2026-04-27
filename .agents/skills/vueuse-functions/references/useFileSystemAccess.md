@@ -23,7 +23,7 @@ const {
   open,
   save,
   saveAs,
-  updateData
+  updateData,
 } = useFileSystemAccess()
 ```
 
@@ -85,61 +85,48 @@ interface FileSystemWritableFileStream extends WritableStream {
  */
 interface FileSystemWritableFileStreamWrite {
   (data: string | BufferSource | Blob): Promise<void>
-  (options: {
-    type: "write"
-    position: number
-    data: string | BufferSource | Blob
-  }): Promise<void>
-  (options: { type: "seek"; position: number }): Promise<void>
-  (options: { type: "truncate"; size: number }): Promise<void>
+  (options: { type: 'write'; position: number; data: string | BufferSource | Blob }): Promise<void>
+  (options: { type: 'seek'; position: number }): Promise<void>
+  (options: { type: 'truncate'; size: number }): Promise<void>
 }
 /**
  * FileStream.write
  * @see https://developer.mozilla.org/en-US/docs/Web/API/FileSystemWritableFileStream/write
  */
 export type FileSystemAccessWindow = Window & {
-  showSaveFilePicker: (
-    options: FileSystemAccessShowSaveFileOptions,
-  ) => Promise<FileSystemFileHandle>
-  showOpenFilePicker: (
-    options: FileSystemAccessShowOpenFileOptions,
-  ) => Promise<FileSystemFileHandle[]>
+  showSaveFilePicker: (options: FileSystemAccessShowSaveFileOptions) => Promise<FileSystemFileHandle>
+  showOpenFilePicker: (options: FileSystemAccessShowOpenFileOptions) => Promise<FileSystemFileHandle[]>
 }
 export type UseFileSystemAccessCommonOptions = Pick<
   FileSystemAccessShowOpenFileOptions,
-  "types" | "excludeAcceptAllOption"
+  'types' | 'excludeAcceptAllOption'
 >
-export type UseFileSystemAccessShowSaveFileOptions = Pick<
-  FileSystemAccessShowSaveFileOptions,
-  "suggestedName"
->
+export type UseFileSystemAccessShowSaveFileOptions = Pick<FileSystemAccessShowSaveFileOptions, 'suggestedName'>
 export type UseFileSystemAccessOptions = ConfigurableWindow &
   UseFileSystemAccessCommonOptions & {
     /**
      * file data type
      */
-    dataType?: MaybeRefOrGetter<"Text" | "ArrayBuffer" | "Blob">
+    dataType?: MaybeRefOrGetter<'Text' | 'ArrayBuffer' | 'Blob'>
   }
 /**
  * Create and read and write local files.
  * @see https://vueuse.org/useFileSystemAccess
  */
-export declare function useFileSystemAccess(): UseFileSystemAccessReturn<
-  string | ArrayBuffer | Blob
->
+export declare function useFileSystemAccess(): UseFileSystemAccessReturn<string | ArrayBuffer | Blob>
 export declare function useFileSystemAccess(
   options: UseFileSystemAccessOptions & {
-    dataType: "Text"
+    dataType: 'Text'
   },
 ): UseFileSystemAccessReturn<string>
 export declare function useFileSystemAccess(
   options: UseFileSystemAccessOptions & {
-    dataType: "ArrayBuffer"
+    dataType: 'ArrayBuffer'
   },
 ): UseFileSystemAccessReturn<ArrayBuffer>
 export declare function useFileSystemAccess(
   options: UseFileSystemAccessOptions & {
-    dataType: "Blob"
+    dataType: 'Blob'
   },
 ): UseFileSystemAccessReturn<Blob>
 export declare function useFileSystemAccess(

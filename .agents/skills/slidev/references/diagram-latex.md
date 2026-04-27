@@ -27,7 +27,8 @@ $$
 ## Line Highlighting
 
 ```md
-$$ {1|3|all}
+$$
+{1|3|all}
 \begin{aligned}
 \nabla \cdot \vec{E} &= \frac{\rho}{\varepsilon_0} \\
 \nabla \cdot \vec{B} &= 0 \\

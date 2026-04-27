@@ -33,7 +33,7 @@ const { color, size } = toRefs(brush)
 ## Type Declarations
 
 ```ts
-export type UseDrauuOptions = Omit<Options, "el">
+export type UseDrauuOptions = Omit<Options, 'el'>
 export interface UseDrauuReturn {
   drauuInstance: Ref<Drauu | undefined>
   load: (svg: string) => void
@@ -58,8 +58,5 @@ export interface UseDrauuReturn {
  * @param target The target svg element
  * @param options Drauu Options
  */
-export declare function useDrauu(
-  target: MaybeComputedElementRef,
-  options?: UseDrauuOptions,
-): UseDrauuReturn
+export declare function useDrauu(target: MaybeComputedElementRef, options?: UseDrauuOptions): UseDrauuReturn
 ```

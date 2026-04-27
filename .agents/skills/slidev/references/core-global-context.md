@@ -20,26 +20,26 @@ Title: {{ $slidev.configs.title }}
 
 Navigation state and controls:
 
-| Property | Type | Description |
-|----------|------|-------------|
-| `$nav.currentPage` | number | Current page (1-indexed) |
-| `$nav.currentLayout` | string | Current layout name |
-| `$nav.total` | number | Total slides |
-| `$nav.isPresenter` | boolean | In presenter mode |
-| `$nav.next()` | function | Next click/slide |
-| `$nav.prev()` | function | Previous click/slide |
-| `$nav.nextSlide()` | function | Next slide |
-| `$nav.prevSlide()` | function | Previous slide |
-| `$nav.go(n)` | function | Go to slide n |
+| Property             | Type     | Description              |
+| -------------------- | -------- | ------------------------ |
+| `$nav.currentPage`   | number   | Current page (1-indexed) |
+| `$nav.currentLayout` | string   | Current layout name      |
+| `$nav.total`         | number   | Total slides             |
+| `$nav.isPresenter`   | boolean  | In presenter mode        |
+| `$nav.next()`        | function | Next click/slide         |
+| `$nav.prev()`        | function | Previous click/slide     |
+| `$nav.nextSlide()`   | function | Next slide               |
+| `$nav.prevSlide()`   | function | Previous slide           |
+| `$nav.go(n)`         | function | Go to slide n            |
 
 ### $slidev
 
 Global context:
 
-| Property | Description |
-|----------|-------------|
-| `$slidev.configs` | Project config (title, etc.) |
-| `$slidev.themeConfigs` | Theme config |
+| Property               | Description                  |
+| ---------------------- | ---------------------------- |
+| `$slidev.configs`      | Project config (title, etc.) |
+| `$slidev.themeConfigs` | Theme config                 |
 
 ### $frontmatter
 
@@ -60,6 +60,7 @@ Current page number (1-indexed).
 ### $renderContext
 
 Current render context:
+
 - `'slide'` - Normal slide view
 - `'overview'` - Overview mode
 - `'presenter'` - Presenter mode
@@ -70,14 +71,7 @@ Current render context:
 Import from `@slidev/client`:
 
 ```ts
-import {
-  useNav,
-  useDarkMode,
-  useIsSlideActive,
-  useSlideContext,
-  onSlideEnter,
-  onSlideLeave,
-} from '@slidev/client'
+import { useNav, useDarkMode, useIsSlideActive, useSlideContext, onSlideEnter, onSlideLeave } from '@slidev/client'
 ```
 
 ### useNav
@@ -130,22 +124,14 @@ onSlideLeave(() => {
 
 ```html
 <!-- Show only in presenter mode -->
-<div v-if="$nav.isPresenter">
-  Presenter notes
-</div>
+<div v-if="$nav.isPresenter">Presenter notes</div>
 
 <!-- Hide on cover slide -->
-<footer v-if="$nav.currentLayout !== 'cover'">
-  Page {{ $nav.currentPage }}
-</footer>
+<footer v-if="$nav.currentLayout !== 'cover'">Page {{ $nav.currentPage }}</footer>
 
 <!-- Different content by context -->
-<template v-if="$renderContext === 'slide'">
-  Normal view
-</template>
-<template v-else-if="$renderContext === 'presenter'">
-  Presenter view
-</template>
+<template v-if="$renderContext === 'slide'"> Normal view </template>
+<template v-else-if="$renderContext === 'presenter'"> Presenter view </template>
 ```
 
 ## Type Imports

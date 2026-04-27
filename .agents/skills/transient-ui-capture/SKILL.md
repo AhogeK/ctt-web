@@ -24,14 +24,14 @@ browser-use click 20 && browser-use screenshot  # Captures while visible
 
 ## Common Transient Elements
 
-| Element | Duration | Capture Method |
-|---------|----------|----------------|
-| Toast notifications | 3-5s | `click && screenshot` |
-| Loading spinners | Variable | `wait selector "spinner" && screenshot` |
-| Dropdown menus | Until click away | `click && screenshot` |
-| Hover tooltips | Until mouse leave | `hover && screenshot` |
-| Modal dialogs | Until close | `click && screenshot` |
-| Animations | 0.5-2s | `click && screenshot` (may need timing) |
+| Element             | Duration          | Capture Method                          |
+| ------------------- | ----------------- | --------------------------------------- |
+| Toast notifications | 3-5s              | `click && screenshot`                   |
+| Loading spinners    | Variable          | `wait selector "spinner" && screenshot` |
+| Dropdown menus      | Until click away  | `click && screenshot`                   |
+| Hover tooltips      | Until mouse leave | `hover && screenshot`                   |
+| Modal dialogs       | Until close       | `click && screenshot`                   |
+| Animations          | 0.5-2s            | `click && screenshot` (may need timing) |
 
 ## Advanced Techniques
 
@@ -77,12 +77,12 @@ Result: Toast captured with styling (green background, ✓ icon, "Email address 
 
 ## Troubleshooting
 
-| Issue | Solution |
-|-------|----------|
-| Toast still disappears | Toast duration may be <1s, check framework settings |
-| Animation missed | Animation timing, may need `wait` with specific state |
+| Issue                    | Solution                                                            |
+| ------------------------ | ------------------------------------------------------------------- |
+| Toast still disappears   | Toast duration may be <1s, check framework settings                 |
+| Animation missed         | Animation timing, may need `wait` with specific state               |
 | Dropdown closes too fast | Some dropdowns close on mouse leave, use `hover` instead of `click` |
-| Loading spinner blinks | Use `wait selector` + state check |
+| Loading spinner blinks   | Use `wait selector` + state check                                   |
 
 ## Reference
 

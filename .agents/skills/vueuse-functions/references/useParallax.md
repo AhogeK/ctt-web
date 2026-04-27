@@ -42,7 +42,7 @@ export interface UseParallaxReturn {
   /**
    * Sensor source, can be `mouse` or `deviceOrientation`
    */
-  source: ComputedRef<"deviceOrientation" | "mouse">
+  source: ComputedRef<'deviceOrientation' | 'mouse'>
 }
 /**
  * Create parallax effect easily. It uses `useDeviceOrientation` and fallback to `useMouse`
@@ -51,8 +51,5 @@ export interface UseParallaxReturn {
  * @param target
  * @param options
  */
-export declare function useParallax(
-  target: MaybeElementRef,
-  options?: UseParallaxOptions,
-): UseParallaxReturn
+export declare function useParallax(target: MaybeElementRef, options?: UseParallaxOptions): UseParallaxReturn
 ```

@@ -22,7 +22,7 @@ const mime = 'text/plain'
 const source = ref([
   new ClipboardItem({
     [mime]: new Blob(['plain text'], { type: mime }),
-  })
+  }),
 ])
 
 const { content, copy, copied, isSupported } = useClipboardItems({ source })
@@ -39,18 +39,14 @@ const { content, copy, copied, isSupported } = useClipboardItems({ source })
       Current copied: <code>{{ content || 'none' }}</code>
     </p>
   </div>
-  <p v-else>
-    Your browser does not support Clipboard API
-  </p>
+  <p v-else>Your browser does not support Clipboard API</p>
 </template>
 ```
 
 ## Type Declarations
 
 ```ts
-export interface UseClipboardItemsOptions<
-  Source,
-> extends ConfigurableNavigator {
+export interface UseClipboardItemsOptions<Source> extends ConfigurableNavigator {
   /**
    * Enabled reading for clipboard
    *
@@ -71,9 +67,7 @@ export interface UseClipboardItemsOptions<
 export interface UseClipboardItemsReturn<Optional> extends Supportable {
   content: Readonly<Ref<ClipboardItems>>
   copied: Readonly<ShallowRef<boolean>>
-  copy: Optional extends true
-    ? (content?: ClipboardItems) => Promise<void>
-    : (text: ClipboardItems) => Promise<void>
+  copy: Optional extends true ? (content?: ClipboardItems) => Promise<void> : (text: ClipboardItems) => Promise<void>
   read: () => void
 }
 /**
@@ -84,9 +78,7 @@ export interface UseClipboardItemsReturn<Optional> extends Supportable {
  *
  * @__NO_SIDE_EFFECTS__
  */
-export declare function useClipboardItems(
-  options?: UseClipboardItemsOptions<undefined>,
-): UseClipboardItemsReturn<false>
+export declare function useClipboardItems(options?: UseClipboardItemsOptions<undefined>): UseClipboardItemsReturn<false>
 export declare function useClipboardItems(
   options: UseClipboardItemsOptions<MaybeRefOrGetter<ClipboardItems>>,
 ): UseClipboardItemsReturn<true>

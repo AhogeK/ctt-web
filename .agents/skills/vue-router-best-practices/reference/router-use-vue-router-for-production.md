@@ -49,18 +49,18 @@ const currentView = computed(() => routes[currentPath.value])
 
 ### Features You'd Have to Implement Manually
 
-| Feature | Simple Routing | Vue Router |
-|---------|---------------|------------|
-| Navigation guards | Manual, error-prone | Built-in, composable |
-| Nested routes | Complex to implement | Native support |
-| Route params | Parse manually | Automatic extraction |
-| Lazy loading | DIY with dynamic imports | Built-in with code splitting |
-| History mode (clean URLs) | Requires server config + manual | Built-in |
-| Scroll behavior | Manual | Configurable |
-| Route transitions | DIY | Integrated with Transition |
-| Active link styling | Manual class toggling | `router-link-active` class |
-| Programmatic navigation | `location.hash = ...` | `router.push()`, `router.replace()` |
-| Route meta fields | N/A | Built-in |
+| Feature                   | Simple Routing                  | Vue Router                          |
+| ------------------------- | ------------------------------- | ----------------------------------- |
+| Navigation guards         | Manual, error-prone             | Built-in, composable                |
+| Nested routes             | Complex to implement            | Native support                      |
+| Route params              | Parse manually                  | Automatic extraction                |
+| Lazy loading              | DIY with dynamic imports        | Built-in with code splitting        |
+| History mode (clean URLs) | Requires server config + manual | Built-in                            |
+| Scroll behavior           | Manual                          | Configurable                        |
+| Route transitions         | DIY                             | Integrated with Transition          |
+| Active link styling       | Manual class toggling           | `router-link-active` class          |
+| Programmatic navigation   | `location.hash = ...`           | `router.push()`, `router.replace()` |
+| Route meta fields         | N/A                             | Built-in                            |
 
 ## Production Setup with Vue Router
 
@@ -72,8 +72,8 @@ const routes = [
   {
     path: '/',
     name: 'Home',
-    component: () => import('@/views/Home.vue'),  // Lazy loaded
-    meta: { requiresAuth: false }
+    component: () => import('@/views/Home.vue'), // Lazy loaded
+    meta: { requiresAuth: false },
   },
   {
     path: '/dashboard',
@@ -84,21 +84,21 @@ const routes = [
       {
         path: 'settings',
         name: 'Settings',
-        component: () => import('@/views/Settings.vue')
-      }
-    ]
+        component: () => import('@/views/Settings.vue'),
+      },
+    ],
   },
   {
     path: '/users/:id',
     name: 'UserProfile',
     component: () => import('@/views/UserProfile.vue'),
-    props: true  // Pass params as props
+    props: true, // Pass params as props
   },
   {
     path: '/:pathMatch(.*)*',
     name: 'NotFound',
-    component: () => import('@/views/NotFound.vue')
-  }
+    component: () => import('@/views/NotFound.vue'),
+  },
 ]
 
 const router = createRouter({
@@ -106,7 +106,7 @@ const router = createRouter({
   routes,
   scrollBehavior(to, from, savedPosition) {
     return savedPosition || { top: 0 }
-  }
+  },
 })
 
 // Global navigation guard
@@ -125,9 +125,7 @@ import { createApp } from 'vue'
 import App from './App.vue'
 import router from './router'
 
-createApp(App)
-  .use(router)
-  .mount('#app')
+createApp(App).use(router).mount('#app')
 ```
 
 ```vue
@@ -157,8 +155,8 @@ const routes = [
     // Load data at route level
     loader: async (route) => {
       return { user: await fetchUser(route.params.id) }
-    }
-  }
+    },
+  },
 ]
 
 // View Transitions API integration
@@ -178,6 +176,7 @@ const router = createRouter({
 6. **New features keep coming** - Data Loading API, View Transitions
 
 ## Reference
+
 - [Vue.js Routing Guide](https://vuejs.org/guide/scaling-up/routing.html)
 - [Vue Router Documentation](https://router.vuejs.org/)
 - [Vue Router Getting Started](https://router.vuejs.org/guide/)

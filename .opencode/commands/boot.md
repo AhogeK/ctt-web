@@ -12,11 +12,11 @@ description: 初始化会话 - 读取项目文件了解上下文（按 AGENTS.md
 
 1. **行为约束** - @AGENTS.md（**优先读取，作为后续所有操作的准则**）
 2. **项目记忆**（R1）:
-    - @memory-bank/projectbrief.md
-    - @memory-bank/techContext.md
-    - @memory-bank/systemPatterns.md
-    - @memory-bank/activeContext.md
-    - @memory-bank/progress.md
+   - @memory-bank/projectbrief.md
+   - @memory-bank/techContext.md
+   - @memory-bank/systemPatterns.md
+   - @memory-bank/activeContext.md
+   - @memory-bank/progress.md
 3. **项目说明** - @README.md
 
 **注意**: 如记忆文件不存在，按 AGENTS.md 模板创建。

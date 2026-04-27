@@ -14,9 +14,11 @@ Animate code changes with smooth transitions (like Keynote's Magic Move).
 ```js
 console.log(`Step ${1}`)
 ```
+
 ```js
 console.log(`Step ${1 + 1}`)
 ```
+
 ```ts
 console.log(`Step ${3}` as string)
 ```
@@ -40,7 +42,7 @@ Non-code blocks in between are ignored.
 
 ```js {*}{lines: false}
 let count = 1
-const add = () => count += 1
+const add = () => (count += 1)
 ```
 ````
 `````
