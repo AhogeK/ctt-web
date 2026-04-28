@@ -1,0 +1,29 @@
+{
+  "expectations": [
+    {
+      "text": "recognizes_api_need",
+      "passed": true,
+      "evidence": "APPROACH.md defines the contract 'GET /api/v1/devices' and 'DELETE /api/v1/devices/{deviceId}' with response shapes. The tech stack README confirms 'ofetch' as the HTTP client. The implementation references API endpoints throughout."
+    },
+    {
+      "text": "mentions_contract_discovery",
+      "passed": true,
+      "evidence": "Phase 1 section explicitly references backend analysis: 'devices table exists in database schema (V20260303210000__init_base_schema.sql)', 'RefreshTokenRepository already has revokeDeviceTokens()', 'Security config uses Secure by Default', and defines the contract with endpoint paths and response shapes. References Controller and DTO files in the file list (DeviceController.java, DeviceResponse.java)."
+    },
+    {
+      "text": "defines_zod_schema",
+      "passed": true,
+      "evidence": "Phase 2 section: 'Frontend Zod schemas (src/lib/schemas/device.schema.ts): DeviceSchema — matches DeviceResponse DTO exactly, DeviceListSchema — array of devices, Uses z.uuid() for UUID validation, Nullable fields for optional device metadata.'"
+    },
+    {
+      "text": "uses_lib_api_layer",
+      "passed": true,
+      "evidence": "Phase 3 section lists 'src/lib/api/devices.ts — Updated to use two-step parsing (wrapper → data)' as a modified file. The lib/api/ layer is used for unified API calls."
+    },
+    {
+      "text": "error_handling_correct",
+      "passed": true,
+      "evidence": "Key Decisions #3: 'Error code COMMON_002 — Used for not found (existing error code, no new code needed)'. Phase 3: 'src/composables/useDevices.ts — Improved error handling with getErrorMessage()'. The contract defines 'Error: COMMON_002 (not found / access denied)'. While the exact string 'error.data?.code' is not literally present in APPROACH.md, the two-step parsing pattern ('parse wrapper first, then extract data') and error code reference (COMMON_002) align with the skill's prescribed error extraction pattern from error.data.code."
+    }
+  ]
+}

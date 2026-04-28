@@ -1,0 +1,29 @@
+{
+  "expectations": [
+    {
+      "text": "mentions_swagger_or_controller",
+      "passed": true,
+      "evidence": "Lines 9, 17: Explicitly references 'AuthController.forgotPassword()' and 'AuthController.confirmPasswordReset()' with line numbers. Lines 10, 18: References request DTOs 'ForgotPasswordRequest' and 'ResetPasswordRequest'. Line 112 checklist: '[x] Read Controller + DTO in ctt-server'."
+    },
+    {
+      "text": "defines_wrapper_schema",
+      "passed": true,
+      "evidence": "Line 47: 'Parse wrapper with RestApiResponseSchema'. Line 11: Response type documented as 'RestApiResponse<EmptyResponse>'. Line 114 checklist: '[x] Define wrapper schema + inner data schema'."
+    },
+    {
+      "text": "two_step_parsing",
+      "passed": true,
+      "evidence": "Lines 43-48: Dedicated 'Two-Step Parsing Pattern' section explicitly states '1. Parse wrapper with RestApiResponseSchema' and '2. Extract data field'. Line 115 checklist: '[x] Parse in two steps (wrapper first, then data)'."
+    },
+    {
+      "text": "error_extraction_correct",
+      "passed": true,
+      "evidence": "Line 117 checklist: '[x] Extract error from error.data.code'. Lines 13, 21: Error codes documented as COMMON_003, COMMON_002, AUTH_003, PASSWORD_SAME_AS_OLD — consistent with error.data.code pattern, not error.error."
+    },
+    {
+      "text": "mentions_self_test",
+      "passed": true,
+      "evidence": "Lines 82-108: Dedicated 'Self-Test (Phase 4)' section with three curl commands targeting actual endpoints (forgot-password success, forgot-password validation error, reset-password). Lines 120-122 checklist items for calling endpoints with curl/Swagger."
+    }
+  ]
+}

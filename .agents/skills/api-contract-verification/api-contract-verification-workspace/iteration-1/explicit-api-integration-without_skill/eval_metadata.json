@@ -1,0 +1,32 @@
+{
+  "eval_id": 1,
+  "eval_name": "explicit-api-integration",
+  "prompt": "I need to implement the forgot password feature. The backend has an endpoint at /api/auth/forgot-password that sends a reset email. Please implement the frontend integration with proper error handling.",
+  "assertions": [
+    {
+      "name": "mentions_swagger_or_controller",
+      "description": "Should mention reading Swagger UI or backend Controller/DTO files",
+      "check": "Output mentions Swagger UI, Controller, or DTO files from ../ctt-server"
+    },
+    {
+      "name": "defines_wrapper_schema",
+      "description": "Should define or reference RestApiResponseSchema wrapper",
+      "check": "Output mentions RestApiResponseSchema or wrapper schema with success/message/data/timestamp"
+    },
+    {
+      "name": "two_step_parsing",
+      "description": "Should parse wrapper first, then extract data",
+      "check": "Output shows parsing wrapper then accessing .data field"
+    },
+    {
+      "name": "error_extraction_correct",
+      "description": "Should extract error from error.data.code not error.error",
+      "check": "Output uses error.data?.code or error.data.code, NOT error.error"
+    },
+    {
+      "name": "mentions_self_test",
+      "description": "Should mention calling endpoint to verify",
+      "check": "Output mentions curl, Swagger 'Try it out', or actual endpoint call"
+    }
+  ]
+}

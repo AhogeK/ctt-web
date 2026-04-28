@@ -1,0 +1,37 @@
+{
+  "run": "feature-with-backend-data-without_skill",
+  "graded_at": "2026-04-28",
+  "expectations": [
+    {
+      "text": "recognizes_api_need",
+      "passed": true,
+      "evidence": "IMPLEMENTATION_SUMMARY.md lists endpoints 'GET /api/v1/devices' and 'DELETE /api/v1/devices/:id'; devices.ts uses apiFetch (ofetch-based) from './instance' for HTTP calls."
+    },
+    {
+      "text": "mentions_contract_discovery",
+      "passed": false,
+      "evidence": "IMPLEMENTATION_SUMMARY.md states 'Assumed REST endpoints based on ctt-server database schema' and 'no DeviceController exists yet in ctt-server' — endpoints were guessed, not discovered. device.schema.ts JSDoc references 'DeviceResponse.java' by name but there is no evidence of actually reading Swagger UI, Controller source, or DTO files as a discovery process."
+    },
+    {
+      "text": "defines_zod_schema",
+      "passed": true,
+      "evidence": "device.schema.ts defines DeviceSchema (id, deviceName, platform, ideName, ideVersion, appVersion, createdAt, lastSeenAt), DeviceListSchema, DeviceListResponseSchema (wrapped in RestApiResponse with success/message/data/timestamp), and DeviceRevokeResponseSchema. Types exported via z.infer."
+    },
+    {
+      "text": "uses_lib_api_layer",
+      "passed": true,
+      "evidence": "devices.ts is placed at src/lib/api/devices.ts, imports apiFetch from './instance' and RestApiResponseSchema from '@/lib/schemas/api.schema'. useDevices.ts imports from '@/lib/api/devices' — confirming the lib/api/ layer pattern."
+    },
+    {
+      "text": "error_handling_correct",
+      "passed": false,
+      "evidence": "useDevices.ts onError handler uses 'error instanceof Error ? error.message : \"Failed to revoke device\"' — does NOT extract error.data?.code. devices.ts has no explicit error extraction. This violates the project's established pattern (AGENTS.md R13) which requires reading error codes from error.data.code."
+    }
+  ],
+  "summary": {
+    "total": 5,
+    "passed": 3,
+    "failed": 2,
+    "score": "3/5 (60%)"
+  }
+}

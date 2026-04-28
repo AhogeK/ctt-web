@@ -1,0 +1,92 @@
+{
+  "skill_name": "api-contract-verification",
+  "iteration": 1,
+  "timestamp": "2026-04-28T00:00:00Z",
+  "configurations": [
+    {
+      "name": "with_skill",
+      "runs": [
+        {
+          "eval_id": 1,
+          "eval_name": "explicit-api-integration",
+          "pass_rate": 1.0,
+          "passed": 5,
+          "total": 5,
+          "duration_seconds": 529,
+          "tokens": 0
+        },
+        {
+          "eval_id": 2,
+          "eval_name": "feature-with-backend-data",
+          "pass_rate": 1.0,
+          "passed": 5,
+          "total": 5,
+          "duration_seconds": 587,
+          "tokens": 0
+        },
+        {
+          "eval_id": 3,
+          "eval_name": "api-error-debugging",
+          "pass_rate": 0.6,
+          "passed": 3,
+          "total": 5,
+          "duration_seconds": 375,
+          "tokens": 0
+        }
+      ],
+      "mean_pass_rate": 0.867,
+      "mean_duration_seconds": 497,
+      "std_pass_rate": 0.231,
+      "std_duration_seconds": 106.7
+    },
+    {
+      "name": "without_skill",
+      "runs": [
+        {
+          "eval_id": 1,
+          "eval_name": "explicit-api-integration",
+          "pass_rate": 0.2,
+          "passed": 1,
+          "total": 5,
+          "duration_seconds": 535,
+          "tokens": 0
+        },
+        {
+          "eval_id": 2,
+          "eval_name": "feature-with-backend-data",
+          "pass_rate": 0.6,
+          "passed": 3,
+          "total": 5,
+          "duration_seconds": 426,
+          "tokens": 0
+        },
+        {
+          "eval_id": 3,
+          "eval_name": "api-error-debugging",
+          "pass_rate": 0.8,
+          "passed": 4,
+          "total": 5,
+          "duration_seconds": 390,
+          "tokens": 0
+        }
+      ],
+      "mean_pass_rate": 0.533,
+      "mean_duration_seconds": 450.3,
+      "std_pass_rate": 0.306,
+      "std_duration_seconds": 72.5
+    }
+  ],
+  "delta": {
+    "pass_rate_improvement": 0.333,
+    "duration_delta_seconds": 46.7,
+    "pass_rate_improvement_pct": 62.5
+  },
+  "analyst_notes": [
+    "Skill significantly improves pass rate (+33.3%, from 53.3% to 86.7%)",
+    "Skill adds ~47s overhead on average (acceptable for quality improvement)",
+    "explicit-api-integration shows largest improvement: 20% → 100% (+80%)",
+    "feature-with-backend-data shows strong improvement: 60% → 100% (+40%)",
+    "api-error-debugging shows slight regression: 80% → 60% (-20%) - skill may be over-constraining for simple error fixes",
+    "Key differentiator: skill enforces Swagger/Controller reading which baseline skipped"
+  ]
+}

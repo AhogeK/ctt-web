@@ -1,0 +1,29 @@
+{
+  "skill_name": "api-contract-verification",
+  "evals": [
+    {
+      "id": 1,
+      "name": "explicit-api-integration",
+      "prompt": "I need to implement the forgot password feature. The backend has an endpoint at /api/auth/forgot-password that sends a reset email. Please implement the frontend integration with proper error handling.",
+      "expected_output": "Should follow the 4-phase workflow: read Swagger/controller, define Zod schemas for wrapper and inner data, implement in lib/api/, and verify by calling the endpoint",
+      "files": [],
+      "assertions": []
+    },
+    {
+      "id": 2,
+      "name": "feature-with-backend-data",
+      "prompt": "Add a device management page where users can see all their registered devices and revoke specific ones. Each device shows name, last active time, and platform.",
+      "expected_output": "Should recognize this involves backend API calls, read the device-related endpoints in Swagger/controller, define proper schemas, and verify the integration",
+      "files": [],
+      "assertions": []
+    },
+    {
+      "id": 3,
+      "name": "api-error-debugging",
+      "prompt": "The leaderboard page is showing 'Please try again later' for all errors but I know there are specific error codes like LEADERBOARD_NOT_AVAILABLE and USER_NOT_IN_LEADERBOARD. Fix the error handling to show proper messages.",
+      "expected_output": "Should identify the error code extraction issue (error.data.code vs error.error), check mapApiErrorCode for missing codes, and verify by testing error scenarios",
+      "files": [],
+      "assertions": []
+    }
+  ]
+}

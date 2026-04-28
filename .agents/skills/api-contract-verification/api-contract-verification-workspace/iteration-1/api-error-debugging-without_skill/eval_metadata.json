@@ -1,0 +1,32 @@
+{
+  "eval_id": 3,
+  "eval_name": "api-error-debugging",
+  "prompt": "The leaderboard page is showing 'Please try again later' for all errors but I know there are specific error codes like LEADERBOARD_NOT_AVAILABLE and USER_NOT_IN_LEADERBOARD. Fix the error handling to show proper messages.",
+  "assertions": [
+    {
+      "name": "identifies_error_extraction_issue",
+      "description": "Should identify error.data.code vs error.error issue",
+      "check": "Output mentions error.data.code or explains correct error extraction"
+    },
+    {
+      "name": "checks_mapApiErrorCode",
+      "description": "Should check or update mapApiErrorCode function",
+      "check": "Output mentions mapApiErrorCode or error code mapping"
+    },
+    {
+      "name": "adds_missing_codes",
+      "description": "Should add LEADERBOARD_NOT_AVAILABLE and USER_NOT_IN_LEADERBOARD to mapping",
+      "check": "Output adds these specific error codes to the mapping"
+    },
+    {
+      "name": "mentions_verification",
+      "description": "Should mention testing error scenarios",
+      "check": "Output mentions testing error path or calling endpoint with error conditions"
+    },
+    {
+      "name": "no_double_toast",
+      "description": "Should consider toast handling (global vs component)",
+      "check": "Output mentions toast handling or interceptor vs component error handling"
+    }
+  ]
+}

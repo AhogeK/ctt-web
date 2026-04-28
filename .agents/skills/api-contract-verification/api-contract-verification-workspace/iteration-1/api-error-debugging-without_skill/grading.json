@@ -1,0 +1,33 @@
+{
+  "run": "api-error-debugging-without_skill",
+  "graded_at": "2026-04-28T00:00:00Z",
+  "source_file": "SOLUTION_SUMMARY.md (APPROACH.md not found; used SOLUTION_SUMMARY.md instead)",
+  "score": "4/5",
+  "expectations": [
+    {
+      "text": "identifies_error_extraction_issue",
+      "passed": true,
+      "evidence": "SOLUTION_SUMMARY.md explicitly identifies error.data.code as the correct extraction path in multiple places: line 17 ('Extracts the error code from error.data.code'), line 78 ('Extract error.data.code → LEADERBOARD_001'), line 91 ('API errors - extracts error.data.code and maps it'), and line 116 ('Error codes live in error.data.code'). Also contrasts correct pattern (getErrorMessage()) vs incorrect (error?.message directly)."
+    },
+    {
+      "text": "checks_mapApiErrorCode",
+      "passed": true,
+      "evidence": "SOLUTION_SUMMARY.md line 18 references mapApiErrorCode() as the mapping function. Line 80 shows the flow: 'mapApiErrorCode(\"LEADERBOARD_001\") → The leaderboard is currently unavailable...'. Tests in api-error.test.ts (lines 30-49) cover mapApiErrorCode with 4 test cases including LEADERBOARD_001, LEADERBOARD_002, unmapped codes, and auth codes."
+    },
+    {
+      "text": "adds_missing_codes",
+      "passed": true,
+      "evidence": "SOLUTION_SUMMARY.md documents both LEADERBOARD_001 ('Leaderboard is not available', HTTP 503) and LEADERBOARD_002 ('User not found in leaderboard', HTTP 404) in the Backend Error Codes table (lines 22-27) and Frontend Error Mappings table (lines 29-33). api-error.test.ts lines 31-38 verify both codes map to their user-friendly messages."
+    },
+    {
+      "text": "mentions_verification",
+      "passed": true,
+      "evidence": "SOLUTION_SUMMARY.md 'Verification' section (lines 105-111) states 'All 14 tests pass' with breakdown: isApiError (3 tests), mapApiErrorCode (4 tests), getErrorMessage (7 tests). api-error.test.ts includes tests for LEADERBOARD_001 and LEADERBOARD_002 error extraction from simulated ofetch error objects. However, no mention of calling actual API endpoints with error conditions — verification is unit-test only."
+    },
+    {
+      "text": "no_double_toast",
+      "passed": false,
+      "evidence": "No mention of toast handling, global interceptors, component-level error handling, or double-toast prevention anywhere in SOLUTION_SUMMARY.md, useLeaderboard.ts, LeaderboardView.vue, or api-error.test.ts. This is a known historical issue (AGENTS.md R13 mentions '双弹窗：全局拦截器 + 组件 onError 同时弹 toast') but the output does not address it."
+    }
+  ]
+}

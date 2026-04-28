@@ -1,0 +1,32 @@
+{
+  "eval_id": 2,
+  "eval_name": "feature-with-backend-data",
+  "prompt": "Add a device management page where users can see all their registered devices and revoke specific ones. Each device shows name, last active time, and platform.",
+  "assertions": [
+    {
+      "name": "recognizes_api_need",
+      "description": "Should recognize this involves backend API calls",
+      "check": "Output mentions API, endpoint, backend, or ofetch"
+    },
+    {
+      "name": "mentions_contract_discovery",
+      "description": "Should mention reading Swagger or backend source",
+      "check": "Output mentions Swagger UI, Controller, or DTO files"
+    },
+    {
+      "name": "defines_zod_schema",
+      "description": "Should define Zod schema for device data",
+      "check": "Output shows Zod schema definition for device/device list"
+    },
+    {
+      "name": "uses_lib_api_layer",
+      "description": "Should use lib/api/ layer for API calls",
+      "check": "Output mentions lib/api/ or creates file in that directory"
+    },
+    {
+      "name": "error_handling_correct",
+      "description": "Should handle errors with error.data.code",
+      "check": "Output uses error.data?.code for error extraction"
+    }
+  ]
+}

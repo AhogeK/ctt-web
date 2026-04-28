@@ -1,0 +1,29 @@
+{
+  "expectations": [
+    {
+      "text": "mentions_swagger_or_controller",
+      "passed": false,
+      "evidence": "Line 7 mentions 'Verified from ctt-server source' and lines 12/20 reference DTO names (ForgotPasswordRequest DTO, ResetPasswordRequest DTO), but there is no explicit mention of Swagger UI or Controller files. The contract appears to be inferred rather than directly read from Swagger UI or Controller source."
+    },
+    {
+      "text": "defines_wrapper_schema",
+      "passed": false,
+      "evidence": "Line 13 references 'RestApiResponse<EmptyResponse>' as the response type, and line 45 mentions 'response wrapper' in the two-step parsing context. However, there is no explicit mention of a Zod wrapper schema (e.g., RestApiResponseSchema) or the full wrapper structure with success/message/data/timestamp fields."
+    },
+    {
+      "text": "two_step_parsing",
+      "passed": true,
+      "evidence": "Line 45 explicitly states: 'Both use two-step Zod parsing (request validation → response wrapper → data)'. This clearly documents the two-step parsing pattern."
+    },
+    {
+      "text": "error_extraction_correct",
+      "passed": false,
+      "evidence": "Lines 89-94 describe error handling via 'isApiError() type guard' and 'mapApiErrorCode() for user-friendly messages'. The actual error field extraction pattern (error.data?.code vs error.error) is not shown anywhere in the document. No evidence of which field is used to extract error codes."
+    },
+    {
+      "text": "mentions_self_test",
+      "passed": false,
+      "evidence": "Lines 108-110 mention 'vp check passes (format + lint + type check)' and 'Pre-existing test failures are unrelated to this feature'. There is no mention of curl, Swagger 'Try it out', or actual endpoint calls for self-testing the API integration."
+    }
+  ]
+}

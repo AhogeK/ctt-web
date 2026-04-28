@@ -1,0 +1,29 @@
+{
+  "expectations": [
+    {
+      "text": "identifies_error_extraction_issue",
+      "passed": true,
+      "evidence": "Lines 34-35 explicitly document the correct error extraction path: 'error.data.code' and 'error.data.message' as the ofetch error shape."
+    },
+    {
+      "text": "checks_mapApiErrorCode",
+      "passed": true,
+      "evidence": "Line 13 identifies that 'mapApiErrorCode in api-error.ts had no leaderboard error code mappings.' Lines 60-66 show the fix adding leaderboard mappings to api-error.ts."
+    },
+    {
+      "text": "adds_missing_codes",
+      "passed": true,
+      "evidence": "Lines 45-46 add LEADERBOARD_001 and LEADERBOARD_002 to ErrorCode.java. Lines 64-65 add corresponding mappings to mapApiErrorCode in api-error.ts."
+    },
+    {
+      "text": "mentions_verification",
+      "passed": false,
+      "evidence": "Lines 92-94 mention running 'vp check' and 'vp test' (288/296 tests pass), but do NOT mention testing the error path specifically or calling endpoints with error conditions to verify error response handling."
+    },
+    {
+      "text": "no_double_toast",
+      "passed": false,
+      "evidence": "Line 99 mentions 'toast calls removed in beta.86 interceptor cleanup' only in the context of pre-existing test failures. Does NOT address toast handling for the leaderboard error path, nor discuss interceptor vs component error handling for this specific fix."
+    }
+  ]
+}
