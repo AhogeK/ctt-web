@@ -48,17 +48,29 @@ function handleUnhandledRejection(event: PromiseRejectionEvent): void {
  * Catches custom events dispatched by API instance when it receives 401 responses.
  * Clears authentication state and redirects to login page with current path as redirect target.
  *
+ * Routes that handle 401 locally (skip redirect):
+ * - VERIFY_EMAIL: Invalid/expired tokens legitimately return 401
+ * - RESET_PASSWORD: Invalid/expired tokens legitimately return 401
+ *
  * @param _event - The CustomEvent dispatched by API instance (no detail payload)
  */
 function handleUnauthorized(_event: Event): void {
   const authStore = useAuthStore()
   authStore.clearAuth()
 
-  // Redirect to login with current path for post-login redirect
-  const currentPath = router.currentRoute.value.fullPath
+  const currentRoute = router.currentRoute.value
+  const routesWithLocalErrorHandling: (typeof RouteNames)[keyof typeof RouteNames][] = [
+    RouteNames.VERIFY_EMAIL,
+    RouteNames.RESET_PASSWORD,
+  ]
+
+  if (routesWithLocalErrorHandling.includes(currentRoute.name as (typeof RouteNames)[keyof typeof RouteNames])) {
+    return
+  }
+
   void router.push({
     name: RouteNames.LOGIN,
-    query: { redirect: currentPath },
+    query: { redirect: currentRoute.fullPath },
   })
 }
 

@@ -1,4 +1,4 @@
-import { describe, it, expect, vi, beforeEach } from 'vitest'
+import { describe, it, expect, vi, beforeEach } from 'vite-plus/test'
 import * as authApi from '@/lib/api/auth'
 import { apiFetch } from '@/lib/api/instance'
 
@@ -15,11 +15,16 @@ describe('auth API', () => {
   describe('login', () => {
     it('sends POST request with validated credentials and returns tokens', async () => {
       vi.mocked(apiFetch).mockResolvedValue({
-        userId: 'a1b2c3d4-e5f6-7890-abcd-ef1234567890',
-        accessToken: 'mock-access-token-xyz',
-        refreshToken: 'mock-refresh-token-xyz',
-        expiresIn: 3600,
-        tokenType: 'Bearer',
+        success: true,
+        message: 'Login successful',
+        timestamp: '2026-04-28T12:00:00Z',
+        data: {
+          userId: 'a1b2c3d4-e5f6-7890-abcd-ef1234567890',
+          accessToken: 'mock-access-token-xyz',
+          refreshToken: 'mock-refresh-token-xyz',
+          expiresIn: 3600,
+          tokenType: 'Bearer',
+        },
       })
 
       const result = await authApi.login({
@@ -45,10 +50,15 @@ describe('auth API', () => {
 
     it('defaults tokenType to Bearer when not provided', async () => {
       vi.mocked(apiFetch).mockResolvedValue({
-        userId: 'a1b2c3d4-e5f6-7890-abcd-ef1234567890',
-        accessToken: 'mock-access-token',
-        refreshToken: 'mock-refresh-token',
-        expiresIn: 7200,
+        success: true,
+        message: 'Login successful',
+        timestamp: '2026-04-28T12:00:00Z',
+        data: {
+          userId: 'a1b2c3d4-e5f6-7890-abcd-ef1234567890',
+          accessToken: 'mock-access-token',
+          refreshToken: 'mock-refresh-token',
+          expiresIn: 7200,
+        },
       })
 
       const result = await authApi.login({
@@ -140,8 +150,12 @@ describe('auth API', () => {
       vi.mocked(apiFetch).mockResolvedValue({
         success: true,
         message: 'User registered successfully',
-        data: null,
         timestamp: '2026-04-11T10:00:00Z',
+        data: {
+          success: true,
+          message: 'User registered successfully',
+          timestamp: '2026-04-11T10:00:00Z',
+        },
       })
 
       const result = await authApi.register({
@@ -166,8 +180,12 @@ describe('auth API', () => {
       vi.mocked(apiFetch).mockResolvedValue({
         success: true,
         message: 'OK',
-        data: null,
         timestamp: '2026-04-11T10:00:00Z',
+        data: {
+          success: true,
+          message: 'OK',
+          timestamp: '2026-04-11T10:00:00Z',
+        },
       })
 
       // Pass data with extra confirmPassword field
@@ -232,8 +250,12 @@ describe('auth API', () => {
       vi.mocked(apiFetch).mockResolvedValue({
         success: true,
         message: 'Email verified successfully',
-        data: null,
         timestamp: '2026-04-11T10:00:00Z',
+        data: {
+          success: true,
+          message: 'Email verified successfully',
+          timestamp: '2026-04-11T10:00:00Z',
+        },
       })
 
       const result = await authApi.verifyEmail('abc-123-token')
@@ -250,8 +272,12 @@ describe('auth API', () => {
       vi.mocked(apiFetch).mockResolvedValue({
         success: false,
         message: 'Invalid token',
-        data: null,
         timestamp: '2026-04-11T10:00:00Z',
+        data: {
+          success: false,
+          message: 'Invalid token',
+          timestamp: '2026-04-11T10:00:00Z',
+        },
       })
 
       const result = await authApi.verifyEmail('')
@@ -269,8 +295,12 @@ describe('auth API', () => {
       vi.mocked(apiFetch).mockResolvedValue({
         success: true,
         message: 'Verification email sent',
-        data: null,
         timestamp: '2026-04-11T10:00:00Z',
+        data: {
+          success: true,
+          message: 'Verification email sent',
+          timestamp: '2026-04-11T10:00:00Z',
+        },
       })
 
       const result = await authApi.resendVerification('user@example.com')
@@ -287,8 +317,12 @@ describe('auth API', () => {
       vi.mocked(apiFetch).mockResolvedValue({
         success: false,
         message: 'Invalid email format',
-        data: null,
         timestamp: '2026-04-11T10:00:00Z',
+        data: {
+          success: false,
+          message: 'Invalid email format',
+          timestamp: '2026-04-11T10:00:00Z',
+        },
       })
 
       const result = await authApi.resendVerification('not-an-email')
@@ -304,8 +338,12 @@ describe('auth API', () => {
       vi.mocked(apiFetch).mockResolvedValue({
         success: false,
         message: 'Email is required',
-        data: null,
         timestamp: '2026-04-11T10:00:00Z',
+        data: {
+          success: false,
+          message: 'Email is required',
+          timestamp: '2026-04-11T10:00:00Z',
+        },
       })
 
       const result = await authApi.resendVerification('')
@@ -321,11 +359,16 @@ describe('auth API', () => {
   describe('refresh', () => {
     it('sends POST request with refreshToken and returns new tokens', async () => {
       vi.mocked(apiFetch).mockResolvedValue({
-        userId: 'a1b2c3d4-e5f6-7890-abcd-ef1234567890',
-        accessToken: 'new-access-token',
-        refreshToken: 'new-refresh-token',
-        expiresIn: 3600,
-        tokenType: 'Bearer',
+        success: true,
+        message: 'Token refresh successful',
+        timestamp: '2026-04-28T12:00:00Z',
+        data: {
+          userId: 'a1b2c3d4-e5f6-7890-abcd-ef1234567890',
+          accessToken: 'new-access-token',
+          refreshToken: 'new-refresh-token',
+          expiresIn: 3600,
+          tokenType: 'Bearer',
+        },
       })
 
       const result = await authApi.refresh({ refreshToken: 'old-refresh-token' })
@@ -342,10 +385,15 @@ describe('auth API', () => {
 
     it('defaults tokenType to Bearer when not provided', async () => {
       vi.mocked(apiFetch).mockResolvedValue({
-        userId: 'a1b2c3d4-e5f6-7890-abcd-ef1234567890',
-        accessToken: 'new-access-token',
-        refreshToken: 'new-refresh-token',
-        expiresIn: 7200,
+        success: true,
+        message: 'Token refresh successful',
+        timestamp: '2026-04-28T12:00:00Z',
+        data: {
+          userId: 'a1b2c3d4-e5f6-7890-abcd-ef1234567890',
+          accessToken: 'new-access-token',
+          refreshToken: 'new-refresh-token',
+          expiresIn: 7200,
+        },
       })
 
       const result = await authApi.refresh({ refreshToken: 'old-refresh-token' })
@@ -355,9 +403,14 @@ describe('auth API', () => {
 
     it('rejects response missing required fields', async () => {
       vi.mocked(apiFetch).mockResolvedValue({
-        userId: 'a1b2c3d4-e5f6-7890-abcd-ef1234567890',
-        accessToken: 'new-access-token',
-        expiresIn: 3600,
+        success: true,
+        message: 'Token refresh successful',
+        timestamp: '2026-04-28T12:00:00Z',
+        data: {
+          userId: 'a1b2c3d4-e5f6-7890-abcd-ef1234567890',
+          accessToken: 'new-access-token',
+          expiresIn: 3600,
+        },
       })
 
       await expect(authApi.refresh({ refreshToken: 'old-refresh-token' })).rejects.toThrow(/refreshToken|invalid/i)

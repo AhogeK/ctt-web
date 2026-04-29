@@ -51,7 +51,20 @@ export function isApiError(error: unknown): error is ApiError {
  */
 export function mapApiErrorCode(code: string): string {
   const messages: Record<string, string> = {
-    // Auth errors
+    // Auth errors (backend error codes)
+    AUTH_001: 'Invalid email or password. Please check your credentials.',
+    AUTH_003: 'This reset link is invalid or has expired. Please request a new one.',
+    AUTH_004: 'Account locked due to too many failed attempts.',
+    AUTH_005: 'Account suspended. Please contact support.',
+    AUTH_006: 'Please verify your email before signing in.',
+    AUTH_007: 'Refresh token expired. Please sign in again.',
+    AUTH_008: 'Refresh token revoked. Please sign in again.',
+    AUTH_009: 'Refresh token reuse detected. Please sign in again.',
+
+    MAIL_005: 'Verification link has expired. Please request a new one.',
+    MAIL_006: 'Invalid verification link. Please check your email for the correct link.',
+
+    // Auth errors (legacy string keys for backward compatibility)
     invalid_credentials: 'Invalid email or password. Please check your credentials.',
     user_not_found: 'No account found with this email address.',
     email_not_verified: 'Please verify your email before signing in.',
@@ -61,9 +74,22 @@ export function mapApiErrorCode(code: string): string {
     // User errors (USER_XXX from ctt-server)
     USER_001: 'This email is already registered. Please sign in or use a different email.',
     USER_002: 'This email has already been verified. Please proceed to login.',
+    USER_007: 'This email has already been verified. Please proceed to login.',
+
+    // Password reset errors
+    PASSWORD_SAME_AS_OLD: 'New password cannot be the same as your current password.',
+
+    // Common errors
+    COMMON_002: 'Too many requests. Please wait a moment before trying again.',
+    COMMON_003: 'Invalid input. Please check your entries and try again.',
 
     // Rate limiting
+    RATE_LIMIT_001: 'Too many requests. Please wait a moment before trying again.',
     rate_limit_exceeded: 'Too many requests. Please wait a moment before trying again.',
+
+    // Leaderboard errors (LEADERBOARD_XXX from ctt-server)
+    LEADERBOARD_001: 'The leaderboard is currently unavailable. Please try again later.',
+    LEADERBOARD_002: 'You are not ranked on the leaderboard yet. Start tracking your coding time to appear.',
 
     // Generic
     internal_error: 'An unexpected error occurred. Please try again later.',
@@ -85,21 +111,14 @@ export function mapApiErrorCode(code: string): string {
  */
 export function getErrorMessage(error: unknown): string {
   if (isApiError(error)) {
-    // Try to extract a structured error code from the response
-    const data = error.data as ApiErrorResponse | undefined
-    if (data?.error) {
-      return mapApiErrorCode(data.error)
+    const data = error.data as { code?: string; message?: string } | undefined
+    if (data?.code) {
+      return mapApiErrorCode(data.code)
     }
     if (data?.message) {
       return data.message
     }
-    if (error.message) {
-      return error.message
-    }
-    if (error.statusMessage) {
-      return error.statusMessage
-    }
-    return `Request failed with status ${error.statusCode}`
+    return 'An unexpected error occurred. Please try again later.'
   }
 
   if (error instanceof Error) {

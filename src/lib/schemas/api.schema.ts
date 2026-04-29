@@ -99,6 +99,21 @@ export type ApiError = z.infer<typeof ApiErrorSchema>
 // ==========================================
 
 /**
+ * Inner data schema for EmptyResponse endpoints.
+ *
+ * Used by resend-verification and forgot-password endpoints when backend
+ * returns idempotentSkip in the data field (not at wrapper level).
+ *
+ * Structure: { success: boolean, message: string, timestamp: ISO8601, idempotentSkip?: boolean }
+ */
+export const EmptyResponseDataSchema = z.object({
+  success: z.boolean(),
+  message: z.string(),
+  timestamp: z.iso.datetime(),
+  idempotentSkip: z.boolean().optional(),
+})
+
+/**
  * Standard REST API response schema matching ctt-server RestApiResponse<T>.
  *
  * Used by registration, email verification, and other endpoints that return
@@ -115,6 +130,8 @@ export const RestApiResponseSchema = z.object({
   data: z.unknown().nullable().optional(),
   // Response timestamp in ISO 8601 format
   timestamp: z.iso.datetime(),
+  // Error code for failed operations (e.g., AUTH_001, LEADERBOARD_001)
+  code: z.string().optional(),
 })
 
 /**
@@ -122,5 +139,7 @@ export const RestApiResponseSchema = z.object({
  *
  * Used by register, verifyEmail, resendVerification, and other state-changing
  * endpoints that don't return specific data on success.
+ *
+ * When idempotentSkip is present, it's in the data field, parsed by EmptyResponseDataSchema.
  */
-export type EmptyResponse = z.infer<typeof RestApiResponseSchema>
+export type EmptyResponse = z.infer<typeof EmptyResponseDataSchema>

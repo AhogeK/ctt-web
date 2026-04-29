@@ -1,12 +1,15 @@
 import { apiFetch } from './instance'
-import { RestApiResponseSchema, type EmptyResponse } from '@/lib/schemas/api.schema'
+import { RestApiResponseSchema, EmptyResponseDataSchema, type EmptyResponse } from '@/lib/schemas/api.schema'
 import {
   LoginRequestSchema,
   LoginResponseSchema,
   RegisterRequestSchema,
+  ForgotPasswordRequestSchema,
+  ResetPasswordRequestSchema,
   type LoginRequest,
   type LoginResponse,
   type RegisterRequest,
+  type ResetPasswordRequest,
 } from '@/lib/schemas/auth.schema'
 
 /**
@@ -22,13 +25,13 @@ export async function login(credentials: LoginRequest): Promise<LoginResponse> {
   // Validate request payload before sending
   const validatedRequest = LoginRequestSchema.parse(credentials)
 
-  const response = await apiFetch<LoginResponse>('/api/v1/auth/login', {
+  const response = await apiFetch<unknown>('/api/v1/auth/login', {
     method: 'POST',
     body: validatedRequest,
   })
 
-  // Validate response structure to ensure type safety
-  return LoginResponseSchema.parse(response)
+  const wrapped = RestApiResponseSchema.parse(response)
+  return LoginResponseSchema.parse(wrapped.data)
 }
 
 /**
@@ -74,13 +77,13 @@ export async function logoutAll(): Promise<void> {
  * @throws Zod validation error if response doesn't match expected schema
  */
 export async function refresh(params: { refreshToken: string }): Promise<LoginResponse> {
-  const response = await apiFetch<LoginResponse>('/api/v1/auth/refresh', {
+  const response = await apiFetch<unknown>('/api/v1/auth/refresh', {
     method: 'POST',
     body: params,
   })
 
-  // Validate response structure to ensure type safety
-  return LoginResponseSchema.parse(response)
+  const wrapped = RestApiResponseSchema.parse(response)
+  return LoginResponseSchema.parse(wrapped.data)
 }
 
 /**
@@ -97,7 +100,6 @@ export async function refresh(params: { refreshToken: string }): Promise<LoginRe
  * @throws Zod validation error if request or response doesn't match expected schema
  */
 export async function register(data: RegisterRequest): Promise<EmptyResponse> {
-  // Validate and strip payload — removes confirmPassword and any extraneous fields
   const cleanPayload = RegisterRequestSchema.parse(data)
 
   const response = await apiFetch<unknown>('/api/v1/auth/register', {
@@ -105,7 +107,8 @@ export async function register(data: RegisterRequest): Promise<EmptyResponse> {
     body: cleanPayload,
   })
 
-  return RestApiResponseSchema.parse(response)
+  const wrapped = RestApiResponseSchema.parse(response)
+  return EmptyResponseDataSchema.parse(wrapped.data)
 }
 
 /**
@@ -126,7 +129,8 @@ export async function verifyEmail(token: string): Promise<EmptyResponse> {
     query: { token },
   })
 
-  return RestApiResponseSchema.parse(response)
+  const wrapped = RestApiResponseSchema.parse(response)
+  return EmptyResponseDataSchema.parse(wrapped.data)
 }
 
 /**
@@ -145,5 +149,56 @@ export async function resendVerification(email: string): Promise<EmptyResponse> 
     body: { email },
   })
 
-  return RestApiResponseSchema.parse(response)
+  const wrapped = RestApiResponseSchema.parse(response)
+  return EmptyResponseDataSchema.parse(wrapped.data)
+}
+
+/**
+ * Requests a password reset email for the given address.
+ *
+ * Endpoint: POST /api/v1/auth/forgot-password
+ * Rate limited: 3 requests per 10 minutes per email, 30 per hour per IP.
+ *
+ * Anti-enumeration: Backend always returns 200 OK regardless of whether the
+ * email exists in the database. This prevents attackers from determining which
+ * emails are registered.
+ *
+ * @param email - The email address to send the password reset link to
+ * @returns Parsed API response with success status and message
+ * @throws Zod validation error if request or response doesn't match expected schema
+ */
+export async function forgotPassword(email: string): Promise<EmptyResponse> {
+  const cleanPayload = ForgotPasswordRequestSchema.parse({ email })
+
+  const response = await apiFetch<unknown>('/api/v1/auth/forgot-password', {
+    method: 'POST',
+    body: cleanPayload,
+  })
+
+  const wrapped = RestApiResponseSchema.parse(response)
+  return EmptyResponseDataSchema.parse(wrapped.data)
+}
+
+/**
+ * Confirms and executes a password reset using the token from the email link.
+ *
+ * Endpoint: POST /api/v1/auth/password-reset/confirm
+ * Rate limited: 15 requests per 10 minutes per IP.
+ *
+ * On success, all existing sessions for the user are terminated.
+ *
+ * @param data - Reset payload containing token and newPassword
+ * @returns Parsed API response with success status and message
+ * @throws Zod validation error if request or response doesn't match expected schema
+ */
+export async function resetPassword(data: ResetPasswordRequest): Promise<EmptyResponse> {
+  const cleanPayload = ResetPasswordRequestSchema.parse(data)
+
+  const response = await apiFetch<unknown>('/api/v1/auth/password-reset/confirm', {
+    method: 'POST',
+    body: cleanPayload,
+  })
+
+  const wrapped = RestApiResponseSchema.parse(response)
+  return EmptyResponseDataSchema.parse(wrapped.data)
 }
