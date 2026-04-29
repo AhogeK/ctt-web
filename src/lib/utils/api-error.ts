@@ -53,6 +53,7 @@ export function mapApiErrorCode(code: string): string {
   const messages: Record<string, string> = {
     // Auth errors (backend error codes)
     AUTH_001: 'Invalid email or password. Please check your credentials.',
+    AUTH_002: 'Session expired. Please sign in again.',
     AUTH_003: 'This reset link is invalid or has expired. Please request a new one.',
     AUTH_004: 'Account locked due to too many failed attempts.',
     AUTH_005: 'Account suspended. Please contact support.',
