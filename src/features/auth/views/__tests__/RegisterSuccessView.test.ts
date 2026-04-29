@@ -1,4 +1,4 @@
-import { beforeEach, describe, expect, it, vi } from 'vitest'
+import { beforeEach, describe, expect, it, vi } from 'vite-plus/test'
 import { mount } from '@vue/test-utils'
 import RegisterSuccessView from '../RegisterSuccessView.vue'
 import { SESSION_STORAGE_KEYS } from '@/stores/auth'
@@ -55,7 +55,7 @@ vi.mock('@vueuse/core', () => ({
         if (newValue === null || newValue === undefined) {
           sessionStorage.removeItem(key)
         } else {
-          sessionStorage.setItem(key, String(newValue))
+          sessionStorage.setItem(key, typeof newValue === 'string' ? newValue : JSON.stringify(newValue))
         }
       },
     }

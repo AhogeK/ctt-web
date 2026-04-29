@@ -56,17 +56,13 @@ const showProgress = computed(() => hasPassword.value && passedCount.value > 0)
 /** Icon color for a rule - neutral gray when empty, active colors when has password */
 function iconColor(rule: Rule): string {
   if (!hasPassword.value) return 'text-[#8a8f98] dark:text-gray-500'
-  return rule.passed
-    ? 'text-emerald-600 dark:text-emerald-400'
-    : 'text-[#8a8f98] dark:text-gray-500 opacity-50'
+  return rule.passed ? 'text-emerald-600 dark:text-emerald-400' : 'text-[#8a8f98] dark:text-gray-500 opacity-50'
 }
 
 /** Text color for a rule - neutral gray when empty, active colors when has password */
 function textColor(rule: Rule): string {
   if (!hasPassword.value) return 'text-[#8a8f98] dark:text-gray-500'
-  return rule.passed
-    ? 'text-emerald-600 dark:text-emerald-400'
-    : 'text-[#8a8f98] dark:text-gray-500 opacity-60'
+  return rule.passed ? 'text-emerald-600 dark:text-emerald-400' : 'text-[#8a8f98] dark:text-gray-500 opacity-60'
 }
 </script>
 
@@ -94,16 +90,8 @@ function textColor(rule: Rule): string {
         :class="textColor(rule)"
         style="font-feature-settings: 'cv01', 'ss03'"
       >
-        <Check
-          v-if="rule.passed"
-          class="h-3 w-3 shrink-0 transition-colors duration-200"
-          :class="iconColor(rule)"
-        />
-        <X
-          v-else
-          class="h-3 w-3 shrink-0 transition-colors duration-200"
-          :class="iconColor(rule)"
-        />
+        <Check v-if="rule.passed" class="h-3 w-3 shrink-0 transition-colors duration-200" :class="iconColor(rule)" />
+        <X v-else class="h-3 w-3 shrink-0 transition-colors duration-200" :class="iconColor(rule)" />
         <span>{{ rule.label }}</span>
       </li>
     </ul>

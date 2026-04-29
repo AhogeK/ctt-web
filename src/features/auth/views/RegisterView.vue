@@ -28,8 +28,8 @@ const mutation = useMutation({
   onError: (error: unknown) => {
     serverErrors.value = undefined
     if (isApiError(error)) {
-      const data = error.data as { error?: string } | undefined
-      if (error.statusCode === 409 && data?.error === 'USER_001') {
+      const data = error.data as { code?: string } | undefined
+      if (error.statusCode === 409 && data?.code === 'USER_001') {
         serverErrors.value = { email: mapApiErrorCode('USER_001') }
       } else if (error.statusCode === 429) {
         start()
@@ -37,9 +37,7 @@ const mutation = useMutation({
           description: `Try again in ${countdown.value}s`,
         })
       } else {
-        toast.error('Registration failed', {
-          description: error.message || 'Please try again later',
-        })
+        toast.error('Registration failed', { description: 'Please try again later' })
       }
     } else {
       toast.error('Registration failed', { description: 'An unexpected error occurred' })

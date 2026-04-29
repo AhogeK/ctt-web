@@ -90,15 +90,11 @@ onMounted(() => {
           <span class="auth-metrics__counter-label">Total Hours</span>
         </div>
         <div class="auth-metrics__counter">
-          <span class="auth-metrics__counter-value auth-metrics__counter-value--accent">{{
-            animatedProjects
-          }}</span>
+          <span class="auth-metrics__counter-value auth-metrics__counter-value--accent">{{ animatedProjects }}</span>
           <span class="auth-metrics__counter-label">Projects</span>
         </div>
         <div class="auth-metrics__counter">
-          <span class="auth-metrics__counter-value auth-metrics__counter-value--green"
-            >{{ animatedStreak }}d</span
-          >
+          <span class="auth-metrics__counter-value auth-metrics__counter-value--green">{{ animatedStreak }}d</span>
           <span class="auth-metrics__counter-label">Streak</span>
         </div>
       </div>
@@ -121,30 +117,21 @@ onMounted(() => {
         <div class="auth-metrics__lang">
           <span class="auth-metrics__lang-name">TypeScript</span>
           <div class="auth-metrics__lang-bar-track">
-            <div
-              class="auth-metrics__lang-bar-fill auth-metrics__lang-bar-fill--indigo"
-              style="width: 68%"
-            />
+            <div class="auth-metrics__lang-bar-fill auth-metrics__lang-bar-fill--indigo" style="width: 68%" />
           </div>
           <span class="auth-metrics__lang-pct">68%</span>
         </div>
         <div class="auth-metrics__lang">
           <span class="auth-metrics__lang-name">Vue</span>
           <div class="auth-metrics__lang-bar-track">
-            <div
-              class="auth-metrics__lang-bar-fill auth-metrics__lang-bar-fill--violet"
-              style="width: 18%"
-            />
+            <div class="auth-metrics__lang-bar-fill auth-metrics__lang-bar-fill--violet" style="width: 18%" />
           </div>
           <span class="auth-metrics__lang-pct">18%</span>
         </div>
         <div class="auth-metrics__lang">
           <span class="auth-metrics__lang-name">Rust</span>
           <div class="auth-metrics__lang-bar-track">
-            <div
-              class="auth-metrics__lang-bar-fill auth-metrics__lang-bar-fill--green"
-              style="width: 14%"
-            />
+            <div class="auth-metrics__lang-bar-fill auth-metrics__lang-bar-fill--green" style="width: 14%" />
           </div>
           <span class="auth-metrics__lang-pct">14%</span>
         </div>

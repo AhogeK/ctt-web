@@ -42,10 +42,16 @@ export function useResendVerification() {
 
     isPending.value = true
     try {
-      await resendVerification(email)
-      toast.success('Verification email sent', {
-        description: 'Please check your inbox',
-      })
+      const response = await resendVerification(email)
+      if (response.idempotentSkip) {
+        toast.info('Verification email already sent within 10 minutes', {
+          description: 'Please check your inbox',
+        })
+      } else {
+        toast.success('Verification email sent', {
+          description: 'Please check your inbox',
+        })
+      }
       startCountdown(60)
     } catch (error: unknown) {
       if (isApiError(error)) {
@@ -55,13 +61,13 @@ export function useResendVerification() {
             description: `Please wait ${retryAfter} seconds before trying again`,
           })
           startCountdown(retryAfter)
-        } else if (error.statusCode === 409 && error.error === 'USER_007') {
+        } else if (error.statusCode === 409 && (error.data as { code?: string })?.code === 'USER_007') {
           toast.info('Email already verified', {
             description: 'Please proceed to login',
           })
         } else {
           toast.error('Failed to resend verification email', {
-            description: error.message || 'Please try again later',
+            description: 'Please try again later',
           })
         }
       } else {
