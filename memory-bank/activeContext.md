@@ -2,8 +2,72 @@
 
 ## Current Status
 
-**Phase**: SonarQube Code Quality Fix (v0.5.14)
-**Version**: 0.5.14 (2026-04-30)
+**Phase**: Vitest .agents Exclusion Fix (v0.5.19)
+**Version**: 0.5.19 (2026-04-30)
+
+### Vitest .agents Exclusion Fix (0.5.19)
+
+**Issue**: `vp test` (vitest) was scanning `.agents/skills/` test files, causing spurious failures.
+The `ignorePatterns` in `vite.config.ts` only applies to `fmt` and `lint`, not test discovery.
+
+**File**: `vitest.config.ts`
+
+**Fix**: Added `.agents/**` and `.claude/**` to vitest `exclude` array:
+
+```typescript
+exclude: [...configDefaults.exclude, 'e2e/**', '.agents/**', '.claude/**'],
+```
+
+**Verification**: `vp test` — 16/16 files, 328/328 tests pass, 0 failures.
+
+### Interceptor Test Coverage Added (0.5.18)
+
+**File**: `src/lib/api/__tests__/instance.test.ts` (401 → 833 lines, +18 test cases)
+
+**New test coverage** (previously 0):
+
+- AUTH_002/AUTH_003 refresh trigger (2 tests)
+- Refresh success with `__authRetry` flag retry (1 test)
+- `__authRetry` infinite loop guard (1 test)
+- Refresh failure handling: AUTH_003, AUTH_007, AUTH_009, network error (4 tests)
+- Terminal auth errors on 401: AUTH_004/005/006/007/008 (5 tests)
+- Terminal auth error on 403: AUTH_004 (1 test)
+- `isTerminalAuthHandling` mutex preventing duplicate handling (1 test)
+- `getErrorCode()` flat and wrapped response formats (3 tests)
+
+**Mock additions**: `@/stores/auth` (useAuthStore, refreshAccessToken, clearAuth), `@/router` (push, currentRoute)
+
+**Verification**: 328/328 project tests pass.
+
+### Interceptor Code Review Findings + Fixes (0.5.17)
+
+**Three parallel Oracle agent reviews** (logic, style, test) identified:
+
+**Critical bug fixed**: Retry used raw `ofetch` instead of `apiFetch` → `onRequest` hook never fires → retry sends expired token → user kicked to login even after successful refresh. Fixed by changing `ofetch(request, ...)` → `apiFetch(request, ...)` on the retry line.
+
+**Medium fixes applied**:
+
+- Added JSDoc to `apiFetch` (public API surface) and `UNAUTHORIZED_EVENT` (cross-module contract)
+- Added network error fallback toast in refresh catch block (previously silent failure)
+
+**All review findings addressed**: Critical bug fixed, JSDoc added, network error toast added, full test coverage added.
+
+### AUTH_003 Refresh Trigger Fix (0.5.16)
+
+**Root cause**: Backend `JwtAuthenticationEntryPoint` returns `AUTH_003` for all JWT failures (expired, invalid, missing), but the interceptor only triggered token refresh on `AUTH_002`. Since `AUTH_002` is defined in `ErrorCode.java` but never thrown, the refresh flow never activated — users were immediately logged out on token expiry.
+
+**File**: `src/lib/api/instance.ts`
+
+**Changes**:
+
+- Removed `AUTH_003` from `TERMINAL_AUTH_CODES` — it now triggers refresh instead of immediate redirect
+- Extended 401 refresh trigger to include `AUTH_003` alongside `AUTH_002`: `errorCode === 'AUTH_002' || errorCode === 'AUTH_003'`
+- Catch block in refresh failure handles error codes from the refresh endpoint:
+  - `AUTH_003` (refresh token not found) → inline terminal handling with `isTerminalAuthHandling` mutex, `clearAuth()`, toast, and `router.push`
+  - `AUTH_007` / `AUTH_009` (expired / reuse detected) → handled via existing `TERMINAL_AUTH_CODES` and `handleTerminalAuthError()`
+- Unknown refresh failures fall through to legacy 401 handler (token clear + `UNAUTHORIZED_EVENT` dispatch)
+
+**All existing protections preserved**: `isTerminalAuthHandling` mutex, `__authRetry` guard, legacy 401 fallback, `router.push().finally()` pattern, terminal handling for `AUTH_004/005/006/007/008/009`.
 
 ### globalThis Migration (0.5.14)
 

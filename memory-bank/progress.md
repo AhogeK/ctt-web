@@ -39,6 +39,11 @@
 - [x] Unified error code field (backend `code` vs frontend `error` alignment across all views)
 - [x] User-friendly toast policy (no leaking HTTP methods/paths/status codes)
 - [x] Vite+ migration (unified toolchain via `vp` CLI)
+- [x] ofetch interceptor: token refresh (AUTH_002/AUTH_003) + terminal auth error handling (AUTH_004/005/006/007/008/009)
+- [x] Interceptor code review: critical retry token bug fixed, JSDoc added, network error toast added
+- [x] Interceptor test coverage: 18 new tests (refresh, terminal auth, mutex, retry guard, getErrorCode)
+- [x] Vitest .agents exclusion: added `.agents/**` and `.claude/**` to vitest.config.ts exclude
+- [x] AUTH_003 refresh trigger fix: backend never throws AUTH_002, all JWT failures return AUTH_003
 
 ## In Progress
 
