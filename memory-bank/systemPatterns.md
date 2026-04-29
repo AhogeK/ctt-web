@@ -3,12 +3,14 @@
 ## Component Architecture
 
 ### Naming & File Conventions
+
 - Component files: `PascalCase.vue` (e.g., `HeatmapChart.vue`)
 - Composable files: `camelCase.ts` with `use` prefix (e.g., `useStats.ts`)
 - Schema files: `kebab-case.schema.ts` (e.g., `coding-session.schema.ts`)
 - All code in English — no Chinese, no emoji
 
 ### Component Patterns
+
 - Always `<script setup lang="ts">`
 - Props: `defineProps<{ ... }>()`
 - Emits: `defineEmits<{ ... }>()`
@@ -37,19 +39,20 @@
 ```typescript
 // lib/api/stats.ts
 export const fetchStats = (params: StatsParams) =>
-  apiFetch('/api/v1/stats', { query: params })
-    .then(r => PagedResponseSchema(CodingSessionSchema).parse(r))
+  apiFetch('/api/v1/stats', { query: params }).then((r) => PagedResponseSchema(CodingSessionSchema).parse(r))
 ```
 
 ## Error Handling Pattern
 
 ### ErrorBoundary Component
+
 - Catches errors via `onErrorCaptured`
 - Displays fallback UI with retry mechanism
 - Shows error details in dev mode only
 - Prevents white-screen crashes in production
 
 ### TanStack Query Error State
+
 ```vue
 <ErrorState v-if="isError" :error="error" />
 <LoadingState v-else-if="isPending" />
@@ -59,6 +62,7 @@ export const fetchStats = (params: StatsParams) =>
 ## Router Architecture
 
 ### Directory Structure
+
 ```
 src/router/
 ├── index.ts           # Core router with auto-import
@@ -70,30 +74,35 @@ src/router/
 ```
 
 ### Layout Switching Pattern
+
 Routes specify layout via `meta.layout`:
+
 - Auth routes: `{ path: '/login', meta: { layout: 'auth' } }`
 - App routes: `{ path: '/dashboard', meta: { layout: 'app' } }`
 
 AppLayout renders sidebar on desktop (≥768px), Sheet on mobile.
 
 ### Route Meta Type Definition
+
 ```typescript
 interface RouteMeta {
-  title: string              // Page title (required)
-  requiresAuth?: boolean     // Authentication required
-  roles?: string[]          // RBAC roles
+  title: string // Page title (required)
+  requiresAuth?: boolean // Authentication required
+  roles?: string[] // RBAC roles
   layout?: 'default' | 'blank' | 'dashboard'
-  hideInMenu?: boolean      // Hide from sidebar
+  hideInMenu?: boolean // Hide from sidebar
 }
 ```
 
 ### Auto-Import Pattern
+
 ```typescript
 const routeModules = import.meta.glob('./modules/*.ts', { eager: true })
 // Iterate and flatten module routes
 ```
 
 ### Route Guards
+
 - **Authentication**: Redirects to `/login` if `requiresAuth` and no token
 - **Page Title**: Sets `document.title` from `to.meta.title`
 - **Progress Bar**: NProgress starts on `beforeEach`, stops on `afterEach`
@@ -101,24 +110,28 @@ const routeModules = import.meta.glob('./modules/*.ts', { eager: true })
 ### Code Splitting
 
 All route components use lazy loading:
+
 ```typescript
 component: () => import('@/features/auth/views/LoginView.vue')
 ```
 
 Vite `manualChunks` configuration:
+
 - `vendor.js` — Third-party dependencies
 - `feature-auth.js` — Authentication module
 - `feature-dashboard.js` — Dashboard analytics
 - `feature-settings.js` — Settings pages
 
 ### Chunk Load Error Handling
+
 Auto-reload for stale chunks after deployment:
+
 ```typescript
 router.onError((error, to) => {
   if (isChunkLoadFailed && !to.query.retried) {
-    window.location.href = `${to.fullPath}?retried=1`;
+    window.location.href = `${to.fullPath}?retried=1`
   }
-});
+})
 ```
 
 Pattern: `?retried=1` query param prevents infinite reload loop.
@@ -146,3 +159,4 @@ Pattern: `?retried=1` query param prevents infinite reload loop.
 - ❌ `console.log` in committed code
 - ❌ Hardcoded strings (use i18n keys)
 - ❌ Direct `ofetch` calls in components
+- ❌ `error.error` for backend error code extraction (use `error.data.code`)

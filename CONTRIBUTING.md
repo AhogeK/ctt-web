@@ -15,12 +15,14 @@ pnpm dev
 ```
 
 **Prerequisites:**
+
 - Node.js `^20.19.0 || >=22.12.0`
 - pnpm `>=10` — install via `corepack enable && corepack prepare pnpm@latest --activate`
 
 ## Code Style
 
 **Linting:** Oxlint (primary) + ESLint (type-aware rules)
+
 ```bash
 pnpm lint        # Check and fix
 pnpm lint:oxlint # Oxlint only
@@ -28,17 +30,20 @@ pnpm lint:eslint # ESLint only
 ```
 
 **Formatting:** Oxfmt (Prettier compatible)
+
 ```bash
 pnpm format      # Format all files
 pnpm format:check # Check without writing
 ```
 
 **TypeScript:** Strict mode, no `any`
+
 ```bash
 pnpm type-check  # Verify types
 ```
 
 **Vue Conventions:**
+
 - Always use `<script setup lang="ts">`
 - Props typed with `defineProps<{...}>()`
 - Emits typed with `defineEmits<{...}>()`
@@ -46,6 +51,7 @@ pnpm type-check  # Verify types
 - No Options API in new code
 
 **Naming:**
+
 - Components: `PascalCase.vue`
 - Composables: `use*.ts` (camelCase)
 - Stores: `use*Store.ts` (camelCase)
@@ -68,6 +74,7 @@ chore: update pnpm-lock.yaml
 **Format:** `<type>(<scope>): <subject>` (lowercase, no period)
 
 **Types:**
+
 - `feat` — New feature
 - `fix` — Bug fix
 - `docs` — Documentation only
@@ -79,6 +86,7 @@ chore: update pnpm-lock.yaml
 - `ci` — CI/CD changes
 
 **Setup commit template:**
+
 ```bash
 git config commit.template .gitmessage
 ```
@@ -86,6 +94,7 @@ git config commit.template .gitmessage
 ## Pull Requests
 
 **Before submitting:**
+
 - [ ] `pnpm lint` passes
 - [ ] `pnpm type-check` passes
 - [ ] Tests added/updated for new features
@@ -96,14 +105,15 @@ git config commit.template .gitmessage
 - [ ] No `console.log` left in code
 
 **Branch naming:**
-| Type     | Pattern                            | Example                        |
+| Type | Pattern | Example |
 |----------|------------------------------------|--------------------------------|
-| Feature  | `feat/{ticket-id}-{short-desc}`    | `feat/CTT-42-dashboard-charts` |
-| Bugfix   | `fix/{ticket-id}-{short-desc}`     | `fix/CTT-55-auth-redirect`     |
-| Docs     | `docs/{short-desc}`                | `docs/contributing-guide`      |
-| Refactor | `refactor/{short-desc}`            | `refactor/extract-composable`  |
+| Feature | `feat/{ticket-id}-{short-desc}` | `feat/CTT-42-dashboard-charts` |
+| Bugfix | `fix/{ticket-id}-{short-desc}` | `fix/CTT-55-auth-redirect` |
+| Docs | `docs/{short-desc}` | `docs/contributing-guide` |
+| Refactor | `refactor/{short-desc}` | `refactor/extract-composable` |
 
 **PR Process:**
+
 1. Create branch from `develop`
 2. Make changes and commit
 3. Push and create PR to `develop`
@@ -113,6 +123,7 @@ git config commit.template .gitmessage
 ## Testing
 
 **Run tests:**
+
 ```bash
 pnpm test:unit     # Unit tests (Vitest)
 pnpm test:e2e      # E2E tests (Playwright)
@@ -120,16 +131,19 @@ pnpm test          # All tests
 ```
 
 **First-time E2E setup:**
+
 ```bash
 pnpm exec playwright install
 ```
 
 **Coverage expectations:**
+
 - Unit tests (composables, utils): > 80%
 - Component tests: critical interaction paths
 - E2E tests: login → dashboard → device management
 
 **Test structure (AAA pattern):**
+
 ```typescript
 describe('UserCard', () => {
   it('should display username', () => {
@@ -163,14 +177,15 @@ src/
 ```
 
 **State management:**
-| State Type   | Tool               | Scope                    |
+| State Type | Tool | Scope |
 |--------------|--------------------|--------------------------|
-| Server State | TanStack Query     | All API data             |
-| URL State    | vue-router query   | Filters, pagination      |
-| Global UI    | Pinia              | Auth session, theme      |
-| Local UI     | `ref` / `reactive` | Component-level toggles  |
+| Server State | TanStack Query | All API data |
+| URL State | vue-router query | Filters, pagination |
+| Global UI | Pinia | Auth session, theme |
+| Local UI | `ref` / `reactive` | Component-level toggles |
 
 **Anti-patterns (forbidden):**
+
 - Storing API response data in Pinia
 - Prop drilling beyond 2 levels
 - Using `v-html` without sanitization

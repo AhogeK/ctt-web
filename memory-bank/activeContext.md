@@ -2,226 +2,430 @@
 
 ## Current Status
 
-**Phase**: Auth — deviceId utility refactoring
-**Version**: 0.5.0-beta.80 (2026-04-23)
+**Phase**: SonarQube Code Quality Fix (v0.5.14)
+**Version**: 0.5.14 (2026-04-30)
 
-### DeviceId Utility Refactoring (0.5.0-beta.80)
+### globalThis Migration (0.5.14)
 
-**Date**: 2026-04-23
+**Date**: 2026-04-30
+
+**Issue**: SonarQube `typescript:S7764` flags `window` and `global` usage in test setup.
+
+**File**: `src/test/setup.ts`
+
+**Fixed**:
+
+- Line 11: `Object.defineProperty(window, 'matchMedia', ...)` → `Object.defineProperty(globalThis, 'matchMedia', ...)`
+- Line 25: `global.ResizeObserver` → `globalThis.ResizeObserver`
+
+**Reason**: `globalThis` is modern JavaScript standard, works in all environments (browser, Node.js, jsdom).
+
+### Zod v4 Deprecated API Fix (0.5.13)
+
+**Date**: 2026-04-30
+
+**Issue**: SonarQube `typescript:S1874` flags deprecated `z.string().uuid()` and `z.string().url()` methods.
+
+**Reference**: Zod v4 migration - string format methods promoted to top-level functions.
+
+**File**: `src/lib/schemas/leaderboard.schema.ts`
+
+**Fixed**:
+
+- Line 10: `z.string().uuid()` → `z.uuid()`
+- Line 18: `z.string().url()` → `z.url()`
+
+**Migration pattern** (per Zod v4 docs):
+| Deprecated | Replacement |
+|------------|-------------|
+| `z.string().uuid()` | `z.uuid()` |
+| `z.string().url()` | `z.url()` |
+| `z.string().email()` | `z.email()` |
+| `z.string().datetime()` | `z.iso.datetime()` |
+| `z.string().ip()` | `z.ipv4()` / `z.ipv6()` |
+
+**Verification**: ✅ Type check passes (199 files)
+
+### R9 Violation Fix (0.5.12)
+
+**Date**: 2026-04-30
+
+**Issue**: Chinese text in code file violates R9 (code/comments/variables must be English).
+
+**File**: `src/features/auth/composables/useResendVerification.ts`
+
+**Fixed**:
+
+- Line 47: `'邮件已在10分钟内发送'` → `'Verification email already sent within 10 minutes'`
+- Line 48: `'请查看收件箱'` → `'Please check your inbox'`
+
+**Verification**: ✅ Tests pass (15/15)
+
+### SonarQube VSCode Config (0.5.11)
+
+**Change**: Disabled `Web:S6853` rule in `.vscode/settings.json` for SonarQube VSCode plugin (Standalone Mode).
+
+**Reason**: Rule flags Vue label components with slots as "missing text label", but this is false positive:
+
+- `FormLabel.vue` — wrapper component, text comes via slot from parent
+- `Label.vue` — primitive style component, doesn't require control association
+
+**Config added**:
+
+```json
+{
+  "sonarlint.rules": {
+    "Web:S6853": "off"
+  }
+}
+```
+
+### Complete Over-120-Char Class String Fixes (0.5.11)
+
+**Date**: 2026-04-30
+
+**Issue**: After v0.5.10 fix, additional class strings >120 chars remained. All needed multi-line split via `cn()`.
+
+**Files changed**:
+
+- `src/components/ui/sidebar/SidebarMenuAction.vue` — split 121-char class string
+- `src/components/ui/sidebar/SidebarMenuBadge.vue` — split class string
+- `src/components/ui/sidebar/SidebarGroupAction.vue` — split class string
+- `src/components/ui/dialog/DialogContent.vue` — split class string
+- `src/components/ui/dialog/DialogScrollContent.vue` — split class string
+- `src/components/ui/select/SelectTrigger.vue` — split 2 class strings
+- `src/components/ui/select/SelectContent.vue` — split 2 class strings
+- `src/components/ui/sheet/SheetContent.vue` — split 3 class strings (position variants)
+- `src/components/ui/dropdown-menu/DropdownMenuContent.vue` — split class string
+- `package.json` — version bump to 0.5.11
+
+**Verification**:
+
+- ✅ `find src/components/ui -name "*.vue" -exec awk '{if(length($0)>120) ...}'` → 0 lines over 120
+- ✅ `vp check --fix` does NOT merge multi-line strings back to single line
+- ✅ All class strings ≤120 chars
+
+### Split Over-120-Char Class Strings with cn() (0.5.10)
+
+**Date**: 2026-04-30
+
+**Issue**: Several UI components had class strings exceeding 120 characters on single lines,
+violating printWidth constraint. Previous cleanup incorrectly removed all `cn()` usage.
+
+**Rule clarification**:
+
+- Class strings > 120 chars → MUST use `cn()` to split into multi-line format
+- Class strings ≤ 120 chars → Can use simple array syntax `['...', props.class]`
+
+**Files changed**:
+
+- `src/components/ui/dialog/DialogContent.vue` — added `cn` import, split DialogClose class (~280 chars) into 4 lines
+- `src/components/ui/sheet/SheetContent.vue` — added `cn` import, split DialogClose class (~180 chars) into 3 lines
+- `src/components/ui/dialog/DialogScrollContent.vue` — added `cn` import, split DialogOverlay class (~150 chars) into 3 lines
+- `src/components/ui/sidebar/Sidebar.vue` — added `cn` import, split inner div class (~150 chars) into 4 lines
+- `package.json` — version bump to 0.5.10
+
+**Verification**:
+
+- ✅ `vp check` — 228 files formatted, 199 files lint/type clean
+- ✅ `vp test` — 310/310 tests pass
+
+### Final cn utility removal + multiline class split (0.5.9)
+
+**Date**: 2026-04-29
+
+**Change**: Removed remaining `cn()` calls from TooltipContent.vue and AppIcon.vue.
+Split overly long class strings (>120 chars) into multiline array format to satisfy printWidth constraint.
+
+**Files changed**:
+
+- `src/components/ui/tooltip/TooltipContent.vue` — removed cn import, split 300+ char class string into 8 array elements (base styles, animations, states, positions).
+- `src/components/ui/app-icon/AppIcon.vue` — removed cn import, `cn(props.class)` → `props.class` (single element, no array needed).
+- `package.json` — version bump to 0.5.9.
+
+**Verification**:
+
+- ✅ `vp check` — 228 files formatted, 199 files lint/type clean.
+- ✅ `vp test` — 310/310 tests pass.
+
+### Removed cn utility from UI components (0.5.8)
+
+**Date**: 2026-04-29
+
+**Change**: Replaced `cn()` calls with native Vue array syntax `['...', props.class]` in `src/components/ui`.
+Removed `cn` imports from all UI components. This simplifies the code and avoids unnecessary dependency on `tailwind-merge` for simple class merging.
+
+**Files changed**:
+
+- `src/components/ui/**/*.vue` — replaced `cn(...)` with `[...]`, removed imports.
+- `package.json` — version bump to 0.5.8.
+
+**Verification**:
+
+- ✅ `vp check` — 0 errors, 0 warnings.
+- ✅ `vp test` — 310/310 tests pass.
+
+### Fixed vp check AI file exclusion & TS config (0.5.7)
+
+**Date**: 2026-04-29
 
 **Changes**:
-1. Created `src/lib/utils/device.ts` — pure utility `getOrCreateDeviceId()` (SSR-safe, localStorage key `ctt-device-id`, `crypto.randomUUID()`)
-2. Refactored `authStore`: added `deviceId` state, `login()` now accepts `Omit<LoginRequest, 'deviceId'>` and transparently injects deviceId
-3. Simplified `LoginForm.vue`: removed `useDeviceId` import/usage, emit only `{ email, password }`
-4. Migrated `LoginView.vue`: uses `authStore.login()` instead of direct API call
-5. Deleted deprecated `useDeviceId.ts` composable + tests
-6. Updated `auth.test.ts`: login tests use new signature, API expectation includes injected deviceId
 
-**Files Modified**:
-- `src/lib/utils/device.ts` — new pure utility
-- `src/lib/utils/index.ts` — barrel export
-- `src/stores/auth.ts` — deviceId state + transparent login injection
-- `src/features/auth/components/LoginForm.vue` — simplified emit
-- `src/features/auth/views/LoginView.vue` — uses authStore.login()
-- `src/stores/__tests__/auth.test.ts` — updated login test signatures
+1. **AI File Exclusion**: Added `ignorePatterns` to both `fmt` and `lint` blocks in `vite.config.ts` to exclude `.agents/**`, `.claude/**`, `.cursor/**`. Prevents AI skill files from being formatted/linted.
+2. **TS Config Fix**: Removed `composite: true` from `tsconfig.vitest.json`. It was causing `vue-tsc` to fail resolving `*.vue` modules in test files. Restored `declare module '*.vue'` in `env.d.ts` which is required for type checking.
 
-**Files Deleted**:
-- `src/features/auth/composables/useDeviceId.ts`
-- `src/features/auth/composables/__tests__/useDeviceId.test.ts`
+**Files changed**:
 
-**Verified**:
-- ✅ All 289 tests pass (15 files — 2 test files deleted)
-- ✅ type-check passes (0 errors)
-- ✅ No remaining `useDeviceId` references in codebase
-- ✅ deviceId NOT cleared on logout (represents physical device)
+- `vite.config.ts` — added `ignorePatterns` to `fmt` and `lint`.
+- `tsconfig.vitest.json` — removed `composite: true`.
+- `env.d.ts` — restored `declare module '*.vue'` block.
+- `package.json` — version bump to 0.5.7.
 
-### Auth Schema Strong Password + Literal Token Type (0.5.0-beta.79)
+**Verification**:
 
-**Date**: 2026-04-21
+- ✅ `vp check` — 0 errors, 0 warnings.
+- ✅ `vp test` — 310/310 tests pass.
 
-**Changes**:
-1. `LoginRequestSchema.password`: `z.string().min(8)` → `StrongPasswordSchema` (aligned with backend `@StrongPassword`)
-2. `LoginResponseSchema.tokenType`: `z.string().default('Bearer')` → `z.literal('Bearer').default('Bearer')` (strict type inference)
-3. Tests: Added 7 new test cases (weak password rejection, disallowed chars, strong password acceptance, non-Bearer rejection x2, lowercase bearer rejection, literal type inference)
-4. Tests: Fixed 3 breaking tests (8-char strong password, custom tokenType → reject non-Bearer)
-5. Factory: `buildLoginRequest()` password → `'TestPass1!'` (deterministic strong password)
-6. Type fixes: 9 type errors in auth.test.ts + factories.test.ts fixed (`as const` assertions)
+### Reverted printWidth to 120 (0.5.6)
 
-**Files Modified**:
-- `src/lib/schemas/auth.schema.ts` — schema changes, StrongPasswordSchema moved before LoginRequestSchema
-- `src/lib/schemas/__tests__/auth.schema.test.ts` — 5 new tests + 3 fixed tests
-- `src/test/factories/auth.ts` — deterministic strong password
-- `src/test/factories/__tests__/factories.test.ts` — tokenType fix
-- `src/stores/__tests__/auth.test.ts` — 8 `as const` assertions for tokenType
+**Date**: 2026-04-29
 
-**Verified**:
-- ✅ All 297 tests pass (16 files)
-- ✅ type-check passes (0 errors)
-- ✅ Zod v4 API confirmed: `z.email()`, `z.uuid()` are correct (NOT `z.string().email()`)
+**Change**: Reverted `vite.config.ts` `fmt.printWidth` from 100 back to 120 per user preference.
+Long Tailwind class strings can be split using `cn()` function manually if needed.
 
-### Toast Format Fix (0.5.0-beta.76)
+**Files changed**:
 
-**Date**: 2026-04-17
+- `vite.config.ts` — `printWidth: 120`.
+- `package.json` — version bump to 0.5.6.
 
-**Issue**: 2 tests in `useResendVerification.test.ts` failing — toast format mismatch
+### Switched to Vue Stable Release (0.5.4)
 
-**Root Cause**: Implementation used `mapApiErrorCode()` returning long strings as toast title, tests expected short title + description format
+**Date**: 2026-04-29
+
+**Change**: Removed forced Vue Beta overrides from `pnpm-workspace.yaml`. Project now uses Vue latest stable release instead of beta.
+
+**Files changed**:
+
+- `pnpm-workspace.yaml` — removed 13 Vue beta overrides.
+- `package.json` — version bump to 0.5.4.
+
+**Verification**:
+
+- ✅ `vp install` — dependencies updated successfully.
+- ✅ `vp check` — 0 type/lint errors.
+- ✅ `vp test` — 310/310 tests pass.
+
+### HTML Lang Attribute Corrected to en (0.5.3)
+
+**Date**: 2026-04-29
+
+**Issue**: `index.html` had `lang="zh-CN"` but project content is English-only.
 
 **Fix**:
-- USER_002: `toast.info('Email already verified', { description: 'Please proceed to login' })`
-- 429: `toast.error('Too many requests', { description: 'Please wait ${retryAfter} seconds before trying again' })`
 
-**Files**:
-- `src/features/auth/composables/useResendVerification.ts` — direct toast calls, removed `mapApiErrorCode` import
+- Changed `<html lang="zh-CN">` to `<html lang="en">` to match actual content language.
+
+**Files changed**:
+
+- `index.html` — corrected language code to `en`.
+- `package.json` — version bump to 0.5.3.
+
+### HTML Lang Attribute Fixed (0.5.2)
+
+**Date**: 2026-04-29
+
+**Issue**: `index.html` had empty `<html lang="">`, triggering SonarQube warning Web:S5254.
+
+**Fix**:
+
+- Set `<html lang="zh-CN">` for proper accessibility, SEO, and translation tool support.
+
+**Files changed**:
+
+- `index.html` — added `zh-CN` language code.
+- `package.json` — version bump to 0.5.2.
+
+**Verification**:
+
+- ✅ `vp check` — 0 type/lint errors.
+
+### Redundant env.d.ts Declaration Removed (0.5.1)
+
+**Date**: 2026-04-29
+
+**Issue**: `env.d.ts` contained a manual `declare module '*.vue'` block that was redundant.
+
+**Root cause**:
+
+- The project uses `@vue/tsconfig/tsconfig.dom.json` which handles `.vue` file types automatically via `vue-tsc` and Volar.
+- The manual declaration was likely added by AI in a previous session as a "quick fix" for IDE errors, but it's unnecessary for the build/type-check pipeline.
+
+**Fix**:
+
+- Removed the `declare module '*.vue'` block from `env.d.ts`.
+- Kept only `/// <reference types="vite-plus/client" />` which is required.
+
+**Files changed**:
+
+- `env.d.ts` — removed redundant module declaration.
+- `package.json` — version bump to 0.5.1.
+
+**Verification**:
+
+- ✅ `vp check` — 0 type errors (only unrelated formatting issues in docs).
+- ✅ `vp test` — 310/310 tests pass.
+
+### Milestone: Login Page + JWT Authentication Complete (0.5.0)
+
+**Date**: 2026-04-29
+
+Login page and JWT-based authentication fully implemented and verified.
+
+**Features delivered**:
+
+- Login page with email/password form, loading states, error handling
+- JWT token management (access token + refresh token)
+- Route guards (requiresAuth middleware)
+- Email verification flow (verify-email page, resend verification)
+- Password reset flow (forgot-password, reset-password)
+- Registration flow (register, register-success)
+- Auth layout with responsive design (1080p+ support)
+- API contract verification skill (prevents integration bugs)
+- Error code mapping (backend codes → user-friendly messages)
+- Idempotent skip detection (10-min resend window)
+- Global 401 handler with route-aware skip logic
+
+**Version strategy**: Switched from beta suffixes to semantic versioning (0.5.0 → 0.5.1 → 0.5.2...)
+
+---
+
+### Error Code Field Extraction Fixed (beta.84 partial)
+
+**Date**: 2026-04-25
+
+**Issue**: Multiple views read `error.error` to extract backend error codes, but ctt-server returns `{ "code": "XXX" }`. Fixed all occurrences.
+
+---
+
+### Historical Summary (beta.61–beta.95)
+
+| Version       | Date       | Summary                                              |
+| ------------- | ---------- | ---------------------------------------------------- |
+| 0.5.0-beta.95 | 2026-04-29 | Verified checklist file deleted (merged into 0.5.0)  |
+| 0.5.0-beta.94 | 2026-04-29 | AuthLayout short viewport responsive fix             |
+| 0.5.0-beta.93 | 2026-04-29 | Verify-email 401 handler fixed (route-aware skip)    |
+| 0.5.0-beta.92 | 2026-04-29 | EmptyResponse idempotentSkip field location fix      |
+| 0.5.0-beta.91 | 2026-04-29 | Dialog footer button spacing fix                     |
+| 0.5.0-beta.90 | 2026-04-28 | Vite dev server port fix (strictPort: true)          |
+| 0.5.0-beta.89 | 2026-04-28 | Idempotent skip detection (10-min resend window)     |
+| 0.5.0-beta.88 | 2026-04-28 | API contract verification skill created              |
+| 0.5.0-beta.87 | 2026-04-28 | Login success Zod schema mismatch fix                |
+| 0.5.0-beta.86 | 2026-04-28 | Double toast on backend errors fix                   |
+| 0.5.0-beta.85 | 2026-04-28 | Auth UI consistency + error handling polish          |
+| 0.5.0-beta.84 | 2026-04-28 | AuthLayout 1080p responsive fix + Vite+ migration    |
+| 0.5.0-beta.82 | 2026-04-25 | LoginView form submission fix                        |
+| 0.5.0-beta.80 | 2026-04-23 | DeviceId utility refactoring                         |
+| 0.5.0-beta.79 | 2026-04-21 | StrongPassword schema + literal tokenType            |
+| 0.5.0-beta.76 | 2026-04-17 | Toast format fix — short title + description pattern |
+| 0.5.0-beta.74 | 2026-04-17 | Self-learning skill creation (transient-ui-capture)  |
+| 0.5.0-beta.67 | 2026-04-17 | Tailwind class strings → cn() multi-line             |
+| 0.5.0-beta.61 | 2026-04-17 | Auth form zero-jump spacing                          |
+
+**Date**: 2026-04-25
+
+**Issue**: Multiple views read `error.error` or `data.error` to extract backend error codes, but ctt-server returns `{ "code": "XXX", ... }` (not `error`). This caused:
+
+1. RegisterView 409 USER_001 not recognized → leaked raw ofetch error `[POST] "/api/v1/auth/register": 409 Conflict` in toast
+2. VerifyEmailView AUTH_004 not recognized → showed raw `error.message`
+3. useResendVerification USER_007 not recognized → generic error instead of "Email already verified"
+4. `getErrorMessage()` in api-error.ts also read `data?.error` → same issue
+
+**Root Cause**: ofetch error object shape is `{ statusCode, data, message }` where `data` is the JSON response body. Backend uses `code` field, not `error`.
+
+**Fix**:
+
+1. `LoginView.vue` L48: `error.error` → `(error.data as { code?: string })?.code` (already fixed in prior session)
+2. `RegisterView.vue` L31-32: `data?.error === 'USER_001'` → `data?.code === 'USER_001'`
+3. `VerifyEmailView.vue` L46: `error.error === 'AUTH_004'` → `(error.data as { code?: string })?.code === 'AUTH_004'`
+4. `useResendVerification.ts` L58: `error.error === 'USER_007'` → `(error.data as { code?: string })?.code === 'USER_007'`
+5. `api-error.ts` `getErrorMessage()`: `data?.error` → `data?.code`, removed fallback to `error.message`/`error.statusMessage`
+6. Added `USER_007` mapping to `mapApiErrorCode()`
+7. All generic error toasts now use fixed "Please try again later" (no leaking technical details)
+8. Updated 3 test cases in `useResendVerification.test.ts` to mock `data: { code: '...' }` instead of `error: '...'`
+
+**Files Modified**:
+
+- `src/features/auth/views/LoginView.vue` — error code extraction (prior fix)
+- `src/features/auth/views/RegisterView.vue` — error code field + generic toast message
+- `src/features/auth/views/VerifyEmailView.vue` — error code extraction + removed raw message leak
+- `src/features/auth/composables/useResendVerification.ts` — error code field + generic toast message
+- `src/lib/utils/api-error.ts` — `getErrorMessage()` + added USER_007 mapping
+- `src/features/auth/composables/__tests__/useResendVerification.test.ts` — 3 test mocks updated
 
 **Verified**:
-- ✅ All 293 tests pass (16 files)
-- ✅ type-check passes
 
-### sessionStorage Email Passing (0.5.0-beta.75)
+- ✅ All 296 tests pass (15 files)
+- ✅ type-check passes (0 errors)
+- ✅ No remaining `error.error` or `data?.error` references in production code
 
-**Date**: 2026-04-17
+**Policy Established**: All error toasts use fixed user-friendly messages, never leak HTTP methods/paths/status codes.
 
-**Issue**: Email passed via URL query param (`?email=...`) leaked in browser history, referer headers, and server logs
+### Vite+ Migration (0.5.0-beta.84)
 
-**Security Fix**: Replaced URL query param with sessionStorage for email passing between RegisterView → RegisterSuccessView
-
-**Files**:
-- `src/router/routes/auth.ts` — removed `email` from route query schema
-- `src/features/auth/views/RegisterView.vue` — store email in sessionStorage before navigation
-- `src/features/auth/views/RegisterSuccessView.vue` — read email from sessionStorage, clear after use
-- `src/features/auth/views/__tests__/RegisterView.test.ts` — updated tests for sessionStorage pattern
-- `src/features/auth/views/__tests__/RegisterSuccessView.test.ts` — updated tests for sessionStorage pattern
-
-**Verified**:
-- ✅ Email no longer appears in URL
-- ✅ sessionStorage cleared after reading
-- ✅ All tests pass
-- ✅ type-check passes
-
-### Self-Learning Skill Creation (0.5.0-beta.74)
-
-**Date**: 2026-04-17
-
-**Trigger**: Toast capture issue during beta.73 fix verification — toast disappeared too fast for screenshot
-
-**Solution**: Created `transient-ui-capture` skill documenting browser-use chain command pattern:
-- `browser-use click 20 && browser-use screenshot` — click triggers toast, screenshot captures immediately
-- Captures ephemeral UI elements (toast, animations, tooltips) that auto-dismiss
-
-**Files**:
-- `.agents/skills/transient-ui-capture/SKILL.md` — new skill file
-- `AGENTS.md` — added R15 (Self-Learning rule)
-
-**Verified**:
-- ✅ Skill file created with problem/solution structure
-- ✅ R15 added to AGENTS.md defining self-learning trigger conditions
-
-### Toast CSS Import Fix (0.5.0-beta.73)
-
-**Date**: 2026-04-17
-
-**Issue**: vue-sonner toast notifications appeared as plain text without styling - no background, borders, or visual feedback
-
-**Root Cause**: Missing CSS import for vue-sonner styles. The library requires explicit style import for proper toast appearance.
-
-**Fix**: Added `import 'vue-sonner/style.css'` to `src/main.ts` before app mount
-
-**Files**:
-- `src/main.ts` - added vue-sonner style import
-
-**Verified**:
-- ✅ Toast notifications display with proper styling (background, borders, shadows)
-- ✅ Light/dark mode toast variants work correctly
-- ✅ All existing toast calls (copy success, error messages) render properly
-
-## RegisterSuccessView Copy Fix + Email Truncation (0.5.0-beta.72)
-
-**Date**: 2026-04-17
+**Date**: 2026-04-25
 
 **Changes**:
-1. **useClipboard fix**: Changed from `useClipboard()` to `useClipboard({ source: emailRef })` per VueUse docs - `copied` ref now auto-updates
-2. **Email truncation**: `truncatedEmail` computed truncates local part to 15 chars + `...` + domain when > 30 chars total
-3. **Hover tooltip**: `title` attribute shows full email on hover
 
-**Files**:
-- `src/features/auth/views/RegisterSuccessView.vue` — useClipboard fix + truncation logic
+1. Migrated from standalone Vite/Vitest/Oxlint/Oxfmt to unified Vite+ toolchain
+2. All tool configs merged into `vite.config.ts` (`fmt` + `lint` blocks)
+3. Scripts updated to use `vp` CLI commands
+4. pnpm catalog configured: `vite` → `@voidzero-dev/vite-plus-core`, `vitest` → `@voidzero-dev/vite-plus-test`
+5. Fixed `env.d.ts` empty object type (`{}` → `Record<string, unknown>`)
+6. Fixed `tsconfig.app.json` types reference (`vite/client` → `vite-plus/client`)
+7. Fixed `tsconfig.vitest.json` missing `env.d.ts` in include
+8. Fixed `instance.test.ts` unbound-method errors (7 occurrences)
+9. Fixed `RegisterSuccessView.test.ts` no-base-to-string error
+10. Added `.agents/skills/**` and `.claude/skills/**` to lint ignorePatterns
+
+**Files Modified**:
+
+- `package.json` — scripts migrated to `vp` commands
+- `vite.config.ts` — import changed to `vite-plus`, fmt/lint blocks added
+- `env.d.ts` — empty object type fix
+- `tsconfig.app.json` — types reference fix
+- `tsconfig.vitest.json` — added env.d.ts to include
+- `src/__tests__/placeholder.test.js` — vitest → vite-plus/test import
+- `src/lib/api/__tests__/instance.test.ts` — unbound-method fixes
+- `src/features/auth/views/__tests__/RegisterSuccessView.test.ts` — no-base-to-string fix
 
 **Verified**:
-- ✅ Copy button icon changes (Copy → Check → Copy)
-- ✅ Toast "Email address copied!" appears
-- ✅ Long emails truncated display
-- ✅ Hover tooltip shows full email
 
-### RegisterSuccessView Email Display + Copy (0.5.0-beta.71)
-- **Issue**: Email address broke across lines, confusing users
-- **Fix**: Email on separate line with `whitespace-nowrap`, added click-to-copy button using VueUse `useClipboard` + `vue-sonner` toast
-- **Result**: Email never wraps, one-click copy with visual feedback (Copy → Check icon toggle)
+- ✅ `vp check` — 0 errors, 0 warnings
+- ✅ `vp test` — 296/296 tests pass
+- ✅ `vp build` — built successfully
 
-### RegisterSuccessView Email Flow Fix (0.5.0-beta.70)
-- **Issue**: User had to re-enter email in RegisterSuccessView for resend — redundant UX
-- **Root Cause**: RegisterView didn't pass email to RegisterSuccessView; email input field collected duplicate data
-- **Fix**: RegisterView passes email via route query; RegisterSuccessView displays email instead of input
-- **Result**: Streamlined UX — no email input needed after registration
+---
 
-### Auth Error Mapping Style Polish (0.5.0-beta.69)
-- **Issue**: RegisterView 429 toast description used redundant `isActive.value` ternary (`isActive.value ? ... : undefined`), while LoginView used direct template literal — style inconsistency
-- **Root Cause**: `start()` always called before toast, so `countdown > 0` and `isActive` is always `true` — false branch unreachable
-- **Fix**: Removed ternary, aligned RegisterView with LoginView pattern. Removed unused `isActive` destructure from `useCooldown()`
-- **Result**: Both views use identical `description: \`Try again in ${countdown.value}s\`` pattern
+### Historical Summary (beta.61–beta.95)
 
-### Auth Spacing + Layout Consistency (0.5.0-beta.73)
-- **Issue 1**: RegisterSuccessView/VerifyEmailView elements cramped; Tailwind `space-y-*`/`mb-*` utilities not generating CSS
-- **Fix 1**: Added scoped `<style>` blocks with explicit margin/gap classes (`.auth-spacing-*`, `.resend-section`)
-- **Issue 2**: Resend section internal elements (title/input/button) stuck together
-- **Fix 2**: `.resend-section { display: flex; flex-direction: column; gap: 0.75rem }` — native CSS gap, no Tailwind dependency
-- **Issue 3**: Layout inconsistent with Login/Register (left panel was hidden)
-- **Fix 3**: Restored full AuthLayout left-right split for all auth pages — design consistency
-- **Result**: Left 3D cards + right form on all auth pages; proper spacing via scoped CSS
-
-### Auth Layout Fix (0.5.0-beta.69)
-- **Issue**: RegisterSuccessView and VerifyEmailView rendered inside AuthLayout's right panel, with left 3D cards still visible — cramped and inconsistent
-- **Fix 1**: Moved these two routes out of AuthLayout children to top-level routes (no parent layout)
-- **Fix 2**: Wrapped both views in centered layout (`flex min-h-screen items-center justify-center bg-[#0a0a0f]`)
-- **Result**: Clean centered pages matching auth visual style, no left panel interference
-
-### Error Mapping + Inline Server Errors (0.5.0-beta.68)
-- **Issue 1**: USER_001 (email already registered) showed as toast instead of inline form error
-- **Fix 1**: RegisterForm accepts `serverErrors` prop, watches it and calls `form.setFieldError()` to show inline on email field
-- **Issue 2**: 429 rate limit had no cooldown countdown in RegisterView/LoginView
-- **Fix 2**: Created `useCooldown` composable (generic countdown timer), added to both views
-- **Issue 3**: Hardcoded error messages instead of using `mapApiErrorCode` utility
-- **Fix 3**: RegisterView, LoginView, VerifyEmailView, useResendVerification all use `mapApiErrorCode`
-- **Result**: USER_001 → inline field error, 429 → toast with countdown, consistent error messages
-
-### Tailwind Class Strings → cn() Multi-Line (0.5.0-beta.67)
-- **Issue**: Long Tailwind class strings in Vue templates (300+ chars) exceed printWidth, hurt readability
-- **Root Cause**: oxfmt collapses class attribute string internal newlines into single line
-- **Fix**: Replaced `class="..."` with `:class="cn(...)"` multi-line arrays in LoginForm.vue and RegisterForm.vue
-- **Strategy**: Pure static strings use cn() for line-break preservation (oxfmt respects cn() multi-line structure)
-- **Result**: All lines under 100 chars, oxfmt preserves formatting, vue-tsc 0 errors
-
-### ESLint Max Line Length & Fix (0.5.0-beta.66)
-- **Issue**: Long Tailwind class strings in Vue templates (300+ chars) hurt readability
-- **Fix 1**: Added `vue/max-len` rule to `eslint.config.ts` (placed after `eslintConfigPrettier`)
-- **Fix 2**: Refactored long class strings in `LoginForm.vue` and `RegisterForm.vue` into multi-line format
-- **Config**: `code: 120, template: 120`, ignores comments/URLs/strings/template literals
-- **Result**: Zero long-line violations; future violations blocked by ESLint
-
-### Auth Form SonarQube Warning (0.5.0-beta.64)
-- **Issue**: SonarQube Web:S6853 warning on `FormLabel.vue` (false positive due to `<slot />`)
-- **Decision**: User prefers global warning suppression over inline `<!-- sonarqube-disable -->` comments
-- **Action**: Reverted inline suppression; user will configure global exclusion in SonarQube settings
-- **Result**: Clean code, zero inline suppression comments
-
-### Auth Form Label Color Fix (0.5.0-beta.62)
-- **Issue**: Form labels (Email, DisplayName, Password) turned red in light mode when field had validation errors
-- **Root Cause**: `FormLabel.vue` had `data-[error=true]:text-destructive` — shadcn default that applies red color on validation error
-- **Fix**: Removed `data-[error=true]:text-destructive` from FormLabel's class — labels keep their original `text-gray-600` / `dark:text-[#8a8f98]` color regardless of error state
-- **Result**: Labels stay neutral gray in light mode, only FormMessage shows red error text
-
-### Auth Form Zero-Jump Spacing (0.5.0-beta.61)
-- **Issue**: Validation warnings still caused slight layout jump — `min-h-[0.5rem]` (8px) insufficient for `text-sm` error text (~20px line-height)
-- **Fix 1**: Restored FormMessage to `min-h-[1.25rem]` (20px) — fully reserves space for error text, zero jump
-- **Fix 2**: Reduced form `gap-5` → `gap-3` (20px → 12px) to compensate, keeping fields紧凑
-- **Result**: Zero layout shift on validation, compact professional spacing
+| Version       | Date       | Summary                                              |
+| ------------- | ---------- | ---------------------------------------------------- |
+| 0.5.0-beta.95 | 2026-04-29 | Verified checklist file deleted (merged into 0.5.0)  |
+| 0.5.0-beta.94 | 2026-04-29 | AuthLayout short viewport responsive fix             |
+| 0.5.0-beta.93 | 2026-04-29 | Verify-email 401 handler fixed (route-aware skip)    |
+| 0.5.0-beta.92 | 2026-04-29 | EmptyResponse idempotentSkip field location fix      |
+| 0.5.0-beta.91 | 2026-04-29 | Dialog footer button spacing fix                     |
+| 0.5.0-beta.90 | 2026-04-28 | Vite dev server port fix (strictPort: true)          |
+| 0.5.0-beta.89 | 2026-04-28 | Idempotent skip detection (10-min resend window)     |
+| 0.5.0-beta.88 | 2026-04-28 | API contract verification skill created              |
+| 0.5.0-beta.87 | 2026-04-28 | Login success Zod schema mismatch fix                |
+| 0.5.0-beta.86 | 2026-04-28 | Double toast on backend errors fix                   |
+| 0.5.0-beta.85 | 2026-04-28 | Auth UI consistency + error handling polish          |
+| 0.5.0-beta.84 | 2026-04-28 | AuthLayout 1080p responsive fix + Vite+ migration    |
+| 0.5.0-beta.82 | 2026-04-25 | LoginView form submission fix                        |
+| 0.5.0-beta.80 | 2026-04-23 | DeviceId utility refactoring                         |
+| 0.5.0-beta.79 | 2026-04-21 | StrongPassword schema + literal tokenType            |
+| 0.5.0-beta.76 | 2026-04-17 | Toast format fix — short title + description pattern |
+| 0.5.0-beta.74 | 2026-04-17 | Self-learning skill creation (transient-ui-capture)  |
+| 0.5.0-beta.67 | 2026-04-17 | Tailwind class strings → cn() multi-line             |
+| 0.5.0-beta.61 | 2026-04-17 | Auth form zero-jump spacing                          |

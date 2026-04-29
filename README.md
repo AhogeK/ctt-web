@@ -2,7 +2,7 @@
 
 [![License](https://img.shields.io/badge/license-MIT-green.svg)](LICENSE)
 [![Vue](https://img.shields.io/badge/Vue-3.5-42b883.svg)](https://vuejs.org/)
-[![Vite](https://img.shields.io/badge/Vite-8-646cff.svg)](https://vitejs.dev/)
+[![Vite+](https://img.shields.io/badge/Vite+-unified--toolchain-646cff.svg)](https://vite.dev/)
 [![pnpm](https://img.shields.io/badge/pnpm-10.x-f69220.svg)](https://pnpm.io/)
 
 Web dashboard frontend for [CTT Server](https://github.com/AhogeK/ctt-server) — the cloud sync backend of
@@ -14,9 +14,9 @@ visualization.
 ## ✨ Tech Stack
 
 | Layer          | Technology                                                  |
-|----------------|-------------------------------------------------------------|
+| -------------- | ----------------------------------------------------------- |
 | Framework      | Vue 3.5 + TypeScript 6.0 (Strict, modern module resolution) |
-| Build          | Vite 8 (Rolldown engine)                                    |
+| Build          | Vite+ (unified toolchain, Rolldown engine)                  |
 | Routing        | Vue Router 5 (feature-based routing, type-safe meta)        |
 | Server State   | TanStack Query v5                                           |
 | Global State   | Pinia 3 (auth + theme stores with VueUse persistence)       |
@@ -27,6 +27,7 @@ visualization.
 | Icons          | Iconify Vue                                                 |
 | i18n           | Vue I18n v11                                                |
 | Package Manger | pnpm v10 (via corepack)                                     |
+| Toolchain      | Vite+ (vp CLI — unified dev/build/test/lint/fmt)            |
 | Lint           | Oxlint v1 (primary) + ESLint                                |
 | Format         | Oxfmt (100% Prettier compatible)                            |
 | Git Hooks      | simple-git-hooks + lint-staged                              |
@@ -37,7 +38,7 @@ visualization.
 ## ✅ Implemented Features
 
 | Feature                 | Description                                                                                          |
-|-------------------------|------------------------------------------------------------------------------------------------------|
+| ----------------------- | ---------------------------------------------------------------------------------------------------- |
 | Authentication          | JWT login, token management, router guards                                                           |
 | Layout System           | AuthLayout + AppLayout, mobile responsive sidebar                                                    |
 | Routing                 | Feature-based modules, type-safe meta, NProgress, **route name constants**, **absolute child paths** |
@@ -95,19 +96,19 @@ pnpm install
 ### Development
 
 ```sh
-pnpm dev
+vp dev
 ```
 
 ### Type Check + Production Build
 
 ```sh
-pnpm build
+vp build
 ```
 
 ### Preview Production Build
 
 ```sh
-pnpm preview
+vp preview
 ```
 
 ## 🧪 Testing
@@ -121,9 +122,8 @@ pnpm preview
 - **Globals**: Vitest globals enabled (no import needed for describe/it/expect)
 - **Assertions**: @testing-library/jest-dom provides semantic matchers (toBeInTheDocument, etc.)
 
-
 ```sh
-pnpm test:unit
+vp test
 ```
 
 ### E2E Tests (Playwright)
@@ -151,14 +151,14 @@ pnpm build && pnpm test:e2e
 ## 🔍 Lint & Format
 
 ```sh
-# Lint (Oxlint primary, ESLint supplemental)
-pnpm lint
+# Lint + Format + Type Check (all-in-one)
+vp check
 
-# Format with Oxfmt
-pnpm format
+# Lint only
+vp lint
 
-# Type check only
-pnpm type-check
+# Format only
+vp fmt
 ```
 
 Pre-commit hooks run automatically via `simple-git-hooks` + `lint-staged` on staged `*.ts`, `*.vue`, `*.js` files.

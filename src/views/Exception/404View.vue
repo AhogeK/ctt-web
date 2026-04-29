@@ -35,8 +35,8 @@ function handleGoBack() {
 
       <!-- Helpful description -->
       <p class="mt-4 max-w-md text-muted-foreground">
-        The page you are looking for does not exist or has been removed. Please check the URL or use
-        the buttons below to return to a valid page.
+        The page you are looking for does not exist or has been removed. Please check the URL or use the buttons below
+        to return to a valid page.
       </p>
 
       <!-- Action buttons -->

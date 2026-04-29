@@ -2,36 +2,32 @@
 
 ## Core Stack
 
-| Layer          | Technology                         | Version     |
-|----------------|------------------------------------|-------------|
-| Build          | Vite + Rolldown                    | ^8.0 (beta) |
-| Framework      | Vue 3 + TypeScript Strict          | ^3.5        |
-| Routing        | Vue Router                         | ^4          |
-| Server State   | TanStack Query                     | ^5          |
-| Global State   | Pinia                              | ^3          |
-| UI             | Radix Vue + shadcn-vue             | latest      |
-| Styles         | Tailwind CSS + @tailwindcss/vite   | ^4          |
-| Charts         | Apache ECharts + vue-echarts       | ^6 / ^8     |
-| HTTP           | ofetch                             | ^1          |
-| Validation     | Vee-Validate + Zod                 | ^4 / ^4.3.6 |
-| Icons          | @iconify/vue                       | ^5          |
-| i18n           | Vue I18n                           | ^11         |
-| Package Mgr    | pnpm (via corepack)                | ^10         |
-| Design System  | DESIGN.md                          | Linear-style|
+| Layer         | Technology                             | Version      |
+| ------------- | -------------------------------------- | ------------ |
+| Build         | Vite+ (unified toolchain via `vp` CLI) | latest       |
+| Framework     | Vue 3 + TypeScript Strict              | ^3.5         |
+| Routing       | Vue Router                             | ^4           |
+| Server State  | TanStack Query                         | ^5           |
+| Global State  | Pinia                                  | ^3           |
+| UI            | Radix Vue + shadcn-vue                 | latest       |
+| Styles        | Tailwind CSS + @tailwindcss/vite       | ^4           |
+| Charts        | Apache ECharts + vue-echarts           | ^6 / ^8      |
+| HTTP          | ofetch                                 | ^1           |
+| Validation    | Vee-Validate + Zod                     | ^4 / ^4.3.6  |
+| Icons         | @iconify/vue                           | ^5           |
+| i18n          | Vue I18n                               | ^11          |
+| Package Mgr   | pnpm (via corepack)                    | ^10          |
+| Design System | DESIGN.md                              | Linear-style |
 
-## Dev Toolchain (VoidZero Ecosystem)
+## Dev Toolchain (Vite+ Unified)
 
-| Tool                   | Version  | Role                        |
-|------------------------|----------|-----------------------------|
-| Oxlint                 | ~1.50    | Primary linter              |
-| Oxfmt                  | ^0.35    | Formatter (Prettier compat) |
-| ESLint                 | ^10      | Supplemental (vitest/pw)    |
-| Vitest                 | ^4       | Unit + component tests      |
-| @testing-library/vue   | ^8       | Component behavior tests    |
-| Playwright             | ^1.58    | E2E tests                   |
-| vue-tsc                | ^3       | Type checking               |
-| simple-git-hooks       | ^2       | Pre-commit hooks            |
-| lint-staged            | ^16      | Staged file lint/format     |
+| Tool             | Role                            |
+| ---------------- | ------------------------------- |
+| Vite+ (`vp` CLI) | Unified dev/build/test/lint/fmt |
+| Playwright       | E2E tests                       |
+| vue-tsc          | Type checking                   |
+| simple-git-hooks | Pre-commit hooks                |
+| lint-staged      | Staged file lint/format         |
 
 ## API Authentication
 
@@ -98,7 +94,7 @@
 - Global state (auth session, theme) → Pinia
 - All API types defined as Zod schemas in `lib/schemas/`, aligned with ctt-server DTOs
 - `ofetch` instance in `lib/api/` is the single HTTP boundary
- 
+
 ## 设计系统
 
 视觉规范遵循根目录 `DESIGN.md`（Linear 风格，亮/暗双模式）。

@@ -2,20 +2,20 @@
 
 ## Milestone Overview
 
-| Milestone         | Status         | Target Version |
-|-------------------|----------------|----------------|
-| Project Scaffold  | ✅ Complete    | 0.1.0          |
-| Router Architecture| ✅ Complete    | 0.2.0-beta.2   |
-| Layout System     | ✅ Complete    | 0.2.0-beta.3   |
-| Auth Module       | ✅ Complete    | 0.3.0-beta.1   |
-| Lazy Loading + Chunk Optimization | ✅ Complete | 0.4.0-beta.2 |
-| Dashboard         | ⏳ Pending      | 0.4.0          |
-| Device Management | ⏳ Pending      | 0.4.0          |
-| Leaderboard       | ⏳ Pending      | 0.5.0          |
-| Settings          | ⏳ Pending      | 0.5.0          |
-| i18n (zh/en)      | ⏳ Pending      | 0.5.0          |
-| E2E Test Coverage | ⏳ Pending      | 0.6.0          |
-| Production Deploy | ⏳ Pending      | 1.0.0          |
+| Milestone                         | Status      | Target Version |
+| --------------------------------- | ----------- | -------------- |
+| Project Scaffold                  | ✅ Complete | 0.1.0          |
+| Router Architecture               | ✅ Complete | 0.2.0-beta.2   |
+| Layout System                     | ✅ Complete | 0.2.0-beta.3   |
+| Auth Module                       | ✅ Complete | 0.3.0-beta.1   |
+| Lazy Loading + Chunk Optimization | ✅ Complete | 0.4.0-beta.2   |
+| Dashboard                         | ⏳ Pending  | 0.4.0          |
+| Device Management                 | ⏳ Pending  | 0.4.0          |
+| Leaderboard                       | ⏳ Pending  | 0.5.0          |
+| Settings                          | ⏳ Pending  | 0.5.0          |
+| i18n (zh/en)                      | ⏳ Pending  | 0.5.0          |
+| E2E Test Coverage                 | ⏳ Pending  | 0.6.0          |
+| Production Deploy                 | ⏳ Pending  | 1.0.0          |
 
 ## Completed
 
@@ -35,6 +35,10 @@
 - [x] Chunk optimization (feature-based manual chunks: auth, dashboard, settings)
 - [x] Error handling (ErrorBoundary component with retry mechanism)
 - [x] API layer architecture (unified ofetch instance, JWT auth interceptor, global error handling, CustomEvent decoupling)
+- [x] LoginView form submission fix (LoginFormSchema separation, loading state, redirect param)
+- [x] Unified error code field (backend `code` vs frontend `error` alignment across all views)
+- [x] User-friendly toast policy (no leaking HTTP methods/paths/status codes)
+- [x] Vite+ migration (unified toolchain via `vp` CLI)
 
 ## In Progress
 
