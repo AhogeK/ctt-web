@@ -1,2 +1,2 @@
 export { apiFetch, type ApiFetchOptions } from './instance'
-export { login, logout } from './auth'
+export { login, logout, forgotPassword, resetPassword } from './auth'

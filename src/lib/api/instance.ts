@@ -1,5 +1,4 @@
 import { ofetch, type FetchOptions } from 'ofetch'
-import { toast } from 'vue-sonner'
 import { STORAGE_KEYS } from '@/stores/auth'
 
 /**
@@ -72,12 +71,11 @@ export const apiFetch = ofetch.create({
     switch (status) {
       case 401:
         localStorage.removeItem(STORAGE_KEYS.ACCESS_TOKEN)
-        toast.error('Authentication expired. Please log in again.')
         globalThis.dispatchEvent(new CustomEvent(UNAUTHORIZED_EVENT))
         break
 
       case 403:
-        toast.error('Permission denied. You do not have access to this resource.')
+        console.warn('Permission denied:', response._data)
         break
 
       case 404:
@@ -89,7 +87,7 @@ export const apiFetch = ofetch.create({
 
       default:
         if (status >= 500) {
-          toast.error('Server error. Please try again later.')
+          console.error('Server error:', response._data)
         }
         break
     }

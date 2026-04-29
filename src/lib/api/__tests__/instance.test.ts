@@ -1,8 +1,8 @@
-import { describe, it, expect, beforeEach, vi, afterEach } from 'vitest'
+import { describe, it, expect, beforeEach, vi, afterEach } from 'vite-plus/test'
 import { toast } from 'vue-sonner'
 import { UNAUTHORIZED_EVENT } from '../instance'
 
-/* eslint-disable @typescript-eslint/no-explicit-any */
+/* oxlint-disable @typescript-eslint/no-explicit-any */
 
 const capturedConfig = vi.hoisted(() => ({
   baseURL: '',
@@ -194,9 +194,7 @@ describe('API Instance', () => {
       if (capturedConfig.onRequest) {
         await capturedConfig.onRequest(mockContext2)
       }
-      expect((mockContext2.options.headers as Headers).get('Authorization')).toBe(
-        'Bearer new-token',
-      )
+      expect((mockContext2.options.headers as Headers).get('Authorization')).toBe('Bearer new-token')
     })
   })
 
@@ -240,11 +238,15 @@ describe('API Instance', () => {
   })
 
   describe('Response Error Interceptor (onResponseError)', () => {
+    let removeItemSpy: ReturnType<typeof vi.spyOn>
+    let dispatchEventSpy: ReturnType<typeof vi.spyOn>
+
     beforeEach(async () => {
       vi.resetModules()
       vi.spyOn(console, 'warn').mockImplementation(vi.fn())
-      vi.spyOn(window, 'dispatchEvent').mockImplementation(vi.fn())
-      vi.spyOn(Storage.prototype, 'removeItem').mockImplementation(vi.fn())
+      vi.spyOn(console, 'error').mockImplementation(vi.fn())
+      dispatchEventSpy = vi.spyOn(window, 'dispatchEvent').mockImplementation(vi.fn())
+      removeItemSpy = vi.spyOn(Storage.prototype, 'removeItem').mockImplementation(vi.fn())
       await import('../instance')
     })
 
@@ -264,15 +266,14 @@ describe('API Instance', () => {
         await capturedConfig.onResponseError(mockContext)
       }
 
-      expect(Storage.prototype.removeItem).toHaveBeenCalledWith('ctt_access_token')
-      expect(window.dispatchEvent).toHaveBeenCalled()
-      const dispatchedEvent = (window.dispatchEvent as ReturnType<typeof vi.fn>).mock
-        .calls[0]![0] as CustomEvent
+      expect(removeItemSpy).toHaveBeenCalledWith('ctt_access_token')
+      expect(dispatchEventSpy).toHaveBeenCalled()
+      const dispatchedEvent = dispatchEventSpy.mock.calls[0]![0] as CustomEvent
       expect(dispatchedEvent.type).toBe(UNAUTHORIZED_EVENT)
-      expect(toast.error).toHaveBeenCalledWith('Authentication expired. Please log in again.')
+      expect(toast.error).not.toHaveBeenCalled()
     })
 
-    it('should handle 403 by showing permission denied toast', async () => {
+    it('should handle 403 by logging console warning', async () => {
       const mockResponse = {
         status: 403,
         _data: { message: 'Forbidden' },
@@ -284,11 +285,10 @@ describe('API Instance', () => {
         await capturedConfig.onResponseError(mockContext)
       }
 
-      expect(toast.error).toHaveBeenCalledWith(
-        'Permission denied. You do not have access to this resource.',
-      )
-      expect(Storage.prototype.removeItem).not.toHaveBeenCalled()
-      expect(window.dispatchEvent).not.toHaveBeenCalled()
+      expect(console.warn).toHaveBeenCalledWith('Permission denied:', mockResponse._data)
+      expect(toast.error).not.toHaveBeenCalled()
+      expect(removeItemSpy).not.toHaveBeenCalled()
+      expect(dispatchEventSpy).not.toHaveBeenCalled()
     })
 
     it('should handle 404 by logging console warning', async () => {
@@ -305,8 +305,8 @@ describe('API Instance', () => {
 
       expect(console.warn).toHaveBeenCalledWith('Resource not found:', mockResponse._data)
       expect(toast.error).not.toHaveBeenCalled()
-      expect(Storage.prototype.removeItem).not.toHaveBeenCalled()
-      expect(window.dispatchEvent).not.toHaveBeenCalled()
+      expect(removeItemSpy).not.toHaveBeenCalled()
+      expect(dispatchEventSpy).not.toHaveBeenCalled()
     })
 
     it('should skip handling for 422 Unprocessable Entity', async () => {
@@ -322,12 +322,12 @@ describe('API Instance', () => {
       }
 
       expect(toast.error).not.toHaveBeenCalled()
-      expect(Storage.prototype.removeItem).not.toHaveBeenCalled()
-      expect(window.dispatchEvent).not.toHaveBeenCalled()
+      expect(removeItemSpy).not.toHaveBeenCalled()
+      expect(dispatchEventSpy).not.toHaveBeenCalled()
       expect(console.warn).not.toHaveBeenCalled()
     })
 
-    it('should handle 500+ server errors by showing toast', async () => {
+    it('should handle 500+ server errors by logging console error', async () => {
       const mockResponse = {
         status: 500,
         _data: { message: 'Internal Server Error' },
@@ -339,9 +339,10 @@ describe('API Instance', () => {
         await capturedConfig.onResponseError(mockContext)
       }
 
-      expect(toast.error).toHaveBeenCalledWith('Server error. Please try again later.')
-      expect(Storage.prototype.removeItem).not.toHaveBeenCalled()
-      expect(window.dispatchEvent).not.toHaveBeenCalled()
+      expect(console.error).toHaveBeenCalledWith('Server error:', mockResponse._data)
+      expect(toast.error).not.toHaveBeenCalled()
+      expect(removeItemSpy).not.toHaveBeenCalled()
+      expect(dispatchEventSpy).not.toHaveBeenCalled()
     })
 
     it('should handle 503 Service Unavailable', async () => {
@@ -356,8 +357,9 @@ describe('API Instance', () => {
         await capturedConfig.onResponseError(mockContext)
       }
 
-      expect(toast.error).toHaveBeenCalledWith('Server error. Please try again later.')
-      expect(Storage.prototype.removeItem).not.toHaveBeenCalled()
+      expect(console.error).toHaveBeenCalledWith('Server error:', mockResponse._data)
+      expect(toast.error).not.toHaveBeenCalled()
+      expect(removeItemSpy).not.toHaveBeenCalled()
     })
 
     it('should not show toast for other 4xx errors (handled by default case)', async () => {
@@ -373,8 +375,8 @@ describe('API Instance', () => {
       }
 
       expect(toast.error).not.toHaveBeenCalled()
-      expect(Storage.prototype.removeItem).not.toHaveBeenCalled()
-      expect(window.dispatchEvent).not.toHaveBeenCalled()
+      expect(removeItemSpy).not.toHaveBeenCalled()
+      expect(dispatchEventSpy).not.toHaveBeenCalled()
     })
 
     it('should handle 401 with custom event details', async () => {
