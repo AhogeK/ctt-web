@@ -13,3 +13,5 @@ export function cn(...inputs: ClassValue[]) {
 }
 
 export { getOrCreateDeviceId } from './device'
+export { mapApiErrorCode, getErrorMessage, isApiError } from './api-error'
+export type { ApiError, ApiErrorResponse } from './api-error'

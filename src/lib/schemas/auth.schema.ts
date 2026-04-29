@@ -158,3 +158,59 @@ export const ResendVerificationRequestSchema = z.object({
 })
 
 export type ResendVerificationRequest = z.infer<typeof ResendVerificationRequestSchema>
+
+// ==========================================
+// Password Reset Schemas
+// ==========================================
+
+/**
+ * Forgot password request schema matching ctt-server ForgotPasswordRequest DTO.
+ *
+ * Server-side validation (ForgotPasswordRequest.java):
+ * - email: @NotBlank + @Email, server normalizes to lowercase
+ *
+ * Backend endpoint: POST /api/v1/auth/forgot-password
+ * Rate limited: 3 requests per 10 minutes per email, 30 per hour per IP.
+ * Anti-enumeration: Always returns 200 OK regardless of email existence.
+ */
+export const ForgotPasswordRequestSchema = z.object({
+  // Email address to send reset link to, server normalizes to lowercase
+  email: z.email('Invalid email format').min(1, 'Email is required'),
+})
+
+export type ForgotPasswordRequest = z.infer<typeof ForgotPasswordRequestSchema>
+
+/**
+ * Reset password request schema matching ctt-server ResetPasswordRequest DTO.
+ *
+ * Server-side validation (ResetPasswordRequest.java):
+ * - token: @NotBlank, the reset token from email link
+ * - newPassword: @StrongPassword (min 8, max 32, upper + lower + digit + special)
+ *
+ * Backend endpoint: POST /api/v1/auth/password-reset/confirm
+ * Rate limited: 15 requests per 10 minutes per IP.
+ */
+export const ResetPasswordRequestSchema = z.object({
+  // Reset token from email link — required, non-empty
+  token: z.string().min(1, 'Reset token is required'),
+  // Strong password policy enforced by server's @StrongPassword annotation
+  newPassword: StrongPasswordSchema,
+})
+
+export type ResetPasswordRequest = z.infer<typeof ResetPasswordRequestSchema>
+
+/**
+ * Reset password form schema for frontend UI validation.
+ *
+ * Extends ResetPasswordRequestSchema with confirmPassword field and cross-field
+ * password matching validation. Used with Vee-Validate + Zod integration.
+ */
+export const ResetPasswordFormSchema = ResetPasswordRequestSchema.extend({
+  // Confirm password for frontend UX — not sent to API
+  confirmPassword: z.string().min(1, 'Please confirm your password'),
+}).refine((data) => data.newPassword === data.confirmPassword, {
+  message: 'Passwords do not match',
+  path: ['confirmPassword'],
+})
+
+export type ResetPasswordForm = z.infer<typeof ResetPasswordFormSchema>

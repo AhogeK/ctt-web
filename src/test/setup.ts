@@ -1,6 +1,6 @@
 import '@testing-library/jest-dom/vitest'
 import { cleanup } from '@testing-library/vue'
-import { afterEach, vi } from 'vitest'
+import { afterEach, vi } from 'vite-plus/test'
 
 // Auto-cleanup DOM after each test to prevent memory leaks
 afterEach(() => {
@@ -8,7 +8,7 @@ afterEach(() => {
 })
 
 // Mock browser APIs required by Radix UI / Shadcn (jsdom doesn't provide them)
-Object.defineProperty(window, 'matchMedia', {
+Object.defineProperty(globalThis, 'matchMedia', {
   writable: true,
   value: vi.fn<(query: string) => MediaQueryList>().mockImplementation((query) => ({
     matches: false,
@@ -22,7 +22,7 @@ Object.defineProperty(window, 'matchMedia', {
   })),
 })
 
-global.ResizeObserver = vi.fn<() => ResizeObserver>().mockImplementation(() => ({
+globalThis.ResizeObserver = vi.fn<() => ResizeObserver>().mockImplementation(() => ({
   observe: vi.fn<() => void>(),
   unobserve: vi.fn<() => void>(),
   disconnect: vi.fn<() => void>(),
