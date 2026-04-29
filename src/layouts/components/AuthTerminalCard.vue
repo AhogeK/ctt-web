@@ -36,9 +36,7 @@ const tilt = useCardTilt({
       <div class="auth-terminal__body">
         <div class="auth-terminal__line">
           <span class="auth-terminal__prompt">&gt;</span>
-          <span class="auth-terminal__text"
-            >Total coding time: <span class="auth-terminal__value">342h 15m</span></span
-          >
+          <span class="auth-terminal__text">Total coding time: <span class="auth-terminal__value">342h 15m</span></span>
         </div>
         <div class="auth-terminal__line">
           <span class="auth-terminal__prompt">&gt;</span>
@@ -48,21 +46,15 @@ const tilt = useCardTilt({
         </div>
         <div class="auth-terminal__line">
           <span class="auth-terminal__prompt">&gt;</span>
-          <span class="auth-terminal__text"
-            >Longest session: <span class="auth-terminal__value">4h 23m</span></span
-          >
+          <span class="auth-terminal__text">Longest session: <span class="auth-terminal__value">4h 23m</span></span>
         </div>
         <div class="auth-terminal__line">
           <span class="auth-terminal__prompt">&gt;</span>
-          <span class="auth-terminal__text"
-            >Active days: <span class="auth-terminal__value">89/90</span></span
-          >
+          <span class="auth-terminal__text">Active days: <span class="auth-terminal__value">89/90</span></span>
         </div>
         <div class="auth-terminal__line">
           <span class="auth-terminal__prompt">&gt;</span>
-          <span class="auth-terminal__text"
-            >Current streak: <span class="auth-terminal__streak">12 days</span></span
-          >
+          <span class="auth-terminal__text">Current streak: <span class="auth-terminal__streak">12 days</span></span>
           <span class="auth-terminal__cursor" />
         </div>
       </div>

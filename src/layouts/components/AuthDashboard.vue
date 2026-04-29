@@ -61,11 +61,7 @@ function heatmapLevel(row: number, col: number): number {
       <div class="auth-dashboard__url">
         <svg class="auth-dashboard__lock" width="10" height="12" viewBox="0 0 10 12" fill="none">
           <rect x="1" y="5" width="8" height="6" rx="1" stroke="currentColor" stroke-width="1.2" />
-          <path
-            d="M3 5V3.5C3 2.12 3.9 1 5 1s2 1.12 2 2.5V5"
-            stroke="currentColor"
-            stroke-width="1.2"
-          />
+          <path d="M3 5V3.5C3 2.12 3.9 1 5 1s2 1.12 2 2.5V5" stroke="currentColor" stroke-width="1.2" />
         </svg>
         <span>app.codetime.dev/dashboard</span>
       </div>

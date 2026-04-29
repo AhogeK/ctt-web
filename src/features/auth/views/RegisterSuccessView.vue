@@ -50,15 +50,12 @@ const handleResend = () => {
 </script>
 
 <template>
-  <div class="mx-auto w-full max-w-sm">
+  <div class="mx-auto w-full max-w-sm space-y-10">
     <!-- Error State: No email in query -->
     <div v-if="!email" class="space-y-6">
       <div
         :class="
-          cn(
-            'mb-8 flex h-16 w-16 items-center justify-center rounded-2xl',
-            'bg-red-500/10 text-red-500 dark:bg-red-500/15',
-          )
+          cn('flex h-16 w-16 items-center justify-center rounded-2xl', 'bg-red-500/10 text-red-500 dark:bg-red-500/15')
         "
       >
         <AlertCircle class="h-8 w-8" />
@@ -90,12 +87,12 @@ const handleResend = () => {
     </div>
 
     <!-- Success State: Email available -->
-    <div v-else>
+    <div v-else class="space-y-10">
       <!-- Success Icon -->
       <div
         :class="
           cn(
-            'mb-8 flex h-16 w-16 items-center justify-center rounded-2xl',
+            'flex h-16 w-16 items-center justify-center rounded-2xl',
             'bg-[#5e6ad2]/10 text-[#5e6ad2] dark:bg-[#5e6ad2]/15',
           )
         "
@@ -104,7 +101,7 @@ const handleResend = () => {
       </div>
 
       <!-- Content -->
-      <div class="mb-10 space-y-3">
+      <div class="space-y-3">
         <h1
           class="text-2xl font-[510] text-gray-900 dark:text-[#f7f8f8] sm:text-3xl"
           style="font-feature-settings: 'cv01', 'ss03'; letter-spacing: -0.704px"
@@ -149,16 +146,13 @@ const handleResend = () => {
       <div
         :class="
           cn(
-            'mb-6 flex flex-col gap-3 rounded-xl border border-[#d0d6e0]',
+            'flex flex-col gap-3 rounded-xl border border-[#d0d6e0]',
             'bg-[#f3f4f5]/60 p-5 backdrop-blur-sm',
             'dark:border-white/8 dark:bg-white/3 dark:backdrop-blur-md',
           )
         "
       >
-        <p
-          class="mb-1 text-sm font-[510] text-gray-700 dark:text-[#d0d6e0]"
-          style="font-feature-settings: 'cv01', 'ss03'"
-        >
+        <p class="text-sm font-[510] text-gray-700 dark:text-[#d0d6e0]" style="font-feature-settings: 'cv01', 'ss03'">
           Didn't receive the email?
         </p>
         <Button
@@ -184,7 +178,7 @@ const handleResend = () => {
         variant="ghost"
         :class="
           cn(
-            'mt-6 w-full h-11 rounded-md font-[510] text-gray-600',
+            'w-full h-11 rounded-md font-[510] text-gray-600',
             'transition-all duration-200 hover:bg-[#f3f4f5] hover:text-gray-900',
             'dark:text-[#8a8f98] dark:hover:bg-white/5 dark:hover:text-[#f7f8f8]',
           )

@@ -1,4 +1,4 @@
-import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vite-plus/test'
 import { useResendVerification } from '../useResendVerification'
 import * as authApi from '@/lib/api/auth'
 import type { EmptyResponse } from '@/lib/schemas/api.schema'
@@ -180,14 +180,13 @@ describe('useResendVerification', () => {
       // Mock a real API error with statusCode so isApiError recognizes it
       vi.mocked(authApi.resendVerification).mockRejectedValueOnce({
         statusCode: 500,
-        message: 'Network error',
       })
 
       const { resend } = useResendVerification()
       await resend(testEmail)
 
       expect(toast.error).toHaveBeenCalledWith('Failed to resend verification email', {
-        description: 'Network error',
+        description: 'Please try again later',
       })
     })
 
@@ -205,7 +204,6 @@ describe('useResendVerification', () => {
     it('handles 429 rate limit error with 60-second countdown', async () => {
       vi.mocked(authApi.resendVerification).mockRejectedValueOnce({
         statusCode: 429,
-        message: 'Too many requests',
       })
 
       const { resend, countdown } = useResendVerification()
@@ -220,8 +218,7 @@ describe('useResendVerification', () => {
     it('handles 409 USER_007 error (email already verified)', async () => {
       vi.mocked(authApi.resendVerification).mockRejectedValueOnce({
         statusCode: 409,
-        error: 'USER_007',
-        message: 'Email already verified',
+        data: { code: 'USER_007' },
       })
 
       const { resend, countdown } = useResendVerification()
@@ -236,15 +233,14 @@ describe('useResendVerification', () => {
     it('handles 409 non-USER_007 error as generic error', async () => {
       vi.mocked(authApi.resendVerification).mockRejectedValueOnce({
         statusCode: 409,
-        error: 'OTHER_ERROR',
-        message: 'Some conflict',
+        data: { code: 'OTHER_ERROR' },
       })
 
       const { resend } = useResendVerification()
       await resend(testEmail)
 
       expect(toast.error).toHaveBeenCalledWith('Failed to resend verification email', {
-        description: 'Some conflict',
+        description: 'Please try again later',
       })
     })
 

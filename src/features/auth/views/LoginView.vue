@@ -1,42 +1,120 @@
 <script setup lang="ts">
-import { useRouter, RouterLink } from 'vue-router'
+import { ref, computed, toValue } from 'vue'
+import { RouterLink, useRouter, useRoute } from 'vue-router'
 import { toast } from 'vue-sonner'
 import { useMutation } from '@tanstack/vue-query'
 import { useAuthStore } from '@/stores/auth'
 import { RouteNames } from '@/router/route-names'
 import { isApiError, mapApiErrorCode } from '@/lib/utils/api-error'
 import { useCooldown } from '@/composables/useCooldown'
+import { useResendVerification } from '../composables/useResendVerification'
 import LoginForm from '../components/LoginForm.vue'
+import type { useForm } from 'vee-validate'
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from '@/components/ui/dialog'
+import { Button } from '@/components/ui/button'
 
 const router = useRouter()
+const route = useRoute()
 const authStore = useAuthStore()
 const { countdown, start } = useCooldown()
+const { resend, countdown: resendCountdown, isPending: isResending } = useResendVerification()
+
+// Form ref for setting inline field errors (AUTH_001)
+const loginFormRef = ref<{ form: ReturnType<typeof useForm> } | null>(null)
+
+// Dialog state for specific error scenarios
+const showLockedDialog = ref(false)
+const showVerificationDialog = ref(false)
+const pendingEmail = ref('')
+const lockCountdown = ref(0)
 
 const mutation = useMutation({
   mutationFn: authStore.login,
   onSuccess: () => {
-    router.push({ name: RouteNames.DASHBOARD })
+    const redirect = route.query.redirect as string
+    router.push(redirect || { name: RouteNames.DASHBOARD })
   },
   onError: (error: unknown) => {
-    if (isApiError(error)) {
-      if (error.statusCode === 401) {
-        toast.error(mapApiErrorCode('invalid_credentials'))
-      } else if (error.statusCode === 429) {
+    if (!isApiError(error)) {
+      toast.error('Login failed', { description: 'An unexpected error occurred' })
+      return
+    }
+
+    const errorCode = (error.data as { code?: string })?.code
+
+    switch (errorCode) {
+      case 'AUTH_001':
+        // Invalid credentials - inline field error on email
+        loginFormRef.value?.form.setFieldError('email', mapApiErrorCode('AUTH_001'))
+        loginFormRef.value?.form.setFieldError('password', ' ')
+        break
+
+      case 'AUTH_004': {
+        // Account locked - show locked dialog with countdown
+        showLockedDialog.value = true
+        // Parse retryAfter from ISO 8601 timestamp
+        const data = error.data as { retryAfter?: string } | undefined
+        if (data?.retryAfter) {
+          const retryDate = new Date(data.retryAfter)
+          const now = new Date()
+          lockCountdown.value = Math.max(0, Math.floor((retryDate.getTime() - now.getTime()) / 1000))
+        }
+        break
+      }
+
+      case 'AUTH_005':
+        // Account suspended
+        toast.error(mapApiErrorCode('AUTH_005'))
+        break
+
+      case 'AUTH_006':
+        // Email not verified - show verification dialog
+        showVerificationDialog.value = true
+        break
+
+      case 'RATE_LIMIT_001':
+        // Rate limited - use existing cooldown pattern
         start()
-        toast.error(mapApiErrorCode('rate_limit_exceeded'), {
+        toast.error(mapApiErrorCode('RATE_LIMIT_001'), {
           description: `Try again in ${countdown.value}s`,
         })
-      } else {
-        toast.error('Login failed', { description: error.message || 'Please try again later' })
-      }
-    } else {
-      toast.error('Login failed', { description: 'An unexpected error occurred' })
+        break
+
+      default:
+        // Handle 429 status code (rate limit) without specific error code
+        if (error.statusCode === 429) {
+          start()
+          toast.error(mapApiErrorCode('rate_limit_exceeded'), {
+            description: `Try again in ${countdown.value}s`,
+          })
+        } else {
+          // Generic error fallback — never leak HTTP method/path/status
+          toast.error('Login failed', { description: 'Please try again later' })
+        }
     }
   },
 })
 
 const handleSubmit = (data: { email: string; password: string }) => {
+  // Store email for potential resend verification dialog
+  pendingEmail.value = data.email
   mutation.mutate(data)
+}
+
+const isSubmitting = computed(() => toValue(mutation.isPending))
+
+const handleResendVerification = async () => {
+  await resend(pendingEmail.value)
+  if (resendCountdown.value === 0) {
+    toast.success('Verification email sent', { description: 'Please check your inbox' })
+  }
 }
 </script>
 
@@ -77,7 +155,7 @@ const handleSubmit = (data: { email: string; password: string }) => {
     </div>
 
     <!-- Form -->
-    <LoginForm @submit="handleSubmit" />
+    <LoginForm ref="loginFormRef" :loading="isSubmitting" @submit="handleSubmit" />
 
     <!-- Create Account Link -->
     <div class="pt-2 text-center">
@@ -92,5 +170,44 @@ const handleSubmit = (data: { email: string; password: string }) => {
         </RouterLink>
       </p>
     </div>
+
+    <!-- Account Locked Dialog (AUTH_004) -->
+    <Dialog v-model:open="showLockedDialog">
+      <DialogContent class="sm:max-w-md">
+        <DialogHeader>
+          <DialogTitle>Account Locked</DialogTitle>
+          <DialogDescription>
+            Too many failed login attempts. Your account has been temporarily locked for security.
+            <br />
+            <span v-if="lockCountdown > 0">
+              Please try again in <strong>{{ lockCountdown }}</strong> seconds.
+            </span>
+            <span v-else> You may now attempt to sign in again. </span>
+          </DialogDescription>
+        </DialogHeader>
+        <DialogFooter>
+          <Button variant="outline" @click="showLockedDialog = false"> Close </Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
+
+    <!-- Email Not Verified Dialog (AUTH_006) -->
+    <Dialog v-model:open="showVerificationDialog">
+      <DialogContent class="sm:max-w-md">
+        <DialogHeader>
+          <DialogTitle>Email Not Verified</DialogTitle>
+          <DialogDescription>
+            Your account <strong>{{ pendingEmail }}</strong> has not been verified yet. Please check your inbox and
+            click the verification link.
+          </DialogDescription>
+        </DialogHeader>
+        <DialogFooter>
+          <Button variant="outline" @click="showVerificationDialog = false"> Close </Button>
+          <Button :disabled="isResending || resendCountdown > 0" @click="handleResendVerification">
+            {{ isResending ? 'Sending...' : resendCountdown > 0 ? `Resend in ${resendCountdown}s` : 'Resend Email' }}
+          </Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
   </div>
 </template>

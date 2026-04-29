@@ -14,9 +14,7 @@ const props = defineProps<{
 </script>
 
 <template>
-  <div
-    :class="cn('auth-root flex h-screen items-center justify-center overflow-hidden', props.class)"
-  >
+  <div :class="cn('auth-root flex min-h-screen items-center justify-center', props.class)">
     <AuthBackground />
 
     <!-- Main Glass-Morphism Card -->
