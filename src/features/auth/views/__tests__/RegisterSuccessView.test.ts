@@ -11,6 +11,19 @@ vi.mock('vue-router', () => ({
   useRoute: vi.fn<() => { query: Record<string, unknown> }>(() => ({
     query: {},
   })),
+  createRouter: vi.fn<() => { install: () => void; onError: () => void }>(() => ({
+    install: vi.fn<() => void>(),
+    onError: vi.fn<() => void>(),
+  })),
+  createWebHistory: vi.fn<() => void>(),
+}))
+
+// Mock @/router to avoid loading the real router module (which requires Pinia)
+vi.mock('@/router', () => ({
+  default: {
+    push: vi.fn<() => void>(),
+    currentRoute: { value: { fullPath: '/' } },
+  },
 }))
 
 // Mock vue-sonner toast
