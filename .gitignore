@@ -44,3 +44,4 @@ playwright-report/
 # Test artifacts
 src/__tests__/*.d.ts
 src/__tests__/*.js
+.gstack/
