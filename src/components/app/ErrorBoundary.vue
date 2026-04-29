@@ -101,9 +101,7 @@ function handleReset() {
       <TriangleAlert class="h-6 w-6 text-destructive shrink-0 mt-0.5" />
       <div class="flex-1 min-w-0">
         <h3 class="text-lg font-semibold text-destructive mb-2">Component Render Error</h3>
-        <p class="text-sm text-muted-foreground mb-4">
-          Please refresh the page or contact administrator
-        </p>
+        <p class="text-sm text-muted-foreground mb-4">Please refresh the page or contact administrator</p>
 
         <!-- Error details in development mode -->
         <details v-if="isDev && errorInfo" class="mb-4 text-xs bg-muted/50 rounded p-3">

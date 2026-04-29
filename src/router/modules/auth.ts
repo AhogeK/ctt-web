@@ -33,6 +33,18 @@ const authRoutes: RouteRecordRaw[] = [
         component: () => import('@/features/auth/views/VerifyEmailView.vue'),
         meta: { title: 'Verify Email', requiresAuth: false },
       },
+      {
+        path: 'forgot-password',
+        name: RouteNames.FORGOT_PASSWORD,
+        component: () => import('@/features/auth/views/ForgotPasswordView.vue'),
+        meta: { title: 'Forgot Password', requiresAuth: false },
+      },
+      {
+        path: 'reset-password',
+        name: RouteNames.RESET_PASSWORD,
+        component: () => import('@/features/auth/views/ResetPasswordView.vue'),
+        meta: { title: 'Reset Password', requiresAuth: false },
+      },
     ],
   },
 ]

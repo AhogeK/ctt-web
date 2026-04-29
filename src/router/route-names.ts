@@ -13,15 +13,25 @@ export const RouteNames = {
   REGISTER: 'register',
   REGISTER_SUCCESS: 'register-success',
   VERIFY_EMAIL: 'verify-email',
+  FORGOT_PASSWORD: 'forgot-password',
+  RESET_PASSWORD: 'reset-password',
 
   // Dashboard
   DASHBOARD: 'dashboard',
   DASHBOARD_HOME: 'dashboard-home',
 
+  // Devices
+  DEVICES: 'devices',
+  DEVICES_LIST: 'devices-list',
+
   // Settings
   SETTINGS: 'settings',
   SETTINGS_PROFILE: 'settings-profile',
   SETTINGS_API_KEYS: 'settings-api-keys',
+  SETTINGS_DEVICES: 'settings-devices',
+
+  // Leaderboard
+  LEADERBOARD: 'leaderboard',
 } as const
 
 /**

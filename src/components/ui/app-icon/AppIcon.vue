@@ -1,7 +1,6 @@
 <script setup lang="ts">
 import type { HTMLAttributes } from 'vue'
 import { Icon, type IconProps } from '@iconify/vue'
-import { cn } from '@/lib/utils'
 
 /**
  * Wrapper for Iconify icons with consistent sizing and styling.
@@ -30,6 +29,6 @@ const props = withDefaults(defineProps<Props>(), {
     :height="props.size"
     :aria-hidden="!props.label"
     :aria-label="props.label"
-    :class="cn(props.class)"
+    :class="props.class"
   />
 </template>

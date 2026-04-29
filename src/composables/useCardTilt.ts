@@ -55,10 +55,7 @@ export function useCardTilt(options: UseCardTiltOptions = {}) {
     if (Math.abs(currentRotateX) < 0.01) currentRotateX = 0
     if (Math.abs(currentRotateY) < 0.01) currentRotateY = 0
 
-    if (
-      Math.abs(currentRotateX - targetRotateX) > 0.01 ||
-      Math.abs(currentRotateY - targetRotateY) > 0.01
-    ) {
+    if (Math.abs(currentRotateX - targetRotateX) > 0.01 || Math.abs(currentRotateY - targetRotateY) > 0.01) {
       rafId = requestAnimationFrame(animate)
     }
   }

@@ -1,4 +1,4 @@
-import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest'
+import { describe, it, expect, beforeEach, afterEach, vi } from 'vite-plus/test'
 import { createRouter, createWebHistory, type RouteRecordRaw } from 'vue-router'
 import { setActivePinia, createPinia } from 'pinia'
 import { setupRouterGuards } from '../guard'

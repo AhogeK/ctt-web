@@ -1,6 +1,5 @@
 <script setup lang="ts">
 import type { HTMLAttributes } from 'vue'
-import { cn } from '@/lib/utils'
 
 const props = defineProps<{
   class?: HTMLAttributes['class']
@@ -8,11 +7,7 @@ const props = defineProps<{
 </script>
 
 <template>
-  <div
-    data-slot="sidebar-menu-item"
-    data-sidebar="menu-item"
-    :class="cn('group/menu-item relative', props.class)"
-  >
+  <div data-slot="sidebar-menu-item" data-sidebar="menu-item" :class="['group/menu-item relative', props.class]">
     <slot />
   </div>
 </template>
