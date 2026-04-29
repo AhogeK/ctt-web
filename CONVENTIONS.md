@@ -8,15 +8,15 @@
 
 ### Branch Naming
 
-| Type     | Pattern                            | Example                          |
-|----------|------------------------------------|----------------------------------|
-| Feature  | `feat/{ticket-id}-{short-desc}`    | `feat/CTT-42-dashboard-charts`   |
-| Bugfix   | `fix/{ticket-id}-{short-desc}`     | `fix/CTT-55-auth-redirect`       |
-| Hotfix   | `hotfix/{version}-{short-desc}`    | `hotfix/v1.2.3-xss-fix`          |
-| Release  | `release/v{major}.{minor}.{patch}` | `release/v1.0.0`                 |
-| Docs     | `docs/{short-desc}`                | `docs/contributing-guide`        |
-| Refactor | `refactor/{short-desc}`            | `refactor/extract-composable`    |
-| Scaffold | `scaffold/{short-desc}`            | `scaffold/conventions`           |
+| Type     | Pattern                            | Example                        |
+| -------- | ---------------------------------- | ------------------------------ |
+| Feature  | `feat/{ticket-id}-{short-desc}`    | `feat/CTT-42-dashboard-charts` |
+| Bugfix   | `fix/{ticket-id}-{short-desc}`     | `fix/CTT-55-auth-redirect`     |
+| Hotfix   | `hotfix/{version}-{short-desc}`    | `hotfix/v1.2.3-xss-fix`        |
+| Release  | `release/v{major}.{minor}.{patch}` | `release/v1.0.0`               |
+| Docs     | `docs/{short-desc}`                | `docs/contributing-guide`      |
+| Refactor | `refactor/{short-desc}`            | `refactor/extract-composable`  |
+| Scaffold | `scaffold/{short-desc}`            | `scaffold/conventions`         |
 
 ### Commit Message Format
 
@@ -140,7 +140,7 @@ src/
 ## 3. State Management Strategy
 
 | State Type   | Tool               | Scope                                  |
-|--------------|--------------------|----------------------------------------|
+| ------------ | ------------------ | -------------------------------------- |
 | Server State | TanStack Query     | All API data: stats, sessions, devices |
 | URL State    | vue-router query   | Filters, date range, pagination        |
 | Global UI    | Pinia              | Auth session, theme                    |
@@ -308,6 +308,6 @@ pnpm exec playwright install
 
 ---
 
-*Last updated: 2026-03-18*
-*Maintainers: Project maintainers*
-*Questions? Open an issue with label `conventions`*
+_Last updated: 2026-03-18_
+_Maintainers: Project maintainers_
+_Questions? Open an issue with label `conventions`_
