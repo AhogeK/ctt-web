@@ -12,14 +12,12 @@ import ForgotPasswordForm from '../components/ForgotPasswordForm.vue'
 const { countdown, start } = useCooldown()
 const isSubmitted = ref(false)
 const submittedEmail = ref('')
-const isIdempotentSkip = ref(false)
 
 const mutation = useMutation({
   mutationFn: forgotPassword,
-  onSuccess: (data, email) => {
-    submittedEmail.value = email
+  onSuccess: (_data, variables) => {
+    submittedEmail.value = variables.email
     isSubmitted.value = true
-    isIdempotentSkip.value = data.idempotentSkip === true
   },
   onError: (error: unknown) => {
     if (!isApiError(error)) {
@@ -43,7 +41,7 @@ const mutation = useMutation({
 })
 
 const handleSubmit = (data: { email: string }) => {
-  mutation.mutate(data.email)
+  mutation.mutate({ email: data.email })
 }
 
 const isSubmitting = computed(() => toValue(mutation.isPending))
@@ -108,11 +106,8 @@ const isSubmitting = computed(() => toValue(mutation.isPending))
           <polyline points="22 4 12 14.01 9 11.01" />
         </svg>
         <p class="text-sm text-gray-700 dark:text-[#c0c4cc]" style="font-feature-settings: 'cv01', 'ss03'">
-          <template v-if="isIdempotentSkip"> 邮件已在10分钟内发送，请查看收件箱。 </template>
-          <template v-else>
-            If <strong>{{ submittedEmail }}</strong> exists in our database, you will receive a password recovery link
-            shortly.
-          </template>
+          If <strong>{{ submittedEmail }}</strong> exists in our database, you will receive a password recovery link
+          shortly.
         </p>
       </div>
       <RouterLink

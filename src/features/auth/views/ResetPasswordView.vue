@@ -5,7 +5,7 @@ import { toast } from 'vue-sonner'
 import { useMutation } from '@tanstack/vue-query'
 import { RouteNames } from '@/router/route-names'
 import { isApiError, mapApiErrorCode } from '@/lib/utils/api-error'
-import { resetPassword } from '@/lib/api/auth'
+import { confirmPasswordReset } from '@/lib/api/auth'
 import { ResetPasswordFormSchema, type ResetPasswordForm } from '@/lib/schemas/auth.schema'
 import { toTypedSchema } from '@vee-validate/zod'
 import { useForm } from 'vee-validate'
@@ -26,7 +26,7 @@ const form = useForm<ResetPasswordForm>({
 
 const mutation = useMutation({
   mutationFn: (data: { token: string; newPassword: string }) =>
-    resetPassword({ token: data.token, newPassword: data.newPassword }),
+    confirmPasswordReset({ token: data.token, newPassword: data.newPassword }),
   onSuccess: () => {
     toast.success('Password reset successful', {
       description: 'You can now sign in with your new password',

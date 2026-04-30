@@ -449,4 +449,131 @@ describe('auth API', () => {
       await expect(authApi.logoutAll()).rejects.toThrow('Too many requests')
     })
   })
+
+  describe('forgotPassword', () => {
+    it('sends POST request with email and returns void', async () => {
+      vi.mocked(apiFetch).mockResolvedValue(undefined)
+
+      const result = await authApi.forgotPassword({ email: 'user@example.com' })
+
+      expect(apiFetch).toHaveBeenCalledWith('/api/v1/auth/forgot-password', {
+        method: 'POST',
+        body: { email: 'user@example.com' },
+      })
+      expect(result).toBeUndefined()
+    })
+
+    it('rejects invalid email format', async () => {
+      await expect(authApi.forgotPassword({ email: 'not-an-email' })).rejects.toThrow('Invalid email format')
+    })
+
+    it('rejects empty email', async () => {
+      await expect(authApi.forgotPassword({ email: '' })).rejects.toThrow('Email is required')
+    })
+
+    it('propagates API error on failure', async () => {
+      const apiError = new Error('Service unavailable')
+      vi.mocked(apiFetch).mockRejectedValue(apiError)
+
+      await expect(authApi.forgotPassword({ email: 'user@example.com' })).rejects.toThrow('Service unavailable')
+    })
+  })
+
+  describe('confirmPasswordReset', () => {
+    it('sends POST request with token and newPassword and returns void', async () => {
+      vi.mocked(apiFetch).mockResolvedValue(undefined)
+
+      const result = await authApi.confirmPasswordReset({
+        token: 'reset-token-abc123',
+        newPassword: 'SecurePass1!',
+      })
+
+      expect(apiFetch).toHaveBeenCalledWith('/api/v1/auth/password-reset/confirm', {
+        method: 'POST',
+        body: {
+          token: 'reset-token-abc123',
+          newPassword: 'SecurePass1!',
+        },
+      })
+      expect(result).toBeUndefined()
+    })
+
+    it('rejects weak password', async () => {
+      await expect(
+        authApi.confirmPasswordReset({
+          token: 'reset-token-abc123',
+          newPassword: 'weak',
+        }),
+      ).rejects.toThrow('Password must be at least 8 characters')
+    })
+
+    it('rejects password missing uppercase', async () => {
+      await expect(
+        authApi.confirmPasswordReset({
+          token: 'reset-token-abc123',
+          newPassword: 'lowercase1!',
+        }),
+      ).rejects.toThrow('Must contain at least one uppercase letter')
+    })
+
+    it('rejects password missing lowercase', async () => {
+      await expect(
+        authApi.confirmPasswordReset({
+          token: 'reset-token-abc123',
+          newPassword: 'UPPERCASE1!',
+        }),
+      ).rejects.toThrow('Must contain at least one lowercase letter')
+    })
+
+    it('rejects password missing digit', async () => {
+      await expect(
+        authApi.confirmPasswordReset({
+          token: 'reset-token-abc123',
+          newPassword: 'NoDigits!',
+        }),
+      ).rejects.toThrow('Must contain at least one digit')
+    })
+
+    it('rejects password missing special character', async () => {
+      await expect(
+        authApi.confirmPasswordReset({
+          token: 'reset-token-abc123',
+          newPassword: 'NoSpecial1',
+        }),
+      ).rejects.toThrow('Must contain at least one special character (@$!%*?&)')
+    })
+
+    it('rejects empty token', async () => {
+      await expect(
+        authApi.confirmPasswordReset({
+          token: '',
+          newPassword: 'SecurePass1!',
+        }),
+      ).rejects.toThrow('Reset token is required')
+    })
+
+    it('propagates API error on invalid token', async () => {
+      const apiError = new Error('Invalid or expired reset token')
+      vi.mocked(apiFetch).mockRejectedValue(apiError)
+
+      await expect(
+        authApi.confirmPasswordReset({
+          token: 'invalid-token',
+          newPassword: 'SecurePass1!',
+        }),
+      ).rejects.toThrow('Invalid or expired reset token')
+    })
+
+    it('propagates network error on connection failure', async () => {
+      const networkError = new TypeError('Failed to fetch')
+      vi.mocked(apiFetch).mockRejectedValue(networkError)
+
+      await expect(
+        authApi.confirmPasswordReset({
+          token: 'reset-token-abc123',
+          newPassword: 'SecurePass1!',
+        }),
+      ).rejects.toThrow('Failed to fetch')
+    })
+  })
 })

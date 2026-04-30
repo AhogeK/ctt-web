@@ -9,6 +9,7 @@ import {
   type LoginRequest,
   type LoginResponse,
   type RegisterRequest,
+  type ForgotPasswordRequest,
   type ResetPasswordRequest,
 } from '@/lib/schemas/auth.schema'
 
@@ -163,20 +164,15 @@ export async function resendVerification(email: string): Promise<EmptyResponse> 
  * email exists in the database. This prevents attackers from determining which
  * emails are registered.
  *
- * @param email - The email address to send the password reset link to
- * @returns Parsed API response with success status and message
- * @throws Zod validation error if request or response doesn't match expected schema
+ * @param data - Object containing the email address to send the password reset link to
+ * @throws Zod validation error if request doesn't match expected schema
  */
-export async function forgotPassword(email: string): Promise<EmptyResponse> {
-  const cleanPayload = ForgotPasswordRequestSchema.parse({ email })
-
-  const response = await apiFetch<unknown>('/api/v1/auth/forgot-password', {
+export async function forgotPassword(data: ForgotPasswordRequest): Promise<void> {
+  const cleanPayload = ForgotPasswordRequestSchema.parse(data)
+  await apiFetch('/api/v1/auth/forgot-password', {
     method: 'POST',
     body: cleanPayload,
   })
-
-  const wrapped = RestApiResponseSchema.parse(response)
-  return EmptyResponseDataSchema.parse(wrapped.data)
 }
 
 /**
@@ -188,17 +184,12 @@ export async function forgotPassword(email: string): Promise<EmptyResponse> {
  * On success, all existing sessions for the user are terminated.
  *
  * @param data - Reset payload containing token and newPassword
- * @returns Parsed API response with success status and message
- * @throws Zod validation error if request or response doesn't match expected schema
+ * @throws Zod validation error if request payload doesn't match expected schema
  */
-export async function resetPassword(data: ResetPasswordRequest): Promise<EmptyResponse> {
+export async function confirmPasswordReset(data: ResetPasswordRequest): Promise<void> {
   const cleanPayload = ResetPasswordRequestSchema.parse(data)
-
-  const response = await apiFetch<unknown>('/api/v1/auth/password-reset/confirm', {
+  await apiFetch('/api/v1/auth/password-reset/confirm', {
     method: 'POST',
     body: cleanPayload,
   })
-
-  const wrapped = RestApiResponseSchema.parse(response)
-  return EmptyResponseDataSchema.parse(wrapped.data)
 }
