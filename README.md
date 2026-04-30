@@ -37,8 +37,8 @@ visualization.
 ## ✅ Implemented Features
 
 | Feature                 | Description                                                                                          |
-|-------------------------|------------------------------------------------------------------------------------------------------|
-| Authentication          | JWT login, token management, router guards                                                           |
+| ----------------------- | ---------------------------------------------------------------------------------------------------- |
+| Authentication          | JWT login, logout, token management, router guards                                                   |
 | Layout System           | AuthLayout + AppLayout, mobile responsive sidebar                                                    |
 | Routing                 | Feature-based modules, type-safe meta, NProgress, **route name constants**, **absolute child paths** |
 | Form Validation         | Vee-Validate + Zod, real-time feedback                                                               |
