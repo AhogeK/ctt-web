@@ -2,8 +2,18 @@
 
 ## Current Status
 
-**Phase**: Vitest .agents Exclusion Fix (v0.5.19)
-**Version**: 0.5.19 (2026-04-30)
+**Phase**: SonarQube S7764 Fix (v0.5.20)
+**Version**: 0.5.20 (2026-04-30)
+
+### SonarQube S7764 Fix (0.5.20)
+
+**Issue**: SonarQube warning S7764 ("Prefer 'globalThis' over 'global'") in `src/stores/__tests__/auth.test.ts` at lines 226-227.
+
+**File**: `src/stores/__tests__/auth.test.ts`
+
+**Fix**: Replaced `global` with `globalThis` in `vi.spyOn` calls for `clearTimeout` and `setTimeout`.
+
+**Verification**: `vp test` — 16/16 files, 319/319 tests pass, 0 failures.
 
 ### Vitest .agents Exclusion Fix (0.5.19)
 

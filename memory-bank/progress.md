@@ -44,6 +44,10 @@
 - [x] Interceptor test coverage: 18 new tests (refresh, terminal auth, mutex, retry guard, getErrorCode)
 - [x] Vitest .agents exclusion: added `.agents/**` and `.claude/**` to vitest.config.ts exclude
 - [x] AUTH_003 refresh trigger fix: backend never throws AUTH_002, all JWT failures return AUTH_003
+- [x] Refactor `clearRefreshTimer` to module-level outer scope in `src/stores/auth.ts` to satisfy SonarQube rule S7721
+- [x] Verified with `vp check` and `vp test` (319/319 passed)
+- [x] Fixed SonarQube S7764 warning: replaced `global` with `globalThis` in `src/stores/__tests__/auth.test.ts` (lines 226-227)
+- [x] Bump version 0.5.21
 
 ## In Progress
 
