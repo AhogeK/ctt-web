@@ -2,35 +2,88 @@
 
 ## Current Status
 
-**Phase**: SonarQube S7764 Fix (v0.5.20)
-**Version**: 0.5.20 (2026-04-30)
+**Phase**: Lint/SonarLint Warning Fix (v0.5.29)
+**Version**: 0.5.29 (2026-04-30)
 
-### SonarQube S7764 Fix (0.5.20)
+### CSS unknownAtRules IDE Config Fix
 
-**Issue**: SonarQube warning S7764 ("Prefer 'globalThis' over 'global'") in `src/stores/__tests__/auth.test.ts` at lines 226-227.
+**Date**: 2026-04-30
 
-**File**: `src/stores/__tests__/auth.test.ts`
+**Issue**: VSCode CSS language server reports 4 `unknownAtRules` warnings for valid Tailwind CSS v4 directives in `main.css` (`@custom-variant`, `@theme`, `@apply`). These are not real errors — Tailwind processes them correctly.
 
-**Fix**: Replaced `global` with `globalThis` in `vi.spyOn` calls for `clearTimeout` and `setTimeout`.
+**Fix**: Added `"css.lint.unknownAtRules": "ignore"` to `.vscode/settings.json` to suppress these false positives. Standard practice for Tailwind CSS projects.
 
-**Verification**: `vp test` — 16/16 files, 319/319 tests pass, 0 failures.
+**No version bump**: IDE-only config change, no functional impact.
+
+### Lint/SonarLint Warning Fix (0.5.29)
+
+**File**: `src/components/app/__tests__/AppSidebar.test.ts`
+
+**Issues fixed (8 warnings)**:
+
+1. `vi.fn()` missing type params (lines 12, 19, 20) — added `<() => typeof mockAuthStore>` and `<(key: string, defaultValue: unknown) => unknown>`
+2. Unused `onClick` variable (line 47) — renamed to `_onClick` per eslint convention
+3. Unnecessary `as Record<string, unknown>` assertion (line 47) — removed, type already inferred
+4. Unnecessary non-null assertions `resolveLogout!()` (lines 177, 226) — initialized with `= () => {}`, removed `!`
+
+**Verification**: LSP diagnostics clean (0 warnings). 330/330 tests pass.
+
+### Sidebar Light Mode Color Fix (0.5.28)
+
+**Issue**: Light mode sidebar (`#ffffff`) was brighter than body (`#f7f8f8`), inverting expected visual hierarchy — sidebar should recede, body should be focal.
+
+**Fix**: Changed light mode sidebar background from `#ffffff` to `#f3f4f5` (DESIGN.md "Light Surface" value). This makes the sidebar slightly darker/grayer than the page background, creating proper hierarchy: sidebar recedes (grayest) < body (mid) < cards/content (pure white brightest).
+
+**Dark mode unchanged**: sidebar `#0f1011`, body `#08090a`, card `#191a1b` — difference only ~7 RGB, barely perceptible.
+
+**Verification**: 330/330 tests pass (17 files).
+
+### DESIGN.md CSS Variable Alignment (0.5.27)
+
+**Root cause**: DashboardHome.vue already uses CSS variable tokens (`text-foreground`, `bg-card`, `border-border`, etc.) from v0.5.26 fix, but `src/assets/main.css` still used shadcn-vue default oklch color values for both `:root` (light mode) and `.dark` (dark mode) — none matched DESIGN.md's specified hex colors.
+
+**Fix**: Replaced all CSS variable color values with DESIGN.md exact colors:
+
+- **Dark mode** (`.dark`): `--background: #08090a`, `--foreground: #f7f8f8`, `--card: #191a1b`, `--muted-foreground: #8a8f98`, `--border: rgba(255,255,255,0.08)`, `--primary: #5e6ad2`, `--accent: #7170ff`, `--sidebar: #0f1011`
+- **Light mode** (`:root`): Light Background `#f7f8f8`, Pure White cards `#ffffff`, Light Border `#d0d6e0`. Brand colors (`--primary`/`--accent`) use same values in both modes for brand consistency.
+- Preserved: chart colors, destructive/error red, radius system
+
+**Verification**: All 15 CSS variable values confirmed via browser DevTools inspection. 330/330 tests pass.
+
+### Critical Re-review & Dashboard DESIGN.md Compliance (0.5.26)
+
+### Critical Re-review & Dashboard DESIGN.md Compliance (0.5.26)
+
+**Re-review of all v0.5.25 fixes**: Sub-agent analysis found only 1 remaining issue — AppHeader logout button missing `aria-label`. All other fixes verified correct.
+
+**Dashboard DESIGN.md compliance audit**: DashboardHome.vue was a minimal placeholder using Tailwind light-mode defaults (`bg-white`, `text-gray-900`, `shadow`, `font-bold`) that violated every aspect of the Linear-inspired dark-mode-first DESIGN.md. All visual classes replaced with CSS variable tokens (`text-foreground`, `bg-card`, `font-medium`, `tracking-tight`, `border-border/50`, `text-muted-foreground`) for theme-aware rendering.
+
+**Verdict**: Component-level compliance achieved. Dark mode CSS variables in main.css are reasonably close to DESIGN.md values. CSS variable values could be further fine-tuned to exact DESIGN.md colors (`#08090a`, `#f7f8f8`, etc.) but that's a separate CSS variable definition concern.
+
+**AppHeader accessibility fix**: Added `aria-label` attribute to icon-only logout button (dynamic "Logout" / "Logging out...") and wrapped in Tooltip/TooltipProvider for visual hover hint. Satisfies WCAG 4.1.2.
+
+**Verification**: `vp test` — 330/330 tests pass across 17 files. LSP diagnostics clean.
+
+### Logout Code Review & Fixes (0.5.25)
+
+**Code review of uncommitted logout feature changes identified these issues and applied fixes:**
+
+**Critical fix**: Logout button was only in AppSidebar (sidebar footer) but requirement was "顶部导航" (top navigation). Added logout button to `AppHeader.vue` with same fail-safe pattern. Both locations now have logout.
+
+**Code quality fix**: Replaced `any` types in Button mock (`AppSidebar.test.ts`) with proper TypeScript types (`Record<string, unknown>`, typed `$emit`). Violated AGENTS.md R8 (prohibit `any`).
+
+**Test coverage improvements** (`AppSidebar.test.ts`):
+
+- Added `afterEach` cleanup block
+- Added `wrapper.unmount()` to all 4 tests that lacked it
+- Added new tests: double-click prevention, navigation links (Dashboard/Devices/Settings), header branding ("CTT"), sidebar content structure
+- Fixed unhandled rejection by using `mockImplementation(() => Promise.reject(...).catch(() => {}))` pattern
+
+**README.md**: Added "logout" to Authentication feature description.
+
+**Verification**: `vp test` — 330/330 tests pass across 17 files. LSP diagnostics clean.
 
 ### Vitest .agents Exclusion Fix (0.5.19)
-
-**Issue**: `vp test` (vitest) was scanning `.agents/skills/` test files, causing spurious failures.
-The `ignorePatterns` in `vite.config.ts` only applies to `fmt` and `lint`, not test discovery.
-
-**File**: `vitest.config.ts`
-
-**Fix**: Added `.agents/**` and `.claude/**` to vitest `exclude` array:
-
-```typescript
-exclude: [...configDefaults.exclude, 'e2e/**', '.agents/**', '.claude/**'],
-```
-
-**Verification**: `vp test` — 16/16 files, 328/328 tests pass, 0 failures.
-
-### Interceptor Test Coverage Added (0.5.18)
 
 **File**: `src/lib/api/__tests__/instance.test.ts` (401 → 833 lines, +18 test cases)
 
@@ -477,6 +530,18 @@ Login page and JWT-based authentication fully implemented and verified.
 - ✅ `vp check` — 0 errors, 0 warnings
 - ✅ `vp test` — 296/296 tests pass
 - ✅ `vp build` — built successfully
+
+### Notion Dev Plan Tracking Update (2026-04-30)
+
+**Task**: Updated Notion「🌐 ctt-web 开发计划」Section C「3. 导航栏接入」checkboxes to [x].
+
+**Verification**: AppHeader.vue confirmed:
+
+- `authStore.logout()` called on logout button click (line 34)
+- `isLoggingOut` loading state with `:disabled` button + `Loader2` spinner icon
+- Double-click prevention guard (line 30)
+
+**Conclusion**: Both items genuinely complete — no code changes needed, only Notion tracking update.
 
 ---
 

@@ -41,13 +41,22 @@
 - [x] Vite+ migration (unified toolchain via `vp` CLI)
 - [x] ofetch interceptor: token refresh (AUTH_002/AUTH_003) + terminal auth error handling (AUTH_004/005/006/007/008/009)
 - [x] Interceptor code review: critical retry token bug fixed, JSDoc added, network error toast added
-- [x] Interceptor test coverage: 18 new tests (refresh, terminal auth, mutex, retry guard, getErrorCode)
-- [x] Vitest .agents exclusion: added `.agents/**` and `.claude/**` to vitest.config.ts exclude
-- [x] AUTH_003 refresh trigger fix: backend never throws AUTH_002, all JWT failures return AUTH_003
-- [x] Refactor `clearRefreshTimer` to module-level outer scope in `src/stores/auth.ts` to satisfy SonarQube rule S7721
-- [x] Verified with `vp check` and `vp test` (319/319 passed)
-- [x] Fixed SonarQube S7764 warning: replaced `global` with `globalThis` in `src/stores/__tests__/auth.test.ts` (lines 226-227)
-- [x] Bump version 0.5.21
+- [x] AppSidebar Logout Integration: Added logout button in AppSidebar.vue with loading state and useAuthStore().logout() integration
+- [x] AppSidebar Logout Tests: Added comprehensive unit tests for loading state and guard behavior
+- [x] Logout Code Review & Fixes: any type removal, AppHeader logout addition, test coverage expansion (double-click/nav links/structure), unhandled rejection fix
+- [x] Bump version 0.5.24
+- [x] Bump version 0.5.25
+- [x] Critical re-review of all logout fixes: verified correct, added AppHeader aria-label for WCAG compliance
+- [x] Dashboard DESIGN.md compliance: replaced Tailwind light-mode classes with CSS variable tokens
+- [x] Bump version 0.5.26
+- [x] DESIGN.md CSS variable alignment: replaced all shadcn-vue default oklch values with DESIGN.md exact hex colors
+- [x] Bump version 0.5.27
+- [x] Sidebar light mode color fix: changed sidebar bg from #ffffff to #f3f4f5 (DESIGN.md Light Surface) for proper visual hierarchy
+- [x] Bump version 0.5.28
+- [x] Fix 8 lint/sonarlint warnings in AppSidebar.test.ts (vi.fn types, unused onClick, unnecessary assertions)
+- [x] Bump version 0.5.29
+- [x] Fix 4 CSS unknownAtRules false positives (Tailwind v4 directives in main.css — IDE config fix)
+- [x] Notion dev plan tracking: Section C「3. 导航栏接入」checked complete (verified AppHeader logout + loading state)
 
 ## In Progress
 
