@@ -2,84 +2,25 @@
 
 ## Current Status
 
-**Phase**: Auth Schema Layer — Review Fixes (v0.5.30)
-**Version**: 0.5.30 (2026-04-30)
+**Phase**: Auth API Layer — Reset Password Refactoring (v0.5.31)
+**Version**: 0.5.31 (2026-04-30)
 
 ## Recent Activity
 
-### 0.5.29 — Lint/SonarLint Warning Fix
+### 0.5.31 — Auth API Layer Refactoring
 
-Fixed 8 warnings in `AppSidebar.test.ts`: typed `vi.fn()` params, renamed unused `onClick` to `_onClick`, removed unnecessary type assertions, initialized `resolveLogout` with empty function to remove non-null assertions. 330/330 tests pass.
+Refactored password reset API methods to match architect practice requirements:
 
-### 0.5.28 — Sidebar Light Mode Color Fix
-
-Changed sidebar background from `#ffffff` to `#f3f4f5` (DESIGN.md "Light Surface") for proper visual hierarchy — sidebar recedes (grayest) < body (mid) < cards (brightest). Dark mode unchanged.
-
-### 0.5.27 — DESIGN.md CSS Variable Alignment
-
-Replaced all CSS variable colors in `main.css` with DESIGN.md exact hex values: dark mode `--background: #08090a`, `--foreground: #f7f8f8`, `--card: #191a1b`; light mode `--background: #f7f8f8`, `--card: #ffffff`. 330/330 tests pass.
-
-### 0.5.26 — Dashboard DESIGN.md Compliance
-
-Replaced DashboardHome.vue Tailwind light-mode defaults with CSS variable tokens (`text-foreground`, `bg-card`, `border-border`). Added `aria-label` to AppHeader logout button with Tooltip wrapper. 330/330 tests pass.
-
-### 0.5.25 — Logout Code Review & Fixes
-
-Added logout button to AppHeader.vue (requirement was "顶部导航"). Replaced `any` types with proper TypeScript. Added test cleanup, unmount, new tests (double-click, navigation, branding). README updated.
-
-### 0.5.19 — Vitest .agents Exclusion Fix
-
-Added 18 test cases to `instance.test.ts` covering AUTH_002/AUTH_003 refresh, retry with `__authRetry`, infinite loop guard, refresh failure handling, terminal auth errors, mutex behavior. 328/328 tests pass.
-
-### 0.5.17 — Interceptor Code Review Fixes
-
-**Critical**: Retry used raw `ofetch` instead of `apiFetch` → expired token sent → user kicked to login. Fixed by using `apiFetch` on retry. Added JSDoc to `apiFetch` and `UNAUTHORIZED_EVENT`. Added network error toast.
-
-### 0.5.16 — AUTH_003 Refresh Trigger Fix
-
-Backend returns `AUTH_003` for all JWT failures, but interceptor only triggered refresh on `AUTH_002` (never thrown). Extended 401 trigger to include `AUTH_003`. Added inline terminal handling for refresh failure.
-
-### Atomic Git Commits & Cherry-pick (2026-04-30)
-
-**6 atomic commits on `develop`**: logout button, dashboard CSS tokens, CSS variable alignment, README update, memory-bank (AI-only, NOT cherry-picked), version bump.
-
-**Cherry-picked 5 non-AI commits to `master`**: All code/doc/version commits landed. Master HEAD: `faa6a60`. Working directory clean.
-
-### Acceptance Verification — Token Refresh & Global Logout (2026-04-30)
-
-| #   | Criterion                        | Verdict    | Evidence                                     |
-| --- | -------------------------------- | ---------- | -------------------------------------------- |
-| 1   | Auto-refresh expired token       | ✅ PASS    | instance.ts L102-109 refresh trigger + retry |
-| 2   | Concurrent 401 dedup             | ✅ PASS    | Promise lock + mutex + \_\_authRetry flag    |
-| 3   | Expired refresh → unified /login | ✅ PASS    | Mutex prevents multiple redirects            |
-| 4   | Logout fail-safe (429)           | ✅ PASS    | try/catch/finally, clearAuth always runs     |
-|     | **Test suite**                   | ✅ 330/330 | 17 files                                     |
-
-### Notion Dev Plan Tracking Update (2026-04-30)
-
-Updated Notion「🌐 ctt-web 开发计划」Section C「3. 导航栏接入」checkboxes to [x]. AppHeader.vue confirmed: `authStore.logout()` on click, `isLoggingOut` loading state, double-click guard.
-
-### Auth Schema Layer Verification (2026-04-30)
-
-**Task**: Notion Section D「忘记密码与重置密码」1. Schema 层 — verify `ForgotPasswordRequestSchema` and `ResetPasswordRequestSchema`.
-
-**Result**: Both schemas **already implemented** in `src/lib/schemas/auth.schema.ts` (L176-179, L193-198). Also includes `ResetPasswordFormSchema` with `confirmPassword` + `refine` cross-field matching (L208-214) — follows same pattern as `RegisterRequestSchema` + `RegisterFormSchema`. No code changes needed. Notion D.1 checkboxes updated to [x], delivery table status → ✅ 已完成.
-
-### Auth Schema Layer Code Review (2026-04-30)
-
-**Scope**: Comprehensive 5-axis code review (deep agent + code-review-and-quality skill) of ForgotPassword/ResetPassword Schema layer. Full test suite 330/330 PASS.
-
-**Findings**:
-- Schema definitions ✅ correct (ForgotPasswordRequestSchema, ResetPasswordRequestSchema, ResetPasswordFormSchema)
-- API integration ✅ correct (parse before send, EmptyResponseDataSchema response validation)
-- Security ✅ correct (StrongPasswordSchema, anti-enumeration design, payload filtering)
-- **Missing tests** 🔴 `ForgotPasswordRequestSchema`/`ResetPasswordRequestSchema`/`ResetPasswordFormSchema` have zero unit tests in `auth.schema.test.ts`
-- `ForgotPasswordFormSchema` defined inline in component instead of `auth.schema.ts` (inconsistent with RegisterFormSchema pattern)
-- `ResetPasswordForm.vue` dead code — component exists but unused; `ResetPasswordView.vue` inlines form (pre-existing issue)
+1. **forgotPassword**: signature changed to `(data: ForgotPasswordRequest): Promise<void>`, removed response parsing.
+2. **confirmPasswordReset**: renamed from `resetPassword`, signature changed to `(data: ResetPasswordRequest): Promise<void>`, removed response parsing.
+3. **View Adaptation**: Updated `ForgotPasswordView.vue` (removed idempotentSkip logic) and `ResetPasswordView.vue` to match new signatures.
+4. **Export Update**: Updated `src/lib/api/index.ts` export name.
+5. **Test Coverage**: Added/updated tests in `auth.test.ts` (359/359 pass).
 
 ### 0.5.30 — Schema Layer Review Fixes
 
 Fixed both issues from the review:
+
 1. **Added 16 unit tests** for `ForgotPasswordRequestSchema` (3), `ResetPasswordRequestSchema` (5), `ResetPasswordFormSchema` (5), type inference (3) in `auth.schema.test.ts`
 2. **Exported `ForgotPasswordFormSchema`** from `auth.schema.ts` + updated `ForgotPasswordForm.vue` to import it instead of inline definition
 

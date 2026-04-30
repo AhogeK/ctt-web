@@ -62,7 +62,8 @@
 - [x] Auth Schema layer verification: ForgotPasswordRequestSchema + ResetPasswordRequestSchema + ResetPasswordFormSchema already implemented (v0.5 era). Notion Section D.1 schemas checked complete.
 - [x] Auth Schema layer code review: 5-axis review complete. Schemas correct but missing unit tests (3 schemas uncovered). Full test suite 330/330 passes.
 - [x] Schema layer review fixes: moved ForgotPasswordFormSchema to auth.schema.ts + added 16 unit tests. Tests 346/346 pass.
-- [x] Bump version 0.5.30
+- [x] Auth API layer refactoring: `forgotPassword` and `confirmPasswordReset` (renamed from `resetPassword`) aligned with Architect Practice requirements. Promise<void> return type + object parameters. Tests 359/359 pass.
+- [x] Bump version 0.5.31
 
 ## In Progress
 
