@@ -1,11 +1,11 @@
 <script setup lang="ts">
 import { toTypedSchema } from '@vee-validate/zod'
 import { useForm } from 'vee-validate'
-import { z } from 'zod'
 import { FormField, FormItem, FormLabel, FormControl, FormMessage } from '@/components/ui/form'
 import { Input } from '@/components/ui/input'
 import { Button } from '@/components/ui/button'
 import { cn } from '@/lib/utils'
+import { ForgotPasswordFormSchema } from '@/lib/schemas/auth.schema'
 
 const emit = defineEmits<{
   /** Emitted when form validation passes with the email address */
@@ -16,10 +16,6 @@ const props = defineProps<{
   /** Whether the form is currently submitting (disables button + shows loading) */
   loading?: boolean
 }>()
-
-const ForgotPasswordFormSchema = z.object({
-  email: z.email('Invalid email format').min(1, 'Email is required'),
-})
 
 const form = useForm({
   validationSchema: toTypedSchema(ForgotPasswordFormSchema),

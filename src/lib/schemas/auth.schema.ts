@@ -181,6 +181,16 @@ export const ForgotPasswordRequestSchema = z.object({
 export type ForgotPasswordRequest = z.infer<typeof ForgotPasswordRequestSchema>
 
 /**
+ * Forgot password form schema for frontend UI validation.
+ *
+ * Extends ForgotPasswordRequestSchema with no additional fields since the
+ * forgot password flow only requires email input. Used with Vee-Validate + Zod integration.
+ */
+export const ForgotPasswordFormSchema = ForgotPasswordRequestSchema.extend({})
+
+export type ForgotPasswordForm = z.infer<typeof ForgotPasswordFormSchema>
+
+/**
  * Reset password request schema matching ctt-server ResetPasswordRequest DTO.
  *
  * Server-side validation (ResetPasswordRequest.java):
