@@ -1,12 +1,28 @@
 import { ref, computed } from 'vue'
 import { defineStore } from 'pinia'
 import { useStorage } from '@vueuse/core'
-import { login as loginApi, refresh as refreshApi } from '@/lib/api/auth'
+import { login as loginApi, refresh as refreshApi, logoutAll } from '@/lib/api/auth'
 import type { LoginRequest, LoginResponse } from '@/lib/schemas/auth.schema'
 import { getOrCreateDeviceId } from '@/lib/utils/device'
+import router from '@/router'
+import { RouteNames } from '@/router/route-names'
 
 // Promise lock to prevent concurrent refresh requests (Thundering Herd)
 let activeRefreshPromise: Promise<string> | null = null
+
+// Timer ID for scheduled silent token refresh
+let refreshTimerId: ReturnType<typeof setTimeout> | null = null
+
+/**
+ * Clears the scheduled silent refresh timer if one exists.
+ * Called on logout, before scheduling a new timer, or when manually stopping refresh.
+ */
+export function clearRefreshTimer(): void {
+  if (refreshTimerId !== null) {
+    clearTimeout(refreshTimerId)
+    refreshTimerId = null
+  }
+}
 
 /**
  * localStorage key constants for auth token persistence.
@@ -65,8 +81,8 @@ export const useAuthStore = defineStore('auth', () => {
     accessToken.value = response.accessToken
     refreshToken.value = response.refreshToken
     userId.value = response.userId
-    // Convert expiresIn (seconds) to absolute timestamp (milliseconds)
     tokenExpiry.value = Date.now() + response.expiresIn * 1000
+    scheduleSilentRefresh()
   }
 
   /**
@@ -75,6 +91,7 @@ export const useAuthStore = defineStore('auth', () => {
    * Resets all refs to null, effectively ending the session.
    */
   function clearAuth(): void {
+    clearRefreshTimer()
     accessToken.value = null
     refreshToken.value = null
     userId.value = null
@@ -147,6 +164,64 @@ export const useAuthStore = defineStore('auth', () => {
     return activeRefreshPromise
   }
 
+  /**
+   * Schedules a silent token refresh before the current token expires.
+   *
+   * Timing strategy:
+   * - If token expires in >5min: refresh 5min before expiry
+   * - If token expires in <=5min: refresh at 1/4 of remaining time
+   *
+   * This ensures the token is refreshed proactively, avoiding 401 errors
+   * during user activity while not refreshing too aggressively.
+   */
+  function scheduleSilentRefresh(): void {
+    clearRefreshTimer()
+
+    if (!refreshToken.value) return
+    if (!tokenExpiry.value) return
+
+    const timeToExpiry = tokenExpiry.value - Date.now()
+    if (timeToExpiry <= 0) return
+
+    const FIVE_MINUTES = 5 * 60 * 1000
+    const delay = timeToExpiry > FIVE_MINUTES ? timeToExpiry - FIVE_MINUTES : timeToExpiry / 4
+
+    refreshTimerId = setTimeout(async () => {
+      try {
+        await refreshAccessToken()
+        scheduleSilentRefresh()
+      } catch {
+        clearRefreshTimer()
+      }
+    }, delay)
+  }
+
+  /**
+   * Performs logout by invalidating all refresh tokens on server and clearing local state.
+   *
+   * Flow:
+   * 1. Clear refresh timer to prevent background refresh attempts
+   * 2. Call logoutAll API to invalidate all server-side tokens
+   * 3. Clear local auth state (tokens, expiry, user ID)
+   * 4. Redirect to login page
+   *
+   * Fail-safe: Even if logoutAll API fails (network error, server down),
+   * local state is cleared and user is redirected. This ensures user can always
+   * log out locally even if server is unreachable.
+   */
+  async function logout(): Promise<void> {
+    try {
+      clearRefreshTimer()
+      await logoutAll()
+    } catch {
+      // Fail-safe: ignore API errors, still clear local state
+      // User can always log out locally even if server is unreachable
+    } finally {
+      clearAuth()
+      void router.push({ name: RouteNames.LOGIN })
+    }
+  }
+
   return {
     accessToken,
     refreshToken,
@@ -158,5 +233,14 @@ export const useAuthStore = defineStore('auth', () => {
     clearAuth,
     login,
     refreshAccessToken,
+    scheduleSilentRefresh,
+    logout,
+    /**
+     * Test-only helper to reset module-scoped timer state.
+     * Used in beforeEach to ensure clean timer state between tests.
+     */
+    __resetTimerForTesting: () => {
+      refreshTimerId = null
+    },
   }
 })

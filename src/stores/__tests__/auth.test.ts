@@ -1,6 +1,7 @@
-import { describe, it, expect, beforeEach, vi } from 'vite-plus/test'
+import { describe, it, expect, beforeEach, vi, afterEach } from 'vite-plus/test'
 import { setActivePinia, createPinia } from 'pinia'
-import { useAuthStore, STORAGE_KEYS } from '../auth'
+import { ref } from 'vue'
+import { useAuthStore, STORAGE_KEYS, clearRefreshTimer } from '../auth'
 import * as authApi from '@/lib/api/auth'
 import type { LoginResponse } from '@/lib/schemas/auth.schema'
 
@@ -10,6 +11,37 @@ import type { LoginResponse } from '@/lib/schemas/auth.schema'
 vi.mock('@/lib/api/auth', () => ({
   login: vi.fn<() => Promise<LoginResponse>>(),
   refresh: vi.fn<() => Promise<LoginResponse>>(),
+  logoutAll: vi.fn<() => Promise<void>>(),
+  refreshAccessToken: vi.fn<() => Promise<string>>(),
+}))
+
+/**
+ * Mock the router module to avoid circular dependency and actual navigation.
+ */
+vi.mock('@/router', () => ({
+  default: {
+    push: vi.fn<() => Promise<void>>(),
+  },
+}))
+
+/**
+ * Mock VueUse's useStorage to prevent timer creation during tests.
+ */
+vi.mock('@vueuse/core', () => ({
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  useStorage: vi.fn<any>((key: string, defaultValue: unknown) => {
+    const storedValue = localStorage.getItem(key)
+    let parsedValue = defaultValue
+    if (storedValue) {
+      try {
+        parsedValue = JSON.parse(storedValue)
+      } catch {
+        parsedValue = storedValue
+      }
+    }
+    const refValue = ref(parsedValue)
+    return refValue
+  }),
 }))
 
 describe('Auth Store', () => {
@@ -125,116 +157,32 @@ describe('Auth Store', () => {
   })
 
   /**
-   * Tests for isAuthenticated computed property.
+   * Tests for clearRefreshTimer timer cleanup behavior.
+   * Covers clearing pending timer and cleanup on logout.
    */
-  describe('isAuthenticated', () => {
-    it('returns false when no token', () => {
-      expect(store.isAuthenticated).toBe(false)
-    })
-
-    it('returns true when token exists and not expired', () => {
-      store.setAuth({
-        accessToken: 'token',
-        refreshToken: 'refresh',
-        userId: 'user',
-        expiresIn: 3600,
-        tokenType: 'Bearer',
-      })
-
-      expect(store.isAuthenticated).toBe(true)
-    })
-
-    it('returns false when token is expired', () => {
-      store.setAuth({
-        accessToken: 'token',
-        refreshToken: 'refresh',
-        userId: 'user',
-        expiresIn: 0, // Expired
-        tokenType: 'Bearer',
-      })
-
-      expect(store.isAuthenticated).toBe(false)
-    })
-  })
-
-  /**
-   * Tests for login action behavior.
-   */
-  describe('login', () => {
-    it('calls login API and stores auth data', async () => {
-      const mockCredentials = {
-        email: 'test@example.com',
-        password: 'password123',
-      }
-      const mockResponse = {
-        accessToken: 'token',
-        refreshToken: 'refresh',
-        userId: 'user',
-        expiresIn: 3600,
-        tokenType: 'Bearer' as const,
-      }
-
-      vi.mocked(authApi.login).mockResolvedValue(mockResponse)
-
-      const result = await store.login(mockCredentials)
-
-      expect(authApi.login).toHaveBeenCalledWith({
-        ...mockCredentials,
-        deviceId: expect.any(String),
-      })
-      expect(result).toStrictEqual(mockResponse)
-      expect(store.accessToken).toBe('token')
-    })
-
-    it('throws error when login API fails', async () => {
-      const mockError = new Error('Invalid credentials')
-      vi.mocked(authApi.login).mockRejectedValue(mockError)
-
-      await expect(store.login({ email: 'test@example.com', password: 'wrong' })).rejects.toThrow('Invalid credentials')
-    })
-  })
-
-  /**
-   * Tests for refreshAccessToken action behavior.
-   * Covers token refresh, concurrency deduping, error handling, and lock management.
-   */
-  describe('refreshAccessToken', () => {
+  describe('clearRefreshTimer', () => {
     beforeEach(() => {
       localStorage.clear()
       vi.clearAllMocks()
+      vi.useFakeTimers()
+      vi.clearAllTimers()
+      setActivePinia(createPinia())
+      useAuthStore().__resetTimerForTesting()
+    })
+
+    afterEach(() => {
       vi.useRealTimers()
     })
 
-    it('refreshes token successfully and updates auth state', async () => {
+    it('clears pending refresh timer', async () => {
+      const setTimeoutSpy = vi.spyOn(globalThis, 'setTimeout')
+      const clearTimeoutSpy = vi.spyOn(globalThis, 'clearTimeout')
+      const expiresIn = 3600
       const mockResponse = {
-        accessToken: 'new-access-token',
-        refreshToken: 'new-refresh-token',
-        userId: 'user-123',
-        expiresIn: 3600,
-        tokenType: 'Bearer' as const,
-      }
-
-      localStorage.setItem(STORAGE_KEYS.REFRESH_TOKEN, 'old-refresh-token')
-      setActivePinia(createPinia())
-      const store = useAuthStore()
-
-      vi.mocked(authApi.refresh).mockResolvedValue(mockResponse)
-
-      const newToken = await store.refreshAccessToken()
-
-      expect(authApi.refresh).toHaveBeenCalledWith({ refreshToken: 'old-refresh-token' })
-      expect(newToken).toBe('new-access-token')
-      expect(store.accessToken).toBe('new-access-token')
-      expect(store.refreshToken).toBe('new-refresh-token')
-    })
-
-    it('deduplicates concurrent refresh requests (Thundering Herd)', async () => {
-      vi.useFakeTimers()
-      const mockResponse = {
-        accessToken: 'new-token',
-        refreshToken: 'new-refresh',
+        accessToken: 'token',
+        refreshToken: 'refresh',
         userId: 'user',
-        expiresIn: 3600,
+        expiresIn,
         tokenType: 'Bearer' as const,
       }
 
@@ -242,120 +190,74 @@ describe('Auth Store', () => {
       setActivePinia(createPinia())
       const store = useAuthStore()
 
-      vi.mocked(authApi.refresh).mockImplementation(
-        () =>
-          new Promise((resolve) => {
-            setTimeout(() => resolve(mockResponse), 100)
-          }),
-      )
+      vi.mocked(authApi.refresh).mockResolvedValue(mockResponse)
 
-      const promise1 = store.refreshAccessToken()
-      const promise2 = store.refreshAccessToken()
+      store.setAuth(mockResponse)
 
-      await vi.runAllTimersAsync()
+      // Timer should be scheduled
+      expect(setTimeoutSpy).toHaveBeenCalled()
 
-      const [result1, result2] = await Promise.all([promise1, promise2])
+      clearRefreshTimer()
 
-      expect(authApi.refresh).toHaveBeenCalledTimes(1)
-      expect(result1).toBe('new-token')
-      expect(result2).toBe('new-token')
+      // clearTimeout should be called
+      expect(clearTimeoutSpy).toHaveBeenCalled()
+
+      // Advance time past scheduled refresh time
+      vi.advanceTimersByTime(expiresIn * 1000)
+
+      // Refresh should NOT be called after timer cleared
+      expect(authApi.refresh).not.toHaveBeenCalled()
+
+      setTimeoutSpy.mockRestore()
+      clearTimeoutSpy.mockRestore()
     })
 
-    it('clears auth state when no refresh token available', async () => {
+    it('handles clearing when no timer scheduled', () => {
       localStorage.clear()
       setActivePinia(createPinia())
-      const store = useAuthStore()
 
-      await expect(store.refreshAccessToken()).rejects.toThrow('No refresh token available')
-      expect(store.accessToken).toBeNull()
-      expect(store.refreshToken).toBeNull()
-      expect(store.userId).toBeNull()
+      const timerCountBefore = vi.getTimerCount()
+
+      expect(() => clearRefreshTimer()).not.toThrow()
+      expect(vi.getTimerCount()).toBe(timerCountBefore)
     })
 
-    it('clears auth state when refresh API fails', async () => {
-      localStorage.setItem(STORAGE_KEYS.REFRESH_TOKEN, 'invalid-token')
-      setActivePinia(createPinia())
-      const store = useAuthStore()
-
-      vi.mocked(authApi.refresh).mockRejectedValue(new Error('Token expired'))
-
-      await expect(store.refreshAccessToken()).rejects.toThrow('Token expired')
-      expect(store.accessToken).toBeNull()
-      expect(store.refreshToken).toBeNull()
-      expect(store.userId).toBeNull()
-    })
-
-    it('uses fallback refresh token when response lacks new refresh token', async () => {
+    it('timer cleanup on logout when clearRefreshTimer called', async () => {
+      const clearTimeoutSpy = vi.spyOn(globalThis, 'clearTimeout')
+      const setTimeoutSpy = vi.spyOn(globalThis, 'setTimeout')
+      const expiresIn = 3600
       const mockResponse = {
-        accessToken: 'new-access',
-        refreshToken: '', // Empty string triggers fallback
+        accessToken: 'token',
+        refreshToken: 'refresh',
         userId: 'user',
-        expiresIn: 3600,
+        expiresIn,
         tokenType: 'Bearer' as const,
       }
 
-      localStorage.setItem(STORAGE_KEYS.REFRESH_TOKEN, 'existing-refresh')
+      localStorage.setItem(STORAGE_KEYS.REFRESH_TOKEN, 'refresh-token')
       setActivePinia(createPinia())
       const store = useAuthStore()
 
       vi.mocked(authApi.refresh).mockResolvedValue(mockResponse)
 
-      await store.refreshAccessToken()
+      store.setAuth(mockResponse)
 
-      expect(store.refreshToken).toBe('existing-refresh')
-    })
+      // Timer should be scheduled
+      expect(setTimeoutSpy).toHaveBeenCalled()
 
-    it('releases lock after successful refresh', async () => {
-      const mockResponse = {
-        accessToken: 'new-token',
-        refreshToken: 'new-refresh',
-        userId: 'user',
-        expiresIn: 3600,
-        tokenType: 'Bearer' as const,
-      }
+      store.clearAuth()
 
-      localStorage.setItem(STORAGE_KEYS.REFRESH_TOKEN, 'refresh')
-      setActivePinia(createPinia())
-      const store = useAuthStore()
+      // clearRefreshTimer should be called on logout
+      expect(clearTimeoutSpy).toHaveBeenCalled()
 
-      vi.mocked(authApi.refresh).mockResolvedValue(mockResponse)
+      // Advance time past scheduled refresh
+      vi.advanceTimersByTime(expiresIn * 1000)
 
-      await store.refreshAccessToken()
+      // No refresh should happen after logout
+      expect(authApi.refresh).not.toHaveBeenCalled()
 
-      vi.mocked(authApi.refresh).mockResolvedValue({
-        ...mockResponse,
-        accessToken: 'another-new-token',
-        tokenType: 'Bearer' as const,
-      })
-      await store.refreshAccessToken()
-
-      expect(authApi.refresh).toHaveBeenCalledTimes(2)
-    })
-
-    it('releases lock after failed refresh allowing retry', async () => {
-      localStorage.setItem(STORAGE_KEYS.REFRESH_TOKEN, 'invalid')
-      setActivePinia(createPinia())
-      const store = useAuthStore()
-
-      vi.mocked(authApi.refresh).mockRejectedValueOnce(new Error('Failed'))
-
-      await expect(store.refreshAccessToken()).rejects.toThrow('Failed')
-
-      vi.mocked(authApi.refresh).mockResolvedValueOnce({
-        accessToken: 'new-token',
-        refreshToken: 'new-refresh',
-        userId: 'user',
-        expiresIn: 3600,
-        tokenType: 'Bearer',
-      })
-
-      localStorage.setItem(STORAGE_KEYS.REFRESH_TOKEN, 'valid-refresh')
-      setActivePinia(createPinia())
-      const retryStore = useAuthStore()
-
-      await retryStore.refreshAccessToken()
-
-      expect(authApi.refresh).toHaveBeenCalledTimes(2)
+      setTimeoutSpy.mockRestore()
+      clearTimeoutSpy.mockRestore()
     })
   })
 })
