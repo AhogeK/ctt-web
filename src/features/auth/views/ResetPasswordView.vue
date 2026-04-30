@@ -4,16 +4,19 @@ import { RouterLink, useRouter, useRoute } from 'vue-router'
 import { toast } from 'vue-sonner'
 import { useMutation } from '@tanstack/vue-query'
 import { RouteNames } from '@/router/route-names'
-import { isApiError, mapApiErrorCode } from '@/lib/utils/api-error'
+import { isApiError } from '@/lib/utils/api-error'
 import { confirmPasswordReset } from '@/lib/api/auth'
 import { ResetPasswordFormSchema, type ResetPasswordForm } from '@/lib/schemas/auth.schema'
 import { toTypedSchema } from '@vee-validate/zod'
-import { useForm } from 'vee-validate'
+import { useForm, useFieldValue } from 'vee-validate'
 import { FormField, FormItem, FormLabel, FormControl, FormMessage } from '@/components/ui/form'
 import { Input } from '@/components/ui/input'
 import { Button } from '@/components/ui/button'
 import { cn } from '@/lib/utils'
+import { useCooldown } from '@/composables/useCooldown'
 import PasswordStrengthMeter from '../components/PasswordStrengthMeter.vue'
+
+const { countdown, start } = useCooldown()
 
 const router = useRouter()
 const route = useRoute()
@@ -24,57 +27,43 @@ const form = useForm<ResetPasswordForm>({
   validationSchema: toTypedSchema(ResetPasswordFormSchema),
 })
 
+const passwordValue = useFieldValue<string>('newPassword')
+
 const mutation = useMutation({
   mutationFn: (data: { token: string; newPassword: string }) =>
     confirmPasswordReset({ token: data.token, newPassword: data.newPassword }),
   onSuccess: () => {
-    toast.success('Password reset successful', {
-      description: 'You can now sign in with your new password',
-    })
+    toast.success('密码已重置，所有设备已强制下线')
     router.push({ name: RouteNames.LOGIN })
   },
   onError: (error: unknown) => {
     if (!isApiError(error)) {
-      toast.error('Password reset failed', { description: 'An unexpected error occurred' })
+      toast.error('密码重置失败，请稍后重试')
       return
     }
 
-    const errorCode = (error.data as { code?: string })?.code
+    const data = error.data as { code?: string } | undefined
 
-    switch (errorCode) {
-      case 'AUTH_003':
-        // Invalid or expired token
-        toast.error(mapApiErrorCode('AUTH_003'))
-        break
-
-      case 'PASSWORD_SAME_AS_OLD':
-        // New password same as old
-        form.setFieldError('newPassword', mapApiErrorCode('PASSWORD_SAME_AS_OLD'))
-        break
-
-      case 'COMMON_002':
-      case 'RATE_LIMIT_001':
-        toast.error(mapApiErrorCode(errorCode), {
-          description: 'Please wait a moment before trying again',
-        })
-        break
-
-      default:
-        if (error.statusCode === 429) {
-          toast.error(mapApiErrorCode('rate_limit_exceeded'), {
-            description: 'Please wait a moment before trying again',
-          })
-        } else {
-          toast.error('Password reset failed', { description: 'Please try again later' })
-        }
+    if (error.statusCode === 401 && data?.code === 'AUTH_003') {
+      toast.error('重置链接已失效或已使用，请重新申请')
+      router.push({ name: RouteNames.FORGOT_PASSWORD })
+    } else if (error.statusCode === 409 && data?.code === 'PASSWORD_SAME_AS_OLD') {
+      form.setFieldError('newPassword', '新密码不能与当前密码相同')
+    } else if (error.statusCode === 429) {
+      start()
+      toast.error('请求过于频繁', {
+        description: `请在 ${countdown.value}s 后重试`,
+      })
+    } else {
+      toast.error('密码重置失败，请稍后重试')
     }
   },
 })
 
 const onSubmit = form.handleSubmit((values) => {
   if (!token.value) {
-    toast.error('Invalid reset link', {
-      description: 'Please request a new password reset email',
+    toast.error('重置链接无效', {
+      description: '请重新申请密码重置邮件',
     })
     return
   }
@@ -153,10 +142,10 @@ const showConfirmPassword = ref(false)
           class="text-2xl font-[510] text-gray-900 dark:text-[#f7f8f8] sm:text-3xl"
           style="font-feature-settings: 'cv01', 'ss03'; letter-spacing: -0.704px"
         >
-          Invalid reset link
+          重置链接无效
         </h1>
         <p class="text-base text-gray-500 dark:text-[#8a8f98]" style="font-feature-settings: 'cv01', 'ss03'">
-          This password reset link is invalid or has expired. Please request a new one.
+          此密码重置链接无效或已过期，请重新申请。
         </p>
       </div>
       <Button
@@ -170,7 +159,7 @@ const showConfirmPassword = ref(false)
         @click="router.push({ name: RouteNames.FORGOT_PASSWORD })"
         style="font-feature-settings: 'cv01', 'ss03'"
       >
-        Request new reset link
+        重新申请重置链接
       </Button>
     </div>
 
@@ -225,7 +214,7 @@ const showConfirmPassword = ref(false)
             </div>
           </FormControl>
           <FormMessage />
-          <PasswordStrengthMeter :password="(componentField as any).modelValue || ''" />
+          <PasswordStrengthMeter :password="passwordValue || ''" />
         </FormItem>
       </FormField>
 
