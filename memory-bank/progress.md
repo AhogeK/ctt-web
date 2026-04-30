@@ -59,6 +59,10 @@
 - [x] Notion dev plan tracking: Section C「3. 导航栏接入」checked complete (verified AppHeader logout + loading state)
 - [x] Atomic git commits: 6 commits on develop (feat:auth/logout, feat:dashboard, fix:style/css-vars, docs:readme, chore:memory, version:0.5.29)
 - [x] Cherry-pick 5 non-AI commits individually to master (no branch merge)
+- [x] Auth Schema layer verification: ForgotPasswordRequestSchema + ResetPasswordRequestSchema + ResetPasswordFormSchema already implemented (v0.5 era). Notion Section D.1 schemas checked complete.
+- [x] Auth Schema layer code review: 5-axis review complete. Schemas correct but missing unit tests (3 schemas uncovered). Full test suite 330/330 passes.
+- [x] Schema layer review fixes: moved ForgotPasswordFormSchema to auth.schema.ts + added 16 unit tests. Tests 346/346 pass.
+- [x] Bump version 0.5.30
 
 ## In Progress
 
