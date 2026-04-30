@@ -8,8 +8,19 @@ import {
   StrongPasswordSchema,
   VerifyEmailParamSchema,
   ResendVerificationRequestSchema,
+  ForgotPasswordRequestSchema,
+  ResetPasswordRequestSchema,
+  ResetPasswordFormSchema,
 } from '../auth.schema'
-import type { LoginRequest, LoginResponse, RegisterForm, RegisterRequest } from '../auth.schema'
+import type {
+  LoginRequest,
+  LoginResponse,
+  RegisterForm,
+  RegisterRequest,
+  ForgotPasswordRequest,
+  ResetPasswordRequest,
+  ResetPasswordForm,
+} from '../auth.schema'
 
 describe('REGEX_DISPLAY_NAME', () => {
   it('matches minimum length (2 chars)', () => {
@@ -834,6 +845,33 @@ describe('Type inference', () => {
     // Verify the tokenType is correctly typed and assigned
     expect(response.tokenType).toBe('Bearer')
   })
+
+  it('ForgotPasswordRequest type has email field', () => {
+    const _typeCheck: ForgotPasswordRequest = {
+      email: 'test@example.com',
+    }
+    expect(_typeCheck.email).toBe('test@example.com')
+  })
+
+  it('ResetPasswordRequest type has token and newPassword fields', () => {
+    const _typeCheck: ResetPasswordRequest = {
+      token: 'reset-token-123',
+      newPassword: 'SecurePass1!',
+    }
+    expect(_typeCheck.token).toBe('reset-token-123')
+    expect(_typeCheck.newPassword).toBe('SecurePass1!')
+  })
+
+  it('ResetPasswordForm type extends ResetPasswordRequest with confirmPassword', () => {
+    const _typeCheck: ResetPasswordForm = {
+      token: 'reset-token-123',
+      newPassword: 'SecurePass1!',
+      confirmPassword: 'SecurePass1!',
+    }
+    expect(_typeCheck.confirmPassword).toBe('SecurePass1!')
+    expect(_typeCheck.token).toBe('reset-token-123')
+    expect(_typeCheck.newPassword).toBe('SecurePass1!')
+  })
 })
 
 describe('VerifyEmailParamSchema', () => {
@@ -907,5 +945,173 @@ describe('ResendVerificationRequestSchema', () => {
       throw new Error('Expected parse to fail but it succeeded')
     }
     expect(result.error.issues[0]?.path).toStrictEqual(['email'])
+  })
+})
+
+describe('ForgotPasswordRequestSchema', () => {
+  it('accepts valid email', () => {
+    const validData = { email: 'user@example.com' }
+    const result = ForgotPasswordRequestSchema.safeParse(validData)
+    expect(result.success).toBe(true)
+    if (!result.success) {
+      throw new Error(`Parse failed: ${JSON.stringify(result.error)}`)
+    }
+    expect(result.data.email).toBe('user@example.com')
+  })
+
+  it('rejects invalid email format', () => {
+    const invalidData = { email: 'not-an-email' }
+    const result = ForgotPasswordRequestSchema.safeParse(invalidData)
+    expect(result.success).toBe(false)
+    if (result.success) {
+      throw new Error('Expected parse to fail but it succeeded')
+    }
+    expect(result.error.issues[0]?.path).toStrictEqual(['email'])
+  })
+
+  it('rejects empty email', () => {
+    const invalidData = { email: '' }
+    const result = ForgotPasswordRequestSchema.safeParse(invalidData)
+    expect(result.success).toBe(false)
+    if (result.success) {
+      throw new Error('Expected parse to fail but it succeeded')
+    }
+    expect(result.error.issues[0]?.path).toStrictEqual(['email'])
+  })
+})
+
+describe('ResetPasswordRequestSchema', () => {
+  it('accepts valid token with strong password', () => {
+    const validData = {
+      token: 'reset-token-abc-123',
+      newPassword: 'SecurePass1!',
+    }
+    const result = ResetPasswordRequestSchema.safeParse(validData)
+    expect(result.success).toBe(true)
+    if (!result.success) {
+      throw new Error(`Parse failed: ${JSON.stringify(result.error)}`)
+    }
+    expect(result.data.token).toBe('reset-token-abc-123')
+    expect(result.data.newPassword).toBe('SecurePass1!')
+  })
+
+  it('rejects empty token', () => {
+    const invalidData = {
+      token: '',
+      newPassword: 'SecurePass1!',
+    }
+    const result = ResetPasswordRequestSchema.safeParse(invalidData)
+    expect(result.success).toBe(false)
+    if (result.success) {
+      throw new Error('Expected parse to fail but it succeeded')
+    }
+    expect(result.error.issues[0]?.path).toStrictEqual(['token'])
+  })
+
+  it('rejects weak password too short', () => {
+    const invalidData = {
+      token: 'reset-token-abc-123',
+      newPassword: 'Sec1!',
+    }
+    const result = ResetPasswordRequestSchema.safeParse(invalidData)
+    expect(result.success).toBe(false)
+    if (result.success) {
+      throw new Error('Expected parse to fail but it succeeded')
+    }
+    expect(result.error.issues[0]?.message).toContain('8 characters')
+  })
+
+  it('rejects password missing special character', () => {
+    const invalidData = {
+      token: 'reset-token-abc-123',
+      newPassword: 'SecurePass1',
+    }
+    const result = ResetPasswordRequestSchema.safeParse(invalidData)
+    expect(result.success).toBe(false)
+    if (result.success) {
+      throw new Error('Expected parse to fail but it succeeded')
+    }
+    expect(result.error.issues[0]?.message).toContain('special character')
+  })
+
+  it('rejects completely empty object', () => {
+    const result = ResetPasswordRequestSchema.safeParse({})
+    expect(result.success).toBe(false)
+    if (result.success) {
+      throw new Error('Expected parse to fail but it succeeded')
+    }
+    expect(result.error.issues.length).toBeGreaterThanOrEqual(2)
+  })
+})
+
+describe('ResetPasswordFormSchema', () => {
+  it('accepts valid form with matching passwords', () => {
+    const validData = {
+      token: 'reset-token-abc-123',
+      newPassword: 'SecurePass1!',
+      confirmPassword: 'SecurePass1!',
+    }
+    const result = ResetPasswordFormSchema.safeParse(validData)
+    expect(result.success).toBe(true)
+    if (!result.success) {
+      throw new Error(`Parse failed: ${JSON.stringify(result.error)}`)
+    }
+    expect(result.data.confirmPassword).toBe('SecurePass1!')
+  })
+
+  it('rejects password mismatch with error on confirmPassword path', () => {
+    const invalidData = {
+      token: 'reset-token-abc-123',
+      newPassword: 'SecurePass1!',
+      confirmPassword: 'DifferentPass1!',
+    }
+    const result = ResetPasswordFormSchema.safeParse(invalidData)
+    expect(result.success).toBe(false)
+    if (result.success) {
+      throw new Error('Expected parse to fail but it succeeded')
+    }
+    expect(result.error.issues[0]?.path).toStrictEqual(['confirmPassword'])
+    expect(result.error.issues[0]?.message).toBe('Passwords do not match')
+  })
+
+  it('rejects missing confirmPassword', () => {
+    const invalidData = {
+      token: 'reset-token-abc-123',
+      newPassword: 'SecurePass1!',
+    }
+    const result = ResetPasswordFormSchema.safeParse(invalidData)
+    expect(result.success).toBe(false)
+    if (result.success) {
+      throw new Error('Expected parse to fail but it succeeded')
+    }
+    expect(result.error.issues[0]?.path).toStrictEqual(['confirmPassword'])
+  })
+
+  it('inherits token validation from base schema', () => {
+    const invalidData = {
+      token: '',
+      newPassword: 'SecurePass1!',
+      confirmPassword: 'SecurePass1!',
+    }
+    const result = ResetPasswordFormSchema.safeParse(invalidData)
+    expect(result.success).toBe(false)
+    if (result.success) {
+      throw new Error('Expected parse to fail but it succeeded')
+    }
+    expect(result.error.issues[0]?.path).toStrictEqual(['token'])
+  })
+
+  it('inherits password strength validation from base schema', () => {
+    const invalidData = {
+      token: 'reset-token-abc-123',
+      newPassword: 'weak',
+      confirmPassword: 'weak',
+    }
+    const result = ResetPasswordFormSchema.safeParse(invalidData)
+    expect(result.success).toBe(false)
+    if (result.success) {
+      throw new Error('Expected parse to fail but it succeeded')
+    }
+    expect(result.error.issues[0]?.message).toContain('8 characters')
   })
 })
