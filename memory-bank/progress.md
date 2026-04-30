@@ -64,6 +64,10 @@
 - [x] Schema layer review fixes: moved ForgotPasswordFormSchema to auth.schema.ts + added 16 unit tests. Tests 346/346 pass.
 - [x] Auth API layer refactoring: `forgotPassword` and `confirmPasswordReset` (renamed from `resetPassword`) aligned with Architect Practice requirements. Promise<void> return type + object parameters. Tests 359/359 pass.
 - [x] Bump version 0.5.31
+- [x] ResetPasswordView page layer: Chinese error handling (401/409/429), useCooldown integration, success toast + redirect, 10 unit tests. Tests 369/369 pass.
+- [x] Bump version 0.5.32
+- [x] Post-review fixes: R8 violation (`as any` → `useFieldValue`), localization consistency (English → Chinese), test mock fix. Tests 369/369 pass.
+- [x] Bump version 0.5.33
 
 ## In Progress
 

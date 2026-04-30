@@ -2,10 +2,31 @@
 
 ## Current Status
 
-**Phase**: Auth API Layer — Reset Password Refactoring (v0.5.31)
-**Version**: 0.5.31 (2026-04-30)
+**Phase**: Auth Page Layer — Reset Password Error Handling (v0.5.33)
+**Version**: 0.5.33 (2026-04-30)
 
 ## Recent Activity
+
+### 0.5.33 — Review Fixes: R8 Violation + Localization Consistency
+
+Post-implementation review fixes for ResetPasswordView.vue:
+
+1. **R8 violation fix**: Replaced `(componentField as any).modelValue` with `useFieldValue('password')` (matches RegisterForm.vue pattern).
+2. **Localization consistency**: Changed no-token English text to Chinese to match all other error messages in the same file.
+3. **Test mock fix**: Added `useFieldValue` export to vee-validate mock in `ResetPasswordView.test.ts`.
+4. **Verification**: 369/369 tests pass, `vp check` clean.
+
+### 0.5.32 — ResetPasswordView Page Layer Completion
+
+Completed remaining ResetPasswordView.vue page layer requirements:
+
+1. **Success flow**: Redirect to `/login` with Chinese toast「密码已重置，所有设备已强制下线」.
+2. **Error mapping**:
+   - `401 AUTH_003` → Chinese toast「重置链接已失效或已使用，请重新申请」+ redirect to forgot-password
+   - `409 PASSWORD_SAME_AS_OLD` → inline field error「新密码不能与当前密码相同」
+   - `429` → `useCooldown` integration with countdown in toast
+   - Default → Chinese fallback toast「密码重置失败，请稍后重试」
+3. **Test Coverage**: Created `ResetPasswordView.test.ts` with 10 test cases covering all error scenarios + success flow (369/369 pass, `vp check` clean).
 
 ### 0.5.31 — Auth API Layer Refactoring
 
