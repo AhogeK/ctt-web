@@ -57,6 +57,8 @@
 - [x] Bump version 0.5.29
 - [x] Fix 4 CSS unknownAtRules false positives (Tailwind v4 directives in main.css — IDE config fix)
 - [x] Notion dev plan tracking: Section C「3. 导航栏接入」checked complete (verified AppHeader logout + loading state)
+- [x] Atomic git commits: 6 commits on develop (feat:auth/logout, feat:dashboard, fix:style/css-vars, docs:readme, chore:memory, version:0.5.29)
+- [x] Cherry-pick 5 non-AI commits individually to master (no branch merge)
 
 ## In Progress
 

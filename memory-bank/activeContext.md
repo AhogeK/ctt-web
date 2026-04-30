@@ -531,6 +531,22 @@ Login page and JWT-based authentication fully implemented and verified.
 - ✅ `vp test` — 296/296 tests pass
 - ✅ `vp build` — built successfully
 
+### Atomic Git Commits & Cherry-pick (2026-04-30)
+
+**6 atomic commits created on `develop`**:
+1. `3849aa9 feat(auth): add logout button with loading state to navigation bars`
+2. `733119e feat(dashboard): replace Tailwind light-mode classes with DESIGN.md CSS variable tokens`
+3. `85d5894 fix(style): align CSS variables with DESIGN.md exact hex colors`
+4. `f1ddc9f docs: update README feature list`
+5. `0d7e535 chore: update memory-bank progress and active context` (AI-only, NOT cherry-picked)
+6. `ee0cb2c version: bump 0.5.29`
+
+**Cherry-picked 5 non-AI commits to `master`** (individual cherry-picks, no branch merge):
+- All 5 code/doc/version commits successfully land on master
+- AI-only commit (0d7e535) intentionally excluded
+- Master HEAD: `faa6a60 version: bump 0.5.29`
+- Working directory: clean on both branches
+
 ### Notion Dev Plan Tracking Update (2026-04-30)
 
 **Task**: Updated Notion「🌐 ctt-web 开发计划」Section C「3. 导航栏接入」checkboxes to [x].
