@@ -6,12 +6,21 @@ import { RouteNames } from '@/router/route-names'
 
 const BASE_URL = import.meta.env.VITE_API_BASE_URL || '/api'
 
+/**
+ * Extended fetch options with internal retry flag.
+ * Used to prevent infinite refresh loops in the interceptor.
+ */
+export interface ApiFetchOptions extends FetchOptions {
+  __authRetry?: boolean
+}
+
 /** Event dispatched on 401 responses that cannot be recovered. Auth guards listen for this to trigger logout. */
 export const UNAUTHORIZED_EVENT = 'api:unauthorized'
 
 let isTerminalAuthHandling = false
 
 const TERMINAL_AUTH_CODES: Record<string, { route: string; message: string }> = {
+  AUTH_003: { route: RouteNames.LOGIN, message: 'Session expired. Please log in again.' },
   AUTH_007: { route: RouteNames.LOGIN, message: 'Session expired. Please log in again.' },
   AUTH_008: { route: RouteNames.LOGIN, message: 'Session revoked. Please log in again.' },
   AUTH_006: { route: RouteNames.VERIFY_EMAIL, message: 'Please verify your email address to continue.' },
@@ -63,6 +72,57 @@ function handleTerminalAuthError(errorCode: string): void {
   })
 }
 
+async function handle401Error(
+  errorCode: string | null,
+  request: RequestInfo,
+  options: ApiFetchOptions,
+): Promise<Response | undefined> {
+  const isRetryable = errorCode === 'AUTH_002' || errorCode === 'AUTH_003'
+  const hasRetryFlag = options?.__authRetry
+
+  if (isRetryable && !hasRetryFlag) {
+    return await attemptTokenRefresh(request, options)
+  }
+
+  if (errorCode && TERMINAL_AUTH_CODES[errorCode]) {
+    handleTerminalAuthError(errorCode)
+    return undefined
+  }
+
+  localStorage.removeItem(STORAGE_KEYS.ACCESS_TOKEN)
+  globalThis.dispatchEvent(new CustomEvent(UNAUTHORIZED_EVENT))
+  return undefined
+}
+
+async function attemptTokenRefresh(request: RequestInfo, options: ApiFetchOptions): Promise<Response | undefined> {
+  try {
+    await useAuthStore().refreshAccessToken()
+    // __authRetry is an internal flag to prevent infinite refresh loops
+    return apiFetch(request, { ...options, __authRetry: true } as Record<string, unknown>) as unknown as
+      | Response
+      | undefined
+  } catch (refreshError) {
+    const refreshErrData = (refreshError as { data?: unknown }).data
+    const refreshErrCode = refreshErrData ? getErrorCode(refreshErrData) : null
+
+    if (refreshErrCode === 'AUTH_003') {
+      handleTerminalAuthError('AUTH_003')
+      throw refreshError
+    }
+
+    if (refreshErrCode && TERMINAL_AUTH_CODES[refreshErrCode]) {
+      handleTerminalAuthError(refreshErrCode)
+      return undefined
+    }
+
+    if (!refreshErrCode) {
+      throw refreshError
+    }
+
+    return undefined
+  }
+}
+
 /**
  * Pre-configured HTTP client with automatic Bearer token injection,
  * token refresh on 401 (AUTH_002/AUTH_003), and terminal auth error routing.
@@ -92,80 +152,31 @@ export const apiFetch = ofetch.create({
   onResponseError: async (ctx: {
     response: { status: number; _data?: unknown }
     request: RequestInfo
-    options: RequestInit
+    options: ApiFetchOptions
   }) => {
     const { response, request, options } = ctx
-    const status = response.status
     const errorCode = getErrorCode(response._data)
 
-    switch (status) {
-      case 401:
-        if (
-          (errorCode === 'AUTH_002' || errorCode === 'AUTH_003') &&
-          !(options as Record<string, unknown>).__authRetry
-        ) {
-          try {
-            await useAuthStore().refreshAccessToken()
-            return apiFetch(request, { ...options, __authRetry: true } as typeof options)
-          } catch (refreshError) {
-            const refreshErrData = (refreshError as { data?: unknown }).data
-            const refreshErrCode = refreshErrData ? getErrorCode(refreshErrData) : null
+    if (response.status === 401) {
+      return handle401Error(errorCode, request, options)
+    }
 
-            if (refreshErrCode === 'AUTH_003') {
-              if (isTerminalAuthHandling) return
-              isTerminalAuthHandling = true
-              useAuthStore().clearAuth()
-              toast.error('Session expired. Please log in again.')
-              void router.push({ name: RouteNames.LOGIN }).finally(() => {
-                isTerminalAuthHandling = false
-              })
-              return
-            }
+    if (response.status === 403) {
+      if (errorCode && TERMINAL_AUTH_CODES[errorCode]) {
+        handleTerminalAuthError(errorCode)
+        return
+      }
+      console.warn('Permission denied:', response._data)
+      return
+    }
 
-            if (refreshErrCode && TERMINAL_AUTH_CODES[refreshErrCode]) {
-              handleTerminalAuthError(refreshErrCode)
-              return
-            }
+    if (response.status === 404) {
+      console.warn('Resource not found:', response._data)
+      return
+    }
 
-            if (!refreshErrCode) {
-              toast.error('Connection failed. Please check your network and try again.')
-              return
-            }
-          }
-        }
-
-        if (errorCode && TERMINAL_AUTH_CODES[errorCode]) {
-          handleTerminalAuthError(errorCode)
-          return
-        }
-
-        localStorage.removeItem(STORAGE_KEYS.ACCESS_TOKEN)
-        globalThis.dispatchEvent(new CustomEvent(UNAUTHORIZED_EVENT))
-        break
-
-      case 403:
-        if (errorCode && TERMINAL_AUTH_CODES[errorCode]) {
-          handleTerminalAuthError(errorCode)
-          return
-        }
-
-        console.warn('Permission denied:', response._data)
-        break
-
-      case 404:
-        console.warn('Resource not found:', response._data)
-        break
-
-      case 422:
-        break
-
-      default:
-        if (status >= 500) {
-          console.error('Server error:', response._data)
-        }
-        break
+    if (response.status >= 500) {
+      console.error('Server error:', response._data)
     }
   },
 })
-
-export type ApiFetchOptions = FetchOptions

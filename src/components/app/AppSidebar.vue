@@ -102,7 +102,7 @@ async function handleLogout(): Promise<void> {
         <SidebarMenuItem>
           <Button
             variant="ghost"
-            class="w-full justify-start text-muted-foreground hover:text-foreground"
+            class="w-full justify-start text-secondary-foreground hover:text-foreground"
             :disabled="isLoggingOut"
             @click="handleLogout"
           >
