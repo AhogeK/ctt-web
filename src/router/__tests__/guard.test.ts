@@ -40,13 +40,13 @@ describe('Router Guards', () => {
       path: '/login',
       name: RouteNames.LOGIN,
       component: { template: '<div>Login</div>' },
-      meta: { title: 'Login', requiresAuth: false },
+      meta: { title: 'Login', requiresAuth: false, guestOnly: true },
     },
     {
       path: '/register',
       name: RouteNames.REGISTER,
       component: { template: '<div>Register</div>' },
-      meta: { title: 'Register', requiresAuth: false },
+      meta: { title: 'Register', requiresAuth: false, guestOnly: true },
     },
     {
       path: '/public',
@@ -217,6 +217,35 @@ describe('Router Guards', () => {
       await router.isReady()
 
       expect(router.currentRoute.value.name).toBe('Public')
+    })
+  })
+
+  describe('Guest-only route redirect', () => {
+    it('redirects authenticated user to dashboard when accessing login', async () => {
+      localStorage.setItem(STORAGE_KEYS.ACCESS_TOKEN, 'valid-token')
+
+      await router.push('/login')
+      await router.isReady()
+
+      expect(router.currentRoute.value.name).toBe(RouteNames.DASHBOARD)
+    })
+
+    it('redirects authenticated user to dashboard when accessing register', async () => {
+      localStorage.setItem(STORAGE_KEYS.ACCESS_TOKEN, 'valid-token')
+
+      await router.push('/register')
+      await router.isReady()
+
+      expect(router.currentRoute.value.name).toBe(RouteNames.DASHBOARD)
+    })
+
+    it('allows unauthenticated user to access guest-only route', async () => {
+      localStorage.removeItem(STORAGE_KEYS.ACCESS_TOKEN)
+
+      await router.push('/login')
+      await router.isReady()
+
+      expect(router.currentRoute.value.name).toBe(RouteNames.LOGIN)
     })
   })
 
