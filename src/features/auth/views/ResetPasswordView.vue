@@ -33,37 +33,37 @@ const mutation = useMutation({
   mutationFn: (data: { token: string; newPassword: string }) =>
     confirmPasswordReset({ token: data.token, newPassword: data.newPassword }),
   onSuccess: () => {
-    toast.success('密码已重置，所有设备已强制下线')
+    toast.success('Password reset successful. All devices have been logged out.')
     router.push({ name: RouteNames.LOGIN })
   },
   onError: (error: unknown) => {
     if (!isApiError(error)) {
-      toast.error('密码重置失败，请稍后重试')
+      toast.error('Password reset failed. Please try again later.')
       return
     }
 
     const data = error.data as { code?: string } | undefined
 
     if (error.statusCode === 401 && data?.code === 'AUTH_003') {
-      toast.error('重置链接已失效或已使用，请重新申请')
+      toast.error('This reset link has expired or already been used. Please request a new one.')
       router.push({ name: RouteNames.FORGOT_PASSWORD })
     } else if (error.statusCode === 409 && data?.code === 'PASSWORD_SAME_AS_OLD') {
-      form.setFieldError('newPassword', '新密码不能与当前密码相同')
+      form.setFieldError('newPassword', 'New password cannot be the same as your current password.')
     } else if (error.statusCode === 429) {
       start()
-      toast.error('请求过于频繁', {
-        description: `请在 ${countdown.value}s 后重试`,
+      toast.error('Too many requests', {
+        description: `Try again in ${countdown.value}s`,
       })
     } else {
-      toast.error('密码重置失败，请稍后重试')
+      toast.error('Password reset failed. Please try again later.')
     }
   },
 })
 
 const onSubmit = form.handleSubmit((values) => {
   if (!token.value) {
-    toast.error('重置链接无效', {
-      description: '请重新申请密码重置邮件',
+    toast.error('Invalid reset link', {
+      description: 'Please request a new password reset email.',
     })
     return
   }
@@ -142,10 +142,10 @@ const showConfirmPassword = ref(false)
           class="text-2xl font-[510] text-gray-900 dark:text-[#f7f8f8] sm:text-3xl"
           style="font-feature-settings: 'cv01', 'ss03'; letter-spacing: -0.704px"
         >
-          重置链接无效
+          Invalid Reset Link
         </h1>
         <p class="text-base text-gray-500 dark:text-[#8a8f98]" style="font-feature-settings: 'cv01', 'ss03'">
-          此密码重置链接无效或已过期，请重新申请。
+          This password reset link is invalid or has expired. Please request a new one.
         </p>
       </div>
       <Button
@@ -159,7 +159,7 @@ const showConfirmPassword = ref(false)
         @click="router.push({ name: RouteNames.FORGOT_PASSWORD })"
         style="font-feature-settings: 'cv01', 'ss03'"
       >
-        重新申请重置链接
+        Request New Reset Link
       </Button>
     </div>
 
