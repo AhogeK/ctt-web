@@ -322,6 +322,7 @@ describe('ResetPasswordView', () => {
       expect(wrapper.text()).toContain('Invalid Reset Link')
       expect(wrapper.text()).toContain('This password reset link is invalid or has expired')
       expect(wrapper.text()).toContain('Request New Reset Link')
+      expect(wrapper.text()).toContain('Back to sign in')
     })
   })
 
