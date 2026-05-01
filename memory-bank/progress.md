@@ -68,6 +68,18 @@
 - [x] Bump version 0.5.32
 - [x] Post-review fixes: R8 violation (`as any` → `useFieldValue`), localization consistency (English → Chinese), test mock fix. Tests 369/369 pass.
 - [x] Bump version 0.5.33
+- [x] Double toast bug fix: removed generic "Connection failed" toast in instance.ts interceptor, updated test expectations. Tests 368/368 pass.
+- [x] Bump version 0.5.34
+- [x] Guest guard for auth routes: authenticated users now redirected to dashboard when accessing /auth/\* pages. Added guestOnly meta to all auth routes + guard logic. Tests 381/381 pass.
+- [x] Bump version 0.5.35
+- [x] Logout bug fix: interceptor now properly propagates errors after handling terminal AUTH_003, preventing stuck "Logging out" state. Tests 381/381 pass.
+- [x] Bump version 0.5.36
+- [x] Logout button color fix: changed from text-muted-foreground (#8a8f98) to text-secondary-foreground (#d0d6e0) per DESIGN.md Ghost Button spec. Tests 381/381 pass.
+- [x] Bump version 0.5.37
+- [x] Auth initialization: added initializeAuth() to validate tokens via refresh on app startup. Users with expired tokens are now redirected to login immediately. Tests 384/384 pass.
+- [x] Bump version 0.5.38
+- [x] Code quality fixes: added guestOnly to RouteMeta, created ApiFetchOptions type, consolidated AUTH_003 handling, updated README.md. Tests 384/384 pass.
+- [x] Bump version 0.5.39
 
 ## In Progress
 

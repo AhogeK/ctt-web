@@ -2,10 +2,65 @@
 
 ## Current Status
 
-**Phase**: Auth Page Layer — Reset Password Error Handling (v0.5.33)
-**Version**: 0.5.33 (2026-04-30)
+**Phase**: Code Quality Fixes — Type Safety & Redundancy (v0.5.39)
+**Version**: 0.5.39 (2026-05-01)
 
 ## Recent Activity
+
+### 0.5.39 — Code Quality Fixes
+
+Fixed issues found in code review:
+
+1. **Type safety**: Added `guestOnly` to `RouteMeta` interface in `vue-router.d.ts`
+2. **Type safety**: Created `ApiFetchOptions` interface for `__authRetry` flag
+3. **Code redundancy**: Consolidated AUTH_003 handling using `handleTerminalAuthError`
+4. **Documentation**: Updated README.md with new features (auth init, guest guard, password reset)
+5. **Verification**: 384/384 tests pass, `vp check` clean.
+
+### 0.5.38 — Auth Initialization with Token Validation
+
+Implemented professional-standard token validation on app startup:
+
+1. **Feature**: Added `initializeAuth()` method to auth store - validates tokens via refresh endpoint on page load
+2. **Logic**: If refreshToken exists → try refresh → success = authenticated, failure = clear auth and return false
+3. **Integration**: `main.ts` calls `initializeAuth()` before mounting app
+4. **Test coverage**: Added 3 unit tests for initializeAuth() (no token, refresh success, refresh failure)
+5. **Verification**: 384/384 tests pass, `vp check` clean.
+
+### 0.5.37 — Logout Button Color Fix
+
+Fixed logout button color to match DESIGN.md Ghost Button spec:
+
+1. **Issue**: Button used `text-muted-foreground` (`#8a8f98`, tertiary text) which was too muted
+2. **Fix**: Changed to `text-secondary-foreground` (`#d0d6e0`, secondary text) per DESIGN.md Ghost Button spec
+3. **Verification**: 381/381 tests pass, `vp check` clean.
+
+### 0.5.36 — Logout Bug Fix
+
+Fixed logout bug where app gets stuck on "Logging out" when token is expired:
+
+1. **Root cause**: Interceptor in `instance.ts` returned `undefined` (line 122) after handling terminal AUTH_003 error, preventing error propagation to `logout()` function
+2. **Fix**: Removed `return` statement to let error propagate naturally to the caller's catch-finally block
+3. **Behavior**: Error now propagates → `logout()` catches it → `finally` block runs → auth cleared, UI state reset
+4. **Verification**: 381/381 tests pass, `vp check` clean.
+
+### 0.5.35 — Guest Guard for Auth Routes
+
+Implemented guest guard to redirect authenticated users away from auth pages:
+
+1. **Feature**: Added `guestOnly: true` meta to all `/auth/*` routes (login, register, register-success, verify-email, forgot-password, reset-password)
+2. **Guard logic**: Added guest-only check in `guard.ts` — authenticated users visiting guestOnly routes are automatically redirected to dashboard
+3. **Test coverage**: Added 3 unit tests for guest guard behavior (redirect authenticated on login/register, allow unauthenticated on guest routes)
+4. **Verification**: 381/381 tests pass, `vp check` clean.
+
+### 0.5.34 — Double Toast Bug Fix
+
+Fixed double toast bug in `src/lib/api/instance.ts`:
+
+1. **Root cause**: Interceptor showed generic "Connection failed" toast when refresh failed (line 131), while `ResetPasswordView.vue` also showed its own toast for AUTH_003 → double toast.
+2. **Fix**: Removed generic toast at line 131. Added comment explaining intentional error propagation. Now returns silently when `!refreshErrCode`, letting component's `onError` handle the error.
+3. **Test fix**: Updated `instance.test.ts` to expect `toast.error` NOT to be called for network errors during refresh.
+4. **Verification**: 368/368 tests pass, `vp check` clean.
 
 ### 0.5.33 — Review Fixes: R8 Violation + Localization Consistency
 
