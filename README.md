@@ -39,7 +39,10 @@ visualization.
 
 | Feature                 | Description                                                                                          |
 | ----------------------- | ---------------------------------------------------------------------------------------------------- |
-| Authentication          | JWT login, logout, token management, router guards                                                   |
+| Authentication          | JWT login, logout, token management, router guards, startup token validation                         |
+| Auth Initialization     | Startup token validation via refresh endpoint, redirects expired sessions to login                   |
+| Guest Guard             | Redirects authenticated users away from auth pages (login, register, forgot-password)                |
+| Password Reset          | Forgot password + reset password flows with error mapping, rate limit cooldown, anti-enumeration     |
 | Layout System           | AuthLayout + AppLayout, mobile responsive sidebar                                                    |
 | Routing                 | Feature-based modules, type-safe meta, NProgress, **route name constants**, **absolute child paths** |
 | Form Validation         | Vee-Validate + Zod, real-time feedback                                                               |
