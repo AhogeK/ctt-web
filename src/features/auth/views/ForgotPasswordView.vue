@@ -1,14 +1,17 @@
 <script setup lang="ts">
 import { ref, computed, toValue } from 'vue'
-import { RouterLink } from 'vue-router'
+import { useRouter } from 'vue-router'
 import { toast } from 'vue-sonner'
 import { useMutation } from '@tanstack/vue-query'
 import { forgotPassword } from '@/lib/api/auth'
 import { RouteNames } from '@/router/route-names'
 import { isApiError, mapApiErrorCode } from '@/lib/utils/api-error'
 import { useCooldown } from '@/composables/useCooldown'
+import { Button } from '@/components/ui/button'
+import { cn } from '@/lib/utils'
 import ForgotPasswordForm from '../components/ForgotPasswordForm.vue'
 
+const router = useRouter()
 const { countdown, start } = useCooldown()
 const isSubmitted = ref(false)
 const submittedEmail = ref('')
@@ -110,13 +113,14 @@ const isSubmitting = computed(() => toValue(mutation.isPending))
           shortly.
         </p>
       </div>
-      <RouterLink
-        :to="{ name: RouteNames.LOGIN }"
-        class="mt-2 block text-sm font-[510] text-[#5e6ad2] underline-offset-4 hover:text-[#7170ff] hover:underline dark:text-[#7170ff] dark:hover:text-[#828fff]"
+      <Button
+        variant="ghost"
+        :class="cn('w-full h-11 font-[510] text-muted-foreground')"
+        @click="router.push({ name: RouteNames.LOGIN })"
         style="font-feature-settings: 'cv01', 'ss03'"
       >
         Back to sign in
-      </RouterLink>
+      </Button>
     </div>
 
     <!-- Form -->
@@ -124,16 +128,14 @@ const isSubmitting = computed(() => toValue(mutation.isPending))
 
     <!-- Back to Login Link -->
     <div v-if="!isSubmitted" class="pt-2 text-center">
-      <p class="text-sm text-gray-500 dark:text-[#8a8f98]" style="font-feature-settings: 'cv01', 'ss03'">
-        Remember your password?
-        <RouterLink
-          :to="{ name: RouteNames.LOGIN }"
-          class="ml-1 font-[510] text-[#5e6ad2] underline-offset-4 hover:text-[#7170ff] hover:underline dark:text-[#7170ff] dark:hover:text-[#828fff]"
-          style="font-feature-settings: 'cv01', 'ss03'"
-        >
-          Sign in
-        </RouterLink>
-      </p>
+      <Button
+        variant="ghost"
+        :class="cn('w-full h-11 font-[510] text-muted-foreground')"
+        @click="router.push({ name: RouteNames.LOGIN })"
+        style="font-feature-settings: 'cv01', 'ss03'"
+      >
+        Back to sign in
+      </Button>
     </div>
   </div>
 </template>

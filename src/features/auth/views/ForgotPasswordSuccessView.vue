@@ -45,7 +45,7 @@ const router = useRouter()
       :class="
         cn(
           'flex flex-col gap-3 rounded-xl border border-[#d0d6e0]',
-          'bg-[#f3f4f5]/60 p-5 backdrop-blur-sm',
+          'bg-[#e5e7eb]/80 p-5 backdrop-blur-sm',
           'dark:border-white/8 dark:bg-white/3 dark:backdrop-blur-md',
         )
       "
@@ -53,33 +53,26 @@ const router = useRouter()
       <p class="text-sm font-[510] text-gray-700 dark:text-[#d0d6e0]" style="font-feature-settings: 'cv01', 'ss03'">
         Didn't receive the email?
       </p>
-      <Button
+      <button
         :class="
           cn(
-            'w-full h-11 rounded-md border border-[#d0d6e0] font-[510] text-gray-700',
-            'transition-all duration-200 hover:bg-[#f3f4f5] hover:border-[#5e6ad2]/50',
-            'dark:border-white/8 dark:text-[#d0d6e0]',
-            'dark:hover:bg-white/5 dark:hover:border-[#5e6ad2]/50',
+            'w-full h-11 cursor-pointer rounded-md border border-[#d0d6e0] bg-white font-[510] text-gray-700 shadow-xs',
+            'transition-all duration-200 hover:border-[#5e6ad2] hover:text-[#5e6ad2]',
+            'dark:border-white/8 dark:bg-input/30 dark:text-[#d0d6e0]',
+            'dark:hover:border-[#5e6ad2]/50 dark:hover:bg-input/50 dark:hover:text-[#5e6ad2]',
           )
         "
-        variant="outline"
         @click="router.push({ name: RouteNames.FORGOT_PASSWORD })"
         style="font-feature-settings: 'cv01', 'ss03'"
       >
         Try another email
-      </Button>
+      </button>
     </div>
 
     <!-- Back to Login -->
     <Button
       variant="ghost"
-      :class="
-        cn(
-          'w-full h-11 rounded-md font-[510] text-gray-600',
-          'transition-all duration-200 hover:bg-[#f3f4f5] hover:text-gray-900',
-          'dark:text-[#8a8f98] dark:hover:bg-white/5 dark:hover:text-[#f7f8f8]',
-        )
-      "
+      :class="cn('w-full h-11 font-[510] text-muted-foreground')"
       @click="router.push({ name: RouteNames.LOGIN })"
       style="font-feature-settings: 'cv01', 'ss03'"
     >
