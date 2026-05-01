@@ -51,5 +51,8 @@ export declare function useIpcRendererInvoke<T>(
  *
  * @__NO_SIDE_EFFECTS__
  */
-export declare function useIpcRendererInvoke<T>(channel: string, ...args: any[]): ShallowRef<T | null>
+export declare function useIpcRendererInvoke<T>(
+  channel: string,
+  ...args: any[]
+): ShallowRef<T | null>
 ```

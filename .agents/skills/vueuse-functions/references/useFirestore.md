@@ -81,7 +81,9 @@ or use `createGlobalState` from the core package
 import { createGlobalState } from '@vueuse/core'
 import { useFirestore } from '@vueuse/firebase/useFirestore'
 
-export const useTodos = createGlobalState(() => useFirestore(collection(db, 'todos')))
+export const useTodos = createGlobalState(
+  () => useFirestore(collection(db, 'todos')),
+)
 ```
 
 ```vue
@@ -103,7 +105,7 @@ export interface UseFirestoreOptions {
   autoDispose?: boolean | number
 }
 export type FirebaseDocRef<T> = Query<T> | DocumentReference<T>
-type Falsy = false | 0 | '' | null | undefined
+type Falsy = false | 0 | "" | null | undefined
 export declare function useFirestore<T extends DocumentData>(
   maybeDocRef: MaybeRef<DocumentReference<T> | Falsy>,
   initialValue: T,

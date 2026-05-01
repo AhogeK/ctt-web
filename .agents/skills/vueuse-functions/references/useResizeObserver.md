@@ -80,8 +80,12 @@ export interface ResizeObserverEntry {
  * @deprecated This interface is now available in the DOM lib.
  * Use the global {@link globalThis.ResizeObserverCallback} instead.
  */
-export type ResizeObserverCallback = (entries: ReadonlyArray<ResizeObserverEntry>, observer: ResizeObserver) => void
-export interface UseResizeObserverOptions extends ResizeObserverOptions, ConfigurableWindow {}
+export type ResizeObserverCallback = (
+  entries: ReadonlyArray<ResizeObserverEntry>,
+  observer: ResizeObserver,
+) => void
+export interface UseResizeObserverOptions
+  extends ResizeObserverOptions, ConfigurableWindow {}
 export interface UseResizeObserverReturn extends Supportable {
   stop: () => void
 }
@@ -94,7 +98,10 @@ export interface UseResizeObserverReturn extends Supportable {
  * @param options
  */
 export declare function useResizeObserver(
-  target: MaybeComputedElementRef | MaybeComputedElementRef[] | MaybeRefOrGetter<MaybeElement[]>,
+  target:
+    | MaybeComputedElementRef
+    | MaybeComputedElementRef[]
+    | MaybeRefOrGetter<MaybeElement[]>,
   callback: globalThis.ResizeObserverCallback,
   options?: UseResizeObserverOptions,
 ): UseResizeObserverReturn

@@ -47,8 +47,12 @@ const { x, y } = useScroll(el)
 
 <template>
   <div ref="el" />
-  <button @click="x += 10">Scroll right 10px</button>
-  <button @click="y += 10">Scroll down 10px</button>
+  <button @click="x += 10">
+    Scroll right 10px
+  </button>
+  <button @click="y += 10">
+    Scroll down 10px
+  </button>
 </template>
 ```
 
@@ -65,7 +69,7 @@ const { x, y } = useScroll(el, { behavior: 'smooth' })
 
 // Or as a `ref`:
 const smooth = ref(false)
-const behavior = computed(() => (smooth.value ? 'smooth' : 'auto'))
+const behavior = computed(() => smooth.value ? 'smooth' : 'auto')
 const { x, y } = useScroll(el, { behavior })
 ```
 
@@ -226,7 +230,9 @@ export interface UseScrollReturn {
  * @param options
  */
 export declare function useScroll(
-  element: MaybeRefOrGetter<HTMLElement | SVGElement | Window | Document | null | undefined>,
+  element: MaybeRefOrGetter<
+    HTMLElement | SVGElement | Window | Document | null | undefined
+  >,
   options?: UseScrollOptions,
 ): UseScrollReturn
 ```

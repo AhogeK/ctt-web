@@ -27,7 +27,7 @@ import About from './About.vue'
 
 const routes = {
   '/': Home,
-  '/about': About,
+  '/about': About
 }
 
 const currentPath = ref(window.location.hash)
@@ -46,7 +46,6 @@ const currentView = computed(() => {
 ```
 
 **What happens:**
-
 1. Component mounts, adds listener
 2. Component unmounts (e.g., route change, v-if toggle)
 3. Component mounts again, adds ANOTHER listener
@@ -64,7 +63,7 @@ import NotFound from './NotFound.vue'
 
 const routes = {
   '/': Home,
-  '/about': About,
+  '/about': About
 }
 
 const currentPath = ref(window.location.hash)
@@ -98,20 +97,20 @@ import NotFound from './NotFound.vue'
 
 const routes = {
   '/': Home,
-  '/about': About,
+  '/about': About
 }
 
 export default {
   data() {
     return {
-      currentPath: window.location.hash,
+      currentPath: window.location.hash
     }
   },
 
   computed: {
     currentView() {
       return routes[this.currentPath.slice(1) || '/'] || NotFound
-    },
+    }
   },
 
   mounted() {
@@ -125,7 +124,7 @@ export default {
   beforeUnmount() {
     // Clean up
     window.removeEventListener('hashchange', this.hashHandler)
-  },
+  }
 }
 </script>
 ```
@@ -163,7 +162,7 @@ export function useHashRouter(routes, notFoundComponent = null) {
   return {
     currentPath,
     currentView,
-    navigate,
+    navigate
   }
 }
 ```
@@ -176,13 +175,10 @@ import Home from './Home.vue'
 import About from './About.vue'
 import NotFound from './NotFound.vue'
 
-const { currentView } = useHashRouter(
-  {
-    '/': Home,
-    '/about': About,
-  },
-  NotFound,
-)
+const { currentView } = useHashRouter({
+  '/': Home,
+  '/about': About
+}, NotFound)
 </script>
 
 <template>
@@ -192,13 +188,13 @@ const { currentView } = useHashRouter(
 
 ## When to Use Simple Routing vs Vue Router
 
-| Use Simple Hash Routing      | Use Vue Router            |
-| ---------------------------- | ------------------------- |
-| Learning/prototyping         | Production apps           |
-| Very simple apps (2-3 pages) | Nested routes needed      |
-| No build step available      | Navigation guards needed  |
-| Bundle size critical         | Lazy loading needed       |
-| Static hosting only          | History mode (clean URLs) |
+| Use Simple Hash Routing | Use Vue Router |
+|------------------------|----------------|
+| Learning/prototyping | Production apps |
+| Very simple apps (2-3 pages) | Nested routes needed |
+| No build step available | Navigation guards needed |
+| Bundle size critical | Lazy loading needed |
+| Static hosting only | History mode (clean URLs) |
 
 ## Key Points
 
@@ -209,6 +205,5 @@ const { currentView } = useHashRouter(
 5. **Composables help encapsulate cleanup logic** - Reusable and automatic
 
 ## Reference
-
 - [Vue.js Routing Documentation](https://vuejs.org/guide/scaling-up/routing.html)
 - [Vue Router Official Library](https://router.vuejs.org/)

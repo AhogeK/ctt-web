@@ -23,7 +23,7 @@ export default antfu({
 
   // Stylistic options
   stylistic: {
-    indent: 2, // 2, 4, or 'tab'
+    indent: 2,        // 2, 4, or 'tab'
     quotes: 'single', // or 'double'
   },
 
@@ -46,7 +46,7 @@ Vue accessibility:
 ```js
 export default antfu({
   vue: {
-    a11y: true,
+    a11y: true
   },
 })
 // Requires: pnpm add -D eslint-plugin-vuejs-accessibility
@@ -113,10 +113,10 @@ For files ESLint doesn't handle natively:
 ```js
 export default antfu({
   formatters: {
-    css: true, // Format CSS, LESS, SCSS (uses Prettier)
-    html: true, // Format HTML (uses Prettier)
-    markdown: 'prettier', // or 'dprint'
-  },
+    css: true,      // Format CSS, LESS, SCSS (uses Prettier)
+    html: true,     // Format HTML (uses Prettier)
+    markdown: 'prettier' // or 'dprint'
+  }
 })
 // Requires: pnpm add -D eslint-plugin-format
 ```
@@ -135,7 +135,7 @@ export default antfu(
     rules: {
       'style/semi': ['error', 'never'],
     },
-  },
+  }
 )
 ```
 
@@ -166,7 +166,7 @@ export default antfu(
     rules: {
       'vue/operator-linebreak': ['error', 'before'],
     },
-  },
+  }
 )
 ```
 
@@ -174,15 +174,15 @@ export default antfu(
 
 The config renames plugin prefixes for consistency:
 
-| New Prefix | Original               |
-| ---------- | ---------------------- |
-| `ts/*`     | `@typescript-eslint/*` |
-| `style/*`  | `@stylistic/*`         |
-| `import/*` | `import-lite/*`        |
-| `node/*`   | `n/*`                  |
-| `yaml/*`   | `yml/*`                |
-| `test/*`   | `vitest/*`             |
-| `next/*`   | `@next/next`           |
+| New Prefix | Original |
+|------------|----------|
+| `ts/*` | `@typescript-eslint/*` |
+| `style/*` | `@stylistic/*` |
+| `import/*` | `import-lite/*` |
+| `node/*` | `n/*` |
+| `yaml/*` | `yml/*` |
+| `test/*` | `vitest/*` |
+| `next/*` | `@next/next` |
 
 Use the new prefix when overriding or disabling rules:
 
@@ -213,7 +213,7 @@ export default antfu()
   .override('antfu/stylistic/rules', {
     rules: {
       'style/generator-star-spacing': ['error', { after: true, before: false }],
-    },
+    }
   })
   .renamePlugins({
     'old-prefix': 'new-prefix',
@@ -226,7 +226,7 @@ Disable Anthony's most opinionated rules:
 
 ```js
 export default antfu({
-  lessOpinionated: true,
+  lessOpinionated: true
 })
 ```
 
@@ -258,7 +258,7 @@ Add to `.vscode/settings.json`:
   "editor.formatOnSave": false,
   "editor.codeActionsOnSave": {
     "source.fixAll.eslint": "explicit",
-    "source.organizeImports": "never",
+    "source.organizeImports": "never"
   },
   "eslint.rules.customizations": [
     { "rule": "style/*", "severity": "off", "fixable": true },
@@ -270,7 +270,7 @@ Add to `.vscode/settings.json`:
     { "rule": "*-dangle", "severity": "off", "fixable": true },
     { "rule": "*-newline", "severity": "off", "fixable": true },
     { "rule": "*quotes", "severity": "off", "fixable": true },
-    { "rule": "*semi", "severity": "off", "fixable": true },
+    { "rule": "*semi", "severity": "off", "fixable": true }
   ],
   "eslint.validate": [
     "javascript",
@@ -289,12 +289,12 @@ Add to `.vscode/settings.json`:
     "svelte",
     "css",
     "less",
-    "scss",
-  ],
+    "scss"
+  ]
 }
 ```
 
-<!--
+<!-- 
 Source references:
 - https://github.com/antfu/eslint-config
 - https://raw.githubusercontent.com/antfu/eslint-config/refs/heads/main/README.md

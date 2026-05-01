@@ -23,19 +23,27 @@ function resetHook() {
   longPressedHook.value = false
 }
 
-onLongPress(htmlRefHook, onLongPressCallbackHook, {
-  modifiers: {
-    prevent: true,
-  },
-})
+onLongPress(
+  htmlRefHook,
+  onLongPressCallbackHook,
+  {
+    modifiers: {
+      prevent: true
+    }
+  }
+)
 </script>
 
 <template>
   <p>Long Pressed: {{ longPressedHook }}</p>
 
-  <button ref="htmlRefHook" class="ml-2 button small">Press long</button>
+  <button ref="htmlRefHook" class="ml-2 button small">
+    Press long
+  </button>
 
-  <button class="ml-2 button small" @click="resetHook">Reset</button>
+  <button class="ml-2 button small" @click="resetHook">
+    Reset
+  </button>
 </template>
 ```
 
@@ -51,7 +59,7 @@ onLongPress(target, handler, { delay: 1000 })
 
 // Dynamic delay based on event
 onLongPress(target, handler, {
-  delay: (ev) => (ev.pointerType === 'touch' ? 800 : 500),
+  delay: ev => ev.pointerType === 'touch' ? 800 : 500,
 })
 ```
 
@@ -124,9 +132,17 @@ function resetComponent() {
 <template>
   <p>Long Pressed: {{ longPressedComponent }}</p>
 
-  <OnLongPress as="button" class="ml-2 button small" @trigger="onLongPressCallbackComponent"> Press long </OnLongPress>
+  <OnLongPress
+    as="button"
+    class="ml-2 button small"
+    @trigger="onLongPressCallbackComponent"
+  >
+    Press long
+  </OnLongPress>
 
-  <button class="ml-2 button small" @click="resetComponent">Reset</button>
+  <button class="ml-2 button small" @click="resetComponent">
+    Reset
+  </button>
 </template>
 ```
 
@@ -150,7 +166,12 @@ function resetDirective() {
 <template>
   <p>Long Pressed: {{ longPressedDirective }}</p>
 
-  <button v-on-long-press.prevent="onLongPressCallbackDirective" class="ml-2 button small">Press long</button>
+  <button
+    v-on-long-press.prevent="onLongPressCallbackDirective"
+    class="ml-2 button small"
+  >
+    Press long
+  </button>
 
   <button
     v-on-long-press="[onLongPressCallbackDirective, { delay: 1000, modifiers: { stop: true } }]"
@@ -159,7 +180,9 @@ function resetDirective() {
     Press long (with options)
   </button>
 
-  <button class="ml-2 button small" @click="resetDirective">Reset</button>
+  <button class="ml-2 button small" @click="resetDirective">
+    Reset
+  </button>
 </template>
 ```
 

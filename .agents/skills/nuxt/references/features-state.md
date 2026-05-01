@@ -157,7 +157,8 @@ export function useDefaultLocale(fallback = 'en-US') {
   if (import.meta.server) {
     const reqLocale = useRequestHeaders()['accept-language']?.split(',')[0]
     if (reqLocale) locale.value = reqLocale
-  } else if (import.meta.client) {
+  }
+  else if (import.meta.client) {
     const navLang = navigator.language
     if (navLang) locale.value = navLang
   }
@@ -185,7 +186,7 @@ useState('data', () => ({ name: 'John', age: 30 }))
 useState('items', () => ['a', 'b', 'c'])
 ```
 
-<!--
+<!-- 
 Source references:
 - https://nuxt.com/docs/getting-started/state-management
 - https://nuxt.com/docs/api/composables/use-state

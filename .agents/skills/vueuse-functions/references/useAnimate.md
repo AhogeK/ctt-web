@@ -57,7 +57,10 @@ const el = useTemplateRef('el')
 // ---cut---
 const keyframes = { transform: 'rotate(360deg)' }
 // Or
-const keyframes = [{ transform: 'rotate(0deg)' }, { transform: 'rotate(360deg)' }]
+const keyframes = [
+  { transform: 'rotate(0deg)' },
+  { transform: 'rotate(360deg)' },
+]
 // Or
 const keyframes = ref([
   { clipPath: 'circle(20% at 0% 30%)' },
@@ -113,7 +116,8 @@ play()
 ## Type Declarations
 
 ```ts
-export interface UseAnimateOptions extends KeyframeAnimationOptions, ConfigurableWindow {
+export interface UseAnimateOptions
+  extends KeyframeAnimationOptions, ConfigurableWindow {
   /**
    * Will automatically run play when `useAnimate` is used
    *
@@ -142,7 +146,9 @@ export interface UseAnimateOptions extends KeyframeAnimationOptions, Configurabl
    */
   onError?: (e: unknown) => void
 }
-export type UseAnimateKeyframes = MaybeRef<Keyframe[] | PropertyIndexedKeyframes | null>
+export type UseAnimateKeyframes = MaybeRef<
+  Keyframe[] | PropertyIndexedKeyframes | null
+>
 export interface UseAnimateReturn extends Supportable {
   animate: ShallowRef<Animation | undefined>
   play: () => void

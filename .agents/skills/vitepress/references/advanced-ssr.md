@@ -10,7 +10,6 @@ VitePress pre-renders pages on the server during build. All Vue code must be SSR
 ## The Rule
 
 Only access browser/DOM APIs in Vue lifecycle hooks:
-
 - `onMounted()`
 - `onBeforeMount()`
 
@@ -84,7 +83,7 @@ export default {
       const plugin = await import('browser-plugin')
       app.use(plugin.default)
     }
-  },
+  }
 }
 ```
 
@@ -122,13 +121,13 @@ const BrowserComponent = defineClientComponent(
     { ref: componentRef, someProp: 'value' },
     {
       default: () => 'Default slot content',
-      header: () => h('div', 'Header slot'),
-    },
+      header: () => h('div', 'Header slot')
+    }
   ],
   // Callback after component loads
   () => {
     console.log('Component loaded', componentRef.value)
-  },
+  }
 )
 </script>
 ```
@@ -152,7 +151,7 @@ For other targets, use `postRender` hook:
 export default {
   async postRender(context) {
     // Inject teleport content into final HTML
-  },
+  }
 }
 ```
 
@@ -205,7 +204,7 @@ Server and client render different content:
 
 ```ts
 // In Vue component
-import.meta.env.SSR // true on server, false on client
+import.meta.env.SSR  // true on server, false on client
 
 // In VitePress
 import { inBrowser } from 'vitepress'

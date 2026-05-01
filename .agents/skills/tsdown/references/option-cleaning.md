@@ -23,7 +23,7 @@ tsdown --no-clean
 ```ts
 export default defineConfig({
   entry: ['src/index.ts'],
-  clean: true, // Default
+  clean: true,  // Default
 })
 ```
 
@@ -32,13 +32,11 @@ export default defineConfig({
 ### With Cleaning (Default)
 
 Before each build:
-
 1. All files in `outDir` are removed
 2. Fresh build starts with empty directory
 3. Only current build outputs remain
 
 **Benefits:**
-
 - No stale files
 - Predictable output
 - Clean slate each build
@@ -54,7 +52,6 @@ export default defineConfig({
 ```
 
 **Use when:**
-
 - Multiple builds to same directory
 - Incremental builds
 - Preserving other files
@@ -68,7 +65,7 @@ export default defineConfig({
 export default defineConfig({
   entry: ['src/index.ts'],
   format: ['esm', 'cjs'],
-  clean: true, // Ensure clean output
+  clean: true,  // Ensure clean output
   minify: true,
 })
 ```
@@ -78,7 +75,7 @@ export default defineConfig({
 ```ts
 export default defineConfig((options) => ({
   entry: ['src/index.ts'],
-  clean: !options.watch, // Don't clean in watch mode
+  clean: !options.watch,  // Don't clean in watch mode
   sourcemap: options.watch,
 }))
 ```
@@ -90,12 +87,12 @@ export default defineConfig([
   {
     entry: ['src/index.ts'],
     outDir: 'dist',
-    clean: true, // Clean once
+    clean: true,  // Clean once
   },
   {
     entry: ['src/cli.ts'],
     outDir: 'dist',
-    clean: false, // Don't clean, add to same dir
+    clean: false,  // Don't clean, add to same dir
   },
 ])
 ```
@@ -106,7 +103,7 @@ export default defineConfig([
 export default defineConfig({
   workspace: 'packages/*',
   entry: ['src/index.ts'],
-  clean: true, // Clean each package's dist
+  clean: true,  // Clean each package's dist
 })
 ```
 
@@ -115,7 +112,7 @@ export default defineConfig({
 ```ts
 export default defineConfig({
   entry: ['src/index.ts'],
-  clean: false, // Keep manually added files
+  clean: false,  // Keep manually added files
   outDir: 'dist',
 })
 
@@ -131,7 +128,7 @@ export default defineConfig({
 import { rmSync } from 'fs'
 
 export default defineConfig({
-  clean: false, // Disable auto clean
+  clean: false,  // Disable auto clean
   hooks: {
     'build:prepare': () => {
       // Custom cleaning logic
@@ -169,12 +166,11 @@ In watch mode, cleaning behavior is important:
 export default defineConfig((options) => ({
   entry: ['src/index.ts'],
   watch: options.watch,
-  clean: !options.watch, // Only clean initial build
+  clean: !options.watch,  // Only clean initial build
 }))
 ```
 
 **Result:**
-
 - First build: Clean
 - Subsequent rebuilds: Incremental
 
@@ -183,7 +179,7 @@ export default defineConfig((options) => ({
 ```ts
 export default defineConfig({
   watch: true,
-  clean: true, // Clean every rebuild
+  clean: true,  // Clean every rebuild
 })
 ```
 
@@ -248,7 +244,7 @@ tsdown --clean
 export default defineConfig({
   entry: ['src/index.ts'],
   watch: true,
-  clean: false, // Faster rebuilds
+  clean: false,  // Faster rebuilds
   sourcemap: true,
 })
 ```
@@ -266,7 +262,7 @@ export default defineConfig([
   {
     entry: ['src/utils.ts'],
     outDir: 'dist',
-    clean: false, // Add to same directory
+    clean: false,  // Add to same directory
   },
 ])
 ```

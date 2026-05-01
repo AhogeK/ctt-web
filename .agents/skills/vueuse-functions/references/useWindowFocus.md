@@ -24,7 +24,9 @@ const focused = useWindowFocus()
 
 ```vue
 <template>
-  <UseWindowFocus v-slot="{ focused }"> Document Focus: {{ focused }} </UseWindowFocus>
+  <UseWindowFocus v-slot="{ focused }">
+    Document Focus: {{ focused }}
+  </UseWindowFocus>
 </template>
 ```
 
@@ -38,5 +40,7 @@ const focused = useWindowFocus()
  *
  * @__NO_SIDE_EFFECTS__
  */
-export declare function useWindowFocus(options?: ConfigurableWindow): ShallowRef<boolean>
+export declare function useWindowFocus(
+  options?: ConfigurableWindow,
+): ShallowRef<boolean>
 ```

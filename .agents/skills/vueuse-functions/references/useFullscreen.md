@@ -36,7 +36,9 @@ const { isFullscreen, enter, exit, toggle } = useFullscreen(el)
 <template>
   <UseFullscreen v-slot="{ toggle }">
     <video />
-    <button @click="toggle">Go Fullscreen</button>
+    <button @click="toggle">
+      Go Fullscreen
+    </button>
   </UseFullscreen>
 </template>
 ```
@@ -65,5 +67,8 @@ export interface UseFullscreenReturn extends Supportable {
  * @param target
  * @param options
  */
-export declare function useFullscreen(target?: MaybeElementRef, options?: UseFullscreenOptions): UseFullscreenReturn
+export declare function useFullscreen(
+  target?: MaybeElementRef,
+  options?: UseFullscreenOptions,
+): UseFullscreenReturn
 ```

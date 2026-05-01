@@ -20,14 +20,25 @@ N.B. This API is not available in Web Workers (not exposed via WorkerNavigator).
 <script setup lang="ts">
 import { useBluetooth } from '@vueuse/core'
 
-const { isSupported, isConnected, device, requestDevice, server, error } = useBluetooth({
+const {
+  isSupported,
+  isConnected,
+  device,
+  requestDevice,
+  server,
+  error,
+} = useBluetooth({
   acceptAllDevices: true,
 })
 </script>
 
 <template>
-  <button @click="requestDevice()">Request Bluetooth Device</button>
-  <div v-if="error">Error: {{ error }}</div>
+  <button @click="requestDevice()">
+    Request Bluetooth Device
+  </button>
+  <div v-if="error">
+    Error: {{ error }}
+  </div>
 </template>
 ```
 
@@ -54,9 +65,17 @@ Here, we use the characteristicvaluechanged event listener to handle reading bat
 <script setup lang="ts">
 import { useBluetooth, useEventListener, watchPausable } from '@vueuse/core'
 
-const { isSupported, isConnected, device, requestDevice, server } = useBluetooth({
+const {
+  isSupported,
+  isConnected,
+  device,
+  requestDevice,
+  server,
+} = useBluetooth({
   acceptAllDevices: true,
-  optionalServices: ['battery_service'],
+  optionalServices: [
+    'battery_service',
+  ],
 })
 
 const batteryPercent = ref<undefined | number>()
@@ -70,17 +89,14 @@ async function getBatteryLevels() {
   const batteryService = await server.getPrimaryService('battery_service')
 
   // Get the current battery level
-  const batteryLevelCharacteristic = await batteryService.getCharacteristic('battery_level')
+  const batteryLevelCharacteristic = await batteryService.getCharacteristic(
+    'battery_level',
+  )
 
   // Listen to when characteristic value changes on `characteristicvaluechanged` event:
-  useEventListener(
-    batteryLevelCharacteristic,
-    'characteristicvaluechanged',
-    (event) => {
-      batteryPercent.value = event.target.value.getUint8(0)
-    },
-    { passive: true },
-  )
+  useEventListener(batteryLevelCharacteristic, 'characteristicvaluechanged', (event) => {
+    batteryPercent.value = event.target.value.getUint8(0)
+  }, { passive: true })
 
   // Convert received buffer to number:
   const batteryLevel = await batteryLevelCharacteristic.readValue()
@@ -89,7 +105,8 @@ async function getBatteryLevels() {
 }
 
 const { stop } = watchPausable(isConnected, (newIsConnected) => {
-  if (!newIsConnected || !server.value || isGettingBatteryLevels.value) return
+  if (!newIsConnected || !server.value || isGettingBatteryLevels.value)
+    return
   // Attempt to get the battery levels of the device:
   getBatteryLevels()
   // We only want to run this on the initial connection, as we will use an event listener to handle updates:
@@ -98,7 +115,9 @@ const { stop } = watchPausable(isConnected, (newIsConnected) => {
 </script>
 
 <template>
-  <button @click="requestDevice()">Request Bluetooth Device</button>
+  <button @click="requestDevice()">
+    Request Bluetooth Device
+  </button>
 </template>
 ```
 
@@ -124,7 +143,8 @@ export interface UseBluetoothRequestDeviceOptions {
    */
   optionalServices?: BluetoothServiceUUID[] | undefined
 }
-export interface UseBluetoothOptions extends UseBluetoothRequestDeviceOptions, ConfigurableNavigator {
+export interface UseBluetoothOptions
+  extends UseBluetoothRequestDeviceOptions, ConfigurableNavigator {
   /**
    *
    * A boolean value indicating that the requesting script can accept all Bluetooth
@@ -141,7 +161,9 @@ export interface UseBluetoothOptions extends UseBluetoothRequestDeviceOptions, C
    */
   acceptAllDevices?: boolean
 }
-export declare function useBluetooth(options?: UseBluetoothOptions): UseBluetoothReturn
+export declare function useBluetooth(
+  options?: UseBluetoothOptions,
+): UseBluetoothReturn
 export interface UseBluetoothReturn extends Supportable {
   isConnected: Readonly<ShallowRef<boolean>>
   device: ShallowRef<BluetoothDevice | undefined>

@@ -31,5 +31,7 @@ onUpdated(() => {
 export type TemplateRefsList<T> = T[] & {
   set: (el: object | null) => void
 }
-export declare function useTemplateRefsList<T = Element>(): Readonly<Ref<Readonly<TemplateRefsList<T>>>>
+export declare function useTemplateRefsList<T = Element>(): Readonly<
+  Ref<Readonly<TemplateRefsList<T>>>
+>
 ```

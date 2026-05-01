@@ -23,22 +23,20 @@ tags: [vue3, attrs, fallthrough-attributes, composition-api, reactivity]
 Hyphenated attribute names preserve their original casing in JavaScript, so dot notation does not work for keys that include `-`.
 
 **BAD:**
-
 ```vue
 <script setup>
 import { useAttrs } from 'vue'
 
 const attrs = useAttrs()
 
-console.log(attrs.data - testid) // Syntax error
-console.log(attrs.dataTestid) // undefined for data-testid
-console.log(attrs['on-click']) // undefined
-console.log(attrs['@click']) // undefined
+console.log(attrs.data-testid)  // Syntax error
+console.log(attrs.dataTestid)   // undefined for data-testid
+console.log(attrs['on-click'])  // undefined
+console.log(attrs['@click'])    // undefined
 </script>
 ```
 
 **GOOD:**
-
 ```vue
 <script setup>
 import { useAttrs } from 'vue'
@@ -57,14 +55,14 @@ console.log(attrs.onMouseEnter)
 
 ### Naming Reference
 
-| Parent Usage              | Access in `attrs`              |
-| ------------------------- | ------------------------------ |
-| `class="foo"`             | `attrs.class`                  |
-| `data-id="123"`           | `attrs['data-id']`             |
-| `aria-label="..."`        | `attrs['aria-label']`          |
-| `foo-bar="baz"`           | `attrs['foo-bar']`             |
-| `@click="fn"`             | `attrs.onClick`                |
-| `@custom-event="fn"`      | `attrs.onCustomEvent`          |
+| Parent Usage | Access in `attrs` |
+|--------------|-------------------|
+| `class="foo"` | `attrs.class` |
+| `data-id="123"` | `attrs['data-id']` |
+| `aria-label="..."` | `attrs['aria-label']` |
+| `foo-bar="baz"` | `attrs['foo-bar']` |
+| `@click="fn"` | `attrs.onClick` |
+| `@custom-event="fn"` | `attrs.onCustomEvent` |
 | `@update:modelValue="fn"` | `attrs['onUpdate:modelValue']` |
 
 ## `useAttrs()` Is Not Reactive
@@ -72,7 +70,6 @@ console.log(attrs.onMouseEnter)
 `useAttrs()` always reflects the latest values, but it is intentionally not reactive for watcher tracking.
 
 **BAD:**
-
 ```vue
 <script setup>
 import { watch, watchEffect, useAttrs } from 'vue'
@@ -83,7 +80,7 @@ watch(
   () => attrs.someAttr,
   (newValue) => {
     console.log('Changed:', newValue) // Never runs on attr changes
-  },
+  }
 )
 
 watchEffect(() => {
@@ -93,7 +90,6 @@ watchEffect(() => {
 ```
 
 **GOOD:**
-
 ```vue
 <script setup>
 import { onUpdated, useAttrs } from 'vue'
@@ -107,20 +103,19 @@ onUpdated(() => {
 ```
 
 **GOOD:**
-
 ```vue
 <script setup>
 import { watch } from 'vue'
 
 const props = defineProps({
-  someAttr: String,
+  someAttr: String
 })
 
 watch(
   () => props.someAttr,
   (newValue) => {
     console.log('Changed:', newValue)
-  },
+  }
 )
 </script>
 ```

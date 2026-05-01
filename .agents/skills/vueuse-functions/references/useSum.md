@@ -27,6 +27,10 @@ const sum = useSum(a, b, 2) // Ref<6>
 ## Type Declarations
 
 ```ts
-export declare function useSum(array: MaybeRefOrGetter<MaybeRefOrGetter<number>[]>): ComputedRef<number>
-export declare function useSum(...args: MaybeRefOrGetter<number>[]): ComputedRef<number>
+export declare function useSum(
+  array: MaybeRefOrGetter<MaybeRefOrGetter<number>[]>,
+): ComputedRef<number>
+export declare function useSum(
+  ...args: MaybeRefOrGetter<number>[]
+): ComputedRef<number>
 ```

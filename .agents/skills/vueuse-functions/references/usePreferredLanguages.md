@@ -18,7 +18,9 @@ const languages = usePreferredLanguages()
 
 ```vue
 <template>
-  <UsePreferredLanguages v-slot="{ languages }"> Preferred Languages: {{ languages }} </UsePreferredLanguages>
+  <UsePreferredLanguages v-slot="{ languages }">
+    Preferred Languages: {{ languages }}
+  </UsePreferredLanguages>
 </template>
 ```
 
@@ -33,5 +35,7 @@ const languages = usePreferredLanguages()
  *
  * @__NO_SIDE_EFFECTS__
  */
-export declare function usePreferredLanguages(options?: ConfigurableWindow): ShallowRef<readonly string[]>
+export declare function usePreferredLanguages(
+  options?: ConfigurableWindow,
+): ShallowRef<readonly string[]>
 ```

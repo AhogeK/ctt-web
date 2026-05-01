@@ -28,5 +28,7 @@ export type ReactiveComputedReturn<T extends object> = UnwrapNestedRefs<T>
 /**
  * Computed reactive object.
  */
-export declare function reactiveComputed<T extends object>(fn: ComputedGetter<T>): ReactiveComputedReturn<T>
+export declare function reactiveComputed<T extends object>(
+  fn: ComputedGetter<T>,
+): ReactiveComputedReturn<T>
 ```

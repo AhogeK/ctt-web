@@ -22,7 +22,9 @@ const { x, y, style } = useDraggable(el, {
 </script>
 
 <template>
-  <div ref="el" :style="style" style="position: fixed">Drag me! I am at {{ x }}, {{ y }}</div>
+  <div ref="el" :style="style" style="position: fixed">
+    Drag me! I am at {{ x }}, {{ y }}
+  </div>
 </template>
 ```
 
@@ -104,7 +106,7 @@ const { x, y, style } = useDraggable(el, {
   autoScroll: {
     speed: 2, // Control the speed of auto-scroll.
     margin: 30, // Set the margin from the edge that triggers auto-scroll.
-    direction: 'both', // Determine the direction of auto-scroll.
+    direction: 'both' // Determine the direction of auto-scroll.
   },
 })
 ```
@@ -113,7 +115,9 @@ const { x, y, style } = useDraggable(el, {
 
 ```vue
 <template>
-  <UseDraggable v-slot="{ x, y }" :initial-value="{ x: 10, y: 10 }"> Drag me! I am at {{ x }}, {{ y }} </UseDraggable>
+  <UseDraggable v-slot="{ x, y }" :initial-value="{ x: 10, y: 10 }">
+    Drag me! I am at {{ x }}, {{ y }}
+  </UseDraggable>
 </template>
 ```
 
@@ -160,13 +164,17 @@ export interface UseDraggableOptions {
    *
    * @default window
    */
-  draggingElement?: MaybeRefOrGetter<HTMLElement | SVGElement | Window | Document | null | undefined>
+  draggingElement?: MaybeRefOrGetter<
+    HTMLElement | SVGElement | Window | Document | null | undefined
+  >
   /**
    * Element for calculating bounds (If not set, it will use the event's target).
    *
    * @default undefined
    */
-  containerElement?: MaybeRefOrGetter<HTMLElement | SVGElement | null | undefined>
+  containerElement?: MaybeRefOrGetter<
+    HTMLElement | SVGElement | null | undefined
+  >
   /**
    * Handle that triggers the drag event
    *
@@ -202,7 +210,7 @@ export interface UseDraggableOptions {
    *
    * @default 'both'
    */
-  axis?: 'x' | 'y' | 'both'
+  axis?: "x" | "y" | "both"
   /**
    * Disabled drag and drop.
    *
@@ -256,7 +264,7 @@ export interface UseDraggableOptions {
          *
          * @default 'both'
          */
-        direction?: 'x' | 'y' | 'both'
+        direction?: "x" | "y" | "both"
       }
   >
 }

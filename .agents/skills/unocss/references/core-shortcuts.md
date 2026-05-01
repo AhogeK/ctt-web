@@ -22,7 +22,6 @@ shortcuts: {
 ```
 
 Usage:
-
 ```html
 <button class="btn btn-green">Click me</button>
 ```
@@ -61,12 +60,10 @@ Dynamic shortcuts receive context with theme access:
 
 ```ts
 shortcuts: [
-  [
-    /^badge-(.*)$/,
-    ([, c], { theme }) => {
-      if (Object.keys(theme.colors).includes(c)) return `bg-${c}4:10 text-${c}5 rounded`
-    },
-  ],
+  [/^badge-(.*)$/, ([, c], { theme }) => {
+    if (Object.keys(theme.colors).includes(c))
+      return `bg-${c}4:10 text-${c}5 rounded`
+  }],
 ]
 ```
 
@@ -86,7 +83,7 @@ shortcutsLayer: 'my-shortcuts-layer'
 - Shortcuts are expanded at build time, not runtime
 - All variants work with shortcuts (`hover:btn`, `dark:btn`, etc.)
 
-<!--
+<!-- 
 Source references:
 - https://unocss.dev/config/shortcuts
 -->

@@ -14,7 +14,6 @@ pnpm add -D typescript
 ```
 
 **Requirements:**
-
 - Node.js 20.19 or higher
 - Experimental support for Deno and Bun
 
@@ -27,7 +26,6 @@ pnpm create tsdown@latest
 ```
 
 Provides templates for:
-
 - Pure TypeScript libraries
 - React component libraries
 - Vue component libraries

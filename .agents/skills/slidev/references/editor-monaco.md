@@ -22,7 +22,8 @@ Compare two code versions:
 ````md
 ```ts {monaco-diff}
 console.log('Original text')
-~~~console.log('Modified text')
+~~~
+console.log('Modified text')
 ```
 ````
 

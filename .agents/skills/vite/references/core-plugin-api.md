@@ -48,9 +48,7 @@ const plugin = () => {
       config = resolvedConfig
     },
     transform(code, id) {
-      if (config.command === 'serve') {
-        /* dev */
-      }
+      if (config.command === 'serve') { /* dev */ }
     },
   }
 }

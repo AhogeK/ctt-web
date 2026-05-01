@@ -30,14 +30,13 @@ Use RegExp matcher with function body for flexible utilities:
 rules: [
   // Match m-1, m-2, m-100, etc.
   [/^m-(\d+)$/, ([, d]) => ({ margin: `${d / 4}rem` })],
-
+  
   // Access theme and context
   [/^p-(\d+)$/, (match, ctx) => ({ padding: `${match[1] / 4}rem` })],
 ]
 ```
 
 The function receives:
-
 1. RegExp match result (destructure to get captured groups)
 2. Context object with `theme`, `symbols`, etc.
 
@@ -47,13 +46,10 @@ Return 2D array for CSS property fallbacks (browser compatibility):
 
 ```ts
 rules: [
-  [
-    /^h-(\d+)dvh$/,
-    ([_, d]) => [
-      ['height', `${d}vh`],
-      ['height', `${d}dvh`],
-    ],
-  ],
+  [/^h-(\d+)dvh$/, ([_, d]) => [
+    ['height', `${d}vh`],
+    ['height', `${d}dvh`],
+  ]],
 ]
 ```
 
@@ -67,28 +63,25 @@ Control CSS output with symbols from `@unocss/core`:
 import { symbols } from '@unocss/core'
 
 rules: [
-  [
-    'grid',
-    {
-      [symbols.parent]: '@supports (display: grid)',
-      display: 'grid',
-    },
-  ],
+  ['grid', {
+    [symbols.parent]: '@supports (display: grid)',
+    display: 'grid',
+  }],
 ]
 ```
 
 ### Available Symbols
 
-| Symbol                     | Description                                  |
-| -------------------------- | -------------------------------------------- |
-| `symbols.parent`           | Parent wrapper (e.g., `@supports`, `@media`) |
-| `symbols.selector`         | Function to modify the selector              |
-| `symbols.layer`            | Set the UnoCSS layer                         |
-| `symbols.variants`         | Array of variant handlers                    |
-| `symbols.shortcutsNoMerge` | Disable merging in shortcuts                 |
-| `symbols.noMerge`          | Disable rule merging                         |
-| `symbols.sort`             | Override sorting order                       |
-| `symbols.body`             | Full control of CSS body                     |
+| Symbol | Description |
+|--------|-------------|
+| `symbols.parent` | Parent wrapper (e.g., `@supports`, `@media`) |
+| `symbols.selector` | Function to modify the selector |
+| `symbols.layer` | Set the UnoCSS layer |
+| `symbols.variants` | Array of variant handlers |
+| `symbols.shortcutsNoMerge` | Disable merging in shortcuts |
+| `symbols.noMerge` | Disable rule merging |
+| `symbols.sort` | Override sorting order |
+| `symbols.body` | Full control of CSS body |
 
 ## Multi-Selector Rules
 
@@ -96,16 +89,13 @@ Use generator functions to yield multiple CSS rules:
 
 ```ts
 rules: [
-  [
-    /^button-(.*)$/,
-    function* ([, color], { symbols }) {
-      yield { background: color }
-      yield {
-        [symbols.selector]: (selector) => `${selector}:hover`,
-        background: `color-mix(in srgb, ${color} 90%, black)`,
-      }
-    },
-  ],
+  [/^button-(.*)$/, function* ([, color], { symbols }) {
+    yield { background: color }
+    yield {
+      [symbols.selector]: selector => `${selector}:hover`,
+      background: `color-mix(in srgb, ${color} 90%, black)`
+    }
+  }],
 ]
 ```
 
@@ -119,19 +109,16 @@ Return a string for complete CSS control (advanced):
 import { defineConfig, toEscapedSelector as e } from 'unocss'
 
 rules: [
-  [
-    /^custom-(.+)$/,
-    ([, name], { rawSelector, theme }) => {
-      const selector = e(rawSelector)
-      return `
+  [/^custom-(.+)$/, ([, name], { rawSelector, theme }) => {
+    const selector = e(rawSelector)
+    return `
 ${selector} { font-size: ${theme.fontSize.sm}; }
 ${selector}::after { content: 'after'; }
 @media (min-width: ${theme.breakpoints.sm}) {
   ${selector} { font-size: ${theme.fontSize.lg}; }
 }
 `
-    },
-  ],
+  }],
 ]
 ```
 
@@ -143,17 +130,14 @@ Use `symbols.body` to keep variant support with custom CSS:
 
 ```ts
 rules: [
-  [
-    'custom-red',
-    {
-      [symbols.body]: `
+  ['custom-red', {
+    [symbols.body]: `
       font-size: 1rem;
       &::after { content: 'after'; }
       & > .bar { color: red; }
     `,
-      [symbols.selector]: (selector) => `:is(${selector})`,
-    },
-  ],
+    [symbols.selector]: selector => `:is(${selector})`,
+  }]
 ]
 ```
 
@@ -166,21 +150,17 @@ Later rules have higher priority. Dynamic rules output is sorted alphabetically 
 UnoCSS merges rules with identical CSS bodies:
 
 ```html
-<div class="m-2 hover:m2"></div>
+<div class="m-2 hover:m2">
 ```
 
 Generates:
-
 ```css
-.hover\:m2:hover,
-.m-2 {
-  margin: 0.5rem;
-}
+.hover\:m2:hover, .m-2 { margin: 0.5rem; }
 ```
 
 Use `symbols.noMerge` to disable.
 
-<!--
+<!-- 
 Source references:
 - https://unocss.dev/config/rules
 -->

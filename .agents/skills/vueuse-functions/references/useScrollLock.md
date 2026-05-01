@@ -42,7 +42,9 @@ const toggleLock = useToggle(isLocked)
       {{ item }}
     </div>
   </div>
-  <button @click="toggleLock()">Toggle lock state</button>
+  <button @click="toggleLock()">
+    Toggle lock state
+  </button>
 </template>
 ```
 
@@ -56,7 +58,9 @@ const toggleLock = useToggle(isLocked)
  * @param element
  */
 export declare function useScrollLock(
-  element: MaybeRefOrGetter<HTMLElement | SVGElement | Window | Document | null | undefined>,
+  element: MaybeRefOrGetter<
+    HTMLElement | SVGElement | Window | Document | null | undefined
+  >,
   initialState?: boolean,
 ): WritableComputedRef<boolean, boolean>
 ```

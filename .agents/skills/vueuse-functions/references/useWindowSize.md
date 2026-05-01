@@ -16,7 +16,10 @@ const { width, height } = useWindowSize()
 </script>
 
 <template>
-  <div>Width: {{ width }} Height: {{ height }}</div>
+  <div>
+    Width: {{ width }}
+    Height: {{ height }}
+  </div>
 </template>
 ```
 
@@ -24,7 +27,10 @@ const { width, height } = useWindowSize()
 
 ```vue
 <template>
-  <UseWindowSize v-slot="{ width, height }"> Width: {{ width }} Height: {{ height }} </UseWindowSize>
+  <UseWindowSize v-slot="{ width, height }">
+    Width: {{ width }}
+    Height: {{ height }}
+  </UseWindowSize>
 </template>
 ```
 
@@ -52,7 +58,7 @@ export interface UseWindowSizeOptions extends ConfigurableWindow {
    * visualViewport documentation from MDN(https://developer.mozilla.org/zh-CN/docs/Web/API/VisualViewport)
    * @default 'inner'
    */
-  type?: 'inner' | 'outer' | 'visual'
+  type?: "inner" | "outer" | "visual"
 }
 export interface UseWindowSizeReturn {
   width: ShallowRef<number>
@@ -66,5 +72,7 @@ export interface UseWindowSizeReturn {
  *
  * @__NO_SIDE_EFFECTS__
  */
-export declare function useWindowSize(options?: UseWindowSizeOptions): UseWindowSizeReturn
+export declare function useWindowSize(
+  options?: UseWindowSizeOptions,
+): UseWindowSizeReturn
 ```

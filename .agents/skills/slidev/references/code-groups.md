@@ -54,12 +54,11 @@ console.log('Hello!')
 ````
 
 Requires:
-
 1. Install icon collection: `pnpm add @iconify-json/uil`
 2. Add to safelist in `uno.config.ts`:
 
 ```ts
 export default defineConfig({
-  safelist: ['i-uil:github'],
+  safelist: ['i-uil:github']
 })
 ```

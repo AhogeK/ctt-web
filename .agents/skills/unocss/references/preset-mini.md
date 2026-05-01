@@ -13,7 +13,9 @@ The minimal preset with only essential rules and variants. Good starting point f
 import { defineConfig, presetMini } from 'unocss'
 
 export default defineConfig({
-  presets: [presetMini()],
+  presets: [
+    presetMini(),
+  ],
 })
 ```
 
@@ -33,7 +35,6 @@ Subset of `preset-wind3` with essential utilities aligned to CSS properties:
 ## What's NOT Included
 
 Opinionated or complex Tailwind utilities:
-
 - `container`
 - Complex animations
 - Gradients
@@ -52,7 +53,7 @@ Same as preset-wind3:
 
 ```ts
 presetMini({
-  dark: 'class', // or 'media'
+  dark: 'class' // or 'media'
 })
 ```
 
@@ -61,7 +62,6 @@ presetMini({
 ```
 
 Class-based:
-
 ```css
 .dark .dark\:bg-red\:10 {
   background-color: rgb(248 113 113 / 0.1);
@@ -69,7 +69,6 @@ Class-based:
 ```
 
 Media query:
-
 ```css
 @media (prefers-color-scheme: dark) {
   .dark\:bg-red\:10 {
@@ -103,9 +102,9 @@ presetMini({
       veryCool: '#0000ff',
       brand: {
         primary: 'hsl(var(--hue, 217) 78% 51%)',
-      },
+      }
     },
-  },
+  }
 })
 ```
 
@@ -117,16 +116,16 @@ presetMini({
 presetMini({
   // Dark mode: 'class' | 'media' | { light: string, dark: string }
   dark: 'class',
-
+  
   // Generate [group=""] instead of .group for attributify
   attributifyPseudo: false,
-
+  
   // CSS variable prefix (default: 'un-')
   variablePrefix: 'un-',
-
+  
   // Utility prefix
   prefix: undefined,
-
+  
   // Preflight generation: true | false | 'on-demand'
   preflight: true,
 })
@@ -148,12 +147,12 @@ export const myPreset: Preset = {
     ['card', { 'border-radius': '8px', 'box-shadow': '0 2px 8px rgba(0,0,0,0.1)' }],
   ],
   shortcuts: {
-    btn: 'px-4 py-2 rounded bg-blue-500 text-white',
+    'btn': 'px-4 py-2 rounded bg-blue-500 text-white',
   },
 }
 ```
 
-<!--
+<!-- 
 Source references:
 - https://unocss.dev/presets/mini
 -->

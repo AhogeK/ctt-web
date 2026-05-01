@@ -18,7 +18,10 @@ const { width, height } = useElementSize(el)
 </script>
 
 <template>
-  <div ref="el">Height: {{ height }} Width: {{ width }}</div>
+  <div ref="el">
+    Height: {{ height }}
+    Width: {{ width }}
+  </div>
 </template>
 ```
 
@@ -26,7 +29,9 @@ const { width, height } = useElementSize(el)
 
 ```vue
 <template>
-  <UseElementSize v-slot="{ width, height }"> Width: {{ width }} Height: {{ height }} </UseElementSize>
+  <UseElementSize v-slot="{ width, height }">
+    Width: {{ width }} Height: {{ height }}
+  </UseElementSize>
 </template>
 ```
 
@@ -36,7 +41,7 @@ const { width, height } = useElementSize(el)
 <script setup lang="ts">
 import { vElementSize } from '@vueuse/components'
 
-function onResize({ width, height }: { width: number; height: number }) {
+function onResize({ width, height }: { width: number, height: number }) {
   console.log(width, height)
 }
 </script>

@@ -49,15 +49,12 @@ await build(options)
 ```
 
 **Parameters:**
-
 - `options` - Build configuration object (same as config file)
 
 **Returns:**
-
 - `Promise<void>` - Resolves when build completes
 
 **Throws:**
-
 - Build errors if compilation fails
 
 ## Configuration Object
@@ -76,9 +73,7 @@ const config = defineConfig({
   deps: {
     neverBundle: ['react', 'react-dom'],
   },
-  plugins: [
-    /* plugins */
-  ],
+  plugins: [/* plugins */],
   hooks: {
     'build:done': async () => {
       console.log('Build complete!')
@@ -116,7 +111,6 @@ main().catch(console.error)
 ```
 
 Run with:
-
 ```bash
 tsx scripts/build.ts
 ```
@@ -342,7 +336,6 @@ await build(config)
 ### Import Errors
 
 Ensure tsdown is installed:
-
 ```bash
 pnpm add -D tsdown
 ```
@@ -350,7 +343,6 @@ pnpm add -D tsdown
 ### Type Errors
 
 Import types:
-
 ```ts
 import type { UserConfig } from 'tsdown'
 ```
@@ -358,7 +350,6 @@ import type { UserConfig } from 'tsdown'
 ### Build Fails Silently
 
 Add error handling:
-
 ```ts
 try {
   await build(config)
@@ -371,17 +362,12 @@ try {
 ### Options Not Working
 
 Check spelling and types:
-
 ```ts
 // ✅ Correct
-{
-  format: ['esm', 'cjs']
-}
+{ format: ['esm', 'cjs'] }
 
 // ❌ Wrong
-{
-  formats: ['esm', 'cjs']
-}
+{ formats: ['esm', 'cjs'] }
 ```
 
 ## Related

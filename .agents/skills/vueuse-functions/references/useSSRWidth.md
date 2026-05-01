@@ -40,5 +40,8 @@ const width = useSSRWidth()
 
 ```ts
 export declare function useSSRWidth(): number | undefined
-export declare function provideSSRWidth(width: number | null, app?: App<unknown>): void
+export declare function provideSSRWidth(
+  width: number | null,
+  app?: App<unknown>,
+): void
 ```

@@ -53,7 +53,10 @@ export interface FormatTimeAgoIntlOptions {
    *
    * If provided, it will be used instead of the default join logic.
    */
-  joinParts?: (parts: Intl.RelativeTimeFormatPart[], locale?: Intl.UnicodeBCP47LocaleIdentifier | Intl.Locale) => string
+  joinParts?: (
+    parts: Intl.RelativeTimeFormatPart[],
+    locale?: Intl.UnicodeBCP47LocaleIdentifier | Intl.Locale,
+  ) => string
   /**
    * Custom units
    */
@@ -99,7 +102,11 @@ export declare function useTimeAgoIntl(
 /**
  * Non-reactive version of useTimeAgoIntl
  */
-export declare function formatTimeAgoIntl(from: Date, options?: FormatTimeAgoIntlOptions, now?: Date | number): string
+export declare function formatTimeAgoIntl(
+  from: Date,
+  options?: FormatTimeAgoIntlOptions,
+  now?: Date | number,
+): string
 /**
  * Format parts into a string
  */

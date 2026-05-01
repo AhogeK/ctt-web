@@ -246,7 +246,6 @@ export function useMyComposable() {
 ```
 
 **Valid contexts:**
-
 - `<script setup>` block
 - `setup()` function
 - `defineNuxtPlugin()` callback
@@ -269,7 +268,7 @@ export default defineNuxtConfig({
 })
 ```
 
-<!--
+<!-- 
 Source references:
 - https://nuxt.com/docs/guide/concepts/auto-imports
 - https://nuxt.com/docs/directory-structure/app/composables

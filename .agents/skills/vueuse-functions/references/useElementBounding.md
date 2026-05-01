@@ -26,7 +26,9 @@ const { x, y, top, right, bottom, left, width, height } = useElementBounding(el)
 
 ```vue
 <template>
-  <UseElementBounding v-slot="{ width, height }"> Width: {{ width }} Height: {{ height }} </UseElementBounding>
+  <UseElementBounding v-slot="{ width, height }">
+    Width: {{ width }} Height: {{ height }}
+  </UseElementBounding>
 </template>
 ```
 
@@ -103,7 +105,7 @@ export interface UseElementBoundingOptions {
    *
    * @default 'sync'
    */
-  updateTiming?: 'sync' | 'next-frame'
+  updateTiming?: "sync" | "next-frame"
 }
 export interface UseElementBoundingReturn {
   height: ShallowRef<number>

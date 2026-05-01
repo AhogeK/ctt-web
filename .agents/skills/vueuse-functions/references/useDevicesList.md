@@ -11,7 +11,12 @@ Reactive [enumerateDevices](https://developer.mozilla.org/en-US/docs/Web/API/Med
 ```ts
 import { useDevicesList } from '@vueuse/core'
 
-const { devices, videoInputs: cameras, audioInputs: microphones, audioOutputs: speakers } = useDevicesList()
+const {
+  devices,
+  videoInputs: cameras,
+  audioInputs: microphones,
+  audioOutputs: speakers,
+} = useDevicesList()
 ```
 
 ## Requesting Permissions
@@ -21,7 +26,10 @@ To request permissions, use the `ensurePermissions` method.
 ```ts
 import { useDevicesList } from '@vueuse/core'
 // ---cut---
-const { ensurePermissions, permissionGranted } = useDevicesList()
+const {
+  ensurePermissions,
+  permissionGranted,
+} = useDevicesList()
 
 await ensurePermissions()
 console.log(permissionsGranted.value)
@@ -32,7 +40,9 @@ console.log(permissionsGranted.value)
 ```vue
 <template>
   <UseDevicesList v-slot="{ videoInputs, audioInputs, audioOutputs }">
-    Cameras: {{ videoInputs }} Microphones: {{ audioInputs }} Speakers: {{ audioOutputs }}
+    Cameras: {{ videoInputs }}
+    Microphones: {{ audioInputs }}
+    Speakers: {{ audioOutputs }}
   </UseDevicesList>
 </template>
 ```
@@ -73,5 +83,7 @@ export interface UseDevicesListReturn extends Supportable {
  * @see https://vueuse.org/useDevicesList
  * @param options
  */
-export declare function useDevicesList(options?: UseDevicesListOptions): UseDevicesListReturn
+export declare function useDevicesList(
+  options?: UseDevicesListOptions,
+): UseDevicesListReturn
 ```

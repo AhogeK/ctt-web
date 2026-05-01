@@ -13,7 +13,9 @@ import { useAsyncState } from '@vueuse/core'
 import axios from 'axios'
 
 const { state, isReady, isLoading, error } = useAsyncState(
-  axios.get('https://jsonplaceholder.typicode.com/todos/1').then((t) => t.data),
+  axios
+    .get('https://jsonplaceholder.typicode.com/todos/1')
+    .then(t => t.data),
   { id: null },
 )
 ```
@@ -49,7 +51,7 @@ import { useAsyncState } from '@vueuse/core'
 const { state, execute, executeImmediate } = useAsyncState(action, '', { immediate: false })
 
 async function action(event) {
-  await new Promise((resolve) => setTimeout(resolve, 500))
+  await new Promise(resolve => setTimeout(resolve, 500))
   return `${event.target.textContent} clicked!`
 }
 </script>
@@ -57,9 +59,13 @@ async function action(event) {
 <template>
   <p>State: {{ state }}</p>
 
-  <button class="button" @click="executeImmediate">Execute now</button>
+  <button class="button" @click="executeImmediate">
+    Execute now
+  </button>
 
-  <button class="ml-2 button" @click="(event) => execute(500, event)">Execute with delay</button>
+  <button class="ml-2 button" @click="event => execute(500, event)">
+    Execute with delay
+  </button>
 </template>
 ```
 
@@ -91,7 +97,11 @@ const { state } = useAsyncState(promise, initialState, {
 ## Type Declarations
 
 ```ts
-export interface UseAsyncStateReturnBase<Data, Params extends any[], Shallow extends boolean> {
+export interface UseAsyncStateReturnBase<
+  Data,
+  Params extends any[],
+  Shallow extends boolean,
+> {
   state: Shallow extends true ? Ref<Data> : Ref<UnwrapRef<Data>>
   isReady: Ref<boolean>
   isLoading: Ref<boolean>
@@ -99,11 +109,11 @@ export interface UseAsyncStateReturnBase<Data, Params extends any[], Shallow ext
   execute: (delay?: number, ...args: Params) => Promise<Data | undefined>
   executeImmediate: (...args: Params) => Promise<Data | undefined>
 }
-export type UseAsyncStateReturn<Data, Params extends any[], Shallow extends boolean> = UseAsyncStateReturnBase<
+export type UseAsyncStateReturn<
   Data,
-  Params,
-  Shallow
-> &
+  Params extends any[],
+  Shallow extends boolean,
+> = UseAsyncStateReturnBase<Data, Params, Shallow> &
   PromiseLike<UseAsyncStateReturnBase<Data, Params, Shallow>>
 export interface UseAsyncStateOptions<Shallow extends boolean, D = any> {
   /**
@@ -163,7 +173,11 @@ export interface UseAsyncStateOptions<Shallow extends boolean, D = any> {
  * @param initialState    The initial state, used until the first evaluation finishes
  * @param options
  */
-export declare function useAsyncState<Data, Params extends any[] = any[], Shallow extends boolean = true>(
+export declare function useAsyncState<
+  Data,
+  Params extends any[] = any[],
+  Shallow extends boolean = true,
+>(
   promise: Promise<Data> | ((...args: Params) => Promise<Data>),
   initialState: MaybeRef<Data>,
   options?: UseAsyncStateOptions<Shallow, Data>,

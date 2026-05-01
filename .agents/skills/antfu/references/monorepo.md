@@ -45,6 +45,7 @@ In each package's `package.json`, add the scripts.
 
 ## ESLint Cache
 
+
 ```json
 {
   "scripts": {
@@ -86,14 +87,17 @@ tsconfig.compilerOptions.paths = Object.fromEntries(
   Object.entries(alias).map(([key, value]) => [key, [`./${relative(root, value)}`]]),
 )
 const newRaw = JSON.stringify(tsconfig, null, 2)
-if (newRaw !== raw) fs.writeFileSync(join(root, 'tsconfig.alias.json'), `${newRaw}\n`, 'utf-8')
+if (newRaw !== raw)
+  fs.writeFileSync(join(root, 'tsconfig.alias.json'), `${newRaw}\n`, 'utf-8')
 ```
 
 Then update the `tsconfig.json` to use the alias file:
 
 ```json
 {
-  "extends": ["./tsconfig.alias.json"]
+  "extends": [
+    "./tsconfig.alias.json"
+  ]
 }
 ```
 

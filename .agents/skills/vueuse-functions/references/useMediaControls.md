@@ -29,7 +29,9 @@ onMounted(() => {
 
 <template>
   <video ref="video" />
-  <button @click="playing = !playing">Play / Pause</button>
+  <button @click="playing = !playing">
+    Play / Pause
+  </button>
   <span>{{ currentTime }} / {{ duration }}</span>
 </template>
 ```
@@ -48,7 +50,10 @@ import { useMediaControls } from '@vueuse/core'
 import { useTemplateRef } from 'vue'
 
 const video = useTemplateRef('video')
-const { tracks, enableTrack } = useMediaControls(video, {
+const {
+  tracks,
+  enableTrack
+} = useMediaControls(video, {
   src: 'video.mp4',
   tracks: [
     {
@@ -58,7 +63,7 @@ const { tracks, enableTrack } = useMediaControls(video, {
       label: 'English',
       srcLang: 'en',
     },
-  ],
+  ]
 })
 </script>
 
@@ -178,7 +183,10 @@ export interface UseMediaControlsReturn {
   muted: ShallowRef<boolean>
   tracks: Ref<UseMediaTextTrack[]>
   selectedTrack: ShallowRef<number>
-  enableTrack: (track: number | UseMediaTextTrack, disableTracks?: boolean) => void
+  enableTrack: (
+    track: number | UseMediaTextTrack,
+    disableTracks?: boolean,
+  ) => void
   disableTrack: (track?: number | UseMediaTextTrack) => void
   supportsPictureInPicture: boolean
   togglePictureInPicture: () => Promise<PictureInPictureWindow | void>
