@@ -165,9 +165,9 @@ const onSubmit = form.handleSubmit((values) => {
       type="submit"
       :class="
         cn(
-          'group w-full h-11 mt-3 rounded-md bg-[#5e6ad2] text-white font-[510] text-base',
-          'shadow-lg shadow-[#5e6ad2]/25 transition-all duration-200',
-          'hover:bg-[#7170ff] hover:shadow-[#7170ff]/30 hover:scale-[1.02] active:scale-[0.98]',
+          'group w-full h-11 mt-3 rounded-md bg-[#7b85d4] text-white font-[510] text-base',
+          'shadow-lg shadow-[#7b85d4]/15 transition-all duration-200',
+          'hover:bg-[#8b95e0] hover:shadow-[#8b95e0]/20 hover:scale-[1.02] active:scale-[0.98]',
         )
       "
       style="font-feature-settings: 'cv01', 'ss03'"
