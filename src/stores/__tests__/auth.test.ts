@@ -260,4 +260,51 @@ describe('Auth Store', () => {
       clearTimeoutSpy.mockRestore()
     })
   })
+
+  describe('initializeAuth', () => {
+    it('returns false when no refresh token exists', async () => {
+      localStorage.removeItem(STORAGE_KEYS.REFRESH_TOKEN)
+      setActivePinia(createPinia())
+      store = useAuthStore()
+
+      const result = await store.initializeAuth()
+
+      expect(result).toBe(false)
+    })
+
+    it('returns true when refresh succeeds', async () => {
+      localStorage.setItem(STORAGE_KEYS.REFRESH_TOKEN, 'valid-refresh-token')
+      setActivePinia(createPinia())
+      store = useAuthStore()
+
+      vi.mocked(authApi.refresh).mockResolvedValue({
+        accessToken: 'new-access-token',
+        refreshToken: 'new-refresh-token',
+        userId: 'user-id',
+        expiresIn: 3600,
+        tokenType: 'Bearer',
+      })
+
+      const result = await store.initializeAuth()
+
+      expect(result).toBe(true)
+      expect(store.accessToken).toBe('new-access-token')
+      expect(store.refreshToken).toBe('new-refresh-token')
+    })
+
+    it('returns false and clears auth when refresh fails', async () => {
+      localStorage.setItem(STORAGE_KEYS.REFRESH_TOKEN, 'invalid-refresh-token')
+      setActivePinia(createPinia())
+      store = useAuthStore()
+
+      vi.mocked(authApi.refresh).mockRejectedValue(new Error('AUTH_003'))
+
+      const result = await store.initializeAuth()
+
+      expect(result).toBe(false)
+      expect(store.accessToken).toBeNull()
+      expect(store.refreshToken).toBeNull()
+      expect(store.userId).toBeNull()
+    })
+  })
 })

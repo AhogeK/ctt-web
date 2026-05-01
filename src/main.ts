@@ -86,4 +86,7 @@ app.component('Toaster', Toaster)
 globalThis.addEventListener('unhandledrejection', handleUnhandledRejection)
 globalThis.addEventListener(UNAUTHORIZED_EVENT, handleUnauthorized)
 
+const authStore = useAuthStore()
+await authStore.initializeAuth()
+
 app.mount('#app')
