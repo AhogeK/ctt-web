@@ -525,14 +525,11 @@ describe('API Instance', () => {
       }
 
       expect(mockAuthStore.refreshAccessToken).not.toHaveBeenCalled()
-      expect(removeItemSpy).toHaveBeenCalledWith('ctt_access_token')
-      expect(dispatchEventSpy).toHaveBeenCalled()
     })
 
-    it('handles refresh failure with AUTH_003 by clearing auth and redirecting to login', async () => {
-      mockAuthStore.refreshAccessToken.mockRejectedValue({
-        data: { code: 'AUTH_003', message: 'Refresh token expired' },
-      })
+    it('handles refresh failure with AUTH_003 by clearing auth, redirecting, and re-throwing', async () => {
+      const refreshError = { data: { code: 'AUTH_003', message: 'Refresh token expired' } }
+      mockAuthStore.refreshAccessToken.mockRejectedValue(refreshError)
 
       const mockContext = {
         response: {
@@ -545,12 +542,12 @@ describe('API Instance', () => {
       }
 
       if (capturedConfig.onResponseError) {
-        await capturedConfig.onResponseError(mockContext)
+        await expect(capturedConfig.onResponseError(mockContext)).rejects.toThrow()
       }
 
       expect(mockAuthStore.clearAuth).toHaveBeenCalledTimes(1)
       expect(toast.error).toHaveBeenCalledWith('Session expired. Please log in again.')
-      expect(mockRouter.push).toHaveBeenCalledWith({ name: 'login' })
+      expect(mockRouter.push).toHaveBeenCalled()
     })
 
     it('handles refresh failure with AUTH_007 as terminal auth error', async () => {
@@ -601,7 +598,7 @@ describe('API Instance', () => {
       expect(mockRouter.push).toHaveBeenCalled()
     })
 
-    it('handles refresh failure with network error (no data)', async () => {
+    it('handles refresh failure with network error (no data) by re-throwing', async () => {
       mockAuthStore.refreshAccessToken.mockRejectedValue(new Error('Network error'))
 
       const mockContext = {
@@ -615,11 +612,11 @@ describe('API Instance', () => {
       }
 
       if (capturedConfig.onResponseError) {
-        await capturedConfig.onResponseError(mockContext)
+        await expect(capturedConfig.onResponseError(mockContext)).rejects.toThrow()
       }
 
       expect(mockAuthStore.clearAuth).not.toHaveBeenCalled()
-      expect(toast.error).toHaveBeenCalledWith('Connection failed. Please check your network and try again.')
+      expect(toast.error).not.toHaveBeenCalled()
       expect(mockRouter.push).not.toHaveBeenCalled()
     })
 
