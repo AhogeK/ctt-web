@@ -17,6 +17,12 @@ export function setupRouterGuards(router: Router) {
     NProgress.start()
 
     const authStore = useAuthStore()
+
+    if (to.meta.guestOnly && authStore.isAuthenticated) {
+      next({ name: RouteNames.DASHBOARD })
+      return
+    }
+
     if (to.meta.requiresAuth && !authStore.isAuthenticated) {
       next({ name: RouteNames.LOGIN, query: { redirect: to.fullPath } })
       return
