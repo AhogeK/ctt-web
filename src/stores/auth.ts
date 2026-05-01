@@ -165,6 +165,32 @@ export const useAuthStore = defineStore('auth', () => {
   }
 
   /**
+   * Initializes authentication state on app startup.
+   *
+   * Professional standard: validates tokens via refresh endpoint on page load.
+   * If refresh fails (AUTH_003), clears auth state and returns false.
+   * If refresh succeeds, schedules silent refresh and returns true.
+   *
+   * This ensures users with expired tokens are redirected to login immediately,
+   * preventing them from accessing protected routes with invalid tokens.
+   *
+   * @returns Promise<boolean> - true if authenticated, false if should redirect to login
+   */
+  async function initializeAuth(): Promise<boolean> {
+    if (!refreshToken.value) {
+      return false
+    }
+
+    try {
+      await refreshAccessToken()
+      return true
+    } catch {
+      clearAuth()
+      return false
+    }
+  }
+
+  /**
    * Schedules a silent token refresh before the current token expires.
    *
    * Timing strategy:
@@ -233,6 +259,7 @@ export const useAuthStore = defineStore('auth', () => {
     clearAuth,
     login,
     refreshAccessToken,
+    initializeAuth,
     scheduleSilentRefresh,
     logout,
     /**
