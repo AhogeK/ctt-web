@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { ref, computed, toValue } from 'vue'
-import { RouterLink, useRouter, useRoute } from 'vue-router'
+import { useRouter, useRoute } from 'vue-router'
 import { toast } from 'vue-sonner'
 import { useMutation } from '@tanstack/vue-query'
 import { RouteNames } from '@/router/route-names'
@@ -190,7 +190,7 @@ const showConfirmPassword = ref(false)
               />
               <button
                 type="button"
-                class="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 dark:text-[#62666d] dark:hover:text-[#d0d6e0]"
+                class="absolute right-3 top-1/2 -translate-y-1/2 cursor-pointer text-gray-400 hover:text-gray-600 dark:text-[#62666d] dark:hover:text-[#d0d6e0]"
                 @click="showNewPassword = !showNewPassword"
               >
                 <svg
@@ -243,7 +243,7 @@ const showConfirmPassword = ref(false)
               />
               <button
                 type="button"
-                class="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 dark:text-[#62666d] dark:hover:text-[#d0d6e0]"
+                class="absolute right-3 top-1/2 -translate-y-1/2 cursor-pointer text-gray-400 hover:text-gray-600 dark:text-[#62666d] dark:hover:text-[#d0d6e0]"
                 @click="showConfirmPassword = !showConfirmPassword"
               >
                 <svg
@@ -298,18 +298,13 @@ const showConfirmPassword = ref(false)
       </Button>
     </form>
 
-    <!-- Back to Login Link -->
-    <div class="pt-2 text-center">
-      <p class="text-sm text-gray-500 dark:text-[#8a8f98]" style="font-feature-settings: 'cv01', 'ss03'">
-        Remember your password?
-        <RouterLink
-          :to="{ name: RouteNames.LOGIN }"
-          class="ml-1 font-[510] text-[#5e6ad2] underline-offset-4 hover:text-[#7170ff] hover:underline dark:text-[#7170ff] dark:hover:text-[#828fff]"
-          style="font-feature-settings: 'cv01', 'ss03'"
-        >
-          Back to sign in
-        </RouterLink>
-      </p>
-    </div>
+    <Button
+      variant="ghost"
+      :class="cn('w-full h-11 font-[510] text-muted-foreground')"
+      @click="router.push({ name: RouteNames.LOGIN })"
+      style="font-feature-settings: 'cv01', 'ss03'"
+    >
+      Back to sign in
+    </Button>
   </div>
 </template>

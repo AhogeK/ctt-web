@@ -124,7 +124,7 @@ const handleResend = () => {
               type="button"
               :class="
                 cn(
-                  'flex h-7 w-7 shrink-0 items-center justify-center rounded-md',
+                  'flex h-7 w-7 cursor-pointer shrink-0 items-center justify-center rounded-md',
                   'text-gray-400 hover:text-gray-600',
                   'dark:text-[#62666d] dark:hover:text-[#d0d6e0]',
                   'transition-colors duration-200',
@@ -147,7 +147,7 @@ const handleResend = () => {
         :class="
           cn(
             'flex flex-col gap-3 rounded-xl border border-[#d0d6e0]',
-            'bg-[#f3f4f5]/60 p-5 backdrop-blur-sm',
+            'bg-[#e5e7eb]/80 p-5 backdrop-blur-sm',
             'dark:border-white/8 dark:bg-white/3 dark:backdrop-blur-md',
           )
         "
@@ -155,34 +155,27 @@ const handleResend = () => {
         <p class="text-sm font-[510] text-gray-700 dark:text-[#d0d6e0]" style="font-feature-settings: 'cv01', 'ss03'">
           Didn't receive the email?
         </p>
-        <Button
+        <button
           :class="
             cn(
-              'w-full h-11 rounded-md border border-[#d0d6e0] font-[510] text-gray-700',
-              'transition-all duration-200 hover:bg-[#f3f4f5] hover:border-[#5e6ad2]/50',
-              'dark:border-white/8 dark:text-[#d0d6e0]',
-              'dark:hover:bg-white/5 dark:hover:border-[#5e6ad2]/50',
+              'w-full h-11 cursor-pointer rounded-md border border-[#d0d6e0] bg-white font-[510] text-gray-700 shadow-xs',
+              'transition-all duration-200 hover:border-[#5e6ad2] hover:text-[#5e6ad2]',
+              'dark:border-white/8 dark:bg-input/30 dark:text-[#d0d6e0]',
+              'dark:hover:border-[#5e6ad2]/50 dark:hover:bg-input/50 dark:hover:text-[#5e6ad2]',
             )
           "
-          variant="outline"
           :disabled="countdown > 0 || isPending"
           @click="handleResend"
           style="font-feature-settings: 'cv01', 'ss03'"
         >
           {{ countdown > 0 ? `Resend in ${countdown}s` : 'Resend verification email' }}
-        </Button>
+        </button>
       </div>
 
       <!-- Back to Login -->
       <Button
         variant="ghost"
-        :class="
-          cn(
-            'w-full h-11 rounded-md font-[510] text-gray-600',
-            'transition-all duration-200 hover:bg-[#f3f4f5] hover:text-gray-900',
-            'dark:text-[#8a8f98] dark:hover:bg-white/5 dark:hover:text-[#f7f8f8]',
-          )
-        "
+        :class="cn('w-full h-11 font-[510] text-muted-foreground')"
         @click="router.push({ name: RouteNames.LOGIN })"
         style="font-feature-settings: 'cv01', 'ss03'"
       >
