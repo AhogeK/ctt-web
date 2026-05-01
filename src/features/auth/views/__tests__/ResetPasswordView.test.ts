@@ -235,7 +235,7 @@ describe('ResetPasswordView', () => {
       mount(ResetPasswordView)
       expect(mutationOnSuccess).toBeDefined()
       mutationOnSuccess!()
-      expect(mockToastSuccess).toHaveBeenCalledWith('密码已重置，所有设备已强制下线')
+      expect(mockToastSuccess).toHaveBeenCalledWith('Password reset successful. All devices have been logged out.')
       expect(mockPush).toHaveBeenCalledWith({ name: 'login' })
     })
   })
@@ -249,7 +249,9 @@ describe('ResetPasswordView', () => {
       const error = createApiError(401, 'AUTH_003')
       mutationOnError!(error)
       expect(mockIsApiError).toHaveBeenCalledWith(error)
-      expect(mockToastError).toHaveBeenCalledWith('重置链接已失效或已使用，请重新申请')
+      expect(mockToastError).toHaveBeenCalledWith(
+        'This reset link has expired or already been used. Please request a new one.',
+      )
       expect(mockPush).toHaveBeenCalledWith({ name: 'forgot-password' })
     })
   })
@@ -263,7 +265,10 @@ describe('ResetPasswordView', () => {
       const error = createApiError(409, 'PASSWORD_SAME_AS_OLD')
       mutationOnError!(error)
       expect(mockIsApiError).toHaveBeenCalledWith(error)
-      expect(mockSetFieldError).toHaveBeenCalledWith('newPassword', '新密码不能与当前密码相同')
+      expect(mockSetFieldError).toHaveBeenCalledWith(
+        'newPassword',
+        'New password cannot be the same as your current password.',
+      )
     })
   })
 
@@ -278,8 +283,8 @@ describe('ResetPasswordView', () => {
       mutationOnError!(error)
       expect(mockIsApiError).toHaveBeenCalledWith(error)
       expect(mockStart).toHaveBeenCalled()
-      expect(mockToastError).toHaveBeenCalledWith('请求过于频繁', {
-        description: '请在 60s 后重试',
+      expect(mockToastError).toHaveBeenCalledWith('Too many requests', {
+        description: 'Try again in 60s',
       })
     })
   })
@@ -293,7 +298,7 @@ describe('ResetPasswordView', () => {
       const error = createApiError(500, 'SOME_UNKNOWN_CODE')
       mutationOnError!(error)
       expect(mockIsApiError).toHaveBeenCalledWith(error)
-      expect(mockToastError).toHaveBeenCalledWith('密码重置失败，请稍后重试')
+      expect(mockToastError).toHaveBeenCalledWith('Password reset failed. Please try again later.')
     })
   })
 
@@ -306,7 +311,7 @@ describe('ResetPasswordView', () => {
       const error = new Error('Network error')
       mutationOnError!(error)
       expect(mockIsApiError).toHaveBeenCalledWith(error)
-      expect(mockToastError).toHaveBeenCalledWith('密码重置失败，请稍后重试')
+      expect(mockToastError).toHaveBeenCalledWith('Password reset failed. Please try again later.')
     })
   })
 
@@ -314,9 +319,9 @@ describe('ResetPasswordView', () => {
     it('shows invalid reset link error state when token is missing', async () => {
       routeQueryState.value = {}
       const wrapper = mount(ResetPasswordView)
-      expect(wrapper.text()).toContain('重置链接无效')
-      expect(wrapper.text()).toContain('此密码重置链接无效或已过期')
-      expect(wrapper.text()).toContain('重新申请重置链接')
+      expect(wrapper.text()).toContain('Invalid Reset Link')
+      expect(wrapper.text()).toContain('This password reset link is invalid or has expired')
+      expect(wrapper.text()).toContain('Request New Reset Link')
     })
   })
 
@@ -326,8 +331,8 @@ describe('ResetPasswordView', () => {
       mount(ResetPasswordView)
       const onSubmitHandler = mockHandleSubmit.mock.results[0]?.value
       if (onSubmitHandler) onSubmitHandler()
-      expect(mockToastError).toHaveBeenCalledWith('重置链接无效', {
-        description: '请重新申请密码重置邮件',
+      expect(mockToastError).toHaveBeenCalledWith('Invalid reset link', {
+        description: 'Please request a new password reset email.',
       })
       expect(mockMutate).not.toHaveBeenCalled()
     })
@@ -340,7 +345,7 @@ describe('ResetPasswordView', () => {
       mount(ResetPasswordView)
       const error = createApiError(400, 'COMMON_002')
       mutationOnError!(error)
-      expect(mockToastError).toHaveBeenCalledWith('密码重置失败，请稍后重试')
+      expect(mockToastError).toHaveBeenCalledWith('Password reset failed. Please try again later.')
     })
 
     it('shows generic error toast for RATE_LIMIT_001 error', async () => {
@@ -349,7 +354,7 @@ describe('ResetPasswordView', () => {
       mount(ResetPasswordView)
       const error = createApiError(400, 'RATE_LIMIT_001')
       mutationOnError!(error)
-      expect(mockToastError).toHaveBeenCalledWith('密码重置失败，请稍后重试')
+      expect(mockToastError).toHaveBeenCalledWith('Password reset failed. Please try again later.')
     })
   })
 })
