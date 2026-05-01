@@ -80,6 +80,9 @@
 - [x] Bump version 0.5.38
 - [x] Code quality fixes: added guestOnly to RouteMeta, created ApiFetchOptions type, consolidated AUTH_003 handling, updated README.md. Tests 384/384 pass.
 - [x] Bump version 0.5.39
+- [x] Password validation sync: REGEX_PASSWORD_CHARS whitelist + PasswordStrengthMeter 4-rule additive system. Tests 382/382 pass.
+- [x] Bump version 0.5.40
+- [x] Ghost button default text color: added `text-muted-foreground` to 6 "Back to sign in" buttons. Bump version 0.5.57
 
 ## In Progress
 

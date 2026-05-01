@@ -2,10 +2,252 @@
 
 ## Current Status
 
-**Phase**: Code Quality Fixes — Type Safety & Redundancy (v0.5.39)
-**Version**: 0.5.39 (2026-05-01)
+**Phase**: Ghost Button Default Text Color
+**Version**: 0.5.57 (2026-05-02)
 
 ## Recent Activity
+
+### 0.5.57 — Ghost Button Default Text Color
+
+Added `text-muted-foreground` to all 6 "Back to sign in" ghost buttons across 5 auth views:
+
+1. **Problem**: Ghost buttons inherited full-contrast page text (pure black in light mode, pure white in dark mode), making them visually compete with the primary CTA button.
+
+2. **Solution**: Added `text-muted-foreground` to each button's `cn()` class, using shadcn-vue's muted foreground variable (`hsl(var(--muted-foreground))`) which automatically adjusts for both themes.
+
+3. **Files Updated**:
+   - RegisterSuccessView.vue (line 178)
+   - VerifyEmailView.vue (line 185)
+   - ResetPasswordView.vue (line 303)
+   - ForgotPasswordView.vue (lines 118, 133 — 2 instances)
+   - ForgotPasswordSuccessView.vue (line 75)
+
+4. **Ghost variant unchanged**: Hover glow effect (`hover:text-[#7170ff]` + text-shadow) preserved.
+
+### 0.5.56 — Resend Button Hover Simplified
+
+Changed light mode Resend/Try another email button hover to match dark mode pattern:
+
+- Before: `hover:bg-[#f3f4f5] hover:border-[#5e6ad2]/50` (background fill + tinted border)
+- After: `hover:border-[#5e6ad2] hover:text-[#5e6ad2]` (border + text color only)
+
+Files: RegisterSuccessView.vue, VerifyEmailView.vue, ForgotPasswordSuccessView.vue
+
+### 0.5.55 — Inline Card Darker (Didn't receive email)
+
+Made the "Didn't receive the email" inline card darker for better visual separation from main auth card:
+
+1. **User Feedback**: "我让你改的卡又不是大卡，是 Didn't receive the email"
+
+2. **Solution**: Card background `bg-[#f3f4f5]/60` → `bg-[#e5e7eb]/80`
+   - More visible gray tone while staying subtle
+   - Dark mode unchanged (`dark:bg-white/3`)
+
+3. **Files Updated**:
+   - RegisterSuccessView.vue (line 150)
+   - VerifyEmailView.vue (line 144)
+   - ForgotPasswordSuccessView.vue (line 48)
+
+### 0.5.54 — Dark Mode Restore (Resend Button)
+
+Restored Resend verification email button dark mode to git original:
+
+1. **Problem**: Previous iterations broke dark mode with `!bg-[#a6aaaf]` and `!text-gray-700` important modifiers
+
+2. **Solution**: `git checkout 509c6f9` restored all 3 auth views to original state
+
+3. **Ghost Button Preserved**: "Back to sign in" buttons kept brand color glow (`variant="ghost"` + `cn('w-full h-11 font-[510]')`)
+
+4. **Files Restored**:
+   - RegisterSuccessView.vue (Resend button)
+   - VerifyEmailView.vue (Resend button)
+   - ForgotPasswordSuccessView.vue (Try another email button)
+
+5. **Verification**: Dark mode colors confirmed:
+   - Background: `rgba(255,255,255,0.02)` (outline variant)
+   - Text: `#d0d6e0`
+   - Border: `rgba(255,255,255,0.08)`
+
+### 0.5.53 — Light Mode Button Contrast Fix (SUPERSEDED)
+
+Fixed light mode Resend button contrast per Plan Agent analysis:
+
+1. **User Feedback**: "现在又变回了没有差异的状态（亮主题下" — `bg-[#f7f8f8]` too close to card
+
+2. **Root Cause Analysis** (Plan Agent ses_21a706649ffegALapozngkefvS):
+   - Card effective color: `~rgb(250,251,251)` (near-white)
+   - Button `bg-[#f7f8f8]`: contrast ratio only **1.01:1** → invisible
+   - Dark mode pattern: button should be **distinctly different** from both page and card
+
+3. **Solution**: Use darker gray for visible contrast:
+   - Default: `bg-[#d9dce0]` (contrast 1.50:1 — clearly visible)
+   - Hover: `bg-[#ced2d7]` (slightly darker)
+
+4. **Files Fixed**:
+   - RegisterSuccessView.vue (line 161)
+   - ForgotPasswordSuccessView.vue (line 59)
+   - VerifyEmailView.vue (line 170)
+
+5. **Verification**: 384/384 tests pass
+
+### 0.5.52 — Light Mode Button "Hole" Effect Fix (SUPERSEDED by 0.5.53)
+
+Fixed light mode Resend button background to avoid "hole" effect in card:
+
+1. **User Feedback**: "亮色主题的那个按钮不要用跟总背景一样的颜色，看着像在卡片里挖了个洞。学习暗色主题里的设计思路"
+
+2. **Problem**: Light button `bg-white` = page background white, creating hole illusion in gray card `bg-[#f3f4f5]/60`
+
+3. **Solution**: Learn from dark mode approach (`bg-white/2` semi-transparent):
+   - Light: `bg-[#f7f8f8]` (off-white) → hover: `bg-[#ebedef]`
+   - Dark: unchanged (`bg-white/2` → hover: `bg-white/5`)
+
+4. **Files Fixed**:
+   - RegisterSuccessView.vue (lines 161-162)
+   - ForgotPasswordSuccessView.vue (lines 59-60)
+   - VerifyEmailView.vue (lines 170-171)
+
+5. **Verification**: 384/384 tests pass
+
+### 0.5.51 — Ghost Button DESIGN.md Compliance + Light Mode Contrast Fix (SUPERSEDED)
+
+Fixed Resend verification email button styling per DESIGN.md Ghost Button spec:
+
+1. **DESIGN.md Reference**: Ghost Button spec (lines 125-134):
+   - Background: `rgba(255,255,255,0.02)` ≈ `bg-white/2`
+   - Border: `1px solid rgb(36, 40, 44)` ≈ `border-[#24282c]`
+   - Text: `#e2e4e7`
+2. **Problem**: Light mode button lacked explicit background → invisible against card `bg-[#f3f4f5]/60`
+
+3. **Solution**: Updated button classes for all 3 auth views:
+   - Light: `bg-white border-[#d0d6e0] text-gray-700` → hover: `bg-[#f7f8f8] border-[#5e6ad2]/50`
+   - Dark: `bg-white/2 border-[#24282c] text-[#e2e4e7]` → hover: `bg-white/5 border-[#5e6ad2]/50`
+
+4. **Files Fixed**:
+   - VerifyEmailView.vue (lines 169-174)
+   - RegisterSuccessView.vue (lines 160-165)
+   - ForgotPasswordSuccessView.vue (lines 57-64)
+
+5. **Verification**: 384/384 tests pass
+
+### 0.5.50 — Auth Views Light Mode Button/Card Contrast Fix (SUPERSEDED)
+
+Fixed secondary button vs card background contrast in light mode:
+
+1. **User Feedback**: "我看你就改了暗色主题的按钮背景。但我的核心问题在亮色按钮背景色跟后面的Didn't receive the email 卡片背景色没啥差异，我是这个意思"
+2. **Root Cause**: Button `bg-[#f3f4f5]/80` and card `bg-[#f3f4f5]/60` were same color with only 20% opacity difference
+3. **Solution**: Changed button to pure white background
+   - Light: `bg-white border-[#d0d6e0]` → hover: `bg-[#f3f4f5] border-[#5e6ad2]/50 text-[#5e6ad2]`
+   - Dark: `bg-white/5 border-white/8` (unchanged) → hover: `bg-white/8 border-[#7170ff]/50 text-[#828fff]`
+4. **Files Fixed**:
+   - RegisterSuccessView.vue (lines 158-173)
+   - VerifyEmailView.vue (lines 167-182)
+   - ForgotPasswordSuccessView.vue (lines 56-70)
+5. **Verification**: 384/384 tests pass
+
+### 0.5.49 — Auth Views Light Mode Button Contrast Fix (SUPERSEDED by 0.5.50)
+
+Initial attempt with gray background `bg-[#f3f4f5]/80` — user clarified the real issue was button vs card contrast.
+
+### 0.5.48 — Ghost Button Brand Color Glow
+
+Updated font glow effect with DESIGN.md brand colors:
+
+1. **User Feedback**: "暗色主题缺少泛光，另外泛光应该符合 @DESIGN.md 的那个主题色" — wanted brand color glow, not generic black/white
+2. **DESIGN.md Reference**: Accent Violet `#7170ff` for interactive elements, Accent Hover `#828fff` for hover states
+3. **Solution**: Changed from generic black/white glow to brand indigo-violet glow
+   - ghost: `hover:text-[#7170ff] dark:hover:text-[#828fff] hover:[text-shadow:0_0_8px_rgba(113,112,255,0.25),0_0_2px_rgba(113,112,255,0.15)] dark:hover:[text-shadow:0_0_12px_rgba(130,143,255,0.4),0_0_4px_rgba(130,143,255,0.2)] transition-all duration-200`
+   - Light mode: `#7170ff` text color + soft glow
+   - Dark mode: `#828fff` text color + stronger glow (12px outer + 4px inner)
+4. **Verification**: 384/384 tests pass
+
+### 0.5.47 — Ghost Button Font Glow Effect (SUPERSEDED by 0.5.48)
+
+Implemented font glow effect per user request:
+
+1. **User Feedback**: "鼠标移上去不还是有按钮边框样式，当我想要的是字体边框的那种效果" — wanted text edge glow, not button container border
+2. **Solution**: Replaced inset shadow with `text-shadow` glow
+   - ghost: `hover:[text-shadow:0_0_8px_rgba(0,0,0,0.15),0_0_2px_rgba(0,0,0,0.1)] dark:hover:[text-shadow:0_0_8px_rgba(255,255,255,0.2),0_0_2px_rgba(255,255,255,0.1)] transition-all duration-200`
+   - Default: No style (inherits parent color)
+   - Hover: Font glow — 8px outer glow + 2px inner highlight on text itself
+3. **Verification**: 384/384 tests pass
+
+### 0.5.46 — Ghost Button Final Fix (No Default Text Color) (SUPERSEDED by 0.5.47)
+
+Previous attempt with inset shadow (user said still looked like button border):
+
+### 0.5.45 — Ghost Button Hover Effect Refactor (SUPERSEDED by 0.5.46)
+
+Initial ghost button hover refactor (later refined in 0.5.46):
+
+1. Redefined ghost variant with inset shadow hover (had `text-muted-foreground` — removed in 0.5.46)
+2. Deleted subtle variant (no longer needed)
+3. Files reverted to ghost: AppSidebar.vue, AppHeader.vue, SidebarTrigger.vue
+4. Superseded: 0.5.46 removed default text color for true invisible state
+
+### 0.5.44 — Ghost Button Variant System Refactor (SUPERSEDED by 0.5.45)
+
+Separated ghost/subtle variants per DESIGN.md spec (later reverted):
+
+1. **Issue**: Ghost variant conflated two design intents — Ghost Button (permanent bg+border) vs Subtle Button (invisible until hover)
+2. **Solution**: Redefined ghost + added new subtle variant in `button/index.ts`
+   - ghost: `text-muted-foreground bg-black/2 dark:bg-white/2 border border-border hover:bg-black/5 dark:hover:bg-white/5 hover:text-foreground transition-colors duration-200`
+   - subtle: `text-muted-foreground hover:bg-black/5 dark:hover:bg-white/5 hover:text-foreground transition-colors duration-200`
+3. **Files Migrated to subtle**: AppSidebar.vue:104, AppHeader.vue:43, SidebarTrigger.vue:18
+4. **Auth views keep ghost**: RegisterSuccessView, VerifyEmailView, ForgotPasswordView x2, ResetPasswordView, ForgotPasswordSuccessView (6 usages)
+5. **User Feedback**: Wrong approach — user wanted invisible default + edge highlight hover, not permanent bg
+6. **Superseded**: 0.5.45 reverted this approach
+
+### 0.5.43 — Auth Button Ghost Conversion
+
+Converted low-visibility RouterLinks to consistent Ghost Button pattern:
+
+1. **Issue**: "Back to sign in" text links invisible on Light mode white background — violated Linear design system visual hierarchy
+2. **Pattern A → B**: RouterLink (text-only) → Button variant="ghost" with font weight 510, feature settings 'cv01','ss03'
+3. **Files Changed**:
+   - ForgotPasswordView.vue: Lines 113-119 (success state) + 126-137 (pre-submission) → 2 Ghost Buttons
+   - ResetPasswordView.vue: Lines 301-313 ("Remember your password?" paragraph) → Ghost Button
+4. **Test Coverage**: Added assertion in ResetPasswordView.test.ts, ForgotPasswordView.test.ts line 194 still passes
+5. **Verification**: 382/382 tests pass, `vp check` clean (4 pre-existing lint errors in instance.test.ts unrelated)
+
+### 0.5.42 — Button Cursor Pointer Fix
+
+Fixed missing cursor:pointer on all button variants:
+
+1. **Issue**: Buttons lacked `cursor-pointer` class — mouse cursor stayed as default arrow on hover instead of showing hand icon
+2. **Root Cause**: Base `buttonVariants` CVA definition in `index.ts` line 7 missing `cursor-pointer` utility class
+3. **Fix**: Added `cursor-pointer` to base class string (shadcn-vue standard)
+4. **Location**: `src/components/ui/button/index.ts` line 7
+5. **Result**: All button variants now show hand cursor on hover (default, destructive, outline, secondary, ghost, link)
+6. **Verification**: `lsp_diagnostics` clean, `vp check` pass (memory-bank formatting pre-existing)
+
+### 0.5.41 — Button System Restoration
+
+RESTORED button system to shadcn-vue original after failed Linear-style refactor:
+
+1. **Root Cause**: I blindly applied user's "suggestions" instead of following DESIGN.md actual spec
+2. **Failed Changes**: Deleted `outline` variant, changed `default`→`ghost`, added custom Linear-style variants with wrong colors/shadows
+3. **User Feedback**: "风格直接被你改炸了...彻底烂掉了...风格不统一，单主题不统一，亮暗不统一"
+4. **Restoration**: `git checkout HEAD -- src/components/ui/button/index.ts` → shadcn-vue original restored
+5. **Cleanup**: Removed custom Button.test.ts
+6. **Result**: 382/382 tests pass, button variants back to:
+   - `default`: `bg-primary text-primary-foreground shadow-xs`
+   - `outline`: `border bg-background shadow-xs`
+   - `secondary`: `bg-secondary text-secondary-foreground`
+   - `ghost`: `hover:bg-accent hover:text-accent-foreground`
+   - `link`: `text-primary underline-offset-4 hover:underline`
+7. **Lesson**: NEVER blindly apply user suggestions — ALWAYS read DESIGN.md spec first
+
+### 0.5.40 — Password Validation Sync
+
+### 0.5.40 — Password Validation Sync
+
+Synced password validation with backend `^[!-~]+$` whitelist (ASCII 33-126):
+
+1. **Schema**: Added `REGEX_PASSWORD_CHARS = /^[!-~]+$/` constant + `.regex()` to `StrongPasswordSchema` before `.min(8)`. Parentheses/brackets now allowed.
+2. **Tests**: Added 7 charset tests (parentheses, brackets, ASCII range, spaces, Chinese, emoji, priority).
+3. **PasswordStrengthMeter**: Replaced 7-rule penalty system with 4-rule additive system — adding chars never reduces strength.
+4. **Verification**: 382/382 tests pass, `vp check` clean.
 
 ### 0.5.39 — Code Quality Fixes
 

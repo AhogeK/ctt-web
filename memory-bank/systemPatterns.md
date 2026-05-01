@@ -160,3 +160,32 @@ Pattern: `?retried=1` query param prevents infinite reload loop.
 - ❌ Hardcoded strings (use i18n keys)
 - ❌ Direct `ofetch` calls in components
 - ❌ `error.error` for backend error code extraction (use `error.data.code`)
+- ❌ Outer shadows for button elevation in dark mode (use luminance stepping)
+
+## Button Variant System (Linear-style)
+
+### 4-tier Hierarchy (0.5.45 refactor)
+
+| Variant     | Purpose                         | Visual Weight                              | Usage Examples                                 |
+| ----------- | ------------------------------- | ------------------------------------------ | ---------------------------------------------- |
+| `primary`   | Brand CTA (submit, confirm)     | Strongest — `bg-[#5e6ad2]` indigo          | Login submit, Register submit                  |
+| `secondary` | Container actions (cancel)      | Medium — `bg-secondary`                    | Dialog cancel, Modal close                     |
+| `ghost`     | Secondary CTAs, toolbar buttons | Invisible default, edge highlight on hover | Auth "Back to sign in", sidebar toggle, logout |
+| `default`   | Minimal text-only (non-primary) | Weakest — no bg/border                     | Non-primary text links                         |
+
+### Ghost Variant Behavior (0.5.45)
+
+**ghost variant** — Invisible until interaction, edge highlight on hover:
+
+- Default: `text-muted-foreground` (no bg, no border)
+- Hover: `hover:shadow-[inset_0_0_0_1px_rgba(0,0,0,0.1)]` (light) or `hover:shadow-[inset_0_0_0_1px_rgba(255,255,255,0.08)]` (dark) — 1px inset shadow edge highlight
+- Transition: `transition-all duration-200` (smooth shadow appearance)
+- Use case: All secondary buttons — auth views, toolbar, sidebar toggle, logout
+
+### Key Implementation Rules
+
+1. **Ghost = invisible default + edge highlight hover** (not solid bg change)
+2. **Edge highlight = inset shadow** (not border or background)
+3. **Transition timing**: `duration-200` for smooth shadow appearance
+4. **Light/Dark adaptation**: Different shadow opacity values for contrast
+5. **All secondary buttons use ghost** (no subtle variant since 0.5.45)
