@@ -212,15 +212,20 @@ export type ResetPasswordRequest = z.infer<typeof ResetPasswordRequestSchema>
 /**
  * Reset password form schema for frontend UI validation.
  *
- * Extends ResetPasswordRequestSchema with confirmPassword field and cross-field
- * password matching validation. Used with Vee-Validate + Zod integration.
+ * Independent from ResetPasswordRequestSchema — does NOT include token field
+ * because token is extracted from URL query param, not rendered in the form.
+ * Used with Vee-Validate + Zod integration for client-side validation only.
+ * Token validation is handled at submission time in the view component.
  */
-export const ResetPasswordFormSchema = ResetPasswordRequestSchema.extend({
-  // Confirm password for frontend UX — not sent to API
-  confirmPassword: z.string().min(1, 'Please confirm your password'),
-}).refine((data) => data.newPassword === data.confirmPassword, {
-  message: 'Passwords do not match',
-  path: ['confirmPassword'],
-})
+export const ResetPasswordFormSchema = z
+  .object({
+    newPassword: StrongPasswordSchema,
+    // Confirm password for frontend UX — not sent to API
+    confirmPassword: z.string().min(1, 'Please confirm your password'),
+  })
+  .refine((data) => data.newPassword === data.confirmPassword, {
+    message: 'Passwords do not match',
+    path: ['confirmPassword'],
+  })
 
 export type ResetPasswordForm = z.infer<typeof ResetPasswordFormSchema>

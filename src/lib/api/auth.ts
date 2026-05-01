@@ -78,10 +78,12 @@ export async function logoutAll(): Promise<void> {
  * @throws Zod validation error if response doesn't match expected schema
  */
 export async function refresh(params: { refreshToken: string }): Promise<LoginResponse> {
+  // __authRetry prevents infinite refresh loops in the interceptor
   const response = await apiFetch<unknown>('/api/v1/auth/refresh', {
     method: 'POST',
     body: params,
-  })
+    __authRetry: true,
+  } as Record<string, unknown>)
 
   const wrapped = RestApiResponseSchema.parse(response)
   return LoginResponseSchema.parse(wrapped.data)

@@ -376,6 +376,7 @@ describe('auth API', () => {
       expect(apiFetch).toHaveBeenCalledWith('/api/v1/auth/refresh', {
         method: 'POST',
         body: { refreshToken: 'old-refresh-token' },
+        __authRetry: true,
       })
       expect(result.accessToken).toBe('new-access-token')
       expect(result.refreshToken).toBe('new-refresh-token')
