@@ -862,14 +862,12 @@ describe('Type inference', () => {
     expect(_typeCheck.newPassword).toBe('SecurePass1!')
   })
 
-  it('ResetPasswordForm type extends ResetPasswordRequest with confirmPassword', () => {
+  it('ResetPasswordForm type has newPassword and confirmPassword only', () => {
     const _typeCheck: ResetPasswordForm = {
-      token: 'reset-token-123',
       newPassword: 'SecurePass1!',
       confirmPassword: 'SecurePass1!',
     }
     expect(_typeCheck.confirmPassword).toBe('SecurePass1!')
-    expect(_typeCheck.token).toBe('reset-token-123')
     expect(_typeCheck.newPassword).toBe('SecurePass1!')
   })
 })
@@ -1047,7 +1045,6 @@ describe('ResetPasswordRequestSchema', () => {
 describe('ResetPasswordFormSchema', () => {
   it('accepts valid form with matching passwords', () => {
     const validData = {
-      token: 'reset-token-abc-123',
       newPassword: 'SecurePass1!',
       confirmPassword: 'SecurePass1!',
     }
@@ -1061,7 +1058,6 @@ describe('ResetPasswordFormSchema', () => {
 
   it('rejects password mismatch with error on confirmPassword path', () => {
     const invalidData = {
-      token: 'reset-token-abc-123',
       newPassword: 'SecurePass1!',
       confirmPassword: 'DifferentPass1!',
     }
@@ -1076,7 +1072,6 @@ describe('ResetPasswordFormSchema', () => {
 
   it('rejects missing confirmPassword', () => {
     const invalidData = {
-      token: 'reset-token-abc-123',
       newPassword: 'SecurePass1!',
     }
     const result = ResetPasswordFormSchema.safeParse(invalidData)
@@ -1087,23 +1082,8 @@ describe('ResetPasswordFormSchema', () => {
     expect(result.error.issues[0]?.path).toStrictEqual(['confirmPassword'])
   })
 
-  it('inherits token validation from base schema', () => {
+  it('rejects weak password', () => {
     const invalidData = {
-      token: '',
-      newPassword: 'SecurePass1!',
-      confirmPassword: 'SecurePass1!',
-    }
-    const result = ResetPasswordFormSchema.safeParse(invalidData)
-    expect(result.success).toBe(false)
-    if (result.success) {
-      throw new Error('Expected parse to fail but it succeeded')
-    }
-    expect(result.error.issues[0]?.path).toStrictEqual(['token'])
-  })
-
-  it('inherits password strength validation from base schema', () => {
-    const invalidData = {
-      token: 'reset-token-abc-123',
       newPassword: 'weak',
       confirmPassword: 'weak',
     }
