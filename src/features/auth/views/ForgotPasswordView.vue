@@ -123,15 +123,16 @@ const isSubmitting = computed(() => toValue(mutation.isPending))
 
       <!-- Success Message -->
       <div class="space-y-2">
-        <h2
-          class="text-xl font-[510] text-gray-900 dark:text-[#f7f8f8]"
-          style="font-feature-settings: 'cv01', 'ss03'"
-        >
+        <h2 class="text-xl font-[510] text-gray-900 dark:text-[#f7f8f8]" style="font-feature-settings: 'cv01', 'ss03'">
           Check your email
         </h2>
         <p class="text-base text-gray-500 dark:text-[#8a8f98]" style="font-feature-settings: 'cv01', 'ss03'">
-          If <code class="px-2 py-0.5 rounded-md bg-gray-100 dark:bg-gray-800 font-mono text-sm font-medium text-gray-700 dark:text-gray-300">{{ submittedEmail }}</code> exists in our database, you will receive a password recovery link
-          shortly.
+          If
+          <code
+            class="px-2 py-0.5 rounded-md bg-gray-100 dark:bg-gray-800 font-mono text-sm font-medium text-gray-700 dark:text-gray-300"
+            >{{ submittedEmail }}</code
+          >
+          exists in our database, you will receive a password recovery link shortly.
         </p>
       </div>
     </div>

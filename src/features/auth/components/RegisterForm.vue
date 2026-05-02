@@ -6,8 +6,10 @@ import { RegisterFormSchema, type RegisterRequest } from '@/lib/schemas/auth.sch
 import { FormField, FormItem, FormLabel, FormControl, FormMessage } from '@/components/ui/form'
 import { Input } from '@/components/ui/input'
 import { Button } from '@/components/ui/button'
+import { Checkbox } from '@/components/ui/checkbox'
 import { cn } from '@/lib/utils'
 import PasswordStrengthMeter from './PasswordStrengthMeter.vue'
+import TermsDialog from './TermsDialog.vue'
 import { Eye, EyeOff } from 'lucide-vue-next'
 
 const props = defineProps<{
@@ -27,6 +29,7 @@ const form = useForm({
 
 const showPassword = shallowRef(false)
 const showConfirmPassword = shallowRef(false)
+const showTerms = shallowRef(false)
 
 const passwordValue = useFieldValue<string>('password')
 
@@ -57,7 +60,7 @@ const onSubmit = form.handleSubmit((values) => {
 </script>
 
 <template>
-  <form @submit="onSubmit" class="flex flex-col gap-3 pt-6">
+  <form @submit="onSubmit" class="flex flex-col gap-3 pt-4">
     <FormField v-slot="{ componentField }" name="email">
       <FormItem>
         <FormLabel
@@ -71,7 +74,7 @@ const onSubmit = form.handleSubmit((values) => {
             placeholder="you@example.com"
             :class="
               cn(
-                'h-11 rounded-md border border-[#d0d6e0] bg-[#f3f4f5] text-[#1a1a2e]',
+                'h-10 rounded-md border border-[#d0d6e0] bg-[#f3f4f5] text-[#1a1a2e]',
                 'placeholder:text-[#8a8f98] transition-all duration-200',
                 'focus:border-[#5e6ad2] focus:bg-white focus:ring-2 focus:ring-[#5e6ad2]/20',
                 'dark:border-white/8 dark:bg-white/2 dark:text-[#f7f8f8] dark:placeholder:text-[#62666d]',
@@ -81,7 +84,7 @@ const onSubmit = form.handleSubmit((values) => {
             v-bind="componentField"
           />
         </FormControl>
-        <FormMessage />
+        <FormMessage class="min-h-4" />
       </FormItem>
     </FormField>
 
@@ -97,7 +100,7 @@ const onSubmit = form.handleSubmit((values) => {
             placeholder="Your name"
             :class="
               cn(
-                'h-11 rounded-md border border-[#d0d6e0] bg-[#f3f4f5] text-[#1a1a2e]',
+                'h-10 rounded-md border border-[#d0d6e0] bg-[#f3f4f5] text-[#1a1a2e]',
                 'placeholder:text-[#8a8f98] transition-all duration-200',
                 'focus:border-[#5e6ad2] focus:bg-white focus:ring-2 focus:ring-[#5e6ad2]/20',
                 'dark:border-white/8 dark:bg-white/2 dark:text-[#f7f8f8] dark:placeholder:text-[#62666d]',
@@ -107,7 +110,7 @@ const onSubmit = form.handleSubmit((values) => {
             v-bind="componentField"
           />
         </FormControl>
-        <FormMessage />
+        <FormMessage class="min-h-4" />
       </FormItem>
     </FormField>
 
@@ -125,7 +128,7 @@ const onSubmit = form.handleSubmit((values) => {
               placeholder="Create a strong password"
               :class="
                 cn(
-                  'h-11 rounded-md border border-[#d0d6e0] bg-[#f3f4f5] text-[#1a1a2e]',
+                  'h-10 rounded-md border border-[#d0d6e0] bg-[#f3f4f5] text-[#1a1a2e]',
                   'placeholder:text-[#8a8f98] transition-all duration-200',
                   'focus:border-[#5e6ad2] focus:bg-white focus:ring-2 focus:ring-[#5e6ad2]/20',
                   'dark:border-white/8 dark:bg-white/2 dark:text-[#f7f8f8] dark:placeholder:text-[#62666d]',
@@ -138,7 +141,7 @@ const onSubmit = form.handleSubmit((values) => {
             <button
               type="button"
               tabindex="-1"
-              class="absolute right-2.5 top-1/2 -translate-y-1/2 text-[#8a8f98] hover:text-[#5e6ad2] transition-colors"
+              class="absolute right-2.5 top-1/2 -translate-y-1/2 text-[#8a8f98] hover:text-[#5e6ad2] transition-colors cursor-pointer"
               @click="showPassword = !showPassword"
             >
               <EyeOff v-if="!showPassword" class="h-4 w-4" />
@@ -147,12 +150,12 @@ const onSubmit = form.handleSubmit((values) => {
           </div>
         </FormControl>
         <PasswordStrengthMeter :password="passwordValue" />
-        <FormMessage />
+        <FormMessage class="min-h-4" />
       </FormItem>
     </FormField>
 
     <FormField v-slot="{ componentField }" name="confirmPassword">
-      <FormItem class="mt-4">
+      <FormItem>
         <FormLabel
           class="text-sm font-[510] text-gray-600 dark:text-[#8a8f98]"
           style="font-feature-settings: 'cv01', 'ss03'"
@@ -165,7 +168,7 @@ const onSubmit = form.handleSubmit((values) => {
               placeholder="Repeat your password"
               :class="
                 cn(
-                  'h-11 rounded-md border border-[#d0d6e0] bg-[#f3f4f5] text-[#1a1a2e]',
+                  'h-10 rounded-md border border-[#d0d6e0] bg-[#f3f4f5] text-[#1a1a2e]',
                   'placeholder:text-[#8a8f98] transition-all duration-200',
                   'focus:border-[#5e6ad2] focus:bg-white focus:ring-2 focus:ring-[#5e6ad2]/20',
                   'dark:border-white/8 dark:bg-white/2 dark:text-[#f7f8f8] dark:placeholder:text-[#62666d]',
@@ -178,7 +181,7 @@ const onSubmit = form.handleSubmit((values) => {
             <button
               type="button"
               tabindex="-1"
-              class="absolute right-2.5 top-1/2 -translate-y-1/2 text-[#8a8f98] hover:text-[#5e6ad2] transition-colors"
+              class="absolute right-2.5 top-1/2 -translate-y-1/2 text-[#8a8f98] hover:text-[#5e6ad2] transition-colors cursor-pointer"
               @click="showConfirmPassword = !showConfirmPassword"
             >
               <EyeOff v-if="!showConfirmPassword" class="h-4 w-4" />
@@ -186,15 +189,34 @@ const onSubmit = form.handleSubmit((values) => {
             </button>
           </div>
         </FormControl>
-        <FormMessage />
+        <FormMessage class="min-h-4" />
       </FormItem>
+    </FormField>
+
+    <FormField v-slot="{ value, handleChange }" name="agreedToTerms">
+      <div class="flex items-start gap-2">
+        <Checkbox :checked="value" @update:checked="handleChange" class="mt-0.5 cursor-pointer" />
+        <div class="grid gap-1.5 leading-tight">
+          <FormLabel class="text-sm font-normal text-gray-600 dark:text-[#8a8f98]">
+            I agree to the
+            <button
+              type="button"
+              class="cursor-pointer text-[#5e6ad2] hover:text-[#7170ff] underline transition-colors"
+              @click="showTerms = true"
+            >
+              Terms of Service
+            </button>
+          </FormLabel>
+        </div>
+      </div>
+      <FormMessage class="min-h-4" />
     </FormField>
 
     <Button
       type="submit"
       :class="
         cn(
-          'group w-full h-11 mt-3 rounded-md bg-[#7b85d4] text-white font-[510] text-base',
+          'group w-full h-10 mt-3 rounded-md bg-[#7b85d4] text-white font-[510] text-base',
           'shadow-lg shadow-[#7b85d4]/15 transition-all duration-200',
           'hover:bg-[#8b95e0] hover:shadow-[#8b95e0]/20 hover:scale-[1.02] active:scale-[0.98]',
         )
@@ -204,4 +226,5 @@ const onSubmit = form.handleSubmit((values) => {
       <span class="relative z-10">Create account</span>
     </Button>
   </form>
+  <TermsDialog v-model:open="showTerms" />
 </template>
