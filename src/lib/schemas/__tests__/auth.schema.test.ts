@@ -101,7 +101,7 @@ describe('StrongPasswordSchema', () => {
     if (result.success) {
       throw new Error('Expected parse to fail but it succeeded')
     }
-    expect(result.error.issues[0]?.message).toContain('ASCII')
+    expect(result.error.issues[0]?.message).toContain('invalid characters')
   })
 })
 
@@ -205,6 +205,7 @@ describe('RegisterFormSchema', () => {
       displayName: 'TestUser',
       password: 'SecurePass1!',
       confirmPassword: 'SecurePass1!',
+      agreedToTerms: true,
     }
     const result = RegisterFormSchema.safeParse(validData)
 
@@ -221,6 +222,7 @@ describe('RegisterFormSchema', () => {
       displayName: 'TestUser',
       password: 'SecurePass1!',
       confirmPassword: 'DifferentPass1!',
+      agreedToTerms: true,
     }
     const result = RegisterFormSchema.safeParse(invalidData)
 
@@ -253,6 +255,7 @@ describe('RegisterFormSchema', () => {
       displayName: 'TestUser',
       password: 'SecurePass1!',
       confirmPassword: 'SecurePass1!',
+      agreedToTerms: true,
     }
     const result = RegisterFormSchema.safeParse(invalidData)
 
@@ -792,6 +795,7 @@ describe('Type inference', () => {
       displayName: 'Test',
       password: 'SecurePass1!',
       confirmPassword: 'SecurePass1!',
+      agreedToTerms: true,
     }
     expect(_typeCheck.confirmPassword).toBe('SecurePass1!')
     expect(_typeCheck.email).toBe('test@example.com')

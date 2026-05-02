@@ -17,7 +17,7 @@ import { z } from 'zod'
 export const StrongPasswordSchema = z
   .string()
   .optional()
-  .refine((val) => !val || /^[!-~]+$/.test(val), 'Password must only contain standard ASCII characters (letters, digits, and symbols)')
+  .refine((val) => !val || /^[!-~]+$/.test(val), 'Password contains invalid characters')
   .refine((val) => !val || val.length >= 8, 'Password must be at least 8 characters')
   .refine((val) => !val || val.length <= 64, 'Password must not exceed 64 characters')
 
@@ -110,6 +110,9 @@ export const RegisterRequestSchema = z.object({
 export const RegisterFormSchema = RegisterRequestSchema.extend({
   // Confirm password for frontend UX — not sent to API
   confirmPassword: z.string().min(1, 'Please confirm your password'),
+  agreedToTerms: z.boolean().refine((val) => val === true, {
+    message: 'You must agree to the Terms of Service',
+  }),
 }).refine((data) => data.password === data.confirmPassword, {
   message: 'Passwords do not match',
   path: ['confirmPassword'],
