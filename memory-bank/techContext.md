@@ -5,8 +5,8 @@
 | Layer         | Technology                             | Version      |
 | ------------- | -------------------------------------- | ------------ |
 | Build         | Vite+ (unified toolchain via `vp` CLI) | latest       |
-| Framework     | Vue 3 + TypeScript Strict              | ^3.5         |
-| Routing       | Vue Router                             | ^4           |
+| Framework     | Vue 3 + TypeScript Strict              | ^3.6 (beta)  |
+| Routing       | Vue Router                             | ^5           |
 | Server State  | TanStack Query                         | ^5           |
 | Global State  | Pinia                                  | ^3           |
 | UI            | Radix Vue + shadcn-vue                 | latest       |

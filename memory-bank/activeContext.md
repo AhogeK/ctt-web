@@ -2,10 +2,203 @@
 
 ## Current Status
 
-**Phase**: 404View Button Centering Fix
-**Version**: 0.5.76 (2026-05-02)
+**Phase**: UI Polish & Refinement
+**Version**: 0.5.83 (2026-05-02)
 
 ## Recent Activity
+
+### 0.5.83 — Code Review Fixes
+
+Fixed all critical and important issues identified in comprehensive code review:
+
+**1. Test Assertion Fix**:
+
+- Updated `auth.schema.test.ts` line 104: `toContain('ASCII')` → `toContain('invalid characters')`
+- Matches simplified error message `'Password contains invalid characters'`
+- Result: All 392 tests now pass
+
+**2. Documentation Version Updates**:
+
+- `memory-bank/activeContext.md`: Version 0.5.77 → 0.5.82 → 0.5.83, Phase → UI Polish & Refinement
+- `memory-bank/techContext.md`: Vue Router ^4 → ^5, Vue ^3.5 → ^3.6 (beta)
+- `memory-bank/systemPatterns.md`: Added devices.ts and leaderboard.ts to router modules
+
+**3. README & Architecture Docs**:
+
+- `README.md`: Added devices/ and leaderboard/ to project structure and features table
+- `docs/architecture.md`: Added feature directories, router modules, and chunk groups
+
+**Verification**:
+
+- ✅ 392/392 tests pass
+- ✅ vp check pass (4 pre-existing lint errors unrelated)
+- ✅ All documentation consistent with code state
+
+### 0.5.82 — Fix Terms of Service Dialog Width
+
+Fixed Terms of Service dialog being too narrow:
+
+**Problem**: Dialog appeared too narrow, making text content look cramped and awkward.
+
+**Root Cause**: DialogContent base styles have `sm:max-w-lg` constraint. The `max-w-2xl` class without breakpoint prefix was being overridden.
+
+**Solution**: Changed TermsDialog width from `max-w-2xl` to `sm:max-w-3xl` (768px) to properly override the base constraint.
+
+**File Updated**: `src/features/auth/components/TermsDialog.vue` (line 23)
+
+**Result**:
+
+- ✅ Dialog width increased from 672px to 768px
+- ✅ More comfortable line length for reading terms content
+- ✅ Properly overrides DialogContent base styles
+- ✅ Maintains mobile responsiveness
+
+**Verification**: lsp_diagnostics clean
+
+### 0.5.81 — Fix Password Eye Icon Cursor
+
+Fixed missing pointer cursor on password visibility toggle buttons:
+
+**Problem**: Eye icons for showing/hiding password did NOT show pointer cursor on hover.
+
+**Files Updated**:
+
+- `src/features/auth/components/LoginForm.vue` — password toggle button
+- `src/features/auth/components/RegisterForm.vue` — password toggle button
+- `src/features/auth/components/RegisterForm.vue` — confirm password toggle button
+
+**Fix**: Added `cursor-pointer` class to all 3 password toggle buttons.
+
+**Result**:
+
+- ✅ Hovering over eye icons now shows pointer cursor
+- ✅ Click functionality unchanged
+- ✅ Consistent with other interactive elements
+
+**Verification**: lsp_diagnostics clean
+
+### 0.5.80 — Fix Cursor Pointer Styles
+
+Fixed incorrect cursor styles in RegisterForm terms agreement section:
+
+**Problem**:
+
+1. "I agree to the" (plain text) showed pointer cursor incorrectly
+2. "Terms of Service" (clickable link) did NOT show pointer cursor
+3. Checkbox did NOT show pointer cursor
+
+**Root Cause**:
+
+- `FormLabel` had `cursor-pointer` class, but it wraps both plain text AND the link
+- Checkbox and link button lacked `cursor-pointer` class
+
+**Fix Applied to `src/features/auth/components/RegisterForm.vue`**:
+
+1. **Checkbox**: Added `cursor-pointer` class
+2. **FormLabel**: Removed `cursor-pointer` class (was causing plain text to show pointer)
+3. **Terms of Service button**: Added `cursor-pointer` class
+
+**Result**:
+
+- ✅ Checkbox → pointer cursor on hover
+- ✅ "Terms of Service" link → pointer cursor on hover
+- ✅ "I agree to the" plain text → default cursor (no pointer)
+
+**Verification**: lsp_diagnostics clean
+
+### 0.5.79 — Compact Form Layout
+
+Made all auth forms more compact for better space efficiency:
+
+**Changes Applied to All Auth Forms** (LoginForm, RegisterForm, ForgotPasswordForm, ResetPasswordForm):
+
+1. **Form gap**: `gap-4` (16px) → `gap-3` (12px) — saves 4px × 5 gaps = 20px
+2. **Top padding**: `pt-6` (24px) → `pt-4` (16px) — saves 8px
+3. **Input height**: `h-11` (44px) → `h-10` (40px) — saves 4px × 4 inputs = 16px
+4. **Button margin**: `mt-4` (16px) → `mt-3` (12px) — saves 4px
+5. **Button height**: `h-11` (44px) → `h-10` (40px) — saves 4px
+
+**Total Vertical Savings**: ~52px per form
+
+**Files Updated**:
+
+- `src/features/auth/components/LoginForm.vue`
+- `src/features/auth/components/RegisterForm.vue`
+- `src/features/auth/components/ForgotPasswordForm.vue`
+- `src/features/auth/components/ResetPasswordForm.vue`
+
+**Design Rationale**:
+
+- Input height h-10 (40px) still above shadcn default h-9 (36px)
+- Touch targets remain usable (40px + focus rings)
+- Maintains professional appearance while reducing wasted space
+- Consistent with 4px-based spacing scale
+
+**Verification**: vp check pass (4 pre-existing lint errors in test files unrelated)
+
+### 0.5.78 — Password Error Message Simplification
+
+Fixed long error message causing form layout shift:
+
+**Problem**: Password ASCII validation error message was too long (~80 chars), wrapping to 2 lines and causing layout shift:
+
+```
+'Password must only contain standard ASCII characters (letters, digits, and symbols)'
+```
+
+**Solution**: Simplified to concise single-line message:
+
+```
+'Password contains invalid characters'
+```
+
+**File Updated**: `src/lib/schemas/auth.schema.ts` (line 22)
+
+**Benefit**: Error message now fits on single line, no layout shift, clear and actionable.
+
+### 0.5.77 — Form Spacing Consistency Fix
+
+Fixed inconsistent form spacing across all auth pages for professional, uniform appearance:
+
+**Problems Identified**:
+
+1. FormMessage reserved excessive space (`min-h-12` = 48px)
+2. Form internal gaps inconsistent (gap-2, gap-3 mixed)
+3. View-level spacing inconsistent (space-y-6 vs space-y-10)
+4. Submit button margins inconsistent (mt-3, mt-4, or none)
+
+**Fixes Applied**:
+
+1. **FormMessage.vue**: `min-h-12` → `min-h-8` (48px → 32px) — reserves appropriate space for 2 lines of error text
+2. **All auth forms**: Unified to `gap-4` (16px) for field-to-field spacing
+   - LoginForm.vue: gap-3 → gap-4
+   - RegisterForm.vue: gap-2 → gap-4 (was too tight)
+   - ForgotPasswordForm.vue: gap-3 → gap-4
+   - ResetPasswordForm.vue: gap-3 → gap-4
+3. **ResetPasswordView.vue**: `space-y-6` → `space-y-10` (matches all other auth views)
+4. **All submit buttons**: Unified to `mt-4` (16px)
+   - LoginForm.vue: mt-3 → mt-4
+   - RegisterForm.vue: no mt → mt-4
+   - ForgotPasswordForm.vue: mt-3 → mt-4
+   - ResetPasswordForm.vue: mt-3 → mt-4
+
+**Design System Alignment**:
+
+- Field-to-field: 16px (gap-4) — professional standard
+- Label-to-input: 8px (FormItem's internal gap-2) — shadcn-vue default
+- View section separation: 40px (space-y-10) — consistent vertical rhythm
+- Button separation: 16px (mt-4) — matches field spacing
+
+**Files Updated**: 8 files total
+
+- `src/components/ui/form/FormMessage.vue`
+- `src/features/auth/components/LoginForm.vue`
+- `src/features/auth/components/RegisterForm.vue`
+- `src/features/auth/components/ForgotPasswordForm.vue`
+- `src/features/auth/components/ResetPasswordForm.vue`
+- `src/features/auth/views/ResetPasswordView.vue`
+
+**Verification**: vp check pass (4 pre-existing lint errors in test files unrelated)
 
 ### 0.5.76 — 404View Button Centering Fix
 
@@ -27,16 +220,19 @@ Fixed button alignment in 404 Not Found page:
 Fixed all issues identified in code review with own judgment applied:
 
 **1. Hardcoded Error Messages (ResetPasswordView.vue)**:
+
 - Added `mapApiErrorCode` import from `@/lib/utils/api-error`
 - Replaced hardcoded strings with `mapApiErrorCode('AUTH_003')` and `mapApiErrorCode('PASSWORD_SAME_AS_OLD')`
 - Updated test mock to return proper messages
 
 **2. Stale Authentication Tests (19 tests)**:
+
 - `auth.schema.test.ts` (13 tests): Updated to match current `StrongPasswordSchema` (8-64 chars, printable ASCII, NO complexity requirements)
 - `auth.test.ts` (6 tests): Same updates for API-level tests
 - Test changes: "rejects X" → "accepts X (no complexity requirement)" for passwords that now pass validation
 
 **3. Schema Cleanup**:
+
 - Removed no-op `.extend({})` from `ForgotPasswordFormSchema`
 
 **Test Results**: ✅ 384/384 tests pass (was 365/384 with 19 stale failures)
@@ -48,6 +244,7 @@ Completed comprehensive code review for ResetPasswordView changes:
 **Review Verdict**: ✅ Ready to commit
 
 **Passed Categories**:
+
 - Code Quality & Style: Naming conventions, TypeScript strict, Tailwind consistency
 - Comments & Documentation: No emojis, English only, JSDoc on props
 - Business Logic: Password validation matches backend, form submission prevents duplicates
@@ -57,6 +254,7 @@ Completed comprehensive code review for ResetPasswordView changes:
 - Test Results: 10/10 ResetPasswordView tests pass
 
 **Issues Found** (non-blocking):
+
 1. Hardcoded error messages (AUTH_003, PASSWORD_SAME_AS_OLD) — should use `mapApiErrorCode()`
 2. Pre-existing test failures (19 tests in auth.schema.test.ts/auth.test.ts) — stale from v0.5.40 password policy sync
 3. ForgotPasswordFormSchema empty `.extend({})` — cosmetic nit

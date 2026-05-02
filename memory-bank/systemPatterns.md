@@ -70,6 +70,8 @@ src/router/
 └── modules/           # Feature-based route slices
     ├── auth.ts        # Authentication routes
     ├── dashboard.ts   # Dashboard routes
+    ├── devices.ts     # Device management routes
+    ├── leaderboard.ts # Leaderboard routes
     └── settings.ts    # Settings routes
 ```
 
