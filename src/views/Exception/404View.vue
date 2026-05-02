@@ -40,7 +40,7 @@ function handleGoBack() {
       </p>
 
       <!-- Action buttons -->
-      <div class="mt-8 flex flex-col gap-3 sm:flex-row sm:gap-4">
+      <div class="mt-8 flex justify-center flex-col gap-3 sm:flex-row sm:gap-4">
         <Button variant="default" @click="handleGoHome"> Go Home </Button>
         <Button variant="outline" @click="handleGoBack"> Go Back </Button>
       </div>
