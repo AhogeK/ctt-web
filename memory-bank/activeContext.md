@@ -4,10 +4,11 @@
 
 **Phase**: UI Polish & Refinement
 **Version**: 0.5.83 (2026-05-02)
+**Branch**: develop (synced with origin)
 
 ## Recent Activity
 
-### 0.5.83 — Code Review Fixes
+### 0.5.83 — Code Review Fixes & Atomic Commits
 
 Fixed all critical and important issues identified in comprehensive code review:
 
@@ -28,11 +29,29 @@ Fixed all critical and important issues identified in comprehensive code review:
 - `README.md`: Added devices/ and leaderboard/ to project structure and features table
 - `docs/architecture.md`: Added feature directories, router modules, and chunk groups
 
+**4. Atomic Commits on develop** (5 commits, following AGENTS.md R6.5):
+
+- `3e76f63` fix(ui): polish auth form spacing, cursor styles, and TermsDialog width (14 files)
+- `a9767fb` fix(auth): simplify password error message and fix test assertion (2 files)
+- `360e379` docs: add devices and leaderboard features to README and architecture (2 files)
+- `cac123c` chore: update memory-bank for v0.5.82-v0.5.83 (3 files, AI content)
+- `5fba086` chore: bump version to 0.5.83 (1 file, independent)
+
+**5. Cherry-pick to master** (4 non-AI commits, skipped cac123c):
+
+- `874845f` fix(ui): polish auth form spacing, cursor styles, and TermsDialog width
+- `2a40414` fix(auth): simplify password error message and fix test assertion
+- `5b6242f` docs: add devices and leaderboard features to README and architecture
+- `469b496` chore: bump version to 0.5.83
+
 **Verification**:
 
 - ✅ 392/392 tests pass
 - ✅ vp check pass (4 pre-existing lint errors unrelated)
 - ✅ All documentation consistent with code state
+- ✅ 5 atomic commits on develop, pushed to origin
+- ✅ 4 cherry-picked commits on master, pushed to origin
+- ✅ AI content isolated on develop, not polluting master
 
 ### 0.5.82 — Fix Terms of Service Dialog Width
 
