@@ -2,10 +2,25 @@
 
 ## Current Status
 
-**Phase**: All Issues Fixed - Code Review Complete
-**Version**: 0.5.75 (2026-05-02)
+**Phase**: 404View Button Centering Fix
+**Version**: 0.5.76 (2026-05-02)
 
 ## Recent Activity
+
+### 0.5.76 — 404View Button Centering Fix
+
+Fixed button alignment in 404 Not Found page:
+
+**Problem**: "Go Home" and "Go Back" buttons were not horizontally centered.
+
+**Fix**: Added `justify-center` class to button container div (line 43).
+
+**File Updated**: `src/views/Exception/404View.vue`
+
+**Before**: `<div class="mt-8 flex flex-col gap-3 sm:flex-row sm:gap-4">`
+**After**: `<div class="mt-8 flex justify-center flex-col gap-3 sm:flex-row sm:gap-4">`
+
+**Result**: Buttons now centered in both mobile (stacked) and desktop (side-by-side) layouts.
 
 ### 0.5.75 — Complete Fix: All Identified Issues Resolved
 
