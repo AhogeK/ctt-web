@@ -169,12 +169,16 @@ export async function resendVerification(email: string): Promise<EmptyResponse> 
  * @param data - Object containing the email address to send the password reset link to
  * @throws Zod validation error if request doesn't match expected schema
  */
-export async function forgotPassword(data: ForgotPasswordRequest): Promise<void> {
+export async function forgotPassword(data: ForgotPasswordRequest): Promise<EmptyResponse> {
   const cleanPayload = ForgotPasswordRequestSchema.parse(data)
-  await apiFetch('/api/v1/auth/forgot-password', {
+
+  const response = await apiFetch<unknown>('/api/v1/auth/forgot-password', {
     method: 'POST',
     body: cleanPayload,
   })
+
+  const wrapped = RestApiResponseSchema.parse(response)
+  return EmptyResponseDataSchema.parse(wrapped.data)
 }
 
 /**

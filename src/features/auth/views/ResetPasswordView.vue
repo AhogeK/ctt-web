@@ -4,7 +4,7 @@ import { useRouter, useRoute } from 'vue-router'
 import { toast } from 'vue-sonner'
 import { useMutation } from '@tanstack/vue-query'
 import { RouteNames } from '@/router/route-names'
-import { isApiError } from '@/lib/utils/api-error'
+import { isApiError, mapApiErrorCode } from '@/lib/utils/api-error'
 import { confirmPasswordReset } from '@/lib/api/auth'
 import { ResetPasswordFormSchema, type ResetPasswordForm } from '@/lib/schemas/auth.schema'
 import { toTypedSchema } from '@vee-validate/zod'
@@ -45,10 +45,10 @@ const mutation = useMutation({
     const data = error.data as { code?: string } | undefined
 
     if (error.statusCode === 401 && data?.code === 'AUTH_003') {
-      toast.error('This reset link has expired or already been used. Please request a new one.')
+      toast.error(mapApiErrorCode('AUTH_003'))
       router.push({ name: RouteNames.FORGOT_PASSWORD })
     } else if (error.statusCode === 409 && data?.code === 'PASSWORD_SAME_AS_OLD') {
-      form.setFieldError('newPassword', 'New password cannot be the same as your current password.')
+      form.setFieldError('newPassword', mapApiErrorCode('PASSWORD_SAME_AS_OLD'))
     } else if (error.statusCode === 429) {
       start()
       toast.error('Too many requests', {
@@ -81,7 +81,7 @@ const showConfirmPassword = ref(false)
 </script>
 
 <template>
-  <div class="mx-auto w-full max-w-sm space-y-10">
+  <div class="mx-auto w-full max-w-sm space-y-6">
     <!-- Header -->
     <div class="space-y-4">
       <div class="flex items-center gap-2.5 lg:hidden">
@@ -164,7 +164,7 @@ const showConfirmPassword = ref(false)
     </div>
 
     <!-- Form -->
-    <form v-else @submit="onSubmit" class="flex flex-col gap-3 pt-6">
+    <form v-else @submit="onSubmit" class="flex flex-col gap-3 pt-4">
       <FormField v-slot="{ componentField }" name="newPassword">
         <FormItem>
           <FormLabel
@@ -201,20 +201,20 @@ const showConfirmPassword = ref(false)
                   stroke="currentColor"
                   stroke-width="2"
                 >
-                  <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z" />
-                  <circle cx="12" cy="12" r="3" />
-                </svg>
-                <svg v-else class="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                   <path
                     d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"
                   />
                   <line x1="1" y1="1" x2="23" y2="23" />
                 </svg>
+                <svg v-else class="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z" />
+                  <circle cx="12" cy="12" r="3" />
+                </svg>
               </button>
             </div>
           </FormControl>
-          <FormMessage />
           <PasswordStrengthMeter :password="passwordValue || ''" />
+          <FormMessage class="min-h-0" />
         </FormItem>
       </FormField>
 
@@ -254,14 +254,14 @@ const showConfirmPassword = ref(false)
                   stroke="currentColor"
                   stroke-width="2"
                 >
-                  <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z" />
-                  <circle cx="12" cy="12" r="3" />
-                </svg>
-                <svg v-else class="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                   <path
                     d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"
                   />
                   <line x1="1" y1="1" x2="23" y2="23" />
+                </svg>
+                <svg v-else class="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z" />
+                  <circle cx="12" cy="12" r="3" />
                 </svg>
               </button>
             </div>

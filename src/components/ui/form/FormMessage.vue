@@ -12,8 +12,8 @@ const { name, formMessageId } = useFormField()
 </script>
 
 <template>
-  <!-- Always-rendered wrapper reserves full line height to prevent layout shift -->
-  <div class="min-h-5">
+  <!-- Always-rendered wrapper reserves space for up to 2 lines to prevent layout shift -->
+  <div class="min-h-12">
     <ErrorMessage
       :id="formMessageId"
       data-slot="form-message"

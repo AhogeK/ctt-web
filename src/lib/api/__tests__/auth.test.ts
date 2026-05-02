@@ -80,14 +80,27 @@ describe('auth API', () => {
       ).rejects.toThrow('Invalid email format')
     })
 
-    it('rejects missing password', async () => {
-      await expect(
-        authApi.login({
-          email: 'user@example.com',
-          password: '',
-          deviceId: 'device-001',
-        }),
-      ).rejects.toThrow('Password must be at least 8 characters')
+    it('accepts empty password (schema allows it)', async () => {
+      vi.mocked(apiFetch).mockResolvedValue({
+        success: true,
+        message: 'Login successful',
+        timestamp: '2026-04-28T12:00:00Z',
+        data: {
+          userId: 'a1b2c3d4-e5f6-7890-abcd-ef1234567890',
+          accessToken: 'mock-access-token',
+          refreshToken: 'mock-refresh-token',
+          expiresIn: 3600,
+          tokenType: 'Bearer',
+        },
+      })
+
+      const result = await authApi.login({
+        email: 'user@example.com',
+        password: '',
+        deviceId: 'device-001',
+      })
+
+      expect(result.accessToken).toBe('mock-access-token')
     })
 
     it('rejects missing deviceId', async () => {
@@ -453,7 +466,16 @@ describe('auth API', () => {
 
   describe('forgotPassword', () => {
     it('sends POST request with email and returns void', async () => {
-      vi.mocked(apiFetch).mockResolvedValue(undefined)
+      vi.mocked(apiFetch).mockResolvedValue({
+        success: true,
+        message: 'Password reset email sent',
+        timestamp: '2026-04-28T12:00:00Z',
+        data: {
+          success: true,
+          message: 'Password reset email sent',
+          timestamp: '2026-04-28T12:00:00Z',
+        },
+      })
 
       const result = await authApi.forgotPassword({ email: 'user@example.com' })
 
@@ -461,7 +483,11 @@ describe('auth API', () => {
         method: 'POST',
         body: { email: 'user@example.com' },
       })
-      expect(result).toBeUndefined()
+      expect(result).toEqual({
+        success: true,
+        message: 'Password reset email sent',
+        timestamp: '2026-04-28T12:00:00Z',
+      })
     })
 
     it('rejects invalid email format', async () => {
@@ -508,40 +534,48 @@ describe('auth API', () => {
       ).rejects.toThrow('Password must be at least 8 characters')
     })
 
-    it('rejects password missing uppercase', async () => {
-      await expect(
-        authApi.confirmPasswordReset({
-          token: 'reset-token-abc123',
-          newPassword: 'lowercase1!',
-        }),
-      ).rejects.toThrow('Must contain at least one uppercase letter')
+    it('accepts password without uppercase (no complexity requirement)', async () => {
+      vi.mocked(apiFetch).mockResolvedValue(undefined)
+
+      const result = await authApi.confirmPasswordReset({
+        token: 'reset-token-abc123',
+        newPassword: 'lowercase1!',
+      })
+
+      expect(result).toBeUndefined()
     })
 
-    it('rejects password missing lowercase', async () => {
-      await expect(
-        authApi.confirmPasswordReset({
-          token: 'reset-token-abc123',
-          newPassword: 'UPPERCASE1!',
-        }),
-      ).rejects.toThrow('Must contain at least one lowercase letter')
+    it('accepts password without lowercase (no complexity requirement)', async () => {
+      vi.mocked(apiFetch).mockResolvedValue(undefined)
+
+      const result = await authApi.confirmPasswordReset({
+        token: 'reset-token-abc123',
+        newPassword: 'UPPERCASE1!',
+      })
+
+      expect(result).toBeUndefined()
     })
 
-    it('rejects password missing digit', async () => {
-      await expect(
-        authApi.confirmPasswordReset({
-          token: 'reset-token-abc123',
-          newPassword: 'NoDigits!',
-        }),
-      ).rejects.toThrow('Must contain at least one digit')
+    it('accepts password without digit (no complexity requirement)', async () => {
+      vi.mocked(apiFetch).mockResolvedValue(undefined)
+
+      const result = await authApi.confirmPasswordReset({
+        token: 'reset-token-abc123',
+        newPassword: 'NoDigits!',
+      })
+
+      expect(result).toBeUndefined()
     })
 
-    it('rejects password missing special character', async () => {
-      await expect(
-        authApi.confirmPasswordReset({
-          token: 'reset-token-abc123',
-          newPassword: 'NoSpecial1',
-        }),
-      ).rejects.toThrow('Must contain at least one special character (@$!%*?&)')
+    it('accepts password without special character (no complexity requirement)', async () => {
+      vi.mocked(apiFetch).mockResolvedValue(undefined)
+
+      const result = await authApi.confirmPasswordReset({
+        token: 'reset-token-abc123',
+        newPassword: 'NoSpecial1',
+      })
+
+      expect(result).toBeUndefined()
     })
 
     it('rejects empty token', async () => {

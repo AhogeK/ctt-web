@@ -5,27 +5,21 @@ import { z } from 'zod'
 // ==========================================
 
 /**
- * Strong password validation matching ctt-server @StrongPassword annotation.
+ * Password validation matching ctt-server @StrongPassword annotation.
  *
- * Server-side regex: ^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{8,32}$
- * - Minimum 8 characters, maximum 32
- * - At least one uppercase letter [A-Z]
- * - At least one lowercase letter [a-z]
- * - At least one digit [0-9]
- * - At least one special character (@$!%*?&)
- * - Allowed characters: A-Z, a-z, 0-9, @$!%*?& only
+ * Server-side validation (StrongPassword.java):
+ * - 8-64 characters length (NIST SP 800-63B compliant)
+ * - Only printable ASCII non-space characters (0x21-0x7E)
+ * - NO complexity requirements (uppercase, digit, special char are optional)
  *
- * Reused by LoginRequestSchema, RegisterRequestSchema, and future ChangePassword/ResetPassword schemas.
+ * Reused by LoginRequestSchema, RegisterRequestSchema, and password reset schemas.
  */
 export const StrongPasswordSchema = z
   .string()
-  .min(8, 'Password must be at least 8 characters')
-  .max(32, 'Password must not exceed 32 characters')
-  .regex(/[A-Z]/, 'Must contain at least one uppercase letter')
-  .regex(/[a-z]/, 'Must contain at least one lowercase letter')
-  .regex(/\d/, 'Must contain at least one digit')
-  .regex(/[@$!%*?&]/, 'Must contain at least one special character (@$!%*?&)')
-  .regex(/^[A-Za-z\d@$!%*?&]+$/, 'Password contains disallowed characters')
+  .optional()
+  .refine((val) => !val || /^[!-~]+$/.test(val), 'Password must only contain standard ASCII characters (letters, digits, and symbols)')
+  .refine((val) => !val || val.length >= 8, 'Password must be at least 8 characters')
+  .refine((val) => !val || val.length <= 64, 'Password must not exceed 64 characters')
 
 // ==========================================
 // Login Schemas
@@ -36,7 +30,7 @@ export const StrongPasswordSchema = z
  *
  * Server-side validation (LoginRequest.java):
  * - email: @NotBlank + @Email, trimmed and lowercased before processing
- * - password: @StrongPassword (min 8 chars, uppercase, lowercase, digit, special char)
+ * - password: @StrongPassword (8-64 chars, printable ASCII only, no complexity requirements)
  * - deviceId: @NotBlank (required for device binding and tracking)
  */
 export const LoginRequestSchema = z.object({
@@ -92,7 +86,7 @@ export const REGEX_DISPLAY_NAME = /^[\u4e00-\u9fa5\u3040-\u309f\u30a0-\u30ff\uac
  * Server-side validation (UserRegisterRequest.java):
  * - email: @NotBlank + @Email, server normalizes to lowercase
  * - displayName: @NotBlank + @Pattern, regex allows CJK + ASCII alphanumerics + _-
- * - password: @StrongPassword (min 8, max 32, upper + lower + digit + special)
+ * - password: @StrongPassword (8-64 chars, printable ASCII only, no complexity requirements)
  */
 export const RegisterRequestSchema = z.object({
   // Email validated as proper format, server normalizes to lowercase
@@ -186,7 +180,7 @@ export type ForgotPasswordRequest = z.infer<typeof ForgotPasswordRequestSchema>
  * Extends ForgotPasswordRequestSchema with no additional fields since the
  * forgot password flow only requires email input. Used with Vee-Validate + Zod integration.
  */
-export const ForgotPasswordFormSchema = ForgotPasswordRequestSchema.extend({})
+export const ForgotPasswordFormSchema = ForgotPasswordRequestSchema
 
 export type ForgotPasswordForm = z.infer<typeof ForgotPasswordFormSchema>
 
@@ -195,7 +189,7 @@ export type ForgotPasswordForm = z.infer<typeof ForgotPasswordFormSchema>
  *
  * Server-side validation (ResetPasswordRequest.java):
  * - token: @NotBlank, the reset token from email link
- * - newPassword: @StrongPassword (min 8, max 32, upper + lower + digit + special)
+ * - newPassword: @StrongPassword (8-64 chars, printable ASCII only, no complexity requirements)
  *
  * Backend endpoint: POST /api/v1/auth/password-reset/confirm
  * Rate limited: 15 requests per 10 minutes per IP.

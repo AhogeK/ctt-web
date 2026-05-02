@@ -51,40 +51,24 @@ describe('StrongPasswordSchema', () => {
     expect(result.success).toBe(true)
   })
 
-  it('rejects password missing uppercase', () => {
-    const result = StrongPasswordSchema.safeParse('securepass1!')
-    expect(result.success).toBe(false)
-    if (result.success) {
-      throw new Error('Expected parse to fail but it succeeded')
-    }
-    expect(result.error.issues[0]?.message).toContain('uppercase')
+  it('accepts password without uppercase (no complexity requirement)', () => {
+    const result = StrongPasswordSchema.safeParse('abcdefgh')
+    expect(result.success).toBe(true)
   })
 
-  it('rejects password missing lowercase', () => {
-    const result = StrongPasswordSchema.safeParse('SECUREPASS1!')
-    expect(result.success).toBe(false)
-    if (result.success) {
-      throw new Error('Expected parse to fail but it succeeded')
-    }
-    expect(result.error.issues[0]?.message).toContain('lowercase')
+  it('accepts password without lowercase (no complexity requirement)', () => {
+    const result = StrongPasswordSchema.safeParse('ABCDEFGH')
+    expect(result.success).toBe(true)
   })
 
-  it('rejects password missing digit', () => {
-    const result = StrongPasswordSchema.safeParse('SecurePass!!')
-    expect(result.success).toBe(false)
-    if (result.success) {
-      throw new Error('Expected parse to fail but it succeeded')
-    }
-    expect(result.error.issues[0]?.message).toContain('digit')
+  it('accepts password without digit (no complexity requirement)', () => {
+    const result = StrongPasswordSchema.safeParse('12345678')
+    expect(result.success).toBe(true)
   })
 
-  it('rejects password missing special character', () => {
+  it('accepts password without special character (no complexity requirement)', () => {
     const result = StrongPasswordSchema.safeParse('SecurePass1')
-    expect(result.success).toBe(false)
-    if (result.success) {
-      throw new Error('Expected parse to fail but it succeeded')
-    }
-    expect(result.error.issues[0]?.message).toContain('special character')
+    expect(result.success).toBe(true)
   })
 
   it('rejects password too short (7 chars)', () => {
@@ -96,28 +80,28 @@ describe('StrongPasswordSchema', () => {
     expect(result.error.issues[0]?.message).toContain('8 characters')
   })
 
-  it('rejects password too long (33 chars)', () => {
-    const longPassword = 'SecurePass1!' + 'a'.repeat(21) // 12 + 21 = 33 chars
+  it('rejects password too long (65 chars)', () => {
+    const longPassword = 'a'.repeat(65)
     const result = StrongPasswordSchema.safeParse(longPassword)
     expect(result.success).toBe(false)
     if (result.success) {
       throw new Error('Expected parse to fail but it succeeded')
     }
-    expect(result.error.issues[0]?.message).toContain('32 characters')
+    expect(result.error.issues[0]?.message).toContain('64 characters')
   })
 
-  it('rejects empty string', () => {
+  it('accepts empty string (optional field)', () => {
     const result = StrongPasswordSchema.safeParse('')
-    expect(result.success).toBe(false)
+    expect(result.success).toBe(true)
   })
 
-  it('rejects password with disallowed special character', () => {
-    const result = StrongPasswordSchema.safeParse('SecurePass1^')
+  it('rejects password with non-printable ASCII (space)', () => {
+    const result = StrongPasswordSchema.safeParse('12345678 ')
     expect(result.success).toBe(false)
     if (result.success) {
       throw new Error('Expected parse to fail but it succeeded')
     }
-    expect(result.error.issues[0]?.message).toContain('special character')
+    expect(result.error.issues[0]?.message).toContain('ASCII')
   })
 })
 
@@ -342,18 +326,13 @@ describe('LoginRequestSchema', () => {
     expect(result.error.issues[0]?.path).toStrictEqual(['email'])
   })
 
-  it('rejects missing password', () => {
-    const invalidData = {
+  it('accepts missing password (field is optional)', () => {
+    const validData = {
       email: 'user@example.com',
       deviceId: 'device-uuid-123',
     }
-    const result = LoginRequestSchema.safeParse(invalidData)
-
-    expect(result.success).toBe(false)
-    if (result.success) {
-      throw new Error('Expected parse to fail but it succeeded')
-    }
-    expect(result.error.issues[0]?.path).toStrictEqual(['password'])
+    const result = LoginRequestSchema.safeParse(validData)
+    expect(result.success).toBe(true)
   })
 
   it('rejects password too short (less than 8 chars)', () => {
@@ -440,7 +419,7 @@ describe('LoginRequestSchema', () => {
     if (result.success) {
       throw new Error('Expected parse to fail but it succeeded')
     }
-    expect(result.error.issues.length).toBeGreaterThanOrEqual(3)
+    expect(result.error.issues.length).toBeGreaterThanOrEqual(2)
   })
 
   it('accepts email with subdomain', () => {
@@ -476,37 +455,24 @@ describe('LoginRequestSchema', () => {
     expect(result.success).toBe(true)
   })
 
-  it('rejects password that is long enough but fails strong policy', () => {
-    const invalidData = {
+  it('accepts lowercase-only password (no complexity requirement)', () => {
+    const validData = {
       email: 'user@example.com',
       password: 'weakpassword', // 12 chars, all lowercase, no uppercase/digit/special
       deviceId: 'device-uuid-123',
     }
-    const result = LoginRequestSchema.safeParse(invalidData)
-
-    expect(result.success).toBe(false)
-    if (result.success) {
-      throw new Error('Expected parse to fail but it succeeded')
-    }
-    // Should reference strong password requirements (uppercase/lowercase/digit/special)
-    const message = result.error.issues[0]?.message
-    expect(message).toMatch(/uppercase|lowercase|digit|special/)
+    const result = LoginRequestSchema.safeParse(validData)
+    expect(result.success).toBe(true)
   })
 
-  it('rejects password with disallowed special character', () => {
-    const invalidData = {
+  it('accepts password with printable ASCII special characters', () => {
+    const validData = {
       email: 'user@example.com',
-      password: 'SecurePass1^', // meets all requirements except ^ is not in allowed set @$!%*?&
+      password: 'SecurePass1^', // ^ is valid printable ASCII (0x21-0x7E)
       deviceId: 'device-uuid-123',
     }
-    const result = LoginRequestSchema.safeParse(invalidData)
-
-    expect(result.success).toBe(false)
-    if (result.success) {
-      throw new Error('Expected parse to fail but it succeeded')
-    }
-    // Error message should reference disallowed characters
-    expect(result.error.issues[0]?.message).toContain('special character')
+    const result = LoginRequestSchema.safeParse(validData)
+    expect(result.success).toBe(true)
   })
 })
 
@@ -1019,17 +985,13 @@ describe('ResetPasswordRequestSchema', () => {
     expect(result.error.issues[0]?.message).toContain('8 characters')
   })
 
-  it('rejects password missing special character', () => {
-    const invalidData = {
+  it('accepts password without special character (no complexity requirement)', () => {
+    const validData = {
       token: 'reset-token-abc-123',
       newPassword: 'SecurePass1',
     }
-    const result = ResetPasswordRequestSchema.safeParse(invalidData)
-    expect(result.success).toBe(false)
-    if (result.success) {
-      throw new Error('Expected parse to fail but it succeeded')
-    }
-    expect(result.error.issues[0]?.message).toContain('special character')
+    const result = ResetPasswordRequestSchema.safeParse(validData)
+    expect(result.success).toBe(true)
   })
 
   it('rejects completely empty object', () => {
@@ -1038,7 +1000,7 @@ describe('ResetPasswordRequestSchema', () => {
     if (result.success) {
       throw new Error('Expected parse to fail but it succeeded')
     }
-    expect(result.error.issues.length).toBeGreaterThanOrEqual(2)
+    expect(result.error.issues.length).toBeGreaterThanOrEqual(1)
   })
 })
 

@@ -92,8 +92,17 @@ vi.mock('@/lib/api/auth', () => ({
   confirmPasswordReset: vi.fn<() => void>(),
 }))
 
+const mockMapApiErrorCode = vi.hoisted(() =>
+  vi.fn<(code: string) => string>((code) => {
+    if (code === 'AUTH_003') return 'This reset link has expired or already been used. Please request a new one.'
+    if (code === 'PASSWORD_SAME_AS_OLD') return 'New password cannot be the same as your current password.'
+    return code
+  }),
+)
+
 vi.mock('@/lib/utils/api-error', () => ({
   isApiError: mockIsApiError,
+  mapApiErrorCode: mockMapApiErrorCode,
 }))
 
 vi.mock('@/router/route-names', () => ({
@@ -249,6 +258,7 @@ describe('ResetPasswordView', () => {
       const error = createApiError(401, 'AUTH_003')
       mutationOnError!(error)
       expect(mockIsApiError).toHaveBeenCalledWith(error)
+      expect(mockMapApiErrorCode).toHaveBeenCalledWith('AUTH_003')
       expect(mockToastError).toHaveBeenCalledWith(
         'This reset link has expired or already been used. Please request a new one.',
       )
@@ -265,6 +275,7 @@ describe('ResetPasswordView', () => {
       const error = createApiError(409, 'PASSWORD_SAME_AS_OLD')
       mutationOnError!(error)
       expect(mockIsApiError).toHaveBeenCalledWith(error)
+      expect(mockMapApiErrorCode).toHaveBeenCalledWith('PASSWORD_SAME_AS_OLD')
       expect(mockSetFieldError).toHaveBeenCalledWith(
         'newPassword',
         'New password cannot be the same as your current password.',
