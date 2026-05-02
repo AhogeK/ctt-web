@@ -2,19 +2,19 @@
 
 ## Tech Stack
 
-| Layer          | Technology                                      |
-|----------------|-------------------------------------------------|
-| Framework      | Vue 3.5 + TypeScript 6.0 (Strict mode)          |
-| Build          | Vite 8 (Rolldown engine)                        |
-| Routing        | Vue Router 5 (feature-based modules)            |
-| Server State   | TanStack Query v5                               |
-| Global State   | Pinia 3 (auth store with JWT management)        |
-| UI             | Radix Vue + shadcn-vue + Tailwind CSS v4        |
-| HTTP           | ofetch (centralized instance with interceptors) |
-| Validation     | Vee-Validate + Zod                              |
-| Charts         | Apache ECharts + vue-echarts                    |
-| Icons          | Iconify Vue                                     |
-| i18n           | Vue I18n v11                                    |
+| Layer        | Technology                                      |
+| ------------ | ----------------------------------------------- |
+| Framework    | Vue 3.5 + TypeScript 6.0 (Strict mode)          |
+| Build        | Vite 8 (Rolldown engine)                        |
+| Routing      | Vue Router 5 (feature-based modules)            |
+| Server State | TanStack Query v5                               |
+| Global State | Pinia 3 (auth store with JWT management)        |
+| UI           | Radix Vue + shadcn-vue + Tailwind CSS v4        |
+| HTTP         | ofetch (centralized instance with interceptors) |
+| Validation   | Vee-Validate + Zod                              |
+| Charts       | Apache ECharts + vue-echarts                    |
+| Icons        | Iconify Vue                                     |
+| i18n         | Vue I18n v11                                    |
 
 ## Directory Structure
 
@@ -23,6 +23,8 @@ src/
 ├── features/           # Feature modules
 │   ├── auth/           # Authentication (LoginView, RegisterView)
 │   ├── dashboard/      # Dashboard analytics (DashboardHome)
+│   ├── devices/        # Device management (DeviceListView)
+│   ├── leaderboard/    # Leaderboard rankings (LeaderboardView)
 │   └── settings/       # User settings (ProfileView, ApiKeysView)
 ├── layouts/            # Layout components
 │   ├── AuthLayout.vue  # Login/Register layout (minimal, centered)
@@ -43,6 +45,8 @@ src/
 │   └── modules/        # Feature route slices
 │       ├── auth.ts     # /auth/login, /auth/register
 │       ├── dashboard.ts # /dashboard
+│       ├── devices.ts  # /devices
+│       ├── leaderboard.ts # /leaderboard
 │       └── settings.ts # /settings/profile, /settings/api-keys
 └── views/              # Top-level views
     ├── HomeView.vue    # Landing page
@@ -132,12 +136,12 @@ In Vue Router, child routes with paths starting with `/` are treated as **root p
 
 ### Route Meta Fields
 
-| Field          | Type      | Purpose                                    |
-|----------------|-----------|--------------------------------------------|
-| `title`        | `string`  | Page title (document.title + NProgress)    |
-| `requiresAuth` | `boolean` | Auth guard check (redirect to Login)       |
-| `layout`       | `string`  | Layout type ('auth' or 'app')              |
-| `hideInMenu`   | `boolean` | Hide route from sidebar navigation         |
+| Field          | Type      | Purpose                                 |
+| -------------- | --------- | --------------------------------------- |
+| `title`        | `string`  | Page title (document.title + NProgress) |
+| `requiresAuth` | `boolean` | Auth guard check (redirect to Login)    |
+| `layout`       | `string`  | Layout type ('auth' or 'app')           |
+| `hideInMenu`   | `boolean` | Hide route from sidebar navigation      |
 
 ## Lazy Loading Strategy
 
@@ -168,16 +172,17 @@ Router handles deployment-induced chunk failures:
 ```typescript
 // src/router/index.ts
 router.onError((error, to) => {
-  const isChunkLoadFailed = error.message.includes('Failed to fetch dynamically imported module')
-    || error.message.includes('Importing a module script failed');
+  const isChunkLoadFailed =
+    error.message.includes('Failed to fetch dynamically imported module') ||
+    error.message.includes('Importing a module script failed')
 
   if (isChunkLoadFailed && !to.query.retried) {
-    console.warn('[Router] New version detected, reloading page...', error);
-    const targetPath = to.fullPath;
-    const separator = targetPath.includes('?') ? '&' : '?';
-    window.location.href = `${targetPath}${separator}retried=1`;
+    console.warn('[Router] New version detected, reloading page...', error)
+    const targetPath = to.fullPath
+    const separator = targetPath.includes('?') ? '&' : '?'
+    window.location.href = `${targetPath}${separator}retried=1`
   }
-});
+})
 ```
 
 ## Chunk Optimization
@@ -202,6 +207,12 @@ build: {
         if (id.includes('src/features/settings')) {
           return 'feature-settings'
         }
+        if (id.includes('src/features/devices')) {
+          return 'feature-devices'
+        }
+        if (id.includes('src/features/leaderboard')) {
+          return 'feature-leaderboard'
+        }
       },
     },
   },
@@ -210,19 +221,21 @@ build: {
 
 ### Chunk Groups
 
-| Chunk               | Contents                           | Load Trigger             |
-|---------------------|------------------------------------|--------------------------|
-| `vendor`            | All `node_modules` dependencies    | Initial load             |
-| `feature-auth`      | Auth views, components, logic      | Navigate to `/auth`      |
-| `feature-dashboard` | Dashboard views, charts, analytics | Navigate to `/dashboard` |
-| `feature-settings`  | Settings views, forms, API key UI  | Navigate to `/settings`  |
+| Chunk                 | Contents                           | Load Trigger               |
+| --------------------- | ---------------------------------- | -------------------------- |
+| `vendor`              | All `node_modules` dependencies    | Initial load               |
+| `feature-auth`        | Auth views, components, logic      | Navigate to `/auth`        |
+| `feature-dashboard`   | Dashboard views, charts, analytics | Navigate to `/dashboard`   |
+| `feature-settings`    | Settings views, forms, API key UI  | Navigate to `/settings`    |
+| `feature-devices`     | Device list, device management     | Navigate to `/devices`     |
+| `feature-leaderboard` | Leaderboard rankings, composables  | Navigate to `/leaderboard` |
 
 ## State Management
 
 ### Layer Separation
 
 | State Type       | Tool           | Use Case                                          |
-|------------------|----------------|---------------------------------------------------|
+| ---------------- | -------------- | ------------------------------------------------- |
 | **Server State** | TanStack Query | API data, caching, refetching, optimistic updates |
 | **Global State** | Pinia          | Auth session, theme, UI state                     |
 | **URL State**    | Vue Router     | Filters, pagination, search params                |
@@ -272,7 +285,17 @@ export const useAuthStore = defineStore('auth', () => {
     return response
   }
 
-  return { accessToken, refreshToken, userId, tokenExpiry, deviceId, isAuthenticated, setAuth, clearAuth, login }
+  return {
+    accessToken,
+    refreshToken,
+    userId,
+    tokenExpiry,
+    deviceId,
+    isAuthenticated,
+    setAuth,
+    clearAuth,
+    login,
+  }
 })
 ```
 
@@ -342,6 +365,47 @@ export async function login(credentials: LoginRequest): Promise<LoginResponse> {
   - Type-safe error handling
   - Single source for error code mapping
 
+### ofetch Error Object Structure
+
+ofetch throws a structured error object on non-2xx responses:
+
+```typescript
+interface ApiError {
+  statusCode: number // HTTP status code (401, 409, 429...)
+  statusMessage?: string // HTTP status text ("Unauthorized", "Conflict"...)
+  message?: string // ofetch-generated error description
+  data?: unknown // Server JSON response body
+}
+```
+
+**Backend ctt-server response body**:
+
+```json
+{
+  "code": "AUTH_001",
+  "message": "Invalid email or password",
+  "httpStatus": 401,
+  "traceId": "...",
+  "timestamp": "..."
+}
+```
+
+**Correct error code extraction**:
+
+```typescript
+// ✅ Correct: Extract code from error.data
+const errorCode = (error.data as { code?: string })?.code
+
+// ❌ Wrong: error.error does not exist (it's statusMessage)
+const errorCode = error.error
+```
+
+**Toast policy**:
+
+- Known error codes → use `mapApiErrorCode()` for user-friendly messages
+- Unknown API errors → fixed "Please try again later" (never leak technical details)
+- Never display HTTP methods, paths, or status codes in toasts
+
 ## Navigation Guards
 
 ```typescript
@@ -381,7 +445,7 @@ export function setupRouterGuards(router: Router) {
 ### Error Boundary Hierarchy
 
 | Level       | Location        | Scope                    | Purpose                                    |
-|-------------|-----------------|--------------------------|--------------------------------------------|
+| ----------- | --------------- | ------------------------ | ------------------------------------------ |
 | **Root**    | `App.vue`       | Entire application       | Catch-all for uncaught rendering errors    |
 | **Layout**  | `AppLayout.vue` | Main content area (slot) | Isolate page failures, keep nav functional |
 | **Feature** | Feature views   | Individual components    | Optional, for critical feature isolation   |
@@ -507,9 +571,7 @@ function handleGoBack() {
   <div class="flex min-h-screen flex-col items-center justify-center">
     <h1 class="text-8xl font-bold text-primary/20">404</h1>
     <h2 class="mt-4 text-3xl font-bold">Page Not Found</h2>
-    <p class="mt-4 max-w-md text-muted-foreground">
-      The page you are looking for does not exist or has been removed.
-    </p>
+    <p class="mt-4 max-w-md text-muted-foreground">The page you are looking for does not exist or has been removed.</p>
     <div class="mt-8 flex gap-4">
       <Button variant="default" @click="handleGoHome">Go Home</Button>
       <Button variant="outline" @click="handleGoBack">Go Back</Button>

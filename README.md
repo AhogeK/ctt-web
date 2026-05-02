@@ -14,7 +14,7 @@ visualization.
 ## ✨ Tech Stack
 
 | Layer          | Technology                                                  |
-|----------------|-------------------------------------------------------------|
+| -------------- | ----------------------------------------------------------- |
 | Framework      | Vue 3.5 + TypeScript 6.0 (Strict, modern module resolution) |
 | Build          | Vite 8 (Rolldown engine)                                    |
 | Routing        | Vue Router 5 (feature-based routing, type-safe meta)        |
@@ -50,12 +50,15 @@ visualization.
 | **Exception Handling**  | Hierarchical ErrorBoundary (App.vue → AppLayout.vue), global handlers, 404View, Sonner toast         |
 | Token Refresh           | JWT refresh with concurrency control, Promise deduping, Thundering Herd prevention                   |
 | Server State Management | TanStack Query v5 with 30s staleTime, SWR pattern, automatic caching                                 |
+| Device Management       | Device list view, device identification, multi-device sync visualization                             |
+| Leaderboard             | Leaderboard view with rankings, composable-driven data fetching                                      |
+| Theme System            | Light/dark mode toggle, Pinia theme store with VueUse persistence                                    |
 
 ## 🗺 Project Structure
 
 ```
 src/
-├── features/       # Feature modules (auth/, dashboard/, settings/)
+├── features/       # Feature modules (auth/, dashboard/, devices/, leaderboard/, settings/)
 ├── layouts/        # Layout components (AuthLayout, AppLayout)
 ├── components/     # Shared components (ui/, app/)
 ├── lib/            # Core utilities (api/, schemas/)
@@ -123,7 +126,6 @@ pnpm preview
 - **Environment**: jsdom with matchMedia + ResizeObserver mocks for Radix UI / shadcn-vue
 - **Globals**: Vitest globals enabled (no import needed for describe/it/expect)
 - **Assertions**: @testing-library/jest-dom provides semantic matchers (toBeInTheDocument, etc.)
-
 
 ```sh
 pnpm test:unit
