@@ -2,12 +2,53 @@
 
 ## Current Status
 
-**Phase**: Ghost Button Default Text Color
-**Version**: 0.5.57 (2026-05-02)
+**Phase**: All Issues Fixed - Code Review Complete
+**Version**: 0.5.75 (2026-05-02)
 
 ## Recent Activity
 
-### 0.5.57 — Ghost Button Default Text Color
+### 0.5.75 — Complete Fix: All Identified Issues Resolved
+
+Fixed all issues identified in code review with own judgment applied:
+
+**1. Hardcoded Error Messages (ResetPasswordView.vue)**:
+- Added `mapApiErrorCode` import from `@/lib/utils/api-error`
+- Replaced hardcoded strings with `mapApiErrorCode('AUTH_003')` and `mapApiErrorCode('PASSWORD_SAME_AS_OLD')`
+- Updated test mock to return proper messages
+
+**2. Stale Authentication Tests (19 tests)**:
+- `auth.schema.test.ts` (13 tests): Updated to match current `StrongPasswordSchema` (8-64 chars, printable ASCII, NO complexity requirements)
+- `auth.test.ts` (6 tests): Same updates for API-level tests
+- Test changes: "rejects X" → "accepts X (no complexity requirement)" for passwords that now pass validation
+
+**3. Schema Cleanup**:
+- Removed no-op `.extend({})` from `ForgotPasswordFormSchema`
+
+**Test Results**: ✅ 384/384 tests pass (was 365/384 with 19 stale failures)
+
+### 0.5.74 — ResetPasswordView Complete - Code Review Passed
+
+Completed comprehensive code review for ResetPasswordView changes:
+
+**Review Verdict**: ✅ Ready to commit
+
+**Passed Categories**:
+- Code Quality & Style: Naming conventions, TypeScript strict, Tailwind consistency
+- Comments & Documentation: No emojis, English only, JSDoc on props
+- Business Logic: Password validation matches backend, form submission prevents duplicates
+- Security: No XSS, proper password field handling, no secrets logged
+- Integration: API layer, Zod schemas, Toast, Router all correct
+- Project Consistency: Matches LoginView/ForgotPasswordView patterns
+- Test Results: 10/10 ResetPasswordView tests pass
+
+**Issues Found** (non-blocking):
+1. Hardcoded error messages (AUTH_003, PASSWORD_SAME_AS_OLD) — should use `mapApiErrorCode()`
+2. Pre-existing test failures (19 tests in auth.schema.test.ts/auth.test.ts) — stale from v0.5.40 password policy sync
+3. ForgotPasswordFormSchema empty `.extend({})` — cosmetic nit
+
+**Documentation**: memory-bank version updated to 0.5.73
+
+### 0.5.72 — ResetPasswordView PasswordStrengthMeter Order Fix
 
 Added `text-muted-foreground` to all 6 "Back to sign in" ghost buttons across 5 auth views:
 
