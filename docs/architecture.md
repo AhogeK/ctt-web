@@ -23,6 +23,8 @@ src/
 ├── features/           # Feature modules
 │   ├── auth/           # Authentication (LoginView, RegisterView)
 │   ├── dashboard/      # Dashboard analytics (DashboardHome)
+│   ├── devices/        # Device management (DeviceListView)
+│   ├── leaderboard/    # Leaderboard rankings (LeaderboardView)
 │   └── settings/       # User settings (ProfileView, ApiKeysView)
 ├── layouts/            # Layout components
 │   ├── AuthLayout.vue  # Login/Register layout (minimal, centered)
@@ -43,6 +45,8 @@ src/
 │   └── modules/        # Feature route slices
 │       ├── auth.ts     # /auth/login, /auth/register
 │       ├── dashboard.ts # /dashboard
+│       ├── devices.ts  # /devices
+│       ├── leaderboard.ts # /leaderboard
 │       └── settings.ts # /settings/profile, /settings/api-keys
 └── views/              # Top-level views
     ├── HomeView.vue    # Landing page
@@ -203,6 +207,12 @@ build: {
         if (id.includes('src/features/settings')) {
           return 'feature-settings'
         }
+        if (id.includes('src/features/devices')) {
+          return 'feature-devices'
+        }
+        if (id.includes('src/features/leaderboard')) {
+          return 'feature-leaderboard'
+        }
       },
     },
   },
@@ -211,12 +221,14 @@ build: {
 
 ### Chunk Groups
 
-| Chunk               | Contents                           | Load Trigger             |
-| ------------------- | ---------------------------------- | ------------------------ |
-| `vendor`            | All `node_modules` dependencies    | Initial load             |
-| `feature-auth`      | Auth views, components, logic      | Navigate to `/auth`      |
-| `feature-dashboard` | Dashboard views, charts, analytics | Navigate to `/dashboard` |
-| `feature-settings`  | Settings views, forms, API key UI  | Navigate to `/settings`  |
+| Chunk                 | Contents                           | Load Trigger               |
+| --------------------- | ---------------------------------- | -------------------------- |
+| `vendor`              | All `node_modules` dependencies    | Initial load               |
+| `feature-auth`        | Auth views, components, logic      | Navigate to `/auth`        |
+| `feature-dashboard`   | Dashboard views, charts, analytics | Navigate to `/dashboard`   |
+| `feature-settings`    | Settings views, forms, API key UI  | Navigate to `/settings`    |
+| `feature-devices`     | Device list, device management     | Navigate to `/devices`     |
+| `feature-leaderboard` | Leaderboard rankings, composables  | Navigate to `/leaderboard` |
 
 ## State Management
 

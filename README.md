@@ -51,12 +51,15 @@ visualization.
 | **Exception Handling**  | Hierarchical ErrorBoundary (App.vue → AppLayout.vue), global handlers, 404View, Sonner toast         |
 | Token Refresh           | JWT refresh with concurrency control, Promise deduping, Thundering Herd prevention                   |
 | Server State Management | TanStack Query v5 with 30s staleTime, SWR pattern, automatic caching                                 |
+| Device Management       | Device list view, device identification, multi-device sync visualization                             |
+| Leaderboard             | Leaderboard view with rankings, composable-driven data fetching                                      |
+| Theme System            | Light/dark mode toggle, Pinia theme store with VueUse persistence                                    |
 
 ## 🗺 Project Structure
 
 ```
 src/
-├── features/       # Feature modules (auth/, dashboard/, settings/)
+├── features/       # Feature modules (auth/, dashboard/, devices/, leaderboard/, settings/)
 ├── layouts/        # Layout components (AuthLayout, AppLayout)
 ├── components/     # Shared components (ui/, app/)
 ├── lib/            # Core utilities (api/, schemas/)
