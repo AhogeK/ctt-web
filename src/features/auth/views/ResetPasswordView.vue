@@ -81,7 +81,7 @@ const showConfirmPassword = ref(false)
 </script>
 
 <template>
-  <div class="mx-auto w-full max-w-sm space-y-6">
+  <div class="mx-auto w-full max-w-sm space-y-10">
     <!-- Header -->
     <div class="space-y-4">
       <div class="flex items-center gap-2.5 lg:hidden">

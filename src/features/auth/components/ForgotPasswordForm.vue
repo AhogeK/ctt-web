@@ -28,7 +28,7 @@ const onSubmit = form.handleSubmit((values) => {
 </script>
 
 <template>
-  <form @submit="onSubmit" class="flex flex-col gap-3 pt-6">
+  <form @submit="onSubmit" class="flex flex-col gap-3 pt-4">
     <FormField v-slot="{ componentField }" name="email">
       <FormItem>
         <FormLabel
@@ -42,7 +42,7 @@ const onSubmit = form.handleSubmit((values) => {
             placeholder="you@example.com"
             :class="
               cn(
-                'h-11 rounded-md border border-[#d0d6e0] bg-[#f3f4f5] text-[#1a1a2e]',
+                'h-10 rounded-md border border-[#d0d6e0] bg-[#f3f4f5] text-[#1a1a2e]',
                 'placeholder:text-[#8a8f98] transition-all duration-200',
                 'focus:border-[#5e6ad2] focus:bg-white focus:ring-2 focus:ring-[#5e6ad2]/20',
                 'dark:border-white/8 dark:bg-white/2 dark:text-[#f7f8f8] dark:placeholder:text-[#62666d]',
@@ -61,7 +61,7 @@ const onSubmit = form.handleSubmit((values) => {
       :disabled="loading"
       :class="
         cn(
-          'group w-full h-11 mt-3 rounded-md bg-[#7b85d4] text-white font-[510] text-base',
+          'group w-full h-10 mt-3 rounded-md bg-[#7b85d4] text-white font-[510] text-base',
           'shadow-lg shadow-[#7b85d4]/15 transition-all duration-200',
           'hover:bg-[#8b95e0] hover:shadow-[#8b95e0]/20 hover:scale-[1.02] active:scale-[0.98]',
           'disabled:opacity-70 disabled:cursor-not-allowed disabled:hover:scale-100',

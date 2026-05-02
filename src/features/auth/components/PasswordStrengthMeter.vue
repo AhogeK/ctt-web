@@ -106,7 +106,10 @@ function textColor(rule: Rule): string {
       />
     </div>
     <!-- Score display: always rendered to prevent layout shift, visibility toggled via opacity -->
-    <div class="text-[11px] text-[#8a8f98] dark:text-gray-500 transition-opacity duration-200" :style="{ opacity: hasPassword ? 1 : 0 }">
+    <div
+      class="text-[11px] text-[#8a8f98] dark:text-gray-500 transition-opacity duration-200"
+      :style="{ opacity: hasPassword ? 1 : 0 }"
+    >
       Strength: {{ score }}/7
     </div>
 
