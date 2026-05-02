@@ -18,9 +18,15 @@ const submittedEmail = ref('')
 
 const mutation = useMutation({
   mutationFn: forgotPassword,
-  onSuccess: (_data, variables) => {
+  onSuccess: (response, variables) => {
     submittedEmail.value = variables.email
     isSubmitted.value = true
+
+    if (response.idempotentSkip) {
+      toast.info('Reset password email already sent', {
+        description: 'Please check your inbox or spam folder',
+      })
+    }
   },
   onError: (error: unknown) => {
     if (!isApiError(error)) {
@@ -91,13 +97,18 @@ const isSubmitting = computed(() => toValue(mutation.isPending))
     </div>
 
     <!-- Success State -->
-    <div
-      v-if="isSubmitted"
-      class="space-y-4 rounded-lg border border-[#d0d6e0] bg-[#f3f4f5] p-6 dark:border-white/8 dark:bg-white/2"
-    >
-      <div class="flex items-center gap-3">
+    <div v-if="isSubmitted" class="space-y-6">
+      <!-- Success Icon -->
+      <div
+        :class="
+          cn(
+            'flex h-16 w-16 items-center justify-center rounded-2xl',
+            'bg-green-500/10 text-green-600 dark:bg-green-500/15 dark:text-green-400',
+          )
+        "
+      >
         <svg
-          class="h-6 w-6 shrink-0 text-green-600 dark:text-green-400"
+          class="h-8 w-8"
           viewBox="0 0 24 24"
           fill="none"
           stroke="currentColor"
@@ -108,34 +119,34 @@ const isSubmitting = computed(() => toValue(mutation.isPending))
           <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14" />
           <polyline points="22 4 12 14.01 9 11.01" />
         </svg>
-        <p class="text-sm text-gray-700 dark:text-[#c0c4cc]" style="font-feature-settings: 'cv01', 'ss03'">
-          If <strong>{{ submittedEmail }}</strong> exists in our database, you will receive a password recovery link
+      </div>
+
+      <!-- Success Message -->
+      <div class="space-y-2">
+        <h2
+          class="text-xl font-[510] text-gray-900 dark:text-[#f7f8f8]"
+          style="font-feature-settings: 'cv01', 'ss03'"
+        >
+          Check your email
+        </h2>
+        <p class="text-base text-gray-500 dark:text-[#8a8f98]" style="font-feature-settings: 'cv01', 'ss03'">
+          If <code class="px-2 py-0.5 rounded-md bg-gray-100 dark:bg-gray-800 font-mono text-sm font-medium text-gray-700 dark:text-gray-300">{{ submittedEmail }}</code> exists in our database, you will receive a password recovery link
           shortly.
         </p>
       </div>
-      <Button
-        variant="ghost"
-        :class="cn('w-full h-11 font-[510] text-muted-foreground')"
-        @click="router.push({ name: RouteNames.LOGIN })"
-        style="font-feature-settings: 'cv01', 'ss03'"
-      >
-        Back to sign in
-      </Button>
     </div>
 
     <!-- Form -->
     <ForgotPasswordForm v-else :loading="isSubmitting" @submit="handleSubmit" />
 
-    <!-- Back to Login Link -->
-    <div v-if="!isSubmitted" class="pt-2 text-center">
-      <Button
-        variant="ghost"
-        :class="cn('w-full h-11 font-[510] text-muted-foreground')"
-        @click="router.push({ name: RouteNames.LOGIN })"
-        style="font-feature-settings: 'cv01', 'ss03'"
-      >
-        Back to sign in
-      </Button>
-    </div>
+    <!-- Back to sign in -->
+    <Button
+      variant="ghost"
+      :class="cn('w-full h-11 font-[510] text-muted-foreground')"
+      @click="router.push({ name: RouteNames.LOGIN })"
+      style="font-feature-settings: 'cv01', 'ss03'"
+    >
+      Back to sign in
+    </Button>
   </div>
 </template>

@@ -20,6 +20,7 @@ const props = defineProps<{
 
 const form = useForm({
   validationSchema: toTypedSchema(ResetPasswordFormSchema),
+  validateOnInput: true,
 })
 
 const onSubmit = form.handleSubmit((values) => {

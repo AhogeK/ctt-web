@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { watch } from 'vue'
+import { shallowRef, watch } from 'vue'
 import { toTypedSchema } from '@vee-validate/zod'
 import { useForm, useFieldValue } from 'vee-validate'
 import { RegisterFormSchema, type RegisterRequest } from '@/lib/schemas/auth.schema'
@@ -8,6 +8,7 @@ import { Input } from '@/components/ui/input'
 import { Button } from '@/components/ui/button'
 import { cn } from '@/lib/utils'
 import PasswordStrengthMeter from './PasswordStrengthMeter.vue'
+import { Eye, EyeOff } from 'lucide-vue-next'
 
 const props = defineProps<{
   /** Server-side field errors mapped to field names */
@@ -21,7 +22,11 @@ const emit = defineEmits<{
 
 const form = useForm({
   validationSchema: toTypedSchema(RegisterFormSchema),
+  validateOnInput: true,
 })
+
+const showPassword = shallowRef(false)
+const showConfirmPassword = shallowRef(false)
 
 const passwordValue = useFieldValue<string>('password')
 
@@ -114,20 +119,32 @@ const onSubmit = form.handleSubmit((values) => {
           >Password</FormLabel
         >
         <FormControl>
-          <Input
-            type="password"
-            placeholder="Create a strong password"
-            :class="
-              cn(
-                'h-11 rounded-md border border-[#d0d6e0] bg-[#f3f4f5] text-[#1a1a2e]',
-                'placeholder:text-[#8a8f98] transition-all duration-200',
-                'focus:border-[#5e6ad2] focus:bg-white focus:ring-2 focus:ring-[#5e6ad2]/20',
-                'dark:border-white/8 dark:bg-white/2 dark:text-[#f7f8f8] dark:placeholder:text-[#62666d]',
-                'dark:focus:border-[#5e6ad2] dark:focus:bg-white/4 dark:focus:ring-[#5e6ad2]/25',
-              )
-            "
-            v-bind="componentField"
-          />
+          <div class="relative">
+            <Input
+              :type="showPassword ? 'text' : 'password'"
+              placeholder="Create a strong password"
+              :class="
+                cn(
+                  'h-11 rounded-md border border-[#d0d6e0] bg-[#f3f4f5] text-[#1a1a2e]',
+                  'placeholder:text-[#8a8f98] transition-all duration-200',
+                  'focus:border-[#5e6ad2] focus:bg-white focus:ring-2 focus:ring-[#5e6ad2]/20',
+                  'dark:border-white/8 dark:bg-white/2 dark:text-[#f7f8f8] dark:placeholder:text-[#62666d]',
+                  'dark:focus:border-[#5e6ad2] dark:focus:bg-white/4 dark:focus:ring-[#5e6ad2]/25',
+                  'pr-10',
+                )
+              "
+              v-bind="componentField"
+            />
+            <button
+              type="button"
+              tabindex="-1"
+              class="absolute right-2.5 top-1/2 -translate-y-1/2 text-[#8a8f98] hover:text-[#5e6ad2] transition-colors"
+              @click="showPassword = !showPassword"
+            >
+              <EyeOff v-if="!showPassword" class="h-4 w-4" />
+              <Eye v-else class="h-4 w-4" />
+            </button>
+          </div>
         </FormControl>
         <PasswordStrengthMeter :password="passwordValue" />
         <FormMessage />
@@ -142,20 +159,32 @@ const onSubmit = form.handleSubmit((values) => {
           >Confirm Password</FormLabel
         >
         <FormControl>
-          <Input
-            type="password"
-            placeholder="Repeat your password"
-            :class="
-              cn(
-                'h-11 rounded-md border border-[#d0d6e0] bg-[#f3f4f5] text-[#1a1a2e]',
-                'placeholder:text-[#8a8f98] transition-all duration-200',
-                'focus:border-[#5e6ad2] focus:bg-white focus:ring-2 focus:ring-[#5e6ad2]/20',
-                'dark:border-white/8 dark:bg-white/2 dark:text-[#f7f8f8] dark:placeholder:text-[#62666d]',
-                'dark:focus:border-[#5e6ad2] dark:focus:bg-white/4 dark:focus:ring-[#5e6ad2]/25',
-              )
-            "
-            v-bind="componentField"
-          />
+          <div class="relative">
+            <Input
+              :type="showConfirmPassword ? 'text' : 'password'"
+              placeholder="Repeat your password"
+              :class="
+                cn(
+                  'h-11 rounded-md border border-[#d0d6e0] bg-[#f3f4f5] text-[#1a1a2e]',
+                  'placeholder:text-[#8a8f98] transition-all duration-200',
+                  'focus:border-[#5e6ad2] focus:bg-white focus:ring-2 focus:ring-[#5e6ad2]/20',
+                  'dark:border-white/8 dark:bg-white/2 dark:text-[#f7f8f8] dark:placeholder:text-[#62666d]',
+                  'dark:focus:border-[#5e6ad2] dark:focus:bg-white/4 dark:focus:ring-[#5e6ad2]/25',
+                  'pr-10',
+                )
+              "
+              v-bind="componentField"
+            />
+            <button
+              type="button"
+              tabindex="-1"
+              class="absolute right-2.5 top-1/2 -translate-y-1/2 text-[#8a8f98] hover:text-[#5e6ad2] transition-colors"
+              @click="showConfirmPassword = !showConfirmPassword"
+            >
+              <EyeOff v-if="!showConfirmPassword" class="h-4 w-4" />
+              <Eye v-else class="h-4 w-4" />
+            </button>
+          </div>
         </FormControl>
         <FormMessage />
       </FormItem>
