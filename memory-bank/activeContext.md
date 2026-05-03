@@ -2,16 +2,19 @@
 
 ## Current Status
 
-**Phase**: Terms Acceptance Tracking (Complete, Committed)
+**Phase**: Terms Acceptance Tracking (Fully Complete)
 **Version**: 0.6.0 (2026-05-03)
-**Branch**: develop (5 commits above 34bbc43, working tree clean)
+**Branch**: develop at f4af3c8, master at 3b4899a
 **Tests**: 392/392 pass
+**Plan**: docs/plans/2026-05-02-terms-acceptance-tracking.md — status: completed
 
 ## Recent Activity
 
 ### 0.6.0 — Terms Acceptance Tracking Feature Complete (2026-05-03)
 
-Full terms acceptance tracking feature implemented and committed. All 392 tests pass.
+Full terms acceptance tracking feature implemented and committed. All 392 tests pass. Plan document updated to reflect actual implementation status.
+
+**Final Fix**: `stores/auth.ts` login flow now checks `termsExpired` field. Added optional `termsExpired` to `LoginResponseSchema` (default false). When true, dispatches `TERMS_EXPIRED_EVENT` instead of calling `setAuth()`.
 
 **Commits on develop**:
 

@@ -1,9 +1,9 @@
 # Plan: Terms of Service Acceptance Tracking (Frontend Only)
 
 **Date**: 2026-05-02
-**Status**: in-progress (data layer complete, UI integration pending)
-**Version**: v0.5.84 (P0) + v0.5.85 (P1)
-**Last Updated**: 2026-05-03 (implementation audit)
+**Status**: completed
+**Version**: v0.6.0
+**Last Updated**: 2026-05-03 (post-commit audit)
 
 ---
 
@@ -204,28 +204,29 @@ defineExpose({ open })
 | `lib/api/config.ts`                        | P0   | ✅ 完全实现 | 新建文件，包含 `PublicConfigSchema` 和 `getPublicConfig()`                        |
 | `lib/schemas/auth.schema.ts`               | P0   | ✅ 完全实现 | `RegisterRequestSchema` 含 `termsVersion`，`AuthResponseSchema` 含 `termsExpired` |
 | `features/auth/views/RegisterView.vue`     | P0   | ✅ 完全实现 | `onMounted` 获取 `termsVersion`，`handleSubmit` 发送                              |
-| `stores/auth.ts`                           | P0   | ❌ 未实现   | login 流程未处理 `termsExpired`，仍使用 `LoginResponseSchema`                     |
+| `stores/auth.ts`                           | P0   | ✅ 完全实现 | login 检查 `termsExpired`，为 true 时 dispatch `TERMS_EXPIRED_EVENT`              |
 | `lib/api/auth.ts`                          | P1   | ✅ 完全实现 | `acceptTerms()` 函数已实现                                                        |
-| `lib/api/instance.ts`                      | P1   | ⚠️ 部分实现 | 检测到 `TERMS_EXPIRED` 但仅 `console.warn`，无 UI 触发机制                        |
-| `features/auth/components/TermsDialog.vue` | P1   | ✅ 完全实现 | 获取并显示版本号                                                                  |
+| `lib/api/instance.ts`                      | P1   | ✅ 完全实现 | `TERMS_EXPIRED_EVENT` + 请求队列 + `resolveTermsQueue()`/`rejectTermsQueue()`     |
+| `features/auth/components/TermsDialog.vue` | P1   | ✅ 完全实现 | Accept/Decline 按钮 + `acceptTerms()` API + loading + toast + emit                |
 
 ### 功能级别状态
 
-| 功能                      | 状态        | 缺失内容                               |
-| ------------------------- | ----------- | -------------------------------------- |
-| 注册获取并发送条款版本    | ✅ 完成     | 无                                     |
-| 登录时检查 `termsExpired` | ❌ 未完成   | `stores/auth.ts` 未处理 `termsExpired` |
-| 403 TERMS_EXPIRED 拦截    | ⚠️ 部分完成 | 检测到错误码但无 UI 触发               |
-| TermsDialog 版本显示      | ✅ 完成     | 无                                     |
-| 同意条款后 token 刷新     | ❌ 未完成   | `acceptTerms()` 返回 token 但未存储    |
-| 失败请求重放              | ❌ 未完成   | 无请求缓存和重放机制                   |
-| TermsDialog 同意按钮      | ❌ 未完成   | 无 "Accept" 按钮绑定 `acceptTerms()`   |
+| 功能                      | 状态      | 缺失内容                               |
+| ------------------------- | --------- | -------------------------------------- |
+| 注册获取并发送条款版本    | ✅ 完成   | 无                                     |
+| 登录时检查 `termsExpired` | ❌ 未完成 | `stores/auth.ts` 未处理 `termsExpired` |
+| 403 TERMS_EXPIRED 拦截    | ✅ 完成   | 无                                     |
+| TermsDialog 版本显示      | ✅ 完成   | 无                                     |
+| 同意条款后 token 刷新     | ✅ 完成   | 无                                     |
+| 失败请求重放              | ✅ 完成   | 无                                     |
+| TermsDialog 同意按钮      | ✅ 完成   | 无                                     |
 
 ### Git 状态
 
-- **分支**: `develop` at `34bbc43`
-- **未提交改动**: 6 files changed, +66/-3 lines
-- **已实现但未提交**: config.ts, auth.schema.ts, RegisterView.vue, auth.ts, instance.ts, TermsDialog.vue
+- **分支**: `develop` at `f4af3c8`, `master` at `3b4899a`
+- **版本**: 0.6.0
+- **状态**: working tree clean, 所有改动已提交并推送
+- **提交**: 5 commits on develop, 4 cherry-picked to master
 
 ---
 
@@ -248,19 +249,19 @@ defineExpose({ open })
 ### P0
 
 - [x] 前端注册页自动获取条款版本并发送
-- [ ] 前端登录时根据 `termsExpired` 决定是否弹条款对话框
+- [x] 前端登录时根据 `termsExpired` 决定是否弹条款对话框
 
 ### P1
 
-- [ ] 前端拦截 403 TERMS_EXPIRED，弹窗同意后重放失败请求
+- [x] 前端拦截 403 TERMS_EXPIRED，弹窗同意后重放失败请求
 - [x] TermsDialog 支持版本显示
 
 ### 待补充标准
 
-- [ ] 登录流程正确处理 `termsExpired`（store/auth.ts）
-- [ ] 403 TERMS_EXPIRED 触发 TermsDialog 显示
-- [ ] TermsDialog 同意按钮调用 `acceptTerms()` 并存储新 token
-- [ ] 失败请求在同意后自动重放
+- [x] 登录流程正确处理 `termsExpired`（store/auth.ts）
+- [x] 403 TERMS_EXPIRED 触发 TermsDialog 显示
+- [x] TermsDialog 同意按钮调用 `acceptTerms()` 并存储新 token
+- [x] 失败请求在同意后自动重放
 
 ---
 
@@ -274,29 +275,15 @@ defineExpose({ open })
 
 ## 待完成工作
 
-### P0 缺失
+### ✅ 全部完成
 
-1. **`stores/auth.ts` — login 流程处理 `termsExpired`**
-   - 当前 login 使用 `LoginResponseSchema`（不含 `termsExpired`）
-   - 需改为使用 `AuthResponseSchema` 或添加后检查逻辑
-   - 当 `termsExpired === true` 时：不跳转 dashboard，显示 TermsDialog
+所有计划项已实现：
 
-### P1 缺失
-
-2. **`lib/api/instance.ts` — TERMS_EXPIRED UI 触发机制**
-   - 当前仅 `console.warn`，无实际 UI 交互
-   - 需添加触发机制（参考现有 `UNAUTHORIZED_EVENT` 模式）
-   - 方案：自定义事件 / Pinia store flag / 回调注册
-
-3. **TermsDialog — 同意按钮绑定**
-   - 当前无 "Accept" 按钮调用 `acceptTerms()`
-   - 同意后需存储新 token（`setAuth()`）
-   - 关闭对话框并恢复用户操作
-
-4. **`lib/api/instance.ts` — 失败请求缓存与重放**
-   - 缓存 TERMS_EXPIRED 期间的原始请求
-   - 同意后重放失败请求
-   - 处理重放失败/成功两种情况
+- `LoginResponseSchema` 添加 `termsExpired` 字段（默认 false）
+- `stores/auth.ts` login 检查 `termsExpired`，为 true 时 dispatch `TERMS_EXPIRED_EVENT`
+- `instance.ts` 403 TERMS_EXPIRED 处理 + 请求队列
+- `TermsDialog.vue` Accept/Decline 按钮 + `acceptTerms()` API
+- `App.vue` 事件监听 + TermsDialog 集成
 
 ### 端到端流程验证
 
