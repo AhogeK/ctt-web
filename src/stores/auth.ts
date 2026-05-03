@@ -2,6 +2,7 @@ import { ref, computed } from 'vue'
 import { defineStore } from 'pinia'
 import { useStorage } from '@vueuse/core'
 import { login as loginApi, refresh as refreshApi, logoutAll } from '@/lib/api/auth'
+import { TERMS_EXPIRED_EVENT } from '@/lib/api/instance'
 import type { LoginRequest, LoginResponse } from '@/lib/schemas/auth.schema'
 import { getOrCreateDeviceId } from '@/lib/utils/device'
 import router from '@/router'
@@ -109,6 +110,10 @@ export const useAuthStore = defineStore('auth', () => {
       deviceId: deviceId.value,
     }
     const response = await loginApi(payload)
+    if (response.termsExpired) {
+      globalThis.dispatchEvent(new CustomEvent(TERMS_EXPIRED_EVENT))
+      return response
+    }
     setAuth(response)
     return response
   }

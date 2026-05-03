@@ -63,6 +63,8 @@ export const LoginResponseSchema = z.object({
   expiresIn: z.number().int().positive('Expiration must be positive'),
   // OAuth2 token type per RFC 6750 — only 'Bearer' is accepted
   tokenType: z.literal('Bearer').default('Bearer'),
+  // Whether terms of service need re-acceptance (optional, defaults to false)
+  termsExpired: z.boolean().default(false),
 })
 
 // Export inferred types for use in API layer and components
