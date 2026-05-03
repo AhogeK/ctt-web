@@ -2,11 +2,47 @@
 
 ## Current Status
 
-**Phase**: UI Polish & Refinement
-**Version**: 0.5.83 (2026-05-02)
-**Branch**: develop (synced with origin)
+**Phase**: Terms Acceptance Tracking (Complete, Committed)
+**Version**: 0.6.0 (2026-05-03)
+**Branch**: develop (5 commits above 34bbc43, working tree clean)
+**Tests**: 392/392 pass
 
 ## Recent Activity
+
+### 0.6.0 — Terms Acceptance Tracking Feature Complete (2026-05-03)
+
+Full terms acceptance tracking feature implemented and committed. All 392 tests pass.
+
+**Commits on develop**:
+
+- `e2539d0` feat(auth): add terms acceptance tracking API infrastructure (5 files)
+- `3d91ea7` feat(auth): integrate terms acceptance UI with request queue replay (3 files)
+- `f1bc345` test: update test data for terms acceptance feature (3 files)
+- `181d5f1` chore: bump version to 0.6.0 (1 file)
+- `4171d9e` chore: update memory-bank and docs for terms acceptance (2 files, AI content)
+
+**Architecture Decision**: CustomEvent pattern for TERMS_EXPIRED (consistent with UNAUTHORIZED_EVENT). Request queue with Promise callbacks for replay after acceptance.
+
+**Files Modified (8 total)**:
+
+1. `src/lib/api/__tests__/auth.test.ts` — Added termsVersion to 2 register test payloads
+2. `src/lib/schemas/__tests__/auth.schema.test.ts` — Added termsVersion to 7 test data/type objects
+3. `src/features/auth/components/__tests__/TermsCheckbox.test.ts` — Button text 'Close' → 'Decline'
+4. `src/lib/api/index.ts` — Added acceptTerms barrel export
+5. `src/lib/api/instance.ts` — TERMS_EXPIRED_EVENT constant + request queue + resolve/reject exports
+6. `src/features/auth/views/RegisterView.vue` — Error toast on getPublicConfig fail
+7. `src/features/auth/components/TermsDialog.vue` — Accept/reject handlers + error handling + emits
+8. `src/App.vue` — TERMS_EXPIRED event listener + TermsDialog integration
+
+**Key Implementation Details**:
+
+- `instance.ts`: Added `TERMS_EXPIRED_EVENT`, `PendingTermsRequest` interface, `processTermsQueue()` helper, `resolveTermsQueue()` and `rejectTermsQueue()` exports
+- `TermsDialog.vue`: Added `defineEmits<{ accepted: []; rejected: [] }>()`, `handleAccept()` calling `acceptTerms()` API, `handleReject()`, loading state, error handling with toast
+- `App.vue`: Added `isTermsDialogOpen` ref, event listener in onMounted/onUnmounted, TermsDialog component with v-model:open + @accepted + @rejected
+- `RegisterView.vue`: Replaced silent catch with toast error + console.error
+
+**Git Status**: 5 clean commits on develop, working tree clean. Pending cherry-pick to master.
+**Plan Updated**: `docs/plans/2026-05-02-terms-acceptance-tracking.md` — status → in-progress, added implementation audit section
 
 ### 0.5.83 — Code Review Fixes & Atomic Commits
 
