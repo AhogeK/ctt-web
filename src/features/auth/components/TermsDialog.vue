@@ -1,4 +1,6 @@
 <script setup lang="ts">
+import { ref, onMounted } from 'vue'
+import { toast } from 'vue-sonner'
 import {
   Dialog,
   DialogContent,
@@ -8,13 +10,52 @@ import {
   DialogTitle,
 } from '@/components/ui/dialog'
 import { Button } from '@/components/ui/button'
+import { getPublicConfig } from '@/lib/api/config'
+import { acceptTerms } from '@/lib/api/auth'
 import { termsContent, type TermsSection } from '@/features/auth/content'
 
 const open = defineModel<boolean>('open', { default: false })
+const emit = defineEmits<{
+  accepted: []
+  rejected: []
+}>()
+
+const currentVersion = ref('')
+const isLoading = ref(false)
+
+onMounted(async () => {
+  try {
+    const config = await getPublicConfig()
+    currentVersion.value = config.termsVersion
+  } catch (error) {
+    toast.error('Failed to load terms version')
+    console.error('Failed to fetch terms config:', error)
+  }
+})
 
 function renderSectionContent(section: TermsSection) {
   const parts = section.content.split('\n\n')
   return parts.map((part, i) => ({ id: `${section.id}-p${i}`, text: part }))
+}
+
+async function handleAccept() {
+  isLoading.value = true
+  try {
+    await acceptTerms()
+    toast.success('Terms accepted successfully')
+    emit('accepted')
+    open.value = false
+  } catch (error) {
+    toast.error('Failed to accept terms. Please try again.')
+    console.error('Terms acceptance failed:', error)
+  } finally {
+    isLoading.value = false
+  }
+}
+
+function handleReject() {
+  emit('rejected')
+  open.value = false
 }
 </script>
 
@@ -24,7 +65,7 @@ function renderSectionContent(section: TermsSection) {
       <DialogHeader class="flex-shrink-0">
         <DialogTitle>Terms of Service</DialogTitle>
         <DialogDescription>
-          Last updated: {{ termsContent.lastUpdated }} &middot; Version {{ termsContent.version }}
+          Last updated: {{ termsContent.lastUpdated }} &middot; Version {{ currentVersion || termsContent.version }}
         </DialogDescription>
       </DialogHeader>
 
@@ -72,7 +113,10 @@ function renderSectionContent(section: TermsSection) {
       </div>
 
       <DialogFooter class="flex-shrink-0">
-        <Button variant="outline" @click="open = false"> Close </Button>
+        <Button variant="outline" @click="handleReject"> Decline </Button>
+        <Button :disabled="isLoading" @click="handleAccept">
+          {{ isLoading ? 'Accepting...' : 'Accept' }}
+        </Button>
       </DialogFooter>
     </DialogContent>
   </Dialog>
