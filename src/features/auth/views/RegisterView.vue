@@ -1,10 +1,11 @@
 <script setup lang="ts">
-import { ref } from 'vue'
+import { ref, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { toast } from 'vue-sonner'
 import { useMutation } from '@tanstack/vue-query'
 import { useSessionStorage } from '@vueuse/core'
 import { register } from '@/lib/api/auth'
+import { getPublicConfig } from '@/lib/api/config'
 import { RouteNames } from '@/router/route-names'
 import { isApiError, mapApiErrorCode } from '@/lib/utils/api-error'
 import { useCooldown } from '@/composables/useCooldown'
@@ -15,8 +16,21 @@ const router = useRouter()
 const { countdown, start } = useCooldown()
 const serverErrors = ref<Record<string, string>>()
 const registeredEmail = ref('')
+const termsVersion = ref('')
 // Write to sessionStorage (tab-scoped, no history leakage) - MUST be at top-level for VueUse
 const pendingEmail = useSessionStorage<string>(SESSION_STORAGE_KEYS.PENDING_VERIFICATION_EMAIL, null)
+
+onMounted(async () => {
+  try {
+    const config = await getPublicConfig()
+    termsVersion.value = config.termsVersion
+  } catch (error) {
+    toast.error('Failed to load terms configuration', {
+      description: 'Registration may not work properly. Please refresh the page.',
+    })
+    console.error('Failed to fetch public config:', error)
+  }
+})
 
 const mutation = useMutation({
   mutationFn: register,
@@ -47,7 +61,7 @@ const mutation = useMutation({
 
 const handleSubmit = (data: Parameters<typeof register>[0]) => {
   registeredEmail.value = data.email
-  mutation.mutate(data)
+  mutation.mutate({ ...data, termsVersion: termsVersion.value })
 }
 </script>
 
