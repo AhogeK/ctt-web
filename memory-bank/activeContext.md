@@ -4,7 +4,7 @@
 
 **Phase**: Terms Acceptance Tracking (Fully Complete)
 **Version**: 0.6.1 (2026-05-03)
-**Branch**: develop at 992b74d, master at b331b91
+**Branch**: develop at e001154, master at b171498
 **Tests**: 392/392 pass
 **Plan**: docs/plans/2026-05-02-terms-acceptance-tracking.md — status: completed
 
