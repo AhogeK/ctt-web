@@ -16,7 +16,7 @@ export interface TermsContent {
 export const termsContent: TermsContent = {
   language: 'en',
   lastUpdated: '2026-05-02',
-  version: '2.0.0',
+  version: '1.0.0',
   sections: [
     {
       id: 'acceptance',
