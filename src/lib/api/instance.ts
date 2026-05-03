@@ -17,6 +17,9 @@ export interface ApiFetchOptions extends FetchOptions {
 /** Event dispatched on 401 responses that cannot be recovered. Auth guards listen for this to trigger logout. */
 export const UNAUTHORIZED_EVENT = 'api:unauthorized'
 
+/** Event dispatched when terms of service need re-acceptance. App.vue listens to show TermsDialog. */
+export const TERMS_EXPIRED_EVENT = 'api:terms-expired'
+
 let isTerminalAuthHandling = false
 
 const TERMINAL_AUTH_CODES: Record<string, { route: string; message: string }> = {
@@ -27,6 +30,28 @@ const TERMINAL_AUTH_CODES: Record<string, { route: string; message: string }> = 
   AUTH_004: { route: RouteNames.LOGIN, message: 'Account is locked. Please contact support.' },
   AUTH_005: { route: RouteNames.LOGIN, message: 'Account is disabled. Please contact support.' },
   AUTH_009: { route: RouteNames.LOGIN, message: 'Security alert: Suspicious activity detected. Please log in again.' },
+}
+
+interface PendingTermsRequest {
+  resolve: (value: unknown) => void
+  reject: (reason: Error) => void
+  request: RequestInfo
+  options: ApiFetchOptions
+}
+
+let isWaitingForTerms = false
+const pendingTermsQueue: PendingTermsRequest[] = []
+
+function processTermsQueue(error: Error | null): void {
+  for (const p of pendingTermsQueue) {
+    if (error) {
+      p.reject(error)
+    } else {
+      // Replay the request
+      p.resolve(apiFetch(p.request, p.options))
+    }
+  }
+  pendingTermsQueue.length = 0
 }
 
 function getErrorCode(data: unknown): string | null {
@@ -162,6 +187,20 @@ export const apiFetch = ofetch.create({
     }
 
     if (response.status === 403) {
+      if (errorCode === 'TERMS_EXPIRED') {
+        // Queue this request for replay after terms acceptance
+        const pending = new Promise((resolve, reject) => {
+          pendingTermsQueue.push({ resolve, reject, request, options })
+        })
+
+        // Only dispatch event on first TERMS_EXPIRED (avoid multiple dialogs)
+        if (!isWaitingForTerms) {
+          isWaitingForTerms = true
+          globalThis.dispatchEvent(new CustomEvent(TERMS_EXPIRED_EVENT))
+        }
+
+        return pending
+      }
       if (errorCode && TERMINAL_AUTH_CODES[errorCode]) {
         handleTerminalAuthError(errorCode)
         return
@@ -180,3 +219,22 @@ export const apiFetch = ofetch.create({
     }
   },
 })
+
+/**
+ * Resolves all pending TERMS_EXPIRED requests by replaying them.
+ * Called by TermsDialog after successful terms acceptance.
+ */
+export function resolveTermsQueue(): void {
+  isWaitingForTerms = false
+  processTermsQueue(null)
+}
+
+/**
+ * Rejects all pending TERMS_EXPIRED requests.
+ * Called by TermsDialog when user rejects or closes the dialog.
+ */
+export function rejectTermsQueue(): void {
+  isWaitingForTerms = false
+  const error = new Error('Terms acceptance required')
+  processTermsQueue(error)
+}

@@ -6,11 +6,13 @@ import {
   RegisterRequestSchema,
   ForgotPasswordRequestSchema,
   ResetPasswordRequestSchema,
+  AuthResponseSchema,
   type LoginRequest,
   type LoginResponse,
   type RegisterRequest,
   type ForgotPasswordRequest,
   type ResetPasswordRequest,
+  type AuthResponse,
 } from '@/lib/schemas/auth.schema'
 
 /**
@@ -198,4 +200,21 @@ export async function confirmPasswordReset(data: ResetPasswordRequest): Promise<
     method: 'POST',
     body: cleanPayload,
   })
+}
+
+/**
+ * Accepts the latest terms of service.
+ *
+ * Endpoint: POST /api/v1/terms/accept
+ *
+ * @returns Parsed auth response with new access token and refresh token
+ * @throws Zod validation error if response doesn't match expected schema
+ */
+export async function acceptTerms(): Promise<AuthResponse> {
+  const response = await apiFetch<unknown>('/api/v1/terms/accept', {
+    method: 'POST',
+  })
+
+  const wrapped = RestApiResponseSchema.parse(response)
+  return AuthResponseSchema.parse(wrapped.data)
 }

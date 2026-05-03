@@ -69,6 +69,22 @@ export const LoginResponseSchema = z.object({
 export type LoginRequest = z.infer<typeof LoginRequestSchema>
 export type LoginResponse = z.infer<typeof LoginResponseSchema>
 
+/**
+ * Unified authentication response schema.
+ *
+ * Backend returns (AuthResponse.java):
+ * - accessToken: JWT token for API authentication
+ * - refreshToken: Token for obtaining new access tokens
+ * - termsExpired: Whether user's terms acceptance is expired
+ */
+export const AuthResponseSchema = z.object({
+  accessToken: z.string().min(1, 'Access token is required'),
+  refreshToken: z.string().min(1, 'Refresh token is required'),
+  termsExpired: z.boolean().default(false),
+})
+
+export type AuthResponse = z.infer<typeof AuthResponseSchema>
+
 // ==========================================
 // Registration Schemas
 // ==========================================
@@ -99,6 +115,8 @@ export const RegisterRequestSchema = z.object({
     .regex(REGEX_DISPLAY_NAME, 'Invalid display name format'),
   // Strong password policy enforced by server's @StrongPassword annotation
   password: StrongPasswordSchema,
+  // Terms version accepted by user — must match server's current version
+  termsVersion: z.string().min(1, 'Terms version is required'),
 })
 
 /**
