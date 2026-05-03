@@ -347,7 +347,7 @@ describe('TermsDialog', () => {
   describe('8. Dialog closes when close button clicked', () => {
     it('emits update:open with false when close button is clicked', async () => {
       const wrapper = mount(RealTermsDialog, { props: { open: true } })
-      const closeButton = wrapper.findAll('button').find((b) => b.text().includes('Close'))
+      const closeButton = wrapper.findAll('button').find((b) => b.text().includes('Decline'))
       expect(closeButton).toBeDefined()
 
       await closeButton!.trigger('click')

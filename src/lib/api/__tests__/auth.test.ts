@@ -175,6 +175,7 @@ describe('auth API', () => {
         email: 'user@example.com',
         displayName: 'TestUser',
         password: 'SecurePass1!',
+        termsVersion: '1.0.0',
       })
 
       expect(apiFetch).toHaveBeenCalledWith('/api/v1/auth/register', {
@@ -183,6 +184,7 @@ describe('auth API', () => {
           email: 'user@example.com',
           displayName: 'TestUser',
           password: 'SecurePass1!',
+          termsVersion: '1.0.0',
         },
       })
       expect(result.success).toBe(true)
@@ -207,6 +209,7 @@ describe('auth API', () => {
         displayName: 'TestUser',
         password: 'SecurePass1!',
         confirmPassword: 'SecurePass1!',
+        termsVersion: '1.0.0',
       }
 
       // Test Zod passthrough: extra fields should be stripped by schema parsing
@@ -223,6 +226,7 @@ describe('auth API', () => {
           email: 'not-an-email',
           displayName: 'TestUser',
           password: 'SecurePass1!',
+          termsVersion: '1.0.0',
         }),
       ).rejects.toThrow('Invalid email format')
     })
@@ -233,6 +237,7 @@ describe('auth API', () => {
           email: 'user@example.com',
           displayName: 'TestUser',
           password: 'weak',
+          termsVersion: '1.0.0',
         }),
       ).rejects.toThrow('Password must be at least 8 characters')
     })
@@ -243,6 +248,7 @@ describe('auth API', () => {
           email: 'user@example.com',
           displayName: 'Test@User!',
           password: 'SecurePass1!',
+          termsVersion: '1.0.0',
         }),
       ).rejects.toThrow('Invalid display name format')
     })
@@ -253,6 +259,7 @@ describe('auth API', () => {
           email: 'user@example.com',
           displayName: 'A',
           password: 'SecurePass1!',
+          termsVersion: '1.0.0',
         }),
       ).rejects.toThrow('Invalid display name format')
     })

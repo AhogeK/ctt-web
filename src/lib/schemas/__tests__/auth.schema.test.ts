@@ -111,6 +111,7 @@ describe('RegisterRequestSchema', () => {
       email: 'user@example.com',
       displayName: 'TestUser',
       password: 'SecurePass1!',
+      termsVersion: '1.0.0',
     }
     const result = RegisterRequestSchema.safeParse(validData)
 
@@ -187,6 +188,7 @@ describe('RegisterRequestSchema', () => {
       email: 'user@example.com',
       displayName: '张三',
       password: 'SecurePass1!',
+      termsVersion: '1.0.0',
     }
     const result = RegisterRequestSchema.safeParse(validData)
 
@@ -204,6 +206,7 @@ describe('RegisterFormSchema', () => {
       email: 'user@example.com',
       displayName: 'TestUser',
       password: 'SecurePass1!',
+      termsVersion: '1.0.0',
       confirmPassword: 'SecurePass1!',
       agreedToTerms: true,
     }
@@ -221,6 +224,7 @@ describe('RegisterFormSchema', () => {
       email: 'user@example.com',
       displayName: 'TestUser',
       password: 'SecurePass1!',
+      termsVersion: '1.0.0',
       confirmPassword: 'DifferentPass1!',
       agreedToTerms: true,
     }
@@ -239,6 +243,7 @@ describe('RegisterFormSchema', () => {
       email: 'user@example.com',
       displayName: 'TestUser',
       password: 'SecurePass1!',
+      termsVersion: '1.0.0',
     }
     const result = RegisterFormSchema.safeParse(invalidData)
 
@@ -783,6 +788,7 @@ describe('Type inference', () => {
       email: 'test@example.com',
       displayName: 'Test',
       password: 'SecurePass1!',
+      termsVersion: '1.0.0',
     }
     expect(_typeCheck.email).toBe('test@example.com')
     expect(_typeCheck.displayName).toBe('Test')
@@ -794,6 +800,7 @@ describe('Type inference', () => {
       email: 'test@example.com',
       displayName: 'Test',
       password: 'SecurePass1!',
+      termsVersion: '1.0.0',
       confirmPassword: 'SecurePass1!',
       agreedToTerms: true,
     }
