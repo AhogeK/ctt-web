@@ -22,6 +22,19 @@ export const TERMS_EXPIRED_EVENT = 'api:terms-expired'
 
 let isTerminalAuthHandling = false
 
+/**
+ * Auth error codes that cannot be recovered via token refresh and require user intervention.
+ *
+ * Unlike retryable codes (AUTH_002: Token expired, AUTH_003: Token invalid) which trigger
+ * automatic token refresh, these terminal errors require explicit user action:
+ * - AUTH_003/AUTH_007/AUTH_008/AUTH_009: Session invalidated → re-login required
+ * - AUTH_006: Email not verified → verification flow required
+ * - AUTH_004/AUTH_005: Account locked/suspended → support contact required
+ *
+ * Maps each code to a target route and user-friendly toast message for graceful degradation.
+ *
+ * @see ctt-server ErrorCode enum for server-side definitions
+ */
 const TERMINAL_AUTH_CODES: Record<string, { route: string; message: string }> = {
   AUTH_003: { route: RouteNames.LOGIN, message: 'Session expired. Please log in again.' },
   AUTH_007: { route: RouteNames.LOGIN, message: 'Session expired. Please log in again.' },
@@ -32,6 +45,16 @@ const TERMINAL_AUTH_CODES: Record<string, { route: string; message: string }> = 
   AUTH_009: { route: RouteNames.LOGIN, message: 'Security alert: Suspicious activity detected. Please log in again.' },
 }
 
+/**
+ * Represents a queued request blocked by TERMS_EXPIRED (403 with TERMS_EXPIRED code).
+ *
+ * When the server rejects a request due to outdated terms acceptance, the request is
+ * suspended in this queue rather than failing immediately. After the user accepts the
+ * new terms via TermsDialog, all queued requests are replayed automatically via
+ * resolveTermsQueue(). If the user declines, all requests are rejected via rejectTermsQueue().
+ *
+ * This ensures seamless UX - users don't lose in-flight requests during the terms update flow.
+ */
 interface PendingTermsRequest {
   resolve: (value: unknown) => void
   reject: (reason: Error) => void

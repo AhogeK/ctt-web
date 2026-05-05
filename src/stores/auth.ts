@@ -3,10 +3,30 @@ import { defineStore } from 'pinia'
 import { useStorage } from '@vueuse/core'
 import { login as loginApi, refresh as refreshApi, logoutAll } from '@/lib/api/auth'
 import { TERMS_EXPIRED_EVENT } from '@/lib/api/instance'
-import type { LoginRequest, LoginResponse } from '@/lib/schemas/auth.schema'
+import type { LoginRequest, LoginResponse, AuthResponse } from '@/lib/schemas/auth.schema'
 import { getOrCreateDeviceId } from '@/lib/utils/device'
 import router from '@/router'
 import { RouteNames } from '@/router/route-names'
+
+/**
+ * Decodes a JWT access token to extract the expiry timestamp.
+ * JWT structure: header.payload.signature
+ * Payload contains 'exp' field (Unix timestamp in seconds).
+ *
+ * @param token - JWT access token
+ * @returns Expiry timestamp in milliseconds, or null if decoding fails
+ */
+function decodeJwtExpiry(token: string): number | null {
+  try {
+    const payload = token.split('.')[1]
+    if (!payload) return null
+    const decoded = JSON.parse(atob(payload))
+    if (typeof decoded.exp !== 'number') return null
+    return decoded.exp * 1000 // Convert seconds to milliseconds
+  } catch {
+    return null
+  }
+}
 
 // Promise lock to prevent concurrent refresh requests (Thundering Herd)
 let activeRefreshPromise: Promise<string> | null = null
@@ -87,6 +107,22 @@ export const useAuthStore = defineStore('auth', () => {
   }
 
   /**
+   * Stores authentication data from terms acceptance response.
+   * AuthResponse lacks userId and expiresIn, so we:
+   * - Keep existing userId from localStorage
+   * - Decode JWT to extract expiry, or use 1-hour default
+   */
+  function setAuthFromTermsAcceptance(response: AuthResponse): void {
+    accessToken.value = response.accessToken
+    refreshToken.value = response.refreshToken
+    // userId is already stored from initial login, keep it
+    // Decode JWT to get expiry, fallback to 1 hour if decoding fails
+    const expiryFromJwt = decodeJwtExpiry(response.accessToken)
+    tokenExpiry.value = expiryFromJwt ?? Date.now() + 3600 * 1000
+    scheduleSilentRefresh()
+  }
+
+  /**
    * Clears all authentication state on logout or token invalidation.
    * Setting useStorage refs to null automatically removes from localStorage.
    * Resets all refs to null, effectively ending the session.
@@ -110,11 +146,12 @@ export const useAuthStore = defineStore('auth', () => {
       deviceId: deviceId.value,
     }
     const response = await loginApi(payload)
+    // Store tokens even when termsExpired is true so user is authenticated
+    // This allows navigation to dashboard while showing terms dialog
+    setAuth(response)
     if (response.termsExpired) {
       globalThis.dispatchEvent(new CustomEvent(TERMS_EXPIRED_EVENT))
-      return response
     }
-    setAuth(response)
     return response
   }
 
@@ -261,6 +298,7 @@ export const useAuthStore = defineStore('auth', () => {
     deviceId,
     isAuthenticated,
     setAuth,
+    setAuthFromTermsAcceptance,
     clearAuth,
     login,
     refreshAccessToken,

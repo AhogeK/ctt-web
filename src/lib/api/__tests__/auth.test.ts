@@ -618,4 +618,98 @@ describe('auth API', () => {
       ).rejects.toThrow('Failed to fetch')
     })
   })
+
+  describe('acceptTerms', () => {
+    it('sends POST request and returns auth response with tokens', async () => {
+      vi.mocked(apiFetch).mockResolvedValue({
+        success: true,
+        message: 'Terms accepted',
+        timestamp: '2026-04-28T12:00:00Z',
+        data: {
+          accessToken: 'new-access-token',
+          refreshToken: 'new-refresh-token',
+          termsExpired: false,
+        },
+      })
+
+      const result = await authApi.acceptTerms()
+
+      expect(apiFetch).toHaveBeenCalledWith('/api/v1/terms/accept', {
+        method: 'POST',
+      })
+      expect(result.accessToken).toBe('new-access-token')
+      expect(result.refreshToken).toBe('new-refresh-token')
+      expect(result.termsExpired).toBe(false)
+    })
+
+    it('defaults termsExpired to false when not provided', async () => {
+      vi.mocked(apiFetch).mockResolvedValue({
+        success: true,
+        message: 'Terms accepted',
+        timestamp: '2026-04-28T12:00:00Z',
+        data: {
+          accessToken: 'new-access-token',
+          refreshToken: 'new-refresh-token',
+        },
+      })
+
+      const result = await authApi.acceptTerms()
+
+      expect(result.termsExpired).toBe(false)
+    })
+
+    it('rejects response missing accessToken', async () => {
+      vi.mocked(apiFetch).mockResolvedValue({
+        success: true,
+        message: 'Terms accepted',
+        timestamp: '2026-04-28T12:00:00Z',
+        data: {
+          refreshToken: 'new-refresh-token',
+        },
+      })
+
+      await expect(authApi.acceptTerms()).rejects.toThrow(/accessToken|invalid/i)
+    })
+
+    it('rejects response missing refreshToken', async () => {
+      vi.mocked(apiFetch).mockResolvedValue({
+        success: true,
+        message: 'Terms accepted',
+        timestamp: '2026-04-28T12:00:00Z',
+        data: {
+          accessToken: 'new-access-token',
+        },
+      })
+
+      await expect(authApi.acceptTerms()).rejects.toThrow(/refreshToken|invalid/i)
+    })
+
+    it('propagates API error on unauthorized (401)', async () => {
+      const apiError = new Error('Unauthorized')
+      vi.mocked(apiFetch).mockRejectedValue(apiError)
+
+      await expect(authApi.acceptTerms()).rejects.toThrow('Unauthorized')
+    })
+
+    it('propagates API error on forbidden (403)', async () => {
+      const apiError = new Error('Forbidden')
+      vi.mocked(apiFetch).mockRejectedValue(apiError)
+
+      await expect(authApi.acceptTerms()).rejects.toThrow('Forbidden')
+    })
+
+    it('propagates network error on connection failure', async () => {
+      const networkError = new TypeError('Failed to fetch')
+      vi.mocked(apiFetch).mockRejectedValue(networkError)
+
+      await expect(authApi.acceptTerms()).rejects.toThrow('Failed to fetch')
+    })
+
+    it('propagates server error (500)', async () => {
+      const serverError = new Error('Internal Server Error')
+      vi.mocked(apiFetch).mockRejectedValue(serverError)
+
+      await expect(authApi.acceptTerms()).rejects.toThrow('Internal Server Error')
+    })
+  })
 })
