@@ -21,10 +21,11 @@ export function buildLoginRequest(overrides: Partial<LoginRequest> = {}): LoginR
 export function buildLoginResponse(overrides: Partial<LoginResponse> = {}): LoginResponse {
   return {
     userId: faker.string.uuid(),
-    accessToken: faker.string.alphanumeric({ length: 32 }),
-    refreshToken: faker.string.alphanumeric({ length: 32 }),
-    expiresIn: faker.number.int({ min: 300, max: 86_400 }),
+    accessToken: faker.string.alphanumeric(32),
+    refreshToken: faker.string.alphanumeric(32),
+    expiresIn: 3600,
     tokenType: 'Bearer',
+    termsExpired: false,
     ...overrides,
   }
 }

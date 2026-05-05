@@ -185,6 +185,22 @@ vi.mock('lucide-vue-next', () => ({
   EyeOff: vi.fn<() => void>(),
 }))
 
+vi.mock('@/stores/auth', () => ({
+  useAuthStore: vi.fn<() => { setAuthFromTermsAcceptance: (response: unknown) => void }>(() => ({
+    setAuthFromTermsAcceptance: vi.fn<(response: unknown) => void>(),
+  })),
+}))
+
+vi.mock('@/lib/api/instance', () => ({
+  rejectTermsQueue: vi.fn<() => void>(),
+  resolveTermsQueue: vi.fn<() => void>(),
+  TERMS_EXPIRED_EVENT: 'api:terms-expired',
+}))
+
+vi.mock('@/lib/api/config', () => ({
+  getPublicConfig: vi.fn<() => Promise<{ termsVersion: string }>>().mockResolvedValue({ termsVersion: '1.0.0' }),
+}))
+
 // ==========================================
 // Helper Functions
 // ==========================================

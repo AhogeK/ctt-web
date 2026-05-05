@@ -90,6 +90,7 @@ describe('Auth Store', () => {
         userId: 'user-456',
         expiresIn: 3600,
         tokenType: 'Bearer' as const,
+        termsExpired: false,
       }
 
       store.setAuth(mockResponse)
@@ -107,6 +108,7 @@ describe('Auth Store', () => {
         userId: 'user',
         expiresIn: 3600, // 1 hour
         tokenType: 'Bearer' as const,
+        termsExpired: false,
       }
 
       const beforeExpiry = Date.now()
@@ -129,6 +131,7 @@ describe('Auth Store', () => {
         userId: 'user',
         expiresIn: 3600,
         tokenType: 'Bearer',
+        termsExpired: false,
       })
 
       store.clearAuth()
@@ -146,6 +149,7 @@ describe('Auth Store', () => {
         userId: 'user',
         expiresIn: 3600,
         tokenType: 'Bearer',
+        termsExpired: false,
       })
 
       store.clearAuth()
@@ -184,6 +188,7 @@ describe('Auth Store', () => {
         userId: 'user',
         expiresIn,
         tokenType: 'Bearer' as const,
+        termsExpired: false,
       }
 
       localStorage.setItem(STORAGE_KEYS.REFRESH_TOKEN, 'refresh-token')
@@ -192,7 +197,7 @@ describe('Auth Store', () => {
 
       vi.mocked(authApi.refresh).mockResolvedValue(mockResponse)
 
-      store.setAuth(mockResponse)
+      store.setAuth({ ...mockResponse, termsExpired: false })
 
       // Timer should be scheduled
       expect(setTimeoutSpy).toHaveBeenCalled()
@@ -232,6 +237,7 @@ describe('Auth Store', () => {
         userId: 'user',
         expiresIn,
         tokenType: 'Bearer' as const,
+        termsExpired: false,
       }
 
       localStorage.setItem(STORAGE_KEYS.REFRESH_TOKEN, 'refresh-token')
@@ -240,7 +246,7 @@ describe('Auth Store', () => {
 
       vi.mocked(authApi.refresh).mockResolvedValue(mockResponse)
 
-      store.setAuth(mockResponse)
+      store.setAuth({ ...mockResponse, termsExpired: false })
 
       // Timer should be scheduled
       expect(setTimeoutSpy).toHaveBeenCalled()
@@ -283,6 +289,7 @@ describe('Auth Store', () => {
         userId: 'user-id',
         expiresIn: 3600,
         tokenType: 'Bearer',
+        termsExpired: false,
       })
 
       const result = await store.initializeAuth()
@@ -305,6 +312,143 @@ describe('Auth Store', () => {
       expect(store.accessToken).toBeNull()
       expect(store.refreshToken).toBeNull()
       expect(store.userId).toBeNull()
+    })
+  })
+
+  describe('login', () => {
+    it('calls login API with credentials and deviceId', async () => {
+      vi.mocked(authApi.login).mockResolvedValue({
+        accessToken: 'test-access-token',
+        refreshToken: 'test-refresh-token',
+        userId: 'user-id',
+        expiresIn: 3600,
+        tokenType: 'Bearer',
+        termsExpired: false,
+      })
+
+      const result = await store.login({
+        email: 'user@example.com',
+        password: 'SecurePass1!',
+      })
+
+      expect(authApi.login).toHaveBeenCalledWith({
+        email: 'user@example.com',
+        password: 'SecurePass1!',
+        deviceId: store.deviceId,
+      })
+      expect(result.accessToken).toBe('test-access-token')
+      expect(store.accessToken).toBe('test-access-token')
+    })
+
+    it('sets auth state on successful login', async () => {
+      vi.mocked(authApi.login).mockResolvedValue({
+        accessToken: 'new-access-token',
+        refreshToken: 'new-refresh-token',
+        userId: 'new-user-id',
+        expiresIn: 7200,
+        tokenType: 'Bearer',
+        termsExpired: false,
+      })
+
+      await store.login({
+        email: 'user@example.com',
+        password: 'SecurePass1!',
+      })
+
+      expect(store.accessToken).toBe('new-access-token')
+      expect(store.refreshToken).toBe('new-refresh-token')
+      expect(store.userId).toBe('new-user-id')
+      expect(store.isAuthenticated).toBe(true)
+    })
+
+    it('dispatches TERMS_EXPIRED_EVENT when termsExpired is true', async () => {
+      const dispatchEventSpy = vi.spyOn(globalThis, 'dispatchEvent').mockImplementation(vi.fn())
+
+      vi.mocked(authApi.login).mockResolvedValue({
+        accessToken: 'test-access-token',
+        refreshToken: 'test-refresh-token',
+        userId: 'user-id',
+        expiresIn: 3600,
+        tokenType: 'Bearer',
+        termsExpired: true,
+      })
+
+      const result = await store.login({
+        email: 'user@example.com',
+        password: 'SecurePass1!',
+      })
+
+      expect(dispatchEventSpy).toHaveBeenCalled()
+      const dispatchedEvent = dispatchEventSpy.mock.calls[0]![0] as CustomEvent
+      expect(dispatchedEvent.type).toBe('api:terms-expired')
+
+      expect(result.termsExpired).toBe(true)
+      expect(store.accessToken).toBe('test-access-token')
+
+      dispatchEventSpy.mockRestore()
+    })
+
+    it('sets auth state even when termsExpired is true (user is authenticated)', async () => {
+      vi.mocked(authApi.login).mockResolvedValue({
+        accessToken: 'test-access-token',
+        refreshToken: 'test-refresh-token',
+        userId: 'user-id',
+        expiresIn: 3600,
+        tokenType: 'Bearer',
+        termsExpired: true,
+      })
+
+      await store.login({
+        email: 'user@example.com',
+        password: 'SecurePass1!',
+      })
+
+      expect(store.accessToken).toBe('test-access-token')
+      expect(store.refreshToken).toBe('test-refresh-token')
+      expect(store.userId).toBe('user-id')
+      expect(store.isAuthenticated).toBe(true)
+    })
+
+    it('returns response with termsExpired flag', async () => {
+      vi.mocked(authApi.login).mockResolvedValue({
+        accessToken: 'test-access-token',
+        refreshToken: 'test-refresh-token',
+        userId: 'user-id',
+        expiresIn: 3600,
+        tokenType: 'Bearer',
+        termsExpired: true,
+      })
+
+      const result = await store.login({
+        email: 'user@example.com',
+        password: 'SecurePass1!',
+      })
+
+      expect(result.termsExpired).toBe(true)
+    })
+
+    it('propagates login API error', async () => {
+      const loginError = new Error('Invalid credentials')
+      vi.mocked(authApi.login).mockRejectedValue(loginError)
+
+      await expect(
+        store.login({
+          email: 'user@example.com',
+          password: 'WrongPassword',
+        }),
+      ).rejects.toThrow('Invalid credentials')
+    })
+
+    it('propagates network error on connection failure', async () => {
+      const networkError = new TypeError('Failed to fetch')
+      vi.mocked(authApi.login).mockRejectedValue(networkError)
+
+      await expect(
+        store.login({
+          email: 'user@example.com',
+          password: 'SecurePass1!',
+        }),
+      ).rejects.toThrow('Failed to fetch')
     })
   })
 })

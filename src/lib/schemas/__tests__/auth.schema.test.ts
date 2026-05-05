@@ -775,6 +775,7 @@ describe('Type inference', () => {
       refreshToken: 'refresh-token',
       expiresIn: 3600,
       tokenType: 'Bearer',
+      termsExpired: false,
     }
     expect(_typeCheck.userId).toBe('550e8400-e29b-41d4-a716-446655440000')
     expect(_typeCheck.accessToken).toBe('access-token')
@@ -817,7 +818,8 @@ describe('Type inference', () => {
       accessToken: 'access-token',
       refreshToken: 'refresh-token',
       expiresIn: 3600,
-      tokenType: 'Bearer', // This must be exactly 'Bearer', not any string
+      tokenType: 'Bearer',
+      termsExpired: false,
     }
     // Verify the tokenType is correctly typed and assigned
     expect(response.tokenType).toBe('Bearer')
