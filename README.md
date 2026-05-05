@@ -37,23 +37,24 @@ visualization.
 
 ## ✅ Implemented Features
 
-| Feature                 | Description                                                                                          |
-| ----------------------- | ---------------------------------------------------------------------------------------------------- |
-| Authentication          | JWT login, logout, token management, router guards, startup token validation                         |
-| Auth Initialization     | Startup token validation via refresh endpoint, redirects expired sessions to login                   |
-| Guest Guard             | Redirects authenticated users away from auth pages (login, register, forgot-password)                |
-| Password Reset          | Forgot password + reset password flows with error mapping, rate limit cooldown, anti-enumeration     |
-| Layout System           | AuthLayout + AppLayout, mobile responsive sidebar                                                    |
-| Routing                 | Feature-based modules, type-safe meta, NProgress, **route name constants**, **absolute child paths** |
-| Form Validation         | Vee-Validate + Zod, real-time feedback                                                               |
-| Lazy Loading            | Route-level code splitting, dynamic imports                                                          |
-| Chunk Optimization      | Feature-based manual chunks (auth, dashboard, settings)                                              |
-| **Exception Handling**  | Hierarchical ErrorBoundary (App.vue → AppLayout.vue), global handlers, 404View, Sonner toast         |
-| Token Refresh           | JWT refresh with concurrency control, Promise deduping, Thundering Herd prevention                   |
-| Server State Management | TanStack Query v5 with 30s staleTime, SWR pattern, automatic caching                                 |
-| Device Management       | Device list view, device identification, multi-device sync visualization                             |
-| Leaderboard             | Leaderboard view with rankings, composable-driven data fetching                                      |
-| Theme System            | Light/dark mode toggle, Pinia theme store with VueUse persistence                                    |
+| Feature                 | Description                                                                                                |
+| ----------------------- | ---------------------------------------------------------------------------------------------------------- |
+| Authentication          | JWT login, logout, token management, router guards, startup token validation                               |
+| Auth Initialization     | Startup token validation via refresh endpoint, redirects expired sessions to login                         |
+| Guest Guard             | Redirects authenticated users away from auth pages (login, register, forgot-password)                      |
+| Password Reset          | Forgot password + reset password flows with error mapping, rate limit cooldown, anti-enumeration           |
+| Layout System           | AuthLayout + AppLayout, mobile responsive sidebar                                                          |
+| Routing                 | Feature-based modules, type-safe meta, NProgress, **route name constants**, **absolute child paths**       |
+| Form Validation         | Vee-Validate + Zod, real-time feedback                                                                     |
+| Lazy Loading            | Route-level code splitting, dynamic imports                                                                |
+| Chunk Optimization      | Feature-based manual chunks (auth, dashboard, settings)                                                    |
+| **Exception Handling**  | Hierarchical ErrorBoundary (App.vue → AppLayout.vue), global handlers, 404View, Sonner toast               |
+| Token Refresh           | JWT refresh with concurrency control, Promise deduping, Thundering Herd prevention                         |
+| Server State Management | TanStack Query v5 with 30s staleTime, SWR pattern, automatic caching                                       |
+| Device Management       | Device list view, device identification, multi-device sync visualization                                   |
+| Leaderboard             | Leaderboard view with rankings, composable-driven data fetching                                            |
+| Theme System            | Light/dark mode toggle, Pinia theme store with VueUse persistence                                          |
+| Terms Acceptance        | Terms version tracking on registration, expiration handling on login, 403 interception with request replay |
 
 ## 🗺 Project Structure
 
