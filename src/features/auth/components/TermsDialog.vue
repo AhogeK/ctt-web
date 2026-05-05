@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, onMounted } from 'vue'
+import { ref, onMounted, watch } from 'vue'
 import { toast } from 'vue-sonner'
 import {
   Dialog,
@@ -13,6 +13,8 @@ import { Button } from '@/components/ui/button'
 import { getPublicConfig } from '@/lib/api/config'
 import { acceptTerms } from '@/lib/api/auth'
 import { termsContent, type TermsSection } from '@/features/auth/content'
+import { useAuthStore } from '@/stores/auth'
+import { rejectTermsQueue } from '@/lib/api/instance'
 
 const open = defineModel<boolean>('open', { default: false })
 const emit = defineEmits<{
@@ -22,6 +24,7 @@ const emit = defineEmits<{
 
 const currentVersion = ref('')
 const isLoading = ref(false)
+const authStore = useAuthStore()
 
 onMounted(async () => {
   try {
@@ -33,6 +36,15 @@ onMounted(async () => {
   }
 })
 
+// Handle dialog close without explicit decision (click outside, Escape key)
+watch(open, (newValue, oldValue) => {
+  if (oldValue === true && newValue === false && isLoading.value === false) {
+    // Dialog was closed without accept/reject - reject queued requests
+    rejectTermsQueue()
+    emit('rejected')
+  }
+})
+
 function renderSectionContent(section: TermsSection) {
   const parts = section.content.split('\n\n')
   return parts.map((part, i) => ({ id: `${section.id}-p${i}`, text: part }))
@@ -41,7 +53,9 @@ function renderSectionContent(section: TermsSection) {
 async function handleAccept() {
   isLoading.value = true
   try {
-    await acceptTerms()
+    const response = await acceptTerms()
+    // Store new tokens from terms acceptance
+    authStore.setAuthFromTermsAcceptance(response)
     toast.success('Terms accepted successfully')
     emit('accepted')
     open.value = false
@@ -62,7 +76,7 @@ function handleReject() {
 <template>
   <Dialog v-model:open="open">
     <DialogContent class="sm:max-w-3xl max-h-[80vh] flex flex-col">
-      <DialogHeader class="flex-shrink-0">
+      <DialogHeader class="shrink-0">
         <DialogTitle>Terms of Service</DialogTitle>
         <DialogDescription>
           Last updated: {{ termsContent.lastUpdated }} &middot; Version {{ currentVersion || termsContent.version }}
@@ -112,7 +126,7 @@ function handleReject() {
         </div>
       </div>
 
-      <DialogFooter class="flex-shrink-0">
+      <DialogFooter class="shrink-0">
         <Button variant="outline" @click="handleReject"> Decline </Button>
         <Button :disabled="isLoading" @click="handleAccept">
           {{ isLoading ? 'Accepting...' : 'Accept' }}
