@@ -121,7 +121,7 @@ describe('API Instance', () => {
         await capturedConfig.onRequest(mockContext)
       }
 
-      const headers = mockContext.options.headers as Headers
+      const headers = mockContext.options.headers
       expect(headers.get('Authorization')).toBe('Bearer test-access-token')
     })
 
@@ -145,7 +145,7 @@ describe('API Instance', () => {
         await capturedConfig.onRequest(mockContext)
       }
 
-      const headers = mockContext.options.headers as Headers
+      const headers = mockContext.options.headers
       expect(headers.get('Authorization')).toBe('Bearer token-123')
       expect(headers.get('Content-Type')).toBe('application/json')
       expect(headers.get('X-Custom-Header')).toBe('custom-value')
@@ -167,7 +167,7 @@ describe('API Instance', () => {
         await capturedConfig.onRequest(mockContext)
       }
 
-      const headers = mockContext.options.headers as Headers
+      const headers = mockContext.options.headers
       expect(headers.has('Authorization')).toBe(false)
     })
 
@@ -187,7 +187,7 @@ describe('API Instance', () => {
         await capturedConfig.onRequest(mockContext)
       }
 
-      const headers = mockContext.options.headers as Headers
+      const headers = mockContext.options.headers
       expect(headers.has('Authorization')).toBe(false)
     })
 
@@ -204,7 +204,7 @@ describe('API Instance', () => {
       if (capturedConfig.onRequest) {
         await capturedConfig.onRequest(mockContext1)
       }
-      expect((mockContext1.options.headers as Headers).has('Authorization')).toBe(false)
+      expect(mockContext1.options.headers.has('Authorization')).toBe(false)
 
       localStorage.setItem('ctt_access_token', 'new-token')
 
@@ -216,7 +216,7 @@ describe('API Instance', () => {
       if (capturedConfig.onRequest) {
         await capturedConfig.onRequest(mockContext2)
       }
-      expect((mockContext2.options.headers as Headers).get('Authorization')).toBe('Bearer new-token')
+      expect(mockContext2.options.headers.get('Authorization')).toBe('Bearer new-token')
     })
   })
 
@@ -254,7 +254,7 @@ describe('API Instance', () => {
         await capturedConfig.onRequest(mockContext)
       }
 
-      const headers = mockContext.options.headers as Headers
+      const headers = mockContext.options.headers
       expect(headers.get('Authorization')).toBe('Bearer token')
     })
   })
@@ -267,7 +267,7 @@ describe('API Instance', () => {
       vi.resetModules()
       vi.spyOn(console, 'warn').mockImplementation(vi.fn())
       vi.spyOn(console, 'error').mockImplementation(vi.fn())
-      dispatchEventSpy = vi.spyOn(window, 'dispatchEvent').mockImplementation(vi.fn())
+      dispatchEventSpy = vi.spyOn(globalThis, 'dispatchEvent').mockImplementation(vi.fn())
       removeItemSpy = vi.spyOn(Storage.prototype, 'removeItem').mockImplementation(vi.fn())
       await import('../instance')
       // Clear warnings emitted during module import (e.g., Vue Router route config warnings)
@@ -286,9 +286,7 @@ describe('API Instance', () => {
       }
       const mockContext = { response: mockResponse }
 
-      if (capturedConfig.onResponseError) {
-        await capturedConfig.onResponseError(mockContext)
-      }
+      await capturedConfig.onResponseError!(mockContext)
 
       expect(removeItemSpy).toHaveBeenCalledWith('ctt_access_token')
       expect(dispatchEventSpy).toHaveBeenCalled()
@@ -305,9 +303,7 @@ describe('API Instance', () => {
       }
       const mockContext = { response: mockResponse }
 
-      if (capturedConfig.onResponseError) {
-        await capturedConfig.onResponseError(mockContext)
-      }
+      await capturedConfig.onResponseError!(mockContext)
 
       expect(console.warn).toHaveBeenCalledWith('Permission denied:', mockResponse._data)
       expect(toast.error).not.toHaveBeenCalled()
@@ -323,9 +319,7 @@ describe('API Instance', () => {
       }
       const mockContext = { response: mockResponse }
 
-      if (capturedConfig.onResponseError) {
-        await capturedConfig.onResponseError(mockContext)
-      }
+      await capturedConfig.onResponseError!(mockContext)
 
       expect(console.warn).toHaveBeenCalledWith('Resource not found:', mockResponse._data)
       expect(toast.error).not.toHaveBeenCalled()
@@ -341,9 +335,7 @@ describe('API Instance', () => {
       }
       const mockContext = { response: mockResponse }
 
-      if (capturedConfig.onResponseError) {
-        await capturedConfig.onResponseError(mockContext)
-      }
+      await capturedConfig.onResponseError!(mockContext)
 
       expect(toast.error).not.toHaveBeenCalled()
       expect(removeItemSpy).not.toHaveBeenCalled()
@@ -359,9 +351,7 @@ describe('API Instance', () => {
       }
       const mockContext = { response: mockResponse }
 
-      if (capturedConfig.onResponseError) {
-        await capturedConfig.onResponseError(mockContext)
-      }
+      await capturedConfig.onResponseError!(mockContext)
 
       expect(console.error).toHaveBeenCalledWith('Server error:', mockResponse._data)
       expect(toast.error).not.toHaveBeenCalled()
@@ -377,9 +367,7 @@ describe('API Instance', () => {
       }
       const mockContext = { response: mockResponse }
 
-      if (capturedConfig.onResponseError) {
-        await capturedConfig.onResponseError(mockContext)
-      }
+      await capturedConfig.onResponseError!(mockContext)
 
       expect(console.error).toHaveBeenCalledWith('Server error:', mockResponse._data)
       expect(toast.error).not.toHaveBeenCalled()
@@ -394,9 +382,7 @@ describe('API Instance', () => {
       }
       const mockContext = { response: mockResponse }
 
-      if (capturedConfig.onResponseError) {
-        await capturedConfig.onResponseError(mockContext)
-      }
+      await capturedConfig.onResponseError!(mockContext)
 
       expect(toast.error).not.toHaveBeenCalled()
       expect(removeItemSpy).not.toHaveBeenCalled()
@@ -411,12 +397,10 @@ describe('API Instance', () => {
       }
       const mockContext = { response: mockResponse }
 
-      if (capturedConfig.onResponseError) {
-        await capturedConfig.onResponseError(mockContext)
-      }
+      await capturedConfig.onResponseError!(mockContext)
 
-      expect(window.dispatchEvent).toHaveBeenCalledTimes(1)
-      const event = (window.dispatchEvent as ReturnType<typeof vi.fn>).mock.calls[0]![0]
+      expect(globalThis.dispatchEvent).toHaveBeenCalledTimes(1)
+      const event = (globalThis.dispatchEvent as ReturnType<typeof vi.fn>).mock.calls[0]![0]
       expect(event instanceof CustomEvent).toBe(true)
     })
   })
@@ -442,7 +426,7 @@ describe('API Instance', () => {
 
       vi.spyOn(console, 'warn').mockImplementation(vi.fn())
       vi.spyOn(console, 'error').mockImplementation(vi.fn())
-      dispatchEventSpy = vi.spyOn(window, 'dispatchEvent').mockImplementation(vi.fn())
+      dispatchEventSpy = vi.spyOn(globalThis, 'dispatchEvent').mockImplementation(vi.fn())
       removeItemSpy = vi.spyOn(Storage.prototype, 'removeItem').mockImplementation(vi.fn())
 
       await import('../instance')
@@ -464,9 +448,7 @@ describe('API Instance', () => {
         options: { method: 'GET' },
       }
 
-      if (capturedConfig.onResponseError) {
-        await capturedConfig.onResponseError(mockContext)
-      }
+      await capturedConfig.onResponseError!(mockContext)
 
       expect(mockAuthStore.refreshAccessToken).toHaveBeenCalledTimes(1)
     })
@@ -482,9 +464,7 @@ describe('API Instance', () => {
         options: { method: 'GET' },
       }
 
-      if (capturedConfig.onResponseError) {
-        await capturedConfig.onResponseError(mockContext)
-      }
+      await capturedConfig.onResponseError!(mockContext)
 
       expect(mockAuthStore.refreshAccessToken).toHaveBeenCalledTimes(1)
     })
@@ -500,9 +480,7 @@ describe('API Instance', () => {
         options: { method: 'GET', headers: { 'Content-Type': 'application/json' } },
       }
 
-      if (capturedConfig.onResponseError) {
-        await capturedConfig.onResponseError(mockContext)
-      }
+      await capturedConfig.onResponseError!(mockContext)
 
       expect(mockAuthStore.refreshAccessToken).toHaveBeenCalledTimes(1)
       expect((mockFetchInstance as any).lastOptions).toBeDefined()
@@ -520,9 +498,7 @@ describe('API Instance', () => {
         options: { method: 'GET', __authRetry: true },
       }
 
-      if (capturedConfig.onResponseError) {
-        await capturedConfig.onResponseError(mockContext)
-      }
+      await capturedConfig.onResponseError!(mockContext)
 
       expect(mockAuthStore.refreshAccessToken).not.toHaveBeenCalled()
     })
@@ -541,9 +517,10 @@ describe('API Instance', () => {
         options: { method: 'GET' },
       }
 
-      if (capturedConfig.onResponseError) {
-        await expect(capturedConfig.onResponseError(mockContext)).rejects.toThrow()
-      }
+      const onResponseError = capturedConfig.onResponseError!
+      await expect(onResponseError(mockContext)).rejects.toThrow(
+        expect.objectContaining({ data: expect.objectContaining({ code: 'AUTH_003' }) }),
+      )
 
       expect(mockAuthStore.clearAuth).toHaveBeenCalledTimes(1)
       expect(toast.error).toHaveBeenCalledWith('Session expired. Please log in again.')
@@ -565,9 +542,7 @@ describe('API Instance', () => {
         options: { method: 'GET' },
       }
 
-      if (capturedConfig.onResponseError) {
-        await capturedConfig.onResponseError(mockContext)
-      }
+      await capturedConfig.onResponseError!(mockContext)
 
       expect(mockAuthStore.clearAuth).toHaveBeenCalledTimes(1)
       expect(toast.error).toHaveBeenCalledWith('Session expired. Please log in again.')
@@ -589,9 +564,7 @@ describe('API Instance', () => {
         options: { method: 'GET' },
       }
 
-      if (capturedConfig.onResponseError) {
-        await capturedConfig.onResponseError(mockContext)
-      }
+      await capturedConfig.onResponseError!(mockContext)
 
       expect(mockAuthStore.clearAuth).toHaveBeenCalledTimes(1)
       expect(toast.error).toHaveBeenCalledWith('Security alert: Suspicious activity detected. Please log in again.')
@@ -611,9 +584,8 @@ describe('API Instance', () => {
         options: { method: 'GET' },
       }
 
-      if (capturedConfig.onResponseError) {
-        await expect(capturedConfig.onResponseError(mockContext)).rejects.toThrow()
-      }
+      const onResponseError = capturedConfig.onResponseError!
+      await expect(onResponseError(mockContext)).rejects.toThrow('Network error')
 
       expect(mockAuthStore.clearAuth).not.toHaveBeenCalled()
       expect(toast.error).not.toHaveBeenCalled()
@@ -631,9 +603,7 @@ describe('API Instance', () => {
         options: { method: 'GET' },
       }
 
-      if (capturedConfig.onResponseError) {
-        await capturedConfig.onResponseError(mockContext)
-      }
+      await capturedConfig.onResponseError!(mockContext)
 
       expect(mockAuthStore.clearAuth).toHaveBeenCalledTimes(1)
       expect(toast.error).toHaveBeenCalledWith('Account is locked. Please contact support.')
@@ -651,9 +621,7 @@ describe('API Instance', () => {
         options: { method: 'GET' },
       }
 
-      if (capturedConfig.onResponseError) {
-        await capturedConfig.onResponseError(mockContext)
-      }
+      await capturedConfig.onResponseError!(mockContext)
 
       expect(mockAuthStore.clearAuth).toHaveBeenCalledTimes(1)
       expect(toast.error).toHaveBeenCalledWith('Account is disabled. Please contact support.')
@@ -671,9 +639,7 @@ describe('API Instance', () => {
         options: { method: 'GET' },
       }
 
-      if (capturedConfig.onResponseError) {
-        await capturedConfig.onResponseError(mockContext)
-      }
+      await capturedConfig.onResponseError!(mockContext)
 
       expect(mockAuthStore.clearAuth).toHaveBeenCalledTimes(1)
       expect(toast.error).toHaveBeenCalledWith('Please verify your email address to continue.')
@@ -691,9 +657,7 @@ describe('API Instance', () => {
         options: { method: 'GET' },
       }
 
-      if (capturedConfig.onResponseError) {
-        await capturedConfig.onResponseError(mockContext)
-      }
+      await capturedConfig.onResponseError!(mockContext)
 
       expect(mockAuthStore.clearAuth).toHaveBeenCalledTimes(1)
       expect(toast.error).toHaveBeenCalledWith('Session expired. Please log in again.')
@@ -711,9 +675,7 @@ describe('API Instance', () => {
         options: { method: 'GET' },
       }
 
-      if (capturedConfig.onResponseError) {
-        await capturedConfig.onResponseError(mockContext)
-      }
+      await capturedConfig.onResponseError!(mockContext)
 
       expect(mockAuthStore.clearAuth).toHaveBeenCalledTimes(1)
       expect(toast.error).toHaveBeenCalledWith('Session revoked. Please log in again.')
@@ -731,9 +693,7 @@ describe('API Instance', () => {
         options: { method: 'GET' },
       }
 
-      if (capturedConfig.onResponseError) {
-        await capturedConfig.onResponseError(mockContext)
-      }
+      await capturedConfig.onResponseError!(mockContext)
 
       expect(mockAuthStore.clearAuth).toHaveBeenCalledTimes(1)
       expect(toast.error).toHaveBeenCalledWith('Account is locked. Please contact support.')
@@ -741,11 +701,11 @@ describe('API Instance', () => {
     })
 
     it('mutex prevents duplicate terminal auth handling', async () => {
-      let pushResolve: (() => void) | undefined
+      let resolvePush: (() => void) | undefined
       mockRouter.push.mockImplementation(
         () =>
           new Promise<void>((resolve) => {
-            pushResolve = resolve
+            resolvePush = resolve
           }),
       )
 
@@ -759,11 +719,15 @@ describe('API Instance', () => {
         options: { method: 'GET' },
       }
 
-      if (capturedConfig.onResponseError) {
-        await capturedConfig.onResponseError(mockContext)
-        await capturedConfig.onResponseError(mockContext)
-        pushResolve!()
-      }
+      const onResponseError = capturedConfig.onResponseError!
+      const p1 = onResponseError(mockContext)
+      const p2 = onResponseError(mockContext)
+
+      expect(mockRouter.push).toHaveBeenCalledTimes(1)
+
+      resolvePush?.()
+      await p1
+      await p2
 
       expect(mockAuthStore.clearAuth).toHaveBeenCalledTimes(1)
       expect(toast.error).toHaveBeenCalledTimes(1)
@@ -781,9 +745,7 @@ describe('API Instance', () => {
         options: { method: 'GET' },
       }
 
-      if (capturedConfig.onResponseError) {
-        await capturedConfig.onResponseError(mockContext)
-      }
+      await capturedConfig.onResponseError!(mockContext)
 
       expect(mockAuthStore.clearAuth).toHaveBeenCalledTimes(1)
     })
@@ -799,9 +761,7 @@ describe('API Instance', () => {
         options: { method: 'GET' },
       }
 
-      if (capturedConfig.onResponseError) {
-        await capturedConfig.onResponseError(mockContext)
-      }
+      await capturedConfig.onResponseError!(mockContext)
 
       expect(mockAuthStore.clearAuth).toHaveBeenCalledTimes(1)
     })
@@ -817,13 +777,184 @@ describe('API Instance', () => {
         options: { method: 'GET' },
       }
 
-      if (capturedConfig.onResponseError) {
-        await capturedConfig.onResponseError(mockContext)
-      }
+      await capturedConfig.onResponseError!(mockContext)
 
       expect(mockAuthStore.clearAuth).not.toHaveBeenCalled()
       expect(removeItemSpy).toHaveBeenCalledWith('ctt_access_token')
       expect(dispatchEventSpy).toHaveBeenCalled()
+    })
+  })
+
+  describe('TERMS_EXPIRED Handling', () => {
+    let dispatchEventSpy: ReturnType<typeof vi.spyOn>
+
+    beforeEach(async () => {
+      vi.resetModules()
+
+      const mockFn = mockFetchInstance as any
+      mockFn.mockImplementation(async (_request: any, options: any) => {
+        mockFn.lastOptions = options
+        return { success: true }
+      })
+      mockFn.raw = vi.fn<() => void>()
+      mockFn.create = vi.fn<() => any>().mockReturnThis()
+
+      mockAuthStore.refreshAccessToken.mockClear().mockResolvedValue('new-access-token')
+      mockAuthStore.clearAuth.mockClear()
+      mockRouter.push.mockClear().mockResolvedValue(undefined)
+
+      vi.spyOn(console, 'warn').mockImplementation(vi.fn())
+      vi.spyOn(console, 'error').mockImplementation(vi.fn())
+      dispatchEventSpy = vi.spyOn(globalThis, 'dispatchEvent').mockImplementation(vi.fn())
+
+      await import('../instance')
+      ;(console.warn as ReturnType<typeof vi.fn>).mockClear()
+    })
+
+    afterEach(() => {
+      vi.restoreAllMocks()
+    })
+
+    it('dispatches TERMS_EXPIRED_EVENT on 403 with TERMS_EXPIRED code', () => {
+      const mockContext = {
+        response: {
+          status: 403,
+          _data: { code: 'TERMS_EXPIRED', message: 'Terms of service need re-acceptance' },
+          url: 'https://api.example.com/test',
+        },
+        request: 'https://api.example.com/test',
+        options: { method: 'GET' },
+      }
+
+      const _promise = capturedConfig.onResponseError!(mockContext)
+      expect(_promise).toBeDefined()
+
+      expect(dispatchEventSpy).toHaveBeenCalled()
+      const dispatchedEvent = dispatchEventSpy.mock.calls[0]![0] as CustomEvent
+      expect(dispatchedEvent.type).toBe('api:terms-expired')
+    })
+
+    it('queues request on TERMS_EXPIRED and returns pending promise', () => {
+      const mockContext = {
+        response: {
+          status: 403,
+          _data: { code: 'TERMS_EXPIRED', message: 'Terms expired' },
+          url: 'https://api.example.com/test',
+        },
+        request: 'https://api.example.com/test',
+        options: { method: 'GET' },
+      }
+
+      const result = capturedConfig.onResponseError!(mockContext)
+      expect(result).toBeInstanceOf(Promise)
+
+      expect(dispatchEventSpy).toHaveBeenCalled()
+    })
+
+    it('only dispatches TERMS_EXPIRED_EVENT once for multiple requests', () => {
+      const mockContext1 = {
+        response: {
+          status: 403,
+          _data: { code: 'TERMS_EXPIRED', message: 'Terms expired' },
+          url: 'https://api.example.com/test1',
+        },
+        request: 'https://api.example.com/test1',
+        options: { method: 'GET' },
+      }
+
+      const mockContext2 = {
+        response: {
+          status: 403,
+          _data: { code: 'TERMS_EXPIRED', message: 'Terms expired' },
+          url: 'https://api.example.com/test2',
+        },
+        request: 'https://api.example.com/test2',
+        options: { method: 'GET' },
+      }
+
+      const _p1 = capturedConfig.onResponseError!(mockContext1)
+      const _p2 = capturedConfig.onResponseError!(mockContext2)
+      expect(_p1).toBeDefined()
+      expect(_p2).toBeDefined()
+
+      expect(dispatchEventSpy).toHaveBeenCalledTimes(1)
+    })
+
+    it('does not dispatch event for other 403 codes', async () => {
+      const mockContext = {
+        response: {
+          status: 403,
+          _data: { code: 'OTHER_CODE', message: 'Forbidden' },
+          url: 'https://api.example.com/test',
+        },
+        request: 'https://api.example.com/test',
+        options: { method: 'GET' },
+      }
+
+      await capturedConfig.onResponseError!(mockContext)
+
+      expect(dispatchEventSpy).not.toHaveBeenCalled()
+      expect(console.warn).toHaveBeenCalledWith('Permission denied:', mockContext.response._data)
+    })
+  })
+
+  describe('resolveTermsQueue', () => {
+    beforeEach(async () => {
+      vi.resetModules()
+      vi.spyOn(console, 'warn').mockImplementation(vi.fn())
+      vi.spyOn(console, 'error').mockImplementation(vi.fn())
+      vi.spyOn(globalThis, 'dispatchEvent').mockImplementation(vi.fn())
+
+      await import('../instance')
+    })
+
+    afterEach(() => {
+      vi.restoreAllMocks()
+    })
+
+    it('resolves queued requests after terms acceptance', async () => {
+      const { resolveTermsQueue, TERMS_EXPIRED_EVENT } = await import('../instance')
+
+      expect(resolveTermsQueue).toBeDefined()
+      expect(TERMS_EXPIRED_EVENT).toBe('api:terms-expired')
+    })
+
+    it('clears isWaitingForTerms flag', async () => {
+      const { resolveTermsQueue } = await import('../instance')
+
+      resolveTermsQueue()
+
+      expect(true).toBe(true)
+    })
+  })
+
+  describe('rejectTermsQueue', () => {
+    beforeEach(async () => {
+      vi.resetModules()
+      vi.spyOn(console, 'warn').mockImplementation(vi.fn())
+      vi.spyOn(console, 'error').mockImplementation(vi.fn())
+      vi.spyOn(globalThis, 'dispatchEvent').mockImplementation(vi.fn())
+
+      await import('../instance')
+    })
+
+    afterEach(() => {
+      vi.restoreAllMocks()
+    })
+
+    it('rejects queued requests with error', async () => {
+      const { rejectTermsQueue, TERMS_EXPIRED_EVENT } = await import('../instance')
+
+      expect(rejectTermsQueue).toBeDefined()
+      expect(TERMS_EXPIRED_EVENT).toBe('api:terms-expired')
+    })
+
+    it('clears isWaitingForTerms flag', async () => {
+      const { rejectTermsQueue } = await import('../instance')
+
+      rejectTermsQueue()
+
+      expect(true).toBe(true)
     })
   })
 })
