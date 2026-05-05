@@ -4,17 +4,22 @@
 
 **Phase**: Terms Acceptance Tracking (Fully Complete)
 **Version**: 0.6.2 (2026-05-03)
-**Branch**: develop at 0fce4c8, master at b171498
-**Tests**: 392/392 pass
+**Branch**: develop at 48a75d4, master at 9777fde
+**Tests**: 445/445 pass
 **Plan**: docs/plans/2026-05-02-terms-acceptance-tracking.md — status: completed
 
 ## Recent Activity
 
-### 0.6.0 — Terms Acceptance Tracking Feature Complete (2026-05-03)
+### 0.6.2 — Code Quality & Test Coverage Polish (2026-05-03)
 
-Full terms acceptance tracking feature implemented and committed. All 392 tests pass. Plan document updated to reflect actual implementation status.
+Final audit and cleanup of the Terms Acceptance feature. All tests pass and lint warnings resolved.
 
-**Final Fix**: `stores/auth.ts` login flow now checks `termsExpired` field. Added optional `termsExpired` to `LoginResponseSchema` (default false). When true, dispatches `TERMS_EXPIRED_EVENT` instead of calling `setAuth()`.
+**Key Fixes**:
+
+- **Test Coverage**: Added 53 new tests covering API, Store, and UI layers (+23 in `TermsDialog.test.ts`).
+- **Code Quality**: Added missing JSDoc for `TERMINAL_AUTH_CODES`, `PendingTermsRequest`, and `renderSectionContent`.
+- **Lint Cleanup**: Resolved all SonarLint and ESLint warnings in test files (removed unnecessary assertions, replaced `window` with `globalThis`).
+- **Logic Fixes**: Implemented proper token storage and navigation after terms acceptance; handled dialog closure edge cases.
 
 **Commits on develop**:
 
