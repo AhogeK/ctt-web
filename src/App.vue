@@ -57,5 +57,10 @@ onUnmounted(() => {
     <RouterView />
   </ErrorBoundary>
   <Toaster position="top-right" :expand="true" rich-colors />
-  <TermsDialog v-model:open="isTermsDialogOpen" @accepted="handleTermsAccepted" @rejected="handleTermsRejected" />
+  <TermsDialog
+    v-if="isTermsDialogOpen"
+    v-model:open="isTermsDialogOpen"
+    @accepted="handleTermsAccepted"
+    @rejected="handleTermsRejected"
+  />
 </template>

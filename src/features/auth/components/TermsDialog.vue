@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, onMounted, watch } from 'vue'
+import { computed, ref, watch } from 'vue'
 import { toast } from 'vue-sonner'
 import {
   Dialog,
@@ -10,11 +10,11 @@ import {
   DialogTitle,
 } from '@/components/ui/dialog'
 import { Button } from '@/components/ui/button'
-import { getPublicConfig } from '@/lib/api/config'
 import { acceptTerms } from '@/lib/api/auth'
 import { termsContent, type TermsSection } from '@/features/auth/content'
 import { useAuthStore } from '@/stores/auth'
 import { rejectTermsQueue } from '@/lib/api/instance'
+import { usePublicConfig } from '@/composables/usePublicConfig'
 
 const open = defineModel<boolean>('open', { default: false })
 const emit = defineEmits<{
@@ -22,19 +22,10 @@ const emit = defineEmits<{
   rejected: []
 }>()
 
-const currentVersion = ref('')
+const { data: publicConfig } = usePublicConfig(open)
+const currentVersion = computed(() => publicConfig.value?.termsVersion ?? '')
 const isLoading = ref(false)
 const authStore = useAuthStore()
-
-onMounted(async () => {
-  try {
-    const config = await getPublicConfig()
-    currentVersion.value = config.termsVersion
-  } catch (error) {
-    toast.error('Failed to load terms version')
-    console.error('Failed to fetch terms config:', error)
-  }
-})
 
 // Handle dialog close without explicit decision (click outside, Escape key)
 watch(open, (newValue, oldValue) => {

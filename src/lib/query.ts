@@ -1,6 +1,12 @@
 import { QueryClient, type VueQueryPluginOptions } from '@tanstack/vue-query'
 
 /**
+ * Query key for public configuration data.
+ * Used by usePublicConfig() composable to fetch and cache public config.
+ */
+export const PUBLIC_CONFIG_QUERY_KEY = ['public-config'] as const
+
+/**
  * Global QueryClient instance
  * Manages server state cache for the entire application
  */
@@ -31,6 +37,14 @@ export const queryClient = new QueryClient({
       },
     },
   },
+})
+
+// Override global defaults for specific query keys
+// This ensures public config is fetched only once per session, bypassing option merge issues
+queryClient.setQueryDefaults(PUBLIC_CONFIG_QUERY_KEY, {
+  staleTime: Number.POSITIVE_INFINITY,
+  refetchOnMount: false,
+  refetchOnWindowFocus: false,
 })
 
 /**
