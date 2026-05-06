@@ -8,7 +8,7 @@ import { useAuthStore } from '@/stores/auth'
  * Setup global router guards for authentication and progress bar.
  */
 export function setupRouterGuards(router: Router) {
-  router.beforeEach((to, _from, next) => {
+  router.beforeEach((to, _from) => {
     const title = to.meta.title
     if (title) {
       document.title = `${title} - CTT`
@@ -19,16 +19,12 @@ export function setupRouterGuards(router: Router) {
     const authStore = useAuthStore()
 
     if (to.meta.guestOnly && authStore.isAuthenticated) {
-      next({ name: RouteNames.DASHBOARD })
-      return
+      return { name: RouteNames.DASHBOARD }
     }
 
     if (to.meta.requiresAuth && !authStore.isAuthenticated) {
-      next({ name: RouteNames.LOGIN, query: { redirect: to.fullPath } })
-      return
+      return { name: RouteNames.LOGIN, query: { redirect: to.fullPath } }
     }
-
-    next()
   })
 
   router.afterEach(() => {
