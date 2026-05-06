@@ -191,6 +191,10 @@ export const useAuthStore = defineStore('auth', () => {
         accessToken.value = response.accessToken
         refreshToken.value = response.refreshToken || currentRefreshToken
 
+        if (response.termsExpired) {
+          globalThis.dispatchEvent(new CustomEvent(TERMS_EXPIRED_EVENT))
+        }
+
         return response.accessToken
       } catch (error) {
         // Refresh failed (token expired, blacklisted, or network error)

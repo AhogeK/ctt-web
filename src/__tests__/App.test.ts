@@ -2,6 +2,7 @@ import { describe, it, expect, vi } from 'vite-plus/test'
 import { mount } from '@vue/test-utils'
 import { createRouter, createMemoryHistory } from 'vue-router'
 import { createTestingPinia } from '@pinia/testing'
+import { QueryClient, VueQueryPlugin } from '@tanstack/vue-query'
 import App from '../App.vue'
 import ErrorBoundary from '../components/app/ErrorBoundary.vue'
 import { Toaster } from '../components/ui/sonner'
@@ -34,7 +35,11 @@ describe('App.vue', () => {
 
     const wrapper = mount(App, {
       global: {
-        plugins: [router, createTestingPinia({ createSpy: vi.fn })],
+        plugins: [
+          router,
+          createTestingPinia({ createSpy: vi.fn }),
+          [VueQueryPlugin, { queryClient: new QueryClient({ defaultOptions: { queries: { retry: false } } }) }],
+        ],
         stubs: {
           ErrorBoundary: false,
         },
@@ -59,7 +64,11 @@ describe('App.vue', () => {
 
     const wrapper = mount(App, {
       global: {
-        plugins: [router, createTestingPinia({ createSpy: vi.fn })],
+        plugins: [
+          router,
+          createTestingPinia({ createSpy: vi.fn }),
+          [VueQueryPlugin, { queryClient: new QueryClient({ defaultOptions: { queries: { retry: false } } }) }],
+        ],
         stubs: {
           ErrorBoundary: false,
           Toaster: false,
@@ -84,7 +93,11 @@ describe('App.vue', () => {
 
     const wrapper = mount(App, {
       global: {
-        plugins: [router, createTestingPinia({ createSpy: vi.fn })],
+        plugins: [
+          router,
+          createTestingPinia({ createSpy: vi.fn }),
+          [VueQueryPlugin, { queryClient: new QueryClient({ defaultOptions: { queries: { retry: false } } }) }],
+        ],
         stubs: {
           ErrorBoundary: false,
           Toaster: false,
