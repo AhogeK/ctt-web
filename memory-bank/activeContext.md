@@ -2,13 +2,55 @@
 
 ## Current Status
 
-**Phase**: Code Quality & Test Maintenance
-**Version**: 0.6.7 (2026-05-06)
-**Branch**: develop at 48a75d4, master at 9777fde
-**Tests**: 467/467 pass
+**Phase**: Code Quality & Console Warning Elimination
+**Version**: 0.6.8 (2026-05-06)
+**Branch**: develop at (pending commit), master at (pending commit)
+**Tests**: 444/444 pass
 **Plan**: docs/plans/2026-05-02-terms-acceptance-tracking.md — status: completed
 
 ## Recent Activity
+
+### 0.6.8 — Console Warnings/Errors Elimination (2026-05-06)
+
+Fixed 5 console warnings/errors identified by user:
+
+**Problems Fixed**:
+
+1. **Router Config Warning**: "home" route has child without name, empty path, no children
+2. **Guard next() Deprecation**: Vue Router 4+ deprecates `next()` callback
+3. **PasswordStrengthMeter Prop Undefined**: `useFieldValue` returns `ComputedRef<string | undefined>`, prop expects `string`
+4. **agreedToTerms FormField Injection Missing**: `FormLabel/FormMessage` outside `FormItem`, missing injection context
+5. **publicConfig ZodError (CRITICAL)**: Missing `RestApiResponse` wrapper parsing, unhandled promise rejection
+
+**Root Causes & Solutions**:
+
+1. **router/index.ts**: Child route with `path: ''` lacked `name` property → Added `RouteNames.HOME_INDEX`
+2. **router/guard.ts**: Deprecated `next()` callback pattern → Replaced with return value pattern (Vue Router 4 best practice)
+3. **RegisterForm.vue password**: `useFieldValue<string>('password')` returns undefined before field value set → Added `?? ''` fallback
+4. **RegisterForm.vue agreedToTerms**: Checkbox + FormLabel/FormMessage without FormItem wrapper → Wrapped in `<FormItem>` component
+5. **config.ts**: Backend returns `RestApiResponse` wrapper `{ success, message, data, timestamp }`, frontend directly parsed as `{ termsVersion }` → Added wrapper parsing step
+
+**Files Modified**:
+
+- `src/lib/api/config.ts` (lines 1, 14-16): Import RestApiResponseSchema, parse wrapper → extract data
+- `src/router/route-names.ts` (line 8): Added `HOME_INDEX: 'home-index'`
+- `src/router/index.ts` (line 22): Added `name: RouteNames.HOME_INDEX` to child route
+- `src/router/guard.ts` (lines 11-32): Removed `next` parameter, replaced callbacks with return values
+- `src/features/auth/components/RegisterForm.vue` (line 151): `passwordValue` → `passwordValue ?? ''`
+- `src/features/auth/components/RegisterForm.vue` (lines 195-212): Wrapped agreedToTerms content in `<FormItem>`
+- `src/lib/api/__tests__/config.test.ts` (lines 16-48): Updated mocks to match RestApiResponse wrapper structure
+- `package.json`: version 0.6.7 → 0.6.8
+
+**Verification**:
+
+- ✅ TypeScript diagnostics clean (0 errors in modified files)
+- ✅ Lint clean (0 warnings, 0 errors on 213 files)
+- ✅ Tests pass (444/444)
+- ✅ Console warnings eliminated
+
+**Architecture Insight**: Vue Router 4 navigation guards should return values instead of calling `next()`. Return route object to redirect, return false to cancel, return undefined to proceed.
+
+**Agent Research**: Systematic debugging process (Phase 1-4) - 6 parallel agents (4 explore + 2 librarian) collected evidence, librarian confirmed Vue Router 4 patterns + vee-validate Field integration.
 
 ### 0.6.7 — ResetPasswordForm TypeScript TS2322 Fix (2026-05-06)
 
