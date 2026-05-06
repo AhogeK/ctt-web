@@ -14,7 +14,12 @@ describe('config API', () => {
   describe('getPublicConfig', () => {
     it('fetches and parses public config with termsVersion', async () => {
       vi.mocked(ofetch).mockResolvedValue({
-        termsVersion: '1.0.0',
+        success: true,
+        message: 'Public config retrieved successfully',
+        data: {
+          termsVersion: '1.0.0',
+        },
+        timestamp: '2024-01-01T00:00:00Z',
       })
 
       const result = await configApi.getPublicConfig()
@@ -25,7 +30,12 @@ describe('config API', () => {
 
     it('fetches config with updated terms version', async () => {
       vi.mocked(ofetch).mockResolvedValue({
-        termsVersion: '2.0.0',
+        success: true,
+        message: 'Public config retrieved successfully',
+        data: {
+          termsVersion: '2.0.0',
+        },
+        timestamp: '2024-01-01T00:00:00Z',
       })
 
       const result = await configApi.getPublicConfig()
@@ -34,14 +44,24 @@ describe('config API', () => {
     })
 
     it('rejects response missing termsVersion', async () => {
-      vi.mocked(ofetch).mockResolvedValue({})
+      vi.mocked(ofetch).mockResolvedValue({
+        success: true,
+        message: 'Public config retrieved successfully',
+        data: {},
+        timestamp: '2024-01-01T00:00:00Z',
+      })
 
       await expect(configApi.getPublicConfig()).rejects.toThrow(expect.objectContaining({ name: 'ZodError' }))
     })
 
     it('rejects response with invalid termsVersion type', async () => {
       vi.mocked(ofetch).mockResolvedValue({
-        termsVersion: 123,
+        success: true,
+        message: 'Public config retrieved successfully',
+        data: {
+          termsVersion: 123,
+        },
+        timestamp: '2024-01-01T00:00:00Z',
       })
 
       await expect(configApi.getPublicConfig()).rejects.toThrow(expect.objectContaining({ name: 'ZodError' }))

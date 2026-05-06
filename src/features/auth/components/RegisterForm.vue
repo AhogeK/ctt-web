@@ -148,7 +148,7 @@ const onSubmit = form.handleSubmit((values) => {
             </button>
           </div>
         </FormControl>
-        <PasswordStrengthMeter :password="passwordValue" />
+        <PasswordStrengthMeter :password="passwordValue ?? ''" />
         <FormMessage class="min-h-4" />
       </FormItem>
     </FormField>
@@ -193,22 +193,24 @@ const onSubmit = form.handleSubmit((values) => {
     </FormField>
 
     <FormField v-slot="{ value, handleChange }" name="agreedToTerms">
-      <div class="flex items-start gap-2">
-        <Checkbox :checked="value" @update:checked="handleChange" class="mt-0.5 cursor-pointer" />
-        <div class="grid gap-1.5 leading-tight">
-          <FormLabel class="text-sm font-normal text-gray-600 dark:text-[#8a8f98]">
-            I agree to the
-            <button
-              type="button"
-              class="cursor-pointer text-[#5e6ad2] hover:text-[#7170ff] underline transition-colors"
-              @click="showTerms = true"
-            >
-              Terms of Service
-            </button>
-          </FormLabel>
+      <FormItem>
+        <div class="flex items-start gap-2">
+          <Checkbox :checked="value" @update:checked="handleChange" class="mt-0.5 cursor-pointer" />
+          <div class="grid gap-1.5 leading-tight">
+            <FormLabel class="text-sm font-normal text-gray-600 dark:text-[#8a8f98]">
+              I agree to the
+              <button
+                type="button"
+                class="cursor-pointer text-[#5e6ad2] hover:text-[#7170ff] underline transition-colors"
+                @click="showTerms = true"
+              >
+                Terms of Service
+              </button>
+            </FormLabel>
+          </div>
         </div>
-      </div>
-      <FormMessage class="min-h-4" />
+        <FormMessage class="min-h-4" />
+      </FormItem>
     </FormField>
 
     <Button

@@ -5,6 +5,7 @@
 export const RouteNames = {
   // Root & Exception
   HOME: 'home',
+  HOME_INDEX: 'home-index',
   NOT_FOUND: 'not-found',
 
   // Auth

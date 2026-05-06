@@ -20,6 +20,7 @@ const constantRoutes: RouteRecordRaw[] = [
     children: [
       {
         path: '',
+        name: RouteNames.HOME_INDEX,
         component: () => import('@/views/HomeView.vue'),
       },
     ],
