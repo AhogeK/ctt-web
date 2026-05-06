@@ -1,6 +1,7 @@
 import { beforeEach, describe, expect, it, vi } from 'vite-plus/test'
 import { mount } from '@vue/test-utils'
 import { ref, type Component } from 'vue'
+import { QueryClient, VueQueryPlugin } from '@tanstack/vue-query'
 import RegisterForm from '../RegisterForm.vue'
 
 // ==========================================
@@ -354,7 +355,11 @@ describe('TermsDialog', () => {
 
   describe('7. Dialog displays content (section headers visible)', () => {
     it('renders section titles when dialog is open', () => {
-      const wrapper = mount(RealTermsDialog, { props: { open: true } })
+      const queryClient = new QueryClient({ defaultOptions: { queries: { retry: false } } })
+      const wrapper = mount(RealTermsDialog, {
+        props: { open: true },
+        global: { plugins: [[VueQueryPlugin, { queryClient }]] },
+      })
       expect(wrapper.text()).toContain('1. Acceptance of Terms')
       expect(wrapper.text()).toContain('2. Description of Service')
     })
@@ -362,7 +367,11 @@ describe('TermsDialog', () => {
 
   describe('8. Dialog closes when close button clicked', () => {
     it('emits update:open with false when close button is clicked', async () => {
-      const wrapper = mount(RealTermsDialog, { props: { open: true } })
+      const queryClient = new QueryClient({ defaultOptions: { queries: { retry: false } } })
+      const wrapper = mount(RealTermsDialog, {
+        props: { open: true },
+        global: { plugins: [[VueQueryPlugin, { queryClient }]] },
+      })
       const closeButton = wrapper.findAll('button').find((b) => b.text().includes('Decline'))
       expect(closeButton).toBeDefined()
 

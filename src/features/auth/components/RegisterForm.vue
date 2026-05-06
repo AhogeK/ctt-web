@@ -2,7 +2,7 @@
 import { shallowRef, watch } from 'vue'
 import { toTypedSchema } from '@vee-validate/zod'
 import { useForm, useFieldValue } from 'vee-validate'
-import { RegisterFormSchema, type RegisterRequest } from '@/lib/schemas/auth.schema'
+import { RegisterFormSchema, type RegisterFormData } from '@/lib/schemas/auth.schema'
 import { FormField, FormItem, FormLabel, FormControl, FormMessage } from '@/components/ui/form'
 import { Input } from '@/components/ui/input'
 import { Button } from '@/components/ui/button'
@@ -18,13 +18,12 @@ const props = defineProps<{
 }>()
 
 const emit = defineEmits<{
-  /** Emitted when form validation passes with user registration data */
-  submit: [data: RegisterRequest]
+  /** Emitted when form validation passes with user registration data (without termsVersion) */
+  submit: [data: RegisterFormData]
 }>()
 
 const form = useForm({
   validationSchema: toTypedSchema(RegisterFormSchema),
-  validateOnInput: true,
 })
 
 const showPassword = shallowRef(false)
@@ -226,5 +225,5 @@ const onSubmit = form.handleSubmit((values) => {
       <span class="relative z-10">Create account</span>
     </Button>
   </form>
-  <TermsDialog v-model:open="showTerms" />
+  <TermsDialog v-if="showTerms" v-model:open="showTerms" />
 </template>

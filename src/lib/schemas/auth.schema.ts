@@ -142,6 +142,14 @@ export const RegisterFormSchema = RegisterRequestSchema.extend({
 export type RegisterRequest = z.infer<typeof RegisterRequestSchema>
 export type RegisterForm = z.infer<typeof RegisterFormSchema>
 
+/**
+ * Registration form data emitted by RegisterForm component.
+ *
+ * Excludes termsVersion (injected by RegisterView from publicConfig).
+ * This is the form-layer type, not the API-layer RegisterRequest.
+ */
+export type RegisterFormData = Omit<RegisterRequest, 'termsVersion'>
+
 // ==========================================
 // Email Verification Schemas
 // ==========================================
