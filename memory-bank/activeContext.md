@@ -2,15 +2,103 @@
 
 ## Current Status
 
-**Phase**: Terms Acceptance Tracking (Fully Complete)
-**Version**: 0.6.2 (2026-05-03)
+**Phase**: Code Quality & Test Maintenance
+**Version**: 0.6.7 (2026-05-06)
 **Branch**: develop at 48a75d4, master at 9777fde
-**Tests**: 445/445 pass
+**Tests**: 467/467 pass
 **Plan**: docs/plans/2026-05-02-terms-acceptance-tracking.md — status: completed
 
 ## Recent Activity
 
-### 0.6.2 — Code Quality & Test Coverage Polish (2026-05-03)
+### 0.6.7 — ResetPasswordForm TypeScript TS2322 Fix (2026-05-06)
+
+Fixed TypeScript compilation error in ResetPasswordForm.vue:
+
+**Problem**: TS2322 error line 26 - `values.newPassword` (string | undefined) not assignable to emit type `{ newPassword: string }`
+
+**Root Cause**: StrongPasswordSchema defined as `.optional()` for reuse across login/register/reset contexts. Vee-validate form values are optional by default, but after handleSubmit validation passes, newPassword is guaranteed defined.
+
+**Solution**: Applied type assertion `as string` matching existing pattern at line 55 (PasswordStrengthMeter already uses same assertion).
+
+**Files Modified**:
+
+- `src/features/auth/components/ResetPasswordForm.vue` (line 26): `emit('submit', { newPassword: values.newPassword as string })`
+- `package.json`: version 0.6.6 → 0.6.7
+
+**Verification**:
+
+- ✅ TypeScript diagnostics clean (no TS2322 errors)
+- ✅ Build succeeds
+
+**Architecture Note**: ResetPasswordForm.vue is currently unused - ResetPasswordView.vue has inline form implementation that injects `token` from URL query param. If ResetPasswordForm component is used in future, parent must inject token similar to RegisterView injecting termsVersion.
+
+### 0.6.6 — RegisterForm TypeScript TS2561 + TS2345 Fix (2026-05-06)
+
+Fixed two TypeScript compilation errors in RegisterForm.vue:
+
+**Problem 1**: TS2561 error line 27 - `validateOnInput: true` doesn't exist in FormOptions type
+**Problem 2**: TS2345 error lines 54-58 - emit missing `termsVersion` (required field)
+
+**Root Causes**:
+
+1. **vee-validate v4.15.1 API change**: FormOptions only accepts `validateOnMount`. `validateOnInput`, `validateOnBlur`, `validateOnChange` must be configured via global `configure()` or per-field `defineField()`.
+2. **Type mismatch**: RegisterForm emit declared as `RegisterRequest` (API-layer type with termsVersion), but actual emit sent `RegisterFormData` (form-layer type without termsVersion).
+
+**Solution**:
+
+1. Removed `validateOnInput: true` from 4 form components (RegisterForm, LoginForm, ResetPasswordForm, ForgotPasswordForm) - rely on vee-validate defaults.
+2. Created `RegisterFormData` type (Omit<RegisterRequest, 'termsVersion'>) to distinguish form-layer vs API-layer data structures.
+3. Updated RegisterForm emit declaration to `RegisterFormData`.
+4. Updated RegisterView.handleSubmit parameter to `RegisterFormData` (injects termsVersion before API call).
+
+**Files Modified**:
+
+- `src/lib/schemas/auth.schema.ts`: added `RegisterFormData` type with docstring
+- `src/features/auth/components/RegisterForm.vue`: removed validateOnInput (line 27), updated emit type (lines 20-23)
+- `src/features/auth/views/RegisterView.vue`: imported RegisterFormData, updated handleSubmit signature (line 55)
+- `src/features/auth/components/LoginForm.vue`: removed validateOnInput (line 23)
+- `src/features/auth/components/ResetPasswordForm.vue`: removed validateOnInput (line 23)
+- `src/features/auth/components/ForgotPasswordForm.vue`: removed validateOnInput (line 22)
+- `package.json`: version 0.6.5 → 0.6.6
+
+**Verification**:
+
+- ✅ TypeScript diagnostics clean (0 errors in auth components directory)
+- ✅ All 467 tests pass
+- ✅ Build succeeds
+
+**Architecture Insight**: Layer separation - form components emit form-layer types (RegisterFormData), views inject missing fields for API-layer types (RegisterRequest). This prevents tight coupling between UI and API schemas.
+
+**Agent Research**: Librarian agent (bg_3f7c97b0) confirmed vee-validate v4 API changes. Explore agent (bg_2ad27a25) verified backend requires termsVersion (not auto-injected).
+
+Fixed TypeScript compilation error for defineModel v-model testing:
+
+**Problem**: TS2353 error on lines 385, 398 - `wrapper.setProps({ open: false })` causing "Object literal may only specify known properties, and 'open' does not exist in type".
+
+**Root Cause**: Vue 3 defineModel macro creates two-way binding (`open` prop + `update:open` event), but TypeScript doesn't recognize defineModel-generated props in `wrapper.setProps` context.
+
+**Solution**: Applied `as any` type assertion to preserve original behavior (librarian agent recommendation, matches openobserve/openobserve real-world pattern).
+
+**Files Modified**:
+
+- `src/features/auth/components/__tests__/TermsDialog.test.ts` (lines 385, 398): `await wrapper.setProps({ open: false } as any)`
+- `package.json`: version 0.6.4 → 0.6.5
+
+**Verification**:
+
+- ✅ TypeScript diagnostics clean (no TS2353 errors)
+- ✅ All 22 TermsDialog tests pass (including 2 previously failing tests)
+- ✅ Tests compile and run correctly
+
+**Alternative Approaches Tried**:
+
+- `$emit('update:open', false)`: Fixed TS error but broke test behavior (watch not triggered)
+- `wrapper.vm.open = false`: Same issue
+- Type assertion `as any`: **SUCCESS** - pragmatic solution used in production codebases
+
+**Architecture Insight**: Vue Test Utils documentation recommends event pattern for v-model testing, but defineModel's watch behavior requires `setProps` to trigger reactive state changes. Type assertion is the pragmatic compromise.
+
+### 0.6.4 — Duplicate API Request Elimination (2026-05-06)
 
 Final audit and cleanup of the Terms Acceptance feature. All tests pass and lint warnings resolved.
 
