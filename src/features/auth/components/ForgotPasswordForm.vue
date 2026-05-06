@@ -19,7 +19,6 @@ const props = defineProps<{
 
 const form = useForm({
   validationSchema: toTypedSchema(ForgotPasswordFormSchema),
-  validateOnInput: true,
 })
 
 const onSubmit = form.handleSubmit((values) => {

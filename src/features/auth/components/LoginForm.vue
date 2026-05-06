@@ -36,7 +36,6 @@ const LoginFormSchema = z.object({
 
 const form = useForm({
   validationSchema: toTypedSchema(LoginFormSchema),
-  validateOnInput: true,
 })
 
 const showPassword = shallowRef(false)

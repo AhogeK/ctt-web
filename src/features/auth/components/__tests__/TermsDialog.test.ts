@@ -1,6 +1,7 @@
 import { beforeEach, describe, expect, it, vi, afterEach } from 'vite-plus/test'
 import { mount } from '@vue/test-utils'
 import { nextTick } from 'vue'
+import { QueryClient, VueQueryPlugin } from '@tanstack/vue-query'
 import TermsDialog from '../TermsDialog.vue'
 import { getPublicConfig } from '@/lib/api/config'
 import { acceptTerms } from '@/lib/api/auth'
@@ -79,6 +80,25 @@ vi.mock('@/features/auth/content', () => ({
   },
 }))
 
+function createTestQueryClient() {
+  return new QueryClient({
+    defaultOptions: {
+      queries: { retry: false },
+    },
+  })
+}
+
+function mountWithQuery(component: Parameters<typeof mount>[0], options?: Parameters<typeof mount>[1]) {
+  const queryClient = createTestQueryClient()
+  return mount(component, {
+    ...options,
+    global: {
+      ...options?.global,
+      plugins: [...(options?.global?.plugins ?? []), [VueQueryPlugin, { queryClient }]],
+    },
+  })
+}
+
 describe('TermsDialog', () => {
   beforeEach(() => {
     vi.clearAllMocks()
@@ -97,7 +117,7 @@ describe('TermsDialog', () => {
 
   describe('rendering', () => {
     it('renders dialog when open is true', () => {
-      const wrapper = mount(TermsDialog, {
+      const wrapper = mountWithQuery(TermsDialog, {
         props: { open: true },
       })
 
@@ -105,7 +125,7 @@ describe('TermsDialog', () => {
     })
 
     it('does not render dialog when open is false', () => {
-      const wrapper = mount(TermsDialog, {
+      const wrapper = mountWithQuery(TermsDialog, {
         props: { open: false },
       })
 
@@ -113,7 +133,7 @@ describe('TermsDialog', () => {
     })
 
     it('renders section titles', () => {
-      const wrapper = mount(TermsDialog, {
+      const wrapper = mountWithQuery(TermsDialog, {
         props: { open: true },
       })
 
@@ -122,7 +142,7 @@ describe('TermsDialog', () => {
     })
 
     it('renders Accept and Decline buttons', () => {
-      const wrapper = mount(TermsDialog, {
+      const wrapper = mountWithQuery(TermsDialog, {
         props: { open: true },
       })
 
@@ -135,7 +155,7 @@ describe('TermsDialog', () => {
 
   describe('getPublicConfig', () => {
     it('fetches terms version on mount', async () => {
-      mount(TermsDialog, {
+      mountWithQuery(TermsDialog, {
         props: { open: true },
       })
 
@@ -144,37 +164,22 @@ describe('TermsDialog', () => {
       expect(getPublicConfig).toHaveBeenCalled()
     })
 
-    it('shows error toast when getPublicConfig fails', async () => {
+    it('shows fallback version when getPublicConfig fails', async () => {
       vi.mocked(getPublicConfig).mockRejectedValue(new Error('Network error'))
 
-      mount(TermsDialog, {
+      const wrapper = mountWithQuery(TermsDialog, {
         props: { open: true },
       })
 
       await nextTick()
 
-      expect(toast.error).toHaveBeenCalledWith('Failed to load terms version')
-    })
-
-    it('logs error to console when getPublicConfig fails', async () => {
-      const consoleErrorSpy = vi.spyOn(console, 'error').mockImplementation(vi.fn())
-      vi.mocked(getPublicConfig).mockRejectedValue(new Error('Network error'))
-
-      mount(TermsDialog, {
-        props: { open: true },
-      })
-
-      await nextTick()
-
-      expect(consoleErrorSpy).toHaveBeenCalled()
-
-      consoleErrorSpy.mockRestore()
+      expect(wrapper.text()).toContain('Version 1.0.0')
     })
   })
 
   describe('handleAccept', () => {
     it('calls acceptTerms API when Accept button clicked', async () => {
-      const wrapper = mount(TermsDialog, {
+      const wrapper = mountWithQuery(TermsDialog, {
         props: { open: true },
       })
 
@@ -187,7 +192,7 @@ describe('TermsDialog', () => {
     })
 
     it('calls setAuthFromTermsAcceptance with response on successful acceptance', async () => {
-      const wrapper = mount(TermsDialog, {
+      const wrapper = mountWithQuery(TermsDialog, {
         props: { open: true },
       })
 
@@ -205,7 +210,7 @@ describe('TermsDialog', () => {
     })
 
     it('shows success toast on successful acceptance', async () => {
-      const wrapper = mount(TermsDialog, {
+      const wrapper = mountWithQuery(TermsDialog, {
         props: { open: true },
       })
 
@@ -219,7 +224,7 @@ describe('TermsDialog', () => {
     })
 
     it('emits accepted event on successful acceptance', async () => {
-      const wrapper = mount(TermsDialog, {
+      const wrapper = mountWithQuery(TermsDialog, {
         props: { open: true },
       })
 
@@ -233,7 +238,7 @@ describe('TermsDialog', () => {
     })
 
     it('closes dialog on successful acceptance', async () => {
-      const wrapper = mount(TermsDialog, {
+      const wrapper = mountWithQuery(TermsDialog, {
         props: { open: true },
       })
 
@@ -250,7 +255,7 @@ describe('TermsDialog', () => {
     it('shows error toast on acceptance failure', async () => {
       vi.mocked(acceptTerms).mockRejectedValue(new Error('Network error'))
 
-      const wrapper = mount(TermsDialog, {
+      const wrapper = mountWithQuery(TermsDialog, {
         props: { open: true },
       })
 
@@ -267,7 +272,7 @@ describe('TermsDialog', () => {
       const consoleErrorSpy = vi.spyOn(console, 'error').mockImplementation(vi.fn())
       vi.mocked(acceptTerms).mockRejectedValue(new Error('Network error'))
 
-      const wrapper = mount(TermsDialog, {
+      const wrapper = mountWithQuery(TermsDialog, {
         props: { open: true },
       })
 
@@ -290,7 +295,7 @@ describe('TermsDialog', () => {
           }),
       )
 
-      const wrapper = mount(TermsDialog, {
+      const wrapper = mountWithQuery(TermsDialog, {
         props: { open: true },
       })
 
@@ -311,7 +316,7 @@ describe('TermsDialog', () => {
           }),
       )
 
-      const wrapper = mount(TermsDialog, {
+      const wrapper = mountWithQuery(TermsDialog, {
         props: { open: true },
       })
 
@@ -327,7 +332,7 @@ describe('TermsDialog', () => {
 
   describe('handleReject', () => {
     it('emits rejected event when Decline button clicked', async () => {
-      const wrapper = mount(TermsDialog, {
+      const wrapper = mountWithQuery(TermsDialog, {
         props: { open: true },
       })
 
@@ -340,7 +345,7 @@ describe('TermsDialog', () => {
     })
 
     it('closes dialog when Decline button clicked', async () => {
-      const wrapper = mount(TermsDialog, {
+      const wrapper = mountWithQuery(TermsDialog, {
         props: { open: true },
       })
 
@@ -354,7 +359,7 @@ describe('TermsDialog', () => {
     })
 
     it('does not call acceptTerms API when Decline clicked', async () => {
-      const wrapper = mount(TermsDialog, {
+      const wrapper = mountWithQuery(TermsDialog, {
         props: { open: true },
       })
 
@@ -369,34 +374,37 @@ describe('TermsDialog', () => {
 
   describe('dialog close without decision', () => {
     it('emits rejected when dialog closes without explicit decision', async () => {
-      const wrapper = mount(TermsDialog, {
+      const wrapper = mountWithQuery(TermsDialog, {
         props: { open: true },
       })
 
       await nextTick()
 
       // Simulate dialog closing by clicking outside or pressing Escape
-      // This triggers the watch on open prop
-      await wrapper.setProps({ open: false })
+      // Directly mutate vm.open to trigger the defineModel watch
+      const vm = wrapper.vm as unknown as { open: boolean }
+      vm.open = false
+      await nextTick()
 
       expect(wrapper.emitted('rejected')).toBeTruthy()
     })
 
     it('calls rejectTermsQueue when dialog closes without explicit decision', async () => {
-      const wrapper = mount(TermsDialog, {
+      const wrapper = mountWithQuery(TermsDialog, {
         props: { open: true },
       })
 
       await nextTick()
 
-      // Simulate dialog closing
-      await wrapper.setProps({ open: false })
+      const vm = wrapper.vm as unknown as { open: boolean }
+      vm.open = false
+      await nextTick()
 
       expect(rejectTermsQueue).toHaveBeenCalled()
     })
 
     it('does not emit rejected when dialog closes after explicit accept', async () => {
-      const wrapper = mount(TermsDialog, {
+      const wrapper = mountWithQuery(TermsDialog, {
         props: { open: true },
       })
 
@@ -417,7 +425,7 @@ describe('TermsDialog', () => {
 
   describe('open prop', () => {
     it('updates open model when dialog closes', async () => {
-      const wrapper = mount(TermsDialog, {
+      const wrapper = mountWithQuery(TermsDialog, {
         props: { open: true },
       })
 
