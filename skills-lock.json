@@ -29,7 +29,7 @@
       "source": "anthropics/skills",
       "sourceType": "github",
       "skillPath": "skills/claude-api/SKILL.md",
-      "computedHash": "fe6c64489b954a17d24e3828f79165b230b2a24224d6310ad995061264ca2a3b"
+      "computedHash": "fae9227ae5d58ed366bd225a35d8077100e8a0d056392b7d9165978d3ce4e860"
     },
     "doc-coauthoring": {
       "source": "anthropics/skills",
