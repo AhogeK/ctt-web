@@ -71,6 +71,7 @@ const onSubmit = form.handleSubmit((values) => {
           <Input
             type="email"
             placeholder="you@example.com"
+            autocomplete="email"
             :class="
               cn(
                 'h-10 rounded-md border border-[#d0d6e0] bg-[#f3f4f5] text-[#1a1a2e]',
@@ -125,6 +126,7 @@ const onSubmit = form.handleSubmit((values) => {
             <Input
               :type="showPassword ? 'text' : 'password'"
               placeholder="Create a strong password"
+              autocomplete="new-password"
               :class="
                 cn(
                   'h-10 rounded-md border border-[#d0d6e0] bg-[#f3f4f5] text-[#1a1a2e]',
@@ -165,6 +167,7 @@ const onSubmit = form.handleSubmit((values) => {
             <Input
               :type="showConfirmPassword ? 'text' : 'password'"
               placeholder="Repeat your password"
+              autocomplete="new-password"
               :class="
                 cn(
                   'h-10 rounded-md border border-[#d0d6e0] bg-[#f3f4f5] text-[#1a1a2e]',
@@ -194,21 +197,23 @@ const onSubmit = form.handleSubmit((values) => {
 
     <FormField v-slot="{ value, handleChange }" name="agreedToTerms">
       <FormItem>
-        <div class="flex items-start gap-2">
-          <Checkbox :checked="value" @update:checked="handleChange" class="mt-0.5 cursor-pointer" />
-          <div class="grid gap-1.5 leading-tight">
-            <FormLabel class="text-sm font-normal text-gray-600 dark:text-[#8a8f98]">
-              I agree to the
-              <button
-                type="button"
-                class="cursor-pointer text-[#5e6ad2] hover:text-[#7170ff] underline transition-colors"
-                @click="showTerms = true"
-              >
-                Terms of Service
-              </button>
-            </FormLabel>
+        <FormControl>
+          <div class="flex items-start gap-2">
+            <Checkbox :checked="value" @update:checked="handleChange" class="mt-0.5 cursor-pointer" />
+            <div class="grid gap-1.5 leading-tight">
+              <FormLabel class="text-sm font-normal text-gray-600 dark:text-[#8a8f98]">
+                I agree to the
+                <button
+                  type="button"
+                  class="cursor-pointer text-[#5e6ad2] hover:text-[#7170ff] underline transition-colors"
+                  @click="showTerms = true"
+                >
+                  Terms of Service
+                </button>
+              </FormLabel>
+            </div>
           </div>
-        </div>
+        </FormControl>
         <FormMessage class="min-h-4" />
       </FormItem>
     </FormField>

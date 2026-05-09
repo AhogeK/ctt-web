@@ -66,6 +66,7 @@ defineExpose({
           <Input
             type="email"
             placeholder="you@example.com"
+            autocomplete="email"
             :class="
               cn(
                 'h-10 rounded-md border border-[#d0d6e0] bg-[#f3f4f5] text-[#1a1a2e]',
@@ -103,6 +104,7 @@ defineExpose({
             <Input
               :type="showPassword ? 'text' : 'password'"
               placeholder="Enter your password"
+              autocomplete="current-password"
               :class="
                 cn(
                   'h-10 rounded-md border border-[#d0d6e0] bg-[#f3f4f5] text-[#1a1a2e]',
