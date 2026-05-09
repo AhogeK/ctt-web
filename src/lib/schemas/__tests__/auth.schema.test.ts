@@ -90,9 +90,13 @@ describe('StrongPasswordSchema', () => {
     expect(result.error.issues[0]?.message).toContain('64 characters')
   })
 
-  it('accepts empty string (optional field)', () => {
+  it('rejects empty string (required field)', () => {
     const result = StrongPasswordSchema.safeParse('')
-    expect(result.success).toBe(true)
+    expect(result.success).toBe(false)
+    if (result.success) {
+      throw new Error('Expected parse to fail but it succeeded')
+    }
+    expect(result.error.issues[0]?.message).toContain('Password is required')
   })
 
   it('rejects password with non-printable ASCII (space)', () => {
@@ -334,13 +338,17 @@ describe('LoginRequestSchema', () => {
     expect(result.error.issues[0]?.path).toStrictEqual(['email'])
   })
 
-  it('accepts missing password (field is optional)', () => {
-    const validData = {
+  it('rejects missing password (field is required)', () => {
+    const invalidData = {
       email: 'user@example.com',
       deviceId: 'device-uuid-123',
     }
-    const result = LoginRequestSchema.safeParse(validData)
-    expect(result.success).toBe(true)
+    const result = LoginRequestSchema.safeParse(invalidData)
+    expect(result.success).toBe(false)
+    if (result.success) {
+      throw new Error('Expected parse to fail but it succeeded')
+    }
+    expect(result.error.issues[0]?.path).toStrictEqual(['password'])
   })
 
   it('rejects password too short (less than 8 chars)', () => {
