@@ -2,13 +2,48 @@
 
 ## Current Status
 
-**Phase**: Code Quality & Console Warning Elimination
-**Version**: 0.6.8 (2026-05-06)
+**Phase**: Accessibility Enhancement & Console Clean
+**Version**: 0.6.9 (2026-05-06)
 **Branch**: develop at (pending commit), master at (pending commit)
 **Tests**: 444/444 pass
 **Plan**: docs/plans/2026-05-02-terms-acceptance-tracking.md — status: completed
 
 ## Recent Activity
+
+### 0.6.9 — Accessibility Warning Fix (2026-05-06)
+
+Fixed 2 accessibility warnings identified by user:
+
+**Problems Fixed**:
+
+1. **Label for mismatch**: FormLabel's `for` attribute doesn't match input id (3 violating nodes)
+2. **Missing autocomplete**: Form fields lack autocomplete attributes (1 violating node)
+
+**Root Causes & Solutions**:
+
+1. **RegisterForm.vue agreedToTerms Checkbox**: Checkbox NOT wrapped in FormControl → FormLabel's `for` has no matching input id → Wrapped Checkbox in `<FormControl>` component
+2. **All auth forms Inputs**: Missing `autocomplete` attributes → Browser autofill doesn't work → Added autocomplete attributes:
+   - RegisterForm: email → `"email"`, password → `"new-password"`, confirmPassword → `"new-password"`
+   - LoginForm: email → `"email"`, password → `"current-password"`
+   - ForgotPasswordForm: email → `"email"`
+   - ResetPasswordForm: newPassword → `"new-password"`, confirmPassword → `"new-password"`
+
+**Files Modified**:
+
+- `src/features/auth/components/RegisterForm.vue` (lines 195-214): Wrapped Checkbox in `<FormControl>`
+- `src/features/auth/components/RegisterForm.vue` (lines 71, 125, 165): Added autocomplete attributes
+- `src/features/auth/components/LoginForm.vue` (lines 66, 100): Added autocomplete attributes
+- `src/features/auth/components/ForgotPasswordForm.vue` (line 39): Added autocomplete attribute
+- `src/features/auth/components/ResetPasswordForm.vue` (lines 41, 71): Added autocomplete attributes
+- `package.json`: version 0.6.8 → 0.6.9
+
+**Verification**:
+
+- ✅ TypeScript diagnostics clean (0 errors)
+- ✅ Lint clean (0 warnings, 0 errors on 213 files)
+- ✅ Tests pass (444/444)
+
+**Accessibility Best Practices**: shadcn-vue FormField requires FormControl wrapper for all form controls (including Checkbox), standard autocomplete values for auth forms improve autofill UX.
 
 ### 0.6.8 — Console Warnings/Errors Elimination (2026-05-06)
 
