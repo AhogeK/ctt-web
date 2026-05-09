@@ -41,6 +41,7 @@ const onSubmit = form.handleSubmit((values) => {
             <Input
               type="password"
               placeholder="Enter your new password"
+              autocomplete="new-password"
               :class="
                 cn(
                   'h-10 rounded-md border border-[#d0d6e0] bg-[#f3f4f5] text-[#1a1a2e]',
@@ -70,6 +71,7 @@ const onSubmit = form.handleSubmit((values) => {
           <Input
             type="password"
             placeholder="Confirm your new password"
+            autocomplete="new-password"
             :class="
               cn(
                 'h-10 rounded-md border border-[#d0d6e0] bg-[#f3f4f5] text-[#1a1a2e]',
