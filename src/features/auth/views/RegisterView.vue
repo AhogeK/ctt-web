@@ -55,7 +55,7 @@ const mutation = useMutation({
 
 const handleSubmit = (data: RegisterFormData) => {
   registeredEmail.value = data.email
-  mutation.mutate({ ...data, termsVersion: termsVersion.value })
+  mutation.mutate({ ...data, termsVersion })
 }
 </script>
 

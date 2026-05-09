@@ -16,10 +16,10 @@ import { z } from 'zod'
  */
 export const StrongPasswordSchema = z
   .string()
-  .optional()
-  .refine((val) => !val || /^[!-~]+$/.test(val), 'Password contains invalid characters')
-  .refine((val) => !val || val.length >= 8, 'Password must be at least 8 characters')
-  .refine((val) => !val || val.length <= 64, 'Password must not exceed 64 characters')
+  .min(1, 'Password is required')
+  .refine((val) => /^[!-~]+$/.test(val), 'Password contains invalid characters')
+  .refine((val) => val.length >= 8, 'Password must be at least 8 characters')
+  .refine((val) => val.length <= 64, 'Password must not exceed 64 characters')
 
 // ==========================================
 // Login Schemas
