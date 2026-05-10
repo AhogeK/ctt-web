@@ -43,6 +43,7 @@
 - [x] Interceptor code review: critical retry token bug fixed, JSDoc added, network error toast added
 - [x] AppSidebar Logout Integration: Added logout button in AppSidebar.vue with loading state and useAuthStore().logout() integration
 - [x] AppSidebar Logout Tests: Added comprehensive unit tests for loading state and guard behavior
+- [x] Terms Acceptance Integration (v0.7.0): P0 bug fixes (error code, endpoint path, schema), error code mapping (AUTH_019/USER_008), registration error handling, Chinese terms content, refresh token termsExpired check
 - [x] Logout Code Review & Fixes: any type removal, AppHeader logout addition, test coverage expansion (double-click/nav links/structure), unhandled rejection fix
 - [x] Bump version 0.5.24
 - [x] Bump version 0.5.25

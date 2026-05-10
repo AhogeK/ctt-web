@@ -2,13 +2,50 @@
 
 ## Current Status
 
-**Phase**: Accessibility Enhancement & Console Clean
-**Version**: 0.6.9 (2026-05-06)
+**Phase**: Terms Acceptance Integration (v0.25.1 backend)
+**Version**: 0.7.0 (2026-05-09)
 **Branch**: develop at (pending commit), master at (pending commit)
-**Tests**: 444/444 pass
+**Tests**: 444/444 pass (last verified 0.6.9)
 **Plan**: docs/plans/2026-05-02-terms-acceptance-tracking.md — status: completed
 
 ## Recent Activity
+
+### 0.7.0 — Terms Acceptance Frontend Integration (2026-05-09)
+
+Integrated with ctt-server v0.25.1 Terms Acceptance API. Fixed 3 P0 bugs and added 4 P1 features.
+
+**P0 Bugs Fixed**:
+
+1. **Error code mismatch** (`src/lib/api/instance.ts`): Changed `'TERMS_EXPIRED'` → `'AUTH_019' || 'USER_008'` in 403 interceptor
+2. **Wrong endpoint path** (`src/lib/api/auth.ts`): Fixed `/api/v1/terms/accept` → `/api/v1/auth/terms/accept`
+3. **Response schema mismatch** (`src/lib/api/auth.ts`): Changed `AuthResponseSchema` → `LoginResponseSchema` for acceptTerms response
+
+**P1 Features Added**: 4. **Error code mapping** (`src/lib/utils/api-error.ts`): Added AUTH_019 and USER_008 user-friendly messages 5. **Registration error handling** (`src/features/auth/views/RegisterView.vue`): Added 400+USER_008 toast with terms update message 6. **Chinese terms content** (`src/features/auth/content/terms-zh.ts`): Full Simplified Chinese translation of terms 7. **Refresh token termsExpired** (`src/stores/auth.ts`): Added termsExpired check in refreshAccessToken response
+
+**Files Modified**:
+
+- `src/lib/api/instance.ts` — 403 interceptor error code fix
+- `src/lib/api/auth.ts` — acceptTerms endpoint path + response schema fix
+- `src/lib/utils/api-error.ts` — AUTH_019, USER_008 error mapping
+- `src/features/auth/views/RegisterView.vue` — USER_008 error handling
+- `src/features/auth/content/terms-zh.ts` — NEW: Chinese terms content
+- `src/stores/auth.ts` — refreshAccessToken termsExpired check
+- `package.json` — version 0.6.9 → 0.7.0
+
+**Verification**:
+
+- ✅ TypeScript diagnostics clean (0 errors)
+- ✅ Production build successful (672ms)
+
+**Already Implemented (from prior sessions)**:
+
+- TermsDialog.vue, TermsCheckbox.vue components
+- terms-en.ts English content
+- Request queue mechanism (resolveTermsQueue/rejectTermsQueue)
+- App.vue TERMS_EXPIRED_EVENT listener
+- usePublicConfig composable for /api/v1/config/public
+- RegisterView termsVersion injection
+- LoginForm termsExpired handling
 
 ### 0.6.9 — Accessibility Warning Fix (2026-05-06)
 
