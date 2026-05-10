@@ -44,6 +44,10 @@ const mutation = useMutation({
         toast.error(mapApiErrorCode('rate_limit_exceeded'), {
           description: `Try again in ${countdown.value}s`,
         })
+      } else if (error.statusCode === 400 && data?.code === 'USER_008') {
+        toast.error(mapApiErrorCode('USER_008'), {
+          description: 'Please refresh the page and try again.',
+        })
       } else {
         toast.error('Registration failed', { description: 'Please try again later' })
       }
