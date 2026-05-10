@@ -28,6 +28,25 @@ function decodeJwtExpiry(token: string): number | null {
   }
 }
 
+/**
+ * Decodes a JWT access token to extract the user ID.
+ * JWT payload contains 'sub' field with the user ID (UUID format).
+ *
+ * @param token - JWT access token
+ * @returns User ID string, or null if decoding fails
+ */
+function decodeJwtUserId(token: string): string | null {
+  try {
+    const payload = token.split('.')[1]
+    if (!payload) return null
+    const decoded = JSON.parse(atob(payload))
+    if (typeof decoded.sub !== 'string') return null
+    return decoded.sub
+  } catch {
+    return null
+  }
+}
+
 // Promise lock to prevent concurrent refresh requests (Thundering Herd)
 let activeRefreshPromise: Promise<string> | null = null
 
@@ -153,6 +172,27 @@ export const useAuthStore = defineStore('auth', () => {
       globalThis.dispatchEvent(new CustomEvent(TERMS_EXPIRED_EVENT))
     }
     return response
+  }
+
+  /**
+   * Completes OAuth login by storing tokens from the OAuth callback redirect.
+   *
+   * Unlike regular login, OAuth tokens arrive via URL query params (not API response).
+   * JWT is decoded to extract userId and expiry since these aren't in the redirect params.
+   *
+   * @param params - OAuth tokens from callback redirect URL
+   */
+  function loginWithOAuth(params: { accessToken: string; refreshToken: string; termsExpired: boolean }): void {
+    accessToken.value = params.accessToken
+    refreshToken.value = params.refreshToken
+    userId.value = decodeJwtUserId(params.accessToken)
+    const expiryFromJwt = decodeJwtExpiry(params.accessToken)
+    tokenExpiry.value = expiryFromJwt ?? Date.now() + 3600 * 1000
+    scheduleSilentRefresh()
+
+    if (params.termsExpired) {
+      globalThis.dispatchEvent(new CustomEvent(TERMS_EXPIRED_EVENT))
+    }
   }
 
   /**
@@ -305,6 +345,7 @@ export const useAuthStore = defineStore('auth', () => {
     setAuthFromTermsAcceptance,
     clearAuth,
     login,
+    loginWithOAuth,
     refreshAccessToken,
     initializeAuth,
     scheduleSilentRefresh,

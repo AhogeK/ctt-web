@@ -61,6 +61,7 @@ export function mapApiErrorCode(code: string): string {
     AUTH_007: 'Refresh token expired. Please sign in again.',
     AUTH_008: 'Refresh token revoked. Please sign in again.',
     AUTH_009: 'Refresh token reuse detected. Please sign in again.',
+    AUTH_019: 'Terms of service have been updated. Please review and accept the new terms to continue.',
 
     MAIL_005: 'Verification link has expired. Please request a new one.',
     MAIL_006: 'Invalid verification link. Please check your email for the correct link.',
@@ -76,6 +77,7 @@ export function mapApiErrorCode(code: string): string {
     USER_001: 'This email is already registered. Please sign in or use a different email.',
     USER_002: 'This email has already been verified. Please proceed to login.',
     USER_007: 'This email has already been verified. Please proceed to login.',
+    USER_008: 'Terms of service have been updated. Please review and accept the new terms to continue.',
 
     // Password reset errors
     PASSWORD_SAME_AS_OLD: 'New password cannot be the same as your current password.',

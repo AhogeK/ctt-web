@@ -210,7 +210,7 @@ export const apiFetch = ofetch.create({
     }
 
     if (response.status === 403) {
-      if (errorCode === 'TERMS_EXPIRED') {
+      if (errorCode === 'AUTH_019' || errorCode === 'USER_008') {
         // Queue this request for replay after terms acceptance
         const pending = new Promise((resolve, reject) => {
           pendingTermsQueue.push({ resolve, reject, request, options })

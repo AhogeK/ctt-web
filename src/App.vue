@@ -20,9 +20,12 @@ const isTermsDialogOpen = ref(false)
 const isLoginTimeTermsExpired = ref(false)
 
 function handleTermsExpired() {
-  // Track if this happened during login (user on auth pages)
+  // Track if this happened during login (user on auth pages or OAuth callback)
   const currentRoute = router.currentRoute.value
-  isLoginTimeTermsExpired.value = currentRoute.path.startsWith('/auth/') || currentRoute.name === RouteNames.LOGIN
+  isLoginTimeTermsExpired.value =
+    currentRoute.path.startsWith('/auth/') ||
+    currentRoute.name === RouteNames.LOGIN ||
+    currentRoute.name === RouteNames.OAUTH_CALLBACK
   isTermsDialogOpen.value = true
 }
 

@@ -16,6 +16,7 @@ export const RouteNames = {
   VERIFY_EMAIL: 'verify-email',
   FORGOT_PASSWORD: 'forgot-password',
   RESET_PASSWORD: 'reset-password',
+  OAUTH_CALLBACK: 'oauth-callback',
 
   // Dashboard
   DASHBOARD: 'dashboard',
