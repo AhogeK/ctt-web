@@ -15,7 +15,16 @@ vi.mock('@/lib/api/config', () => ({
 }))
 
 vi.mock('@/lib/api/auth', () => ({
-  acceptTerms: vi.fn<() => Promise<{ accessToken: string; refreshToken: string; termsExpired: boolean }>>(),
+  acceptTerms: vi.fn<
+    () => Promise<{
+      userId: string
+      accessToken: string
+      refreshToken: string
+      expiresIn: number
+      tokenType: 'Bearer'
+      termsExpired: boolean
+    }>
+  >(),
 }))
 
 vi.mock('vue-sonner', () => ({
@@ -105,8 +114,11 @@ describe('TermsDialog', () => {
     mockSetAuthFromTermsAcceptance.mockClear()
     vi.mocked(getPublicConfig).mockResolvedValue({ termsVersion: '1.0.0' })
     vi.mocked(acceptTerms).mockResolvedValue({
+      userId: 'test-user-id',
       accessToken: 'new-token',
       refreshToken: 'new-refresh',
+      expiresIn: 3600,
+      tokenType: 'Bearer',
       termsExpired: false,
     })
   })
@@ -291,7 +303,18 @@ describe('TermsDialog', () => {
       vi.mocked(acceptTerms).mockImplementation(
         () =>
           new Promise((resolve) => {
-            setTimeout(() => resolve({ accessToken: 'token', refreshToken: 'refresh', termsExpired: false }), 100)
+            setTimeout(
+              () =>
+                resolve({
+                  userId: 'user-id',
+                  accessToken: 'token',
+                  refreshToken: 'refresh',
+                  expiresIn: 3600,
+                  tokenType: 'Bearer',
+                  termsExpired: false,
+                }),
+              100,
+            )
           }),
       )
 
@@ -312,7 +335,18 @@ describe('TermsDialog', () => {
       vi.mocked(acceptTerms).mockImplementation(
         () =>
           new Promise((resolve) => {
-            setTimeout(() => resolve({ accessToken: 'token', refreshToken: 'refresh', termsExpired: false }), 100)
+            setTimeout(
+              () =>
+                resolve({
+                  userId: 'user-id',
+                  accessToken: 'token',
+                  refreshToken: 'refresh',
+                  expiresIn: 3600,
+                  tokenType: 'Bearer',
+                  termsExpired: false,
+                }),
+              100,
+            )
           }),
       )
 

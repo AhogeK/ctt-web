@@ -84,13 +84,12 @@
   },
   "lint-staged": {
     "src/**/*.{ts,js,vue,tsx,jsx}": [
-      "oxfmt --write",
-      "oxlint --fix"
+      "vp fmt",
+      "vp lint --fix"
     ],
     "{src/**/__tests__/*,e2e/**/*.spec}.{ts,js}": [
       "vp lint --fix",
-      "oxfmt --write",
-      "oxlint --fix"
+      "vp fmt"
     ]
   },
   "engines": {
