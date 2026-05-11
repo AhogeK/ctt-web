@@ -46,3 +46,5 @@ src/__tests__/*.d.ts
 src/__tests__/*.js
 .gstack/
 .vite-hooks/
+
+.sisyphus/
