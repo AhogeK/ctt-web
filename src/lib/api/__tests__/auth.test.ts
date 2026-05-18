@@ -80,27 +80,14 @@ describe('auth API', () => {
       ).rejects.toThrow('Invalid email format')
     })
 
-    it('accepts empty password (schema allows it)', async () => {
-      vi.mocked(apiFetch).mockResolvedValue({
-        success: true,
-        message: 'Login successful',
-        timestamp: '2026-04-28T12:00:00Z',
-        data: {
-          userId: 'a1b2c3d4-e5f6-7890-abcd-ef1234567890',
-          accessToken: 'mock-access-token',
-          refreshToken: 'mock-refresh-token',
-          expiresIn: 3600,
-          tokenType: 'Bearer',
-        },
-      })
-
-      const result = await authApi.login({
-        email: 'user@example.com',
-        password: '',
-        deviceId: 'device-001',
-      })
-
-      expect(result.accessToken).toBe('mock-access-token')
+    it('rejects empty password (schema requires min 8 chars)', async () => {
+      await expect(
+        authApi.login({
+          email: 'user@example.com',
+          password: '',
+          deviceId: 'device-001',
+        }),
+      ).rejects.toThrow('Password is required')
     })
 
     it('rejects missing deviceId', async () => {
@@ -626,15 +613,18 @@ describe('auth API', () => {
         message: 'Terms accepted',
         timestamp: '2026-04-28T12:00:00Z',
         data: {
+          userId: 'a1b2c3d4-e5f6-7890-abcd-ef1234567890',
           accessToken: 'new-access-token',
           refreshToken: 'new-refresh-token',
+          expiresIn: 3600,
+          tokenType: 'Bearer',
           termsExpired: false,
         },
       })
 
       const result = await authApi.acceptTerms()
 
-      expect(apiFetch).toHaveBeenCalledWith('/api/v1/terms/accept', {
+      expect(apiFetch).toHaveBeenCalledWith('/api/v1/auth/terms/accept', {
         method: 'POST',
       })
       expect(result.accessToken).toBe('new-access-token')
@@ -648,8 +638,11 @@ describe('auth API', () => {
         message: 'Terms accepted',
         timestamp: '2026-04-28T12:00:00Z',
         data: {
+          userId: 'a1b2c3d4-e5f6-7890-abcd-ef1234567890',
           accessToken: 'new-access-token',
           refreshToken: 'new-refresh-token',
+          expiresIn: 3600,
+          tokenType: 'Bearer',
         },
       })
 

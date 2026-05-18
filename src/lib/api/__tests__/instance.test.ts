@@ -819,7 +819,7 @@ describe('API Instance', () => {
       const mockContext = {
         response: {
           status: 403,
-          _data: { code: 'TERMS_EXPIRED', message: 'Terms of service need re-acceptance' },
+          _data: { code: 'AUTH_019', message: 'Terms of service need re-acceptance' },
           url: 'https://api.example.com/test',
         },
         request: 'https://api.example.com/test',
@@ -838,7 +838,7 @@ describe('API Instance', () => {
       const mockContext = {
         response: {
           status: 403,
-          _data: { code: 'TERMS_EXPIRED', message: 'Terms expired' },
+          _data: { code: 'AUTH_019', message: 'Terms expired' },
           url: 'https://api.example.com/test',
         },
         request: 'https://api.example.com/test',
@@ -855,7 +855,7 @@ describe('API Instance', () => {
       const mockContext1 = {
         response: {
           status: 403,
-          _data: { code: 'TERMS_EXPIRED', message: 'Terms expired' },
+          _data: { code: 'AUTH_019', message: 'Terms expired' },
           url: 'https://api.example.com/test1',
         },
         request: 'https://api.example.com/test1',
@@ -865,7 +865,7 @@ describe('API Instance', () => {
       const mockContext2 = {
         response: {
           status: 403,
-          _data: { code: 'TERMS_EXPIRED', message: 'Terms expired' },
+          _data: { code: 'AUTH_019', message: 'Terms expired' },
           url: 'https://api.example.com/test2',
         },
         request: 'https://api.example.com/test2',

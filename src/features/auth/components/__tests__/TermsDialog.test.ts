@@ -215,8 +215,11 @@ describe('TermsDialog', () => {
       await nextTick()
 
       expect(mockSetAuthFromTermsAcceptance).toHaveBeenCalledWith({
+        userId: 'test-user-id',
         accessToken: 'new-token',
         refreshToken: 'new-refresh',
+        expiresIn: 3600,
+        tokenType: 'Bearer',
         termsExpired: false,
       })
     })
