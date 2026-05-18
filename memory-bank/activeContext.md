@@ -3,12 +3,21 @@
 ## Current Status
 
 **Phase**: Terms Acceptance Integration (v0.25.1 backend)
-**Version**: 0.7.0 (2026-05-09)
-**Branch**: develop at (pending commit), master at (pending commit)
+**Version**: 0.7.1 (2026-05-19)
+**Branch**: develop at 48707dd, master at c576e51
 **Tests**: 444/444 pass (last verified 0.6.9)
 **Plan**: docs/plans/2026-05-02-terms-acceptance-tracking.md — status: completed
 
 ## Recent Activity
+
+### 0.7.1 — TermsDialog Scrollbar Theme Fix (2026-05-19)
+
+Fixed TermsDialog scrollbar not adapting to dark theme (white scrollbar on dark background).
+
+**Fix**: Added `.terms-scrollable` class + `<style scoped>` block with shadcn-vue CSS variables (`--muted-foreground`, `--foreground`) for automatic light/dark adaptation. 6px thin scrollbar, transparent track, themed thumb.
+
+**Commits on develop**: `3438af5` fix(terms): add themed scrollbar styling to TermsDialog, `48707dd` chore: bump version to 0.7.1
+**Cherry-picked to master**: `6a270a6` + `c576e51`
 
 ### 0.7.0 — Terms Acceptance Frontend Integration (2026-05-09)
 
