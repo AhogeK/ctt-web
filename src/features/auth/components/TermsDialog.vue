@@ -74,7 +74,7 @@ function handleReject() {
         </DialogDescription>
       </DialogHeader>
 
-      <div class="overflow-y-auto pr-4 -mr-4">
+      <div class="terms-scrollable overflow-y-auto pr-4 -mr-4">
         <div v-for="section in termsContent.sections" :key="section.id" class="mb-6 last:mb-0">
           <h3 class="text-lg font-semibold mb-2 text-foreground">
             {{ section.title }}
@@ -126,3 +126,23 @@ function handleReject() {
     </DialogContent>
   </Dialog>
 </template>
+
+<style scoped>
+.terms-scrollable {
+  scrollbar-color: var(--muted-foreground) transparent;
+  scrollbar-width: thin;
+}
+.terms-scrollable::-webkit-scrollbar {
+  width: 6px;
+}
+.terms-scrollable::-webkit-scrollbar-track {
+  background: transparent;
+}
+.terms-scrollable::-webkit-scrollbar-thumb {
+  background-color: var(--muted-foreground);
+  border-radius: 3px;
+}
+.terms-scrollable::-webkit-scrollbar-thumb:hover {
+  background-color: var(--foreground);
+}
+</style>
