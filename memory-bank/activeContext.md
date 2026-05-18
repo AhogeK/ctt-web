@@ -3,12 +3,23 @@
 ## Current Status
 
 **Phase**: Terms Acceptance Integration (v0.25.1 backend)
-**Version**: 0.7.1 (2026-05-19)
-**Branch**: develop at 48707dd, master at c576e51
-**Tests**: 444/444 pass (last verified 0.6.9)
+**Version**: 0.7.2 (2026-05-19)
+**Branch**: develop at e213e10, master at ad67ecf
+**Tests**: 451/451 pass (verified 0.7.2)
 **Plan**: docs/plans/2026-05-02-terms-acceptance-tracking.md — status: completed
 
 ## Recent Activity
+
+### 0.7.2 — TermsDialog readOnly Mode + Test Fixes (2026-05-19)
+
+Fixed registration flow 401 error: clicking "Accept" in TermsDialog during registration called `acceptTerms()` API which requires JWT, but user isn't logged in yet.
+
+**Fix**: Added `readOnly` prop to TermsDialog. When `readOnly=true` (used in registration), only shows "Close" button, hides Accept/Decline, no API call. RegisterForm passes `:read-only="true"`.
+
+**Also fixed**: 7 pre-existing test failures from v0.7.0 (TERMS_EXPIRED→AUTH_019, acceptTerms endpoint path, LoginResponse schema fields, empty password validation).
+
+**Commits on develop**: `1260846` fix(terms): add readOnly mode, `a6cdabc` fix(test): update tests, `e213e10` chore: bump version to 0.7.2
+**Cherry-picked to master**: `9197cdc` + `b154fd6` + `ad67ecf`
 
 ### 0.7.1 — TermsDialog Scrollbar Theme Fix (2026-05-19)
 

@@ -45,6 +45,7 @@
 - [x] AppSidebar Logout Tests: Added comprehensive unit tests for loading state and guard behavior
 - [x] Terms Acceptance Integration (v0.7.0): P0 bug fixes (error code, endpoint path, schema), error code mapping (AUTH_019/USER_008), registration error handling, Chinese terms content, refresh token termsExpired check
 - [x] TermsDialog scrollbar theme fix (v0.7.1): Added themed scrollbar styling using shadcn-vue CSS variables for light/dark mode adaptation
+- [x] TermsDialog readOnly mode (v0.7.2): Added readOnly prop to prevent 401 on registration Accept click + fixed 7 pre-existing test failures
 - [x] Logout Code Review & Fixes: any type removal, AppHeader logout addition, test coverage expansion (double-click/nav links/structure), unhandled rejection fix
 - [x] Bump version 0.5.24
 - [x] Bump version 0.5.25
