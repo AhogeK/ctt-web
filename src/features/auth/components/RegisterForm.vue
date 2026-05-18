@@ -232,5 +232,5 @@ const onSubmit = form.handleSubmit((values) => {
       <span class="relative z-10">Create account</span>
     </Button>
   </form>
-  <TermsDialog v-if="showTerms" v-model:open="showTerms" />
+  <TermsDialog v-if="showTerms" v-model:open="showTerms" :read-only="true" />
 </template>
