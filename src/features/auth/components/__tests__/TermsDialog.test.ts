@@ -471,4 +471,91 @@ describe('TermsDialog', () => {
       expect(wrapper.emitted('update:open')).toBeTruthy()
     })
   })
+
+  describe('readOnly mode', () => {
+    it('renders only a Close button when readOnly is true', () => {
+      const wrapper = mountWithQuery(TermsDialog, {
+        props: { open: true, readOnly: true },
+      })
+
+      const buttons = wrapper.findAll('button')
+      expect(buttons.length).toBe(1)
+      expect(buttons[0]!.text()).toContain('Close')
+    })
+
+    it('does not render Accept and Decline buttons when readOnly is true', () => {
+      const wrapper = mountWithQuery(TermsDialog, {
+        props: { open: true, readOnly: true },
+      })
+
+      const buttons = wrapper.findAll('button')
+      const buttonTexts = buttons.map((b) => b.text())
+      expect(buttonTexts).not.toContain('Accept')
+      expect(buttonTexts).not.toContain('Decline')
+    })
+
+    it('emits rejected when Close button clicked', async () => {
+      const wrapper = mountWithQuery(TermsDialog, {
+        props: { open: true, readOnly: true },
+      })
+
+      await nextTick()
+
+      const closeButton = wrapper.findAll('button')[0]!
+      await closeButton.trigger('click')
+
+      expect(wrapper.emitted('rejected')).toBeTruthy()
+    })
+
+    it('closes dialog when Close button clicked', async () => {
+      const wrapper = mountWithQuery(TermsDialog, {
+        props: { open: true, readOnly: true },
+      })
+
+      await nextTick()
+
+      const closeButton = wrapper.findAll('button')[0]!
+      await closeButton.trigger('click')
+
+      expect(wrapper.emitted('update:open')).toBeTruthy()
+      expect(wrapper.emitted('update:open')![0]).toEqual([false])
+    })
+
+    it('calls rejectTermsQueue when dialog closes in readOnly mode', async () => {
+      const wrapper = mountWithQuery(TermsDialog, {
+        props: { open: true, readOnly: true },
+      })
+
+      await nextTick()
+
+      const vm = wrapper.vm as unknown as { open: boolean }
+      vm.open = false
+      await nextTick()
+
+      expect(rejectTermsQueue).toHaveBeenCalled()
+    })
+
+    it('does not call acceptTerms API in readOnly mode', async () => {
+      const wrapper = mountWithQuery(TermsDialog, {
+        props: { open: true, readOnly: true },
+      })
+
+      await nextTick()
+
+      const closeButton = wrapper.findAll('button')[0]!
+      await closeButton.trigger('click')
+      await nextTick()
+
+      expect(acceptTerms).not.toHaveBeenCalled()
+    })
+
+    it('renders section content in readOnly mode', () => {
+      const wrapper = mountWithQuery(TermsDialog, {
+        props: { open: true, readOnly: true },
+      })
+
+      expect(wrapper.text()).toContain('1. Acceptance of Terms')
+      expect(wrapper.text()).toContain('2. Description of Service')
+    })
+  })
 })

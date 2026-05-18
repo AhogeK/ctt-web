@@ -16,6 +16,14 @@ import { useAuthStore } from '@/stores/auth'
 import { rejectTermsQueue } from '@/lib/api/instance'
 import { usePublicConfig } from '@/composables/usePublicConfig'
 
+const props = withDefaults(
+  defineProps<{
+    /** When true, hides Accept/Decline buttons and shows only a Close button (for registration flow) */
+    readOnly?: boolean
+  }>(),
+  { readOnly: false },
+)
+
 const open = defineModel<boolean>('open', { default: false })
 const emit = defineEmits<{
   accepted: []
@@ -60,6 +68,10 @@ async function handleAccept() {
 
 function handleReject() {
   emit('rejected')
+  open.value = false
+}
+
+function handleClose() {
   open.value = false
 }
 </script>
@@ -118,10 +130,15 @@ function handleReject() {
       </div>
 
       <DialogFooter class="shrink-0">
-        <Button variant="outline" @click="handleReject"> Decline </Button>
-        <Button :disabled="isLoading" @click="handleAccept">
-          {{ isLoading ? 'Accepting...' : 'Accept' }}
-        </Button>
+        <template v-if="props.readOnly">
+          <Button variant="outline" @click="handleClose"> Close </Button>
+        </template>
+        <template v-else>
+          <Button variant="outline" @click="handleReject"> Decline </Button>
+          <Button :disabled="isLoading" @click="handleAccept">
+            {{ isLoading ? 'Accepting...' : 'Accept' }}
+          </Button>
+        </template>
       </DialogFooter>
     </DialogContent>
   </Dialog>
