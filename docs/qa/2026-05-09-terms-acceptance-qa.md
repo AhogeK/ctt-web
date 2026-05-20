@@ -1,6 +1,6 @@
 # 条款确认功能 QA 测试指南
 
-> **版本**: 0.7.0 | **日期**: 2026-05-09 | **后端**: ctt-server v0.25.1
+> **版本**: 0.7.2 | **日期**: 2026-05-09 | **后端**: ctt-server v0.25.1
 
 ---
 
@@ -21,7 +21,7 @@
 
 1. 打开 `localhost:5173/register`
 2. 填写邮箱、显示名称、密码
-3. 勾选"我已阅读并同意服务条款"复选框
+3. 勾选条款复选框（文字为 `"I agree to the Terms of Service"`）
 4. 点击"注册"按钮
 5. 在 Mailpit (`localhost:8025`) 查收验证邮件
 6. 点击邮件中的验证链接完成注册
@@ -49,7 +49,7 @@
 | 步骤序号 | 具体操作                                                        | 预期结果                                                                                                                                                                                                                                                                               |
 | -------- | --------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | 1        | 打开浏览器，访问 `localhost:5173/register`                      | 页面加载完成，显示注册表单                                                                                                                                                                                                                                                             |
-| 2        | 检查页面元素                                                    | 页面包含以下元素：<br>- 邮箱输入框（placeholder: "请输入邮箱"）<br>- 显示名称输入框（placeholder: "请输入显示名称"）<br>- 密码输入框（placeholder: "请输入密码"）<br>- 确认密码输入框（placeholder: "请再次输入密码"）<br>- 条款复选框，文字为"我已阅读并同意服务条款"<br>- "注册"按钮 |
+| 2        | 检查页面元素                                                    | 页面包含以下元素：<br>- 邮箱输入框（placeholder: "请输入邮箱"）<br>- 显示名称输入框（placeholder: "请输入显示名称"）<br>- 密码输入框（placeholder: "请输入密码"）<br>- 确认密码输入框（placeholder: "请再次输入密码"）<br>- 条款复选框，文字为英文 `"I agree to the Terms of Service"`，其中 `"Terms of Service"` 为蓝色可点击链接<br>- "注册"按钮 |
 | 3        | 填写邮箱：`test-new@example.com`                                | 输入框显示填写的邮箱                                                                                                                                                                                                                                                                   |
 | 4        | 填写显示名称：`测试新用户`                                      | 输入框显示填写的显示名称                                                                                                                                                                                                                                                               |
 | 5        | 填写密码：`Test123456!`                                         | 输入框显示填写的密码（可能被遮蔽）                                                                                                                                                                                                                                                     |
@@ -58,21 +58,28 @@
 | 8        | 检查"注册"按钮状态                                              | 按钮处于禁用状态（disabled 属性为 true），按钮颜色为灰色，无法点击                                                                                                                                                                                                                     |
 | 9        | 勾选条款复选框（点击复选框或文字）                              | 复选框显示勾选状态（蓝色勾选图标）                                                                                                                                                                                                                                                     |
 | 10       | 检查"注册"按钮状态                                              | 按钮变为可用状态（disabled 属性为 false），按钮颜色变为蓝色，可以点击                                                                                                                                                                                                                  |
-| 11       | 点击"注册"按钮                                                  | 页面显示加载状态（按钮文字变为"注册中..."或显示 loading 图标）                                                                                                                                                                                                                         |
-| 12       | 打开浏览器 Network 面板，找到 `POST /api/v1/auth/register` 请求 | 请求已发出，状态为 pending                                                                                                                                                                                                                                                             |
-| 13       | 检查请求体（Request Payload）                                   | 请求体为 JSON 格式：<br>`json<br>{<br>  "email": "test-new@example.com",<br>  "displayName": "测试新用户",<br>  "password": "Test123456!",<br>  "termsVersion": "1.0.0"<br>}<br>`<br>**注意**：字段名为 `termsVersion`，不是 `termsAccepted`                                           |
-| 14       | 检查响应状态码                                                  | 响应状态码为 200 OK                                                                                                                                                                                                                                                                    |
-| 15       | 检查响应体                                                      | 响应体为：<br>`json<br>{<br>  "code": 20000,<br>  "message": "注册成功，请查收验证邮件"<br>}<br>`                                                                                                                                                                                      |
-| 16       | 检查页面跳转                                                    | 页面自动跳转到 `/login`，URL 变为 `localhost:5173/login`                                                                                                                                                                                                                               |
-| 17       | 打开 Mailpit (`localhost:8025`)                                 | 看到新邮件，标题为"验证您的邮箱"或类似内容                                                                                                                                                                                                                                             |
-| 18       | 点击邮件中的验证链接                                            | 邮箱验证完成，账号激活                                                                                                                                                                                                                                                                 |
+| 11       | 点击复选框文字中的 **"Terms of Service"** 链接                   | 弹出 **TermsDialog** 对话框                                                                                                                                                                                                                                                          |
+| 12       | 检查对话框标题                                                   | 对话框标题为 `"Terms of Service"`                                                                                                                                                                                                                                                    |
+| 13       | 检查对话框底部按钮                                               | 对话框底部**只有 "Close" 按钮**，**没有** Accept/Decline 按钮（readOnly 模式）                                                                                                                                                                                                       |
+| 14       | 点击 "Close" 按钮                                                | 对话框关闭，页面回到注册表单                                                                                                                                                                                                                                                         |
+| 15       | 验证无 API 调用                                                   | Network 面板中**没有** `POST /api/v1/auth/terms/accept` 请求（readOnly 模式不调用 API）                                                                                                                                                                                              |
+| 16       | 点击"注册"按钮                                                  | 页面显示加载状态（按钮文字变为"注册中..."或显示 loading 图标）                                                                                                                                                                                                                         |
+| 17       | 打开浏览器 Network 面板，找到 `POST /api/v1/auth/register` 请求 | 请求已发出，状态为 pending                                                                                                                                                                                                                                                             |
+| 18       | 检查请求体（Request Payload）                                   | 请求体为 JSON 格式：<br>`json<br>{<br>  "email": "test-new@example.com",<br>  "displayName": "测试新用户",<br>  "password": "Test123456!",<br>  "termsVersion": "1.0.0"<br>}<br>`<br>**注意**：字段名为 `termsVersion`，不是 `termsAccepted`                                           |
+| 19       | 检查响应状态码                                                  | 响应状态码为 200 OK                                                                                                                                                                                                                                                                    |
+| 20       | 检查响应体                                                      | 响应体为：<br>`json<br>{<br>  "code": 20000,<br>  "message": "注册成功，请查收验证邮件"<br>}<br>`                                                                                                                                                                                      |
+| 21       | 检查页面跳转                                                    | 页面自动跳转到 `/login`，URL 变为 `localhost:5173/login`                                                                                                                                                                                                                               |
+| 22       | 打开 Mailpit (`localhost:8025`)                                 | 看到新邮件，标题为"验证您的邮箱"或类似内容                                                                                                                                                                                                                                             |
+| 23       | 点击邮件中的验证链接                                            | 邮箱验证完成，账号激活                                                                                                                                                                                                                                                                 |
 
 ### 通过标准
 
-- 步骤 1-18 全部通过
+- 步骤 1-23 全部通过
 - 注册请求包含 `termsVersion: "1.0.0"`，不包含 `termsAccepted`
 - 不勾选复选框时，注册按钮禁用
 - 勾选复选框后，注册按钮可用
+- 点击 "Terms of Service" 链接弹出 readOnly 对话框（只有 Close 按钮，无 Accept/Decline）
+- readOnly 对话框关闭后不调用 acceptTerms API
 - 注册成功后跳转到登录页
 
 ---
@@ -171,14 +178,14 @@
 | 7        | 检查响应状态码                                                | 响应状态码为 200 OK                                                                                                                                                                                                                                                                                                                                                                                                      |
 | 8        | 检查响应体                                                    | 响应体为：<br>`json<br>{<br>  "code": 20000,<br>  "data": {<br>    "accessToken": "eyJhbGc...",<br>    "refreshToken": "eyJhbGc...",<br>    "expiresIn": 3600,<br>    "userId": "uuid-string",<br>    "email": "test-expired@example.com",<br>    "displayName": "测试过期用户",<br>    "termsExpired": true<br>  }<br>}<br>`<br>**注意**：`termsExpired` 字段为 `true`（布尔类型）                                      |
 | 9        | 检查页面行为                                                  | **TermsDialog** 组件自动弹出，覆盖在登录页面上方                                                                                                                                                                                                                                                                                                                                                                         |
-| 10       | 检查对话框标题                                                | 对话框标题为"服务条款"                                                                                                                                                                                                                                                                                                                                                                                                   |
+| 10       | 检查对话框标题                                                | 对话框标题为 `"Terms of Service"`                                                                                                                                                                                                                                                                                                                                                                                                   |
 | 11       | 检查对话框内容区域                                            | 条款内容区域可滚动，显示中文条款（如果用户浏览器语言为中文），包含 7 个章节：<br>1. 简介<br>2. 服务说明<br>3. 用户义务<br>4. 隐私保护<br>5. 知识产权<br>6. 免责声明<br>7. 条款变更                                                                                                                                                                                                                                       |
-| 12       | 检查对话框底部元素                                            | 对话框底部包含：<br>- 复选框，文字为"我已阅读并同意服务条款"<br>- "同意"按钮（蓝色）<br>- "拒绝"按钮（灰色）                                                                                                                                                                                                                                                                                                             |
+| 12       | 检查对话框底部元素                                            | 对话框底部包含（**正常模式**，非 readOnly）：<br>- 复选框，文字为英文 `"I agree to the Terms of Service"`<br>- "Accept" 按钮（蓝色）<br>- "Decline" 按钮（灰色）                                                                                                                                                                                                                                                                    |
 | 13       | **不勾选**复选框                                              | 复选框保持未勾选状态                                                                                                                                                                                                                                                                                                                                                                                                     |
-| 14       | 检查"同意"按钮状态                                            | "同意"按钮处于禁用状态（disabled 属性为 true），按钮颜色为灰色，无法点击                                                                                                                                                                                                                                                                                                                                                 |
+| 14       | 检查 "Accept" 按钮状态                                        | "Accept" 按钮处于禁用状态（disabled 属性为 true），按钮颜色为灰色，无法点击                                                                                                                                                                                                                                                                                                                                                         |
 | 15       | 勾选复选框（点击复选框或文字）                                | 复选框显示勾选状态（蓝色勾选图标）                                                                                                                                                                                                                                                                                                                                                                                       |
-| 16       | 检查"同意"按钮状态                                            | "同意"按钮变为可用状态（disabled 属性为 false），按钮颜色变为蓝色，可以点击                                                                                                                                                                                                                                                                                                                                              |
-| 17       | 点击"同意"按钮                                                | 页面显示加载状态                                                                                                                                                                                                                                                                                                                                                                                                         |
+| 16       | 检查 "Accept" 按钮状态                                        | "Accept" 按钮变为可用状态（disabled 属性为 false），按钮颜色变为蓝色，可以点击                                                                                                                                                                                                                                                                                                                                                      |
+| 17       | 点击 "Accept" 按钮                                             | 页面显示加载状态                                                                                                                                                                                                                                                                                                                                                                                                         |
 | 18       | 打开 Network 面板，找到 `POST /api/v1/auth/terms/accept` 请求 | 请求已发出                                                                                                                                                                                                                                                                                                                                                                                                               |
 | 19       | 检查请求体                                                    | 请求体为：<br>`json<br>{<br>  "termsVersion": "1.0.0"<br>}<br>`                                                                                                                                                                                                                                                                                                                                                          |
 | 20       | 检查响应状态码                                                | 响应状态码为 200 OK                                                                                                                                                                                                                                                                                                                                                                                                      |
@@ -192,8 +199,8 @@
 - 步骤 1-24 全部通过
 - 登录响应包含 `termsExpired: true`
 - TermsDialog 自动弹出
-- 不勾选复选框时，"同意"按钮禁用
-- 勾选复选框后，"同意"按钮可用
+- 不勾选复选框时，"Accept" 按钮禁用
+- 勾选复选框后，"Accept" 按钮可用
 - 同意条款后，新 token 替换旧 token
 - 跳转到 dashboard
 
@@ -226,7 +233,7 @@
 | 9        | 检查页面行为                                                     | **App.vue** 监听到 `'api:terms-expired'` 事件，弹出 **TermsDialog**                                                                                                   |
 | 10       | 检查请求队列                                                     | 原始失败的请求（`GET /api/v1/devices`）被加入 **pendingTermsQueue** 队列                                                                                              |
 | 11       | 勾选条款复选框                                                   | 复选框显示勾选状态                                                                                                                                                    |
-| 12       | 点击"同意"按钮                                                   | 页面显示加载状态                                                                                                                                                      |
+| 12       | 点击 "Accept" 按钮                                                   | 页面显示加载状态                                                                                                                                                      |
 | 13       | 打开 Network 面板，找到 `POST /api/v1/auth/terms/accept` 请求    | 请求已发出，返回 200                                                                                                                                                  |
 | 14       | 检查 Network 面板，找到原始请求的重放                            | 原始请求（`GET /api/v1/devices`）被自动重放，使用新的 Authorization 头（新的 access token）                                                                           |
 | 15       | 检查重放请求的响应状态码                                         | 响应状态码为 **200 OK**（不是 403）                                                                                                                                   |
@@ -269,7 +276,7 @@
 | 8        | 检查前端行为                                                                    | **isWaitingForTerms** 标志确保只弹出 **ONE** 个 TermsDialog（不会弹出多个对话框）                                            |
 | 9        | 检查请求队列                                                                    | 所有失败的请求都加入 **pendingTermsQueue** 队列                                                                              |
 | 10       | 勾选条款复选框                                                                  | 复选框显示勾选状态                                                                                                           |
-| 11       | 点击"同意"按钮                                                                  | 页面显示加载状态                                                                                                             |
+| 11       | 点击 "Accept" 按钮                                                                  | 页面显示加载状态                                                                                                             |
 | 12       | 打开 Network 面板，找到 `POST /api/v1/auth/terms/accept` 请求                   | 请求已发出，返回 200                                                                                                         |
 | 13       | 检查 Network 面板，找到所有重放请求                                             | 所有排队的请求被自动重放：<br>- `GET /api/v1/statistics`<br>- `GET /api/v1/devices`<br>- `GET /api/v1/rankings`              |
 | 14       | 检查重放请求的响应状态码                                                        | 所有重放请求返回 **200 OK**                                                                                                  |
@@ -315,7 +322,7 @@
 | 11       | 检查响应状态码                                                  | 响应状态码为 200 OK                                                                                                                                                                                                                                                                                                           |
 | 12       | 检查响应体（情况 A：termsExpired = true）                       | 响应体为：<br>`json<br>{<br>  "code": 20000,<br>  "data": {<br>    "accessToken": "eyJhbGc...",<br>    "refreshToken": "eyJhbGc...",<br>    "expiresIn": 3600,<br>    "userId": "uuid-string",<br>    "email": "test-expired@example.com",<br>    "displayName": "测试过期用户",<br>    "termsExpired": true<br>  }<br>}<br>` |
 | 13       | 检查前端行为（情况 A）                                          | 前端派发 **TERMS_EXPIRED_EVENT**（事件名：`'api:terms-expired'`），弹出 **TermsDialog**                                                                                                                                                                                                                                       |
-| 14       | 勾选复选框 → 点击"同意"                                         | 同意条款，新 token 存储，原始请求重试                                                                                                                                                                                                                                                                                         |
+| 14       | 勾选复选框 → 点击 "Accept"                                        | 同意条款，新 token 存储，原始请求重试                                                                                                                                                                                                                                                                                         |
 | 15       | 检查响应体（情况 B：termsExpired = false）                      | 响应体为：<br>`json<br>{<br>  "code": 20000,<br>  "data": {<br>    "accessToken": "eyJhbGc...",<br>    "refreshToken": "eyJhbGc...",<br>    "expiresIn": 3600,<br>    "userId": "uuid-string",<br>    "email": "test-valid@example.com",<br>    "displayName": "测试用户",<br>    "termsExpired": false<br>  }<br>}<br>`      |
 | 16       | 检查前端行为（情况 B）                                          | 新 access token 存储，原始请求重试，不弹出对话框                                                                                                                                                                                                                                                                              |
 
@@ -413,8 +420,8 @@
 | -------- | -------------------------------------------------------- | ------------------------------------------------------------------------------- |
 | 1        | 打开浏览器，访问 `localhost:5173/login`                  | 页面加载完成                                                                    |
 | 2        | 输入条款过期账号的邮箱和密码，点击"登录"                 | 登录成功，弹出 TermsDialog                                                      |
-| 3        | 检查对话框元素                                           | 对话框包含：<br>- "拒绝"按钮（灰色，始终可用）<br>- 关闭按钮（X，右上角）       |
-| 4        | 点击"拒绝"按钮                                           | 对话框关闭                                                                      |
+| 3        | 检查对话框元素                                           | 对话框包含：<br>- "Decline" 按钮（灰色，始终可用）<br>- 关闭按钮（X，右上角）       |
+| 4        | 点击 "Decline" 按钮                                      | 对话框关闭                                                                      |
 | 5        | 检查页面状态                                             | 用户未被跳转到 dashboard，停留在登录页或当前页面                                |
 | 6        | 打开 Application 面板 → Local Storage → `localhost:5173` | Local Storage 的 `ctt_access_token` 和 `ctt_refresh_token` 未被更新（仍为旧值） |
 | 7        | 检查请求队列                                             | 队列中的请求被 reject（不会重放）                                               |
@@ -525,10 +532,9 @@
 
 ### 前端组件
 
-| 组件名          | 用途       |
-| --------------- | ---------- |
-| `TermsDialog`   | 条款对话框 |
-| `TermsCheckbox` | 条款复选框 |
+| 组件名          | 用途                                       |
+| --------------- | ------------------------------------------ |
+| `TermsDialog`   | 条款对话框（支持 `readOnly` prop：注册页只显示 Close 按钮，登录/API 拦截显示 Accept/Decline） |
 
 ### 前端事件
 
@@ -553,3 +559,4 @@
 - 接受条款后，新 JWT 替换 localStorage 中的 token
 - 条款内容支持中英文，根据浏览器语言自动切换
 - 拒绝条款后，用户停留在当前页面，token 未更新，队列中的请求被 reject
+- **TermsDialog 有两种模式**：readOnly（注册页，只有 Close 按钮）和 normal（登录/API 拦截，有 Accept/Decline 按钮）
