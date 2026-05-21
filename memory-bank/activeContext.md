@@ -3,12 +3,25 @@
 ## Current Status
 
 **Phase**: Terms Acceptance Integration (v0.25.1 backend)
-**Version**: 0.7.2 (2026-05-19)
+**Version**: 0.7.3 (2026-05-22)
 **Branch**: develop at e213e10, master at ad67ecf
-**Tests**: 451/451 pass (verified 0.7.2)
+**Tests**: 451/451 pass (verified 0.7.3)
 **Plan**: docs/plans/2026-05-02-terms-acceptance-tracking.md — status: completed
 
 ## Recent Activity
+
+### 0.7.3 — RegisterForm agreedToTerms Undefined Fix (2026-05-22)
+
+Fixed Zod validation error on registration page: "Invalid input: expected boolean, received undefined" appeared below the terms checkbox when clicking "Create Account".
+
+**Root Cause**: `RegisterForm.vue` `useForm()` had no `initialValues`, so `agreedToTerms` started as `undefined`. Zod's `z.boolean()` rejected `undefined` before `.refine()` could run.
+
+**Fix**: Added `initialValues: { agreedToTerms: false }` to `useForm()` call in `RegisterForm.vue` line 25-30.
+
+**Verification**:
+- ✅ TypeScript diagnostics clean (0 errors)
+- ✅ All 451 tests pass
+- ✅ Production build successful (1.26s)
 
 ### 0.7.2 — TermsDialog readOnly Mode + Test Fixes (2026-05-19)
 
