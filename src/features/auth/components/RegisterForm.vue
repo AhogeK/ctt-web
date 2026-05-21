@@ -24,6 +24,9 @@ const emit = defineEmits<{
 
 const form = useForm({
   validationSchema: toTypedSchema(RegisterFormSchema),
+  initialValues: {
+    agreedToTerms: false,
+  },
 })
 
 const showPassword = shallowRef(false)
