@@ -30,9 +30,9 @@ const mockCheckboxChange = vi.hoisted(() => vi.fn<(value: boolean) => void>())
 // Mock Checkbox component (reka-ui wrapper)
 const MockCheckbox = vi.hoisted(() => ({
   props: ['checked'],
-  emits: ['update:checked'],
+  emits: ['update:modelValue'],
   template:
-    '<input type="checkbox" data-testid="terms-checkbox" :checked="checked" @change="$emit(\'update:checked\', $event.target.checked)" />',
+    '<input type="checkbox" data-testid="terms-checkbox" :checked="checked" @change="$emit(\'update:modelValue\', $event.target.checked)" />',
 }))
 
 // Mock Button component

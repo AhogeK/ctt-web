@@ -202,7 +202,7 @@ const onSubmit = form.handleSubmit((values) => {
       <FormItem>
         <FormControl>
           <div class="flex items-start gap-2">
-            <Checkbox :checked="value" @update:checked="handleChange" class="mt-0.5 cursor-pointer" />
+            <Checkbox :checked="value" @update:model-value="handleChange" class="mt-0.5 cursor-pointer" />
             <div class="grid gap-1.5 leading-tight">
               <FormLabel class="text-sm font-normal text-gray-600 dark:text-[#8a8f98]">
                 I agree to the
