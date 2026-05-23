@@ -13,7 +13,6 @@ import { Button } from '@/components/ui/button'
 import { acceptTerms } from '@/lib/api/auth'
 import { termsContent, type TermsSection } from '@/features/auth/content'
 import { useAuthStore } from '@/stores/auth'
-import { rejectTermsQueue } from '@/lib/api/instance'
 import { usePublicConfig } from '@/composables/usePublicConfig'
 
 const props = withDefaults(
@@ -38,8 +37,7 @@ const authStore = useAuthStore()
 // Handle dialog close without explicit decision (click outside, Escape key)
 watch(open, (newValue, oldValue) => {
   if (oldValue === true && newValue === false && isLoading.value === false) {
-    // Dialog was closed without accept/reject - reject queued requests
-    rejectTermsQueue()
+    // Dialog was closed without accept/reject - notify parent to handle cleanup
     emit('rejected')
   }
 })

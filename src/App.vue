@@ -8,14 +8,17 @@
  */
 import { ref, onMounted, onUnmounted } from 'vue'
 import { RouterView, useRouter } from 'vue-router'
+import { toast } from 'vue-sonner'
 import ErrorBoundary from '@/components/app/ErrorBoundary.vue'
 import { Toaster } from '@/components/ui/sonner'
 import { useThemeStore } from '@/stores/theme'
+import { useAuthStore } from '@/stores/auth'
 import { TERMS_EXPIRED_EVENT, resolveTermsQueue, rejectTermsQueue } from '@/lib/api/instance'
 import TermsDialog from '@/features/auth/components/TermsDialog.vue'
 import { RouteNames } from '@/router/route-names'
 
 const router = useRouter()
+const authStore = useAuthStore()
 const isTermsDialogOpen = ref(false)
 const isLoginTimeTermsExpired = ref(false)
 
@@ -42,6 +45,10 @@ function handleTermsAccepted() {
 function handleTermsRejected() {
   rejectTermsQueue()
   isLoginTimeTermsExpired.value = false
+  // Clear auth state and redirect to login
+  authStore.clearAuth()
+  router.push({ name: RouteNames.LOGIN })
+  toast.error('You must accept the Terms of Service to continue')
 }
 
 // Initialize theme to follow system preference
