@@ -6,7 +6,6 @@ import TermsDialog from '../TermsDialog.vue'
 import { getPublicConfig } from '@/lib/api/config'
 import { acceptTerms } from '@/lib/api/auth'
 import { toast } from 'vue-sonner'
-import { rejectTermsQueue } from '@/lib/api/instance'
 
 const mockSetAuthFromTermsAcceptance = vi.fn<(response: unknown) => void>()
 
@@ -41,7 +40,6 @@ vi.mock('@/stores/auth', () => ({
 }))
 
 vi.mock('@/lib/api/instance', () => ({
-  rejectTermsQueue: vi.fn<() => void>(),
   resolveTermsQueue: vi.fn<() => void>(),
   TERMS_EXPIRED_EVENT: 'api:terms-expired',
 }))
@@ -437,7 +435,8 @@ describe('TermsDialog', () => {
       vm.open = false
       await nextTick()
 
-      expect(rejectTermsQueue).toHaveBeenCalled()
+      // TermsDialog now only emits 'rejected' event; parent (App.vue) handles rejectTermsQueue
+      expect(wrapper.emitted('rejected')).toBeTruthy()
     })
 
     it('does not emit rejected when dialog closes after explicit accept', async () => {
@@ -535,7 +534,8 @@ describe('TermsDialog', () => {
       vm.open = false
       await nextTick()
 
-      expect(rejectTermsQueue).toHaveBeenCalled()
+      // TermsDialog now only emits 'rejected' event; parent (App.vue) handles rejectTermsQueue
+      expect(wrapper.emitted('rejected')).toBeTruthy()
     })
 
     it('does not call acceptTerms API in readOnly mode', async () => {
