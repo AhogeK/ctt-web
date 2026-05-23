@@ -3,12 +3,30 @@
 ## Current Status
 
 **Phase**: Terms Acceptance Integration (v0.25.1 backend)
-**Version**: 0.7.3 (2026-05-22)
-**Branch**: develop at e213e10, master at ad67ecf
-**Tests**: 451/451 pass (verified 0.7.3)
+**Version**: 0.7.5 (2026-05-23)
+**Branch**: develop at c366e1e, master at dd87236
+**Tests**: 451/451 pass (verified 0.7.5)
 **Plan**: docs/plans/2026-05-02-terms-acceptance-tracking.md — status: completed
 
 ## Recent Activity
+
+### 0.7.5 — Terms Decline Flow Fix (2026-05-23)
+
+Fixed bug where declining terms dialog didn't block app access.
+
+**Problem**: When `termsExpired=true` during login, clicking "Decline" in TermsDialog only closed the dialog but didn't clear auth tokens or redirect to login. User could continue using the app with valid tokens.
+
+**Root Cause**: `handleTermsRejected()` in App.vue only called `rejectTermsQueue()` (rejecting queued API requests) but didn't clear auth state or navigate to login.
+
+**Fix**:
+1. `src/App.vue`: Added `authStore.clearAuth()` + `router.push({ name: RouteNames.LOGIN })` + `toast.error()` to `handleTermsRejected()`
+2. `src/features/auth/components/TermsDialog.vue`: Removed direct `rejectTermsQueue()` call from dialog close watcher — now only emits `rejected` event, parent handles all cleanup
+3. `src/features/auth/components/__tests__/TermsDialog.test.ts`: Updated tests to verify event emission instead of direct function call, removed unused mock
+
+**Verification**:
+- ✅ TypeScript diagnostics clean (0 errors)
+- ✅ All 451 tests pass
+- ✅ Production build successful
 
 ### 0.7.3 — RegisterForm agreedToTerms Undefined Fix (2026-05-22)
 
