@@ -18,6 +18,7 @@ describe('config API', () => {
         message: 'Public config retrieved successfully',
         data: {
           termsVersion: '1.0.0',
+          captchaSiteKey: null,
         },
         timestamp: '2024-01-01T00:00:00Z',
       })
@@ -26,6 +27,23 @@ describe('config API', () => {
 
       expect(ofetch).toHaveBeenCalled()
       expect(result.termsVersion).toBe('1.0.0')
+      expect(result.captchaSiteKey).toBeNull()
+    })
+
+    it('fetches config with captchaSiteKey as a string', async () => {
+      vi.mocked(ofetch).mockResolvedValue({
+        success: true,
+        message: 'Public config retrieved successfully',
+        data: {
+          termsVersion: '1.0.0',
+          captchaSiteKey: '10000000-ffff-ffff-ffff-000000000001',
+        },
+        timestamp: '2024-01-01T00:00:00Z',
+      })
+
+      const result = await configApi.getPublicConfig()
+
+      expect(result.captchaSiteKey).toBe('10000000-ffff-ffff-ffff-000000000001')
     })
 
     it('fetches config with updated terms version', async () => {
@@ -34,6 +52,7 @@ describe('config API', () => {
         message: 'Public config retrieved successfully',
         data: {
           termsVersion: '2.0.0',
+          captchaSiteKey: null,
         },
         timestamp: '2024-01-01T00:00:00Z',
       })
@@ -41,6 +60,19 @@ describe('config API', () => {
       const result = await configApi.getPublicConfig()
 
       expect(result.termsVersion).toBe('2.0.0')
+    })
+
+    it('rejects response missing captchaSiteKey', async () => {
+      vi.mocked(ofetch).mockResolvedValue({
+        success: true,
+        message: 'Public config retrieved successfully',
+        data: {
+          termsVersion: '1.0.0',
+        },
+        timestamp: '2024-01-01T00:00:00Z',
+      })
+
+      await expect(configApi.getPublicConfig()).rejects.toThrow(expect.objectContaining({ name: 'ZodError' }))
     })
 
     it('rejects response missing termsVersion', async () => {

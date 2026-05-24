@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { shallowRef, watch } from 'vue'
+import { ref, shallowRef, watch } from 'vue'
 import { toTypedSchema } from '@vee-validate/zod'
 import { useForm, useFieldValue } from 'vee-validate'
 import { RegisterFormSchema, type RegisterFormData } from '@/lib/schemas/auth.schema'
@@ -11,10 +11,13 @@ import { cn } from '@/lib/utils'
 import PasswordStrengthMeter from './PasswordStrengthMeter.vue'
 import TermsDialog from './TermsDialog.vue'
 import { Eye, EyeOff } from 'lucide-vue-next'
+import CaptchaWidget from '@/components/CaptchaWidget.vue'
 
 const props = defineProps<{
   /** Server-side field errors mapped to field names */
   serverErrors?: Record<string, string>
+  /** hCaptcha site key from public config — widget hidden when null/undefined */
+  captchaSiteKey?: string | null
 }>()
 
 const emit = defineEmits<{
@@ -32,6 +35,18 @@ const form = useForm({
 const showPassword = shallowRef(false)
 const showConfirmPassword = shallowRef(false)
 const showTerms = shallowRef(false)
+const captchaRef = ref<InstanceType<typeof CaptchaWidget> | null>(null)
+const captchaToken = ref<string | null>(null)
+const captchaError = ref(false)
+
+function onCaptchaVerify(token: string) {
+  captchaToken.value = token
+  captchaError.value = false
+}
+
+function onCaptchaExpire() {
+  captchaToken.value = null
+}
 
 const passwordValue = useFieldValue<string>('password')
 
@@ -53,11 +68,21 @@ watch(
 )
 
 const onSubmit = form.handleSubmit((values) => {
+  // Block submission if captcha is required but not completed
+  if (props.captchaSiteKey && !captchaToken.value) {
+    captchaError.value = true
+    return
+  }
   emit('submit', {
     email: values.email,
     displayName: values.displayName,
     password: values.password,
+    captchaToken: captchaToken.value ?? undefined,
   })
+})
+
+defineExpose({
+  captchaRef,
 })
 </script>
 
@@ -221,11 +246,28 @@ const onSubmit = form.handleSubmit((values) => {
       </FormItem>
     </FormField>
 
+    <CaptchaWidget
+      v-if="captchaSiteKey"
+      ref="captchaRef"
+      v-model="captchaToken"
+      :sitekey="captchaSiteKey"
+      @verify="onCaptchaVerify"
+      @expired="onCaptchaExpire"
+    />
+    <div class="min-h-6 text-center">
+      <p
+        class="text-sm text-destructive transition-opacity duration-200"
+        :class="captchaError ? 'opacity-100' : 'opacity-0'"
+      >
+        Please complete the captcha verification
+      </p>
+    </div>
+
     <Button
       type="submit"
       :class="
         cn(
-          'group w-full h-10 mt-3 rounded-md bg-[#7b85d4] text-white font-[510] text-base',
+          'group w-full h-10 rounded-md bg-[#7b85d4] text-white font-[510] text-base',
           'shadow-lg shadow-[#7b85d4]/15 transition-all duration-200',
           'hover:bg-[#8b95e0] hover:shadow-[#8b95e0]/20 hover:scale-[1.02] active:scale-[0.98]',
         )

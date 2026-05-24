@@ -61,6 +61,7 @@ vi.mock('vue-sonner', () => ({
 }))
 
 vi.mock('@tanstack/vue-query', () => ({
+  QueryClient: vi.fn<() => void>(),
   useMutation: vi.fn<
     (options: {
       onSuccess?: (data: unknown, variables: { email: string }) => void
@@ -91,6 +92,14 @@ vi.mock('@/composables/useCooldown', () => ({
 
 vi.mock('@/lib/api/auth', () => ({
   forgotPassword: mockForgotPassword,
+}))
+
+vi.mock('@/composables/usePublicConfig', () => ({
+  usePublicConfig: vi.fn<() => { data: unknown; isLoading: { value: boolean }; error: { value: null } }>(() => ({
+    data: { value: { captchaSiteKey: null, termsVersion: '1.0' } },
+    isLoading: { value: false },
+    error: { value: null },
+  })),
 }))
 
 vi.mock('@/lib/utils/api-error', () => ({
@@ -242,6 +251,40 @@ describe('ForgotPasswordView', () => {
       expect(mockIsApiError).toHaveBeenCalledWith(error)
       expect(mockMapApiErrorCode).toHaveBeenCalledWith('COMMON_003')
       expect(mockToastError).toHaveBeenCalledWith('Invalid input. Please check your entries and try again.')
+    })
+  })
+
+  describe('SECURITY_006 captcha error', () => {
+    it('displays captcha error for SECURITY_006', () => {
+      mockIsApiError.mockReturnValue(true)
+      mockMapApiErrorCode.mockReturnValue('Captcha verification failed. Please try again.')
+
+      mount(ForgotPasswordView)
+      expect(mutationOnError).toBeDefined()
+
+      const error = createApiError(400, 'SECURITY_006')
+      mutationOnError!(error)
+
+      expect(mockIsApiError).toHaveBeenCalledWith(error)
+      expect(mockMapApiErrorCode).toHaveBeenCalledWith('SECURITY_006')
+      expect(mockToastError).toHaveBeenCalledWith('Captcha verification failed. Please try again.')
+    })
+  })
+
+  describe('SECURITY_007 captcha error', () => {
+    it('displays captcha error for SECURITY_007', () => {
+      mockIsApiError.mockReturnValue(true)
+      mockMapApiErrorCode.mockReturnValue('Please complete the captcha verification.')
+
+      mount(ForgotPasswordView)
+      expect(mutationOnError).toBeDefined()
+
+      const error = createApiError(400, 'SECURITY_007')
+      mutationOnError!(error)
+
+      expect(mockIsApiError).toHaveBeenCalledWith(error)
+      expect(mockMapApiErrorCode).toHaveBeenCalledWith('SECURITY_007')
+      expect(mockToastError).toHaveBeenCalledWith('Please complete the captcha verification.')
     })
   })
 

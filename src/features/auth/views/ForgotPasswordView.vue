@@ -7,18 +7,26 @@ import { forgotPassword } from '@/lib/api/auth'
 import { RouteNames } from '@/router/route-names'
 import { isApiError, mapApiErrorCode } from '@/lib/utils/api-error'
 import { useCooldown } from '@/composables/useCooldown'
+import { usePublicConfig } from '@/composables/usePublicConfig'
 import { Button } from '@/components/ui/button'
 import { cn } from '@/lib/utils'
 import ForgotPasswordForm from '../components/ForgotPasswordForm.vue'
+import type CaptchaWidget from '@/components/CaptchaWidget.vue'
 
 const router = useRouter()
 const { countdown, start } = useCooldown()
+const { data: publicConfig } = usePublicConfig()
+const captchaSiteKey = computed(() => publicConfig.value?.captchaSiteKey ?? null)
 const isSubmitted = ref(false)
 const submittedEmail = ref('')
+const forgotPasswordFormRef = ref<{
+  captchaRef: InstanceType<typeof CaptchaWidget> | null
+} | null>(null)
 
 const mutation = useMutation({
   mutationFn: forgotPassword,
   onSuccess: (response, variables) => {
+    forgotPasswordFormRef.value?.captchaRef?.reset()
     submittedEmail.value = variables.email
     isSubmitted.value = true
 
@@ -29,6 +37,7 @@ const mutation = useMutation({
     }
   },
   onError: (error: unknown) => {
+    forgotPasswordFormRef.value?.captchaRef?.reset()
     if (!isApiError(error)) {
       toast.error('Request failed', { description: 'An unexpected error occurred' })
       return
@@ -43,14 +52,16 @@ const mutation = useMutation({
       })
     } else if (data?.code === 'COMMON_003') {
       toast.error(mapApiErrorCode('COMMON_003'))
+    } else if (data?.code === 'SECURITY_006' || data?.code === 'SECURITY_007') {
+      toast.error(mapApiErrorCode(data.code))
     } else {
       toast.error('Request failed', { description: 'Please try again later' })
     }
   },
 })
 
-const handleSubmit = (data: { email: string }) => {
-  mutation.mutate({ email: data.email })
+const handleSubmit = (data: { email: string; captchaToken?: string }) => {
+  mutation.mutate({ email: data.email, captchaToken: data.captchaToken })
 }
 
 const isSubmitting = computed(() => toValue(mutation.isPending))
@@ -138,7 +149,13 @@ const isSubmitting = computed(() => toValue(mutation.isPending))
     </div>
 
     <!-- Form -->
-    <ForgotPasswordForm v-else :loading="isSubmitting" @submit="handleSubmit" />
+    <ForgotPasswordForm
+      ref="forgotPasswordFormRef"
+      v-else
+      :loading="isSubmitting"
+      :captcha-site-key="captchaSiteKey"
+      @submit="handleSubmit"
+    />
 
     <!-- Back to sign in -->
     <Button

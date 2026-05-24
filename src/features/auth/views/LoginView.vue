@@ -8,8 +8,10 @@ import { RouteNames } from '@/router/route-names'
 import { isApiError, mapApiErrorCode } from '@/lib/utils/api-error'
 import { useCooldown } from '@/composables/useCooldown'
 import { useResendVerification } from '../composables/useResendVerification'
+import { usePublicConfig } from '@/composables/usePublicConfig'
 import LoginForm from '../components/LoginForm.vue'
 import type { useForm } from 'vee-validate'
+import type CaptchaWidget from '@/components/CaptchaWidget.vue'
 import {
   Dialog,
   DialogContent,
@@ -25,9 +27,14 @@ const route = useRoute()
 const authStore = useAuthStore()
 const { countdown, start } = useCooldown()
 const { resend, countdown: resendCountdown, isPending: isResending } = useResendVerification()
+const { data: publicConfig } = usePublicConfig()
+const captchaSiteKey = computed(() => publicConfig.value?.captchaSiteKey ?? null)
 
 // Form ref for setting inline field errors (AUTH_001)
-const loginFormRef = ref<{ form: ReturnType<typeof useForm> } | null>(null)
+const loginFormRef = ref<{
+  form: ReturnType<typeof useForm>
+  captchaRef: InstanceType<typeof CaptchaWidget> | null
+} | null>(null)
 
 // Dialog state for specific error scenarios
 const showLockedDialog = ref(false)
@@ -38,10 +45,12 @@ const lockCountdown = ref(0)
 const mutation = useMutation({
   mutationFn: authStore.login,
   onSuccess: () => {
+    loginFormRef.value?.captchaRef?.reset()
     const redirect = route.query.redirect as string
     router.push(redirect || { name: RouteNames.DASHBOARD })
   },
   onError: (error: unknown) => {
+    loginFormRef.value?.captchaRef?.reset()
     if (!isApiError(error)) {
       toast.error('Login failed', { description: 'An unexpected error occurred' })
       return
@@ -79,6 +88,12 @@ const mutation = useMutation({
         showVerificationDialog.value = true
         break
 
+      case 'SECURITY_006':
+      case 'SECURITY_007':
+        // Captcha verification failed or missing
+        toast.error(mapApiErrorCode(errorCode))
+        break
+
       case 'RATE_LIMIT_001':
         // Rate limited - use existing cooldown pattern
         start()
@@ -102,7 +117,7 @@ const mutation = useMutation({
   },
 })
 
-const handleSubmit = (data: { email: string; password: string }) => {
+const handleSubmit = (data: { email: string; password: string; captchaToken?: string }) => {
   // Store email for potential resend verification dialog
   pendingEmail.value = data.email
   mutation.mutate(data)
@@ -155,7 +170,7 @@ const handleResendVerification = async () => {
     </div>
 
     <!-- Form -->
-    <LoginForm ref="loginFormRef" :loading="isSubmitting" @submit="handleSubmit" />
+    <LoginForm ref="loginFormRef" :loading="isSubmitting" :captcha-site-key="captchaSiteKey" @submit="handleSubmit" />
 
     <!-- Create Account Link -->
     <div class="pt-2 text-center">

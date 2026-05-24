@@ -40,6 +40,8 @@ export const LoginRequestSchema = z.object({
   password: StrongPasswordSchema,
   // Device ID is required for device binding - server uses @NotBlank validation
   deviceId: z.string().min(1, 'Device ID is required'),
+  // hCaptcha token — optional because captcha may be disabled server-side
+  captchaToken: z.string().optional(),
 })
 
 /**
@@ -119,6 +121,8 @@ export const RegisterRequestSchema = z.object({
   password: StrongPasswordSchema,
   // Terms version accepted by user — must match server's current version
   termsVersion: z.string().min(1, 'Terms version is required'),
+  // hCaptcha token — optional because captcha may be disabled server-side
+  captchaToken: z.string().optional(),
 })
 
 /**
@@ -201,6 +205,8 @@ export type ResendVerificationRequest = z.infer<typeof ResendVerificationRequest
 export const ForgotPasswordRequestSchema = z.object({
   // Email address to send reset link to, server normalizes to lowercase
   email: z.email('Invalid email format').min(1, 'Email is required'),
+  // hCaptcha token — optional because captcha may be disabled server-side
+  captchaToken: z.string().optional(),
 })
 
 export type ForgotPasswordRequest = z.infer<typeof ForgotPasswordRequestSchema>
