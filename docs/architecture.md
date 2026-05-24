@@ -12,6 +12,7 @@
 | UI           | Radix Vue + shadcn-vue + Tailwind CSS v4        |
 | HTTP         | ofetch (centralized instance with interceptors) |
 | Validation   | Vee-Validate + Zod                              |
+| Captcha      | hCaptcha Free Tier (@hcaptcha/vue3-hcaptcha) — bot protection on auth forms |
 | Charts       | Apache ECharts + vue-echarts                    |
 | Icons        | Iconify Vue                                     |
 | i18n         | Vue I18n v11                                    |
@@ -31,7 +32,8 @@ src/
 │   └── AppLayout.vue   # Main app layout (sidebar, responsive)
 ├── components/         # Shared components
 │   ├── ui/             # shadcn-vue primitives (Button, Input, etc.)
-│   └── app/            # App-specific components (Sidebar, Header)
+│   ├── app/            # App-specific components (Sidebar, Header)
+│   └── CaptchaWidget.vue # hCaptcha wrapper (conditional render based on captchaSiteKey)
 ├── lib/                # Core utilities
 │   ├── api/            # API layer (instance.ts, auth.ts)
 │   ├── schemas/        # Zod schemas (auth.schema.ts)
@@ -351,6 +353,39 @@ export async function login(credentials: LoginRequest): Promise<LoginResponse> {
   })
 }
 ```
+
+### Captcha Token Pattern
+
+Auth forms (login, register, forgot-password) include optional hCaptcha verification:
+
+**Schema additions:**
+
+```typescript
+// LoginRequest, RegisterRequest, ForgotPasswordRequest
+captchaToken: z.string().optional()
+
+// PublicConfig (fetched on app init)
+captchaSiteKey: z.string().nullable()  // null = captcha disabled
+```
+
+**Frontend behavior:**
+
+- `captchaSiteKey` fetched from `/public/config` on app init
+- If `captchaSiteKey` is non-null, CaptchaWidget renders on auth forms
+- Form submission blocked if captcha required but no token obtained
+- Graceful degradation: null site key disables captcha entirely
+
+**Backend verification:**
+
+- Server verifies tokens via `POST https://hcaptcha.com/siteverify`
+- Token validated server-side before processing auth request
+
+**Error codes:**
+
+| Code           | Meaning                     |
+| -------------- | --------------------------- |
+| `SECURITY_006` | Captcha verification failed |
+| `SECURITY_007` | Captcha token missing       |
 
 ### API Error Utility
 

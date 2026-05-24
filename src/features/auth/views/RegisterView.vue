@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, onMounted } from 'vue'
+import { ref, computed } from 'vue'
 import { useRouter } from 'vue-router'
 import { toast } from 'vue-sonner'
 import { useMutation } from '@tanstack/vue-query'
@@ -8,32 +8,35 @@ import { register } from '@/lib/api/auth'
 import { RouteNames } from '@/router/route-names'
 import { isApiError, mapApiErrorCode } from '@/lib/utils/api-error'
 import { useCooldown } from '@/composables/useCooldown'
-import { usePublicConfigStore } from '@/stores/publicConfig'
+import { usePublicConfig } from '@/composables/usePublicConfig'
 import { SESSION_STORAGE_KEYS } from '@/stores/auth'
 import { type RegisterFormData } from '@/lib/schemas/auth.schema'
 import RegisterForm from '../components/RegisterForm.vue'
+import type CaptchaWidget from '@/components/CaptchaWidget.vue'
 
 const router = useRouter()
 const { countdown, start } = useCooldown()
 const serverErrors = ref<Record<string, string>>()
 const registeredEmail = ref('')
-const publicConfigStore = usePublicConfigStore()
-const termsVersion = publicConfigStore.termsVersion
-
-onMounted(() => {
-  publicConfigStore.fetchPublicConfig()
-})
+const { data: publicConfig } = usePublicConfig()
+const termsVersion = computed(() => publicConfig.value?.termsVersion ?? '')
+const captchaSiteKey = computed(() => publicConfig.value?.captchaSiteKey ?? null)
+const registerFormRef = ref<{
+  captchaRef: InstanceType<typeof CaptchaWidget> | null
+} | null>(null)
 // Write to sessionStorage (tab-scoped, no history leakage) - MUST be at top-level for VueUse
 const pendingEmail = useSessionStorage<string>(SESSION_STORAGE_KEYS.PENDING_VERIFICATION_EMAIL, null)
 
 const mutation = useMutation({
   mutationFn: register,
   onSuccess: () => {
+    registerFormRef.value?.captchaRef?.reset()
     serverErrors.value = undefined
     pendingEmail.value = registeredEmail.value
     router.push({ name: RouteNames.REGISTER_SUCCESS })
   },
   onError: (error: unknown) => {
+    registerFormRef.value?.captchaRef?.reset()
     serverErrors.value = undefined
     if (isApiError(error)) {
       const data = error.data as { code?: string } | undefined
@@ -48,6 +51,8 @@ const mutation = useMutation({
         toast.error(mapApiErrorCode('USER_008'), {
           description: 'Please refresh the page and try again.',
         })
+      } else if (data?.code === 'SECURITY_006' || data?.code === 'SECURITY_007') {
+        toast.error(mapApiErrorCode(data.code))
       } else {
         toast.error('Registration failed', { description: 'Please try again later' })
       }
@@ -59,7 +64,7 @@ const mutation = useMutation({
 
 const handleSubmit = (data: RegisterFormData) => {
   registeredEmail.value = data.email
-  mutation.mutate({ ...data, termsVersion })
+  mutation.mutate({ ...data, termsVersion: termsVersion.value })
 }
 </script>
 
@@ -100,7 +105,12 @@ const handleSubmit = (data: RegisterFormData) => {
     </div>
 
     <!-- Form -->
-    <RegisterForm :server-errors="serverErrors" @submit="handleSubmit" />
+    <RegisterForm
+      ref="registerFormRef"
+      :server-errors="serverErrors"
+      :captcha-site-key="captchaSiteKey"
+      @submit="handleSubmit"
+    />
 
     <!-- Sign In Link -->
     <div class="pt-2 text-center">

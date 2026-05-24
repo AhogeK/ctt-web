@@ -6,6 +6,7 @@ const BASE_URL = import.meta.env.VITE_API_BASE_URL || '/api'
 
 export const PublicConfigSchema = z.object({
   termsVersion: z.string(),
+  captchaSiteKey: z.string().nullable(),
 })
 
 export type PublicConfig = z.infer<typeof PublicConfigSchema>

@@ -63,6 +63,10 @@ export function mapApiErrorCode(code: string): string {
     AUTH_009: 'Refresh token reuse detected. Please sign in again.',
     AUTH_019: 'Terms of service have been updated. Please review and accept the new terms to continue.',
 
+    // Security / CAPTCHA errors
+    SECURITY_006: 'Captcha verification failed. Please try again.',
+    SECURITY_007: 'Please complete the captcha verification.',
+
     MAIL_005: 'Verification link has expired. Please request a new one.',
     MAIL_006: 'Invalid verification link. Please check your email for the correct link.',
 

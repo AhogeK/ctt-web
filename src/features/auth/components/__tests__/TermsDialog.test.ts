@@ -110,7 +110,7 @@ describe('TermsDialog', () => {
   beforeEach(() => {
     vi.clearAllMocks()
     mockSetAuthFromTermsAcceptance.mockClear()
-    vi.mocked(getPublicConfig).mockResolvedValue({ termsVersion: '1.0.0' })
+    vi.mocked(getPublicConfig).mockResolvedValue({ termsVersion: '1.0.0', captchaSiteKey: null })
     vi.mocked(acceptTerms).mockResolvedValue({
       userId: 'test-user-id',
       accessToken: 'new-token',
