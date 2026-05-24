@@ -48,3 +48,4 @@ src/__tests__/*.js
 .vite-hooks/
 
 .sisyphus/
+.omo/
