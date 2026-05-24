@@ -47,3 +47,4 @@ src/__tests__/*.js
 .gstack/
 .vite-hooks/
 .sisyphus/
+.omo/
