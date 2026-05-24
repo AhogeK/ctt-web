@@ -24,6 +24,7 @@ visualization.
 | Charts         | Apache ECharts + vue-echarts                                |
 | HTTP           | ofetch                                                      |
 | Validation     | Vee-Validate + Zod                                          |
+| Captcha        | hCaptcha (bot protection via @hcaptcha/vue3-hcaptcha)       |
 | Icons          | Iconify Vue                                                 |
 | i18n           | Vue I18n v11                                                |
 | Package Manger | pnpm v10 (via corepack)                                     |
@@ -55,6 +56,7 @@ visualization.
 | Leaderboard             | Leaderboard view with rankings, composable-driven data fetching                                            |
 | Theme System            | Light/dark mode toggle, Pinia theme store with VueUse persistence                                          |
 | Terms Acceptance        | Terms version tracking on registration, expiration handling on login, 403 interception with request replay |
+| Bot Protection          | hCaptcha integration on login, register, forgot-password forms with graceful degradation (captchaSiteKey=null disables) |
 
 ## 🗺 Project Structure
 
