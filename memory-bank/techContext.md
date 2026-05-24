@@ -16,6 +16,7 @@
 | Validation    | Vee-Validate + Zod                     | ^4 / ^4.3.6  |
 | Icons         | @iconify/vue                           | ^5           |
 | i18n          | Vue I18n                               | ^11          |
+| Captcha       | @hcaptcha/vue3-hcaptcha                | ^1           |
 | Package Mgr   | pnpm (via corepack)                    | ^10          |
 | Design System | DESIGN.md                              | Linear-style |
 

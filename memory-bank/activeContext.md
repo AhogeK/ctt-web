@@ -2,13 +2,55 @@
 
 ## Current Status
 
-**Phase**: Terms Acceptance Integration (v0.25.1 backend)
-**Version**: 0.7.5 (2026-05-23)
+**Phase**: hCaptcha Integration Complete
+**Version**: 0.7.6 (2026-05-23)
 **Branch**: develop at c366e1e, master at dd87236
-**Tests**: 451/451 pass (verified 0.7.5)
-**Plan**: docs/plans/2026-05-02-terms-acceptance-tracking.md — status: completed
+**Tests**: 490/490 pass (verified 2026-05-24)
+**Plans**:
+- docs/plans/2026-05-02-terms-acceptance-tracking.md — status: completed
+- docs/plans/2026-05-23-hcaptcha-integration.md — status: completed
 
 ## Recent Activity
+
+### hCaptcha Code Review Fixes (2026-05-24)
+
+**Status**: ✅ All review issues resolved
+
+**Review Findings & Fixes**:
+1. RegisterForm.vue emit type simplified (`RegisterFormData & { captchaToken?: string }` → `RegisterFormData`)
+2. docs/architecture.md: 3 hCaptcha entries added (Tech Stack, Directory, API Layer)
+3. ForgotPasswordView.test.ts: SECURITY_006/007 tests + usePublicConfig mock
+4. 5 new test files created: LoginForm, RegisterForm, ForgotPasswordForm, LoginView, RegisterView
+5. LoginView/RegisterView captcha ref reset tests: `vi.mock` → `global.stubs` fix
+
+**Root Cause of Test Failure**: `vi.mock` creates module-level mock that doesn't integrate with VTU's template ref system. `expose()` in `vi.mock`'s `defineComponent` doesn't bind to template refs. Fix: use `global.stubs` in mount options so VTU creates the stub itself.
+
+**Verification**: 490/490 tests pass, type-check OK, build OK
+
+### hCaptcha Integration Complete (2026-05-23)
+
+**Status**: ✅ Frontend + Backend integration complete
+
+**Frontend (ctt-web)**:
+- CaptchaWidget.vue: Thin wrapper around @hcaptcha/vue3-hcaptcha with v-model support
+- PublicConfigSchema: Added captchaSiteKey (nullable, null = captcha disabled)
+- Auth schemas: captchaToken added to LoginRequest, RegisterRequest, ForgotPasswordRequest
+- Auth forms: LoginForm, RegisterForm, ForgotPasswordForm integrated with CaptchaWidget
+- Views: Config fetch via usePublicConfig(), captcha reset on mutation result
+- Verification: type-check ✅, lint ✅, build ✅
+
+**Backend (ctt-server)**:
+- CaptchaService.java: Server-side verification via hcaptcha.com/siteverify
+- Auth DTOs: captchaToken field added to login/register/forgot-password requests
+- Public config: GET /api/v1/config/public returns captchaSiteKey
+- Error codes: SECURITY_006 (verification failed), SECURITY_007 (missing token)
+
+**Architecture**:
+- Graceful degradation: captchaSiteKey=null → no widget rendered
+- Backend verification mandatory (frontend token is just a signed string)
+- hCaptcha Free Tier: 100K verifications/month, visible challenges to users
+
+**Plan**: docs/plans/2026-05-23-hcaptcha-integration.md — status: completed
 
 ### 0.7.5 — Terms Decline Flow Fix (2026-05-23)
 

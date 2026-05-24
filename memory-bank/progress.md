@@ -92,6 +92,10 @@
 - [x] Auth pages premium redesign (mesh gradients, isometric visuals) — AuthLayout.vue base visual effects complete at beta.41, PasswordStrengthMeter UX improved (neutral state when empty in 0.5.0-beta.32)
 - [x] AuthLayout.vue component split (0.5.0-beta.46) — 1773→52 lines, 4 child components + external CSS
 
+## Completed (Recent)
+
+- [x] hCaptcha Integration (v0.7.6): Frontend CaptchaWidget.vue + schema/API/form integration. Backend CaptchaService + DTOs + public config. Graceful degradation when captchaSiteKey=null. Code review passed — SECURITY_006/007 error codes added, config.test.ts fixed, ForgotPasswordView.test.ts mock fixed.
+
 ## Backlog
 
 - [ ] Auth: JWT login + GitHub OAuth
