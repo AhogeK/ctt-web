@@ -6,11 +6,13 @@ import {
   RegisterRequestSchema,
   ForgotPasswordRequestSchema,
   ResetPasswordRequestSchema,
+  GitHubAuthorizeResponseSchema,
   type LoginRequest,
   type LoginResponse,
   type RegisterRequest,
   type ForgotPasswordRequest,
   type ResetPasswordRequest,
+  type GitHubAuthorizeResponse,
 } from '@/lib/schemas/auth.schema'
 
 /**
@@ -215,4 +217,27 @@ export async function acceptTerms(): Promise<LoginResponse> {
 
   const wrapped = RestApiResponseSchema.parse(response)
   return LoginResponseSchema.parse(wrapped.data)
+}
+
+/**
+ * Gets the GitHub OAuth authorization URL.
+ *
+ * Endpoint: GET /api/v1/auth/oauth/github/authorize
+ *
+ * Public endpoint — no authentication required.
+ * Rate limited: 30 requests per hour per IP.
+ *
+ * The returned authUrl contains a one-time state parameter for CSRF protection.
+ * Frontend should redirect the user to this URL immediately — do not cache.
+ *
+ * @returns Object containing the GitHub authorization URL
+ * @throws Zod validation error if response doesn't match expected schema
+ */
+export async function getGitHubAuthorizeUrl(): Promise<GitHubAuthorizeResponse> {
+  const response = await apiFetch<unknown>('/api/v1/auth/oauth/github/authorize', {
+    method: 'GET',
+  })
+
+  const wrapped = RestApiResponseSchema.parse(response)
+  return GitHubAuthorizeResponseSchema.parse(wrapped.data)
 }
