@@ -94,7 +94,7 @@
 
 ## Completed (Recent)
 
-- [x] GitHub OAuth Frontend (v0.8.2): Complete OAuth login flow with authorize/callback/error pages. GitHub button in LoginForm, error handling with 13 error codes, rate limiting documentation. Backend integration via GET /api/v1/auth/oauth/github/authorize.
+- [x] GitHub OAuth Frontend (v0.8.3): Complete OAuth login flow with authorize/callback/error pages. GitHub button in LoginForm, error handling with 13 error codes, URL param cleanup for security, GitHub binding button in ProfileView. Backend integration via GET /api/v1/auth/oauth/github/authorize.
 - [x] hCaptcha Integration (v0.7.6): Frontend CaptchaWidget.vue + schema/API/form integration. Backend CaptchaService + DTOs + public config. Graceful degradation when captchaSiteKey=null. Code review passed — SECURITY_006/007 error codes added, config.test.ts fixed, ForgotPasswordView.test.ts mock fixed.
 
 ## Backlog
