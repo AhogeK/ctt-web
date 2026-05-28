@@ -17,6 +17,7 @@ export const RouteNames = {
   FORGOT_PASSWORD: 'forgot-password',
   RESET_PASSWORD: 'reset-password',
   OAUTH_CALLBACK: 'oauth-callback',
+  OAUTH_ERROR: 'oauth-error',
 
   // Dashboard
   DASHBOARD: 'dashboard',
