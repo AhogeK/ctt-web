@@ -9,6 +9,7 @@ import { isApiError, mapApiErrorCode } from '@/lib/utils/api-error'
 import { useCooldown } from '@/composables/useCooldown'
 import { useResendVerification } from '../composables/useResendVerification'
 import { usePublicConfig } from '@/composables/usePublicConfig'
+import { getGitHubAuthorizeUrl } from '@/lib/api/auth'
 import LoginForm from '../components/LoginForm.vue'
 import type { useForm } from 'vee-validate'
 import type CaptchaWidget from '@/components/CaptchaWidget.vue'
@@ -125,6 +126,20 @@ const handleSubmit = (data: { email: string; password: string; captchaToken?: st
 
 const isSubmitting = computed(() => toValue(mutation.isPending))
 
+const githubMutation = useMutation({
+  mutationFn: getGitHubAuthorizeUrl,
+  onSuccess: (data) => {
+    window.location.href = data.authUrl
+  },
+  onError: () => {
+    toast.error('GitHub login failed', { description: 'Unable to start GitHub authorization. Please try again.' })
+  },
+})
+
+const handleGitHubLogin = () => {
+  githubMutation.mutate()
+}
+
 const handleResendVerification = async () => {
   await resend(pendingEmail.value)
   if (resendCountdown.value === 0) {
@@ -170,7 +185,13 @@ const handleResendVerification = async () => {
     </div>
 
     <!-- Form -->
-    <LoginForm ref="loginFormRef" :loading="isSubmitting" :captcha-site-key="captchaSiteKey" @submit="handleSubmit" />
+    <LoginForm
+      ref="loginFormRef"
+      :loading="isSubmitting"
+      :captcha-site-key="captchaSiteKey"
+      @submit="handleSubmit"
+      @github-login="handleGitHubLogin"
+    />
 
     <!-- Create Account Link -->
     <div class="pt-2 text-center">
