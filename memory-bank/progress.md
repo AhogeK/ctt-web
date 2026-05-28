@@ -94,12 +94,12 @@
 
 ## Completed (Recent)
 
-- [x] GitHub OAuth API Integration (v0.8.0): Added getGitHubAuthorizeUrl() function + GitHubAuthorizeResponseSchema. Backend endpoint: GET /api/v1/auth/oauth/github/authorize. Public endpoint, rate limited 30/hour/IP.
+- [x] GitHub OAuth Frontend (v0.8.2): Complete OAuth login flow with authorize/callback/error pages. GitHub button in LoginForm, error handling with 13 error codes, rate limiting documentation. Backend integration via GET /api/v1/auth/oauth/github/authorize.
 - [x] hCaptcha Integration (v0.7.6): Frontend CaptchaWidget.vue + schema/API/form integration. Backend CaptchaService + DTOs + public config. Graceful degradation when captchaSiteKey=null. Code review passed — SECURITY_006/007 error codes added, config.test.ts fixed, ForgotPasswordView.test.ts mock fixed.
 
 ## Backlog
 
-- [ ] Auth: GitHub OAuth (in-progress — API layer complete, UI pending)
+- [x] Auth: GitHub OAuth (complete — API + UI + error handling)
 - [ ] Auth: Token refresh + expiry handling
 - [ ] Dashboard: Coding heatmap (ECharts)
 - [ ] Dashboard: Language distribution pie chart
