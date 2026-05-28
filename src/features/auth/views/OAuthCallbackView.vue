@@ -22,6 +22,9 @@ onMounted(() => {
 
   authStore.loginWithOAuth({ accessToken, refreshToken, termsExpired })
 
+  // Clean URL query params to prevent token leakage in browser history
+  history.replaceState(null, '', route.path)
+
   if (!termsExpired) {
     const redirect = route.query.redirect as string | undefined
     void router.replace(redirect || { name: RouteNames.DASHBOARD })
