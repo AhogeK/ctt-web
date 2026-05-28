@@ -2,15 +2,31 @@
 
 ## Current Status
 
-**Phase**: hCaptcha Integration Complete
-**Version**: 0.7.6 (2026-05-23)
-**Branch**: develop at c366e1e, master at dd87236
+**Phase**: GitHub OAuth Frontend Implementation
+**Version**: 0.8.0 (2026-05-28)
+**Branch**: develop at a64b199, master at dd87236
 **Tests**: 490/490 pass (verified 2026-05-24)
 **Plans**:
 - docs/plans/2026-05-02-terms-acceptance-tracking.md — status: completed
 - docs/plans/2026-05-23-hcaptcha-integration.md — status: completed
+- .dev/plans/2026-05-28-github-oauth.md — status: in-progress
 
 ## Recent Activity
+
+### GitHub OAuth API Integration (2026-05-28)
+
+**Status**: Step 1 complete — getGitHubAuthorizeUrl API function added
+
+**Changes**:
+- `src/lib/schemas/auth.schema.ts`: Added `GitHubAuthorizeResponseSchema` with `z.url()` validation
+- `src/lib/api/auth.ts`: Added `getGitHubAuthorizeUrl()` function for `GET /api/v1/auth/oauth/github/authorize`
+- `src/lib/api/index.ts`: Exported new function
+
+**Next Steps**:
+- Create OAuth error page (`/oauth/error`)
+- Add OAuth error route to router
+- Add GitHub login button to LoginForm
+- Update README with OAuth feature
 
 ### hCaptcha Code Review Fixes (2026-05-24)
 
