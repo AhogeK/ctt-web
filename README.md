@@ -57,6 +57,7 @@ visualization.
 | Theme System            | Light/dark mode toggle, Pinia theme store with VueUse persistence                                          |
 | Terms Acceptance        | Terms version tracking on registration, expiration handling on login, 403 interception with request replay |
 | Bot Protection          | hCaptcha integration on login, register, forgot-password forms with graceful degradation (captchaSiteKey=null disables) |
+| GitHub OAuth            | GitHub OAuth login with authorize/callback flow, error handling, and account linking support              |
 
 ## 🗺 Project Structure
 
