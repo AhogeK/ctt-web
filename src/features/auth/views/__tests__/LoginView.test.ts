@@ -22,8 +22,15 @@ const publicConfigData = vi.hoisted(() => ({
   value: { captchaSiteKey: '10000000-ffff-ffff-ffff-000000000001' as string | null, termsVersion: '1.0' },
 }))
 
-let mutationOnSuccess: (() => void) | undefined
-let mutationOnError: ((error: unknown) => void) | undefined
+const mutations = vi.hoisted(
+  () =>
+    [] as Array<{
+      onSuccess?: () => void
+      onError?: (error: unknown) => void
+      mutate: (...args: unknown[]) => unknown
+      isPending: { value: boolean }
+    }>,
+)
 
 // ==========================================
 // Mocks
@@ -67,12 +74,14 @@ vi.mock('@tanstack/vue-query', () => ({
       isPending: { value: boolean }
     }
   >((options) => {
-    mutationOnSuccess = options.onSuccess
-    mutationOnError = options.onError
-    return {
+    const mutation = {
+      onSuccess: options.onSuccess,
+      onError: options.onError,
       mutate: mockMutate,
       isPending: isPendingRef,
     }
+    mutations.push(mutation)
+    return mutation
   }),
 }))
 
@@ -185,8 +194,7 @@ function resetMocks() {
   countdownState.value = 0
   isPendingRef.value = false
   publicConfigData.value = { captchaSiteKey: '10000000-ffff-ffff-ffff-000000000001', termsVersion: '1.0' }
-  mutationOnSuccess = undefined
-  mutationOnError = undefined
+  mutations.length = 0
   mockMutate.mockClear()
   mockPush.mockClear()
   mockToastError.mockClear()
@@ -233,9 +241,12 @@ describe('LoginView - hCaptcha integration', () => {
       mount(LoginView, {
         global: { stubs: { LoginForm: createLoginFormStub() } },
       })
-      expect(mutationOnSuccess).toBeDefined()
+      // First mutation is the login mutation
+      expect(mutations.length).toBeGreaterThanOrEqual(1)
+      const loginMutation = mutations[0]!
+      expect(loginMutation.onSuccess).toBeDefined()
 
-      mutationOnSuccess!()
+      loginMutation.onSuccess!()
 
       expect(mockCaptchaReset).toHaveBeenCalledOnce()
     })
@@ -246,9 +257,12 @@ describe('LoginView - hCaptcha integration', () => {
       mount(LoginView, {
         global: { stubs: { LoginForm: createLoginFormStub() } },
       })
-      expect(mutationOnError).toBeDefined()
+      // First mutation is the login mutation
+      expect(mutations.length).toBeGreaterThanOrEqual(1)
+      const loginMutation = mutations[0]!
+      expect(loginMutation.onError).toBeDefined()
 
-      mutationOnError!(new Error('test error'))
+      loginMutation.onError!(new Error('test error'))
 
       expect(mockCaptchaReset).toHaveBeenCalledOnce()
     })
@@ -262,10 +276,13 @@ describe('LoginView - hCaptcha integration', () => {
       mount(LoginView, {
         global: { stubs: { LoginForm: createLoginFormStub() } },
       })
-      expect(mutationOnError).toBeDefined()
+      // First mutation is the login mutation
+      expect(mutations.length).toBeGreaterThanOrEqual(1)
+      const loginMutation = mutations[0]!
+      expect(loginMutation.onError).toBeDefined()
 
       const error = createApiError(400, 'SECURITY_006')
-      mutationOnError!(error)
+      loginMutation.onError!(error)
 
       expect(mockMapApiErrorCode).toHaveBeenCalledWith('SECURITY_006')
       expect(mockToastError).toHaveBeenCalledWith('Captcha verification failed. Please try again.')
@@ -278,10 +295,13 @@ describe('LoginView - hCaptcha integration', () => {
       mount(LoginView, {
         global: { stubs: { LoginForm: createLoginFormStub() } },
       })
-      expect(mutationOnError).toBeDefined()
+      // First mutation is the login mutation
+      expect(mutations.length).toBeGreaterThanOrEqual(1)
+      const loginMutation = mutations[0]!
+      expect(loginMutation.onError).toBeDefined()
 
       const error = createApiError(400, 'SECURITY_007')
-      mutationOnError!(error)
+      loginMutation.onError!(error)
 
       expect(mockMapApiErrorCode).toHaveBeenCalledWith('SECURITY_007')
       expect(mockToastError).toHaveBeenCalledWith('Please complete the captcha verification.')

@@ -9,6 +9,24 @@ const router = useRouter()
 const route = useRoute()
 const authStore = useAuthStore()
 
+/**
+ * Validates that a redirect URL is a safe relative path.
+ * Prevents open redirect attacks by rejecting absolute URLs and protocol-relative URLs.
+ *
+ * @param url - The redirect URL to validate
+ * @returns true if the URL is a safe relative path, false otherwise
+ */
+function isSafeRedirect(url: string | undefined): url is string {
+  if (!url) return false
+  // Reject absolute URLs (http://, https://, //)
+  if (url.startsWith('http://') || url.startsWith('https://') || url.startsWith('//')) return false
+  // Must start with / for relative paths
+  if (!url.startsWith('/')) return false
+  // Reject URLs with double slashes (could be protocol-relative after redirect)
+  if (url.includes('//')) return false
+  return true
+}
+
 onMounted(() => {
   const accessToken = route.query.accessToken as string | undefined
   const refreshToken = route.query.refreshToken as string | undefined
@@ -27,7 +45,7 @@ onMounted(() => {
 
   if (!termsExpired) {
     const redirect = route.query.redirect as string | undefined
-    void router.replace(redirect || { name: RouteNames.DASHBOARD })
+    void router.replace(isSafeRedirect(redirect) ? redirect : { name: RouteNames.DASHBOARD })
   }
   // If termsExpired, App.vue handles TermsDialog display and post-acceptance navigation
 })
