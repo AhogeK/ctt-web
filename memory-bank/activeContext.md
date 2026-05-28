@@ -2,34 +2,37 @@
 
 ## Current Status
 
-**Phase**: GitHub OAuth Frontend Implementation
-**Version**: 0.8.0 (2026-05-28)
-**Branch**: develop at a64b199, master at dd87236
+**Phase**: GitHub OAuth Frontend Complete
+**Version**: 0.8.3 (2026-05-28)
+**Branch**: develop at 3f55b29, master at 261b368
 **Tests**: 490/490 pass (verified 2026-05-24)
 **Plans**:
 - docs/plans/2026-05-02-terms-acceptance-tracking.md — status: completed
 - docs/plans/2026-05-23-hcaptcha-integration.md — status: completed
-- .dev/plans/2026-05-28-github-oauth.md — status: in-progress
+- .dev/plans/2026-05-28-github-oauth.md — status: completed
 
 ## Recent Activity
 
-### GitHub OAuth API Integration (2026-05-28)
+### GitHub OAuth Frontend Complete (2026-05-28)
 
-**Status**: Step 3 complete — GitHub login button added to LoginForm
+**Status**: ✅ All requirements from OAuth guide implemented
 
 **Changes**:
 - `src/lib/schemas/auth.schema.ts`: Added `GitHubAuthorizeResponseSchema` with `z.url()` validation
 - `src/lib/api/auth.ts`: Added `getGitHubAuthorizeUrl()` function for `GET /api/v1/auth/oauth/github/authorize`
 - `src/lib/api/index.ts`: Exported new function
-- `src/features/auth/views/OAuthErrorView.vue`: Error page with error code display and retry/back buttons
+- `src/features/auth/views/OAuthErrorView.vue`: Error page with 13 error codes
+- `src/features/auth/views/OAuthCallbackView.vue`: Added `history.replaceState` to clean URL params
 - `src/router/modules/oauth.ts`: Added `/oauth/error` route
 - `src/router/route-names.ts`: Added `OAUTH_ERROR` constant
 - `src/features/auth/components/LoginForm.vue`: Added GitHub login button with "or" divider
 - `src/features/auth/views/LoginView.vue`: Added GitHub login mutation and handler
+- `src/features/settings/views/ProfileView.vue`: Added GitHub binding button
 
-**Next Steps**:
-- Update README with OAuth feature
-- Update memory bank
+**Verification**:
+- ✅ TypeScript diagnostics clean
+- ✅ All 490 tests pass
+- ✅ All OAuth guide requirements implemented
 
 ### hCaptcha Code Review Fixes (2026-05-24)
 
