@@ -8,6 +8,12 @@ const oauthRoutes: RouteRecordRaw[] = [
     component: () => import('@/features/auth/views/OAuthCallbackView.vue'),
     meta: { title: 'OAuth Callback', requiresAuth: false, guestOnly: true, hideInMenu: true },
   },
+  {
+    path: '/oauth/error',
+    name: RouteNames.OAUTH_ERROR,
+    component: () => import('@/features/auth/views/OAuthErrorView.vue'),
+    meta: { title: 'OAuth Error', requiresAuth: false, guestOnly: true, hideInMenu: true },
+  },
 ]
 
 export default oauthRoutes
