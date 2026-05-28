@@ -37,6 +37,12 @@ vi.mock('@/router/route-names', () => ({
   },
 }))
 
+vi.mock('@/stores/theme', () => ({
+  useThemeStore: vi.fn<() => { isDark: boolean }>(() => ({
+    isDark: false,
+  })),
+}))
+
 // ==========================================
 // Import component AFTER mocks
 // ==========================================

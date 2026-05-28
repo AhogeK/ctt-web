@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref } from 'vue'
+import { ref, computed } from 'vue'
 import { toTypedSchema } from '@vee-validate/zod'
 import { useForm } from 'vee-validate'
 import { FormField, FormItem, FormLabel, FormControl, FormMessage } from '@/components/ui/form'
@@ -7,6 +7,7 @@ import { Input } from '@/components/ui/input'
 import { Button } from '@/components/ui/button'
 import { cn } from '@/lib/utils'
 import { ForgotPasswordFormSchema } from '@/lib/schemas/auth.schema'
+import { useThemeStore } from '@/stores/theme'
 import CaptchaWidget from '@/components/CaptchaWidget.vue'
 
 const emit = defineEmits<{
@@ -25,6 +26,8 @@ const form = useForm({
   validationSchema: toTypedSchema(ForgotPasswordFormSchema),
 })
 
+const themeStore = useThemeStore()
+const captchaTheme = computed(() => (themeStore.isDark ? 'dark' : 'light'))
 const captchaRef = ref<InstanceType<typeof CaptchaWidget> | null>(null)
 const captchaToken = ref<string | null>(null)
 const captchaError = ref(false)
@@ -87,6 +90,7 @@ defineExpose({
       ref="captchaRef"
       v-model="captchaToken"
       :sitekey="captchaSiteKey"
+      :theme="captchaTheme"
       @verify="onCaptchaVerify"
       @expired="onCaptchaExpire"
     />

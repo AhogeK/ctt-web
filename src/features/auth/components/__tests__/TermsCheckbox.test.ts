@@ -192,6 +192,12 @@ vi.mock('@/stores/auth', () => ({
   })),
 }))
 
+vi.mock('@/stores/theme', () => ({
+  useThemeStore: vi.fn<() => { isDark: boolean }>(() => ({
+    isDark: false,
+  })),
+}))
+
 vi.mock('@/lib/api/instance', () => ({
   rejectTermsQueue: vi.fn<() => void>(),
   resolveTermsQueue: vi.fn<() => void>(),
