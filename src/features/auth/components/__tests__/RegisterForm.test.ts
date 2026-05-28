@@ -24,6 +24,12 @@ vi.mock('@hcaptcha/vue3-hcaptcha', () => ({
   },
 }))
 
+vi.mock('@/stores/theme', () => ({
+  useThemeStore: vi.fn<() => { isDark: boolean }>(() => ({
+    isDark: false,
+  })),
+}))
+
 // ==========================================
 // Import component AFTER mocks
 // ==========================================

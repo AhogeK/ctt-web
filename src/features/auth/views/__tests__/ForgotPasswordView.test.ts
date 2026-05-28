@@ -130,6 +130,12 @@ vi.mock('@/router/route-names', () => ({
   },
 }))
 
+vi.mock('@/stores/theme', () => ({
+  useThemeStore: vi.fn<() => { isDark: boolean }>(() => ({
+    isDark: false,
+  })),
+}))
+
 vi.mock('../components/ForgotPasswordForm.vue', () => ({
   default: {
     name: 'ForgotPasswordForm',

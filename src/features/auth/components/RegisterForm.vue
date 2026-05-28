@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, shallowRef, watch } from 'vue'
+import { ref, shallowRef, watch, computed } from 'vue'
 import { toTypedSchema } from '@vee-validate/zod'
 import { useForm, useFieldValue } from 'vee-validate'
 import { RegisterFormSchema, type RegisterFormData } from '@/lib/schemas/auth.schema'
@@ -11,6 +11,7 @@ import { cn } from '@/lib/utils'
 import PasswordStrengthMeter from './PasswordStrengthMeter.vue'
 import TermsDialog from './TermsDialog.vue'
 import { Eye, EyeOff } from 'lucide-vue-next'
+import { useThemeStore } from '@/stores/theme'
 import CaptchaWidget from '@/components/CaptchaWidget.vue'
 
 const props = defineProps<{
@@ -35,6 +36,8 @@ const form = useForm({
 const showPassword = shallowRef(false)
 const showConfirmPassword = shallowRef(false)
 const showTerms = shallowRef(false)
+const themeStore = useThemeStore()
+const captchaTheme = computed(() => (themeStore.isDark ? 'dark' : 'light'))
 const captchaRef = ref<InstanceType<typeof CaptchaWidget> | null>(null)
 const captchaToken = ref<string | null>(null)
 const captchaError = ref(false)
@@ -251,6 +254,7 @@ defineExpose({
       ref="captchaRef"
       v-model="captchaToken"
       :sitekey="captchaSiteKey"
+      :theme="captchaTheme"
       @verify="onCaptchaVerify"
       @expired="onCaptchaExpire"
     />

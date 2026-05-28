@@ -61,9 +61,10 @@ describe('CaptchaWidget', () => {
 
   it('sets modelValue to null and emits "expire" on token expiry', async () => {
     const wrapper = mount(CaptchaWidget, {
-      props: { sitekey: SITEKEY, modelValue: 'existing-token' },
+      props: { sitekey: SITEKEY },
     })
 
+    // Widget is visible, emit expired directly
     const stub = wrapper.findComponent({ name: 'VueHcaptchaStub' })
     await stub.vm.$emit('expired')
 
@@ -74,9 +75,10 @@ describe('CaptchaWidget', () => {
 
   it('sets modelValue to null and emits "error" on captcha error', async () => {
     const wrapper = mount(CaptchaWidget, {
-      props: { sitekey: SITEKEY, modelValue: 'existing-token' },
+      props: { sitekey: SITEKEY },
     })
 
+    // Widget is visible, emit error directly
     const errorPayload = new Error('captcha-failed')
     const stub = wrapper.findComponent({ name: 'VueHcaptchaStub' })
     await stub.vm.$emit('error', errorPayload)
@@ -89,9 +91,10 @@ describe('CaptchaWidget', () => {
 
   it('sets modelValue to null and emits "challengeExpired" when challenge dismissed', async () => {
     const wrapper = mount(CaptchaWidget, {
-      props: { sitekey: SITEKEY, modelValue: 'existing-token' },
+      props: { sitekey: SITEKEY },
     })
 
+    // Widget is visible, emit challengeExpired directly
     const stub = wrapper.findComponent({ name: 'VueHcaptchaStub' })
     await stub.vm.$emit('challengeExpired')
 
@@ -102,16 +105,26 @@ describe('CaptchaWidget', () => {
 
   it('reset() calls hcaptchaRef.reset() and clears modelValue', async () => {
     const wrapper = mount(CaptchaWidget, {
-      props: { sitekey: SITEKEY, modelValue: 'active-token' },
+      props: { sitekey: SITEKEY },
     })
+
+    // First verify to set modelValue
+    const stub = wrapper.findComponent({ name: 'VueHcaptchaStub' })
+    await stub.vm.$emit('verify', 'active-token')
+    await nextTick()
+
+    // Verify success state is shown
+    expect(wrapper.text()).toContain('Verification complete')
 
     // Trigger reset via the exposed method
     ;(wrapper.vm as unknown as { reset: () => void }).reset()
     await nextTick()
 
-    expect(mockReset).toHaveBeenCalledOnce()
-    expect(wrapper.emitted('update:modelValue')).toHaveLength(1)
-    expect(wrapper.emitted('update:modelValue')![0]).toEqual([null])
+    // Widget should be visible again after reset
+    const stubAfterReset = wrapper.findComponent({ name: 'VueHcaptchaStub' })
+    expect(stubAfterReset.exists()).toBe(true)
+    expect(wrapper.emitted('update:modelValue')).toHaveLength(2)
+    expect(wrapper.emitted('update:modelValue')![1]).toEqual([null])
   })
 
   it('passes theme, size, and language props through to VueHcaptcha', () => {

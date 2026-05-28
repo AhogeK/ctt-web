@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref } from 'vue'
+import { ref, watch, onUnmounted } from 'vue'
 import VueHcaptcha from '@hcaptcha/vue3-hcaptcha'
 
 /**
@@ -42,6 +42,37 @@ const modelValue = defineModel<string | null>()
 
 const hcaptchaRef = ref<InstanceType<typeof VueHcaptcha> | null>(null)
 
+/** Whether to show the brief success indicator after verification */
+const showSuccess = ref(false)
+
+/** Timer ID for hiding the success indicator after delay */
+let successTimerId: ReturnType<typeof setTimeout> | null = null
+
+// Show success briefly then hide completely
+watch(modelValue, (newVal) => {
+  if (newVal) {
+    showSuccess.value = true
+    successTimerId = setTimeout(() => {
+      showSuccess.value = false
+      successTimerId = null
+    }, 1500)
+  } else {
+    showSuccess.value = false
+    if (successTimerId !== null) {
+      clearTimeout(successTimerId)
+      successTimerId = null
+    }
+  }
+})
+
+// Clean up timer on component unmount to prevent memory leak
+onUnmounted(() => {
+  if (successTimerId !== null) {
+    clearTimeout(successTimerId)
+    successTimerId = null
+  }
+})
+
 function onVerify(token: string) {
   modelValue.value = token
   emit('verify', token)
@@ -73,8 +104,16 @@ defineExpose({
 
 <template>
   <div class="flex justify-center">
+    <div v-if="showSuccess" class="flex items-center gap-2 text-sm text-green-600 dark:text-green-400">
+      <svg class="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+        <path d="M20 6L9 17l-5-5" stroke-linecap="round" stroke-linejoin="round" />
+      </svg>
+      <span>Verification complete</span>
+    </div>
     <VueHcaptcha
+      v-else-if="!modelValue"
       ref="hcaptchaRef"
+      :key="theme"
       :sitekey="sitekey"
       :theme="theme"
       :size="size"
