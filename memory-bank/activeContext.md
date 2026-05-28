@@ -15,16 +15,17 @@
 
 ### GitHub OAuth API Integration (2026-05-28)
 
-**Status**: Step 1 complete — getGitHubAuthorizeUrl API function added
+**Status**: Step 2 complete — OAuth error page and route added
 
 **Changes**:
 - `src/lib/schemas/auth.schema.ts`: Added `GitHubAuthorizeResponseSchema` with `z.url()` validation
 - `src/lib/api/auth.ts`: Added `getGitHubAuthorizeUrl()` function for `GET /api/v1/auth/oauth/github/authorize`
 - `src/lib/api/index.ts`: Exported new function
+- `src/features/auth/views/OAuthErrorView.vue`: Error page with error code display and retry/back buttons
+- `src/router/modules/oauth.ts`: Added `/oauth/error` route
+- `src/router/route-names.ts`: Added `OAUTH_ERROR` constant
 
 **Next Steps**:
-- Create OAuth error page (`/oauth/error`)
-- Add OAuth error route to router
 - Add GitHub login button to LoginForm
 - Update README with OAuth feature
 
