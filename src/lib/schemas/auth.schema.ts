@@ -260,3 +260,23 @@ export const ResetPasswordFormSchema = z
   })
 
 export type ResetPasswordForm = z.infer<typeof ResetPasswordFormSchema>
+
+// ==========================================
+// OAuth Schemas
+// ==========================================
+
+/**
+ * GitHub OAuth authorize response schema.
+ *
+ * Backend returns (GitHubAuthorizeResponse):
+ * - authUrl: Full GitHub OAuth authorization URL with client_id, scope, and state params
+ *
+ * Endpoint: GET /api/v1/auth/oauth/github/authorize
+ * Public endpoint, no authentication required.
+ * Rate limited: 30 requests per hour per IP.
+ */
+export const GitHubAuthorizeResponseSchema = z.object({
+  authUrl: z.url('Invalid authorization URL'),
+})
+
+export type GitHubAuthorizeResponse = z.infer<typeof GitHubAuthorizeResponseSchema>
