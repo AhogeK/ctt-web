@@ -3,13 +3,28 @@
 ## Current Status
 
 **Phase**: GitHub OAuth Frontend Complete
-**Version**: 0.8.3 (2026-05-28)
-**Branch**: develop at 3f55b29, master at 261b368
-**Tests**: 490/490 pass (verified 2026-05-24)
+**Version**: 0.8.4 (2026-05-28)
+**Branch**: develop at 2e8f6e0, master at 8ee398d
+**Tests**: 490/490 pass (verified 2026-05-28)
 **Plans**:
 - docs/plans/2026-05-02-terms-acceptance-tracking.md — status: completed
 - docs/plans/2026-05-23-hcaptcha-integration.md — status: completed
 - .dev/plans/2026-05-28-github-oauth.md — status: completed
+
+## Recent Activity
+
+### OAuth Security Fix (2026-05-28)
+
+**Status**: ✅ Open redirect vulnerability fixed
+
+**Changes**:
+- `src/features/auth/views/OAuthCallbackView.vue`: Added `isSafeRedirect()` function to validate redirect URLs
+- `src/features/auth/views/__tests__/LoginView.test.ts`: Fixed mock to handle dual `useMutation` calls
+
+**Verification**:
+- ✅ TypeScript diagnostics clean
+- ✅ All 490 tests pass
+- ✅ Lint clean
 
 ## Recent Activity
 
