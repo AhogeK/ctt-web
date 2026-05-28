@@ -15,7 +15,7 @@
 
 ### GitHub OAuth API Integration (2026-05-28)
 
-**Status**: Step 2 complete — OAuth error page and route added
+**Status**: Step 3 complete — GitHub login button added to LoginForm
 
 **Changes**:
 - `src/lib/schemas/auth.schema.ts`: Added `GitHubAuthorizeResponseSchema` with `z.url()` validation
@@ -24,10 +24,12 @@
 - `src/features/auth/views/OAuthErrorView.vue`: Error page with error code display and retry/back buttons
 - `src/router/modules/oauth.ts`: Added `/oauth/error` route
 - `src/router/route-names.ts`: Added `OAUTH_ERROR` constant
+- `src/features/auth/components/LoginForm.vue`: Added GitHub login button with "or" divider
+- `src/features/auth/views/LoginView.vue`: Added GitHub login mutation and handler
 
 **Next Steps**:
-- Add GitHub login button to LoginForm
 - Update README with OAuth feature
+- Update memory bank
 
 ### hCaptcha Code Review Fixes (2026-05-24)
 
