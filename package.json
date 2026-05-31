@@ -1,6 +1,6 @@
 {
   "name": "ctt-web",
-  "version": "0.8.7",
+  "version": "0.8.8",
   "private": true,
   "type": "module",
   "scripts": {
@@ -67,7 +67,7 @@
     "eslint-plugin-vue": "~10.9.1",
     "jiti": "^2.7.0",
     "jsdom": "^29.1.1",
-    "lint-staged": "^17.0.6",
+    "lint-staged": "^17.0.7",
     "npm-run-all2": "^8.0.4",
     "simple-git-hooks": "^2.13.1",
     "tailwindcss": "^4.3.0",
