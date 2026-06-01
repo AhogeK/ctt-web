@@ -4,14 +4,29 @@
 
 **Phase**: GitHub OAuth Frontend Complete
 **Version**: 0.8.9 (2026-06-01)
-**Branch**: develop at fc7d534, master at 0fc096a
-**Tests**: 490/490 pass (verified 2026-05-28)
+**Branch**: develop at a33968c, master at 0fc096a
+**Tests**: 490/490 pass (verified 2026-06-01)
 **Plans**:
 - docs/plans/2026-05-02-terms-acceptance-tracking.md — status: completed
 - docs/plans/2026-05-23-hcaptcha-integration.md — status: completed
 - .dev/plans/2026-05-28-github-oauth.md — status: completed
 
 ## Recent Activity
+
+### Dependency Update (2026-06-01)
+
+**Status**: ✅ All dependencies updated successfully
+
+**Changes**:
+- `package.json`: Updated zod from 3.x to 4.4.3 (major version upgrade)
+- `package.json`: Updated @vitest/coverage-v8 from 4.1.7 to 4.1.8
+- `package.json`: Updated @vitest/eslint-plugin from 1.6.18 to 1.6.19
+- `pnpm-lock.yaml`: Updated lock file with new dependency versions
+
+**Verification**:
+- ✅ All 490 tests pass
+- ✅ Build successful
+- ✅ No breaking changes detected
 
 ### OAuth Security Fix (2026-05-28)
 
