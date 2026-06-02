@@ -94,6 +94,7 @@
 
 ## Completed (Recent)
 
+- [x] Dependency Update (v0.8.10): Updated vite-plus 0.1.23→0.1.24, @voidzero-dev/vite-plus-core 0.1.23→0.1.24, @voidzero-dev/vite-plus-test 0.1.23→0.1.24. All 490 tests pass, build successful.
 - [x] Dependency Update (v0.8.9): Updated zod 3.x→4.4.3, @vitest/coverage-v8 4.1.7→4.1.8, @vitest/eslint-plugin 1.6.18→1.6.19. All 490 tests pass, build successful.
 - [x] GitHub OAuth Frontend (v0.8.3): Complete OAuth login flow with authorize/callback/error pages. GitHub button in LoginForm, error handling with 13 error codes, URL param cleanup for security, GitHub binding button in ProfileView. Backend integration via GET /api/v1/auth/oauth/github/authorize.
 - [x] hCaptcha Integration (v0.7.6): Frontend CaptchaWidget.vue + schema/API/form integration. Backend CaptchaService + DTOs + public config. Graceful degradation when captchaSiteKey=null. Code review passed — SECURITY_006/007 error codes added, config.test.ts fixed, ForgotPasswordView.test.ts mock fixed.

@@ -3,8 +3,8 @@
 ## Current Status
 
 **Phase**: GitHub OAuth Frontend Complete
-**Version**: 0.8.9 (2026-06-01)
-**Branch**: develop at a33968c, master at 0fc096a
+**Version**: 0.8.10 (2026-06-01)
+**Branch**: develop at ba4ff63, master at 570e3af
 **Tests**: 490/490 pass (verified 2026-06-01)
 **Plans**:
 - docs/plans/2026-05-02-terms-acceptance-tracking.md — status: completed
@@ -12,6 +12,22 @@
 - .dev/plans/2026-05-28-github-oauth.md — status: completed
 
 ## Recent Activity
+
+### Dependency Update (2026-06-01)
+
+**Status**: ✅ All dependencies updated successfully
+
+**Changes**:
+- `package.json`: Updated vite-plus from 0.1.23 to 0.1.24
+- `package.json`: Updated @voidzero-dev/vite-plus-core from 0.1.23 to 0.1.24
+- `package.json`: Updated @voidzero-dev/vite-plus-test from 0.1.23 to 0.1.24
+- `pnpm-lock.yaml`: Updated lock file with new dependency versions
+- `pnpm-workspace.yaml`: Updated vite-plus catalog version
+
+**Verification**:
+- ✅ All 490 tests pass
+- ✅ Build successful
+- ✅ No breaking changes detected
 
 ### Dependency Update (2026-06-01)
 
