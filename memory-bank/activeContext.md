@@ -3,8 +3,8 @@
 ## Current Status
 
 **Phase**: GitHub OAuth Frontend Complete
-**Version**: 0.8.10 (2026-06-01)
-**Branch**: develop at ba4ff63, master at 570e3af
+**Version**: 0.8.11 (2026-06-02)
+**Branch**: develop at fc8dcea, master at 703d572
 **Tests**: 490/490 pass (verified 2026-06-01)
 **Plans**:
 - docs/plans/2026-05-02-terms-acceptance-tracking.md — status: completed
@@ -12,6 +12,21 @@
 - .dev/plans/2026-05-28-github-oauth.md — status: completed
 
 ## Recent Activity
+
+### Dependency Update (2026-06-02)
+
+**Status**: ✅ All dependencies updated successfully
+
+**Changes**:
+- `package.json`: Updated @tanstack/vue-query from 5.100.14 to 5.101.0
+- `package.json`: Updated reka-ui from 2.9.8 to 2.9.9
+- `package.json`: Updated eslint-plugin-vue from 10.9.1 to 10.9.2
+- `pnpm-lock.yaml`: Updated lock file with new dependency versions
+
+**Verification**:
+- ✅ All 490 tests pass
+- ✅ Build successful
+- ✅ No breaking changes detected
 
 ### Dependency Update (2026-06-01)
 
