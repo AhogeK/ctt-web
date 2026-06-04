@@ -3,8 +3,8 @@
 ## Current Status
 
 **Phase**: GitHub OAuth Frontend Complete
-**Version**: 0.8.11 (2026-06-02)
-**Branch**: develop at fc8dcea, master at 703d572
+**Version**: 0.8.12 (2026-06-03)
+**Branch**: develop at 7e43d04, master at 3f3d2d3
 **Tests**: 490/490 pass (verified 2026-06-01)
 **Plans**:
 - docs/plans/2026-05-02-terms-acceptance-tracking.md — status: completed
@@ -12,6 +12,18 @@
 - .dev/plans/2026-05-28-github-oauth.md — status: completed
 
 ## Recent Activity
+
+### Dependency Update (2026-06-03)
+
+**Status**: ✅ All dependencies updated successfully
+
+**Changes**:
+- `pnpm-lock.yaml`: Updated indirect dependencies (csstools, electron-to-chromium, enhanced-resolve, undici)
+
+**Verification**:
+- ✅ All 490 tests pass
+- ✅ Build successful
+- ✅ No breaking changes detected
 
 ### Dependency Update (2026-06-02)
 

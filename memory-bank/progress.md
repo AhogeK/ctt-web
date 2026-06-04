@@ -94,6 +94,7 @@
 
 ## Completed (Recent)
 
+- [x] Dependency Update (v0.8.12): Updated indirect dependencies (csstools, electron-to-chromium, enhanced-resolve, undici). All 490 tests pass, build successful.
 - [x] Dependency Update (v0.8.11): Updated @tanstack/vue-query 5.100.14→5.101.0, reka-ui 2.9.8→2.9.9, eslint-plugin-vue 10.9.1→10.9.2. All 490 tests pass, build successful.
 - [x] Dependency Update (v0.8.10): Updated vite-plus 0.1.23→0.1.24, @voidzero-dev/vite-plus-core 0.1.23→0.1.24, @voidzero-dev/vite-plus-test 0.1.23→0.1.24. All 490 tests pass, build successful.
 - [x] Dependency Update (v0.8.9): Updated zod 3.x→4.4.3, @vitest/coverage-v8 4.1.7→4.1.8, @vitest/eslint-plugin 1.6.18→1.6.19. All 490 tests pass, build successful.
