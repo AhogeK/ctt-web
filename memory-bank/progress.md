@@ -94,6 +94,7 @@
 
 ## Completed (Recent)
 
+- [x] Dependency Update (v0.8.14): Updated vue-i18n 11.4.4→11.4.5, @types/node 25.9.1→25.9.2. All 490 tests pass, build successful.
 - [x] Dependency Update (v0.8.13): Updated vue 3.6.0-beta.13→3.6.0-beta.14, @vue/eslint-config-typescript 14.7.0→14.8.0, @vue/test-utils 2.4.10→2.4.11. All 490 tests pass, build successful.
 - [x] Dependency Update (v0.8.12): Updated indirect dependencies (csstools, electron-to-chromium, enhanced-resolve, undici). All 490 tests pass, build successful.
 - [x] Dependency Update (v0.8.11): Updated @tanstack/vue-query 5.100.14→5.101.0, reka-ui 2.9.8→2.9.9, eslint-plugin-vue 10.9.1→10.9.2. All 490 tests pass, build successful.
