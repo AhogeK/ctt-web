@@ -4,7 +4,7 @@
 
 **Phase**: GitHub OAuth Frontend Complete
 **Version**: 0.8.16 (2026-06-09)
-**Branch**: develop at 38bd342, master at 9d1572d
+**Branch**: develop at 8c4887e, master at 066b66d
 **Tests**: 490/490 pass (verified 2026-06-01)
 **Plans**:
 - docs/plans/2026-05-02-terms-acceptance-tracking.md — status: completed
