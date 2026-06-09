@@ -94,6 +94,7 @@
 
 ## Completed (Recent)
 
+- [x] Dependency Update (v0.8.16): Updated indirect dependencies (@typescript-eslint 8.60.1→8.61.0). All 490 tests pass, build successful.
 - [x] Dependency Update (v0.8.15): Updated vue-tsc 3.3.3→3.3.4. All 490 tests pass, build successful.
 - [x] Dependency Update (v0.8.14): Updated vue-i18n 11.4.4→11.4.5, @types/node 25.9.1→25.9.2. All 490 tests pass, build successful.
 - [x] Dependency Update (v0.8.13): Updated vue 3.6.0-beta.13→3.6.0-beta.14, @vue/eslint-config-typescript 14.7.0→14.8.0, @vue/test-utils 2.4.10→2.4.11. All 490 tests pass, build successful.

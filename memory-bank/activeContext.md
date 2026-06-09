@@ -3,8 +3,8 @@
 ## Current Status
 
 **Phase**: GitHub OAuth Frontend Complete
-**Version**: 0.8.15 (2026-06-06)
-**Branch**: develop at 29ca66f, master at abae41a
+**Version**: 0.8.16 (2026-06-09)
+**Branch**: develop at 38bd342, master at 9d1572d
 **Tests**: 490/490 pass (verified 2026-06-01)
 **Plans**:
 - docs/plans/2026-05-02-terms-acceptance-tracking.md — status: completed
@@ -12,6 +12,18 @@
 - .dev/plans/2026-05-28-github-oauth.md — status: completed
 
 ## Recent Activity
+
+### Dependency Update (2026-06-09)
+
+**Status**: ✅ All dependencies updated successfully
+
+**Changes**:
+- `pnpm-lock.yaml`: Updated indirect dependencies (@typescript-eslint 8.60.1→8.61.0)
+
+**Verification**:
+- ✅ All 490 tests pass
+- ✅ Build successful
+- ✅ No breaking changes detected
 
 ### Dependency Update (2026-06-06)
 
