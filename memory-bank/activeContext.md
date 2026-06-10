@@ -3,8 +3,8 @@
 ## Current Status
 
 **Phase**: GitHub OAuth Frontend Complete
-**Version**: 0.8.16 (2026-06-09)
-**Branch**: develop at 8c4887e, master at 066b66d
+**Version**: 0.8.17 (2026-06-10)
+**Branch**: develop at b137a97, master at 066b66d
 **Tests**: 490/490 pass (verified 2026-06-01)
 **Plans**:
 - docs/plans/2026-05-02-terms-acceptance-tracking.md — status: completed
@@ -12,6 +12,20 @@
 - .dev/plans/2026-05-28-github-oauth.md — status: completed
 
 ## Recent Activity
+
+### Dependency Update (2026-06-10)
+
+**Status**: ✅ All dependencies updated successfully
+
+**Changes**:
+- `package.json`: Updated reka-ui from 2.9.9 to 2.9.10
+- `package.json`: Updated @vitest/eslint-plugin from 1.6.19 to 1.6.20
+- `pnpm-lock.yaml`: Updated lock file with new dependency versions
+
+**Verification**:
+- ✅ All 490 tests pass
+- ✅ Build successful
+- ✅ No breaking changes detected
 
 ### Dependency Update (2026-06-09)
 
