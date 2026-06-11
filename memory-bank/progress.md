@@ -94,6 +94,7 @@
 
 ## Completed (Recent)
 
+- [x] Dependency Update (v0.8.18): Updated vue 3.6.0-beta.14→3.6.0-beta.15, @types/node 25.9.2→25.9.3. All 490 tests pass, build successful.
 - [x] Dependency Update (v0.8.17): Updated reka-ui 2.9.9→2.9.10, @vitest/eslint-plugin 1.6.19→1.6.20. All 490 tests pass, build successful.
 - [x] Dependency Update (v0.8.16): Updated indirect dependencies (@typescript-eslint 8.60.1→8.61.0). All 490 tests pass, build successful.
 - [x] Dependency Update (v0.8.15): Updated vue-tsc 3.3.3→3.3.4. All 490 tests pass, build successful.

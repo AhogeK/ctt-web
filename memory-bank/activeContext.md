@@ -3,8 +3,8 @@
 ## Current Status
 
 **Phase**: GitHub OAuth Frontend Complete
-**Version**: 0.8.17 (2026-06-10)
-**Branch**: develop at b137a97, master at 066b66d
+**Version**: 0.8.18 (2026-06-11)
+**Branch**: develop at f3a582f, master at 7069c44
 **Tests**: 490/490 pass (verified 2026-06-01)
 **Plans**:
 - docs/plans/2026-05-02-terms-acceptance-tracking.md — status: completed
@@ -12,6 +12,20 @@
 - .dev/plans/2026-05-28-github-oauth.md — status: completed
 
 ## Recent Activity
+
+### Dependency Update (2026-06-11)
+
+**Status**: ✅ All dependencies updated successfully
+
+**Changes**:
+- `package.json`: Updated vue from 3.6.0-beta.14 to 3.6.0-beta.15
+- `package.json`: Updated @types/node from 25.9.2 to 25.9.3
+- `pnpm-lock.yaml`: Updated lock file with new dependency versions
+
+**Verification**:
+- ✅ All 490 tests pass
+- ✅ Build successful
+- ✅ No breaking changes detected
 
 ### Dependency Update (2026-06-10)
 
