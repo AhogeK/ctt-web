@@ -3,8 +3,8 @@
 ## Current Status
 
 **Phase**: GitHub OAuth Frontend Complete
-**Version**: 0.8.19 (2026-06-12)
-**Branch**: develop at 25ba5f1, master at dece6cd
+**Version**: 0.8.20 (2026-06-13)
+**Branch**: develop at 8e81949, master at b2aadda
 **Tests**: 490/490 pass (verified 2026-06-01)
 **Plans**:
 - docs/plans/2026-05-02-terms-acceptance-tracking.md — status: completed
@@ -12,6 +12,21 @@
 - .dev/plans/2026-05-28-github-oauth.md — status: completed
 
 ## Recent Activity
+
+### Dependency Update (2026-06-13)
+
+**Status**: ✅ All dependencies updated successfully
+
+**Changes**:
+- `package.json`: Updated @tailwindcss/vite from 4.3.0 to 4.3.1
+- `package.json`: Updated tailwindcss from 4.3.0 to 4.3.1
+- `package.json`: Updated vue-tsc from 3.3.4 to 3.3.5
+- `pnpm-lock.yaml`: Updated lock file with new dependency versions
+
+**Verification**:
+- ✅ All 490 tests pass
+- ✅ Build successful
+- ✅ No breaking changes detected
 
 ### Dependency Update (2026-06-12)
 
