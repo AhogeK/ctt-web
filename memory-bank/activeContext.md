@@ -3,8 +3,8 @@
 ## Current Status
 
 **Phase**: GitHub OAuth Frontend Complete
-**Version**: 0.8.20 (2026-06-13)
-**Branch**: develop at 8e81949, master at b2aadda
+**Version**: 0.8.21 (2026-06-14)
+**Branch**: develop at 82f8c8a, master at a8dfcfe
 **Tests**: 490/490 pass (verified 2026-06-01)
 **Plans**:
 - docs/plans/2026-05-02-terms-acceptance-tracking.md — status: completed
@@ -12,6 +12,19 @@
 - .dev/plans/2026-05-28-github-oauth.md — status: completed
 
 ## Recent Activity
+
+### Dependency Update (2026-06-14)
+
+**Status**: ✅ All dependencies updated successfully
+
+**Changes**:
+- `package.json`: Updated vite-plugin-vue-devtools from 8.1.2 to 8.1.3
+- `pnpm-lock.yaml`: Updated lock file with new dependency versions
+
+**Verification**:
+- ✅ All 490 tests pass
+- ✅ Build successful
+- ✅ No breaking changes detected
 
 ### Dependency Update (2026-06-13)
 
