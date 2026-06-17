@@ -96,7 +96,7 @@
 - All API types defined as Zod schemas in `lib/schemas/`, aligned with ctt-server DTOs
 - `ofetch` instance in `lib/api/` is the single HTTP boundary
 
-## 设计系统
+## Design System
 
-视觉规范遵循根目录 `DESIGN.md`（Linear 风格，亮/暗双模式）。
-所有 UI 组件的颜色、字阶、间距、组件状态必须从该文件取值。
+Visual spec follows root `DESIGN.md` (Linear-style, light/dark dual mode).
+All UI component colors, typography, spacing, and states must be sourced from that file.
