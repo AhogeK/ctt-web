@@ -94,7 +94,6 @@
 
 ## Completed (Recent)
 
-- [x] Settings Route Fix (v0.8.27): Added redirect from /settings to /settings/profile so the page is not empty.
 - [x] Captcha Widget UX Fix (v0.8.26): Removed success text display to prevent layout jump. Widget now disappears immediately after verification.
 - [x] Captcha Validation Fix (v0.8.25): GitHub login button now checks captcha completion before proceeding. Previously captcha could be bypassed via OAuth login.
 - [x] GitHub Button Hover Fix (v0.8.24): Fixed light mode hover text color changing to accent color. Now matches dark mode behavior - text color stays unchanged on hover.

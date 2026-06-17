@@ -3,8 +3,8 @@
 ## Current Status
 
 **Phase**: GitHub OAuth Frontend Complete
-**Version**: 0.8.27 (2026-06-17)
-**Branch**: develop at a95e090, master at 8e04994
+**Version**: 0.8.26 (2026-06-17)
+**Branch**: develop at bc9f841, master at 2c00ac7
 **Tests**: 490/490 pass (verified 2026-06-01)
 **Plans**:
 - docs/plans/2026-05-02-terms-acceptance-tracking.md — status: completed
@@ -12,17 +12,6 @@
 - .dev/plans/2026-05-28-github-oauth.md — status: completed
 
 ## Recent Activity
-
-### Settings Route Fix (2026-06-17)
-
-**Status**: ✅ Bug fixed
-
-**Changes**:
-- `src/router/modules/settings.ts`: Added `redirect: { name: RouteNames.SETTINGS_PROFILE }` to redirect /settings to /settings/profile
-
-**Verification**:
-- ✅ All 490 tests pass
-- ✅ /settings now redirects to /settings/profile
 
 ### Captcha Widget UX Fix (2026-06-17)
 
