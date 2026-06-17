@@ -94,6 +94,7 @@
 
 ## Completed (Recent)
 
+- [x] GitHub Button Loading & NProgress Spinner Fix (v0.8.29): Added loading state to GitHub login button (spinner, disabled, "Connecting to GitHub..." text). Disabled NProgress spinner via `NProgress.configure({ showSpinner: false })`.
 - [x] AppLayout Router Fix (v0.8.28): Replaced `<slot />` with `<router-view />` in AppLayout.vue to enable child route rendering. Settings/profile page now displays correctly.
 - [x] Captcha Widget UX Fix (v0.8.26): Removed success text display to prevent layout jump. Widget now disappears immediately after verification.
 - [x] Captcha Validation Fix (v0.8.25): GitHub login button now checks captcha completion before proceeding. Previously captcha could be bypassed via OAuth login.

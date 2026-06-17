@@ -3,8 +3,8 @@
 ## Current Status
 
 **Phase**: GitHub OAuth Frontend Complete
-**Version**: 0.8.28 (2026-06-17)
-**Branch**: develop at bc9f841, master at 2c00ac7
+**Version**: 0.8.29 (2026-06-17)
+**Branch**: develop at a31dfca, master at 7a70d33
 **Tests**: 490/490 pass (verified 2026-06-01)
 **Plans**:
 - docs/plans/2026-05-02-terms-acceptance-tracking.md — status: completed
@@ -12,6 +12,14 @@
 - .dev/plans/2026-05-28-github-oauth.md — status: completed
 
 ## Recent Activity
+
+### GitHub Button Loading & NProgress Spinner Fix (2026-06-17)
+
+**Status**: ✅ UX improved
+
+**Changes**:
+- `src/features/auth/components/LoginForm.vue`: Added GitHub login button loading state (`isGithubLoading` ref, disabled state, spinner icon, "Connecting to GitHub..." text)
+- `src/router/guard.ts`: Disabled NProgress spinner with `NProgress.configure({ showSpinner: false })`
 
 ### AppLayout Router Fix (2026-06-17)
 
