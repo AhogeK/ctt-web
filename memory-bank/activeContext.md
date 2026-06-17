@@ -3,7 +3,7 @@
 ## Current Status
 
 **Phase**: GitHub OAuth Frontend Complete
-**Version**: 0.8.26 (2026-06-17)
+**Version**: 0.8.28 (2026-06-17)
 **Branch**: develop at bc9f841, master at 2c00ac7
 **Tests**: 490/490 pass (verified 2026-06-01)
 **Plans**:
@@ -12,6 +12,17 @@
 - .dev/plans/2026-05-28-github-oauth.md — status: completed
 
 ## Recent Activity
+
+### AppLayout Router Fix (2026-06-17)
+
+**Status**: ✅ Bug fixed
+
+**Changes**:
+- `src/layouts/AppLayout.vue`: Replaced `<slot />` with `<router-view />` to enable child route rendering
+
+**Verification**:
+- ✅ All 490 tests pass
+- ✅ /settings/profile now displays ProfileView content correctly
 
 ### Captcha Widget UX Fix (2026-06-17)
 
