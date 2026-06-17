@@ -94,6 +94,8 @@
 
 ## Completed (Recent)
 
+- [x] Captcha Widget UX Fix (v0.8.26): Removed success text display to prevent layout jump. Widget now disappears immediately after verification.
+- [x] Captcha Validation Fix (v0.8.25): GitHub login button now checks captcha completion before proceeding. Previously captcha could be bypassed via OAuth login.
 - [x] GitHub Button Hover Fix (v0.8.24): Fixed light mode hover text color changing to accent color. Now matches dark mode behavior - text color stays unchanged on hover.
 - [x] Dependency Update (v0.8.23): Updated vue 3.6.0-beta.15→3.6.0-beta.16. All 490 tests pass, build successful.
 - [x] Dependency Update (v0.8.22): Updated @playwright/test 1.60.0→1.61.0, @vitest/coverage-v8 4.1.8→4.1.9. All 490 tests pass, build successful.

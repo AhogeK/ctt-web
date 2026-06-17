@@ -3,8 +3,8 @@
 ## Current Status
 
 **Phase**: GitHub OAuth Frontend Complete
-**Version**: 0.8.24 (2026-06-17)
-**Branch**: develop at 3d31cb0, master at 8f76cda
+**Version**: 0.8.26 (2026-06-17)
+**Branch**: develop at bc9f841, master at 2c00ac7
 **Tests**: 490/490 pass (verified 2026-06-01)
 **Plans**:
 - docs/plans/2026-05-02-terms-acceptance-tracking.md — status: completed
@@ -12,6 +12,29 @@
 - .dev/plans/2026-05-28-github-oauth.md — status: completed
 
 ## Recent Activity
+
+### Captcha Widget UX Fix (2026-06-17)
+
+**Status**: ✅ UX improved
+
+**Changes**:
+- `src/components/CaptchaWidget.vue`: Removed success text ("Verification complete") display to prevent layout jump. Widget now disappears immediately after verification.
+- `src/components/__tests__/CaptchaWidget.test.ts`: Updated test to match new behavior
+
+**Verification**:
+- ✅ All 490 tests pass
+- ✅ No layout jump on captcha verification
+
+### Captcha Validation Fix (2026-06-17)
+
+**Status**: ✅ Bug fixed
+
+**Changes**:
+- `src/features/auth/components/LoginForm.vue`: Added `handleGithubLogin()` function that checks captcha completion before emitting github-login event
+
+**Verification**:
+- ✅ All 490 tests pass
+- ✅ GitHub button now blocked if captcha not completed
 
 ### GitHub Button Hover Fix (2026-06-17)
 
