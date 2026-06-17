@@ -222,7 +222,7 @@ defineExpose({
           'border-[#d0d6e0] bg-white text-[#1a1a2e]!',
           'dark:border-white/8 dark:bg-white/2 dark:text-[#f7f8f8]!',
           'transition-all duration-200',
-          'hover:bg-white! hover:border-[#5e6ad2]! hover:text-[#5e6ad2]!',
+          'hover:bg-white! hover:border-[#5e6ad2]!',
           'dark:hover:bg-white/5! dark:hover:border-[#7170ff]/50!',
         )
       "
