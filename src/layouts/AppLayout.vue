@@ -40,7 +40,7 @@ defineSlots<{
       <!-- Main content (protected by ErrorBoundary) -->
       <main class="flex-1 p-4">
         <ErrorBoundary>
-          <slot />
+          <router-view />
         </ErrorBoundary>
       </main>
     </SidebarInset>
