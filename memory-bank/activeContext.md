@@ -3,8 +3,8 @@
 ## Current Status
 
 **Phase**: GitHub OAuth Frontend Complete
-**Version**: 0.8.23 (2026-06-16)
-**Branch**: develop at d6baed7, master at 59a7737
+**Version**: 0.8.24 (2026-06-17)
+**Branch**: develop at 3d31cb0, master at 8f76cda
 **Tests**: 490/490 pass (verified 2026-06-01)
 **Plans**:
 - docs/plans/2026-05-02-terms-acceptance-tracking.md — status: completed
@@ -12,6 +12,18 @@
 - .dev/plans/2026-05-28-github-oauth.md — status: completed
 
 ## Recent Activity
+
+### GitHub Button Hover Fix (2026-06-17)
+
+**Status**: ✅ Bug fixed
+
+**Changes**:
+- `src/features/auth/components/LoginForm.vue`: Removed `hover:text-[#5e6ad2]!` from GitHub button to prevent text color changing on hover in light mode
+
+**Verification**:
+- ✅ All 490 tests pass
+- ✅ Light mode: hover only changes border color, text stays black
+- ✅ Dark mode: behavior unchanged (text stays light)
 
 ### Dependency Update (2026-06-16)
 
