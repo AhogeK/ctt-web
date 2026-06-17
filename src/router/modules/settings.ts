@@ -8,6 +8,7 @@ const settingsRoutes: RouteRecordRaw[] = [
     name: RouteNames.SETTINGS,
     component: () => import('@/layouts/AppLayout.vue'),
     meta: { title: 'Settings', requiresAuth: true, layout: 'app' },
+    redirect: { name: RouteNames.SETTINGS_PROFILE },
     children: [
       {
         path: 'profile',
