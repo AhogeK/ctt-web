@@ -152,3 +152,61 @@ describe('LoginForm - hCaptcha integration', () => {
     })
   })
 })
+
+describe('LoginForm - GitHub login button loading state', () => {
+  it('renders GitHub button enabled by default', () => {
+    const wrapper = mount(LoginForm)
+
+    const githubButton = wrapper
+      .findAll('button[type="button"]')
+      .find((btn) => btn.text().includes('Continue with GitHub'))
+    expect(githubButton).toBeDefined()
+    expect(githubButton!.attributes('disabled')).toBeUndefined()
+  })
+
+  it('disables GitHub button after click', async () => {
+    const wrapper = mount(LoginForm)
+
+    const githubButton = wrapper
+      .findAll('button[type="button"]')
+      .find((btn) => btn.text().includes('Continue with GitHub'))
+    await githubButton!.trigger('click')
+
+    expect(githubButton!.attributes('disabled')).toBeDefined()
+  })
+
+  it('shows "Connecting to GitHub..." text after click', async () => {
+    const wrapper = mount(LoginForm)
+
+    const githubButton = wrapper
+      .findAll('button[type="button"]')
+      .find((btn) => btn.text().includes('Continue with GitHub'))
+    await githubButton!.trigger('click')
+
+    expect(githubButton!.text()).toContain('Connecting to GitHub...')
+    expect(githubButton!.text()).not.toContain('Continue with GitHub')
+  })
+
+  it('shows spinner with animate-spin class after click', async () => {
+    const wrapper = mount(LoginForm)
+
+    const githubButton = wrapper
+      .findAll('button[type="button"]')
+      .find((btn) => btn.text().includes('Continue with GitHub'))
+    await githubButton!.trigger('click')
+
+    const spinner = githubButton!.find('svg.animate-spin')
+    expect(spinner.exists()).toBe(true)
+  })
+
+  it('emits github-login event when clicked without captcha requirement', async () => {
+    const wrapper = mount(LoginForm)
+
+    const githubButton = wrapper
+      .findAll('button[type="button"]')
+      .find((btn) => btn.text().includes('Continue with GitHub'))
+    await githubButton!.trigger('click')
+
+    expect(wrapper.emitted('github-login')).toHaveLength(1)
+  })
+})

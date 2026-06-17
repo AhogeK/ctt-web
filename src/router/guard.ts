@@ -4,6 +4,8 @@ import 'nprogress/nprogress.css'
 import { RouteNames } from './route-names'
 import { useAuthStore } from '@/stores/auth'
 
+NProgress.configure({ showSpinner: false })
+
 /**
  * Setup global router guards for authentication and progress bar.
  */
