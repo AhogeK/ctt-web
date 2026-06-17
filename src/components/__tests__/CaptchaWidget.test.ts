@@ -113,8 +113,8 @@ describe('CaptchaWidget', () => {
     await stub.vm.$emit('verify', 'active-token')
     await nextTick()
 
-    // Verify success state is shown
-    expect(wrapper.text()).toContain('Verification complete')
+    // Widget should be hidden after verification
+    expect(wrapper.findComponent({ name: 'VueHcaptchaStub' }).exists()).toBe(false)
 
     // Trigger reset via the exposed method
     ;(wrapper.vm as unknown as { reset: () => void }).reset()

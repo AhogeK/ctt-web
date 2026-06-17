@@ -60,6 +60,15 @@ function onCaptchaExpire() {
   captchaToken.value = null
 }
 
+function handleGithubLogin() {
+  // Block if captcha is required but not completed
+  if (props.captchaSiteKey && !captchaToken.value) {
+    captchaError.value = true
+    return
+  }
+  emit('github-login')
+}
+
 const onSubmit = form.handleSubmit((values) => {
   // Block submission if captcha is required but not completed
   if (props.captchaSiteKey && !captchaToken.value) {
@@ -227,7 +236,7 @@ defineExpose({
         )
       "
       style="font-feature-settings: 'cv01', 'ss03'"
-      @click="emit('github-login')"
+      @click="handleGithubLogin"
     >
       <svg class="mr-2 h-4 w-4" viewBox="0 0 16 16" fill="currentColor">
         <path
