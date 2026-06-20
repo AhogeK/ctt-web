@@ -22,6 +22,7 @@
 
 ## Completed (Recent)
 
+- [x] Dependency Update (v0.8.32): Updated reka-ui 2.9.10→2.10.0. All 495 tests pass.
 - [x] Dependency Update (v0.8.31): Updated @types/node 25.9.3→25.9.4. All 495 tests pass.
 - [x] Dependency Update (v0.8.30): Updated vue-i18n 11.4.5→11.4.6, @faker-js/faker 10.4.0→10.5.0. All 495 tests pass.
 - [x] GitHub Button Loading & NProgress Spinner Fix (v0.8.29)
