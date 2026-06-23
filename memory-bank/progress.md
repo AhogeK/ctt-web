@@ -22,6 +22,7 @@
 
 ## Completed (Recent)
 
+- [x] Dependency Update (v0.8.35): Updated @tanstack/vue-query 5.101.0→5.101.1, @commitlint/cli 21.0.2→21.1.0, @commitlint/config-conventional 21.0.2→21.1.0. All 495 tests pass.
 - [x] Dependency Update (v0.8.34): Updated @vue/eslint-config-typescript 14.8.0→14.9.0. All 495 tests pass.
 - [x] Dependency Update (v0.8.33): Updated lint-staged 17.0.7→17.0.8. All 495 tests pass.
 - [x] Dependency Update (v0.8.32): Updated reka-ui 2.9.10→2.10.0. All 495 tests pass.
