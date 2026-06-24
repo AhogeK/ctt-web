@@ -22,6 +22,7 @@
 
 ## Completed (Recent)
 
+- [x] Dependency Update (v0.8.36): Updated vue 3.6.0-beta.16→3.6.0-beta.17, @playwright/test 1.61.0→1.61.1. All 495 tests pass.
 - [x] Dependency Update (v0.8.35): Updated @tanstack/vue-query 5.101.0→5.101.1, @commitlint/cli 21.0.2→21.1.0, @commitlint/config-conventional 21.0.2→21.1.0. All 495 tests pass.
 - [x] Dependency Update (v0.8.34): Updated @vue/eslint-config-typescript 14.8.0→14.9.0. All 495 tests pass.
 - [x] Dependency Update (v0.8.33): Updated lint-staged 17.0.7→17.0.8. All 495 tests pass.
