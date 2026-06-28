@@ -180,6 +180,68 @@ export { login, logout } from './auth'
 export { createItem } from './item'
 ```
 
+#### 2.3.1 Discriminated GET endpoints (action discriminator)
+
+Some endpoints serve multiple semantically distinct flows via a query-param discriminator. The OAuth authorize endpoint is the canonical example:
+
+```typescript
+// 1. Schema + API function — src/lib/api/auth.ts
+import { z } from 'zod'
+
+export const GitHubAuthorizeResponseSchema = z.object({
+  authUrl: z.url(),
+})
+export type GitHubAuthorizeResponse = z.infer<typeof GitHubAuthorizeResponseSchema>
+
+export type GitHubOAuthAction = 'login' | 'bind'
+
+export async function getGitHubAuthorizeUrl(
+  action: GitHubOAuthAction = 'login',
+): Promise<GitHubAuthorizeResponse> {
+  const response = await apiFetch<unknown>('/api/v1/auth/oauth/github/authorize', {
+    method: 'GET',
+    query: { action },
+  })
+  const wrapped = RestApiResponseSchema.parse(response)
+  return GitHubAuthorizeResponseSchema.parse(wrapped.data)
+}
+```
+
+```typescript
+// 2. Consumer — LoginView.vue (login flow, no auth required)
+import { getGitHubAuthorizeUrl } from '@/lib/api'
+
+const githubMutation = useMutation({
+  // Wrap in 0-arg arrow so TanStack Query infers TVariables = void
+  // and `mutate()` works without arguments.
+  mutationFn: () => getGitHubAuthorizeUrl('login'),
+  onSuccess: (data) => { window.location.href = data.authUrl },
+})
+
+function handleGitHubLogin() { githubMutation.mutate() }
+```
+
+```typescript
+// 3. Consumer — ProfileView.vue (bind flow, auth required)
+const githubMutation = useMutation({
+  // Explicit 1-arg type so TVariables = 'bind'; mutate('bind') is type-safe.
+  mutationFn: (_action: 'bind') => getGitHubAuthorizeUrl('bind'),
+  onSuccess: (data) => { window.location.href = data.authUrl },
+})
+
+function handleBindGitHub() { githubMutation.mutate('bind') }
+```
+
+**Key points:**
+
+- The `action` query param switches backend behavior (LOGIN vs BIND).
+- `apiFetch` automatically injects `Authorization: Bearer <token>` from localStorage. The BIND flow picks up JWT transparently; LOGIN doesn't need it (and the backend allows anonymous calls).
+- **TanStack Query `mutationFn` shape matters for type safety:**
+  - `() => api()` → `TVariables = void` → `mutate()` works without args.
+  - `(args) => api(args)` → `TVariables = args` → `mutate(args)` is required.
+  - Pick the shape that matches how the caller invokes `mutate`.
+- For Zod-strict unions on the action param, use `z.enum(['login', 'bind'])` if the backend guarantees the enum; use `z.string()` if future providers will add new actions.
+
 ### 2.4 错误处理
 
 API 层的错误处理策略已在 `apiFetch` 实例中全局配置：

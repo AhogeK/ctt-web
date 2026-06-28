@@ -387,6 +387,43 @@ captchaSiteKey: z.string().nullable()  // null = captcha disabled
 | `SECURITY_006` | Captcha verification failed |
 | `SECURITY_007` | Captcha token missing       |
 
+### OAuth Discriminator Pattern
+
+GitHub OAuth serves two distinct flows through a single authorize endpoint:
+
+| Flow      | `action` query | Auth required | Callback behavior                                                                 |
+| --------- | -------------- | ------------- | ---------------------------------------------------------------------------------- |
+| `login`   | `login`        | No (public)   | Backend creates a new user or signs them in; redirects to `/oauth/callback?accessToken=…` |
+| `bind`    | `bind`         | Yes (Bearer)  | Backend attaches the GitHub account to the current user; redirects to `/settings/profile?linked=github` |
+
+**Implementation:**
+
+- Frontend uses `getGitHubAuthorizeUrl(action: 'login' | 'bind' = 'login')` from `src/lib/api/auth.ts`. The `action` parameter is serialized as a query param; `apiFetch` interceptor injects `Authorization: Bearer <token>` automatically when present, so the bind flow piggybacks on the same HTTP client.
+- LoginView (login flow) and ProfileView (bind flow) each call the same endpoint with a different action value.
+- Backend (ctt-server) inspects `action` in the OAuth state payload: LOGIN creates/finds user + issues tokens; BIND attaches provider to existing user without modifying the session.
+
+**Token invariants for BIND:**
+
+- The user's `ctt_access_token` / `ctt_refresh_token` are NOT modified by the BIND callback. The browser session is byte-for-byte identical before and after a successful bind.
+- If BIND fails (conflict, validation, etc.), the session is likewise unaffected.
+
+**Error handling for BIND:**
+
+- On failure, backend redirects to `/settings/profile?linked={provider}&error={errorCode}` with no token params.
+- Frontend listens for these query params in `ProfileView.onMounted` and shows a mapped toast via `src/lib/errors/oauth-bind-error-messages.ts` (8 codes mapped + fallback).
+- URL is cleaned via `router.replace({ query: {} })` to prevent toast re-trigger on refresh.
+
+**Why a discriminator and not two endpoints?**
+
+- Single OAuth flow state machine in the backend (one `OAuthStatePayload.Action` enum, one Redis-backed state record).
+- Symmetric authorize/callback URLs simplify the frontend (one component to render redirects, one set of error states).
+- Adding new providers (Google, GitLab) requires only the provider enum + the bind action; no URL proliferation.
+
+See also:
+- `src/lib/api/auth.ts` — `getGitHubAuthorizeUrl` signature + JSDoc
+- `src/lib/errors/oauth-bind-error-messages.ts` — error code → toast copy mapping
+- `memory-bank/techContext.md` — runtime config (staleTime, refetchOnWindowFocus) of the binding status query
+
 ### API Error Utility
 
 - **Location**: `src/lib/utils/api-error.ts`
