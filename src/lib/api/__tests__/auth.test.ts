@@ -705,4 +705,77 @@ describe('auth API', () => {
       await expect(authApi.acceptTerms()).rejects.toThrow('Internal Server Error')
     })
   })
+
+  describe('getGitHubAuthorizeUrl', () => {
+    it('sends GET request with action=bind when bind is provided', async () => {
+      vi.mocked(apiFetch).mockResolvedValue({
+        success: true,
+        message: 'OK',
+        timestamp: '2026-04-28T12:00:00Z',
+        data: {
+          authUrl: 'https://github.com/login/oauth/authorize?client_id=test&state=xyz',
+        },
+      })
+
+      await authApi.getGitHubAuthorizeUrl('bind')
+
+      expect(apiFetch).toHaveBeenCalledWith('/api/v1/auth/oauth/github/authorize', {
+        method: 'GET',
+        query: { action: 'bind' },
+      })
+    })
+
+    it('sends GET request with action=login when no action is provided (default)', async () => {
+      vi.mocked(apiFetch).mockResolvedValue({
+        success: true,
+        message: 'OK',
+        timestamp: '2026-04-28T12:00:00Z',
+        data: {
+          authUrl: 'https://github.com/login/oauth/authorize?client_id=test&state=xyz',
+        },
+      })
+
+      await authApi.getGitHubAuthorizeUrl()
+
+      expect(apiFetch).toHaveBeenCalledWith('/api/v1/auth/oauth/github/authorize', {
+        method: 'GET',
+        query: { action: 'login' },
+      })
+    })
+
+    it('rejects non-HTTPS authUrl in response', async () => {
+      vi.mocked(apiFetch).mockResolvedValueOnce({
+        success: true,
+        message: 'Operation successful',
+        data: { authUrl: 'http://github.com/login/oauth/authorize?client_id=test' },
+        timestamp: '2026-04-22T10:00:00Z',
+      })
+
+      await expect(authApi.getGitHubAuthorizeUrl('bind')).rejects.toThrow(/https|HTTPS/)
+    })
+
+    it('rejects javascript: authUrl in response', async () => {
+      vi.mocked(apiFetch).mockResolvedValueOnce({
+        success: true,
+        message: 'Operation successful',
+        data: { authUrl: 'javascript:alert(1)' },
+        timestamp: '2026-04-22T10:00:00Z',
+      })
+
+      await expect(authApi.getGitHubAuthorizeUrl('bind')).rejects.toThrow(/https|HTTPS/)
+    })
+
+    it('accepts https:// authUrl in response', async () => {
+      vi.mocked(apiFetch).mockResolvedValueOnce({
+        success: true,
+        message: 'Operation successful',
+        data: { authUrl: 'https://github.com/login/oauth/authorize?client_id=test' },
+        timestamp: '2026-04-22T10:00:00Z',
+      })
+
+      await expect(authApi.getGitHubAuthorizeUrl('bind')).resolves.toEqual({
+        authUrl: 'https://github.com/login/oauth/authorize?client_id=test',
+      })
+    })
+  })
 })

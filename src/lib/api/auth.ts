@@ -220,22 +220,48 @@ export async function acceptTerms(): Promise<LoginResponse> {
 }
 
 /**
- * Gets the GitHub OAuth authorization URL.
+ * Discriminator for the GitHub OAuth flow.
  *
- * Endpoint: GET /api/v1/auth/oauth/github/authorize
+ * - `'login'`: First-time GitHub sign-in via LoginForm. Public endpoint — no JWT required.
+ *   On callback the user may be created or logged in.
  *
- * Public endpoint — no authentication required.
+ * - `'bind'`: Link an existing CTT account to GitHub (used by ProfileView). REQUIRES a valid
+ *   JWT (Authorization header auto-injected by apiFetch interceptor). On callback the GitHub
+ *   account is attached to the currently authenticated user WITHOUT issuing new CTT credentials;
+ *   the user's existing session is preserved.
+ */
+export type GitHubOAuthAction = 'login' | 'bind'
+
+/**
+ * Gets the GitHub OAuth authorization URL for either login or bind flow.
+ *
+ * Endpoint: GET /api/v1/auth/oauth/github/authorize?action={login|bind}
+ *
+ * - `action='login'` (default): No authentication required. Used by LoginForm for
+ *   first-time GitHub sign-in. Returns an authUrl that the user is redirected to
+ *   for OAuth authorization. On callback, the user may be created or logged in.
+ *
+ * - `action='bind'`: REQUIRES valid JWT (Authorization header auto-injected by
+ *   apiFetch interceptor). Used by ProfileView to link an existing account to GitHub.
+ *   Returns an authUrl that, on callback, attaches the GitHub account to the
+ *   currently authenticated user WITHOUT issuing new CTT credentials. The user's
+ *   existing session is preserved (browser tokens unchanged). On success, redirects
+ *   to /settings/profile?linked=github. On failure, redirects to
+ *   /settings/profile?linked=github&error={code}.
+ *
  * Rate limited: 30 requests per hour per IP.
- *
  * The returned authUrl contains a one-time state parameter for CSRF protection.
  * Frontend should redirect the user to this URL immediately — do not cache.
  *
+ * @param action - 'login' (default) or 'bind'. Controls the OAuth flow semantics.
  * @returns Object containing the GitHub authorization URL
  * @throws Zod validation error if response doesn't match expected schema
+ * @throws 401 AUTH_001 if action='bind' is called without a valid JWT
  */
-export async function getGitHubAuthorizeUrl(): Promise<GitHubAuthorizeResponse> {
+export async function getGitHubAuthorizeUrl(action: GitHubOAuthAction = 'login'): Promise<GitHubAuthorizeResponse> {
   const response = await apiFetch<unknown>('/api/v1/auth/oauth/github/authorize', {
     method: 'GET',
+    query: { action },
   })
 
   const wrapped = RestApiResponseSchema.parse(response)

@@ -276,7 +276,9 @@ export type ResetPasswordForm = z.infer<typeof ResetPasswordFormSchema>
  * Rate limited: 30 requests per hour per IP.
  */
 export const GitHubAuthorizeResponseSchema = z.object({
-  authUrl: z.url('Invalid authorization URL'),
+  authUrl: z
+    .url('Invalid authorization URL')
+    .refine((u) => u.startsWith('https://'), 'authUrl must use HTTPS protocol'),
 })
 
 export type GitHubAuthorizeResponse = z.infer<typeof GitHubAuthorizeResponseSchema>

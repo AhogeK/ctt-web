@@ -127,9 +127,11 @@ const handleSubmit = (data: { email: string; password: string; captchaToken?: st
 const isSubmitting = computed(() => toValue(mutation.isPending))
 
 const githubMutation = useMutation({
-  mutationFn: getGitHubAuthorizeUrl,
+  // Use 'login' explicitly to match the BIND flow's signature pattern.
+  // LoginView serves the OAuth LOGIN flow only; ProfileView uses 'bind'.
+  mutationFn: () => getGitHubAuthorizeUrl('login'),
   onSuccess: (data) => {
-    window.location.href = data.authUrl
+    globalThis.location.href = data.authUrl
   },
   onError: () => {
     toast.error('GitHub login failed', { description: 'Unable to start GitHub authorization. Please try again.' })
