@@ -2,16 +2,33 @@
 
 ## Current Status
 
-**Phase**: GitHub OAuth Frontend Complete
-**Version**: 0.8.38 (2026-06-27)
-**Branch**: develop at 440cb71, master at d3f0ac8
-**Tests**: 495/495 pass (verified 2026-06-17)
+**Phase**: GitHub OAuth Binding Flow (Link from Profile) Complete
+**Version**: 0.8.40 (2026-06-28)
+**Branch**: develop at 4234d27, master at d8a656a
+**Tests**: 548/548 pass (verified 2026-06-28)
 **Plans**:
 - docs/plans/2026-05-02-terms-acceptance-tracking.md — completed
 - docs/plans/2026-05-23-hcaptcha-integration.md — completed
 - .dev/plans/2026-05-28-github-oauth.md — completed
 
 ## Recent Activity (v0.8.x — 2026-06)
+
+### OAuth Account Binding Flow (v0.8.40)
+
+- Closes ctt-server PR-A loop: enable GitHub account linking from ProfileView
+- `getGitHubAuthorizeUrl(action: 'login' | 'bind' = 'login')` — adds `?action=bind` query param; JWT auto-injected by apiFetch for bind (handled by backend interceptor)
+- `LoginView.vue`: wraps `mutationFn` in `() => getGitHubAuthorizeUrl('login')` for TanStack Query TVariables inference (mutationFn must be 0-arg to keep `mutate()` call-site compatible)
+- `src/lib/errors/oauth-bind-error-messages.ts`: 8 BIND error codes → user-friendly toast copy (AUTH_006/013/016, USER_004, OAUTH_PROVIDER_ERROR, OAUTH_INTERNAL_ERROR, MISSING_OAUTH_PARAMS, INVALID_STATE_ACTION) + fallback
+- `ProfileView.vue`: bind button calls `'bind'` action; `onMounted` handler reacts to `?linked=github` (success) / `?linked=github&error={code}` (failure) and clears query params via `router.replace({ query: {} })`
+- 17 new tests (8 error-mapping + 2 auth action + 4 ProfileView BIND scenarios + 3 mock infrastructure); 548/548 pass
+
+### OAuth Account Binding Status (v0.8.39)
+
+- Closes backend `GET /api/v1/auth/oauth/accounts` endpoint (ctt-server 1e333dd)
+- `oauth-account.schema.ts`: `OAuthAccountBindingSchema` + `OAuthAccountsResponseDataSchema` (provider as free-form string for future expansion, nullable providerLogin/email, ISO 8601 timestamps)
+- `oauth-account.ts`: `fetchLinkedOAuthAccounts()` wraps `apiFetch` + `RestApiResponseSchema` + inner data schema; 401 propagates to existing interceptor
+- `ProfileView.vue`: `useQuery` with `queryKey: ['oauth-accounts']`, `staleTime: 30s`, `refetchOnWindowFocus: true`; dynamic rendering for loading / error / connected / disconnected; `getProviderDisplay` switch/case for future provider icons; providerLogin → providerEmail → bare "Connected" fallback chain
+- Added 35 new tests (schema, API, view); 531/531 pass
 
 ### GitHub Button Loading & NProgress Spinner Fix (v0.8.29)
 

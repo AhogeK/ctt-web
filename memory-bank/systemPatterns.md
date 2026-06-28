@@ -191,3 +191,7 @@ Pattern: `?retried=1` query param prevents infinite reload loop.
 3. **Transition timing**: `duration-200` for smooth shadow appearance
 4. **Light/Dark adaptation**: Different shadow opacity values for contrast
 5. **All secondary buttons use ghost** (no subtle variant since 0.5.45)
+
+## Discriminated API Endpoints
+
+`mutationFn`'s signature drives TanStack Query's `TVariables` — without explicit literal annotation (e.g. `(_action: 'bind') => ...`), TS infers `undefined` and `mutate('bind')` fails type-check. BIND (`ProfileView.vue`): `mutationFn: (_action: 'bind') => getGitHubAuthorizeUrl('bind')` → `mutate('bind')`. LOGIN (`LoginView.vue`): `mutationFn: () => getGitHubAuthorizeUrl('login')` → `mutate()`. Shapes: literal discriminator → 1-arg form with literal type; structured payload → 1-arg with payload type; no args → 0-arg form.

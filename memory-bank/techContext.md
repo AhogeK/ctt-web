@@ -44,6 +44,13 @@
 - **Decoupling**: CustomEvent (`api:unauthorized`) dispatched on 401, listened in `main.ts` for auth cleanup + redirect
 - **Token Persistence**: localStorage with `ctt_` prefix keys (`ctt_access_token`, `ctt_refresh_token`, `ctt_user_id`)
 
+### OAuth Provider Enumeration (v0.8.39)
+
+- `OAuthAccountBinding.provider` is modeled as a free-form `z.string()` (NOT a `z.enum`) to allow the backend to ship new providers (google, gitlab, …) without a frontend schema bump
+- UI must map known providers to icons/labels via a `switch (provider)` statement in the consuming component
+- Only GitHub has a hardcoded SVG today; future providers should add their own case + icon block, or render an icon component keyed by the case branch
+- Sensitive fields (`accessToken`, `refreshToken`, `providerUserId`) are intentionally excluded from the DTO contract — do NOT add them to `OAuthAccountBindingSchema`
+
 ### Zod Runtime Validation
 
 - Location: `src/lib/schemas/api.schema.ts`
@@ -87,6 +94,21 @@
   - Automatic persistence without manual localStorage calls
   - Type-safe state management
   - Computed properties for derived state (isAuthenticated)
+
+### OAuth Flow Discriminator Pattern
+
+GitHub OAuth has two flows with the same authorize endpoint but different semantics:
+- `action='login'`: public endpoint, used by LoginForm for first-time sign-in
+- `action='bind'`: requires JWT, used by ProfileView to link existing account
+
+Implementation notes:
+- `getGitHubAuthorizeUrl(action: 'login' | 'bind' = 'login')` in `src/lib/api/auth.ts`
+- For bind flow, JWT is auto-injected by `apiFetch` interceptor (`instance.ts:188-196`)
+- TanStack Query mutation: `mutationFn` must wrap the API function (e.g., `() => getGitHubAuthorizeUrl('login')`) so `TVariables` infers as `void` and `mutate()` works without args
+- BIND success redirect: `{frontendUrl}/settings/profile?linked={provider}`
+- BIND failure redirect: `{frontendUrl}/settings/profile?linked={provider}&error={errorCode}`
+- Browser tokens unchanged by BIND flow (backend guarantee)
+- Frontend listens for query params in ProfileView `onMounted` and clears URL via `router.replace({ query: {} })` to prevent toast re-trigger on refresh
 
 ## Key Architectural Decisions
 

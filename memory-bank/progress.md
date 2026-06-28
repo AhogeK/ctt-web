@@ -22,6 +22,8 @@
 
 ## Completed (Recent)
 
+- [x] OAuth Account Binding Flow (v0.8.40): Closes ctt-server PR-A BIND endpoint. `getGitHubAuthorizeUrl` adds `action` param ('login' | 'bind'); ProfileView handles OAuth callback via `?linked=github` query (success toast + refetch, error toast via 8-code mapping + URL cleanup). 17 new tests, 548/548 pass.
+- [x] OAuth Account Binding Status (v0.8.39): Closes `GET /api/v1/auth/oauth/accounts`. New schema/api/view files; `ProfileView` now drives binding state from the backend (loading / error / connected / disconnected) with TanStack Query caching + window-focus refetch. 531/531 tests pass.
 - [x] Dependency Update (v0.8.38): Updated indirect dependencies (electron-to-chromium 1.5.379→1.5.380, js-yaml 4.2.0→4.3.0). All 495 tests pass.
 - [x] Dependency Update (v0.8.37): Updated reka-ui 2.10.0→2.10.1, vite-plugin-vue-devtools 8.1.3→8.1.4. All 495 tests pass.
 - [x] Dependency Update (v0.8.36): Updated vue 3.6.0-beta.16→3.6.0-beta.17, @playwright/test 1.61.0→1.61.1. All 495 tests pass.
