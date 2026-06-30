@@ -55,8 +55,8 @@ visualization.
 | Leaderboard             | Leaderboard view with rankings, composable-driven data fetching                                            |
 | Theme System            | Light/dark mode toggle, Pinia theme store with VueUse persistence                                          |
 | Terms Acceptance        | Terms version tracking on registration, expiration handling on login, 403 interception with request replay |
-| Bot Protection          | hCaptcha integration on auth forms with graceful degradation (captchaSiteKey=null disables)               |
-| GitHub OAuth            | OAuth login + account BIND flow from ProfileView with 8-code BIND error mapping; TanStack Query status      |
+| Bot Protection          | hCaptcha integration on auth forms with graceful degradation (captchaSiteKey=null disables)                |
+| GitHub OAuth            | OAuth login + account BIND/UNBIND flow from ProfileView with Dialog confirmation; 8-code BIND + 2-code UNBIND error mapping; TanStack Query status |
 
 ## 🗺 Project Structure
 

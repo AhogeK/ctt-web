@@ -12,14 +12,14 @@
 | UI           | Radix Vue + shadcn-vue + Tailwind CSS v4        |
 | HTTP         | ofetch (centralized instance with interceptors) |
 | Validation   | Vee-Validate + Zod                              |
-| Captcha      | hCaptcha Free Tier (@hcaptcha/vue3-hcaptcha) — bot protection on auth forms |
+| Captcha      | hCaptcha Free Tier (@hcaptcha/vue3-hcaptcha)    |
 | Charts       | Apache ECharts + vue-echarts                    |
 | Icons        | Iconify Vue                                     |
 | i18n         | Vue I18n v11                                    |
 
 ## Directory Structure
 
-```
+```text
 src/
 ├── features/           # Feature modules
 │   ├── auth/           # Authentication (LoginView, RegisterView)
@@ -391,10 +391,10 @@ captchaSiteKey: z.string().nullable()  // null = captcha disabled
 
 GitHub OAuth serves two distinct flows through a single authorize endpoint:
 
-| Flow      | `action` query | Auth required | Callback behavior                                                                 |
-| --------- | -------------- | ------------- | ---------------------------------------------------------------------------------- |
-| `login`   | `login`        | No (public)   | Backend creates a new user or signs them in; redirects to `/oauth/callback?accessToken=…` |
-| `bind`    | `bind`         | Yes (Bearer)  | Backend attaches the GitHub account to the current user; redirects to `/settings/profile?linked=github` |
+| Flow    | `action` query | Auth required | Callback behavior                                                                |
+| ------- | -------------- | ------------- | -------------------------------------------------------------------------------- |
+| `login` | `login`        | No (public)   | Creates/signs in user; redirects to `/oauth/callback?accessToken=…`              |
+| `bind`  | `bind`         | Yes (Bearer)  | Attaches GitHub to current user; redirects to `/settings/profile?linked=github`  |
 
 **Implementation:**
 
@@ -420,9 +420,40 @@ GitHub OAuth serves two distinct flows through a single authorize endpoint:
 - Adding new providers (Google, GitLab) requires only the provider enum + the bind action; no URL proliferation.
 
 See also:
+
 - `src/lib/api/auth.ts` — `getGitHubAuthorizeUrl` signature + JSDoc
 - `src/lib/errors/oauth-bind-error-messages.ts` — error code → toast copy mapping
 - `memory-bank/techContext.md` — runtime config (staleTime, refetchOnWindowFocus) of the binding status query
+
+### OAuth Account Management Endpoints
+
+In addition to the BIND flow (above), OAuth account management uses two
+non-discriminated endpoints that operate on existing bindings:
+
+| Method   | Endpoint                                   | Auth       | Purpose                                                            |
+| -------- | ------------------------------------------ | ---------- | ------------------------------------------------------------------ |
+| `GET`    | `/api/v1/auth/oauth/accounts`              | Bearer JWT | List current user's OAuth bindings (provider + providerLogin)      |
+| `DELETE` | `/api/v1/auth/oauth/accounts/{provider}`   | Bearer JWT | Unbind a single provider from the current user (e.g. GitHub)       |
+
+**Implementation:**
+
+- `src/lib/api/oauth-account.ts` exposes both functions: `fetchLinkedOAuthAccounts(signal?)` and `unbindOAuthAccount(provider)`.
+- `fetchLinkedOAuthAccounts` accepts an optional `AbortSignal` so TanStack Query can cancel in-flight requests on component unmount. The signal is forwarded to `apiFetch` → ofetch.
+- `unbindOAuthAccount` issues a `DELETE` with the provider URL-encoded in the path. Returns `void` on 204 No Content; 4xx errors propagate for the caller's error-mapping to surface.
+
+**Session invariant:**
+
+- Neither endpoint issues new tokens. The browser's `ctt_access_token` / `ctt_refresh_token` are unchanged by either call.
+- The `apiFetch` interceptor (instance.ts:188-196) may trigger token refresh on 401 if the access token is expired, but the UNBIND operation itself does not rotate credentials.
+
+**Frontend flow (UNBIND):**
+
+1. ProfileView shows a Disconnect button when the user has a binding (state-aware via `v-if="!githubBinding"`).
+2. Click opens a shadcn-vue `Dialog` for confirmation.
+3. Confirm triggers `useMutation` calling `unbindOAuthAccount('github')`.
+4. On 204: `toast.success` + `refetchOAuthAccounts()` + dialog close.
+5. On error: `toast.error` with mapped message (see `getOAuthUnbindErrorMessage`) + dialog close.
+6. `AUTH_001` short-circuit: no toast (interceptor redirects to login).
 
 ### API Error Utility
 
@@ -567,7 +598,7 @@ function handleReset() {
 
 ### Error Flow Diagram
 
-```
+```text
 ┌─────────────────────────────────────────────────────────────────┐
 │                         App.vue                                  │
 │  ┌───────────────────────────────────────────────────────────┐  │
