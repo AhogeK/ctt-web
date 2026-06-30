@@ -205,7 +205,60 @@ http://localhost:5173/oauth/callback?accessToken=fake&refreshToken=fake&redirect
 
 ---
 
-## 测试用例 8: 重复点击防护
+## 测试用例 8: GitHub 解绑按钮（设置页）
+
+**目的**: 验证设置页的 GitHub 解绑功能（Disconnect）
+
+**前提**:
+- 用户已登录
+- 用户已通过 GitHub OAuth 绑定 GitHub 账户
+- 访问 `http://localhost:5173/settings/profile`
+
+**步骤**:
+1. 观察页面内容
+
+**预期结果**:
+- [ ] 页面显示 "Connected as {githubLogin}" 状态
+- [ ] 不再显示 "Connect GitHub" 按钮
+- [ ] 显示 "Disconnect GitHub" 按钮
+
+**交互测试（成功路径）**:
+1. 点击 "Disconnect GitHub" 按钮
+2. 弹出确认对话框，标题 "Disconnect GitHub account?"
+3. 点击 "Disconnect" 确认
+4. 观察 Network 面板
+
+**预期结果**:
+- [ ] Network 显示 `DELETE /api/v1/auth/oauth/accounts/github` 请求，状态码 204
+- [ ] 显示成功 toast "GitHub account disconnected"
+- [ ] 页面状态变为 "Not connected"
+- [ ] "Connect GitHub" 按钮重新出现
+- [ ] 关闭确认对话框
+
+**交互测试（取消路径）**:
+1. 点击 "Disconnect GitHub" 按钮
+2. 在弹出的确认对话框中点击 "Cancel"
+
+**预期结果**:
+- [ ] 对话框关闭
+- [ ] 不发出网络请求
+- [ ] 状态保持 "Connected"
+
+**交互测试（最后登录方式保护）**:
+1. 用户只有 GitHub 登录（无密码）
+2. 点击 "Disconnect GitHub" → 点击确认
+3. 观察响应
+
+**预期结果**:
+- [ ] Network 返回 409 + AUTH_018
+- [ ] Toast "Cannot unlink the last login method. Please set a password first."
+- [ ] GitHub 仍然绑定
+
+> ✅ v0.8.42 完成：ctt-web ProfileView Disconnect 按钮启用 UNBIND flow（DELETE /api/v1/auth/oauth/accounts/{provider}），需要 JWT 鉴权 + shadcn-vue Dialog 二次确认 + AUTH_018 错误引导。详见 ctt-server PR-B（commit 41109c1）+ ctt-web v0.8.42 release notes。
+
+---
+
+## 测试用例 9: 重复点击防护
 
 **目的**: 验证快速重复点击不会导致问题
 
@@ -220,7 +273,7 @@ http://localhost:5173/oauth/callback?accessToken=fake&refreshToken=fake&redirect
 
 ---
 
-## 测试用例 9: 网络错误处理
+## 测试用例 10: 网络错误处理
 
 **目的**: 验证网络请求失败时的错误处理
 
@@ -236,7 +289,7 @@ http://localhost:5173/oauth/callback?accessToken=fake&refreshToken=fake&redirect
 
 ---
 
-## 测试用例 10: Terms Expired 处理
+## 测试用例 11: Terms Expired 处理
 
 **目的**: 验证 terms 过期时的处理
 
@@ -253,7 +306,7 @@ http://localhost:5173/oauth/callback?accessToken=fake&refreshToken=fake&redirect
 
 ---
 
-## 测试用例 11: 亮暗主题切换
+## 测试用例 12: 亮暗主题切换
 
 **目的**: 验证两个主题下 UI 正确显示
 
@@ -270,7 +323,7 @@ http://localhost:5173/oauth/callback?accessToken=fake&refreshToken=fake&redirect
 
 ---
 
-## 测试用例 12: 移动端响应式
+## 测试用例 13: 移动端响应式
 
 **目的**: 验证移动端显示正常
 
@@ -287,7 +340,7 @@ http://localhost:5173/oauth/callback?accessToken=fake&refreshToken=fake&redirect
 
 ---
 
-## 测试用例 13: Token 刷新机制
+## 测试用例 14: Token 刷新机制
 
 **目的**: 验证 OAuth 登录后 token 刷新正常
 
@@ -303,7 +356,7 @@ http://localhost:5173/oauth/callback?accessToken=fake&refreshToken=fake&redirect
 
 ---
 
-## 测试用例 14: 并发请求防护
+## 测试用例 15: 并发请求防护
 
 **目的**: 验证多个并发请求时 token 刷新不会重复
 
@@ -319,7 +372,7 @@ http://localhost:5173/oauth/callback?accessToken=fake&refreshToken=fake&redirect
 
 ---
 
-## 测试用例 15: 登出后 OAuth 状态清理
+## 测试用例 16: 登出后 OAuth 状态清理
 
 **目的**: 验证登出后 OAuth 相关状态被清理
 
@@ -341,7 +394,7 @@ http://localhost:5173/oauth/callback?accessToken=fake&refreshToken=fake&redirect
 
 1. **GitHub 绑定状态**: 当前 "Not connected" 是硬编码，需要后端 API 支持才能显示实际绑定状态
 2. **AUTH_019 处理**: 错误页显示 "Terms of service need to be accepted"，但没有自动跳转到条款页面
-3. **AUTH_017/AUTH_018**: 这些错误码仅在解绑场景出现，当前前端未实现解绑功能
+3. **AUTH_017/AUTH_018**: 这些错误码仅在解绑场景出现。**v0.8.42 已实现**: ProfileView Disconnect 按钮触发 UNBIND 流程, 错误通过 toast 反馈。AUTH_017=未绑定, AUTH_018=最后登录方式。
 
 ---
 
@@ -356,14 +409,15 @@ http://localhost:5173/oauth/callback?accessToken=fake&refreshToken=fake&redirect
 | 5. 错误码显示 | ⬜ | |
 | 6. Open Redirect 防护 | ⬜ | |
 | 7. GitHub 绑定按钮 | ⬜ | |
-| 8. 重复点击防护 | ⬜ | |
-| 9. 网络错误处理 | ⬜ | |
-| 10. Terms Expired | ⬜ | |
-| 11. 亮暗主题 | ⬜ | |
-| 12. 移动端响应式 | ⬜ | |
-| 13. Token 刷新 | ⬜ | |
-| 14. 并发请求防护 | ⬜ | |
-| 15. 登出状态清理 | ⬜ | |
+| 8. GitHub 解绑按钮 | ⬜ | |
+| 9. 重复点击防护 | ⬜ | |
+| 10. 网络错误处理 | ⬜ | |
+| 11. Terms Expired | ⬜ | |
+| 12. 亮暗主题 | ⬜ | |
+| 13. 移动端响应式 | ⬜ | |
+| 14. Token 刷新 | ⬜ | |
+| 15. 并发请求防护 | ⬜ | |
+| 16. 登出状态清理 | ⬜ | |
 
 ---
 

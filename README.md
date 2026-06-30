@@ -2,7 +2,7 @@
 
 [![License](https://img.shields.io/badge/license-MIT-green.svg)](LICENSE)
 [![Vue](https://img.shields.io/badge/Vue-3.5-42b883.svg)](https://vuejs.org/)
-[![Vite+](https://img.shields.io/badge/Vite+-unified--toolchain-646cff.svg)](https://vite.dev/)
+[![Vite](https://img.shields.io/badge/Vite-8-646cff.svg)](https://vitejs.dev/)
 [![pnpm](https://img.shields.io/badge/pnpm-10.x-f69220.svg)](https://pnpm.io/)
 
 Web dashboard frontend for [CTT Server](https://github.com/AhogeK/ctt-server) — the cloud sync backend of
@@ -16,7 +16,7 @@ visualization.
 | Layer          | Technology                                                  |
 | -------------- | ----------------------------------------------------------- |
 | Framework      | Vue 3.5 + TypeScript 6.0 (Strict, modern module resolution) |
-| Build          | Vite+ (unified toolchain, Rolldown engine)                  |
+| Build          | Vite 8 (Rolldown engine)                                    |
 | Routing        | Vue Router 5 (feature-based routing, type-safe meta)        |
 | Server State   | TanStack Query v5                                           |
 | Global State   | Pinia 3 (auth + theme stores with VueUse persistence)       |
@@ -28,7 +28,6 @@ visualization.
 | Icons          | Iconify Vue                                                 |
 | i18n           | Vue I18n v11                                                |
 | Package Manger | pnpm v10 (via corepack)                                     |
-| Toolchain      | Vite+ (vp CLI — unified dev/build/test/lint/fmt)            |
 | Lint           | Oxlint v1 (primary) + ESLint                                |
 | Format         | Oxfmt (100% Prettier compatible)                            |
 | Git Hooks      | simple-git-hooks + lint-staged                              |
@@ -56,8 +55,8 @@ visualization.
 | Leaderboard             | Leaderboard view with rankings, composable-driven data fetching                                            |
 | Theme System            | Light/dark mode toggle, Pinia theme store with VueUse persistence                                          |
 | Terms Acceptance        | Terms version tracking on registration, expiration handling on login, 403 interception with request replay |
-| Bot Protection          | hCaptcha integration on auth forms with graceful degradation (captchaSiteKey=null disables)               |
-| GitHub OAuth            | OAuth login + account BIND flow from ProfileView with 8-code BIND error mapping; TanStack Query status      |
+| Bot Protection          | hCaptcha integration on auth forms with graceful degradation (captchaSiteKey=null disables)                |
+| GitHub OAuth            | OAuth login + account BIND/UNBIND flow from ProfileView with Dialog confirmation; 8-code BIND + 2-code UNBIND error mapping; TanStack Query status |
 
 ## 🗺 Project Structure
 
@@ -106,19 +105,19 @@ pnpm install
 ### Development
 
 ```sh
-vp dev
+pnpm dev
 ```
 
 ### Type Check + Production Build
 
 ```sh
-vp build
+pnpm build
 ```
 
 ### Preview Production Build
 
 ```sh
-vp preview
+pnpm preview
 ```
 
 ## 🧪 Testing
@@ -133,7 +132,7 @@ vp preview
 - **Assertions**: @testing-library/jest-dom provides semantic matchers (toBeInTheDocument, etc.)
 
 ```sh
-vp test
+pnpm test:unit
 ```
 
 ### E2E Tests (Playwright)
@@ -161,14 +160,14 @@ pnpm build && pnpm test:e2e
 ## 🔍 Lint & Format
 
 ```sh
-# Lint + Format + Type Check (all-in-one)
-vp check
+# Lint (Oxlint primary, ESLint supplemental)
+pnpm lint
 
-# Lint only
-vp lint
+# Format with Oxfmt
+pnpm format
 
-# Format only
-vp fmt
+# Type check only
+pnpm type-check
 ```
 
 Pre-commit hooks run automatically via `simple-git-hooks` + `lint-staged` on staged `*.ts`, `*.vue`, `*.js` files.
