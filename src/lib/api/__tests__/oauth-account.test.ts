@@ -188,4 +188,94 @@ describe('oauth-account API', () => {
       await expect(oauthAccountApi.fetchLinkedOAuthAccounts()).resolves.toBeDefined()
     })
   })
+
+  describe('unbindOAuthAccount', () => {
+    it('issues DELETE to the correct endpoint with provider in path', async () => {
+      // 204 No Content — apiFetch returns undefined for empty body
+      vi.mocked(apiFetch).mockResolvedValueOnce(undefined)
+
+      await oauthAccountApi.unbindOAuthAccount('github')
+
+      expect(apiFetch).toHaveBeenCalledTimes(1)
+      expect(apiFetch).toHaveBeenCalledWith('/api/v1/auth/oauth/accounts/github', {
+        method: 'DELETE',
+      })
+    })
+
+    it('returns undefined on 204 No Content success', async () => {
+      vi.mocked(apiFetch).mockResolvedValueOnce(undefined)
+
+      const result = await oauthAccountApi.unbindOAuthAccount('github')
+
+      expect(result).toBeUndefined()
+    })
+
+    it('propagates 404 AUTH_017 error (not linked)', async () => {
+      const notLinkedError = Object.assign(new Error('Not Found'), {
+        statusCode: 404,
+        data: { code: 'AUTH_017' },
+      })
+      vi.mocked(apiFetch).mockRejectedValueOnce(notLinkedError)
+
+      await expect(oauthAccountApi.unbindOAuthAccount('github')).rejects.toBe(notLinkedError)
+    })
+
+    it('propagates 409 AUTH_018 error (last login method)', async () => {
+      const lastMethodError = Object.assign(new Error('Conflict'), {
+        statusCode: 409,
+        data: { code: 'AUTH_018' },
+      })
+      vi.mocked(apiFetch).mockRejectedValueOnce(lastMethodError)
+
+      await expect(oauthAccountApi.unbindOAuthAccount('github')).rejects.toBe(lastMethodError)
+    })
+
+    it('encodes provider with special characters via encodeURIComponent', async () => {
+      vi.mocked(apiFetch).mockResolvedValueOnce(undefined)
+
+      await oauthAccountApi.unbindOAuthAccount('my provider/1')
+
+      expect(apiFetch).toHaveBeenCalledWith('/api/v1/auth/oauth/accounts/my%20provider%2F1', { method: 'DELETE' })
+    })
+
+    it('propagates network error on connection failure', async () => {
+      const networkError = new TypeError('Failed to fetch')
+      vi.mocked(apiFetch).mockRejectedValueOnce(networkError)
+
+      await expect(oauthAccountApi.unbindOAuthAccount('github')).rejects.toThrow('Failed to fetch')
+    })
+
+    it('propagates 401 AUTH_002 error (no JWT)', async () => {
+      vi.mocked(apiFetch).mockRejectedValueOnce(
+        Object.assign(new Error('Unauthorized'), {
+          statusCode: 401,
+          data: { code: 'AUTH_002' },
+        }),
+      )
+
+      await expect(oauthAccountApi.unbindOAuthAccount('github')).rejects.toThrow('Unauthorized')
+    })
+
+    it('propagates 400 COMMON_001 error (invalid provider)', async () => {
+      vi.mocked(apiFetch).mockRejectedValueOnce(
+        Object.assign(new Error('Bad Request'), {
+          statusCode: 400,
+          data: { code: 'COMMON_001', message: 'Unsupported OAuth provider' },
+        }),
+      )
+
+      await expect(oauthAccountApi.unbindOAuthAccount('invalid-provider')).rejects.toThrow('Bad Request')
+    })
+
+    it('propagates 5xx server error', async () => {
+      vi.mocked(apiFetch).mockRejectedValueOnce(
+        Object.assign(new Error('Internal Server Error'), {
+          statusCode: 500,
+          data: { code: 'INTERNAL_ERROR' },
+        }),
+      )
+
+      await expect(oauthAccountApi.unbindOAuthAccount('github')).rejects.toThrow('Internal Server Error')
+    })
+  })
 })

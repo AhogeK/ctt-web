@@ -3,18 +3,30 @@
  * Profile settings view component.
  * Displays user profile information and account management options.
  */
-import { computed, onMounted } from 'vue'
+import { computed, onMounted, ref } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { useMutation, useQuery } from '@tanstack/vue-query'
 import { toast } from 'vue-sonner'
-import { getGitHubAuthorizeUrl, fetchLinkedOAuthAccounts } from '@/lib/api'
-import { getOAuthBindErrorMessage } from '@/lib/errors/oauth-bind-error-messages'
+import { getGitHubAuthorizeUrl, fetchLinkedOAuthAccounts, unbindOAuthAccount } from '@/lib/api'
+import { getOAuthBindErrorMessage, getOAuthUnbindErrorMessage } from '@/lib/errors/oauth-bind-error-messages'
+import { extractErrorCode } from '@/lib/utils/api-error'
 import { Button } from '@/components/ui/button'
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from '@/components/ui/dialog'
 import { cn } from '@/lib/utils'
 import type { OAuthAccountBinding } from '@/lib/schemas/oauth-account.schema'
 
 const route = useRoute()
 const router = useRouter()
+
+const isUnbindDialogOpen = ref(false)
 
 const githubMutation = useMutation({
   // Action 'bind' links the GitHub account to the currently authenticated user.
@@ -29,10 +41,32 @@ const githubMutation = useMutation({
     // AUTH_001 means the apiFetch interceptor (instance.ts) is already
     // clearing auth state and redirecting to /login. Showing our own
     // toast on top would race with the redirect and confuse the user.
-    const code = (error as { data?: { code?: string } })?.data?.code
+    const code = extractErrorCode(error)
     if (code === 'AUTH_001') return
 
     toast.error('GitHub linking failed', { description: 'Unable to start GitHub authorization. Please try again.' })
+  },
+})
+
+const unbindMutation = useMutation({
+  // Provider is hardcoded to 'github' for v0.8.42 (only supported provider).
+  // Future providers will be handled by a per-provider dialog dispatch.
+  mutationFn: (_action: 'unbind') => unbindOAuthAccount('github'),
+  onSuccess: () => {
+    toast.success('GitHub account disconnected')
+    void refetchOAuthAccounts()
+    isUnbindDialogOpen.value = false
+  },
+  onError: (error) => {
+    // AUTH_001 is handled by the global apiFetch interceptor (clears
+    // auth, redirects to /login). Showing a competing toast would race
+    // with the redirect.
+    const code = extractErrorCode(error)
+    if (code === 'AUTH_001') return
+
+    const message = getOAuthUnbindErrorMessage(code ?? '')
+    toast.error('Failed to disconnect GitHub', { description: message })
+    isUnbindDialogOpen.value = false
   },
 })
 
@@ -56,6 +90,14 @@ function handleBindGitHub() {
   // Pass 'bind' as the mutate variable so TanStack Query forwards it to
   // mutationFn; semantically this selects the BIND flow at the backend.
   githubMutation.mutate('bind')
+}
+
+function handleConfirmUnbind() {
+  unbindMutation.mutate('unbind')
+}
+
+function handleCancelUnbind() {
+  isUnbindDialogOpen.value = false
 }
 
 function handleRetryLoad() {
@@ -202,6 +244,7 @@ onMounted(() => {
           </div>
         </div>
         <Button
+          v-if="!githubBinding"
           variant="outline"
           :class="
             cn(
@@ -218,6 +261,47 @@ onMounted(() => {
         >
           {{ githubMutation.isPending.value ? 'Connecting...' : 'Connect GitHub' }}
         </Button>
+        <Dialog v-else :open="isUnbindDialogOpen" @update:open="isUnbindDialogOpen = $event">
+          <DialogTrigger as-child>
+            <Button
+              variant="outline"
+              :class="
+                cn(
+                  'h-9 rounded-md font-[510] text-sm',
+                  'border-[#d0d6e0] bg-white text-[#1a1a2e]',
+                  'dark:border-white/8 dark:bg-white/2 dark:text-[#f7f8f8]',
+                  'transition-all duration-200',
+                  'hover:bg-[#f3f4f5] hover:border-red-300',
+                  'dark:hover:bg-white/5 dark:hover:border-red-400',
+                )
+              "
+              :disabled="unbindMutation.isPending.value"
+            >
+              {{ unbindMutation.isPending.value ? 'Disconnecting...' : 'Disconnect GitHub' }}
+            </Button>
+          </DialogTrigger>
+          <DialogContent class="sm:max-w-md">
+            <DialogHeader>
+              <DialogTitle>Disconnect GitHub account?</DialogTitle>
+              <DialogDescription>
+                This will unlink your GitHub account
+                <span v-if="getBindingLabel(githubBinding)">
+                  (<strong>{{ getBindingLabel(githubBinding) }}</strong
+                  >)
+                </span>
+                from your CTT account. You can reconnect at any time.
+              </DialogDescription>
+            </DialogHeader>
+            <DialogFooter class="gap-2">
+              <Button variant="ghost" :disabled="unbindMutation.isPending.value" @click="handleCancelUnbind">
+                Cancel
+              </Button>
+              <Button variant="destructive" :disabled="unbindMutation.isPending.value" @click="handleConfirmUnbind">
+                {{ unbindMutation.isPending.value ? 'Disconnecting...' : 'Disconnect' }}
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
       </div>
     </div>
   </div>

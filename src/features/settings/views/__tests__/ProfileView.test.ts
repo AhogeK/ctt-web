@@ -13,6 +13,7 @@ const mockMutate = vi.hoisted(() => vi.fn<(...args: unknown[]) => unknown>())
 const mockRefetch = vi.hoisted(() => vi.fn<() => Promise<unknown>>(() => Promise.resolve()))
 const mockFetchLinkedOAuthAccounts = vi.hoisted(() => vi.fn<() => Promise<unknown>>())
 const mockGetGitHubAuthorizeUrl = vi.hoisted(() => vi.fn<() => Promise<unknown>>())
+const mockUnbindOAuthAccount = vi.hoisted(() => vi.fn<() => Promise<unknown>>())
 const mockReplace = vi.hoisted(() => vi.fn<(...args: unknown[]) => unknown>())
 
 // Real vue refs so the template auto-unwrap works correctly
@@ -22,12 +23,30 @@ const queryData: Ref<{ accounts: Array<Record<string, unknown>> } | undefined> =
 const queryIsPending: Ref<boolean> = ref(false)
 const queryIsError: Ref<boolean> = ref(false)
 
-let mutationOnError: ((error: unknown) => void) | undefined
+// Indexed by useMutation call order: [0] = BIND (githubMutation), [1] = UNBIND (unbindMutation).
+const mutationHandlers: Array<{
+  onSuccess?: (data: unknown) => void
+  onError?: (error: unknown) => void
+}> = []
 // Module-level mutable query — per-test setup reassigns this before mount()
 // to simulate OAuth callback URL state (e.g. { linked: 'github' } or
 // { error: 'AUTH_016' }). The mock useRoute returns this same object
 // reference, so changes made before mount() are visible on the next render.
 let routeQuery: Record<string, string> = {}
+
+// Index 1 = UNBIND mutation (index 0 = BIND). Reset clears the array
+// so a single mount yields a deterministic order. Throws if no handler
+// is registered so a test setup bug fails loudly.
+function getUnbindHandlers(): {
+  onSuccess?: (data: unknown) => void
+  onError?: (error: unknown) => void
+} {
+  const handler = mutationHandlers[1]
+  if (!handler) {
+    throw new Error('UNBIND mutation was not registered (expected at index 1)')
+  }
+  return handler
+}
 
 // ==========================================
 // Mocks
@@ -59,14 +78,30 @@ vi.mock('vue-router', () => ({
 vi.mock('@tanstack/vue-query', () => ({
   QueryClient: vi.fn<() => void>(),
   useMutation: vi.fn<
-    (options: { onSuccess?: (data: { authUrl: string }) => void; onError?: (error: unknown) => void }) => {
+    (options: {
+      mutationFn?: (action: unknown) => unknown
+      onSuccess?: (data: unknown) => void
+      onError?: (error: unknown) => void
+    }) => {
       mutate: (...args: unknown[]) => unknown
       isPending: { value: boolean }
     }
   >((options) => {
-    mutationOnError = options.onError
+    mutationHandlers.push({ onSuccess: options.onSuccess, onError: options.onError })
     return {
-      mutate: mockMutate,
+      // Wire mockMutate to actually invoke mutationFn so the UNBIND
+      // flow can verify that the API was called end-to-end. BIND tests
+      // assert on mockMutate/mockToastError directly, not on the
+      // side-effect of mutationFn, so this stays compatible.
+      mutate: (action: unknown) => {
+        mockMutate(action)
+        const result = options.mutationFn?.(action)
+        if (result instanceof Promise) {
+          result.catch(() => {
+            /* fire-and-forget for mock */
+          })
+        }
+      },
       isPending: { value: false },
     }
   }),
@@ -87,6 +122,7 @@ vi.mock('@tanstack/vue-query', () => ({
 
 vi.mock('@/lib/api/oauth-account', () => ({
   fetchLinkedOAuthAccounts: mockFetchLinkedOAuthAccounts,
+  unbindOAuthAccount: mockUnbindOAuthAccount,
 }))
 
 vi.mock('@/lib/api/auth', () => ({
@@ -124,6 +160,21 @@ vi.mock('@/components/ui/button', () => ({
   Button: { template: '<button><slot /></button>' },
 }))
 
+vi.mock('@/components/ui/dialog', () => ({
+  // Render inline so wrapper.findAll('button') can locate dialog controls
+  // without traversing a Teleport target. Matches the Button mock pattern.
+  Dialog: {
+    props: ['open'],
+    template: '<div data-testid="dialog-root"><slot /></div>',
+  },
+  DialogContent: { template: '<div data-testid="dialog-content"><slot /></div>' },
+  DialogDescription: { template: '<div data-testid="dialog-description"><slot /></div>' },
+  DialogFooter: { template: '<div data-testid="dialog-footer"><slot /></div>' },
+  DialogHeader: { template: '<div data-testid="dialog-header"><slot /></div>' },
+  DialogTitle: { template: '<div data-testid="dialog-title"><slot /></div>' },
+  DialogTrigger: { template: '<div><slot /></div>' },
+}))
+
 vi.mock('@/lib/utils', () => ({
   cn: (...inputs: unknown[]) => inputs.filter(Boolean).join(' '),
 }))
@@ -155,7 +206,8 @@ function resetMocks(): void {
   mockReplace.mockResolvedValue(undefined)
   mockFetchLinkedOAuthAccounts.mockClear()
   mockGetGitHubAuthorizeUrl.mockClear()
-  mutationOnError = undefined
+  mockUnbindOAuthAccount.mockClear()
+  mutationHandlers.length = 0
   routeQuery = {}
   setQueryState()
 }
@@ -285,13 +337,21 @@ describe('ProfileView', () => {
   })
 
   describe('Connect GitHub button', () => {
-    it('always shows Connect GitHub label (no Disconnect button this iteration)', () => {
+    it('shows Connect GitHub when not bound and Disconnect GitHub when bound', () => {
+      // Disconnected state: Connect button visible.
+      setQueryState({ data: { accounts: [] } })
+      const disconnected = mount(ProfileView)
+      expect(disconnected.html()).toContain('Connect GitHub')
+      expect(disconnected.html()).not.toContain('Disconnect GitHub')
+      disconnected.unmount()
+
+      // Connected state: Disconnect button replaces Connect.
       setQueryState({
         data: { accounts: [githubBindingRow({ providerLogin: 'octocat' })] },
       })
-      const wrapper = mount(ProfileView)
-
-      expect(wrapper.html()).toContain('Connect GitHub')
+      const connected = mount(ProfileView)
+      expect(connected.html()).toContain('Disconnect GitHub')
+      expect(connected.html()).not.toContain('Connect GitHub')
     })
 
     it('invokes the GitHub authorize mutation on click', async () => {
@@ -305,9 +365,11 @@ describe('ProfileView', () => {
 
     it('shows a toast on mutation error', () => {
       mount(ProfileView)
-      expect(mutationOnError).toBeDefined()
+      // BIND mutation is registered first (index 0); UNBIND is index 1.
+      const bindOnError = mutationHandlers[0]?.onError
+      expect(bindOnError).toBeDefined()
 
-      mutationOnError!(new Error('network down'))
+      bindOnError!(new Error('network down'))
 
       expect(mockToastError).toHaveBeenCalledWith('GitHub linking failed', {
         description: 'Unable to start GitHub authorization. Please try again.',
@@ -448,6 +510,170 @@ describe('ProfileView', () => {
       await flushPromises()
 
       expect(mockMutate).toHaveBeenCalledWith('bind')
+      localWrapper.unmount()
+    })
+  })
+
+  describe('GitHub OAuth unbind flow', () => {
+    it('shows Disconnect button when bound and hides Connect button', () => {
+      setQueryState({
+        data: { accounts: [githubBindingRow({ providerLogin: 'octocat' })] },
+      })
+      const wrapper = mount(ProfileView)
+
+      const html = wrapper.html()
+      expect(html).toContain('Disconnect GitHub')
+      expect(html).not.toContain('Connect GitHub')
+    })
+
+    it('opens confirmation dialog when Disconnect button clicked', async () => {
+      setQueryState({
+        data: { accounts: [githubBindingRow({ providerLogin: 'octocat' })] },
+      })
+      const wrapper = mount(ProfileView)
+
+      // Inline-mocked Dialog renders content unconditionally, so we
+      // assert the click path is wired (state setter fires, dialog
+      // controls exist) rather than checking presence/absence of
+      // the dialog title in the wrapper.
+      const disconnectButton = wrapper.findAll('button').find((b) => b.text().includes('Disconnect GitHub'))
+      expect(disconnectButton).toBeDefined()
+      await disconnectButton!.trigger('click')
+      await flushPromises()
+
+      // After click, the dialog controls are present and the state
+      // is wired so a follow-up confirm can fire.
+      const confirmButton = wrapper.findAll('button').find((b) => b.text().trim() === 'Disconnect')
+      expect(confirmButton).toBeDefined()
+    })
+
+    it('calls unbindOAuthAccount when dialog Confirm clicked', async () => {
+      setQueryState({
+        data: { accounts: [githubBindingRow({ providerLogin: 'octocat' })] },
+      })
+      mockUnbindOAuthAccount.mockResolvedValueOnce(undefined)
+      const wrapper = mount(ProfileView)
+
+      // Open the dialog.
+      const disconnectButton = wrapper.findAll('button').find((b) => b.text().includes('Disconnect GitHub'))
+      await disconnectButton!.trigger('click')
+      await flushPromises()
+
+      // Click the destructive "Disconnect" confirm inside the dialog footer.
+      const confirmButton = wrapper.findAll('button').find((b) => b.text().trim() === 'Disconnect')
+      expect(confirmButton).toBeDefined()
+      await confirmButton!.trigger('click')
+      await flushPromises()
+
+      expect(mockUnbindOAuthAccount).toHaveBeenCalledWith('github')
+    })
+
+    it('shows success toast and refetches accounts on unbind success', async () => {
+      setQueryState({
+        data: { accounts: [githubBindingRow({ providerLogin: 'octocat' })] },
+      })
+      mockUnbindOAuthAccount.mockResolvedValueOnce(undefined)
+      mount(ProfileView)
+
+      const { onSuccess } = getUnbindHandlers()
+      expect(onSuccess).toBeDefined()
+      onSuccess!(undefined)
+      await flushPromises()
+
+      expect(mockToastSuccess).toHaveBeenCalledWith('GitHub account disconnected')
+      expect(mockRefetch).toHaveBeenCalled()
+    })
+
+    it('shows error toast with mapped message on unbind AUTH_018', async () => {
+      setQueryState({
+        data: { accounts: [githubBindingRow({ providerLogin: 'octocat' })] },
+      })
+      mount(ProfileView)
+
+      const { onError } = getUnbindHandlers()
+      expect(onError).toBeDefined()
+      onError!(Object.assign(new Error('Conflict'), { data: { code: 'AUTH_018' } }))
+      await flushPromises()
+
+      expect(mockToastError).toHaveBeenCalledWith(
+        'Failed to disconnect GitHub',
+        expect.objectContaining({
+          description: 'Cannot unlink the last login method. Please set a password first.',
+        }),
+      )
+    })
+
+    it('shows error toast with fallback on unbind unknown error', async () => {
+      setQueryState({
+        data: { accounts: [githubBindingRow({ providerLogin: 'octocat' })] },
+      })
+      mount(ProfileView)
+
+      const { onError } = getUnbindHandlers()
+      expect(onError).toBeDefined()
+      onError!(Object.assign(new Error('Server down'), { data: { code: 'UNKNOWN_FUTURE' } }))
+      await flushPromises()
+
+      expect(mockToastError).toHaveBeenCalledWith(
+        'Failed to disconnect GitHub',
+        expect.objectContaining({
+          description: 'Failed to disconnect GitHub. Please try again.',
+        }),
+      )
+    })
+
+    it('does not toast on unbind AUTH_001 (handled by global interceptor)', async () => {
+      setQueryState({
+        data: { accounts: [githubBindingRow({ providerLogin: 'octocat' })] },
+      })
+      mount(ProfileView)
+
+      const { onError } = getUnbindHandlers()
+      expect(onError).toBeDefined()
+      onError!(Object.assign(new Error('Unauthorized'), { data: { code: 'AUTH_001' } }))
+      await flushPromises()
+
+      expect(mockToastError).not.toHaveBeenCalled()
+    })
+
+    it('shows mapped AUTH_017 toast on unbind error (not linked)', async () => {
+      setQueryState({
+        data: { accounts: [githubBindingRow({ providerLogin: 'octocat' })] },
+      })
+      const localWrapper = mount(ProfileView)
+      await flushPromises()
+
+      const { onError } = getUnbindHandlers()
+      onError!(Object.assign(new Error('Not Found'), { data: { code: 'AUTH_017' } }))
+      await flushPromises()
+
+      expect(mockToastError).toHaveBeenCalledWith(
+        'Failed to disconnect GitHub',
+        expect.objectContaining({
+          description: 'This GitHub account is not linked to your account.',
+        }),
+      )
+      localWrapper.unmount()
+    })
+
+    it('closes dialog when Cancel button clicked (no API call)', async () => {
+      setQueryState({
+        data: { accounts: [githubBindingRow({ providerLogin: 'octocat' })] },
+      })
+      const localWrapper = mount(ProfileView)
+      await flushPromises()
+
+      const buttons = localWrapper.findAll('button')
+      const cancelButton = buttons.find((b) => b.text().includes('Cancel'))
+      expect(cancelButton).toBeDefined()
+      expect(mockUnbindOAuthAccount).not.toHaveBeenCalled()
+
+      await cancelButton!.trigger('click')
+      await flushPromises()
+
+      expect(mockUnbindOAuthAccount).not.toHaveBeenCalled()
+      expect(mockToastError).not.toHaveBeenCalled()
+      expect(mockToastSuccess).not.toHaveBeenCalled()
       localWrapper.unmount()
     })
   })

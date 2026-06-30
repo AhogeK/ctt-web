@@ -41,6 +41,28 @@ export function isApiError(error: unknown): error is ApiError {
 }
 
 /**
+ * Extract the backend error code from an unknown error object.
+ *
+ * The backend wraps every error response with `{ code: string }` inside
+ * the `data` field (e.g. ofetch throws with `.data.code === 'AUTH_018'`).
+ * Callers use the code to short-circuit on known categories (e.g. AUTH_001
+ * is handled by the global apiFetch interceptor) and to look up a
+ * user-friendly message.
+ *
+ * Returns `undefined` if the error does not match the expected shape —
+ * callers should treat that as "no code available" and apply the
+ * default error path.
+ *
+ * @param error - The error to inspect
+ * @returns The backend error code, or `undefined` when unavailable
+ */
+export function extractErrorCode(error: unknown): string | undefined {
+  if (!error || typeof error !== 'object') return undefined
+  const data = (error as { data?: { code?: string } }).data
+  return data?.code
+}
+
+/**
  * Map backend error codes to user-friendly messages.
  *
  * Covers known error codes from ctt-server auth endpoints.
