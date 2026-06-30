@@ -34,6 +34,14 @@
 
 ### OAuth Account Binding Status (v0.8.39)
 
+### Sidebar Branding & Copyright (v0.8.42)
+
+- `src/components/app/AppSidebar.vue`: header "CTT" → "Code Time Tracker" (with `text-sm` to fit sidebar width); SidebarFooter Logout button → "© 2026 AhogeK" copyright line
+- `src/components/app/__tests__/AppSidebar.test.ts`: removed 8 Logout tests, added 2 new tests (copyright line + no-Logout-button)
+- Net change: 580 → 575 tests (removed 8 + added 2, plus pre-existing test count baseline)
+- AI content stays on develop only; master cherry-picks will get only the code commit, not this memory
+
+
 - Closes backend `GET /api/v1/auth/oauth/accounts` endpoint (ctt-server 1e333dd)
 - `oauth-account.schema.ts`: `OAuthAccountBindingSchema` + `OAuthAccountsResponseDataSchema` (provider as free-form string for future expansion, nullable providerLogin/email, ISO 8601 timestamps)
 - `oauth-account.ts`: `fetchLinkedOAuthAccounts()` wraps `apiFetch` + `RestApiResponseSchema` + inner data schema; 401 propagates to existing interceptor

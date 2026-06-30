@@ -114,6 +114,14 @@ Implementation notes:
 - Frontend listens for BIND query params in ProfileView `onMounted` and clears URL via `router.replace({ query: {} })` to prevent toast re-trigger on refresh
 - UNBIND uses shadcn-vue Dialog for confirmation; click handler is single-purpose
 
+
+### Sidebar UI Branding (v0.8.42)
+
+- `src/components/app/AppSidebar.vue` header displays the full project name "Code Time Tracker" (instead of abbreviated "CTT")
+- Footer shows copyright line "© 2026 AhogeK"
+- Logout button removed from sidebar; the `useAuthStore.logout()` method is still used by other code paths (token expiry interceptor)
+
+
 ## Key Architectural Decisions
 
 - Server State (API data) → TanStack Query only, never Pinia

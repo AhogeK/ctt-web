@@ -22,6 +22,8 @@
 
 ## Completed (Recent)
 
+- [x] Sidebar Branding & Copyright (v0.8.42): `AppSidebar.vue` header CTT → "Code Time Tracker"; Logout button → "© 2026 AhogeK" copyright line. `AppSidebar.test.ts` removed 8 Logout tests, added 2 new tests. 575/575 tests pass.
+
 - [x] OAuth Account Unbind Flow (v0.8.41): Closes ctt-server PR-B DELETE endpoint. `unbindOAuthAccount(provider)` in api; state-aware Connect/Disconnect button in ProfileView with Dialog confirmation; `getOAuthUnbindErrorMessage` for AUTH_017 (not linked) + AUTH_018 (last method). approximately 32 new tests (incl. 6 defensive cleanups: redundant @click removal, extractErrorCode helper, COMMON_001 mapping), 580/580 pass.
 - [x] OAuth Account Binding Flow (v0.8.40): Closes ctt-server PR-A BIND endpoint. `getGitHubAuthorizeUrl` adds `action` param ('login' | 'bind'); ProfileView handles OAuth callback via `?linked=github` query (success toast + refetch, error toast via 8-code mapping + URL cleanup). 17 new tests, 548/548 pass.
 - [x] OAuth Account Binding Status (v0.8.39): Closes `GET /api/v1/auth/oauth/accounts`. New schema/api/view files; `ProfileView` now drives binding state from the backend (loading / error / connected / disconnected) with TanStack Query caching + window-focus refetch. 531/531 tests pass.
