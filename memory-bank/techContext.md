@@ -97,18 +97,22 @@
 
 ### OAuth Flow Discriminator Pattern
 
-GitHub OAuth has two flows with the same authorize endpoint but different semantics:
+GitHub OAuth has three flows with the same authorize endpoint (or DELETE for unbind):
 - `action='login'`: public endpoint, used by LoginForm for first-time sign-in
 - `action='bind'`: requires JWT, used by ProfileView to link existing account
+- `DELETE /api/v1/auth/oauth/accounts/{provider}`: requires JWT, used by ProfileView to unlink account
 
 Implementation notes:
 - `getGitHubAuthorizeUrl(action: 'login' | 'bind' = 'login')` in `src/lib/api/auth.ts`
-- For bind flow, JWT is auto-injected by `apiFetch` interceptor (`instance.ts:188-196`)
+- `unbindOAuthAccount(provider)` in `src/lib/api/oauth-account.ts` (v0.8.42+)
+- For bind/unbind flows, JWT is auto-injected by `apiFetch` interceptor (`instance.ts:188-196`)
 - TanStack Query mutation: `mutationFn` must wrap the API function (e.g., `() => getGitHubAuthorizeUrl('login')`) so `TVariables` infers as `void` and `mutate()` works without args
 - BIND success redirect: `{frontendUrl}/settings/profile?linked={provider}`
 - BIND failure redirect: `{frontendUrl}/settings/profile?linked={provider}&error={errorCode}`
-- Browser tokens unchanged by BIND flow (backend guarantee)
-- Frontend listens for query params in ProfileView `onMounted` and clears URL via `router.replace({ query: {} })` to prevent toast re-trigger on refresh
+- UNBIND has no redirect (DELETE returns 204 No Content); frontend triggers `refetchOAuthAccounts()` to update UI
+- Browser tokens unchanged by BIND/UNBIND flows (backend guarantee)
+- Frontend listens for BIND query params in ProfileView `onMounted` and clears URL via `router.replace({ query: {} })` to prevent toast re-trigger on refresh
+- UNBIND uses shadcn-vue Dialog for confirmation; click handler is single-purpose
 
 ## Key Architectural Decisions
 

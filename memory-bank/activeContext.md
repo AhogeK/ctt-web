@@ -2,16 +2,26 @@
 
 ## Current Status
 
-**Phase**: GitHub OAuth Binding Flow (Link from Profile) Complete
-**Version**: 0.8.40 (2026-06-28)
+**Phase**: GitHub OAuth Binding + Unbinding Flow (ProfileView) Complete
+**Version**: 0.8.41 (2026-06-29)
 **Branch**: develop at 4234d27, master at d8a656a
-**Tests**: 548/548 pass (verified 2026-06-28)
+**Tests**: 580/580 pass (verified 2026-06-29)
 **Plans**:
 - docs/plans/2026-05-02-terms-acceptance-tracking.md — completed
 - docs/plans/2026-05-23-hcaptcha-integration.md — completed
 - .dev/plans/2026-05-28-github-oauth.md — completed
 
 ## Recent Activity (v0.8.x — 2026-06)
+
+### OAuth Account Unbind Flow (v0.8.41)
+
+- Closes ctt-server PR-B loop: enable GitHub account disconnection from ProfileView
+- `unbindOAuthAccount(provider)` in `src/lib/api/oauth-account.ts`: issues `DELETE /api/v1/auth/oauth/accounts/{provider}` with JWT
+- `src/lib/errors/oauth-bind-error-messages.ts`: new `OAUTH_UNBIND_ERROR_MESSAGES` + `getOAuthUnbindErrorMessage(code)` (AUTH_017 + AUTH_018) with fallback + dev breadcrumb
+- `ProfileView.vue`: state-aware button — `v-if="!githubBinding"` shows Connect (existing BIND flow), `v-else` shows Disconnect button + shadcn-vue `Dialog` confirmation. Error handling mirrors BIND pattern (AUTH_001 short-circuit, refetch on success, toast + dialog close on error)
+- approximately 32 new tests (6 API + 5 error mapping + 8 view + 7 state-aware + 6 defensive cleanups); 580/580 pass
+- Session invariant: backend guarantees no token rotation; mirror of v0.8.40 BIND
+- v0.8.41 cleanup: removed redundant `@click` on Disconnect button (DialogTrigger as-child handles it); added `extractErrorCode()` helper in `src/lib/utils/api-error.ts` to DRY the type-cast pattern in BIND/UNBIND `onError`; added `COMMON_001` mapping in `OAUTH_UNBIND_ERROR_MESSAGES` for future-proofing
 
 ### OAuth Account Binding Flow (v0.8.40)
 
