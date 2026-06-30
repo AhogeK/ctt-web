@@ -25,6 +25,24 @@ export const OAUTH_BIND_ERROR_MESSAGES: Record<string, string> = {
 }
 
 /**
+ * User-facing error messages for OAuth account UNBIND failures.
+ *
+ * Kept separate from OAUTH_BIND_ERROR_MESSAGES because the same backend
+ * codes (AUTH_017, AUTH_018) carry different semantics depending on the
+ * call direction: AUTH_017 means "already linked to another user" during
+ * BIND but "not linked to current user" during UNBIND. Sharing a single
+ * table would force one side to display a confusing message.
+ *
+ * Reference: ctt-server PR-B (DELETE /api/v1/auth/oauth/accounts/{provider})
+ */
+export const OAUTH_UNBIND_ERROR_MESSAGES: Record<string, string> = {
+  // 400 — only reachable if a non-`github` provider is requested (future-proofing).
+  COMMON_001: 'OAuth provider not supported.',
+  AUTH_017: 'This GitHub account is not linked to your account.',
+  AUTH_018: 'Cannot unlink the last login method. Please set a password first.',
+}
+
+/**
  * Resolves the user-friendly message for an OAuth BIND error code.
  * Returns a default fallback message for unknown / missing codes.
  *
@@ -41,6 +59,25 @@ export function getOAuthBindErrorMessage(code: string): string {
       console.warn(`[oauth-bind] unmapped error code: ${code}`)
     }
     return 'Failed to connect GitHub. Please try again.'
+  }
+  return message
+}
+
+/**
+ * Resolves the user-friendly message for an OAuth UNBIND error code.
+ * Returns a default fallback message for unknown / missing codes.
+ *
+ * @param code - Backend error code (e.g. "AUTH_017", "AUTH_018") from the
+ *               UNBIND failure response body
+ * @returns User-friendly message suitable for display in a toast notification
+ */
+export function getOAuthUnbindErrorMessage(code: string): string {
+  const message = OAUTH_UNBIND_ERROR_MESSAGES[code]
+  if (!message) {
+    if (typeof console !== 'undefined') {
+      console.warn(`[oauth-unbind] unmapped error code: ${code}`)
+    }
+    return 'Failed to disconnect GitHub. Please try again.'
   }
   return message
 }

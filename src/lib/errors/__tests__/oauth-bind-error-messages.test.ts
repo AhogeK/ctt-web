@@ -1,5 +1,10 @@
 import { describe, it, expect } from 'vite-plus/test'
-import { getOAuthBindErrorMessage, OAUTH_BIND_ERROR_MESSAGES } from '../oauth-bind-error-messages'
+import {
+  getOAuthBindErrorMessage,
+  getOAuthUnbindErrorMessage,
+  OAUTH_BIND_ERROR_MESSAGES,
+  OAUTH_UNBIND_ERROR_MESSAGES,
+} from '../oauth-bind-error-messages'
 
 describe('getOAuthBindErrorMessage', () => {
   it.each([
@@ -35,6 +40,30 @@ describe('getOAuthBindErrorMessage', () => {
         'MISSING_OAUTH_PARAMS',
         'INVALID_STATE_ACTION',
       ]),
+    )
+  })
+})
+
+describe('getOAuthUnbindErrorMessage', () => {
+  it.each([
+    ['COMMON_001', 'OAuth provider not supported.'],
+    ['AUTH_017', 'This GitHub account is not linked to your account.'],
+    ['AUTH_018', 'Cannot unlink the last login method. Please set a password first.'],
+  ])('returns mapped message for %s', (code, expected) => {
+    expect(getOAuthUnbindErrorMessage(code)).toBe(expected)
+  })
+
+  it('returns fallback message for unknown error code', () => {
+    expect(getOAuthUnbindErrorMessage('UNKNOWN_FUTURE_CODE')).toBe('Failed to disconnect GitHub. Please try again.')
+  })
+
+  it('returns fallback message for empty error code', () => {
+    expect(getOAuthUnbindErrorMessage('')).toBe('Failed to disconnect GitHub. Please try again.')
+  })
+
+  it('exposes OAUTH_UNBIND_ERROR_MESSAGES record for external consumers', () => {
+    expect(Object.keys(OAUTH_UNBIND_ERROR_MESSAGES)).toEqual(
+      expect.arrayContaining(['COMMON_001', 'AUTH_017', 'AUTH_018']),
     )
   })
 })
