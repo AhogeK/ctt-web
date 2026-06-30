@@ -1,5 +1,4 @@
 <script setup lang="ts">
-import { ref } from 'vue'
 import {
   Sidebar,
   SidebarContent,
@@ -12,35 +11,14 @@ import {
   SidebarGroupLabel,
   SidebarGroupContent,
 } from '@/components/ui/sidebar'
-import { Button } from '@/components/ui/button'
 import { RouterLink } from 'vue-router'
-import { LayoutDashboard, Settings, Monitor, LogOut, Loader2 } from 'lucide-vue-next'
-import { useAuthStore } from '@/stores/auth'
+import { LayoutDashboard, Settings, Monitor } from 'lucide-vue-next'
 
 /**
  * AppSidebar - Navigation sidebar for application pages
  *
  * Displays navigation links for dashboard, devices, settings, etc.
  */
-
-const authStore = useAuthStore()
-const isLoggingOut = ref(false)
-
-/**
- * Handles logout button click.
- * Prevents double-click via loading state guard.
- * Calls authStore.logout() which clears tokens and redirects to login.
- */
-async function handleLogout(): Promise<void> {
-  if (isLoggingOut.value) return
-
-  isLoggingOut.value = true
-  try {
-    await authStore.logout()
-  } finally {
-    isLoggingOut.value = false
-  }
-}
 </script>
 
 <template>
@@ -49,7 +27,7 @@ async function handleLogout(): Promise<void> {
       <SidebarMenu>
         <SidebarMenuItem>
           <SidebarMenuButton size="lg">
-            <span class="font-semibold">CTT</span>
+            <span class="text-sm font-semibold">Code Time Tracker</span>
           </SidebarMenuButton>
         </SidebarMenuItem>
       </SidebarMenu>
@@ -98,20 +76,7 @@ async function handleLogout(): Promise<void> {
     </SidebarContent>
 
     <SidebarFooter>
-      <SidebarMenu>
-        <SidebarMenuItem>
-          <Button
-            variant="ghost"
-            class="w-full justify-start text-secondary-foreground hover:text-foreground"
-            :disabled="isLoggingOut"
-            @click="handleLogout"
-          >
-            <Loader2 v-if="isLoggingOut" class="h-4 w-4 animate-spin" />
-            <LogOut v-else class="h-4 w-4" />
-            <span>{{ isLoggingOut ? 'Logging out...' : 'Logout' }}</span>
-          </Button>
-        </SidebarMenuItem>
-      </SidebarMenu>
+      <div class="px-2 py-1.5 text-xs text-muted-foreground">© 2026 AhogeK</div>
     </SidebarFooter>
   </Sidebar>
 </template>
