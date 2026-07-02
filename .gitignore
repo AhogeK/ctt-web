@@ -48,3 +48,8 @@ src/__tests__/*.js
 .vite-hooks/
 .sisyphus/
 .omo/
+
+# AI agent workspaces (R16 protection)
+.agents/
+.claude/
+.opencode/
