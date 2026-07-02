@@ -49,3 +49,8 @@ src/__tests__/*.js
 
 .sisyphus/
 .omo/
+
+# AI agent workspaces (R16 protection)
+.agents/
+.claude/
+.opencode/
