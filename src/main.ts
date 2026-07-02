@@ -1,7 +1,7 @@
 import './assets/main.css'
 import 'vue-sonner/style.css'
 
-import { createApp } from 'vue'
+import { createApp, nextTick } from 'vue'
 import { createPinia } from 'pinia'
 import { VueQueryPlugin } from '@tanstack/vue-query'
 
@@ -87,6 +87,9 @@ globalThis.addEventListener('unhandledrejection', handleUnhandledRejection)
 globalThis.addEventListener(UNAUTHORIZED_EVENT, handleUnauthorized)
 
 const authStore = useAuthStore()
-await authStore.initializeAuth()
+const authenticated = await authStore.initializeAuth()
+if (authenticated) {
+  void nextTick().then(() => authStore.fetchUserProfile())
+}
 
 app.mount('#app')
