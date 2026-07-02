@@ -455,6 +455,28 @@ non-discriminated endpoints that operate on existing bindings:
 5. On error: `toast.error` with mapped message (see `getOAuthUnbindErrorMessage`) + dialog close.
 6. `AUTH_001` short-circuit: no toast (interceptor redirects to login).
 
+### User Profile Endpoint
+
+| Method | Endpoint             | Auth       | Purpose                                                         |
+| ------ | -------------------- | ---------- | --------------------------------------------------------------- |
+| `GET`  | `/api/v1/users/me`   | Bearer JWT | Current user's profile (id, email, displayName, emailVerified)  |
+
+**Implementation:**
+
+- `src/lib/schemas/user.schema.ts` — `UserProfileSchema` validates `RestApiResponseSchema.data`
+  payload (id, email, displayName, emailVerified, createdAt, lastLoginAt, termsVersion).
+- `src/lib/api/user.ts` — `fetchCurrentUser()` wraps `apiFetch` → `RestApiResponseSchema` → inner
+  `UserProfileSchema` (consistent with oauth-account and auth wiring).
+- `src/stores/auth.ts` — exposes `displayName`, `email`, `emailVerified`, `lastLoginAt` refs +
+  `fetchUserProfile()` action. `clearAuth()` resets all four to null.
+
+**Why Pinia and not TanStack Query?**
+
+- Profile data is session-scoped (read on every authenticated render, refreshed rarely).
+- Server-state caching via TanStack Query adds no value over Pinia's synchronous reactivity for
+  identity fields already co-located with the auth session they describe.
+- `fetchUserProfile()` is fire-and-forget on app init; failures are silent (console.warn + return null).
+
 ### API Error Utility
 
 - **Location**: `src/lib/utils/api-error.ts`
