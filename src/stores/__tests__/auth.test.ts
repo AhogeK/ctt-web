@@ -3,7 +3,9 @@ import { setActivePinia, createPinia } from 'pinia'
 import { ref } from 'vue'
 import { useAuthStore, STORAGE_KEYS, clearRefreshTimer } from '../auth'
 import * as authApi from '@/lib/api/auth'
+import * as userApi from '@/lib/api/user'
 import type { LoginResponse } from '@/lib/schemas/auth.schema'
+import type { UserProfile } from '@/lib/schemas/user.schema'
 
 /**
  * Mock the auth APIs to avoid actual HTTP requests during tests.
@@ -13,6 +15,13 @@ vi.mock('@/lib/api/auth', () => ({
   refresh: vi.fn<() => Promise<LoginResponse>>(),
   logoutAll: vi.fn<() => Promise<void>>(),
   refreshAccessToken: vi.fn<() => Promise<string>>(),
+}))
+
+/**
+ * Mock the user APIs to avoid actual HTTP requests during tests.
+ */
+vi.mock('@/lib/api/user', () => ({
+  fetchCurrentUser: vi.fn<() => Promise<UserProfile>>(),
 }))
 
 /**
@@ -312,6 +321,71 @@ describe('Auth Store', () => {
       expect(store.accessToken).toBeNull()
       expect(store.refreshToken).toBeNull()
       expect(store.userId).toBeNull()
+    })
+  })
+
+  describe('fetchUserProfile', () => {
+    it('populates displayName, email, emailVerified, lastLoginAt on success', async () => {
+      const mockProfile: UserProfile = {
+        id: '550e8400-e29b-41d4-a716-446655440000',
+        email: 'alice@example.com',
+        displayName: 'Alice',
+        emailVerified: true,
+        createdAt: '2026-01-15T10:30:00Z',
+        lastLoginAt: '2026-07-01T09:15:00Z',
+        termsVersion: '1.0.0',
+      }
+      vi.mocked(userApi.fetchCurrentUser).mockResolvedValue(mockProfile)
+
+      const result = await store.fetchUserProfile()
+
+      expect(result).toEqual(mockProfile)
+      expect(store.displayName).toBe('Alice')
+      expect(store.email).toBe('alice@example.com')
+      expect(store.emailVerified).toBe(true)
+      expect(store.lastLoginAt).toBe('2026-07-01T09:15:00Z')
+    })
+
+    it('returns null and warns on API failure', async () => {
+      const consoleWarnSpy = vi.spyOn(console, 'warn').mockImplementation(() => {})
+      vi.mocked(userApi.fetchCurrentUser).mockRejectedValue(new Error('Network error'))
+
+      const result = await store.fetchUserProfile()
+
+      expect(result).toBeNull()
+      expect(store.displayName).toBeNull()
+      expect(consoleWarnSpy).toHaveBeenCalled()
+      consoleWarnSpy.mockRestore()
+    })
+
+    it('deduplicates concurrent calls (Promise lock)', async () => {
+      const mockProfile: UserProfile = {
+        id: '550e8400-e29b-41d4-a716-446655440000',
+        email: 'bob@example.com',
+        displayName: 'Bob',
+        emailVerified: false,
+        createdAt: '2026-01-15T10:30:00Z',
+        lastLoginAt: null,
+        termsVersion: '1.0.0',
+      }
+      // Reset call counter so prior tests in this describe block don't inflate it
+      vi.mocked(userApi.fetchCurrentUser).mockClear()
+      // Simulate slow fetch
+      let resolveProfile!: (v: UserProfile) => void
+      vi.mocked(userApi.fetchCurrentUser).mockReturnValue(
+        new Promise((resolve) => {
+          resolveProfile = resolve
+        }),
+      )
+
+      const promise1 = store.fetchUserProfile()
+      const promise2 = store.fetchUserProfile()
+      expect(userApi.fetchCurrentUser).toHaveBeenCalledTimes(1) // only ONE network call
+
+      resolveProfile(mockProfile)
+      await Promise.all([promise1, promise2])
+
+      expect(store.displayName).toBe('Bob')
     })
   })
 

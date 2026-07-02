@@ -1,7 +1,8 @@
-import { ref, computed } from 'vue'
+import { ref, computed, nextTick } from 'vue'
 import { defineStore } from 'pinia'
 import { useStorage } from '@vueuse/core'
 import { login as loginApi, refresh as refreshApi, logoutAll } from '@/lib/api/auth'
+import { fetchCurrentUser, type UserProfile } from '@/lib/api/user'
 import { TERMS_EXPIRED_EVENT } from '@/lib/api/instance'
 import type { LoginRequest, LoginResponse, AuthResponse } from '@/lib/schemas/auth.schema'
 import { getOrCreateDeviceId } from '@/lib/utils/device'
@@ -49,6 +50,9 @@ function decodeJwtUserId(token: string): string | null {
 
 // Promise lock to prevent concurrent refresh requests (Thundering Herd)
 let activeRefreshPromise: Promise<string> | null = null
+
+// Promise lock to prevent concurrent profile fetch requests
+let activeProfileFetchPromise: Promise<UserProfile | null> | null = null
 
 // Timer ID for scheduled silent token refresh
 let refreshTimerId: ReturnType<typeof setTimeout> | null = null
@@ -98,6 +102,17 @@ export const useAuthStore = defineStore('auth', () => {
   const userId = useStorage<string | null>(STORAGE_KEYS.USER_ID, null)
 
   const tokenExpiry = ref<number | null>(null)
+
+  /**
+   * User profile fields populated by fetchUserProfile() after login.
+   * Session-only state (NOT persisted to localStorage) — re-fetched on app init.
+   * Avatar is derived client-side from displayName via `src/lib/utils/avatar.ts`
+   * (stringToAvatarColor + getInitials) — backend never returns it.
+   */
+  const displayName = ref<string | null>(null)
+  const email = ref<string | null>(null)
+  const emailVerified = ref(false)
+  const lastLoginAt = ref<string | null>(null)
 
   /**
    * Device identifier for login requests and server-side device binding.
@@ -152,6 +167,51 @@ export const useAuthStore = defineStore('auth', () => {
     refreshToken.value = null
     userId.value = null
     tokenExpiry.value = null
+    // Reset profile fields so AppHeader and other consumers don't display stale data after logout
+    displayName.value = null
+    email.value = null
+    emailVerified.value = false
+    lastLoginAt.value = null
+  }
+
+  /**
+   * Fetches the authenticated user's profile from /api/v1/users/me and populates the store.
+   *
+   * Should be called once after login (or on app init if userId exists).
+   * Silently fails on error — does not crash the app if profile fetch fails (e.g., transient
+   * network issues). The interceptor handles 401 AUTH_002/AUTH_003 (token refresh) and
+   * terminal auth codes (AUTH_004–009) before this catch block runs, so the errors that
+   * reach here are typically non-auth-related (network failure, schema drift, 500).
+   *
+   * Uses Promise deduping to prevent multiple concurrent profile fetch requests
+   * (mirrors the refreshAccessToken pattern with activeRefreshPromise). If a fetch
+   * is already in flight, subsequent calls return the same pending promise.
+   *
+   * @returns Parsed UserProfile on success, or null if the request failed
+   */
+  async function fetchUserProfile(): Promise<UserProfile | null> {
+    // Dedup: if a profile fetch is already in flight, reuse it
+    if (activeProfileFetchPromise) {
+      return activeProfileFetchPromise
+    }
+
+    activeProfileFetchPromise = (async () => {
+      try {
+        const profile = await fetchCurrentUser()
+        displayName.value = profile.displayName
+        email.value = profile.email
+        emailVerified.value = profile.emailVerified
+        lastLoginAt.value = profile.lastLoginAt
+        return profile
+      } catch (error) {
+        console.warn('[auth] Failed to fetch user profile:', error)
+        return null
+      } finally {
+        activeProfileFetchPromise = null
+      }
+    })()
+
+    return activeProfileFetchPromise
   }
 
   /**
@@ -165,12 +225,16 @@ export const useAuthStore = defineStore('auth', () => {
       deviceId: deviceId.value,
     }
     const response = await loginApi(payload)
-    // Store tokens even when termsExpired is true so user is authenticated
-    // This allows navigation to dashboard while showing terms dialog
+    // Store tokens even when termsExpired is true so user is authenticated.
+    // This allows navigation to dashboard while showing terms dialog.
     setAuth(response)
     if (response.termsExpired) {
       globalThis.dispatchEvent(new CustomEvent(TERMS_EXPIRED_EVENT))
     }
+    // UseStorage writes localStorage asynchronously (next tick).
+    // Wait one tick so the token is in localStorage before fetching the profile.
+    await nextTick()
+    void fetchUserProfile()
     return response
   }
 
@@ -193,6 +257,8 @@ export const useAuthStore = defineStore('auth', () => {
     if (params.termsExpired) {
       globalThis.dispatchEvent(new CustomEvent(TERMS_EXPIRED_EVENT))
     }
+    // Same localStorage timing issue as login() — wait for sync.
+    void nextTick().then(() => fetchUserProfile())
   }
 
   /**
@@ -340,6 +406,10 @@ export const useAuthStore = defineStore('auth', () => {
     userId,
     tokenExpiry,
     deviceId,
+    displayName,
+    email,
+    emailVerified,
+    lastLoginAt,
     isAuthenticated,
     setAuth,
     setAuthFromTermsAcceptance,
@@ -350,6 +420,7 @@ export const useAuthStore = defineStore('auth', () => {
     initializeAuth,
     scheduleSilentRefresh,
     logout,
+    fetchUserProfile,
     /**
      * Test-only helper to reset module-scoped timer state.
      * Used in beforeEach to ensure clean timer state between tests.

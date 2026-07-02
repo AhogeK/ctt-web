@@ -11,3 +11,4 @@ export {
 export { getPublicConfig, type PublicConfig } from './config'
 export { fetchLinkedOAuthAccounts, unbindOAuthAccount } from './oauth-account'
 export type { OAuthAccountsResponseData } from './oauth-account'
+export { fetchCurrentUser, type UserProfile } from './user'
