@@ -2,16 +2,36 @@
 
 ## Current Status
 
-**Phase**: GitHub OAuth Binding + Unbinding Flow (ProfileView) Complete
-**Version**: 0.8.41 (2026-06-29)
-**Branch**: develop at 4234d27, master at d8a656a
-**Tests**: 580/580 pass (verified 2026-06-29)
+**Phase**: User Profile API + AppHeader Display Complete
+**Version**: 0.8.44 (2026-07-02)
+**Branch**: develop at 61a2f85, master at 58b19a8
+**Tests**: 620/620 pass (verified 2026-07-02)
 **Plans**:
 - docs/plans/2026-05-02-terms-acceptance-tracking.md — completed
 - docs/plans/2026-05-23-hcaptcha-integration.md — completed
 - .dev/plans/2026-05-28-github-oauth.md — completed
 
 ## Recent Activity (v0.8.x — 2026-06)
+
+### User Profile API + AppHeader Display (v0.8.44)
+
+- **Endpoint integration**: `GET /api/v1/users/me` (ctt-server v0.30.0/0.30.1) returning `{id, email, displayName, emailVerified, createdAt, lastLoginAt, termsVersion}`
+- **Schema**: `src/lib/schemas/user.schema.ts` — `UserProfileSchema` with Zod validation; `lastLoginAt: z.iso.datetime().nullable().default(null)` (defensive: field may be absent — backend v0.30.1 guarantees presence via `@JsonInclude(ALWAYS)`)
+- **API**: `src/lib/api/user.ts` — `fetchCurrentUser()` wrapper (apiFetch + RestApiResponseSchema + inner schema)
+- **Auth store extension**: `src/stores/auth.ts` — 4 new ref fields (`displayName`, `email`, `emailVerified`, `lastLoginAt`) + `fetchUserProfile()` with Promise lock (dedup pattern); `clearAuth()` resets all
+- **Lifecycle wiring**: `main.ts` — startup profile fetch removed (avoid premature `/users/me` 401 before localStorage sync); `login()` and `loginWithOAuth()` call `fetchUserProfile()` after `nextTick()` to ensure localStorage token is written (VueUse's `useStorage` is async)
+- **Avatar enhancement**: `UserAvatar.vue` seed now prefers `displayName` over `userId` for readable initials; width/height uses Tailwind `w-9 h-9` (R9 inline style fix)
+- **AppHeader dropdown**: `displayName` + `email` in DropdownMenuLabel; tooltip hidden when displayName null (N5 nit fix); removed hardcoded "My Account" (v0.8.43 i18n fix)
+- **Tests**: 41 new (13 schema + 10 API + 12 avatar + 6 AppHeader); 620/620 pass
+- **Dependencies**: None added (existing `zod`, `ofetch`, `vue`)
+
+### UserAvatar in Header (v0.8.43)
+
+- `src/lib/utils/avatar.ts`: `stringToHue` (djb2 hash → 0-359 HSL hue), `stringToAvatarColor` (HSL with fixed S=65% L=45%), `getInitials` (handles email/Unicode/empty fallback to `?`)
+- `src/components/app/UserAvatar.vue`: 36px circle avatar reading `authStore.userId` for hash seed and initials; deterministic per user
+- `src/components/app/AppHeader.vue`: replaced Tooltip+Logout with Tooltip+DropdownMenu wrapping UserAvatar; logout moved into dropdown menu item
+- 14 new tests (12 avatar utils + 2 AppHeader integration); 589/589 pass
+- Zero dependencies added; pure TypeScript + project primitives
 
 ### OAuth Account Unbind Flow (v0.8.41)
 

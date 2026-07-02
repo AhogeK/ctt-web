@@ -22,6 +22,10 @@
 
 ## Completed (Recent)
 
+- [x] **v0.8.44** User Profile API + AppHeader Display — `GET /api/v1/users/me` (ctt-server v0.30.0 + v0.30.1 lastLoginAt fix); `lastLoginAt` schema `.nullable().default(null)` for missing-field resilience; `fetchUserProfile()` wired into main.ts (conditional on auth) + login/loginWithOAuth (immediate); Promise lock dedup; 620/620 tests pass
+
+- [x] UserAvatar in Header (v0.8.43): `src/lib/utils/avatar.ts` (stringToHue/stringToAvatarColor/getInitials) + `src/components/app/UserAvatar.vue` (36px circle, hash-derived HSL color, deterministic per user) integrated into `AppHeader.vue` via Tooltip+DropdownMenu. Logout moved into dropdown menu item. 14 new tests, 589/589 pass.
+
 - [x] Sidebar Branding & Copyright (v0.8.42): `AppSidebar.vue` header CTT → "Code Time Tracker"; Logout button → "© 2026 AhogeK" copyright line. `AppSidebar.test.ts` removed 8 Logout tests, added 2 new tests. 575/575 tests pass.
 
 - [x] OAuth Account Unbind Flow (v0.8.41): Closes ctt-server PR-B DELETE endpoint. `unbindOAuthAccount(provider)` in api; state-aware Connect/Disconnect button in ProfileView with Dialog confirmation; `getOAuthUnbindErrorMessage` for AUTH_017 (not linked) + AUTH_018 (last method). approximately 32 new tests (incl. 6 defensive cleanups: redundant @click removal, extractErrorCode helper, COMMON_001 mapping), 580/580 pass.
