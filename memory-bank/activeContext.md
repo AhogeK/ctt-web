@@ -3,9 +3,9 @@
 ## Current Status
 
 **Phase**: User Profile API + AppHeader Display Complete
-**Version**: 0.8.44 (2026-07-02)
-**Branch**: develop at 61a2f85, master at 58b19a8
-**Tests**: 620/620 pass (verified 2026-07-02)
+**Version**: 0.8.44 (2026-07-03)
+**Branch**: develop at 6456c39, master at 0a55e2b
+**Tests**: 620/620 pass (verified 2026-07-03)
 **Plans**:
 - docs/plans/2026-05-02-terms-acceptance-tracking.md — completed
 - docs/plans/2026-05-23-hcaptcha-integration.md — completed
