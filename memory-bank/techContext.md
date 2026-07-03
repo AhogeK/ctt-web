@@ -115,6 +115,55 @@ Implementation notes:
 - UNBIND uses shadcn-vue Dialog for confirmation; click handler is single-purpose
 
 
+### Email Change API (v0.31.2)
+
+5 endpoints under `/api/v1/users/me/email/`. All require JWT Bearer auth. Frontend implementation: `src/lib/api/email.ts`.
+
+| Method   | Path                                 | Description                          |
+| -------- | ------------------------------------ | ------------------------------------ |
+| `GET`    | `/api/v1/users/me/email/status`      | Get current email + verification status |
+| `POST`   | `/api/v1/users/me/email/change-request`  | Initiate email change (sends verification to new address) |
+| `POST`   | `/api/v1/users/me/email/change-confirm`  | Confirm email change with token from email |
+| `DELETE` | `/api/v1/users/me/email/change-request`  | Cancel pending email change          |
+| `POST`   | `/api/v1/users/me/email/resend-verification` | Resend verification email for pending change |
+
+**Request/Response formats:**
+
+```ts
+// GET /status → EmailStatus
+{ email: string; emailVerified: boolean; emailChangePending: boolean; pendingNewEmail: string | null }
+
+// POST /change-request
+{ newEmail: string; password: string } → EmptyResponse
+
+// POST /change-confirm
+{ token: string } → EmptyResponse
+
+// DELETE /change-request
+(no body) → EmptyResponse
+
+// POST /resend-verification
+(no body) → EmptyResponse
+```
+
+**Error codes:**
+
+| Code       | Meaning                              |
+| ---------- | ------------------------------------ |
+| `USER_009` | New email same as current email      |
+| `USER_010` | Email already in use by another user |
+| `USER_011` | No pending email change to confirm/cancel |
+| `USER_013` | Invalid or expired confirmation token |
+| `USER_014` | Password verification failed         |
+
+**Security considerations:**
+
+- Password re-verification required on every change request (prevents account takeover via session hijack)
+- Verification token is single-use and time-limited
+- Rate limiting on `/change-request` and `/resend-verification` to prevent email bombing
+- Pending change can be cancelled (DELETE) to reset state
+- Email change is atomic: old email stays active until confirmation succeeds
+
 ### Sidebar UI Branding (v0.8.42)
 
 - `src/components/app/AppSidebar.vue` header displays the full project name "Code Time Tracker" (instead of abbreviated "CTT")

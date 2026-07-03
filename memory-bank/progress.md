@@ -22,6 +22,8 @@
 
 ## Completed (Recent)
 
+- [x] **v0.9.0** Email Change Feature — Backend integration (ctt-server v0.31.2): 5 API endpoints, Zod schemas, composables (useEmailChange, useEmailStatus), AccountSection component (email/verification/display name/registration time), EmailChangeDialog (dynamic password field on USER_013), EmailVerificationBanner (resend with 60s cooldown), `/auth/change-email` route, error codes USER_009/010/011/013/014, auth store `createdAt` field; 751/751 tests pass (37 API + 16 composable + 57 component + ChangeEmailView)
+
 - [x] **v0.8.44** User Profile API + AppHeader Display — `GET /api/v1/users/me` (ctt-server v0.30.0 + v0.30.1 lastLoginAt fix); `lastLoginAt` schema `.nullable().default(null)` for missing-field resilience; `fetchUserProfile()` wired into main.ts (conditional on auth) + login/loginWithOAuth (immediate); Promise lock dedup; 620/620 tests pass
 
 - [x] UserAvatar in Header (v0.8.43): `src/lib/utils/avatar.ts` (stringToHue/stringToAvatarColor/getInitials) + `src/components/app/UserAvatar.vue` (36px circle, hash-derived HSL color, deterministic per user) integrated into `AppHeader.vue` via Tooltip+DropdownMenu. Logout moved into dropdown menu item. 14 new tests, 589/589 pass.

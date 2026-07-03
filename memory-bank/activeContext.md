@@ -2,16 +2,28 @@
 
 ## Current Status
 
-**Phase**: User Profile API + AppHeader Display Complete
-**Version**: 0.8.44 (2026-07-03)
+**Phase**: Email Change Feature Complete
+**Version**: 0.9.0 (2026-07-04)
 **Branch**: develop at 6456c39, master at 0a55e2b
-**Tests**: 620/620 pass (verified 2026-07-03)
+**Tests**: 751/751 pass (verified 2026-07-04)
 **Plans**:
 - docs/plans/2026-05-02-terms-acceptance-tracking.md — completed
 - docs/plans/2026-05-23-hcaptcha-integration.md — completed
 - .dev/plans/2026-05-28-github-oauth.md — completed
 
-## Recent Activity (v0.8.x — 2026-06)
+## Recent Activity (v0.9.x — 2026-07)
+
+### Email Change Feature (v0.9.0)
+
+- **Backend integration**: ctt-server v0.31.2 Email Change API (5 endpoints)
+- **API layer**: `src/lib/api/email.ts` — `fetchEmailStatus()`, `requestEmailChange()`, `confirmEmailChange()`, `cancelEmailChange()`, `resendEmailChangeVerification()`
+- **Schemas**: `src/lib/schemas/user.schema.ts` — added `emailChangePending: z.boolean().default(false)`
+- **Composables**: `src/features/settings/composables/useEmailChange.ts` (4 mutations), `useEmailStatus.ts` (query)
+- **Components**: `AccountSection.vue`, `EmailChangeDialog.vue`, `EmailVerificationBanner.vue`
+- **Route**: `/auth/change-email` added for email change confirmation
+- **Error codes**: USER_009/010/011/013/014 mapped in `api-error.ts`
+- **Auth store**: Added `createdAt` field for registration time display
+- **Dependencies**: None added
 
 ### User Profile API + AppHeader Display (v0.8.44)
 

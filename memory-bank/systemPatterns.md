@@ -138,6 +138,63 @@ router.onError((error, to) => {
 
 Pattern: `?retried=1` query param prevents infinite reload loop.
 
+## Email Change Patterns (v0.9.0)
+
+### Shared Composable State Pattern
+
+Email change uses module-level `ref` for shared dialog state across components:
+
+```typescript
+// composables/useEmailChange.ts
+const isDialogOpen = ref(false) // Module-level — shared across all consumers
+
+export function useEmailChange() {
+  const openDialog = () => { isDialogOpen.value = true }
+  const closeDialog = () => { isDialogOpen.value = false }
+
+  return { isDialogOpen, openDialog, closeDialog }
+}
+```
+
+**Key points:**
+- State declared at module scope, not inside composable function
+- All components importing `useEmailChange()` share the same `isDialogOpen` ref
+- Avoids prop drilling or Pinia for simple UI state coordination
+
+### Dynamic Password Field Pattern
+
+Show password field conditionally based on backend error code:
+
+```typescript
+// In composable
+const requiresPassword = ref(false)
+
+const handleApiError = (error: ApiError) => {
+  if (error.data.code === 'USER_013') {
+    requiresPassword.value = true // Show password field in form
+  }
+}
+```
+
+**Pattern:**
+- `USER_013` = password verification required for sensitive operations
+- Form schema dynamically includes password field when `requiresPassword` is true
+- Zod schema uses `.optional()` for password, then `.refine()` when required
+
+### Email Verification Flow
+
+```
+Request Change → Email Sent → User Clicks Link → Confirm with Token
+      ↓              ↓              ↓                  ↓
+  POST /email    Email arrives   Opens link      POST /email/confirm
+  + password     with token     in browser       + token
+```
+
+**States:**
+- `unverified` — Current email not verified (shows `EmailVerificationBanner`)
+- `pending` — Change requested, awaiting confirmation
+- `verified` — Email confirmed and active
+
 ---
 
 ## Route Structure
