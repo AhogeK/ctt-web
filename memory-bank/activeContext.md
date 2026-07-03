@@ -4,7 +4,7 @@
 
 **Phase**: Email Change Feature Complete
 **Version**: 0.9.0 (2026-07-04)
-**Branch**: develop at 6456c39, master at 0a55e2b
+**Branch**: develop at d0ebea9, master at 9899288
 **Tests**: 751/751 pass (verified 2026-07-04)
 **Plans**:
 - docs/plans/2026-05-02-terms-acceptance-tracking.md — completed
