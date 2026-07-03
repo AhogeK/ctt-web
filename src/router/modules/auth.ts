@@ -34,6 +34,12 @@ const authRoutes: RouteRecordRaw[] = [
         meta: { title: 'Verify Email', requiresAuth: false, guestOnly: true },
       },
       {
+        path: 'change-email',
+        name: RouteNames.CHANGE_EMAIL,
+        component: () => import('@/features/auth/views/ChangeEmailView.vue'),
+        meta: { title: 'Change Email', requiresAuth: false, guestOnly: true },
+      },
+      {
         path: 'forgot-password',
         name: RouteNames.FORGOT_PASSWORD,
         component: () => import('@/features/auth/views/ForgotPasswordView.vue'),
