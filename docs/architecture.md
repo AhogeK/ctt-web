@@ -477,6 +477,118 @@ non-discriminated endpoints that operate on existing bindings:
   identity fields already co-located with the auth session they describe.
 - `fetchUserProfile()` is fire-and-forget on app init; failures are silent (console.warn + return null).
 
+### Email Change Feature
+
+The email change feature allows users to update their email address with a two-step verification flow: request → confirm via email link.
+
+#### API Endpoints
+
+| Method   | Endpoint                                       | Auth       | Purpose                                              |
+| -------- | ---------------------------------------------- | ---------- | ---------------------------------------------------- |
+| `GET`    | `/api/v1/users/me/email/status`                | Bearer JWT | Fetch email status (verified, pending change, etc.)  |
+| `POST`   | `/api/v1/users/me/email/change-request`        | Bearer JWT | Initiate email change, sends verification email      |
+| `POST`   | `/api/v1/users/me/email/change-confirm`        | Bearer JWT | Confirm email change with token from email link      |
+| `DELETE` | `/api/v1/users/me/email/change-request`        | Bearer JWT | Cancel a pending email change request                |
+| `POST`   | `/api/v1/users/me/email/resend-verification`   | Bearer JWT | Resend verification email for pending change         |
+
+#### Frontend Component Structure
+
+```text
+features/settings/
+├── components/
+│   ├── AccountSection.vue           # Displays email + verification badge, triggers dialog
+│   ├── EmailChangeDialog.vue        # Change email form with progressive password reveal
+│   └── EmailVerificationBanner.vue  # Warning banner for unverified emails
+├── composables/
+│   ├── useEmailChange.ts            # Email change mutations (request/confirm/cancel/resend)
+│   └── useEmailStatus.ts            # TanStack Query for GET /email/status
+└── views/
+    └── ProfileView.vue              # Composes AccountSection + EmailChangeDialog
+```
+
+#### Composable Pattern
+
+`useEmailChange` uses a **module-level shared ref** for dialog state, so all callers
+(AccountSection, ProfileView) share the same `isDialogOpen` without prop drilling:
+
+```typescript
+// src/features/settings/composables/useEmailChange.ts
+
+// Module-level — shared across all callers
+const isDialogOpen = ref(false)
+
+export function useEmailChange() {
+  const queryClient = useQueryClient()
+
+  const requestMutation = useMutation({ /* POST /change-request */ })
+  const confirmMutation = useMutation({ /* POST /change-confirm */ })
+  const cancelMutation = useMutation({ /* DELETE /change-request */ })
+  const resendMutation = useMutation({ /* POST /resend-verification */ })
+
+  return {
+    requestMutation,
+    confirmMutation,
+    cancelMutation,
+    resendMutation,
+    isDialogOpen,
+  }
+}
+```
+
+`useEmailStatus` wraps a TanStack Query with 30s stale time:
+
+```typescript
+// src/features/settings/composables/useEmailStatus.ts
+export function useEmailStatus() {
+  return useQuery({
+    queryKey: ['email-status'],
+    queryFn: () => fetchEmailStatus(),
+    staleTime: 30 * 1000,
+    refetchOnWindowFocus: true,
+  })
+}
+```
+
+#### Progressive Password Reveal
+
+`EmailChangeDialog` implements a two-phase form: first attempt sends an empty password;
+if the backend returns `USER_013` (password required), the password field appears inline:
+
+```typescript
+// Phase 1: Try without password
+requestMutation.mutate({ newEmail, password: '' }, {
+  onError: (error) => {
+    if (extractErrorCode(error) === 'USER_013') {
+      showPasswordField.value = true  // Reveal password field
+    }
+  },
+})
+
+// Phase 2: Submit with password
+requestMutation.mutate({ newEmail, password })
+```
+
+This avoids asking for a password when the backend doesn't require it (e.g., recently authenticated sessions).
+
+#### Error Codes
+
+| Code        | Meaning              | Frontend Behavior                                          |
+| ----------- | -------------------- | ---------------------------------------------------------- |
+| `USER_009`  | Already pending      | Toast with suggestion to cancel existing request           |
+| `USER_010`  | Token expired        | Toast suggesting to request a new change                   |
+| `USER_011`  | Invalid token        | Toast suggesting to check the email link                   |
+| `USER_013`  | Password required    | Reveals password field in dialog (first attempt)           |
+| `USER_014`  | Wrong password       | Toast error (subsequent attempts with password)            |
+
+Error code mapping lives in `src/lib/utils/api-error.ts`.
+
+#### Security Considerations
+
+- **Password verification**: Backend may require current password (`USER_013`) depending on session age — prevents unauthorized email takeover
+- **Rate limiting**: Backend enforces rate limits on `change-request` and `resend-verification` endpoints
+- **Token-based confirmation**: Email change requires clicking a verification link sent to the new address
+- **Pending state visibility**: `GET /email/status` returns `emailChangePending` and `pendingNewEmail` so the UI can show pending state and allow cancellation
+
 ### API Error Utility
 
 - **Location**: `src/lib/utils/api-error.ts`
