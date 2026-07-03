@@ -57,7 +57,8 @@ visualization.
 | Terms Acceptance        | Terms version tracking on registration, expiration handling on login, 403 interception with request replay |
 | Bot Protection          | hCaptcha integration on auth forms with graceful degradation (captchaSiteKey=null disables)                |
 | GitHub OAuth            | OAuth login + account BIND/UNBIND flow from ProfileView with Dialog confirmation; 8-code BIND + 2-code UNBIND error mapping; TanStack Query status |
-| User Profile            | `GET /api/v1/users/me` — displayName/email resolution; AppHeader dropdown shows user identity; avatar hash seeded from displayName |
+| User Profile            | `GET /api/v1/users/me` — displayName/email resolution; AppHeader dropdown shows user identity; avatar hash seeded from displayName; Account section integration |
+| Email Change            | Email change flow with verification; Account section displays email/verification status/display name/registration time; EmailVerificationBanner for unverified users |
 
 ## 🗺 Project Structure
 
