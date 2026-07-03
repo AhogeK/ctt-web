@@ -104,6 +104,11 @@ export function mapApiErrorCode(code: string): string {
     USER_002: 'This email has already been verified. Please proceed to login.',
     USER_007: 'This email has already been verified. Please proceed to login.',
     USER_008: 'Terms of service have been updated. Please review and accept the new terms to continue.',
+    USER_009: 'An email change request is already pending. Please check your email or cancel the existing request.',
+    USER_010: 'The email change request has expired. Please request a new one.',
+    USER_011: 'Invalid email change request. Please try again.',
+    USER_013: 'Password verification required. Please provide your current password.',
+    USER_014: 'Incorrect password. Please try again.',
 
     // Password reset errors
     PASSWORD_SAME_AS_OLD: 'New password cannot be the same as your current password.',

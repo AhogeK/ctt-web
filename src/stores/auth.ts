@@ -112,6 +112,7 @@ export const useAuthStore = defineStore('auth', () => {
   const displayName = ref<string | null>(null)
   const email = ref<string | null>(null)
   const emailVerified = ref(false)
+  const createdAt = ref<string | null>(null)
   const lastLoginAt = ref<string | null>(null)
 
   /**
@@ -171,6 +172,7 @@ export const useAuthStore = defineStore('auth', () => {
     displayName.value = null
     email.value = null
     emailVerified.value = false
+    createdAt.value = null
     lastLoginAt.value = null
   }
 
@@ -201,6 +203,7 @@ export const useAuthStore = defineStore('auth', () => {
         displayName.value = profile.displayName
         email.value = profile.email
         emailVerified.value = profile.emailVerified
+        createdAt.value = profile.createdAt
         lastLoginAt.value = profile.lastLoginAt
         return profile
       } catch (error) {
@@ -409,6 +412,7 @@ export const useAuthStore = defineStore('auth', () => {
     displayName,
     email,
     emailVerified,
+    createdAt,
     lastLoginAt,
     isAuthenticated,
     setAuth,

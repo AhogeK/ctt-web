@@ -22,9 +22,18 @@ import {
 } from '@/components/ui/dialog'
 import { cn } from '@/lib/utils'
 import type { OAuthAccountBinding } from '@/lib/schemas/oauth-account.schema'
+import AccountSection from '@/features/settings/components/AccountSection.vue'
+import EmailChangeDialog from '@/features/settings/components/EmailChangeDialog.vue'
+import EmailVerificationBanner from '@/features/settings/components/EmailVerificationBanner.vue'
+import { useEmailChange } from '@/features/settings/composables/useEmailChange'
+import { useEmailStatus } from '@/features/settings/composables/useEmailStatus'
 
 const route = useRoute()
 const router = useRouter()
+
+const { isDialogOpen } = useEmailChange()
+const { data: emailStatus } = useEmailStatus()
+const currentEmail = computed(() => emailStatus.value?.email ?? '')
 
 const isUnbindDialogOpen = ref(false)
 
@@ -173,10 +182,14 @@ onMounted(() => {
 
 <template>
   <div class="flex flex-col gap-6 p-6">
+    <EmailVerificationBanner />
+
     <div class="flex flex-col gap-2">
       <h1 class="text-2xl font-semibold text-gray-900 dark:text-[#f7f8f8]">Profile Settings</h1>
       <p class="text-sm text-gray-500 dark:text-[#8a8f98]">Manage your account information</p>
     </div>
+
+    <AccountSection />
 
     <!-- Connected Accounts Section -->
     <div class="rounded-lg border border-gray-200 dark:border-white/8 bg-gray-50 dark:bg-white/2 p-6">
@@ -304,5 +317,7 @@ onMounted(() => {
         </Dialog>
       </div>
     </div>
+
+    <EmailChangeDialog :open="isDialogOpen" :current-email="currentEmail" @update:open="isDialogOpen = $event" />
   </div>
 </template>

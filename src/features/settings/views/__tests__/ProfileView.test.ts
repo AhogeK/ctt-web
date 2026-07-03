@@ -77,6 +77,9 @@ vi.mock('vue-router', () => ({
 
 vi.mock('@tanstack/vue-query', () => ({
   QueryClient: vi.fn<() => void>(),
+  useQueryClient: vi.fn<() => { invalidateQueries: (...args: unknown[]) => unknown }>(() => ({
+    invalidateQueries: vi.fn<() => Promise<void>>(),
+  })),
   useMutation: vi.fn<
     (options: {
       mutationFn?: (action: unknown) => unknown
@@ -141,6 +144,41 @@ vi.mock('@/router', () => ({
     beforeEach: vi.fn<() => void>(),
     afterEach: vi.fn<() => void>(),
   },
+}))
+
+vi.mock('@/features/settings/composables/useEmailChange', () => ({
+  useEmailChange: vi.fn<() => { isDialogOpen: { value: boolean } }>(() => ({
+    isDialogOpen: { value: false },
+  })),
+}))
+
+vi.mock('@/features/settings/composables/useEmailStatus', () => ({
+  useEmailStatus: vi.fn<
+    () => {
+      data: {
+        value:
+          | { email: string; emailVerified: boolean; emailChangePending: boolean; pendingNewEmail: string | null }
+          | undefined
+      }
+    }
+  >(() => ({
+    data: { value: undefined },
+  })),
+}))
+
+vi.mock('@/features/settings/components/AccountSection.vue', () => ({
+  default: { template: '<div data-testid="account-section">AccountSection</div>' },
+}))
+
+vi.mock('@/features/settings/components/EmailChangeDialog.vue', () => ({
+  default: {
+    props: ['open', 'currentEmail'],
+    template: '<div data-testid="email-change-dialog">EmailChangeDialog</div>',
+  },
+}))
+
+vi.mock('@/features/settings/components/EmailVerificationBanner.vue', () => ({
+  default: { template: '<div data-testid="email-verification-banner">EmailVerificationBanner</div>' },
 }))
 
 vi.mock('@/stores/auth', () => ({
