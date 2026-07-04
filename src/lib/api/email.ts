@@ -1,6 +1,7 @@
 import { apiFetch } from './instance'
 import { RestApiResponseSchema, EmptyResponseDataSchema, type EmptyResponse } from '@/lib/schemas/api.schema'
 import { z } from 'zod'
+import { encodeBase64 } from '@/lib/utils'
 
 /**
  * Email status response schema from GET /api/v1/users/me/email/status.
@@ -38,9 +39,10 @@ export async function fetchEmailStatus(): Promise<EmailStatus> {
  * @param params - New email and current password for confirmation
  */
 export async function requestEmailChange(params: { newEmail: string; password: string }): Promise<EmptyResponse> {
+  const encodedParams = { newEmail: params.newEmail, password: encodeBase64(params.password) }
   const response = await apiFetch<unknown>('/api/v1/users/me/email/change-request', {
     method: 'POST',
-    body: params,
+    body: encodedParams,
   })
 
   const wrapped = RestApiResponseSchema.parse(response)

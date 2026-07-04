@@ -37,7 +37,7 @@ describe('auth API', () => {
         method: 'POST',
         body: {
           email: 'user@example.com',
-          password: 'SecurePass1!',
+          password: 'U2VjdXJlUGFzczEh',
           deviceId: 'device-001',
         },
       })
@@ -170,7 +170,7 @@ describe('auth API', () => {
         body: {
           email: 'user@example.com',
           displayName: 'TestUser',
-          password: 'SecurePass1!',
+          password: 'U2VjdXJlUGFzczEh',
           termsVersion: '1.0.0',
         },
       })
@@ -501,7 +501,7 @@ describe('auth API', () => {
   })
 
   describe('confirmPasswordReset', () => {
-    it('sends POST request with token and newPassword and returns void', async () => {
+    it('sends POST request with token and base64-encoded newPassword and returns void', async () => {
       vi.mocked(apiFetch).mockResolvedValue(undefined)
 
       const result = await authApi.confirmPasswordReset({
@@ -513,7 +513,7 @@ describe('auth API', () => {
         method: 'POST',
         body: {
           token: 'reset-token-abc123',
-          newPassword: 'SecurePass1!',
+          newPassword: 'U2VjdXJlUGFzczEh',
         },
       })
       expect(result).toBeUndefined()
