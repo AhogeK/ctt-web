@@ -10,6 +10,7 @@ import ForgotPasswordView from '../ForgotPasswordView.vue'
 const mockPush = vi.hoisted(() => vi.fn<(...args: unknown[]) => unknown>())
 const mockResolve = vi.hoisted(() => vi.fn<(...args: unknown[]) => unknown>(() => Promise.resolve({ href: '/login' })))
 const mockToastError = vi.hoisted(() => vi.fn<(...args: unknown[]) => unknown>())
+const mockToastInfo = vi.hoisted(() => vi.fn<(...args: unknown[]) => unknown>())
 const mockMutate = vi.hoisted(() => vi.fn<(...args: unknown[]) => unknown>())
 const mockStart = vi.hoisted(() => vi.fn<(...args: unknown[]) => unknown>())
 const mockIsApiError = vi.hoisted(() => vi.fn<(...args: unknown[]) => unknown>())
@@ -57,6 +58,7 @@ vi.mock('@/router', () => ({
 vi.mock('vue-sonner', () => ({
   toast: {
     error: mockToastError,
+    info: mockToastInfo,
   },
 }))
 
@@ -171,6 +173,7 @@ function resetMocks() {
   mockMutate.mockClear()
   mockPush.mockClear()
   mockToastError.mockClear()
+  mockToastInfo.mockClear()
   mockStart.mockClear()
   mockIsApiError.mockReset()
   mockMapApiErrorCode.mockReset().mockImplementation((code) => code)
@@ -219,6 +222,77 @@ describe('ForgotPasswordView', () => {
 
       expect(wrapper.html()).toContain('test@test.com')
       expect(wrapper.html()).not.toContain('Enter your email address')
+    })
+  })
+
+  describe('Idempotent skip (email already sent)', () => {
+    it('shows "Email already sent" title when idempotentSkip is true', async () => {
+      const wrapper = mount(ForgotPasswordView)
+      expect(mutationOnSuccess).toBeDefined()
+
+      mutationOnSuccess!({ idempotentSkip: true }, { email: 'user@example.com' })
+      await nextTick()
+      await nextTick()
+
+      expect(wrapper.html()).toContain('Email already sent')
+      expect(wrapper.html()).not.toContain('Check your email')
+    })
+
+    it('shows "already sent" description when idempotentSkip is true', async () => {
+      const wrapper = mount(ForgotPasswordView)
+      expect(mutationOnSuccess).toBeDefined()
+
+      mutationOnSuccess!({ idempotentSkip: true }, { email: 'user@example.com' })
+      await nextTick()
+      await nextTick()
+
+      expect(wrapper.html()).toContain('We already sent a reset link to')
+      expect(wrapper.html()).toContain('user@example.com')
+      expect(wrapper.html()).toContain('please wait a few minutes before trying again')
+    })
+
+    it('shows info toast when idempotentSkip is true', async () => {
+      mount(ForgotPasswordView)
+      expect(mutationOnSuccess).toBeDefined()
+
+      mutationOnSuccess!({ idempotentSkip: true }, { email: 'user@example.com' })
+
+      expect(mockToastInfo).toHaveBeenCalledWith('Reset password email already sent', {
+        description: 'Please check your inbox or spam folder',
+      })
+    })
+
+    it('shows "Check your email" title when idempotentSkip is false', async () => {
+      const wrapper = mount(ForgotPasswordView)
+      expect(mutationOnSuccess).toBeDefined()
+
+      mutationOnSuccess!({ idempotentSkip: false }, { email: 'user@example.com' })
+      await nextTick()
+      await nextTick()
+
+      expect(wrapper.html()).toContain('Check your email')
+      expect(wrapper.html()).not.toContain('Email already sent')
+    })
+
+    it('shows "Check your email" title when idempotentSkip is undefined', async () => {
+      const wrapper = mount(ForgotPasswordView)
+      expect(mutationOnSuccess).toBeDefined()
+
+      mutationOnSuccess!({}, { email: 'user@example.com' })
+      await nextTick()
+      await nextTick()
+
+      expect(wrapper.html()).toContain('Check your email')
+      expect(wrapper.html()).not.toContain('Email already sent')
+    })
+
+    it('does not show info toast when idempotentSkip is false', async () => {
+      mount(ForgotPasswordView)
+      expect(mutationOnSuccess).toBeDefined()
+
+      mutationOnSuccess!({ idempotentSkip: false }, { email: 'user@example.com' })
+
+      expect(mockToastInfo).not.toHaveBeenCalled()
     })
   })
 
