@@ -164,6 +164,61 @@ Implementation notes:
 - Pending change can be cancelled (DELETE) to reset state
 - Email change is atomic: old email stays active until confirmation succeeds
 
+### CSRF Protection (v0.10.2)
+
+ctt-server v0.33.1 implements CSRF protection using the synchronizer token pattern. Frontend handles token propagation and error recovery.
+
+**Mechanism:**
+
+| Step | Location | Description |
+| ---- | -------- | ----------- |
+| Token source | `XSRF-TOKEN` cookie | Backend sets cookie on login/session start |
+| Cookie read | `src/lib/api/instance.ts` | Parses `document.cookie` to extract `XSRF-TOKEN` value |
+| Header injection | `onRequest` interceptor | Adds `X-XSRF-TOKEN` header to POST/PUT/PATCH/DELETE requests |
+| Error handling | `onResponseError` interceptor | 403 + CSRF error body → Sonner toast + page reload |
+
+**Implementation details:**
+
+- GET/HEAD/OPTIONS requests are excluded from CSRF header injection (safe methods)
+- Login/register endpoints are excluded (no session cookie yet)
+- 403 CSRF error triggers a user-facing toast ("Security token expired. Refreshing…") followed by `window.location.reload()` to obtain a fresh token
+- Cookie reading is lazy (on each request) to handle token rotation
+
+**Security considerations:**
+
+- CSRF token is bound to the session (backend validates token matches the one issued for the current session)
+- Token is not stored in localStorage — only in the cookie (HttpOnly not required for XSRF-TOKEN as it's read by JS)
+- Page reload on 403 CSRF ensures a clean state (clears any stale in-flight mutations)
+
+### Set Password API (v0.10.0)
+
+1 endpoint under `/api/v1/users/me/password/`. Requires JWT Bearer auth. Frontend implementation: `src/lib/api/user.ts`.
+
+| Method   | Path                                 | Description                          |
+| -------- | ------------------------------------ | ------------------------------------ |
+| `POST`   | `/api/v1/users/me/password/set`      | Set password for OAuth users who don't have one yet |
+
+**Request/Response formats:**
+
+```ts
+// POST /set
+{ newPassword: string } → EmptyResponse
+```
+
+**Error codes:**
+
+| Code       | Meaning                              |
+| ---------- | ------------------------------------ |
+| `USER_015` | User already has a password (cannot set again) |
+| `COMMON_003` | Invalid password format (8-64 printable ASCII chars) |
+
+**Security considerations:**
+
+- Only available for OAuth users without an existing password
+- Password must meet format requirements (8-64 printable ASCII chars)
+- Rate limiting on `/set` endpoint to prevent brute force attacks
+- After setting password, user can use email/password login in addition to OAuth
+
 ### Sidebar UI Branding (v0.8.42)
 
 - `src/components/app/AppSidebar.vue` header displays the full project name "Code Time Tracker" (instead of abbreviated "CTT")

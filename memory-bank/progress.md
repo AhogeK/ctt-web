@@ -15,12 +15,18 @@
 | Dashboard                         | ⏳ Pending  | 0.9.0          |
 | Device Management                 | ⏳ Pending  | 0.9.0          |
 | Leaderboard                       | ⏳ Pending  | 1.0.0          |
+| Set Password                      | ✅ Complete | 0.10.0         |
+| CSRF Protection                   | ✅ Complete | 0.10.2         |
 | Settings                          | ⏳ Pending  | 1.0.0          |
 | i18n (zh/en)                      | ⏳ Pending  | 1.0.0          |
 | E2E Test Coverage                 | ⏳ Pending  | 1.0.0          |
 | Production Deploy                 | ⏳ Pending  | 1.0.0          |
 
 ## Completed (Recent)
+
+- [x] **v0.10.2** CSRF Protection — XSRF-TOKEN cookie reading, X-XSRF-TOKEN header injection for state-changing requests, 403 CSRF error handling (toast + page reload); 815/815 tests pass (12 interceptor + 10 cookie parsing + 8 error handling)
+- [x] **v0.10.1** CSP Meta Tag — `index.html` defense-in-depth CSP fallback (same-origin + hCaptcha + inline styles + data URIs + clickjacking protection); HTML-only, no code changes; 785/785 tests pass
+- [x] **v0.10.0** Set Password Feature — Backend integration (ctt-server Set Password API): `POST /api/v1/users/me/password/set`; Zod schemas, composable (useSetPassword), SetPasswordDialog component (password form with validation), AccountSection updated with Set Password button (shown only for OAuth users); error code USER_015 (password already set); 785/785 tests pass (8 API + 12 composable + 14 component)
 
 - [x] **v0.9.0** Email Change Feature — Backend integration (ctt-server v0.31.2): 5 API endpoints, Zod schemas, composables (useEmailChange, useEmailStatus), AccountSection component (email/verification/display name/registration time), EmailChangeDialog (dynamic password field on USER_013), EmailVerificationBanner (resend with 60s cooldown), `/auth/change-email` route, error codes USER_009/010/011/013/014, auth store `createdAt` field; 751/751 tests pass (37 API + 16 composable + 57 component + ChangeEmailView)
 

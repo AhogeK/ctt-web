@@ -2,16 +2,77 @@
 
 ## Current Status
 
-**Phase**: Email Change Feature Complete
-**Version**: 0.9.0 (2026-07-04)
+**Phase**: v0.10.x Security & Account Features (CSRF + Set Password + CSP)
+**Version**: 0.10.2 (2026-07-04)
 **Branch**: develop at d0ebea9, master at 9899288
-**Tests**: 751/751 pass (verified 2026-07-04)
+**Tests**: 815/815 pass (verified 2026-07-04)
+**Code Review**: FAILED (2026-07-04) — 3 blocking issues found
 **Plans**:
 - docs/plans/2026-05-02-terms-acceptance-tracking.md — completed
 - docs/plans/2026-05-23-hcaptcha-integration.md — completed
 - .dev/plans/2026-05-28-github-oauth.md — completed
 
-## Recent Activity (v0.9.x — 2026-07)
+## Code Review Findings (2026-07-04)
+
+### Blocking Issues (must fix before merge)
+
+1. **Missing Base64 encoding**: `confirmPasswordReset` in `auth.ts` does not encode password with `encodeBase64()`, inconsistent with all other password endpoints
+2. **Missing tests**: `codec.ts`, `usePasswordDetection.ts`, `useSetPassword.ts` have zero test coverage
+3. **Weak assertion**: `password.test.ts` uses `expect.any(String)` instead of verifying actual base64 encoding
+
+### Major Issues
+
+4. **Button style duplication**: `AccountSection.vue` repeats `cn()` styling 3 times
+5. **Inconsistent error handling**: `SetPasswordDialog.vue` doesn't show inline error for unknown error codes
+6. **Anti-pattern**: `usePasswordDetection` calls write endpoint for read-only detection
+
+### Minor Issues
+
+7. `docs/architecture.md` missing CSRF and Set Password sections
+8. `docs/dev-handbook.md` missing base64 encoding guidance
+9. `README.md` missing CSP Hardening feature row
+10. `activeContext.md` phase label was misleading (now fixed)
+
+## Recent Activity (v0.10.x — 2026-07)
+
+### Password Detection Robustness Fix (v0.10.2+)
+
+- **Issue**: `usePasswordDetection` composable incorrectly set `hasPassword = false` on network errors
+- **Root cause**: `else` branch in catch block treated all non-USER_015 errors as "no password"
+- **Fix**: Added `isApiError(error)` check to distinguish API responses from network errors
+  - `USER_015` → `hasPassword = true` (user has password)
+  - Other API errors → `hasPassword = false` (API responded, user doesn't have password)
+  - Network/unknown errors → `checkError` set, `hasPassword` unchanged
+- **Backend**: ctt-server `UserProfileResponse` does NOT have `hasPassword` field; `setPassword` approach retained
+- **Tests**: 815/815 pass (no test changes needed — existing mock-based tests cover the behavior)
+
+### CSRF Protection (v0.10.2)
+
+- **Backend**: ctt-server v0.33.1 CSRF protection (synchronizer token pattern)
+- **Cookie reading**: `XSRF-TOKEN` cookie parsed via `document.cookie` in `src/lib/api/instance.ts`
+- **Header injection**: `X-XSRF-TOKEN` header added to all state-changing requests (POST/PUT/PATCH/DELETE) in the `onRequest` interceptor
+- **403 handling**: `onResponseError` interceptor detects 403 with CSRF error body → shows Sonner toast ("Security token expired. Refreshing…") → reloads page to refresh token
+- **Exclusions**: GET/HEAD/OPTIONS requests skip CSRF header; login/register endpoints excluded (no session yet)
+- **Tests**: 30 new (12 interceptor + 10 cookie parsing + 8 error handling); 815/815 pass
+- **Dependencies**: None added
+
+### CSP Meta Tag (v0.10.1)
+
+- `index.html`: added `<meta http-equiv="Content-Security-Policy">` as defense-in-depth fallback for backend CSP headers
+- Policy: same-origin default + hCaptcha (`*.hcaptcha.com`) for script/frame/connect/img + inline styles (shadcn-vue/Radix runtime) + data URIs (fonts/images) + `object-src 'none'` + `frame-ancestors 'none'` (clickjacking)
+- Zero dependencies; no code changes; HTML-only hardening
+
+### Set Password Feature (v0.10.0)
+
+- **Backend integration**: ctt-server Set Password API (`POST /api/v1/users/me/password/set`)
+- **API layer**: `src/lib/api/user.ts` — `setPassword()` wrapper (apiFetch + RestApiResponseSchema)
+- **Schemas**: `src/lib/schemas/user.schema.ts` — added `SetPasswordSchema` (newPassword + confirmPassword)
+- **Composables**: `src/features/settings/composables/useSetPassword.ts` (mutation)
+- **Components**: `SetPasswordDialog.vue` (password form with validation), `AccountSection.vue` updated with Set Password button
+- **Integration**: Set Password button shown only for OAuth users (no password set); works alongside Email Change flow
+- **Error codes**: USER_015 (password already set) mapped in `api-error.ts`
+- **Tests**: 34 new (8 API + 12 composable + 14 component); 785/785 pass
+- **Dependencies**: None added
 
 ### Email Change Feature (v0.9.0)
 
