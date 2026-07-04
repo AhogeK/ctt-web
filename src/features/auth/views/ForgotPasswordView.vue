@@ -18,6 +18,7 @@ const { countdown, start } = useCooldown()
 const { data: publicConfig } = usePublicConfig()
 const captchaSiteKey = computed(() => publicConfig.value?.captchaSiteKey ?? null)
 const isSubmitted = ref(false)
+const isIdempotent = ref(false)
 const submittedEmail = ref('')
 const forgotPasswordFormRef = ref<{
   captchaRef: InstanceType<typeof CaptchaWidget> | null
@@ -29,6 +30,7 @@ const mutation = useMutation({
     forgotPasswordFormRef.value?.captchaRef?.reset()
     submittedEmail.value = variables.email
     isSubmitted.value = true
+    isIdempotent.value = response.idempotentSkip === true
 
     if (response.idempotentSkip) {
       toast.info('Reset password email already sent', {
@@ -135,15 +137,26 @@ const isSubmitting = computed(() => toValue(mutation.isPending))
       <!-- Success Message -->
       <div class="space-y-2">
         <h2 class="text-xl font-[510] text-gray-900 dark:text-[#f7f8f8]" style="font-feature-settings: 'cv01', 'ss03'">
-          Check your email
+          {{ isIdempotent ? 'Email already sent' : 'Check your email' }}
         </h2>
         <p class="text-base text-gray-500 dark:text-[#8a8f98]" style="font-feature-settings: 'cv01', 'ss03'">
-          If
-          <code
-            class="px-2 py-0.5 rounded-md bg-gray-100 dark:bg-gray-800 font-mono text-sm font-medium text-gray-700 dark:text-gray-300"
-            >{{ submittedEmail }}</code
-          >
-          exists in our database, you will receive a password recovery link shortly.
+          <template v-if="isIdempotent">
+            We already sent a reset link to
+            <code
+              class="px-2 py-0.5 rounded-md bg-gray-100 dark:bg-gray-800 font-mono text-sm font-medium text-gray-700 dark:text-gray-300"
+              >{{ submittedEmail }}</code
+            >
+            recently. Please check your inbox or spam folder. If you didn't receive it, please wait a few minutes before
+            trying again.
+          </template>
+          <template v-else>
+            If
+            <code
+              class="px-2 py-0.5 rounded-md bg-gray-100 dark:bg-gray-800 font-mono text-sm font-medium text-gray-700 dark:text-gray-300"
+              >{{ submittedEmail }}</code
+            >
+            exists in our database, you will receive a password recovery link shortly.
+          </template>
         </p>
       </div>
     </div>
