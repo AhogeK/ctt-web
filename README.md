@@ -39,10 +39,13 @@ visualization.
 
 | Feature                 | Description                                                                                                |
 | ----------------------- | ---------------------------------------------------------------------------------------------------------- |
-| Authentication          | JWT login, logout, token management, router guards, startup token validation                               |
+| Authentication          | JWT login, logout, token management, router guards, startup token validation, CSRF protection              |
+| CSRF Protection         | XSRF-TOKEN cookie reading, header injection for state-changing requests, 403 handling with toast + reload  |
+| CSP Hardening           | Defense-in-depth Content-Security-Policy meta tag (same-origin + hCaptcha + clickjacking protection)       |
 | Auth Initialization     | Startup token validation via refresh endpoint, redirects expired sessions to login                         |
 | Guest Guard             | Redirects authenticated users away from auth pages (login, register, forgot-password)                      |
 | Password Reset          | Forgot password + reset password flows with error mapping, rate limit cooldown, anti-enumeration           |
+| Set Password            | Set password for OAuth users; Account section integration with Email Change flow                           |
 | Layout System           | AuthLayout + AppLayout, mobile responsive sidebar                                                          |
 | Routing                 | Feature-based modules, type-safe meta, NProgress, **route name constants**, **absolute child paths**       |
 | Form Validation         | Vee-Validate + Zod, real-time feedback                                                                     |
@@ -58,7 +61,7 @@ visualization.
 | Bot Protection          | hCaptcha integration on auth forms with graceful degradation (captchaSiteKey=null disables)                |
 | GitHub OAuth            | OAuth login + account BIND/UNBIND flow from ProfileView with Dialog confirmation; 8-code BIND + 2-code UNBIND error mapping; TanStack Query status |
 | User Profile            | `GET /api/v1/users/me` — displayName/email resolution; AppHeader dropdown shows user identity; avatar hash seeded from displayName; Account section integration |
-| Email Change            | Email change flow with verification; Account section displays email/verification status/display name/registration time; EmailVerificationBanner for unverified users |
+| Email Change            | Email change flow with verification; Account section displays email/verification status/display name/registration time; EmailVerificationBanner for unverified users; integrated with Set Password for OAuth users |
 
 ## 🗺 Project Structure
 
