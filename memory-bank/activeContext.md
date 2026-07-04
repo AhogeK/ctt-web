@@ -3,14 +3,24 @@
 ## Current Status
 
 **Phase**: v0.10.x Security & Account Features (CSRF + Set Password + CSP)
-**Version**: 0.10.2 (2026-07-04)
+**Version**: 0.10.3 (2026-07-05)
 **Branch**: develop at d0ebea9, master at 9899288
-**Tests**: 815/815 pass (verified 2026-07-04)
-**Code Review**: FAILED (2026-07-04) — 3 blocking issues found
+**Tests**: 892/892 pass (verified 2026-07-05)
+**Code Review**: FAILED (2026-07-04) — 3 blocking issues found (all fixed)
 **Plans**:
 - docs/plans/2026-05-02-terms-acceptance-tracking.md — completed
 - docs/plans/2026-05-23-hcaptcha-integration.md — completed
 - .dev/plans/2026-05-28-github-oauth.md — completed
+
+## Recent Activity (v0.10.3 — 2026-07-05)
+
+### ForgotPasswordView idempotentSkip UX Fix
+
+- **Issue**: When backend returns `idempotentSkip: true` (email already sent within rate limit), frontend showed "Check your email" as if a new email was sent
+- **Fix**: Added `isIdempotent` ref to track idempotent responses; template now shows different text:
+  - Title: "Email already sent" (vs "Check your email")
+  - Description: "We already sent a reset link to {email} recently. Please check your inbox or spam folder. If you didn't receive it, please wait a few minutes before trying again."
+- **Tests**: 6 new tests for idempotentSkip behavior; 892/892 pass
 
 ## Code Review Findings (2026-07-04)
 
