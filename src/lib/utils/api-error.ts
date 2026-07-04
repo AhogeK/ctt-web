@@ -85,6 +85,9 @@ export function mapApiErrorCode(code: string): string {
     AUTH_009: 'Refresh token reuse detected. Please sign in again.',
     AUTH_019: 'Terms of service have been updated. Please review and accept the new terms to continue.',
 
+    // CSRF errors
+    CSRF_001: 'Your session has expired. The page will refresh automatically.',
+
     // Security / CAPTCHA errors
     SECURITY_006: 'Captcha verification failed. Please try again.',
     SECURITY_007: 'Please complete the captcha verification.',
@@ -109,6 +112,7 @@ export function mapApiErrorCode(code: string): string {
     USER_011: 'Invalid email change request. Please try again.',
     USER_013: 'Password verification required. Please provide your current password.',
     USER_014: 'Incorrect password. Please try again.',
+    USER_015: 'You already have a password set. Please use the change password option instead.',
 
     // Password reset errors
     PASSWORD_SAME_AS_OLD: 'New password cannot be the same as your current password.',
