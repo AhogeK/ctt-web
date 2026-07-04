@@ -128,19 +128,26 @@ export const RegisterRequestSchema = z.object({
 /**
  * Registration form schema for frontend UI validation.
  *
- * Extends RegisterRequestSchema with confirmPassword field and cross-field
- * password matching validation. Used with Vee-Validate + Zod integration.
+ * Omits `termsVersion` from RegisterRequestSchema because it is not a
+ * user-editable field — it is injected by RegisterView from publicConfig
+ * after form submission. Including it here would cause silent validation
+ * failure (no registered FormField to display the error on).
+ *
+ * Extends with confirmPassword field and cross-field password matching.
+ * Used with Vee-Validate + Zod integration.
  */
-export const RegisterFormSchema = RegisterRequestSchema.extend({
-  // Confirm password for frontend UX — not sent to API
-  confirmPassword: z.string().min(1, 'Please confirm your password'),
-  agreedToTerms: z.boolean().refine((val) => val === true, {
-    message: 'You must agree to the Terms of Service',
-  }),
-}).refine((data) => data.password === data.confirmPassword, {
-  message: 'Passwords do not match',
-  path: ['confirmPassword'],
-})
+export const RegisterFormSchema = RegisterRequestSchema.omit({ termsVersion: true })
+  .extend({
+    // Confirm password for frontend UX — not sent to API
+    confirmPassword: z.string().min(1, 'Please confirm your password'),
+    agreedToTerms: z.boolean().refine((val) => val === true, {
+      message: 'You must agree to the Terms of Service',
+    }),
+  })
+  .refine((data) => data.password === data.confirmPassword, {
+    message: 'Passwords do not match',
+    path: ['confirmPassword'],
+  })
 
 // Export inferred types for use in API layer and components
 export type RegisterRequest = z.infer<typeof RegisterRequestSchema>

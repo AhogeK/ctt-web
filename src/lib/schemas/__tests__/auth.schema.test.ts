@@ -809,7 +809,6 @@ describe('Type inference', () => {
       email: 'test@example.com',
       displayName: 'Test',
       password: 'SecurePass1!',
-      termsVersion: '1.0.0',
       confirmPassword: 'SecurePass1!',
       agreedToTerms: true,
     }
