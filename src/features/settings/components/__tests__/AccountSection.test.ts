@@ -23,6 +23,8 @@ let emailStatusDataValue:
   | undefined = undefined
 let isEmailStatusPendingValue = false
 let isDialogOpenValue = false
+let hasPasswordValue = false
+let isPasswordCheckingValue = false
 
 // ==========================================
 // Mocks
@@ -47,6 +49,21 @@ vi.mock('@/features/settings/composables/useEmailChange', () => ({
   useEmailChange: vi.fn<() => unknown>(() => ({
     isDialogOpen: ref(isDialogOpenValue),
   })),
+}))
+
+vi.mock('@/features/settings/composables/usePasswordDetection', () => ({
+  usePasswordDetection: vi.fn<() => unknown>(() => ({
+    hasPassword: ref(hasPasswordValue),
+    isChecking: ref(isPasswordCheckingValue),
+  })),
+}))
+
+vi.mock('../SetPasswordDialog.vue', () => ({
+  default: {
+    props: ['open'],
+    emits: ['update:open', 'success'],
+    template: '<div data-testid="set-password-dialog" />',
+  },
 }))
 
 vi.mock('@/stores/auth', () => ({
@@ -81,6 +98,8 @@ function resetMocks(): void {
   emailStatusDataValue = undefined
   isEmailStatusPendingValue = false
   isDialogOpenValue = false
+  hasPasswordValue = false
+  isPasswordCheckingValue = false
 }
 
 function setEmailStatus(
@@ -333,6 +352,41 @@ describe('AccountSection', () => {
 
       const verifyButton = wrapper.find('[data-testid="verify-email-button"]')
       expect(verifyButton.attributes('disabled')).toBeDefined()
+    })
+  })
+
+  describe('Set Password button', () => {
+    it('shows Set Password button when user has no password', () => {
+      hasPasswordValue = false
+      const wrapper = mount(AccountSection)
+
+      const setPasswordButton = wrapper.find('[data-testid="set-password-button"]')
+      expect(setPasswordButton.exists()).toBe(true)
+      expect(setPasswordButton.text()).toContain('Set Password')
+    })
+
+    it('hides Set Password button when user already has password', () => {
+      hasPasswordValue = true
+      const wrapper = mount(AccountSection)
+
+      expect(wrapper.find('[data-testid="set-password-button"]').exists()).toBe(false)
+    })
+
+    it('hides Set Password button while password status is loading', () => {
+      isPasswordCheckingValue = true
+      const wrapper = mount(AccountSection)
+
+      expect(wrapper.find('[data-testid="set-password-button"]').exists()).toBe(false)
+    })
+
+    it('opens SetPasswordDialog when Set Password button is clicked', async () => {
+      hasPasswordValue = false
+      const wrapper = mount(AccountSection)
+
+      const setPasswordButton = wrapper.find('[data-testid="set-password-button"]')
+      await setPasswordButton.trigger('click')
+
+      expect(setPasswordButton.exists()).toBe(true)
     })
   })
 })

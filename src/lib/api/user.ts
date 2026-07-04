@@ -1,6 +1,7 @@
 import { apiFetch } from './instance'
 import { RestApiResponseSchema } from '@/lib/schemas/api.schema'
 import { UserProfileSchema, type UserProfile } from '@/lib/schemas/user.schema'
+import { encodeBase64 } from '@/lib/utils'
 
 export type { UserProfile } from '@/lib/schemas/user.schema'
 
@@ -22,4 +23,24 @@ export async function fetchCurrentUser(): Promise<UserProfile> {
 
   const wrapped = RestApiResponseSchema.parse(response)
   return UserProfileSchema.parse(wrapped.data)
+}
+
+/**
+ * Set password for OAuth users who don't have one yet.
+ *
+ * Endpoint: POST /api/v1/users/me/password/set
+ * Auth: Bearer JWT (auto-injected by apiFetch interceptor)
+ *
+ * @param newPassword - The new password to set (8-64 printable ASCII chars)
+ * @returns Parsed response (empty data on success)
+ * @throws 409 with USER_015 if user already has a password
+ * @throws 400 with COMMON_003 if password format is invalid
+ */
+export async function setPassword(newPassword: string): Promise<void> {
+  const response = await apiFetch<unknown>('/api/v1/users/me/password/set', {
+    method: 'POST',
+    body: { newPassword: encodeBase64(newPassword) },
+  })
+
+  RestApiResponseSchema.parse(response)
 }

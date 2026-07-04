@@ -5,19 +5,35 @@
  * Displays user email (with verification badge), display name,
  * registration time, and email change management actions.
  */
-import { computed } from 'vue'
+import { ref, computed } from 'vue'
 import { useAuthStore } from '@/stores/auth'
 import { useEmailStatus } from '@/features/settings/composables/useEmailStatus'
 import { useEmailChange } from '@/features/settings/composables/useEmailChange'
 import { useResendVerification } from '@/features/auth/composables/useResendVerification'
+import { usePasswordDetection } from '@/features/settings/composables/usePasswordDetection'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { cn } from '@/lib/utils'
+import SetPasswordDialog from './SetPasswordDialog.vue'
 
 const authStore = useAuthStore()
 const { data: emailStatus, isPending: isEmailStatusPending } = useEmailStatus()
 const { isDialogOpen } = useEmailChange()
 const { resend, countdown, isPending: isResendPending } = useResendVerification()
+const { hasPassword, isChecking: isPasswordChecking } = usePasswordDetection()
+
+/** Whether the set password dialog is open */
+const isSetPasswordDialogOpen = ref(false)
+
+/** Shared action button styling for outline buttons in the account section */
+const actionButtonClass = cn(
+  'h-9 rounded-md font-[510] text-sm',
+  'border-[#d0d6e0] bg-white text-[#1a1a2e]',
+  'dark:border-white/8 dark:bg-white/2 dark:text-[#f7f8f8]',
+  'transition-all duration-200',
+  'hover:bg-[#f3f4f5] hover:border-[#5e6ad2]/50',
+  'dark:hover:bg-white/5 dark:hover:border-[#7170ff]/50',
+)
 
 const email = computed(() => emailStatus.value?.email ?? authStore.email)
 const emailVerified = computed(() => emailStatus.value?.emailVerified ?? authStore.emailVerified)
@@ -47,6 +63,14 @@ function handleResendVerification() {
   if (email.value) {
     void resend(email.value)
   }
+}
+
+function handleOpenSetPasswordDialog() {
+  isSetPasswordDialogOpen.value = true
+}
+
+function handleSetPasswordSuccess() {
+  hasPassword.value = true
 }
 </script>
 
@@ -109,36 +133,22 @@ function handleResendVerification() {
 
       <!-- Actions -->
       <div class="flex items-center gap-3 pt-2">
+        <Button variant="outline" :class="actionButtonClass" @click="handleOpenChangeDialog"> Change Email </Button>
+
         <Button
+          v-if="!isPasswordChecking && !hasPassword"
           variant="outline"
-          :class="
-            cn(
-              'h-9 rounded-md font-[510] text-sm',
-              'border-[#d0d6e0] bg-white text-[#1a1a2e]',
-              'dark:border-white/8 dark:bg-white/2 dark:text-[#f7f8f8]',
-              'transition-all duration-200',
-              'hover:bg-[#f3f4f5] hover:border-[#5e6ad2]/50',
-              'dark:hover:bg-white/5 dark:hover:border-[#7170ff]/50',
-            )
-          "
-          @click="handleOpenChangeDialog"
+          :class="actionButtonClass"
+          data-testid="set-password-button"
+          @click="handleOpenSetPasswordDialog"
         >
-          Change Email
+          Set Password
         </Button>
 
         <Button
           v-if="!emailVerified"
           variant="outline"
-          :class="
-            cn(
-              'h-9 rounded-md font-[510] text-sm',
-              'border-[#d0d6e0] bg-white text-[#1a1a2e]',
-              'dark:border-white/8 dark:bg-white/2 dark:text-[#f7f8f8]',
-              'transition-all duration-200',
-              'hover:bg-[#f3f4f5] hover:border-[#5e6ad2]/50',
-              'dark:hover:bg-white/5 dark:hover:border-[#7170ff]/50',
-            )
-          "
+          :class="actionButtonClass"
           :disabled="isResendPending || countdown > 0"
           data-testid="verify-email-button"
           @click="handleResendVerification"
@@ -150,4 +160,10 @@ function handleResendVerification() {
       </div>
     </div>
   </div>
+
+  <SetPasswordDialog
+    :open="isSetPasswordDialogOpen"
+    @update:open="isSetPasswordDialogOpen = $event"
+    @success="handleSetPasswordSuccess"
+  />
 </template>
