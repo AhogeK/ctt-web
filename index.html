@@ -4,6 +4,21 @@
     <meta charset="UTF-8" />
     <link rel="icon" href="/favicon.ico" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <!--
+      Content-Security-Policy: defense-in-depth fallback for backend CSP headers.
+      - default-src 'self': only same-origin by default
+      - script-src/frame-src/connect-src/img-src: allow hCaptcha (*.hcaptcha.com)
+      - style-src 'unsafe-inline': required by shadcn-vue / Radix runtime styles
+      - font-src/img-src data:: allow data URIs (base64 images, embedded fonts)
+      - object-src 'none': block legacy plugin embeds (Flash, Java, etc.)
+      - base-uri 'self': prevent <base> tag injection
+      - form-action 'self': restrict form submission targets
+      - frame-ancestors 'none': prevent clickjacking via iframe embedding
+    -->
+    <meta
+      http-equiv="Content-Security-Policy"
+      content="default-src 'self'; script-src 'self' https://hcaptcha.com https://*.hcaptcha.com; frame-src 'self' https://*.hcaptcha.com; connect-src 'self' https://hcaptcha.com https://*.hcaptcha.com https://api.iconify.design https://api.unisvg.com https://api.simplesvg.com; img-src 'self' data: https://hcaptcha.com https://*.hcaptcha.com https://api.iconify.design https://api.unisvg.com https://api.simplesvg.com; style-src 'self' 'unsafe-inline'; font-src 'self' data:; object-src 'none'; base-uri 'self'; form-action 'self';"
+    />
     <title>Vite App</title>
   </head>
   <body>
