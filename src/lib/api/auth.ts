@@ -14,6 +14,7 @@ import {
   type ResetPasswordRequest,
   type GitHubAuthorizeResponse,
 } from '@/lib/schemas/auth.schema'
+import { encodeBase64 } from '@/lib/utils'
 
 /**
  * Authenticates user with email, password, and device ID.
@@ -27,10 +28,11 @@ import {
 export async function login(credentials: LoginRequest): Promise<LoginResponse> {
   // Validate request payload before sending
   const validatedRequest = LoginRequestSchema.parse(credentials)
+  const encodedRequest = { ...validatedRequest, password: encodeBase64(validatedRequest.password) }
 
   const response = await apiFetch<unknown>('/api/v1/auth/login', {
     method: 'POST',
-    body: validatedRequest,
+    body: encodedRequest,
   })
 
   const wrapped = RestApiResponseSchema.parse(response)
@@ -106,10 +108,11 @@ export async function refresh(params: { refreshToken: string }): Promise<LoginRe
  */
 export async function register(data: RegisterRequest): Promise<EmptyResponse> {
   const cleanPayload = RegisterRequestSchema.parse(data)
+  const encodedPayload = { ...cleanPayload, password: encodeBase64(cleanPayload.password) }
 
   const response = await apiFetch<unknown>('/api/v1/auth/register', {
     method: 'POST',
-    body: cleanPayload,
+    body: encodedPayload,
   })
 
   const wrapped = RestApiResponseSchema.parse(response)
@@ -196,9 +199,10 @@ export async function forgotPassword(data: ForgotPasswordRequest): Promise<Empty
  */
 export async function confirmPasswordReset(data: ResetPasswordRequest): Promise<void> {
   const cleanPayload = ResetPasswordRequestSchema.parse(data)
+  const encodedPayload = { ...cleanPayload, newPassword: encodeBase64(cleanPayload.newPassword) }
   await apiFetch('/api/v1/auth/password-reset/confirm', {
     method: 'POST',
-    body: cleanPayload,
+    body: encodedPayload,
   })
 }
 

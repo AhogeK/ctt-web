@@ -165,7 +165,7 @@ describe('email API', () => {
         method: 'POST',
         body: {
           newEmail: 'new@example.com',
-          password: 'currentPassword123',
+          password: 'Y3VycmVudFBhc3N3b3JkMTIz',
         },
       })
     })
