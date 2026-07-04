@@ -1,5 +1,6 @@
 import { ofetch, type FetchOptions } from 'ofetch'
 import { STORAGE_KEYS, useAuthStore } from '@/stores/auth'
+import { injectCsrfHeader } from '@/lib/utils/csrf'
 import { toast } from 'vue-sonner'
 import router from '@/router'
 import { RouteNames } from '@/router/route-names'
@@ -19,6 +20,8 @@ export const UNAUTHORIZED_EVENT = 'api:unauthorized'
 
 /** Event dispatched when terms of service need re-acceptance. App.vue listens to show TermsDialog. */
 export const TERMS_EXPIRED_EVENT = 'api:terms-expired'
+
+const CSRF_ERROR_CODES = new Set(['CSRF_001'])
 
 let isTerminalAuthHandling = false
 
@@ -178,6 +181,7 @@ async function attemptTokenRefresh(request: RequestInfo, options: ApiFetchOption
  * - Reads access token from localStorage on every request
  * - On 401 with AUTH_002/AUTH_003: attempts token refresh, then retries
  * - On terminal auth errors (AUTH_004–009): clears auth, shows toast, redirects
+ * - On 403 with CSRF code: shows toast and reloads page to obtain fresh CSRF token
  * - Falls back to dispatching UNAUTHORIZED_EVENT for unknown 401 codes
  */
 export const apiFetch = ofetch.create({
@@ -186,13 +190,17 @@ export const apiFetch = ofetch.create({
   credentials: 'include',
 
   async onRequest({ options }) {
-    const accessToken = localStorage.getItem(STORAGE_KEYS.ACCESS_TOKEN)
+    const headers = new Headers(options.headers)
 
+    const accessToken = localStorage.getItem(STORAGE_KEYS.ACCESS_TOKEN)
     if (accessToken) {
-      const headers = new Headers(options.headers)
       headers.set('Authorization', `Bearer ${accessToken}`)
-      options.headers = headers
     }
+
+    const method = (options.method ?? 'GET').toString()
+    injectCsrfHeader(headers, method)
+
+    options.headers = headers
   },
 
   // ofetch's FetchHook type doesn't capture the retry pattern (returning ofetch from onResponseError)
@@ -224,6 +232,13 @@ export const apiFetch = ofetch.create({
 
         return pending
       }
+
+      if (errorCode && CSRF_ERROR_CODES.has(errorCode)) {
+        toast.error('Your session has expired. Refreshing...')
+        window.location.reload()
+        return
+      }
+
       if (errorCode && TERMINAL_AUTH_CODES[errorCode]) {
         handleTerminalAuthError(errorCode)
         return

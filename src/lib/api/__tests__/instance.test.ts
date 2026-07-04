@@ -898,6 +898,235 @@ describe('API Instance', () => {
     })
   })
 
+  describe('CSRF Token Injection', () => {
+    let cookieSpy: ReturnType<typeof vi.spyOn>
+
+    beforeEach(async () => {
+      vi.resetModules()
+      cookieSpy = vi.spyOn(document, 'cookie', 'get').mockReturnValue('XSRF-TOKEN=csrf-token-123')
+      await import('../instance')
+    })
+
+    afterEach(() => {
+      vi.restoreAllMocks()
+    })
+
+    it('adds X-XSRF-TOKEN header for POST requests', async () => {
+      const mockContext = {
+        request: new Request('https://api.example.com/test'),
+        options: {
+          method: 'POST',
+          headers: new Headers(),
+        },
+      }
+
+      if (capturedConfig.onRequest) {
+        await capturedConfig.onRequest(mockContext)
+      }
+
+      const headers = mockContext.options.headers
+      expect(headers.get('X-XSRF-TOKEN')).toBe('csrf-token-123')
+    })
+
+    it('adds X-XSRF-TOKEN header for PUT requests', async () => {
+      const mockContext = {
+        request: new Request('https://api.example.com/test'),
+        options: {
+          method: 'PUT',
+          headers: new Headers(),
+        },
+      }
+
+      if (capturedConfig.onRequest) {
+        await capturedConfig.onRequest(mockContext)
+      }
+
+      const headers = mockContext.options.headers
+      expect(headers.get('X-XSRF-TOKEN')).toBe('csrf-token-123')
+    })
+
+    it('adds X-XSRF-TOKEN header for DELETE requests', async () => {
+      const mockContext = {
+        request: new Request('https://api.example.com/test'),
+        options: {
+          method: 'DELETE',
+          headers: new Headers(),
+        },
+      }
+
+      if (capturedConfig.onRequest) {
+        await capturedConfig.onRequest(mockContext)
+      }
+
+      const headers = mockContext.options.headers
+      expect(headers.get('X-XSRF-TOKEN')).toBe('csrf-token-123')
+    })
+
+    it('adds X-XSRF-TOKEN header for PATCH requests', async () => {
+      const mockContext = {
+        request: new Request('https://api.example.com/test'),
+        options: {
+          method: 'PATCH',
+          headers: new Headers(),
+        },
+      }
+
+      if (capturedConfig.onRequest) {
+        await capturedConfig.onRequest(mockContext)
+      }
+
+      const headers = mockContext.options.headers
+      expect(headers.get('X-XSRF-TOKEN')).toBe('csrf-token-123')
+    })
+
+    it('skips X-XSRF-TOKEN header for GET requests', async () => {
+      const mockContext = {
+        request: new Request('https://api.example.com/test'),
+        options: {
+          method: 'GET',
+          headers: new Headers(),
+        },
+      }
+
+      if (capturedConfig.onRequest) {
+        await capturedConfig.onRequest(mockContext)
+      }
+
+      const headers = mockContext.options.headers
+      expect(headers.has('X-XSRF-TOKEN')).toBe(false)
+    })
+
+    it('skips X-XSRF-TOKEN header when no CSRF cookie exists', async () => {
+      cookieSpy.mockReturnValue('')
+      const mockContext = {
+        request: new Request('https://api.example.com/test'),
+        options: {
+          method: 'POST',
+          headers: new Headers(),
+        },
+      }
+
+      if (capturedConfig.onRequest) {
+        await capturedConfig.onRequest(mockContext)
+      }
+
+      const headers = mockContext.options.headers
+      expect(headers.has('X-XSRF-TOKEN')).toBe(false)
+    })
+
+    it('sets both Authorization and X-XSRF-TOKEN headers when token exists', async () => {
+      localStorage.setItem('ctt_access_token', 'jwt-token')
+      const mockContext = {
+        request: new Request('https://api.example.com/test'),
+        options: {
+          method: 'POST',
+          headers: new Headers(),
+        },
+      }
+
+      if (capturedConfig.onRequest) {
+        await capturedConfig.onRequest(mockContext)
+      }
+
+      const headers = mockContext.options.headers
+      expect(headers.get('Authorization')).toBe('Bearer jwt-token')
+      expect(headers.get('X-XSRF-TOKEN')).toBe('csrf-token-123')
+    })
+  })
+
+  describe('CSRF Error Handling', () => {
+    let reloadSpy: ReturnType<typeof vi.fn>
+
+    beforeEach(async () => {
+      vi.resetModules()
+      reloadSpy = vi.fn<() => void>()
+      Object.defineProperty(window, 'location', {
+        value: { reload: reloadSpy },
+        writable: true,
+      })
+      vi.spyOn(console, 'warn').mockImplementation(vi.fn())
+      vi.spyOn(console, 'error').mockImplementation(vi.fn())
+      vi.spyOn(globalThis, 'dispatchEvent').mockImplementation(vi.fn())
+
+      await import('../instance')
+      ;(console.warn as ReturnType<typeof vi.fn>).mockClear()
+    })
+
+    afterEach(() => {
+      vi.restoreAllMocks()
+    })
+
+    it('shows toast and reloads page on 403 with CSRF_001 code', async () => {
+      const mockContext = {
+        response: {
+          status: 403,
+          _data: { code: 'CSRF_001', message: 'CSRF token invalid' },
+          url: 'https://api.example.com/test',
+        },
+        request: 'https://api.example.com/test',
+        options: { method: 'POST' },
+      }
+
+      await capturedConfig.onResponseError!(mockContext)
+
+      expect(toast.error).toHaveBeenCalledWith('Your session has expired. Refreshing...')
+      expect(reloadSpy).toHaveBeenCalled()
+    })
+
+    it('does not reload page on 403 with other codes', async () => {
+      const mockContext = {
+        response: {
+          status: 403,
+          _data: { code: 'OTHER_CODE', message: 'Forbidden' },
+          url: 'https://api.example.com/test',
+        },
+        request: 'https://api.example.com/test',
+        options: { method: 'POST' },
+      }
+
+      await capturedConfig.onResponseError!(mockContext)
+
+      expect(toast.error).not.toHaveBeenCalled()
+      expect(reloadSpy).not.toHaveBeenCalled()
+      expect(console.warn).toHaveBeenCalledWith('Permission denied:', mockContext.response._data)
+    })
+
+    it('handles CSRF error without code field gracefully', async () => {
+      const mockContext = {
+        response: {
+          status: 403,
+          _data: { message: 'Forbidden' },
+          url: 'https://api.example.com/test',
+        },
+        request: 'https://api.example.com/test',
+        options: { method: 'POST' },
+      }
+
+      await capturedConfig.onResponseError!(mockContext)
+
+      expect(toast.error).not.toHaveBeenCalled()
+      expect(reloadSpy).not.toHaveBeenCalled()
+      expect(console.warn).toHaveBeenCalledWith('Permission denied:', mockContext.response._data)
+    })
+
+    it('handles CSRF error with nested data format', async () => {
+      const mockContext = {
+        response: {
+          status: 403,
+          _data: { data: { code: 'CSRF_001', message: 'CSRF token invalid' } },
+          url: 'https://api.example.com/test',
+        },
+        request: 'https://api.example.com/test',
+        options: { method: 'POST' },
+      }
+
+      await capturedConfig.onResponseError!(mockContext)
+
+      expect(toast.error).toHaveBeenCalledWith('Your session has expired. Refreshing...')
+      expect(reloadSpy).toHaveBeenCalled()
+    })
+  })
+
   describe('resolveTermsQueue', () => {
     beforeEach(async () => {
       vi.resetModules()
