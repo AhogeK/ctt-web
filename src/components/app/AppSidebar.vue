@@ -26,9 +26,9 @@ import { LayoutDashboard, Settings, Monitor } from 'lucide-vue-next'
     <SidebarHeader>
       <SidebarMenu>
         <SidebarMenuItem>
-          <SidebarMenuButton size="lg">
+          <div class="flex items-center gap-2 px-2 py-1.5">
             <span class="text-sm font-semibold">Code Time Tracker</span>
-          </SidebarMenuButton>
+          </div>
         </SidebarMenuItem>
       </SidebarMenu>
     </SidebarHeader>
