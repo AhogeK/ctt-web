@@ -3,9 +3,19 @@
 ## Current Status
 
 **Phase**: v0.10.x Security & Account Features + UI Polish
-**Version**: 0.10.5 (2026-07-05)
+**Version**: 0.10.6 (2026-07-05)
 **Branch**: develop, master at 9899288
 **Tests**: 897/897 pass (verified 2026-07-05)
+
+## Recent Activity (v0.10.6 — 2026-07-05)
+
+### Favicon replaced with PluginIcon SVG
+
+- **Change**: Browser tab icon now uses the Code Time Tracker plugin icon (SVG) instead of the default Vite favicon
+- **Files changed**:
+  - `public/favicon.svg` — new file, SVG extracted from `PluginIcon.vue`
+  - `index.html` — `<link rel="icon" type="image/svg+xml" href="/favicon.svg" />` + title changed from "Vite App" to "Code Time Tracker"
+  - `package.json` — version 0.10.5 → 0.10.6
 
 ## Recent Activity (v0.10.5 — 2026-07-05)
 
