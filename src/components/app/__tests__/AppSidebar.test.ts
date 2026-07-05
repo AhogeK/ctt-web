@@ -33,7 +33,7 @@ vi.mock('@/components/ui/sidebar', () => ({
   },
 }))
 
-vi.mock('lucide-vue-next', () => ({
+vi.mock('@lucide/vue', () => ({
   LayoutDashboard: { name: 'LayoutDashboard', template: '<span data-icon="layout-dashboard" />' },
   Settings: { name: 'Settings', template: '<span data-icon="settings" />' },
   Monitor: { name: 'Monitor', template: '<span data-icon="monitor" />' },

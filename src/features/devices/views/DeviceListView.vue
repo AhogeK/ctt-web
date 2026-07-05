@@ -9,7 +9,7 @@
  * - Uses TanStack Query for data fetching and caching
  */
 import { ref } from 'vue'
-import { Monitor, Smartphone, Laptop, Globe, Trash2, Loader2, AlertTriangle } from 'lucide-vue-next'
+import { Monitor, Smartphone, Laptop, Globe, Trash2, Loader2, AlertTriangle } from '@lucide/vue'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { Skeleton } from '@/components/ui/skeleton'

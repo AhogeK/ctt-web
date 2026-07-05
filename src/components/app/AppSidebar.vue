@@ -14,7 +14,7 @@ import {
   useSidebar,
 } from '@/components/ui/sidebar'
 import { RouterLink } from 'vue-router'
-import { LayoutDashboard, Monitor, User } from 'lucide-vue-next'
+import { LayoutDashboard, Monitor, User } from '@lucide/vue'
 import PluginIcon from './PluginIcon.vue'
 
 /**

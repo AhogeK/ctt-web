@@ -7,7 +7,7 @@
  * to prevent abuse (backend rate limit: 3 requests/minute).
  */
 import { computed } from 'vue'
-import { AlertTriangle, Mail, Loader2 } from 'lucide-vue-next'
+import { AlertTriangle, Mail, Loader2 } from '@lucide/vue'
 import { storeToRefs } from 'pinia'
 import { Button } from '@/components/ui/button'
 import { useAuthStore } from '@/stores/auth'

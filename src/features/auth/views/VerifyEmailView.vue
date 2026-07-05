@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { ref, onMounted, onUnmounted } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
-import { CheckCircle2, AlertTriangle, Loader2 } from 'lucide-vue-next'
+import { CheckCircle2, AlertTriangle, Loader2 } from '@lucide/vue'
 import { verifyEmail } from '@/lib/api/auth'
 import { isApiError, mapApiErrorCode } from '@/lib/utils/api-error'
 import { RouteNames } from '@/router/route-names'

@@ -28,7 +28,7 @@
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",
     "echarts": "^6.1.0",
-    "lucide-vue-next": "^1.0.0",
+    "@lucide/vue": "^1.23.0",
     "nprogress": "^0.2.0",
     "ofetch": "^1.5.1",
     "pinia": "^3.0.4",
