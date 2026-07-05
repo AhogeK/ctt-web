@@ -3,9 +3,50 @@
 ## Current Status
 
 **Phase**: v0.10.x Security & Account Features + UI Polish
-**Version**: 0.10.8 (2026-07-05)
+**Version**: 0.10.9 (2026-07-05)
 **Branch**: develop, master at 9899288
-**Tests**: 897/897 pass (verified 2026-07-05)
+**Tests**: 903/903 pass (verified 2026-07-05)
+
+## Recent Activity (v0.10.9 — 2026-07-05)
+
+### AccountSection reads `hasPassword` from auth store (deprecate usePasswordDetection composable)
+
+- **Why**: `usePasswordDetection` composable called the **write endpoint** `setPassword('')` to detect password status. Even after v0.10.5 removed the auto-mount call, the composable itself was an anti-pattern (write side-effects just to read state).
+- **Backend contract**: `GET /api/v1/users/me` now returns `hasPassword: boolean`. The auth store already exposes it as `hasPassword: Ref<boolean>` (default `false`), set from `fetchUserProfile()`.
+- **Changes**:
+  - `src/features/settings/components/AccountSection.vue` — read `authStore.hasPassword` directly; removed `usePasswordDetection` import + destructuring; simplified `handleOpenSetPasswordDialog()` to just open the dialog (no lazy check, no `toast.info` branch); removed `handleSetPasswordSuccess` handler + `@success` listener (state now flows from API); removed now-unused `vue-sonner` import
+  - `src/features/settings/composables/usePasswordDetection.ts` — added `@deprecated` JSDoc pointing to `authStore.hasPassword`. Function body unchanged (still used by its own tests; removal deferred to a separate cleanup pass)
+  - `src/features/settings/components/__tests__/AccountSection.test.ts` — removed `usePasswordDetection` mock + `hasPasswordValue`/`isPasswordCheckingValue` mutable vars; added `authStoreHasPassword` mutable + threaded into the `useAuthStore` mock; removed two obsolete tests (`hasPassword is null` initial-state test, `isPasswordChecking=true` loading-state test); kept `vue-sonner` and `SetPasswordDialog` mocks
+- **Files changed**:
+  - `src/features/settings/components/AccountSection.vue`
+  - `src/features/settings/composables/usePasswordDetection.ts`
+  - `src/features/settings/components/__tests__/AccountSection.test.ts`
+  - `package.json` — version 0.10.8 → 0.10.9
+  - `pnpm type-check` clean; full suite 902/902 pass
+
+### Code review follow-up: fix SetPasswordDialog @success regression
+
+- **Issue**: v0.10.9 removed `@success="handleSetPasswordSuccess"` listener from SetPasswordDialog, but didn't provide an alternative. After OAuth user sets password, `authStore.hasPassword` stays `false` because nothing triggers `fetchUserProfile()`.
+- **Fix**: Re-added `@success="handleSetPasswordSuccess"` listener that calls `void authStore.fetchUserProfile()` to refresh profile including `hasPassword`.
+- **File**: `src/features/settings/components/AccountSection.vue` — added `handleSetPasswordSuccess()` handler + `@success` listener on SetPasswordDialog
+- **Verification**: type-check clean, AccountSection tests 26/26 pass
+
+### Code review follow-up: JSDoc and comment fixes
+
+- **Fix 1**: `src/lib/schemas/user.schema.ts` — reordered JSDoc and Zod schema fields to match backend DTO order: `emailChangePending, hasPassword, createdAt, lastLoginAt, termsVersion` (was: `createdAt, lastLoginAt, termsVersion, emailChangePending, hasPassword`)
+- **Fix 2**: `src/stores/auth.ts` — added `hasPassword` to the profile fields group comment (lines 107-113)
+- **Verification**: type-check clean
+
+### Code review follow-up: 4 test fixes for v0.10.9 hasPassword coverage
+
+- **Why**: Reviewer flagged gaps in v0.10.9's hasPassword test coverage (the field was newly added to `UserProfileSchema` and `authStore`).
+- **Fixes** (all test-only, no production code changes):
+  1. `src/stores/__tests__/auth.test.ts` — added `expect(store.hasPassword).toBe(true)` to the existing "populates displayName, email, emailVerified, lastLoginAt on success" test (the mock already had `hasPassword: true`, but the assertion was missing).
+  2. `src/lib/schemas/__tests__/user.schema.test.ts` — added a parallel type-rejection test for `hasPassword: 'true'` mirroring the existing emailVerified type-rejection test at line 199. Schema enforces `z.boolean()` so this must fail.
+  3. `src/features/settings/components/__tests__/AccountSection.test.ts` — added `hasPassword: false` to the "shows dash when display name is null" `mockReturnValueOnce` payload (was missing the field; component now reads `authStore.hasPassword`).
+  4. `src/features/settings/components/__tests__/AccountSection.test.ts` — removed orphaned `vi.mock('vue-sonner', ...)` block. The v0.10.9 AccountSection refactor dropped the `vue-sonner` import, so the mock was dead code.
+- **Verification**: `pnpm test:unit --run` → 903/903 pass (was 902; +1 from the new hasPassword schema test)
+- **Files changed**: 3 test files (no production code touched)
 
 ## Recent Activity (v0.10.8 — 2026-07-05)
 
