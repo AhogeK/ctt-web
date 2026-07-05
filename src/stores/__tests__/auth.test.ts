@@ -334,6 +334,7 @@ describe('Auth Store', () => {
         createdAt: '2026-01-15T10:30:00Z',
         lastLoginAt: '2026-07-01T09:15:00Z',
         termsVersion: '1.0.0',
+        emailChangePending: false,
       }
       vi.mocked(userApi.fetchCurrentUser).mockResolvedValue(mockProfile)
 
@@ -367,6 +368,7 @@ describe('Auth Store', () => {
         createdAt: '2026-01-15T10:30:00Z',
         lastLoginAt: null,
         termsVersion: '1.0.0',
+        emailChangePending: false,
       }
       // Reset call counter so prior tests in this describe block don't inflate it
       vi.mocked(userApi.fetchCurrentUser).mockClear()

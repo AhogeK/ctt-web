@@ -1,6 +1,5 @@
 <script setup lang="ts">
 import { ref, computed } from 'vue'
-import { SidebarTrigger } from '@/components/ui/sidebar'
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip'
 import {
   DropdownMenu,
@@ -10,18 +9,22 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu'
+import { SidebarTrigger, useSidebar } from '@/components/ui/sidebar'
 import { LogOut, Loader2 } from 'lucide-vue-next'
 import { useAuthStore } from '@/stores/auth'
 import UserAvatar from './UserAvatar.vue'
 
 /**
- * AppHeader - Sticky header with sidebar trigger and user avatar menu
+ * AppHeader - Sticky header with user avatar menu
  *
- * Desktop: Sidebar collapse on left, user avatar (right) opens dropdown
- *          with profile + logout
- * Mobile:  Hamburger menu (SidebarTrigger handles drawer)
+ * Desktop: collapse toggle lives in the sidebar header (see AppSidebar);
+ *          only the user avatar dropdown is exposed here.
+ * Mobile:  sidebar renders inside a Sheet/Dialog overlay whose internal
+ *          SidebarHeader is unreachable while closed, so we expose the
+ *          SidebarTrigger here as the only way to open the sidebar.
  */
 const authStore = useAuthStore()
+const { isMobile } = useSidebar()
 const isLoggingOut = ref(false)
 
 /**
@@ -50,7 +53,7 @@ async function handleLogout(): Promise<void> {
 
 <template>
   <header class="sticky top-0 z-40 h-14 flex items-center gap-4 border-b bg-background px-4">
-    <SidebarTrigger />
+    <SidebarTrigger v-if="isMobile" class="h-9 w-9" />
     <div class="ml-auto flex items-center gap-2">
       <TooltipProvider>
         <Tooltip>
