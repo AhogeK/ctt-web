@@ -1,4 +1,4 @@
-import { ref, onMounted } from 'vue'
+import { ref } from 'vue'
 import { setPassword } from '@/lib/api/user'
 import { extractErrorCode, isApiError } from '@/lib/utils/api-error'
 
@@ -9,18 +9,23 @@ import { extractErrorCode, isApiError } from '@/lib/utils/api-error'
  * This composable detects password presence by attempting to call
  * the Set Password API with an empty password.
  *
+ * Detection is LAZY — call `recheck()` explicitly when password status
+ * is needed (e.g. before opening the set-password dialog).
+ * No API call is made on mount.
+ *
  * - If USER_015 error is returned → user has password → hasPassword = true
  * - If other API error (e.g. COMMON_003 validation) → user doesn't have password → hasPassword = false
  * - If network/unknown error → checkError is set, hasPassword unchanged
  *
- * @returns Object with hasPassword ref, loading state, and error state
+ * @returns Object with hasPassword ref, loading state, error state, and recheck function
  */
 export function usePasswordDetection() {
-  const hasPassword = ref(false)
-  const isChecking = ref(true)
+  const hasPassword = ref<boolean | null>(null)
+  const isChecking = ref(false)
   const checkError = ref<string | null>(null)
 
   async function checkPasswordStatus() {
+    if (isChecking.value) return
     isChecking.value = true
     checkError.value = null
 
@@ -45,10 +50,6 @@ export function usePasswordDetection() {
       isChecking.value = false
     }
   }
-
-  onMounted(() => {
-    void checkPasswordStatus()
-  })
 
   return {
     hasPassword,

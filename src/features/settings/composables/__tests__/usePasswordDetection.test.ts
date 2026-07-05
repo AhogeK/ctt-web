@@ -19,8 +19,8 @@ const mockExtractErrorCode = vi.mocked(apiError.extractErrorCode)
 const mockIsApiError = vi.mocked(apiError.isApiError)
 
 /**
- * Mounts the composable inside a minimal test component so that
- * `onMounted` fires and the auto password check runs.
+ * Mounts the composable inside a minimal test component.
+ * No auto-call — recheck() must be invoked explicitly.
  */
 function mountComposable() {
   let result!: ReturnType<typeof usePasswordDetection>
@@ -39,9 +39,7 @@ function mountComposable() {
 describe('usePasswordDetection', () => {
   beforeEach(() => {
     vi.clearAllMocks()
-    // Default: setPassword resolves (no error)
     mockSetPassword.mockResolvedValue()
-    // Default: extractErrorCode returns undefined, isApiError returns false
     mockExtractErrorCode.mockReturnValue(undefined)
     mockIsApiError.mockReturnValue(false)
   })
@@ -50,33 +48,25 @@ describe('usePasswordDetection', () => {
     vi.restoreAllMocks()
   })
 
-  describe('initial state', () => {
-    it('starts with hasPassword as false before mount completes', async () => {
-      mockSetPassword.mockImplementation(
-        () => new Promise(() => {}), // never resolves so check stays pending
-      )
-
+  describe('initial state (no auto-call)', () => {
+    it('starts with hasPassword as null', () => {
       const { hasPassword } = mountComposable()
-
-      expect(hasPassword.value).toBe(false)
+      expect(hasPassword.value).toBeNull()
     })
 
-    it('starts with isChecking as true (before mount resolves)', async () => {
-      mockSetPassword.mockImplementation(
-        () => new Promise(() => {}), // never resolves so isChecking stays true
-      )
-
+    it('starts with isChecking as false', () => {
       const { isChecking } = mountComposable()
-
-      expect(isChecking.value).toBe(true)
+      expect(isChecking.value).toBe(false)
     })
 
-    it('starts with checkError as null (before mount resolves)', async () => {
-      mockSetPassword.mockImplementation(() => new Promise(() => {}))
-
+    it('starts with checkError as null', () => {
       const { checkError } = mountComposable()
-
       expect(checkError.value).toBeNull()
+    })
+
+    it('does NOT call setPassword on mount', () => {
+      mountComposable()
+      expect(mockSetPassword).not.toHaveBeenCalled()
     })
   })
 
@@ -86,7 +76,8 @@ describe('usePasswordDetection', () => {
       mockSetPassword.mockRejectedValue(apiError_)
       mockExtractErrorCode.mockReturnValue('USER_015')
 
-      const { hasPassword, isChecking } = mountComposable()
+      const { hasPassword, isChecking, recheck } = mountComposable()
+      await recheck()
       await flushPromises()
 
       expect(hasPassword.value).toBe(true)
@@ -98,7 +89,8 @@ describe('usePasswordDetection', () => {
       mockSetPassword.mockRejectedValue(apiError_)
       mockExtractErrorCode.mockReturnValue('USER_015')
 
-      const { checkError } = mountComposable()
+      const { checkError, recheck } = mountComposable()
+      await recheck()
       await flushPromises()
 
       expect(checkError.value).toBeNull()
@@ -112,7 +104,8 @@ describe('usePasswordDetection', () => {
       mockExtractErrorCode.mockReturnValue('COMMON_003')
       mockIsApiError.mockReturnValue(true)
 
-      const { hasPassword, isChecking } = mountComposable()
+      const { hasPassword, isChecking, recheck } = mountComposable()
+      await recheck()
       await flushPromises()
 
       expect(hasPassword.value).toBe(false)
@@ -125,7 +118,8 @@ describe('usePasswordDetection', () => {
       mockExtractErrorCode.mockReturnValue('COMMON_003')
       mockIsApiError.mockReturnValue(true)
 
-      const { checkError } = mountComposable()
+      const { checkError, recheck } = mountComposable()
+      await recheck()
       await flushPromises()
 
       expect(checkError.value).toBeNull()
@@ -139,23 +133,25 @@ describe('usePasswordDetection', () => {
       mockExtractErrorCode.mockReturnValue(undefined)
       mockIsApiError.mockReturnValue(false)
 
-      const { checkError, isChecking } = mountComposable()
+      const { checkError, isChecking, recheck } = mountComposable()
+      await recheck()
       await flushPromises()
 
       expect(checkError.value).toBe('Unable to check password status. Please try again.')
       expect(isChecking.value).toBe(false)
     })
 
-    it('leaves hasPassword unchanged (still false) on network error', async () => {
+    it('leaves hasPassword unchanged (still null) on network error', async () => {
       const networkError = new TypeError('Network down')
       mockSetPassword.mockRejectedValue(networkError)
       mockExtractErrorCode.mockReturnValue(undefined)
       mockIsApiError.mockReturnValue(false)
 
-      const { hasPassword } = mountComposable()
+      const { hasPassword, recheck } = mountComposable()
+      await recheck()
       await flushPromises()
 
-      expect(hasPassword.value).toBe(false)
+      expect(hasPassword.value).toBeNull()
     })
   })
 
@@ -163,7 +159,8 @@ describe('usePasswordDetection', () => {
     it('sets hasPassword to false when setPassword resolves', async () => {
       mockSetPassword.mockResolvedValue()
 
-      const { hasPassword, isChecking } = mountComposable()
+      const { hasPassword, isChecking, recheck } = mountComposable()
+      await recheck()
       await flushPromises()
 
       expect(hasPassword.value).toBe(false)
@@ -173,54 +170,43 @@ describe('usePasswordDetection', () => {
     it('does not set checkError on success', async () => {
       mockSetPassword.mockResolvedValue()
 
-      const { checkError } = mountComposable()
+      const { checkError, recheck } = mountComposable()
+      await recheck()
       await flushPromises()
 
       expect(checkError.value).toBeNull()
     })
   })
 
-  describe('onMounted auto-trigger', () => {
-    it('calls setPassword with empty string on mount', async () => {
-      mockSetPassword.mockResolvedValue()
-
-      mountComposable()
-      await flushPromises()
-
-      expect(mockSetPassword).toHaveBeenCalledWith('')
-    })
-
-    it('calls setPassword exactly once on mount', async () => {
-      mockSetPassword.mockResolvedValue()
-
-      mountComposable()
-      await flushPromises()
-
-      expect(mockSetPassword).toHaveBeenCalledTimes(1)
-    })
-  })
-
   describe('recheck function', () => {
-    it('exposes recheck that calls setPassword again', async () => {
+    it('calls setPassword with empty string', async () => {
       mockSetPassword.mockResolvedValue()
 
       const { recheck } = mountComposable()
-      await flushPromises()
-
-      expect(mockSetPassword).toHaveBeenCalledTimes(1)
+      expect(mockSetPassword).not.toHaveBeenCalled()
 
       await recheck()
-      expect(mockSetPassword).toHaveBeenCalledTimes(2)
+      expect(mockSetPassword).toHaveBeenCalledWith('')
+      expect(mockSetPassword).toHaveBeenCalledTimes(1)
+    })
+
+    it('recheck updates hasPassword from null to false when setPassword resolves', async () => {
+      mockSetPassword.mockResolvedValue()
+
+      const { hasPassword, recheck } = mountComposable()
+      expect(hasPassword.value).toBeNull()
+
+      await recheck()
+      await flushPromises()
+      expect(hasPassword.value).toBe(false)
     })
 
     it('recheck updates hasPassword from false to true when USER_015 appears later', async () => {
       mockSetPassword.mockResolvedValue()
-      mockExtractErrorCode.mockReturnValue(undefined)
-      mockIsApiError.mockReturnValue(false)
 
       const { hasPassword, recheck } = mountComposable()
+      await recheck()
       await flushPromises()
-
       expect(hasPassword.value).toBe(false)
 
       // Simulate a later check where the user now has a password
@@ -239,6 +225,7 @@ describe('usePasswordDetection', () => {
       mockIsApiError.mockReturnValue(false)
 
       const { checkError, recheck } = mountComposable()
+      await recheck()
       await flushPromises()
 
       expect(checkError.value).toBe('Unable to check password status. Please try again.')
@@ -251,8 +238,7 @@ describe('usePasswordDetection', () => {
   })
 
   describe('isChecking state transitions', () => {
-    it('transitions from true to false after check completes', async () => {
-      // Use a controllable promise so we can observe the intermediate state
+    it('starts false and transitions to true when recheck is called', async () => {
       let resolve!: () => void
       mockSetPassword.mockImplementation(
         () =>
@@ -261,7 +247,11 @@ describe('usePasswordDetection', () => {
           }),
       )
 
-      const { isChecking } = mountComposable()
+      const { isChecking, recheck } = mountComposable()
+      expect(isChecking.value).toBe(false)
+
+      void recheck()
+      await Promise.resolve()
       expect(isChecking.value).toBe(true)
 
       resolve()
@@ -270,22 +260,33 @@ describe('usePasswordDetection', () => {
     })
 
     it('transitions from true to false even when setPassword rejects', async () => {
-      mockSetPassword.mockRejectedValue(new TypeError('Network down'))
+      let reject!: (error: unknown) => void
+      mockSetPassword.mockImplementation(
+        () =>
+          new Promise<void>((_r, rej) => {
+            reject = rej
+          }),
+      )
       mockExtractErrorCode.mockReturnValue(undefined)
       mockIsApiError.mockReturnValue(false)
 
-      const { isChecking } = mountComposable()
+      const { isChecking, recheck } = mountComposable()
+      expect(isChecking.value).toBe(false)
+
+      void recheck()
+      await Promise.resolve()
       expect(isChecking.value).toBe(true)
 
+      reject(new TypeError('Network down'))
       await flushPromises()
       expect(isChecking.value).toBe(false)
     })
 
-    it('transitions back to true when recheck is called', async () => {
+    it('transitions back to true when recheck is called again', async () => {
       mockSetPassword.mockResolvedValue()
 
       const { isChecking, recheck } = mountComposable()
-      await flushPromises()
+      await recheck()
       expect(isChecking.value).toBe(false)
 
       let resolve!: () => void
@@ -297,7 +298,6 @@ describe('usePasswordDetection', () => {
       )
 
       void recheck()
-      // Yield to allow the sync portion of checkPasswordStatus to run
       await Promise.resolve()
       expect(isChecking.value).toBe(true)
 
@@ -307,10 +307,39 @@ describe('usePasswordDetection', () => {
     })
   })
 
+  describe('concurrent recheck guard', () => {
+    it('skips second recheck if first is still in progress', async () => {
+      let resolve!: () => void
+      mockSetPassword.mockImplementation(
+        () =>
+          new Promise<void>((r) => {
+            resolve = r
+          }),
+      )
+
+      const { isChecking, recheck } = mountComposable()
+      expect(isChecking.value).toBe(false)
+
+      // First call — starts the async operation
+      void recheck()
+      await Promise.resolve()
+      expect(isChecking.value).toBe(true)
+      expect(mockSetPassword).toHaveBeenCalledTimes(1)
+
+      // Second call — should be skipped because isChecking is true
+      void recheck()
+      await Promise.resolve()
+      expect(mockSetPassword).toHaveBeenCalledTimes(1)
+
+      // Complete the first call
+      resolve()
+      await flushPromises()
+      expect(isChecking.value).toBe(false)
+    })
+  })
+
   describe('return value shape', () => {
     it('returns hasPassword, isChecking, checkError, and recheck', () => {
-      mockSetPassword.mockImplementation(() => new Promise(() => {}))
-
       const result = mountComposable()
 
       expect(result.hasPassword).toBeDefined()
