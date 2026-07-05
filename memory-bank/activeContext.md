@@ -3,9 +3,21 @@
 ## Current Status
 
 **Phase**: v0.10.x Security & Account Features + UI Polish
-**Version**: 0.10.7 (2026-07-05)
+**Version**: 0.10.8 (2026-07-05)
 **Branch**: develop, master at 9899288
 **Tests**: 897/897 pass (verified 2026-07-05)
+
+## Recent Activity (v0.10.8 — 2026-07-05)
+
+### Password button label: Set Password → Change Password
+
+- **Issue**: "Set Password" label shown even for users who registered with email/password (should only show for OAuth users without password)
+- **Fix**: Button now always visible; label dynamically changes based on `hasPassword` state:
+  - `null` (unknown) or `false` (no password): "Set Password"
+  - `true` (has password): "Change Password"
+- **Files changed**:
+  - `src/features/settings/components/AccountSection.vue` — added `passwordButtonLabel` computed property, removed `v-if` condition on password button
+  - `package.json` — version 0.10.7 → 0.10.8
 
 ## Recent Activity (v0.10.7 — 2026-07-05)
 

@@ -24,6 +24,7 @@
 
 ## Completed (Recent)
 
+- [x] **v0.10.8** Password button label: Set Password → Change Password — button now always visible; label dynamically changes based on `hasPassword` state (null/false → "Set Password", true → "Change Password"). 1 file changed.
 - [x] **v0.10.7** Tab title unified to "Code Time Tracker" — browser tab title suffix changed from `- CTT` to `- Code Time Tracker` for brand consistency. `guard.ts` + `guard.test.ts` updated. 2 files changed.
 - [x] **v0.10.6** Favicon replaced with PluginIcon SVG — Browser tab icon now uses the Code Time Tracker plugin icon (SVG) instead of the default Vite favicon. `public/favicon.svg` created from `PluginIcon.vue` SVG; `index.html` updated to reference SVG favicon + title changed to "Code Time Tracker". 2 files changed.
 - [x] **v0.10.5** Bug fix: remove auto-call of `/api/v1/users/me/password/set` on mount — `usePasswordDetection` had `onMounted` that called `setPassword('')` automatically. Removed auto-call, changed `hasPassword` initial to `null` (tri-state: null/unknown, false/no-password, true/has-password), `isChecking` starts `false`. Detection now lazy via `recheck()` called on "Set Password" button click. 4 files changed, 897/897 tests pass.
