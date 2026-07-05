@@ -24,6 +24,14 @@
 
 ## Completed (Recent)
 
+- [x] **v0.10.5** Appearance submenu: state-adaptive subtitle color (Round 5) — Round 4's `!text-muted-foreground` was still unreadable on the strong purple accent bg (muted-foreground = dark gray, low contrast on purple). Fixed with Tailwind `group-` variants: subtitle now `text-muted-foreground` in normal state + `group-focus:!text-accent-foreground/80` + `group-data-[state=open]:!text-accent-foreground/80` in highlighted states. SubTrigger gets `class="group"` to enable the selectors. Tests unchanged; 897/897 pass; type-check clean.
+- [x] **v0.10.5** Appearance submenu: vertical two-line trigger (Round 4 — SUPERSEDED by Round 5) — Perplexity-style subtitle layout: title "Appearance" + subtitle "System (Light)" below as muted secondary text. Layout correct but static muted-foreground color was unreadable on purple accent bg; Round 5 replaces with state-adaptive coloring.
+- [x] **v0.10.5** Appearance submenu: show current theme on trigger (Round 3 — SUPERSEDED by Round 4) — added inline right-aligned current-theme label to SubTrigger. Rejected: cramped on right side + subtitle re-colored on highlight due to specificity loss. Computed + 4-variant tests kept (reused by Round 4).
+- [x] **v0.10.5** Appearance submenu: show current theme on trigger (Round 3 — SUPERSEDED by Round 4) — added inline right-aligned current-theme label to SubTrigger. Rejected: cramped on right side + subtitle re-colored on highlight due to specificity loss. Computed + 4-variant tests kept (reused by Round 4).
+- [x] **v0.10.5** `lucide-vue-next` → `@lucide/vue` migration — package deprecated upstream. API identical (same icon names, same default-import). 25 source files + 4 test files updated via sed; `package.json` dep + `pnpm-lock.yaml` regenerated. User explicitly approved (R7 dependency change). 895/895 tests pass (pre-Round 3 baseline).
+- [x] **v0.10.5** `lucide-vue-next` → `@lucide/vue` migration — package deprecated upstream. API identical (same icon names, same default-import). 25 source files + 4 test files updated via sed; `package.json` dep + `pnpm-lock.yaml` regenerated. User explicitly approved (R7 dependency change). 895/895 tests pass (pre-Round 3 baseline).
+- [x] **v0.10.5** Appearance submenu in avatar dropdown — Round 2 of v0.10.5: replaced standalone ThemeToggle with Perplexity-style `Appearance` submenu inside the avatar dropdown (Light/Dark/System radio group with Circle indicator). Round 1's standalone button was rejected ("有点丑"). Type-check clean (vue-tsc exit 0); vitest runner pre-existing pnpm 11 / `builtin:vite-wasm-fallback` breakage (same as v0.10.4).
+- [x] **v0.10.5** ThemeToggle in AppHeader — **SUPERSEDED by Round 2 submenu** — Round 1 added standalone ThemeToggle button to AppHeader (left of avatar). Rejected as visually unpolished; ThemeToggle component kept in tree for AuthLayout use.
 - [x] **v0.10.4** Sidebar Icon & Collapse Enhancement — JetBrains plugin icon in sidebar header; `collapsible="icon"` mode with icon swap on hover; Perplexity-style compact layout (sidebar 14rem, menu text 15px, icon 18px); mobile sidebar trigger restored in AppHeader for Sheet overlay accessibility; removed duplicate plugin-icon.svg; SVG cleanup (aria-label, remove hardcoded dimensions); test fixture emailChangePending field added; type-check clean (0 errors)
 - [x] **v0.10.2** CSRF Protection — XSRF-TOKEN cookie reading, X-XSRF-TOKEN header injection for state-changing requests, 403 CSRF error handling (toast + page reload); 815/815 tests pass (12 interceptor + 10 cookie parsing + 8 error handling)
 - [x] **v0.10.1** CSP Meta Tag — `index.html` defense-in-depth CSP fallback (same-origin + hCaptcha + inline styles + data URIs + clickjacking protection); HTML-only, no code changes; 785/785 tests pass
@@ -88,6 +96,5 @@
 - [ ] Devices: Device list + last seen
 - [ ] Devices: API key create / revoke
 - [ ] Leaderboard: Redis ZSet ranking display
-- [ ] Settings: Theme toggle (dark/light)
 - [ ] Settings: Language switch (zh-CN / en-US)
 - [ ] CI: GitHub Actions (lint + test + build)

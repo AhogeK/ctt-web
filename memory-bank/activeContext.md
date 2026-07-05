@@ -3,11 +3,83 @@
 ## Current Status
 
 **Phase**: v0.10.x Security & Account Features + UI Polish
-**Version**: 0.10.4 (2026-07-05)
+**Version**: 0.10.5 (2026-07-05)
 **Branch**: develop, master at 9899288
-**Tests**: 892/892 pass (verified 2026-07-05)
+**Tests**: 897/897 pass (verified 2026-07-05)
 
-## Recent Activity (v0.10.4 — 2026-07-05)
+## Recent Activity (v0.10.5 — 2026-07-05)
+
+### Appearance submenu: state-adaptive subtitle color (Round 5 — REPLACES Round 4)
+
+- **User feedback (Round 4 was still bad)**: The `!text-muted-foreground` from Round 4 prevented the parent's `data-[state=open]:text-accent-foreground` from re-coloring the subtitle, but the result was still unreadable: `text-muted-foreground` is a **dark gray** (zinc-500 in light mode), which has insufficient contrast against the **strong purple accent background** when the trigger row is highlighted ("还是有看不清的问题要解决"). User posted a screenshot showing "Appearance" (white on purple, OK) next to "System (Light)" (dark gray on purple, hard to read).
+- **Root cause**: A single static color token cannot be readable on both white (normal) and strong purple (highlighted) backgrounds. The subtitle must switch between two color tokens depending on the parent row's state.
+- **Pattern adopted**: Tailwind `group-` variants on the subtitle, with `class="group"` added to the SubTrigger parent. The subtitle now carries three classes:
+  - `text-muted-foreground` — default, dark gray on white
+  - `group-focus:!text-accent-foreground/80` — when parent has `:focus` (keyboard nav), switch to white at 80% opacity for purple bg
+  - `group-data-[state=open]:!text-accent-foreground/80` — when parent has `data-state="open"` (submenu showing), same light color
+- **Why `!important`**: The parent's `data-[state=open]:text-accent-foreground` (selector specificity 0,2,0) sets the inherited `color` on children. The subtitle's group-data variant has lower specificity (`:where(.group)` from the `group-` prefix makes it (0,1,0)) so without `!`, CSS inheritance would override the explicit color. The `!` forces the subtitle's explicit color to win over inherited.
+- **Why `/80` opacity**: Preserves visual distinction from the parent's full-opacity "Appearance" title — subtitle stays muted in both states (70-80% opacity mimics the muted-secondary-line UX from Perplexity).
+- **Why both `group-focus:` and `group-data-[state=open]:`**: They cover disjoint states (keyboard nav vs submenu open). Both render the same light color so the visual transition is seamless.
+- **Files modified**:
+  - `src/components/app/AppHeader.vue`: added `class="group"` to `DropdownMenuSubTrigger`; updated subtitle class string; expanded JSDoc explaining state-adaptive coloring + why `!important` is needed
+- **Tests**: unchanged — `data-testid="appearance-current"` selector still resolves; text assertions still pass against new structure.
+- **Type-check**: Clean (vue-tsc exit 0)
+- **Tests**: 897/897 pass (48 files)
+
+### Appearance submenu: vertical two-line trigger (Round 4 — SUPERSEDED by Round 5)
+
+- **User feedback (Round 3 was visually bad)**: Right-aligned inline label looked cramped ("在右边挤在一起") and the text became unreadable when the row was highlighted ("高亮下字都看不清了"). Asked to follow the Perplexity reference exactly — title on first line, current-theme value as a subtitle line below in muted smaller text.
+- **Round 4 implementation**: Two-line column layout `[icon] [flex-col(Appearance / currentThemeLabel)] [chevron@ml-auto]`, with `!text-muted-foreground` to defeat the parent's `data-[state=open]:text-accent-foreground` override.
+- **Round 4 verdict**: Layout fix was correct, but the static `text-muted-foreground` color is dark gray — unreadable on the strong purple accent background that appears when the trigger is highlighted. Round 5 replaces it with state-adaptive coloring.
+- **Tests added in Round 4** (still passing in Round 5): "System (Light)" default, "System (Dark)" auto+dark, "Light" explicit, "Dark" explicit — 4 label variants covered.
+- **Status**: Superseded by Round 5. The `currentThemeLabel` computed and theme-store mock additions are kept (Round 5 reuses both unchanged).
+
+### Appearance submenu: show current theme on trigger (Round 3 — SUPERSEDED by Round 4)
+
+- **User feedback (Round 2 was incomplete)**: Submenu only displays Light/Dark/System options, but the outer Appearance trigger does NOT show the current theme. User has to click into the submenu to know the current state. Asked for Perplexity-style: right-aligned label of the active theme visible without opening the submenu.
+- **Round 3 implementation**: Added `ml-auto text-xs text-muted-foreground` span to the right of "Appearance" — but this put the value inline on the right edge (cramped) and the text-muted-foreground class was overridden by the SubTrigger's `data-[state=open]:text-accent-foreground` state styling, making the subtitle hard to read on highlight.
+- **Tests added in Round 3** (still passing in Round 4): "System (Light)" default, "System (Dark)" auto+dark, "Light" explicit, "Dark" explicit — 4 label variants covered.
+- **Status**: Superseded by Round 4. The `currentThemeLabel` computed and theme-store mock additions are kept (Round 4 reuses both unchanged).
+- **Type-check**: Clean (vue-tsc exit 0)
+- **Tests**: 897/897 pass
+
+### lucide-vue-next → @lucide/vue migration (completed alongside Round 3)
+
+- **Reason**: `lucide-vue-next` deprecated upstream — author message: "Package deprecated. Please use @lucide/vue instead." Latest published 3 months ago.
+- **API**: Identical (same icon names, same default-import pattern). Only the package name changed.
+- **Files touched** (sed across whole tree):
+  - 25 source files (every `import { ... } from 'lucide-vue-next'` → `from '@lucide/vue'`)
+  - 4 test files (`vi.mock('lucide-vue-next'` → `vi.mock('@lucide/vue'`)
+- **package.json**: `"lucide-vue-next": "^1.0.0"` → `"@lucide/vue": "^1.23.0"` (R7 dependency change requested explicitly by user)
+- **pnpm-lock.yaml**: regenerated via `pnpm install`
+- **Verification**: type-check clean, 895/895 tests pass (pre-Round 3 baseline)
+- **Risk**: Near-zero — `@lucide/vue` is the maintained successor from the same author (Lucide team), published on the same icon set
+
+### Appearance submenu in avatar dropdown (Round 2 — SUPERSEDED by Round 3)
+
+- **User feedback (Round 1 was rejected)**: Standalone `<ThemeToggle />` button next to avatar looked ugly ("有点丑"). Asked for Perplexity-style: theme options inside the avatar dropdown as a submenu.
+- **Pattern adopted**: Avatar dropdown now contains `Appearance` submenu → Light / Dark / System radio group, matching Perplexity's "Current theme marked with checkmark" UX (shadcn-vue's `DropdownMenuRadioItem` provides the Circle indicator).
+- **Implementation** (`src/components/app/AppHeader.vue`):
+  - Removed `ThemeToggle` import + standalone button
+  - Imported `DropdownMenuSub`, `DropdownMenuSubTrigger`, `DropdownMenuSubContent`, `DropdownMenuRadioGroup`, `DropdownMenuRadioItem`
+  - Imported `useThemeStore` + `ThemeMode` type from `@/stores/theme`
+  - `handleThemeChange(value: unknown)` type-guards before calling `setTheme` (reka-ui's `AcceptableValue` includes `null`, which would not match a `string | number | undefined | (string | number)[]` signature)
+  - ThemeToggle component kept — still used by `AuthLayout.vue`
+- **Test mock** (`src/components/app/__tests__/AppHeader.test.ts`):
+  - Module-level `vi.mock('@/stores/theme')` exposing `mode` as ref + `setTheme` as spy (mirrors the existing `useAuthStore` mock pattern)
+  - Added stubs for `DropdownMenuSub`, `DropdownMenuSubTrigger`, `DropdownMenuSubContent`, `DropdownMenuRadioGroup`, `DropdownMenuRadioItem`
+  - New tests: "renders the Appearance submenu trigger", "renders Light/Dark/System radio items", "binds the Appearance radio group to the current theme mode"
+- **Type-check**: Clean (exit 0, vue-tsc)
+- **Tests**: vitest runner pre-existing pnpm 11 / `builtin:vite-wasm-fallback` breakage (unrelated, same blocker as v0.10.4 noted below)
+
+### ThemeToggle in AppHeader (Round 1 — SUPERSEDED by Round 2)
+
+- **Issue**: After login, theme toggle was only available on auth pages (AuthLayout); AppHeader had no theme control
+- **Fix**: Added `ThemeToggle` component to `AppHeader.vue`, positioned left of avatar dropdown (industry common pattern)
+- **File**: `src/components/app/AppHeader.vue` — imported ThemeToggle, placed before TooltipProvider in header's right-aligned flex container
+- **Status**: Round 1 visually unpolished; replaced by Appearance submenu above. ThemeToggle component remains in tree for AuthLayout use.
+- **Type-check**: Clean (exit 0)
+- **Tests**: vitest runner has pnpm 11 binary resolution issue (pre-existing, unrelated to this change)
 
 ### Sidebar Icon & Collapse Enhancement
 
