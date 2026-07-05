@@ -60,7 +60,6 @@ const mountAppHeader = () =>
   mount(AppHeader, {
     global: {
       stubs: {
-        SidebarTrigger: { template: '<button data-testid="sidebar-trigger" />' },
         Tooltip: { template: '<div><slot /></div>' },
         TooltipProvider: { template: '<div><slot /></div>' },
         TooltipTrigger: { props: ['asChild'], template: '<div><slot /></div>' },
