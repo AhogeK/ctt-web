@@ -34,6 +34,48 @@ vi.mock('@/stores/auth', () => ({
   }),
 }))
 
+/**
+ * Mock the theme store at module level. AppHeader reads `mode` and `isDark`
+ * for the Appearance submenu trigger label and the radio group's checked
+ * item, then calls `setTheme` on user selection.
+ *
+ * Both `mode` and `isDark` are exposed as refs so individual tests can drive
+ * either input without spinning up Pinia (which transitively pulls in
+ * @vueuse/core's localStorage / matchMedia bindings).
+ */
+const mockThemeMode = ref<'light' | 'dark' | 'auto'>('auto')
+const mockIsDark = ref<boolean>(false)
+const mockSetTheme = vi.fn<(mode: 'light' | 'dark' | 'auto') => void>()
+
+vi.mock('@/stores/theme', () => ({
+  useThemeStore: () => ({
+    get mode() {
+      return mockThemeMode.value
+    },
+    get isDark() {
+      return mockIsDark.value
+    },
+    setTheme: mockSetTheme,
+  }),
+}))
+
+/**
+ * Mock the sidebar module at module level. AppHeader calls useSidebar()
+ * to get isMobile for conditional SidebarTrigger rendering.
+ */
+vi.mock('@/components/ui/sidebar', () => ({
+  useSidebar: () => ({
+    state: ref('expanded'),
+    open: ref(true),
+    openMobile: ref(false),
+    isMobile: ref(false),
+    toggleSidebar: vi.fn<() => void>(),
+    setOpen: vi.fn<() => void>(),
+    setOpenMobile: vi.fn<() => void>(),
+  }),
+  SidebarTrigger: { name: 'SidebarTrigger', template: '<button data-testid="sidebar-trigger" />' },
+}))
+
 vi.mock('@lucide/vue', () => ({
   Sun: { name: 'Sun', template: '<svg data-testid="icon-sun" />' },
   Moon: { name: 'Moon', template: '<svg data-testid="icon-moon" />' },
@@ -82,6 +124,17 @@ const mountAppHeader = () =>
         DropdownMenuItem: { props: ['disabled'], template: '<button />' },
         DropdownMenuLabel: { template: '<div data-testid="dropdown-label"><slot /></div>' },
         DropdownMenuSeparator: { template: '<hr />' },
+        DropdownMenuSub: { template: '<div data-testid="dropdown-sub"><slot /></div>' },
+        DropdownMenuSubTrigger: { template: '<div data-testid="dropdown-sub-trigger"><slot /></div>' },
+        DropdownMenuSubContent: { template: '<div data-testid="dropdown-sub-content"><slot /></div>' },
+        DropdownMenuRadioGroup: {
+          props: ['modelValue'],
+          template: '<div data-testid="dropdown-radio-group" :data-value="modelValue"><slot /></div>',
+        },
+        DropdownMenuRadioItem: {
+          props: ['value'],
+          template: '<div data-testid="dropdown-radio-item" :data-value="value"><slot /></div>',
+        },
         UserAvatar: { template: '<div data-testid="user-avatar" />' },
       },
     },
@@ -93,6 +146,8 @@ describe('AppHeader', () => {
     mockUserId.value = 'test-user-id'
     mockDisplayName.value = null
     mockEmail.value = null
+    mockThemeMode.value = 'auto'
+    mockIsDark.value = false
   })
 
   it('renders UserAvatar in the right side', () => {
@@ -168,6 +223,79 @@ describe('AppHeader', () => {
 
     const tooltip = wrapper.find('[data-testid="tooltip-content"]')
     expect(tooltip.exists()).toBe(false)
+
+    wrapper.unmount()
+  })
+
+  it('renders the Appearance submenu trigger in the avatar dropdown', () => {
+    const wrapper = mountAppHeader()
+
+    const trigger = wrapper.find('[data-testid="dropdown-sub-trigger"]')
+    expect(trigger.exists()).toBe(true)
+    expect(trigger.text()).toContain('Appearance')
+
+    // Default theme is 'auto' + isDark=false, so the trigger should show
+    // the Monitor icon and the "System (Light)" current-state label on
+    // the right side (Perplexity-style: visible without opening the submenu).
+    expect(trigger.find('[data-testid="icon-monitor"]').exists()).toBe(true)
+    expect(trigger.find('[data-testid="appearance-current"]').text()).toBe('System (Light)')
+
+    wrapper.unmount()
+  })
+
+  it('renders Light/Dark/System radio items inside the Appearance submenu', () => {
+    const wrapper = mountAppHeader()
+
+    const items = wrapper.findAll('[data-testid="dropdown-radio-item"]')
+    const values = items.map((el) => el.attributes('data-value')).sort((a, b) => String(a).localeCompare(String(b)))
+    expect(values).toEqual(['auto', 'dark', 'light'])
+
+    const subContent = wrapper.find('[data-testid="dropdown-sub-content"]')
+    expect(subContent.text()).toContain('Light')
+    expect(subContent.text()).toContain('Dark')
+    expect(subContent.text()).toContain('System')
+
+    expect(subContent.find('[data-testid="icon-sun"]').exists()).toBe(true)
+    expect(subContent.find('[data-testid="icon-moon"]').exists()).toBe(true)
+    expect(subContent.find('[data-testid="icon-monitor"]').exists()).toBe(true)
+
+    wrapper.unmount()
+  })
+
+  it('binds the Appearance radio group to the current theme mode', () => {
+    mockThemeMode.value = 'dark'
+    const wrapper = mountAppHeader()
+
+    const radioGroup = wrapper.find('[data-testid="dropdown-radio-group"]')
+    expect(radioGroup.attributes('data-value')).toBe('dark')
+
+    const trigger = wrapper.find('[data-testid="dropdown-sub-trigger"]')
+    expect(trigger.find('[data-testid="icon-moon"]').exists()).toBe(true)
+    // mode='dark' (explicit) → label is just "Dark", no parenthetical
+    expect(trigger.find('[data-testid="appearance-current"]').text()).toBe('Dark')
+
+    wrapper.unmount()
+  })
+
+  it('shows "System (Dark)" on the Appearance trigger when mode=auto + system prefers dark', () => {
+    mockThemeMode.value = 'auto'
+    mockIsDark.value = true
+    const wrapper = mountAppHeader()
+
+    const trigger = wrapper.find('[data-testid="dropdown-sub-trigger"]')
+    expect(trigger.find('[data-testid="icon-monitor"]').exists()).toBe(true)
+    expect(trigger.find('[data-testid="appearance-current"]').text()).toBe('System (Dark)')
+
+    wrapper.unmount()
+  })
+
+  it('shows "Light" on the Appearance trigger when mode=light is explicitly selected', () => {
+    mockThemeMode.value = 'light'
+    const wrapper = mountAppHeader()
+
+    const trigger = wrapper.find('[data-testid="dropdown-sub-trigger"]')
+    expect(trigger.find('[data-testid="icon-sun"]').exists()).toBe(true)
+    expect(trigger.find('[data-testid="appearance-current"]').text()).toBe('Light')
 
     wrapper.unmount()
   })

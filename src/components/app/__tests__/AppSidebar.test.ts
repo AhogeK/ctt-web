@@ -1,5 +1,6 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vite-plus/test'
 import { mount } from '@vue/test-utils'
+import { ref } from 'vue'
 import { createRouter, createMemoryHistory } from 'vue-router'
 import { createTestingPinia } from '@pinia/testing'
 import AppSidebar from '../AppSidebar.vue'
@@ -31,12 +32,23 @@ vi.mock('@/components/ui/sidebar', () => ({
     name: 'SidebarGroupContent',
     template: '<div data-slot="sidebar-group-content"><slot /></div>',
   },
+  useSidebar: () => ({
+    state: ref('expanded'),
+    open: ref(true),
+    openMobile: ref(false),
+    isMobile: ref(false),
+    toggleSidebar: vi.fn<() => void>(),
+    setOpen: vi.fn<() => void>(),
+    setOpenMobile: vi.fn<() => void>(),
+  }),
+  SidebarTrigger: { name: 'SidebarTrigger', template: '<button data-slot="sidebar-trigger" />' },
 }))
 
 vi.mock('@lucide/vue', () => ({
   LayoutDashboard: { name: 'LayoutDashboard', template: '<span data-icon="layout-dashboard" />' },
   Settings: { name: 'Settings', template: '<span data-icon="settings" />' },
   Monitor: { name: 'Monitor', template: '<span data-icon="monitor" />' },
+  User: { name: 'User', template: '<span data-icon="user" />' },
 }))
 
 const createTestRouter = () => {
@@ -105,12 +117,14 @@ describe('AppSidebar', () => {
   })
 
   describe('sidebar structure', () => {
-    it('renders header branding with full project name', () => {
+    it('renders header branding with PluginIcon', () => {
       const { wrapper } = createWrapper()
 
       const sidebarHeader = wrapper.find('[data-slot="sidebar-header"]')
       expect(sidebarHeader.exists()).toBe(true)
-      expect(sidebarHeader.text()).toContain('Code Time Tracker')
+      // v0.10.4 replaced brand text with PluginIcon component
+      const pluginIcon = sidebarHeader.find('[role="img"][aria-label="Code Time Tracker"]')
+      expect(pluginIcon.exists()).toBe(true)
 
       wrapper.unmount()
     })
