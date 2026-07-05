@@ -3,9 +3,19 @@
 ## Current Status
 
 **Phase**: v0.10.x Security & Account Features + UI Polish
-**Version**: 0.10.6 (2026-07-05)
+**Version**: 0.10.7 (2026-07-05)
 **Branch**: develop, master at 9899288
 **Tests**: 897/897 pass (verified 2026-07-05)
+
+## Recent Activity (v0.10.7 — 2026-07-05)
+
+### Tab title unified to "Code Time Tracker"
+
+- **Change**: Browser tab title suffix changed from `- CTT` to `- Code Time Tracker` for consistency
+- **Files changed**:
+  - `src/router/guard.ts` — `document.title = `${title} - Code Time Tracker``
+  - `src/router/__tests__/guard.test.ts` — updated test assertions to match new suffix
+  - `package.json` — version 0.10.6 → 0.10.7
 
 ## Recent Activity (v0.10.6 — 2026-07-05)
 

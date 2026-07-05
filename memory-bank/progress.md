@@ -24,6 +24,7 @@
 
 ## Completed (Recent)
 
+- [x] **v0.10.7** Tab title unified to "Code Time Tracker" — browser tab title suffix changed from `- CTT` to `- Code Time Tracker` for brand consistency. `guard.ts` + `guard.test.ts` updated. 2 files changed.
 - [x] **v0.10.6** Favicon replaced with PluginIcon SVG — Browser tab icon now uses the Code Time Tracker plugin icon (SVG) instead of the default Vite favicon. `public/favicon.svg` created from `PluginIcon.vue` SVG; `index.html` updated to reference SVG favicon + title changed to "Code Time Tracker". 2 files changed.
 - [x] **v0.10.5** Bug fix: remove auto-call of `/api/v1/users/me/password/set` on mount — `usePasswordDetection` had `onMounted` that called `setPassword('')` automatically. Removed auto-call, changed `hasPassword` initial to `null` (tri-state: null/unknown, false/no-password, true/has-password), `isChecking` starts `false`. Detection now lazy via `recheck()` called on "Set Password" button click. 4 files changed, 897/897 tests pass.
 - [x] **v0.10.5** Appearance submenu: state-adaptive subtitle color (Round 5) — Round 4's `!text-muted-foreground` was still unreadable on the strong purple accent bg (muted-foreground = dark gray, low contrast on purple). Fixed with Tailwind `group-` variants: subtitle now `text-muted-foreground` in normal state + `group-focus:!text-accent-foreground/80` + `group-data-[state=open]:!text-accent-foreground/80` in highlighted states. SubTrigger gets `class="group"` to enable the selectors. Tests unchanged; 897/897 pass; type-check clean.
