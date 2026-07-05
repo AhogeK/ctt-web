@@ -23,8 +23,7 @@ let emailStatusDataValue:
   | undefined = undefined
 let isEmailStatusPendingValue = false
 let isDialogOpenValue = false
-let hasPasswordValue: boolean | null = false
-let isPasswordCheckingValue = false
+let authStoreHasPassword = false
 
 // ==========================================
 // Mocks
@@ -51,14 +50,6 @@ vi.mock('@/features/settings/composables/useEmailChange', () => ({
   })),
 }))
 
-vi.mock('@/features/settings/composables/usePasswordDetection', () => ({
-  usePasswordDetection: vi.fn<() => unknown>(() => ({
-    hasPassword: ref(hasPasswordValue),
-    isChecking: ref(isPasswordCheckingValue),
-    recheck: vi.fn<() => Promise<void>>().mockResolvedValue(undefined),
-  })),
-}))
-
 vi.mock('../SetPasswordDialog.vue', () => ({
   default: {
     props: ['open'],
@@ -73,6 +64,7 @@ vi.mock('@/stores/auth', () => ({
     emailVerified: true,
     displayName: 'Fallback User',
     createdAt: '2025-01-15T10:30:00Z',
+    hasPassword: authStoreHasPassword,
   })),
 }))
 
@@ -88,14 +80,6 @@ vi.mock('@/lib/utils', () => ({
   cn: (...inputs: unknown[]) => inputs.filter(Boolean).join(' '),
 }))
 
-vi.mock('vue-sonner', () => ({
-  toast: {
-    info: vi.fn<() => void>(),
-    success: vi.fn<() => void>(),
-    error: vi.fn<() => void>(),
-  },
-}))
-
 // ==========================================
 // Helpers
 // ==========================================
@@ -107,8 +91,7 @@ function resetMocks(): void {
   emailStatusDataValue = undefined
   isEmailStatusPendingValue = false
   isDialogOpenValue = false
-  hasPasswordValue = null
-  isPasswordCheckingValue = false
+  authStoreHasPassword = false
 }
 
 function setEmailStatus(
@@ -205,6 +188,7 @@ describe('AccountSection', () => {
         emailVerified: true,
         displayName: null,
         createdAt: '2025-01-01T00:00:00Z',
+        hasPassword: false,
       } as ReturnType<typeof useAuthStore>)
 
       const wrapper = mount(AccountSection)
@@ -365,17 +349,8 @@ describe('AccountSection', () => {
   })
 
   describe('Set Password button', () => {
-    it('shows Set Password button when hasPassword is null (initial/unknown state)', () => {
-      hasPasswordValue = null
-      const wrapper = mount(AccountSection)
-
-      const setPasswordButton = wrapper.find('[data-testid="set-password-button"]')
-      expect(setPasswordButton.exists()).toBe(true)
-      expect(setPasswordButton.text()).toContain('Set Password')
-    })
-
     it('shows Set Password button when user has no password', () => {
-      hasPasswordValue = false
+      authStoreHasPassword = false
       const wrapper = mount(AccountSection)
 
       const setPasswordButton = wrapper.find('[data-testid="set-password-button"]')
@@ -384,7 +359,7 @@ describe('AccountSection', () => {
     })
 
     it('shows "Change Password" button when user already has password', () => {
-      hasPasswordValue = true
+      authStoreHasPassword = true
       const wrapper = mount(AccountSection)
 
       const button = wrapper.find('[data-testid="set-password-button"]')
@@ -392,17 +367,8 @@ describe('AccountSection', () => {
       expect(button.text()).toBe('Change Password')
     })
 
-    it('shows "Set Password" button when password status is loading', () => {
-      isPasswordCheckingValue = true
-      const wrapper = mount(AccountSection)
-
-      const button = wrapper.find('[data-testid="set-password-button"]')
-      expect(button.exists()).toBe(true)
-      expect(button.text()).toBe('Set Password')
-    })
-
     it('opens SetPasswordDialog when Set Password button is clicked', async () => {
-      hasPasswordValue = false
+      authStoreHasPassword = false
       const wrapper = mount(AccountSection)
 
       const setPasswordButton = wrapper.find('[data-testid="set-password-button"]')

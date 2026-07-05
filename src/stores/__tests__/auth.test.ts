@@ -167,6 +167,21 @@ describe('Auth Store', () => {
       expect(store.refreshToken).toBeNull()
       expect(store.userId).toBeNull()
     })
+
+    it('resets hasPassword to false', () => {
+      store.setAuth({
+        accessToken: 'token',
+        refreshToken: 'refresh',
+        userId: 'user',
+        expiresIn: 3600,
+        tokenType: 'Bearer',
+        termsExpired: false,
+      })
+
+      store.clearAuth()
+
+      expect(store.hasPassword).toBe(false)
+    })
   })
 
   /**
@@ -335,6 +350,7 @@ describe('Auth Store', () => {
         lastLoginAt: '2026-07-01T09:15:00Z',
         termsVersion: '1.0.0',
         emailChangePending: false,
+        hasPassword: true,
       }
       vi.mocked(userApi.fetchCurrentUser).mockResolvedValue(mockProfile)
 
@@ -345,6 +361,26 @@ describe('Auth Store', () => {
       expect(store.email).toBe('alice@example.com')
       expect(store.emailVerified).toBe(true)
       expect(store.lastLoginAt).toBe('2026-07-01T09:15:00Z')
+      expect(store.hasPassword).toBe(true)
+    })
+
+    it('stores hasPassword from profile response', async () => {
+      const mockProfile: UserProfile = {
+        id: '550e8400-e29b-41d4-a716-446655440000',
+        email: 'oauth-user@example.com',
+        displayName: 'OAuth User',
+        emailVerified: true,
+        createdAt: '2026-01-15T10:30:00Z',
+        lastLoginAt: '2026-07-01T09:15:00Z',
+        termsVersion: '1.0.0',
+        emailChangePending: false,
+        hasPassword: false,
+      }
+      vi.mocked(userApi.fetchCurrentUser).mockResolvedValue(mockProfile)
+
+      await store.fetchUserProfile()
+
+      expect(store.hasPassword).toBe(false)
     })
 
     it('returns null and warns on API failure', async () => {
@@ -369,6 +405,7 @@ describe('Auth Store', () => {
         lastLoginAt: null,
         termsVersion: '1.0.0',
         emailChangePending: false,
+        hasPassword: false,
       }
       // Reset call counter so prior tests in this describe block don't inflate it
       vi.mocked(userApi.fetchCurrentUser).mockClear()
