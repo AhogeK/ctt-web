@@ -24,6 +24,7 @@
 
 ## Completed (Recent)
 
+- [x] **v0.10.4** Sidebar Icon & Collapse Enhancement — JetBrains plugin icon in sidebar header; `collapsible="icon"` mode with icon swap on hover; Perplexity-style compact layout (sidebar 14rem, menu text 15px, icon 18px); mobile sidebar trigger restored in AppHeader for Sheet overlay accessibility; removed duplicate plugin-icon.svg; SVG cleanup (aria-label, remove hardcoded dimensions); test fixture emailChangePending field added; type-check clean (0 errors)
 - [x] **v0.10.2** CSRF Protection — XSRF-TOKEN cookie reading, X-XSRF-TOKEN header injection for state-changing requests, 403 CSRF error handling (toast + page reload); 815/815 tests pass (12 interceptor + 10 cookie parsing + 8 error handling)
 - [x] **v0.10.1** CSP Meta Tag — `index.html` defense-in-depth CSP fallback (same-origin + hCaptcha + inline styles + data URIs + clickjacking protection); HTML-only, no code changes; 785/785 tests pass
 - [x] **v0.10.0** Set Password Feature — Backend integration (ctt-server Set Password API): `POST /api/v1/users/me/password/set`; Zod schemas, composable (useSetPassword), SetPasswordDialog component (password form with validation), AccountSection updated with Set Password button (shown only for OAuth users); error code USER_015 (password already set); 785/785 tests pass (8 API + 12 composable + 14 component)

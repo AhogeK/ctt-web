@@ -2,15 +2,31 @@
 
 ## Current Status
 
-**Phase**: v0.10.x Security & Account Features (CSRF + Set Password + CSP)
-**Version**: 0.10.3 (2026-07-05)
-**Branch**: develop at d0ebea9, master at 9899288
+**Phase**: v0.10.x Security & Account Features + UI Polish
+**Version**: 0.10.4 (2026-07-05)
+**Branch**: develop, master at 9899288
 **Tests**: 892/892 pass (verified 2026-07-05)
-**Code Review**: FAILED (2026-07-04) — 3 blocking issues found (all fixed)
-**Plans**:
-- docs/plans/2026-05-02-terms-acceptance-tracking.md — completed
-- docs/plans/2026-05-23-hcaptcha-integration.md — completed
-- .dev/plans/2026-05-28-github-oauth.md — completed
+
+## Recent Activity (v0.10.4 — 2026-07-05)
+
+### Sidebar Icon & Collapse Enhancement
+
+- **Plugin icon**: Replaced lucide `Clock` with JetBrains plugin icon (`src/components/app/PluginIcon.vue`); SVG inline in Vue component (no external asset)
+- **Collapse behavior**: `collapsible="icon"` — sidebar shrinks to icon width instead of disappearing
+- **Header behavior** (v-if/v-else conditional rendering):
+  - **Desktop expanded**: `flex w-full justify-between` — PluginIcon left, SidebarTrigger right
+  - **Desktop collapsed**: `grid grid-cols-1 grid-rows-1 h-9 w-9 group/trigger` — grid 1×1 stacks PluginIcon + SidebarTrigger in same cell for icon swap (opacity-0/100 with pointer-events control)
+  - **Mobile**: SidebarTrigger in AppHeader (only when `isMobile=true`); AppSidebar hides desktop toggle on mobile (`!isMobile && state !== 'collapsed'`)
+- **Perplexity-style compact layout**:
+  - `SIDEBAR_WIDTH`: 16rem → 14rem
+  - `SidebarMenuButton`: text 15px, height 9, icon 18px
+  - `SidebarGroupLabel`: 11px uppercase tracking-wider
+- **Accessibility**: PluginIcon SVG has `role="img" aria-label="Code Time Tracker"`
+- **SVG cleanup**: Removed hardcoded width/height attributes, removed HTML comments (~250 bytes saved)
+- **Import fix**: `useSidebar` from canonical path `@/components/ui/sidebar`
+- **Copyright**: Hidden when collapsed (`group-data-[state=collapsed]:hidden`)
+- **Profile icon**: Changed from `Settings` to `User`
+- **Test mock fix**: Added `emailChangePending: false` to 3 test mocks; type-check clean (exit 0)
 
 ## Recent Activity (v0.10.3 — 2026-07-05)
 
@@ -84,139 +100,12 @@
 - **Tests**: 34 new (8 API + 12 composable + 14 component); 785/785 pass
 - **Dependencies**: None added
 
-### Email Change Feature (v0.9.0)
+## Major Features (v0.7.x–v0.9.x)
 
-- **Backend integration**: ctt-server v0.31.2 Email Change API (5 endpoints)
-- **API layer**: `src/lib/api/email.ts` — `fetchEmailStatus()`, `requestEmailChange()`, `confirmEmailChange()`, `cancelEmailChange()`, `resendEmailChangeVerification()`
-- **Schemas**: `src/lib/schemas/user.schema.ts` — added `emailChangePending: z.boolean().default(false)`
-- **Composables**: `src/features/settings/composables/useEmailChange.ts` (4 mutations), `useEmailStatus.ts` (query)
-- **Components**: `AccountSection.vue`, `EmailChangeDialog.vue`, `EmailVerificationBanner.vue`
-- **Route**: `/auth/change-email` added for email change confirmation
-- **Error codes**: USER_009/010/011/013/014 mapped in `api-error.ts`
-- **Auth store**: Added `createdAt` field for registration time display
-- **Dependencies**: None added
-
-### User Profile API + AppHeader Display (v0.8.44)
-
-- **Endpoint integration**: `GET /api/v1/users/me` (ctt-server v0.30.0/0.30.1) returning `{id, email, displayName, emailVerified, createdAt, lastLoginAt, termsVersion}`
-- **Schema**: `src/lib/schemas/user.schema.ts` — `UserProfileSchema` with Zod validation; `lastLoginAt: z.iso.datetime().nullable().default(null)` (defensive: field may be absent — backend v0.30.1 guarantees presence via `@JsonInclude(ALWAYS)`)
-- **API**: `src/lib/api/user.ts` — `fetchCurrentUser()` wrapper (apiFetch + RestApiResponseSchema + inner schema)
-- **Auth store extension**: `src/stores/auth.ts` — 4 new ref fields (`displayName`, `email`, `emailVerified`, `lastLoginAt`) + `fetchUserProfile()` with Promise lock (dedup pattern); `clearAuth()` resets all
-- **Lifecycle wiring**: `main.ts` — startup profile fetch removed (avoid premature `/users/me` 401 before localStorage sync); `login()` and `loginWithOAuth()` call `fetchUserProfile()` after `nextTick()` to ensure localStorage token is written (VueUse's `useStorage` is async)
-- **Avatar enhancement**: `UserAvatar.vue` seed now prefers `displayName` over `userId` for readable initials; width/height uses Tailwind `w-9 h-9` (R9 inline style fix)
-- **AppHeader dropdown**: `displayName` + `email` in DropdownMenuLabel; tooltip hidden when displayName null (N5 nit fix); removed hardcoded "My Account" (v0.8.43 i18n fix)
-- **Tests**: 41 new (13 schema + 10 API + 12 avatar + 6 AppHeader); 620/620 pass
-- **Dependencies**: None added (existing `zod`, `ofetch`, `vue`)
-
-### UserAvatar in Header (v0.8.43)
-
-- `src/lib/utils/avatar.ts`: `stringToHue` (djb2 hash → 0-359 HSL hue), `stringToAvatarColor` (HSL with fixed S=65% L=45%), `getInitials` (handles email/Unicode/empty fallback to `?`)
-- `src/components/app/UserAvatar.vue`: 36px circle avatar reading `authStore.userId` for hash seed and initials; deterministic per user
-- `src/components/app/AppHeader.vue`: replaced Tooltip+Logout with Tooltip+DropdownMenu wrapping UserAvatar; logout moved into dropdown menu item
-- 14 new tests (12 avatar utils + 2 AppHeader integration); 589/589 pass
-- Zero dependencies added; pure TypeScript + project primitives
-
-### OAuth Account Unbind Flow (v0.8.41)
-
-- Closes ctt-server PR-B loop: enable GitHub account disconnection from ProfileView
-- `unbindOAuthAccount(provider)` in `src/lib/api/oauth-account.ts`: issues `DELETE /api/v1/auth/oauth/accounts/{provider}` with JWT
-- `src/lib/errors/oauth-bind-error-messages.ts`: new `OAUTH_UNBIND_ERROR_MESSAGES` + `getOAuthUnbindErrorMessage(code)` (AUTH_017 + AUTH_018) with fallback + dev breadcrumb
-- `ProfileView.vue`: state-aware button — `v-if="!githubBinding"` shows Connect (existing BIND flow), `v-else` shows Disconnect button + shadcn-vue `Dialog` confirmation. Error handling mirrors BIND pattern (AUTH_001 short-circuit, refetch on success, toast + dialog close on error)
-- approximately 32 new tests (6 API + 5 error mapping + 8 view + 7 state-aware + 6 defensive cleanups); 580/580 pass
-- Session invariant: backend guarantees no token rotation; mirror of v0.8.40 BIND
-- v0.8.41 cleanup: removed redundant `@click` on Disconnect button (DialogTrigger as-child handles it); added `extractErrorCode()` helper in `src/lib/utils/api-error.ts` to DRY the type-cast pattern in BIND/UNBIND `onError`; added `COMMON_001` mapping in `OAUTH_UNBIND_ERROR_MESSAGES` for future-proofing
-
-### OAuth Account Binding Flow (v0.8.40)
-
-- Closes ctt-server PR-A loop: enable GitHub account linking from ProfileView
-- `getGitHubAuthorizeUrl(action: 'login' | 'bind' = 'login')` — adds `?action=bind` query param; JWT auto-injected by apiFetch for bind (handled by backend interceptor)
-- `LoginView.vue`: wraps `mutationFn` in `() => getGitHubAuthorizeUrl('login')` for TanStack Query TVariables inference (mutationFn must be 0-arg to keep `mutate()` call-site compatible)
-- `src/lib/errors/oauth-bind-error-messages.ts`: 8 BIND error codes → user-friendly toast copy (AUTH_006/013/016, USER_004, OAUTH_PROVIDER_ERROR, OAUTH_INTERNAL_ERROR, MISSING_OAUTH_PARAMS, INVALID_STATE_ACTION) + fallback
-- `ProfileView.vue`: bind button calls `'bind'` action; `onMounted` handler reacts to `?linked=github` (success) / `?linked=github&error={code}` (failure) and clears query params via `router.replace({ query: {} })`
-- 17 new tests (8 error-mapping + 2 auth action + 4 ProfileView BIND scenarios + 3 mock infrastructure); 548/548 pass
-
-### OAuth Account Binding Status (v0.8.39)
-
-### Sidebar Branding & Copyright (v0.8.42)
-
-- `src/components/app/AppSidebar.vue`: header "CTT" → "Code Time Tracker" (with `text-sm` to fit sidebar width); SidebarFooter Logout button → "© 2026 AhogeK" copyright line
-- `src/components/app/__tests__/AppSidebar.test.ts`: removed 8 Logout tests, added 2 new tests (copyright line + no-Logout-button)
-- Net change: 580 → 575 tests (removed 8 + added 2, plus pre-existing test count baseline)
-- AI content stays on develop only; master cherry-picks will get only the code commit, not this memory
-
-
-- Closes backend `GET /api/v1/auth/oauth/accounts` endpoint (ctt-server 1e333dd)
-- `oauth-account.schema.ts`: `OAuthAccountBindingSchema` + `OAuthAccountsResponseDataSchema` (provider as free-form string for future expansion, nullable providerLogin/email, ISO 8601 timestamps)
-- `oauth-account.ts`: `fetchLinkedOAuthAccounts()` wraps `apiFetch` + `RestApiResponseSchema` + inner data schema; 401 propagates to existing interceptor
-- `ProfileView.vue`: `useQuery` with `queryKey: ['oauth-accounts']`, `staleTime: 30s`, `refetchOnWindowFocus: true`; dynamic rendering for loading / error / connected / disconnected; `getProviderDisplay` switch/case for future provider icons; providerLogin → providerEmail → bare "Connected" fallback chain
-- Added 35 new tests (schema, API, view); 531/531 pass
-
-### GitHub Button Loading & NProgress Spinner Fix (v0.8.29)
-
-- `LoginForm.vue`: Added `isGithubLoading` ref, disabled state, spinner, "Connecting to GitHub..." text
-- `guard.ts`: Disabled NProgress spinner with `NProgress.configure({ showSpinner: false })`
-- Added 5 tests for GitHub button loading state
-
-### AppLayout Router Fix (v0.8.28)
-
-- `AppLayout.vue`: Replaced `<slot />` with `<router-view />` for child route rendering
-- Settings/profile page now displays correctly
-
-### Captcha Fixes (v0.8.25–v0.8.26)
-
-- GitHub login button now checks captcha completion before proceeding
-- Removed CaptchaWidget success text to prevent layout jump
-
-### GitHub Button Hover Fix (v0.8.24)
-
-- Removed `hover:text-[#5e6ad2]!` — light mode text stays black on hover
-
-### Dependency Updates (v0.8.9–v0.8.23)
-
-Routine dependency updates via `vp update`. See git log for details.
-
-## Major Features (v0.7.x–v0.8.x)
-
-### GitHub OAuth (v0.8.3)
-
-Complete OAuth login flow: authorize/callback/error pages, GitHub button in LoginForm, 13 error codes, URL param cleanup, GitHub binding in ProfileView.
-
-### hCaptcha Integration (v0.7.6)
-
-Frontend CaptchaWidget + backend CaptchaService. Graceful degradation when captchaSiteKey=null. SECURITY_006/007 error codes.
-
-### Terms Acceptance (v0.7.0)
-
-Integrated with ctt-server v0.25.1. Fixed 3 P0 bugs (error code, endpoint path, schema). Added Chinese terms content, request queue replay.
-
-## Bug Fixes (v0.5.x–v0.6.x)
-
-### 0.6.9 — Accessibility Warning Fix
-Fixed label-for mismatch and missing autocomplete attributes.
-
-### 0.6.8 — Console Warnings Elimination
-Fixed router config warning, guard next() deprecation, FormField injection, publicConfig ZodError.
-
-### 0.6.7 — ResetPasswordForm TypeScript Fix
-TS2322 fix: type assertion `as string` for optional schema.
-
-### 0.6.6 — RegisterForm TypeScript Fix
-TS2561/TS2345 fix: removed validateOnInput, created RegisterFormData type.
-
-### 0.6.4 — Terms Acceptance Test Coverage
-Added 53 new tests, JSDoc, lint cleanup, proper token storage.
-
-### 0.5.83 — Code Review Fixes
-Test assertion fix, documentation updates, atomic commits.
-
-### 0.5.75–0.5.82 — UI Polish
-Password error simplification, form spacing, 404 button centering, TermsDialog width, cursor styles, compact layout.
-
-### 0.5.66–0.5.74 — ResetPasswordView
-Complete implementation with error handling, cooldown, code review.
-
-### 0.5.31–0.5.65 — Auth Module Completion
-Password validation, logout fixes, auth initialization, guest guard, double toast fix, accessibility, ghost button system.
+- **Email Change (v0.9.0)**: 5 endpoints, 4 mutations, AccountSection integration
+- **GitHub OAuth (v0.8.3)**: Complete OAuth login flow, 13 error codes, GitHub binding in ProfileView
+- **hCaptcha (v0.7.6)**: Frontend CaptchaWidget + backend CaptchaService, graceful degradation
+- **Terms Acceptance (v0.7.0)**: Integrated with ctt-server v0.25.1, Chinese terms content
 
 ## Architecture Decisions
 
