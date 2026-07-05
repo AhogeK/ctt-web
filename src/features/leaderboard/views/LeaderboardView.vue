@@ -11,7 +11,7 @@
  * - Loading skeletons and retry functionality
  * - Uses TanStack Query for data fetching and caching
  */
-import { Trophy, User, AlertCircle, RefreshCw } from 'lucide-vue-next'
+import { Trophy, User, AlertCircle, RefreshCw } from '@lucide/vue'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { Skeleton } from '@/components/ui/skeleton'

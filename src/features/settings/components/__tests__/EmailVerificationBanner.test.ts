@@ -48,7 +48,7 @@ vi.mock('@/lib/utils', () => ({
   cn: (...inputs: unknown[]) => inputs.filter(Boolean).join(' '),
 }))
 
-vi.mock('lucide-vue-next', () => ({
+vi.mock('@lucide/vue', () => ({
   AlertTriangle: { template: '<span />' },
   Mail: { template: '<span />' },
   Loader2: { template: '<span />' },

@@ -34,6 +34,12 @@ vi.mock('@/stores/auth', () => ({
   }),
 }))
 
+vi.mock('@lucide/vue', () => ({
+  Sun: { name: 'Sun', template: '<svg data-testid="icon-sun" />' },
+  Moon: { name: 'Moon', template: '<svg data-testid="icon-moon" />' },
+  Monitor: { name: 'Monitor', template: '<svg data-testid="icon-monitor" />' },
+}))
+
 // Defensive stub: AppHeader itself does not import vue-router, but Reka UI
 // (used by the Tooltip / DropdownMenu wrappers) may transitively touch it.
 // Stubbing keeps the mount isolated from the real router instance.

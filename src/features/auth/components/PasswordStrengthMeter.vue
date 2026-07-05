@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { computed } from 'vue'
-import { Check, X } from 'lucide-vue-next'
+import { Check, X } from '@lucide/vue'
 
 const props = defineProps<{
   /** Password string to evaluate against length tiers and character type rules */

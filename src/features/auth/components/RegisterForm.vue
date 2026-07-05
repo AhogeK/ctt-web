@@ -10,7 +10,7 @@ import { Checkbox } from '@/components/ui/checkbox'
 import { cn } from '@/lib/utils'
 import PasswordStrengthMeter from './PasswordStrengthMeter.vue'
 import TermsDialog from './TermsDialog.vue'
-import { Eye, EyeOff } from 'lucide-vue-next'
+import { Eye, EyeOff } from '@lucide/vue'
 import { useThemeStore } from '@/stores/theme'
 import CaptchaWidget from '@/components/CaptchaWidget.vue'
 

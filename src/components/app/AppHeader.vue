@@ -10,7 +10,7 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu'
 import { SidebarTrigger, useSidebar } from '@/components/ui/sidebar'
-import { LogOut, Loader2 } from 'lucide-vue-next'
+import { LogOut, Loader2, Sun, Moon, Monitor } from '@lucide/vue'
 import { useAuthStore } from '@/stores/auth'
 import UserAvatar from './UserAvatar.vue'
 

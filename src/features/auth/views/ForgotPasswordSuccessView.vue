@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { useRouter } from 'vue-router'
-import { MailOpen } from 'lucide-vue-next'
+import { MailOpen } from '@lucide/vue'
 import { RouteNames } from '@/router/route-names'
 import { Button } from '@/components/ui/button'
 import { cn } from '@/lib/utils'

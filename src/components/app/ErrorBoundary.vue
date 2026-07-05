@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import type { ComponentPublicInstance } from 'vue'
 import { onErrorCaptured, ref, shallowRef } from 'vue'
-import { TriangleAlert } from 'lucide-vue-next'
+import { TriangleAlert } from '@lucide/vue'
 import { Button } from '@/components/ui/button'
 
 /**

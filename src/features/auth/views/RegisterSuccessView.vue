@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { computed, onUnmounted } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
-import { MailOpen, AlertCircle, Copy, Check } from 'lucide-vue-next'
+import { MailOpen, AlertCircle, Copy, Check } from '@lucide/vue'
 import { useClipboard, useSessionStorage } from '@vueuse/core'
 import { toast } from 'vue-sonner'
 import { RouteNames } from '@/router/route-names'

@@ -181,7 +181,7 @@ vi.mock('@/features/auth/content', () => ({
   },
 }))
 
-vi.mock('lucide-vue-next', () => ({
+vi.mock('@lucide/vue', () => ({
   Eye: vi.fn<() => void>(),
   EyeOff: vi.fn<() => void>(),
 }))
