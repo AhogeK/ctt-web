@@ -1,0 +1,35 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 40 40" role="img" aria-label="Code Time Tracker">
+  <defs>
+    <linearGradient id="primaryGradDark" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color: #38bdf8; stop-opacity: 1" />
+      <stop offset="100%" style="stop-color: #a78bfa; stop-opacity: 1" />
+    </linearGradient>
+    <linearGradient id="accentGradDark" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" style="stop-color: #34d399; stop-opacity: 1" />
+      <stop offset="100%" style="stop-color: #22d3ee; stop-opacity: 1" />
+    </linearGradient>
+    <radialGradient id="timerBgDark">
+      <stop offset="0%" style="stop-color: #374151; stop-opacity: 1" />
+      <stop offset="100%" style="stop-color: #1f2937; stop-opacity: 0.98" />
+    </radialGradient>
+  </defs>
+  <rect x="4" y="6" width="32" height="28" rx="3" fill="url(#primaryGradDark)" opacity="0.15" />
+  <rect x="4" y="6" width="32" height="28" rx="3" fill="none" stroke="url(#primaryGradDark)" stroke-width="2" />
+  <line x1="4" y1="12" x2="36" y2="12" stroke="url(#primaryGradDark)" stroke-width="2" />
+  <circle cx="8" cy="9" r="1.2" fill="url(#primaryGradDark)" />
+  <circle cx="12" cy="9" r="1.2" fill="url(#primaryGradDark)" />
+  <circle cx="16" cy="9" r="1.2" fill="url(#primaryGradDark)" />
+  <line x1="8" y1="17" x2="20" y2="17" stroke="url(#primaryGradDark)" stroke-width="1.8" stroke-linecap="round" opacity="0.9" />
+  <line x1="8" y1="21" x2="24" y2="21" stroke="url(#primaryGradDark)" stroke-width="1.8" stroke-linecap="round" opacity="0.7" />
+  <line x1="8" y1="25" x2="16" y2="25" stroke="url(#primaryGradDark)" stroke-width="1.8" stroke-linecap="round" opacity="0.9" />
+  <rect x="26" y="20" width="2" height="6" fill="url(#accentGradDark)" rx="1" />
+  <g transform="translate(22, 22)">
+    <circle cx="8" cy="8" r="7" fill="url(#timerBgDark)" />
+    <circle cx="8" cy="8" r="7" fill="none" stroke="url(#primaryGradDark)" stroke-width="2" />
+    <rect x="7" y="2" width="2" height="2" rx="0.5" fill="url(#primaryGradDark)" />
+    <line x1="8" y1="8" x2="8" y2="5" stroke="url(#primaryGradDark)" stroke-width="1.5" stroke-linecap="round" />
+    <line x1="8" y1="8" x2="11" y2="8" stroke="url(#primaryGradDark)" stroke-width="1.2" stroke-linecap="round" />
+    <circle cx="8" cy="8" r="1" fill="url(#primaryGradDark)" />
+    <path d="M 8 3 A 5 5 0 0 1 13 8" fill="none" stroke="url(#accentGradDark)" stroke-width="1.5" stroke-linecap="round" opacity="0.8" />
+  </g>
+</svg>
