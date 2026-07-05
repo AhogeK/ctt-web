@@ -69,7 +69,7 @@ describe('Router Guards', () => {
     localStorage.clear()
 
     // Reset document.title
-    document.title = 'CTT'
+    document.title = 'Code Time Tracker'
 
     // Create fresh router instance
     router = createRouter({
@@ -92,14 +92,14 @@ describe('Router Guards', () => {
       await router.push('/dashboard')
       await router.isReady()
 
-      expect(document.title).toBe('Dashboard - CTT')
+      expect(document.title).toBe('Dashboard - Code Time Tracker')
     })
 
-    it('appends "- CTT" suffix to title', async () => {
+    it('appends "- Code Time Tracker" suffix to title', async () => {
       await router.push('/')
       await router.isReady()
 
-      expect(document.title).toBe('Home - CTT')
+      expect(document.title).toBe('Home - Code Time Tracker')
     })
 
     it('does not modify title when route has no meta title', async () => {

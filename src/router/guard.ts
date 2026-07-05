@@ -13,7 +13,7 @@ export function setupRouterGuards(router: Router) {
   router.beforeEach((to, _from) => {
     const title = to.meta.title
     if (title) {
-      document.title = `${title} - CTT`
+      document.title = `${title} - Code Time Tracker`
     }
 
     NProgress.start()
