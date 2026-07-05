@@ -9,6 +9,18 @@
 
 ## Recent Activity (v0.10.5 — 2026-07-05)
 
+### Bug fix: remove auto-call of `/api/v1/users/me/password/set` on mount
+
+- **User report**: "登入进页面后，会自动调用不该调用的接口：/api/v1/users/me/password/set"
+- **Root cause**: `usePasswordDetection` composable had `onMounted(() => { void checkPasswordStatus() })` which automatically called `setPassword('')` (POST to write endpoint) when `AccountSection.vue` mounted. Since `ProfileView` is the default landing page after login, this triggered the unwanted API call on every login.
+- **Fix**: Removed `onMounted` auto-call. `hasPassword` starts as `null` (unknown) instead of `false`. `isChecking` starts as `false` instead of `true`. Detection is now lazy — `recheck()` is called explicitly only when user clicks "Set Password" button.
+- **Files changed**:
+  - `src/features/settings/composables/usePasswordDetection.ts` — removed `onMounted`, changed initial `hasPassword` to `null`, removed `onMounted` import
+  - `src/features/settings/components/AccountSection.vue` — `handleOpenSetPasswordDialog` now `async`, calls `recheckPassword()` before opening dialog
+  - `src/features/settings/composables/__tests__/usePasswordDetection.test.ts` — rewrote tests: removed onMounted auto-trigger tests, all tests now call `recheck()` explicitly
+  - `src/features/settings/components/__tests__/AccountSection.test.ts` — added `recheck` mock to usePasswordDetection mock
+- **Design decision**: `hasPassword: null` tri-state (null=unknown, false=no password, true=has password). `!hasPassword` in template evaluates `!null` as `true`, so "Set Password" button shows by default (correct UX for OAuth users).
+
 ### Appearance submenu: state-adaptive subtitle color (Round 5 — REPLACES Round 4)
 
 - **User feedback (Round 4 was still bad)**: The `!text-muted-foreground` from Round 4 prevented the parent's `data-[state=open]:text-accent-foreground` from re-coloring the subtitle, but the result was still unreadable: `text-muted-foreground` is a **dark gray** (zinc-500 in light mode), which has insufficient contrast against the **strong purple accent background** when the trigger row is highlighted ("还是有看不清的问题要解决"). User posted a screenshot showing "Appearance" (white on purple, OK) next to "System (Light)" (dark gray on purple, hard to read).
