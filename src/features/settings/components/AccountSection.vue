@@ -21,10 +21,15 @@ const authStore = useAuthStore()
 const { data: emailStatus, isPending: isEmailStatusPending } = useEmailStatus()
 const { isDialogOpen } = useEmailChange()
 const { resend, countdown, isPending: isResendPending } = useResendVerification()
-const { hasPassword, isChecking: isPasswordChecking, recheck: recheckPassword } = usePasswordDetection()
+const { hasPassword, recheck: recheckPassword } = usePasswordDetection()
 
 /** Whether the set password dialog is open */
 const isSetPasswordDialogOpen = ref(false)
+
+/** Label for the password button based on detection state */
+const passwordButtonLabel = computed(() => {
+  return hasPassword.value === true ? 'Change Password' : 'Set Password'
+})
 
 /** Shared action button styling for outline buttons in the account section */
 const actionButtonClass = cn(
@@ -145,13 +150,12 @@ function handleSetPasswordSuccess() {
         <Button variant="outline" :class="actionButtonClass" @click="handleOpenChangeDialog"> Change Email </Button>
 
         <Button
-          v-if="!isPasswordChecking && !hasPassword"
           variant="outline"
           :class="actionButtonClass"
           data-testid="set-password-button"
           @click="handleOpenSetPasswordDialog"
         >
-          Set Password
+          {{ passwordButtonLabel }}
         </Button>
 
         <Button

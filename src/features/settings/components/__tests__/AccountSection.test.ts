@@ -383,18 +383,22 @@ describe('AccountSection', () => {
       expect(setPasswordButton.text()).toContain('Set Password')
     })
 
-    it('hides Set Password button when user already has password', () => {
+    it('shows "Change Password" button when user already has password', () => {
       hasPasswordValue = true
       const wrapper = mount(AccountSection)
 
-      expect(wrapper.find('[data-testid="set-password-button"]').exists()).toBe(false)
+      const button = wrapper.find('[data-testid="set-password-button"]')
+      expect(button.exists()).toBe(true)
+      expect(button.text()).toBe('Change Password')
     })
 
-    it('hides Set Password button while password status is loading', () => {
+    it('shows "Set Password" button when password status is loading', () => {
       isPasswordCheckingValue = true
       const wrapper = mount(AccountSection)
 
-      expect(wrapper.find('[data-testid="set-password-button"]').exists()).toBe(false)
+      const button = wrapper.find('[data-testid="set-password-button"]')
+      expect(button.exists()).toBe(true)
+      expect(button.text()).toBe('Set Password')
     })
 
     it('opens SetPasswordDialog when Set Password button is clicked', async () => {
