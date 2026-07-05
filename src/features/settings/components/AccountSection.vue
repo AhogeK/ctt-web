@@ -6,6 +6,7 @@
  * registration time, and email change management actions.
  */
 import { ref, computed } from 'vue'
+import { toast } from 'vue-sonner'
 import { useAuthStore } from '@/stores/auth'
 import { useEmailStatus } from '@/features/settings/composables/useEmailStatus'
 import { useEmailChange } from '@/features/settings/composables/useEmailChange'
@@ -20,7 +21,7 @@ const authStore = useAuthStore()
 const { data: emailStatus, isPending: isEmailStatusPending } = useEmailStatus()
 const { isDialogOpen } = useEmailChange()
 const { resend, countdown, isPending: isResendPending } = useResendVerification()
-const { hasPassword, isChecking: isPasswordChecking } = usePasswordDetection()
+const { hasPassword, isChecking: isPasswordChecking, recheck: recheckPassword } = usePasswordDetection()
 
 /** Whether the set password dialog is open */
 const isSetPasswordDialogOpen = ref(false)
@@ -65,7 +66,15 @@ function handleResendVerification() {
   }
 }
 
-function handleOpenSetPasswordDialog() {
+async function handleOpenSetPasswordDialog() {
+  if (hasPassword.value === null) {
+    // First click: lazy-check password status before opening dialog
+    await recheckPassword()
+    if (hasPassword.value === true) {
+      toast.info('You already have a password set.')
+      return
+    }
+  }
   isSetPasswordDialogOpen.value = true
 }
 
