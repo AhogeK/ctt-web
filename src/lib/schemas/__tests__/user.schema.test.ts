@@ -11,6 +11,7 @@ describe('UserProfileSchema', () => {
       createdAt: '2026-01-15T10:30:00Z',
       lastLoginAt: '2026-07-01T09:15:00Z',
       termsVersion: '1.0.0',
+      hasPassword: true,
     }
     const result = UserProfileSchema.safeParse(validProfile)
 
@@ -214,6 +215,26 @@ describe('UserProfileSchema', () => {
     expect(result.error.issues[0]?.path).toStrictEqual(['emailVerified'])
   })
 
+  it('rejects wrong type for hasPassword (string instead of boolean)', () => {
+    const invalidProfile = {
+      id: '550e8400-e29b-41d4-a716-446655440000',
+      email: 'user@example.com',
+      displayName: 'John Doe',
+      emailVerified: true,
+      createdAt: '2026-01-15T10:30:00Z',
+      lastLoginAt: '2026-07-01T09:15:00Z',
+      termsVersion: '1.0.0',
+      hasPassword: 'true',
+    }
+    const result = UserProfileSchema.safeParse(invalidProfile)
+
+    expect(result.success).toBe(false)
+    if (result.success) {
+      throw new Error('Expected parse to fail but it succeeded')
+    }
+    expect(result.error.issues[0]?.path).toStrictEqual(['hasPassword'])
+  })
+
   it('rejects completely empty object', () => {
     const result = UserProfileSchema.safeParse({})
 
@@ -242,6 +263,65 @@ describe('UserProfileSchema', () => {
     }
     expect(result.data.termsVersion).toBe('2.5.1-beta')
   })
+
+  it('accepts hasPassword=true (email/password user)', () => {
+    const profile = {
+      id: '550e8400-e29b-41d4-a716-446655440000',
+      email: 'user@example.com',
+      displayName: 'John Doe',
+      emailVerified: true,
+      createdAt: '2026-01-15T10:30:00Z',
+      lastLoginAt: '2026-07-01T09:15:00Z',
+      termsVersion: '1.0.0',
+      hasPassword: true,
+    }
+    const result = UserProfileSchema.safeParse(profile)
+
+    expect(result.success).toBe(true)
+    if (!result.success) {
+      throw new Error(`Parse failed: ${JSON.stringify(result.error)}`)
+    }
+    expect(result.data.hasPassword).toBe(true)
+  })
+
+  it('accepts hasPassword=false (OAuth-only user)', () => {
+    const profile = {
+      id: '550e8400-e29b-41d4-a716-446655440000',
+      email: 'user@example.com',
+      displayName: 'John Doe',
+      emailVerified: true,
+      createdAt: '2026-01-15T10:30:00Z',
+      lastLoginAt: '2026-07-01T09:15:00Z',
+      termsVersion: '1.0.0',
+      hasPassword: false,
+    }
+    const result = UserProfileSchema.safeParse(profile)
+
+    expect(result.success).toBe(true)
+    if (!result.success) {
+      throw new Error(`Parse failed: ${JSON.stringify(result.error)}`)
+    }
+    expect(result.data.hasPassword).toBe(false)
+  })
+
+  it('defaults hasPassword to false when field is missing', () => {
+    const profile = {
+      id: '550e8400-e29b-41d4-a716-446655440000',
+      email: 'user@example.com',
+      displayName: 'John Doe',
+      emailVerified: true,
+      createdAt: '2026-01-15T10:30:00Z',
+      lastLoginAt: '2026-07-01T09:15:00Z',
+      termsVersion: '1.0.0',
+    }
+    const result = UserProfileSchema.safeParse(profile)
+
+    expect(result.success).toBe(true)
+    if (!result.success) {
+      throw new Error(`Parse failed: ${JSON.stringify(result.error)}`)
+    }
+    expect(result.data.hasPassword).toBe(false)
+  })
 })
 
 describe('UserProfile type inference', () => {
@@ -255,6 +335,7 @@ describe('UserProfile type inference', () => {
       lastLoginAt: null,
       termsVersion: '1.0.0',
       emailChangePending: false,
+      hasPassword: false,
     }
     expect(profile.id).toBe('550e8400-e29b-41d4-a716-446655440000')
     expect(profile.lastLoginAt).toBeNull()

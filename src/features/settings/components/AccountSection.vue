@@ -6,12 +6,10 @@
  * registration time, and email change management actions.
  */
 import { ref, computed } from 'vue'
-import { toast } from 'vue-sonner'
 import { useAuthStore } from '@/stores/auth'
 import { useEmailStatus } from '@/features/settings/composables/useEmailStatus'
 import { useEmailChange } from '@/features/settings/composables/useEmailChange'
 import { useResendVerification } from '@/features/auth/composables/useResendVerification'
-import { usePasswordDetection } from '@/features/settings/composables/usePasswordDetection'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { cn } from '@/lib/utils'
@@ -21,14 +19,13 @@ const authStore = useAuthStore()
 const { data: emailStatus, isPending: isEmailStatusPending } = useEmailStatus()
 const { isDialogOpen } = useEmailChange()
 const { resend, countdown, isPending: isResendPending } = useResendVerification()
-const { hasPassword, recheck: recheckPassword } = usePasswordDetection()
 
 /** Whether the set password dialog is open */
 const isSetPasswordDialogOpen = ref(false)
 
 /** Label for the password button based on detection state */
 const passwordButtonLabel = computed(() => {
-  return hasPassword.value === true ? 'Change Password' : 'Set Password'
+  return authStore.hasPassword ? 'Change Password' : 'Set Password'
 })
 
 /** Shared action button styling for outline buttons in the account section */
@@ -71,20 +68,16 @@ function handleResendVerification() {
   }
 }
 
-async function handleOpenSetPasswordDialog() {
-  if (hasPassword.value === null) {
-    // First click: lazy-check password status before opening dialog
-    await recheckPassword()
-    if (hasPassword.value === true) {
-      toast.info('You already have a password set.')
-      return
-    }
-  }
+function handleOpenSetPasswordDialog() {
   isSetPasswordDialogOpen.value = true
 }
 
+/**
+ * Refreshes the user profile so `hasPassword` reflects the newly-set password,
+ * which flips the password button label from "Set Password" to "Change Password".
+ */
 function handleSetPasswordSuccess() {
-  hasPassword.value = true
+  void authStore.fetchUserProfile()
 }
 </script>
 

@@ -17,6 +17,10 @@ import { extractErrorCode, isApiError } from '@/lib/utils/api-error'
  * - If other API error (e.g. COMMON_003 validation) → user doesn't have password → hasPassword = false
  * - If network/unknown error → checkError is set, hasPassword unchanged
  *
+ * @deprecated Use `authStore.hasPassword` from `@/stores/auth` instead.
+ * This composable calls the write endpoint `setPassword('')` to detect password status,
+ * which is an anti-pattern. The backend now provides `hasPassword` in `GET /api/v1/users/me`.
+ *
  * @returns Object with hasPassword ref, loading state, error state, and recheck function
  */
 export function usePasswordDetection() {

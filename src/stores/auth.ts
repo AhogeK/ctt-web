@@ -108,10 +108,13 @@ export const useAuthStore = defineStore('auth', () => {
    * Session-only state (NOT persisted to localStorage) — re-fetched on app init.
    * Avatar is derived client-side from displayName via `src/lib/utils/avatar.ts`
    * (stringToAvatarColor + getInitials) — backend never returns it.
+   *
+   * Fields: displayName, email, emailVerified, hasPassword, createdAt, lastLoginAt.
    */
   const displayName = ref<string | null>(null)
   const email = ref<string | null>(null)
   const emailVerified = ref(false)
+  const hasPassword = ref(false)
   const createdAt = ref<string | null>(null)
   const lastLoginAt = ref<string | null>(null)
 
@@ -172,6 +175,7 @@ export const useAuthStore = defineStore('auth', () => {
     displayName.value = null
     email.value = null
     emailVerified.value = false
+    hasPassword.value = false
     createdAt.value = null
     lastLoginAt.value = null
   }
@@ -203,6 +207,7 @@ export const useAuthStore = defineStore('auth', () => {
         displayName.value = profile.displayName
         email.value = profile.email
         emailVerified.value = profile.emailVerified
+        hasPassword.value = profile.hasPassword
         createdAt.value = profile.createdAt
         lastLoginAt.value = profile.lastLoginAt
         return profile
@@ -412,6 +417,7 @@ export const useAuthStore = defineStore('auth', () => {
     displayName,
     email,
     emailVerified,
+    hasPassword,
     createdAt,
     lastLoginAt,
     isAuthenticated,
