@@ -144,7 +144,7 @@ async function handleLogout(): Promise<void> {
                 <button
                   type="button"
                   :aria-label="`Open user menu`"
-                  class="rounded-full focus:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                  class="rounded-full cursor-pointer focus:outline-none focus-visible:ring-2 focus-visible:ring-ring"
                 >
                   <UserAvatar />
                 </button>
