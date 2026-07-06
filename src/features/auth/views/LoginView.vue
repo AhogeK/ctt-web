@@ -131,6 +131,10 @@ const githubMutation = useMutation({
   // LoginView serves the OAuth LOGIN flow only; ProfileView uses 'bind'.
   mutationFn: () => getGitHubAuthorizeUrl('login'),
   onSuccess: (data) => {
+    const redirect = route.query.redirect
+    if (typeof redirect === 'string' && redirect) {
+      sessionStorage.setItem('oauth_redirect', redirect)
+    }
     globalThis.location.href = data.authUrl
   },
   onError: () => {
