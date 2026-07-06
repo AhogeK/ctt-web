@@ -3,9 +3,21 @@
 ## Current Status
 
 **Phase**: v0.10.x Security & Account Features + UI Polish
-**Version**: 0.10.9 (2026-07-05)
+**Version**: 0.10.10 (2026-07-06)
 **Branch**: develop, master at 9899288
-**Tests**: 903/903 pass (verified 2026-07-05)
+**Tests**: 928/928 pass (verified 2026-07-06)
+
+## Recent Activity (v0.10.10 — 2026-07-06)
+
+### OAuth sessionStorage redirect + test coverage
+
+- **Why**: Verification report found 3 gaps: sessionStorage redirect storage missing, OAuthCallbackView tests missing, OAuthErrorView tests missing
+- **Changes**:
+  - `src/features/auth/views/LoginView.vue` — store `route.query.redirect` in sessionStorage before GitHub redirect
+  - `src/features/auth/views/OAuthCallbackView.vue` — read redirect from sessionStorage as fallback, clean up after reading
+  - `src/features/auth/views/__tests__/OAuthCallbackView.test.ts` — 15 tests: happy path, missing tokens, termsExpired, safe/unsafe redirect, URL cleanup
+  - `src/features/auth/views/__tests__/OAuthErrorView.test.ts` — 10 tests: error code mapping, button navigation, fallback messages
+- **Verification**: `pnpm type-check` clean; full suite 928/928 pass
 
 ## Recent Activity (v0.10.9 — 2026-07-05)
 

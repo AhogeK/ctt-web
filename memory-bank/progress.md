@@ -24,6 +24,8 @@
 
 ## Completed (Recent)
 
+- [x] **v0.10.10** OAuth sessionStorage redirect + test coverage — Added sessionStorage storage for redirect target before GitHub OAuth redirect; added 15 tests for OAuthCallbackView (happy path, missing tokens, termsExpired, safe/unsafe redirect, URL cleanup); added 10 tests for OAuthErrorView (error code mapping, button navigation, fallback messages). 4 files changed, 928/928 tests pass.
+- [x] **v0.10.9** hasPassword integration + code review fixes — Integrated backend `hasPassword` field from API; deprecated `usePasswordDetection` composable; fixed SetPasswordDialog @success regression; added schema type-rejection test; fixed JSDoc field order. 8 files changed, 903/903 tests pass.
 - [x] **v0.10.8** Password button label: Set Password → Change Password — button now always visible; label dynamically changes based on `hasPassword` state (null/false → "Set Password", true → "Change Password"). 1 file changed.
 - [x] **v0.10.7** Tab title unified to "Code Time Tracker" — browser tab title suffix changed from `- CTT` to `- Code Time Tracker` for brand consistency. `guard.ts` + `guard.test.ts` updated. 2 files changed.
 - [x] **v0.10.6** Favicon replaced with PluginIcon SVG — Browser tab icon now uses the Code Time Tracker plugin icon (SVG) instead of the default Vite favicon. `public/favicon.svg` created from `PluginIcon.vue` SVG; `index.html` updated to reference SVG favicon + title changed to "Code Time Tracker". 2 files changed.
