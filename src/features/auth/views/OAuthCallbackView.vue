@@ -44,7 +44,12 @@ onMounted(() => {
   history.replaceState(null, '', route.path)
 
   if (!termsExpired) {
-    const redirect = route.query.redirect as string | undefined
+    const queryRedirect = route.query.redirect as string | undefined
+    const storedRedirect = sessionStorage.getItem('oauth_redirect')
+    if (storedRedirect) {
+      sessionStorage.removeItem('oauth_redirect')
+    }
+    const redirect = queryRedirect ?? storedRedirect ?? undefined
     void router.replace(isSafeRedirect(redirect) ? redirect : { name: RouteNames.DASHBOARD })
   }
   // If termsExpired, App.vue handles TermsDialog display and post-acceptance navigation
