@@ -3,9 +3,30 @@
 ## Current Status
 
 **Phase**: v0.10.x Security & Account Features + UI Polish
-**Version**: 0.10.12 (2026-07-06)
+**Version**: 0.10.13 (2026-07-06)
 **Branch**: develop, master at 9899288
-**Tests**: E2E 18/18 auth specs pass; `tsc --noEmit -p e2e/tsconfig.json` clean; `vp lint e2e/` clean; `pnpm type-check` clean
+**Tests**: E2E 18/18 auth specs pass; `tsc --noEmit -p e2e/tsconfig.json` clean; `pnpm type-check` clean
+
+## Recent Activity (v0.10.13 — 2026-07-06)
+
+### Remove dead MSW infrastructure from E2E tests
+
+- **Why**: The project had two parallel mock systems — MSW browser worker handlers (never used at runtime) and `page.route()` helpers (the actual working system). `setupWorker` from `msw/browser` requires `navigator.serviceWorker` which only exists in a browser context; Playwright's test runner runs in Node.js, making MSW browser workers architecturally incompatible. The dead MSW infrastructure added confusion, maintenance burden, and an unnecessary dependency.
+- **Industry standard**: Playwright's `page.route()` / `browserContext.route()` is the first-class, officially recommended API for E2E network mocking. MSW is designed for unit/integration tests (vitest/jest + JSDOM), not Playwright E2E.
+- **Deleted files**:
+  - `e2e/mocks/browser.ts` — lazy Proxy of `setupWorker()` that could never work in Playwright's Node context
+  - `e2e/global-setup.ts` — Playwright `globalSetup` with no-op body
+  - `public/mockServiceWorker.js` — generated Service Worker file with no consumer
+- **Modified files**:
+  - `playwright.config.ts` — removed `globalSetup: './e2e/global-setup.ts'`
+  - `e2e/mocks/handlers/auth.ts` — removed MSW imports (`http`, `HttpResponse`), converted to pure API contract reference with typed response constants
+  - `package.json` — removed `msw` devDependency + `msw.workerDirectory` config; version bumped to 0.10.13
+  - `pnpm-workspace.yaml` — removed `allowBuilds.msw: false`
+- **Kept unchanged**:
+  - `e2e/fixtures/auth.ts` — canonical test data, used by auth-helpers
+  - `e2e/utils/auth-helpers.ts` — the working `page.route()` mock system
+  - `e2e/tsconfig.json` — `dom` lib still needed for `page.evaluate()` callbacks
+- **Verification**: `pnpm type-check` clean; `tsc --noEmit -p e2e/tsconfig.json` clean; 18/18 auth specs pass (chromium, 12.2s)
 
 ## Recent Activity (v0.10.12 — 2026-07-06)
 
