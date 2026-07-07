@@ -651,3 +651,142 @@ export default {
 ```
 
 提交前自动运行 `oxfmt --write` + `oxlint --fix` 格式化暂存文件。不符合规范的提交信息将被拒绝。
+
+---
+
+## 5. 如何写 E2E 测试
+
+### 5.1 E2E 测试基础设施
+
+| 工具         | 版本 | 用途                                       |
+|------------|----|------------------------------------------|
+| Playwright | 1.x | 端到端测试运行器（Chromium / Firefox / WebKit）          |
+| MSW        | 2.x | 浏览器端 API mocking（handlers 位于 `e2e/mocks/`）       |
+
+**关键配置**（`playwright.config.ts`）：
+
+- `globalSetup: './e2e/global-setup.ts'`：加载 MSW worker（实际启动在浏览器端，通过 `page.addInitScript`）
+- `projects: [chromium, firefox, webkit]`：多浏览器矩阵
+- `webServer`: 自动启动 dev server
+
+**MSW Lazy Proxy 模式**（`e2e/mocks/browser.ts`）：
+
+`setupWorker(...authHandlers)` 访问 `navigator.serviceWorker`，该 API 仅在浏览器中存在。`e2e/mocks/browser.ts` 同时被 Node（Playwright `globalSetup` + test runner）和浏览器（spec 文件）导入。为兼容两种环境，worker 以 lazy `Proxy<SetupWorkerApi>` 形式导出，第一次访问属性时才调用 `setupWorker(...)`。eager 形式在 Node 加载模块时立刻抛出 `Invariant Violation: [MSW] Failed to execute setupWorker in a non-browser environment`，因此 lazy Proxy 是唯一能跨 Node / 浏览器双环境的写法。
+
+### 5.2 文件组织
+
+```text
+e2e/
+├── auth/                    # auth flow specs
+│   ├── login.spec.ts
+│   ├── logout.spec.ts
+│   ├── protected-routes.spec.ts
+│   └── guest-guard.spec.ts
+├── fixtures/                # 共享测试数据
+│   └── auth.ts              # 规范化的 credentials + response shapes
+├── mocks/                   # MSW handlers + worker
+│   ├── browser.ts           # lazy Proxy worker
+│   └── handlers/
+│       └── auth.ts          # 9 auth endpoints + /users/me
+├── utils/                   # 共享 helpers
+│   └── auth-helpers.ts      # mockAuthApis, loginViaForm, clickLogout, readAuthStore
+├── global-setup.ts          # Playwright globalSetup
+└── vue.spec.ts              # 旧的基础 smoke test
+```
+
+### 5.3 编写新的 E2E 测试
+
+典型的 auth spec 结构：
+
+```typescript
+import { test, expect, type Page } from '@playwright/test'
+import { mockAuthApis, loginViaForm, clickLogout, readAuthStore } from '../utils/auth-helpers'
+import { TEST_USER_CREDENTIALS } from '../fixtures/auth'
+
+test.describe('Auth flow', () => {
+  test('user can log in and log out', async ({ page }) => {
+    // 1. 设置 mock API
+    await mockAuthApis(page)
+
+    // 2. 通过表单登录
+    await loginViaForm(page, TEST_USER_CREDENTIALS)
+
+    // 3. 验证登录状态
+    expect(await readAuthStore(page, 'accessToken')).toBeTruthy()
+
+    // 4. 登出
+    await clickLogout(page)
+
+    // 5. 验证 token 已清除
+    expect(await readAuthStore(page, 'accessToken')).toBeNull()
+  })
+})
+```
+
+**辅助函数**（`e2e/utils/auth-helpers.ts`）：
+
+| 函数                          | 用途                       |
+|-----------------------------|--------------------------|
+| `mockAuthApis(page)`        | 注册默认 auth API mock（9 个端点） |
+| `loginViaForm(page, creds)` | 通过表单提交登录                |
+| `clickLogout(page)`         | 点击登出按钮                   |
+| `readAuthStore(page, key)`  | 读取 Pinia auth store 中的字段   |
+
+**Fixture 数据**（`e2e/fixtures/auth.ts`）：
+
+| 常量                       | 用途                          |
+|--------------------------|-----------------------------|
+| `TEST_USER_ID`           | 规范化的测试用户 UUID                |
+| `TEST_USER_EMAIL`        | 测试邮箱                        |
+| `TEST_USER_CREDENTIALS`  | 登录表单使用的 email + password  |
+| `INVALID_CREDENTIALS`    | 触发 401 AUTH_001 的凭证         |
+| `TEST_LOGIN_RESPONSE`    | 登录成功响应                      |
+| `TEST_USER_PROFILE`      | `/users/me` 响应              |
+
+### 5.4 自定义 Mock 覆盖
+
+`mockAuthApis(page)` 默认注册全部 9 个端点的 happy path。如需在某个 test 中覆盖某个端点的行为，可在 `mockAuthApis` 之后追加 `page.route()`：
+
+```typescript
+test('rate-limit toast appears on 429', async ({ page }) => {
+  await mockAuthApis(page)
+
+  // 覆盖登录端点：返回 429
+  await page.route('**/api/v1/auth/login', async (route) => {
+    await route.fulfill({
+      status: 429,
+      contentType: 'application/json',
+      body: JSON.stringify({
+        success: false,
+        code: 'COMMON_002',
+        message: 'Too many requests',
+        timestamp: new Date().toISOString(),
+      }),
+    })
+  })
+
+  await loginViaForm(page, TEST_USER_CREDENTIALS)
+  await expect(page.getByText('Too many requests')).toBeVisible()
+})
+```
+
+**注意**：`page.route()` 的注册顺序决定优先级。后注册的 handler 优先匹配。如果只想覆盖一个端点的部分场景（例如 happy path + rate limit），用 `Promise.race` 或者先调用 `await page.unroute(...)` 再注册新的 handler。
+
+### 5.5 MSW 状态说明
+
+当前 v0.10.12 的实现：
+
+- ✅ MSW handlers 已就绪（`e2e/mocks/handlers/auth.ts`，9 个端点）
+- ✅ MSW browser worker 已就绪（`e2e/mocks/browser.ts`，lazy Proxy）
+- ✅ MSW Service Worker 文件已生成（`public/mockServiceWorker.js`）
+- ✅ Playwright `globalSetup` 已配置
+- ⏸ **运行时尚未启用 MSW 拦截**：spec 文件仍使用 `page.route()`（via auth-helpers）
+
+**原因**：MSW browser worker 需要 `navigator.serviceWorker`，该 API 在 Node 中不存在（Playwright 的 `globalSetup` 和 `test.beforeAll` 都在 Node 环境运行）。
+
+**两种启用路径**（未来 follow-up）：
+
+1. **Per-spec `test.beforeAll` + `page.addInitScript`**：将 worker setup 打包到 dev server 可访问的脚本中（如 `public/msw-init.js`）。
+2. **Move MSW bootstrap to `src/`**：在 Vite bundle 中包含 worker setup，由 `import.meta.env.MODE === 'test'` 守卫。
+
+当前架构（lazy Proxy + globalSetup + Service Worker 文件）是两种路径的前置条件。spec 文件已通过共享 fixtures 对齐数据形状，迁移到 MSW 时只需替换 helper 内部实现，外部 API 不变。
