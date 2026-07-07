@@ -89,6 +89,12 @@ export default defineConfig({
   /* Folder for test artifacts such as screenshots, videos, traces, etc. */
   // outputDir: 'test-results/',
 
+  /* Run MSW bootstrap before any spec executes. The actual
+   * `worker.start()` happens per-spec in `test.beforeAll` because the
+   * browser worker requires `navigator.serviceWorker`. See
+   * `e2e/global-setup.ts` for the full rationale. */
+  globalSetup: './e2e/global-setup.ts',
+
   /* Run your local dev server before starting the tests */
   webServer: {
     /**
