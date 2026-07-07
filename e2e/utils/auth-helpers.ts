@@ -11,10 +11,8 @@ import { TEST_USER, TEST_TOKENS, TEST_USER_CREDENTIALS } from '../fixtures/auth.
  * data should call `mockAuthApis()` first and then override the
  * specific route they care about.
  *
- * Replaces per-test `page.route()` mocks. MSW browser workers
- * (`e2e/mocks/handlers/auth.ts`) are the project's infrastructure
- * for future shared mocking; these helpers remain the single-entry
- * API for spec files.
+ * Replaces per-test `page.route()` mocks. These helpers are the
+ * single-entry API for spec files.
  */
 
 // ==========================================

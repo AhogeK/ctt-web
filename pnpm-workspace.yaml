@@ -1,5 +1,4 @@
 allowBuilds:
-  msw: false
   simple-git-hooks: true
   vue-demi: true
 

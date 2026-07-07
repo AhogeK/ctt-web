@@ -27,8 +27,7 @@ import { TEST_TOKENS } from '../fixtures/auth.js'
  * - All API endpoints are mocked via the shared `mockAuthApis(page)` helper
  *   from `e2e/utils/auth-helpers.ts` so the tests are fully self-contained —
  *   no real ctt-server backend required. The same `page.route()` pattern
- *   is intended to be replaceable by MSW browser workers when those
- *   handlers are wired up.
+ *   uses Playwright's `page.route()` for API mocking.
  * - The Pinia store is read directly from the running Vue app via
  *   `readAuthStore()` to verify the `isAuthenticated` computed without
  *   depending on the `useStorage` layer.

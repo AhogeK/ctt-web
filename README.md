@@ -33,7 +33,7 @@ visualization.
 | Git Hooks      | simple-git-hooks + lint-staged                              |
 | Unit Test      | Vitest 4 + Testing Library Vue                              |
 | E2E Test       | Playwright                                                  |
-| Mock           | MSW 2.x (E2E API mocking)                                   |
+| Mock           | Playwright `page.route()` (E2E API mocking)                  |
 | Type Check     | vue-tsc (standalone CI step)                                |
 
 ## ✅ Implemented Features

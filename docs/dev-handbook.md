@@ -661,17 +661,11 @@ export default {
 | 工具         | 版本 | 用途                                       |
 |------------|----|------------------------------------------|
 | Playwright | 1.x | 端到端测试运行器（Chromium / Firefox / WebKit）          |
-| MSW        | 2.x | 浏览器端 API mocking（handlers 位于 `e2e/mocks/`）       |
 
 **关键配置**（`playwright.config.ts`）：
 
-- `globalSetup: './e2e/global-setup.ts'`：加载 MSW worker（实际启动在浏览器端，通过 `page.addInitScript`）
 - `projects: [chromium, firefox, webkit]`：多浏览器矩阵
 - `webServer`: 自动启动 dev server
-
-**MSW Lazy Proxy 模式**（`e2e/mocks/browser.ts`）：
-
-`setupWorker(...authHandlers)` 访问 `navigator.serviceWorker`，该 API 仅在浏览器中存在。`e2e/mocks/browser.ts` 同时被 Node（Playwright `globalSetup` + test runner）和浏览器（spec 文件）导入。为兼容两种环境，worker 以 lazy `Proxy<SetupWorkerApi>` 形式导出，第一次访问属性时才调用 `setupWorker(...)`。eager 形式在 Node 加载模块时立刻抛出 `Invariant Violation: [MSW] Failed to execute setupWorker in a non-browser environment`，因此 lazy Proxy 是唯一能跨 Node / 浏览器双环境的写法。
 
 ### 5.2 文件组织
 
@@ -684,13 +678,11 @@ e2e/
 │   └── guest-guard.spec.ts
 ├── fixtures/                # 共享测试数据
 │   └── auth.ts              # 规范化的 credentials + response shapes
-├── mocks/                   # MSW handlers + worker
-│   ├── browser.ts           # lazy Proxy worker
+├── mocks/                   # API contract reference
 │   └── handlers/
-│       └── auth.ts          # 9 auth endpoints + /users/me
+│       └── auth.ts          # typed response constants for 9 auth endpoints + /users/me
 ├── utils/                   # 共享 helpers
 │   └── auth-helpers.ts      # mockAuthApis, loginViaForm, clickLogout, readAuthStore
-├── global-setup.ts          # Playwright globalSetup
 └── vue.spec.ts              # 旧的基础 smoke test
 ```
 
@@ -772,21 +764,14 @@ test('rate-limit toast appears on 429', async ({ page }) => {
 
 **注意**：`page.route()` 的注册顺序决定优先级。后注册的 handler 优先匹配。如果只想覆盖一个端点的部分场景（例如 happy path + rate limit），用 `Promise.race` 或者先调用 `await page.unroute(...)` 再注册新的 handler。
 
-### 5.5 MSW 状态说明
+### 5.5 E2E API Mocking 架构
 
-当前 v0.10.12 的实现：
+Playwright E2E 测试使用 `page.route()` 进行 API mock（Playwright 官方推荐的一等公民 API）。
 
-- ✅ MSW handlers 已就绪（`e2e/mocks/handlers/auth.ts`，9 个端点）
-- ✅ MSW browser worker 已就绪（`e2e/mocks/browser.ts`，lazy Proxy）
-- ✅ MSW Service Worker 文件已生成（`public/mockServiceWorker.js`）
-- ✅ Playwright `globalSetup` 已配置
-- ⏸ **运行时尚未启用 MSW 拦截**：spec 文件仍使用 `page.route()`（via auth-helpers）
+**当前架构（v0.10.13）**：
 
-**原因**：MSW browser worker 需要 `navigator.serviceWorker`，该 API 在 Node 中不存在（Playwright 的 `globalSetup` 和 `test.beforeAll` 都在 Node 环境运行）。
+- `e2e/utils/auth-helpers.ts` — `mockAuthApis(page)` 注册 `page.route()` handlers，覆盖 9 个 auth 端点 + `/users/me`
+- `e2e/fixtures/auth.ts` — 规范化测试数据（`TEST_USER`、`TEST_TOKENS`、`STORAGE_KEYS` 等）
+- `e2e/mocks/handlers/auth.ts` — API 契约参考文档（typed response constants，无运行时依赖）
 
-**两种启用路径**（未来 follow-up）：
-
-1. **Per-spec `test.beforeAll` + `page.addInitScript`**：将 worker setup 打包到 dev server 可访问的脚本中（如 `public/msw-init.js`）。
-2. **Move MSW bootstrap to `src/`**：在 Vite bundle 中包含 worker setup，由 `import.meta.env.MODE === 'test'` 守卫。
-
-当前架构（lazy Proxy + globalSetup + Service Worker 文件）是两种路径的前置条件。spec 文件已通过共享 fixtures 对齐数据形状，迁移到 MSW 时只需替换 helper 内部实现，外部 API 不变。
+**设计决策**：`page.route()` 是 Playwright 的原生网络拦截 API，无需额外依赖。MSW（Mock Service Worker）设计用于 vitest/jest 的单元/集成测试，与 Playwright E2E 的 Node.js test runner 架构不兼容（`setupWorker` 需要 `navigator.serviceWorker`）。
