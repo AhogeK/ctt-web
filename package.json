@@ -63,12 +63,11 @@
     "@vue/tsconfig": "^0.9.1",
     "eslint-config-prettier": "^10.1.8",
     "eslint-plugin-oxlint": "~1.72.0",
-    "eslint-plugin-playwright": "^2.10.4",
+    "eslint-plugin-playwright": "^2.10.5",
     "eslint-plugin-vue": "~10.9.2",
     "jiti": "^2.7.0",
     "jsdom": "^29.1.1",
     "lint-staged": "^17.0.8",
-
     "npm-run-all2": "^9.0.2",
     "simple-git-hooks": "^2.13.1",
     "tailwindcss": "^4.3.2",
