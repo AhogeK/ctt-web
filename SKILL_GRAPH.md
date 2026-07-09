@@ -18,7 +18,7 @@
 | 🔒 安全与审查 | 8 | [→](#安全与审查) |
 | 📝 文档与写作 | 20 | [→](#文档与写作) |
 | 🌐 浏览器与自动化 | 15 | [→](#浏览器与自动化) |
-| 🔬 研究与分析 | 12 | [→](#研究与分析) |
+| 🔬 研究与分析 | 13 | [→](#研究与分析) |
 | 🛠️ CLI 工具集 | 60+ | [→](#cli-工具集) |
 | 📊 学术与出版 | 14 | [→](#学术与出版) |
 | 🍎 iOS 开发 | 5 | [→](#ios-开发) |
@@ -252,6 +252,7 @@
 | `ask-matt` | 技能路由、哪个技能 | 询问哪个技能或流程适合当前情况 |
 | `obsidian-vault` | Obsidian、笔记、知识库 | 在 Obsidian vault 中搜索/创建/管理笔记 |
 | `setup-matt-pocock-skills` | 配置仓库、工程技能 | 为工程技能配置仓库 |
+| `notion-mcp` | Notion、MCP、页面管理 | 通过 MCP 与 Notion 工作区交互（创建/搜索/更新页面、数据库、视图、评论） |
 
 ---
 
@@ -645,5 +646,5 @@ task(category="deep", load_skills=["test-driven-development", "vue", "vitest"], 
 ---
 
 *最后更新: 2026-07-07*
-*技能总数: 281+*
-*来源: ~/.agents/skills/ (221) + ~/.config/opencode/skills/ (60) + 项目 .agents/skills/*
+*技能总数: 283+*
+*来源: ~/.agents/skills/ (223) + ~/.config/opencode/skills/ (61) + 项目 .agents/skills/*
