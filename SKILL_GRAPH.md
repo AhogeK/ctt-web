@@ -13,7 +13,7 @@
 |------|---------|------|
 | 🧠 思维与流程 | 25 | [→](#思维与流程) |
 | 🎨 前端与 UI | 22 | [→](#前端与-ui) |
-| 🔧 工程与 Git | 20 | [→](#工程与-git) |
+| 🔧 工程与 Git | 22 | [→](#工程与-git) |
 | 🧪 测试与质量 | 14 | [→](#测试与质量) |
 | 🔒 安全与审查 | 8 | [→](#安全与审查) |
 | 📝 文档与写作 | 20 | [→](#文档与写作) |
@@ -126,6 +126,8 @@
 | `finish-a-development-branch` | 完成开发、合并、PR | 引导完成开发工作的集成 |
 | `to-issues` | 拆分问题、issue tracker | 将计划拆分为独立可抓取的问题 |
 | `to-prd` | 转为 PRD、发布到 tracker | 将对话转为 PRD 并发布 |
+| `to-spec` | 转为规格、发布到 tracker | 将当前对话合成为规格并发布到 issue tracker |
+| `to-tickets` | 拆分票、tracer-bullet | 将计划/规格拆分为 tracer-bullet tickets（含阻塞边）|
 | `spec` | 规格化、文件问题 | 将模糊意图转为精确可执行规格 |
 | `wayfinder` | 大块工作、调查票 | 将大块工作规划为共享调查票地图 |
 | `request-refactor-plan` | 重构计划、RFC、增量步骤 | 创建详细的重构计划 |
@@ -645,6 +647,6 @@ task(category="deep", load_skills=["test-driven-development", "vue", "vitest"], 
 
 ---
 
-*最后更新: 2026-07-07*
-*技能总数: 283+*
+*最后更新: 2026-07-09*
+*技能总数: 285+*
 *来源: ~/.agents/skills/ (223) + ~/.config/opencode/skills/ (61) + 项目 .agents/skills/*
