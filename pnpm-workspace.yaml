@@ -1,22 +1,23 @@
 allowBuilds:
+  msw: true
   simple-git-hooks: true
   vue-demi: true
 
-catalog:
-  vite: npm:@voidzero-dev/vite-plus-core@0.2.3
-  vite-plus: 0.2.3
-  vitest: 4.1.10
-  '@vitest/coverage-v8': 4.1.10
-
-overrides:
-  vite: 'catalog:'
-  vitest: 'catalog:'
-
 peerDependencyRules:
   allowAny:
-    - 'vue'
+    - vue
     - vite
     - vitest
   allowedVersions:
     vite: '*'
     vitest: '*'
+catalog:
+  vite: npm:@voidzero-dev/vite-plus-core@0.2.4
+  vitest: 4.1.10
+  vite-plus: 0.2.4
+  '@vitest/coverage-v8': 4.1.10
+overrides:
+  vite: 'catalog:'
+  vitest: 'catalog:'
+minimumReleaseAgeExclude:
+  - '@vitest/eslint-plugin@1.6.23'
