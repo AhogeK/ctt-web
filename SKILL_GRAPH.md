@@ -24,6 +24,18 @@
 | 🍎 iOS 开发 | 5 | [→](#ios-开发) |
 | 🚀 GStack 工具套件 | 40+ | [→](#gstack-工具套件) |
 | 🎯 项目专属 | 15 | [→](#项目专属技能) |
+| 🧬 生物与化学 | 35 | [→](#生物与化学) |
+| 🧬 基因组学 | 33 | [→](#基因组学与生物信息学) |
+| 🤖 机器学习 | 22 | [→](#机器学习与深度学习) |
+| 📐 科学计算 | 15 | [→](#科学计算) |
+| 📊 科研写作 | 25 | [→](#研究与写作) |
+| 💾 数据与基础设施 | 11 | [→](#数据与基础设施) |
+| 🧬 生物与化学 | 35 | [→](#生物与化学) |
+| 🧬 基因组学 | 33 | [→](#基因组学与生物信息学) |
+| 🤖 机器学习 | 22 | [→](#机器学习与深度学习) |
+| 📐 科学计算 | 15 | [→](#科学计算) |
+| 📊 科研写作 | 25 | [→](#研究与写作) |
+| 💾 数据与基础设施 | 11 | [→](#数据与基础设施) |
 
 ---
 
@@ -537,6 +549,189 @@
 
 ---
 
+## 生物与化学
+
+| Skill | 用途 |
+|-------|------|
+| `adaptyv` | Adaptyv Bio 蛋白质实验设计与提交 |
+| `anndata` | 单细胞注释矩阵数据结构 |
+| `arboreto` | 基因调控网络推断（GRNBoost2, GENIE3） |
+| `benchling-integration` | Benchling 实验室数据管理 SDK |
+| `biopython` | 分子生物学工具包（序列/文件/NCBI） |
+| `bioservices` | 40+ 生物信息学服务统一接口 |
+| `cellxgene-census` | CZ CELLxGENE 单细胞数据查询 |
+| `cobrapy` | 约束代谢建模（COBRA） |
+| `datamol` | RDKit 分子处理简化包装 |
+| `deepchem` | 分子机器学习（ADME/毒性预测） |
+| `diffdock` | DiffDock 分子对接 |
+| `esm` | ESM 蛋白质语言模型 |
+| `flowio` | FCS 流式细胞术文件解析 |
+| `geniml` | 基因组区间数据机器学习 |
+| `glycoengineering` | 蛋白质糖基化分析与工程 |
+| `gget` | 20+ 生物信息学数据库快速查询 |
+| `ginkgo-cloud-lab` | Ginkgo 云实验室协议管理 |
+| `histolab` | 组织病理切片提取与预处理 |
+| `imaging-data-commons` | NCI 癌症影像数据查询 |
+| `labarchive-integration` | 电子实验笔记本 API |
+| `lamindb` | 生物数据集 lineage-native lakehouse |
+| `latchbio-integration` | Latch 生物信息学工作流 |
+| `matchms` | 代谢组学质谱相似性匹配 |
+| `medchem` | 药物化学过滤器（Lipinski, PAINS） |
+| `molfeat` | 分子特征化（100+ featurizers） |
+| `omero-integration` | 显微镜数据管理平台 |
+| `opentrons-integration` | Opentrons 实验室机器人 API |
+| `pathml` | 计算病理学工具包 |
+| `pydicom` | DICOM 医学影像处理 |
+| `pyhealth` | 临床医疗深度学习流水线 |
+| `pylabrobot` | 实验室自动化框架 |
+| `rdkit` | 化学信息学工具包 |
+| `rowan` | 云端分子建模平台 |
+| `tamarind` | Tamarind Bio 分子设计工具 |
+| `torchdrug` | PyTorch 分子图神经网络 |
+
+---
+
+## 基因组学与生物信息学
+
+| Skill | 用途 |
+|-------|------|
+| `bgpt-paper-search` | 科学论文结构化实验数据搜索 |
+| `bids` | 脑影像数据结构（BIDS） |
+| `bulk-rnaseq` | 批量 RNA-seq 端到端流水线 |
+| `citation-management` | 学术引用管理 |
+| `clinical-decision-support` | 临床决策支持文档生成 |
+| `clinical-reports` | 临床报告撰写 |
+| `deeptools` | NGS 分析工具包 |
+| `depmap` | 癌症依赖图谱查询 |
+| `dnanexus-integration` | DNAnexus 云基因组学平台 |
+| `etetoolkit` | 系统发育树工具包 |
+| `experimental-design` | 实验设计（DOE） |
+| `gtars` | 基因组区间分析 Rust 工具 |
+| `iso-13485-certification` | 医疗器械 QMS 文档 |
+| `nextflow` | Nextflow 数据流水线 |
+| `onekgpd` | 千人基因组计划查询 |
+| `pacsomatic` | nf-core/pacsomatic 肿瘤正常匹配 |
+| `pathway-enrichment` | 通路/基因集富集分析 |
+| `phylogenetics` | 系统发育树构建与分析 |
+| `polars-bio` | Polars 基因组区间操作 |
+| `primekg` | 精准医学知识图谱 |
+| `protocolsio-integration` | protocols.io 科学协议管理 |
+| `pydeseq2` | 批量 RNA-seq 差异表达分析 |
+| `pyopenms` | 质谱分析平台 |
+| `pysam` | SAM/BAM/VCF 基因组文件处理 |
+| `pytdc` | 治疗数据通用标准 |
+| `pyzotero` | Zotero 参考文献 Python 接口 |
+| `scanpy` | 单细胞 RNA-seq 标准流水线 |
+| `scikit-bio` | 生物数据工具包 |
+| `scikit-survival` | 生存分析工具包 |
+| `scvelo` | RNA 速度分析 |
+| `scvi-tools` | 单细胞深度生成模型 |
+| `tiledbvcf` | TileDB 基因组变异存储 |
+| `treatment-plans` | 医疗治疗方案生成 |
+
+---
+
+## 机器学习与深度学习
+
+| Skill | 用途 |
+|-------|------|
+| `aeon` | 时间序列机器学习 |
+| `arbor` | 假设树优化（HTR） |
+| `cirq` | Google 量子计算框架 |
+| `hugging-science` | HuggingFace 科学 AI 资源 |
+| `modal` | Modal 无服务器 GPU 平台 |
+| `molecular-dynamics` | 分子动力学模拟（OpenMM） |
+| `networkx` | 复杂网络/图分析 |
+| `neurokit2` | 生物信号处理（ECG/EEG/EDA） |
+| `optimize-for-gpu` | Python GPU 加速 |
+| `pennylane` | 量子机器学习框架 |
+| `pufferlib` | 高性能强化学习框架 |
+| `pymc` | 贝叶斯建模 |
+| `pymoo` | 多目标优化框架 |
+| `pytorch-lightning` | PyTorch Lightning 深度学习 |
+| `qiskit` | IBM 量子计算框架 |
+| `qutip` | 量子物理模拟 |
+| `scikit-learn` | 机器学习标准库 |
+| `shap` | 模型可解释性（SHAP） |
+| `stable-baselines3` | 强化学习算法库 |
+| `torch-geometric` | 图神经网络（PyG） |
+| `transformers` | HuggingFace Transformers |
+| `umap-learn` | 非线性降维 |
+
+---
+
+## 科学计算
+
+| Skill | 用途 |
+|-------|------|
+| `astropy` | 天文天体物理计算 |
+| `dask` | 分布式计算（超内存） |
+| `fluidsim` | 计算流体动力学 |
+| `geomaster` | 地理空间科学综合技能 |
+| `geopandas` | 地理空间矢量数据 |
+| `matlab` | MATLAB/Octave 数值计算 |
+| `matplotlib` | Python 底层绘图库 |
+| `pymatgen` | 材料科学工具包 |
+| `polars` | 高性能 DataFrame |
+| `seaborn` | 统计可视化 |
+| `simpy` | 离散事件仿真 |
+| `statsmodels` | 统计模型库 |
+| `sympy` | 符号数学 |
+| `vaex` | 超内存 DataFrame |
+| `zarr-python` | 云端 N-D 数组存储 |
+
+---
+
+## 研究与写作
+
+| Skill | 用途 |
+|-------|------|
+| `consciousness-council` | 多视角意识委员会审议 |
+| `dhdna-profiler` | 认知模式/思维指纹提取 |
+| `exploratory-data-analysis` | 探索性数据分析 |
+| `generate-image` | AI 图像生成（FLUX） |
+| `hypothesis-generation` | 结构化假设生成 |
+| `hypogenic` | LLM 驱动假设测试 |
+| `infographics` | 专业信息图生成 |
+| `latex-posters` | LaTeX 研究海报 |
+| `literature-review` | 系统文献综述 |
+| `market-research-reports` | 市场研究报告（McKinsey 风格） |
+| `paper-lookup` | 10 学术数据库论文搜索 |
+| `paperzilla` | 论文推荐与摘要 |
+| `peer-review` | 结构化同行评审 |
+| `pptx-posters` | PPTX 研究海报 |
+| `research-grants` | 研究资助提案撰写 |
+| `research-lookup` | 科研信息检索 |
+| `scholar-evaluation` | 学术成果评估 |
+| `scientific-brainstorming` | 科学创意头脑风暴 |
+| `scientific-critical-thinking` | 科学批判性思维 |
+| `scientific-schematics` | 科学示意图生成 |
+| `scientific-slides` | 科学演示幻灯片 |
+| `scientific-visualization` | 出版级科学图表 |
+| `scientific-writing` | 科学论文写作 |
+| `venue-templates` | 期刊/会议 LaTeX 模板 |
+| `what-if-oracle` | What-If 场景分析 |
+
+---
+
+## 数据与基础设施
+
+| Skill | 用途 |
+|-------|------|
+| `autoskill` | 屏幕观察自动技能发现 |
+| `database-lookup` | 公开数据库 API 查询 |
+| `get-available-resources` | 系统资源检测 |
+| `liteparse` | 本地 PDF/文档解析 |
+| `markdown-mermaid-writing` | Markdown + Mermaid 图表写作 |
+| `markitdown` | 文件转 Markdown |
+| `neuropixels-analysis` | Neuropixels 电生理分析 |
+| `open-notebook` | 自托管 NotebookLM 替代 |
+| `parallel-web` | 并行 Web 工具套件 |
+| `timesfm-forecasting` | Google 时间序列预测 |
+| `usfiscaldata` | 美国财政部数据查询 |
+
+---
+
 ## 项目专属技能
 
 > 位于项目 `.agents/skills/` 和 `.claude/skills/` 目录。
@@ -647,6 +842,6 @@ task(category="deep", load_skills=["test-driven-development", "vue", "vitest"], 
 
 ---
 
-*最后更新: 2026-07-09*
-*技能总数: 285+*
-*来源: ~/.agents/skills/ (223) + ~/.config/opencode/skills/ (61) + 项目 .agents/skills/*
+*最后更新: 2026-07-14*
+*技能总数: 432+*
+*来源: ~/.agents/skills/ (371) + ~/.config/opencode/skills/ (61) + 项目 .agents/skills/*
