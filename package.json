@@ -38,7 +38,7 @@
     "vue": "beta",
     "vue-echarts": "^8.0.1",
     "vue-i18n": "^11.4.6",
-    "vue-router": "^5.1.0",
+    "vue-router": "^5.2.0",
     "vue-sonner": "^2.0.9",
     "zod": "^4.4.3"
   },
@@ -55,7 +55,7 @@
     "@types/jsdom": "^28.0.3",
     "@types/node": "^26.1.1",
     "@types/nprogress": "^0.2.3",
-    "@vitejs/plugin-vue": "^6.0.7",
+    "@vitejs/plugin-vue": "^6.0.8",
     "@vitest/coverage-v8": "catalog:",
     "@vitest/eslint-plugin": "^1.6.23",
     "@vue/eslint-config-typescript": "^14.9.0",
@@ -81,7 +81,7 @@
   },
   "simple-git-hooks": {
     "pre-commit": "pnpm lint-staged",
-    "commit-msg": "npx --no -- commitlint --edit $1"
+    "commit-msg": "pnpm exec commitlint --edit $1"
   },
   "lint-staged": {
     "src/**/*.{ts,js,vue,tsx,jsx}": [
@@ -94,6 +94,13 @@
     ]
   },
   "engines": {
-    "node": "^20.19.0 || >=22.12.0"
+    "node": ">=20.19.0 || >=22.12.0"
+  },
+  "devEngines": {
+    "packageManager": {
+      "name": "pnpm",
+      "version": "11.13.0",
+      "onFail": "download"
+    }
   }
 }

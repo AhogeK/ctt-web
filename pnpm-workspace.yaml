@@ -21,3 +21,4 @@ overrides:
   vitest: 'catalog:'
 minimumReleaseAgeExclude:
   - '@vitest/eslint-plugin@1.6.23'
+  - vue-router@5.2.0
