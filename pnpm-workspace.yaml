@@ -2,7 +2,10 @@ allowBuilds:
   msw: true
   simple-git-hooks: true
   vue-demi: true
-
+minimumReleaseAgeExclude:
+  - '@vue/language-core@3.3.8'
+  - lint-staged@17.1.1
+  - vue-tsc@3.3.8
 peerDependencyRules:
   allowAny:
     - vue
@@ -11,24 +14,3 @@ peerDependencyRules:
   allowedVersions:
     vite: '*'
     vitest: '*'
-catalog:
-  vite: npm:@voidzero-dev/vite-plus-core@0.2.5
-  vitest: 4.1.10
-  vite-plus: 0.2.5
-  '@vitest/coverage-v8': 4.1.10
-overrides:
-  vite: 'catalog:'
-  vitest: 'catalog:'
-minimumReleaseAgeExclude:
-  - '@vitest/eslint-plugin@1.6.23'
-  - vue-router@5.2.0
-  - '@lucide/vue@1.25.0'
-  - lint-staged@17.1.0
-  - '@intlify/core-base@11.4.7'
-  - '@intlify/devtools-types@11.4.7'
-  - '@intlify/message-compiler@11.4.7'
-  - '@intlify/shared@11.4.7'
-  - '@tanstack/query-core@5.101.3'
-  - '@tanstack/vue-query@5.101.3'
-  - vue-i18n@11.4.7
-  - '@testing-library/jest-dom@6.10.0 || 7.0.0'
