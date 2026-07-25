@@ -3,10 +3,13 @@ allowBuilds:
   simple-git-hooks: true
   vue-demi: true
 minimumReleaseAgeExclude:
-  - '@vue/language-core@3.3.8'
-  - lint-staged@17.1.1
-  - vue-tsc@3.3.8
-  - '@vitest/eslint-plugin@1.6.24'
+  - '@playwright/test@1.62.0'
+  - '@vue/devtools-core@8.2.0'
+  - '@vue/devtools-kit@8.2.0'
+  - '@vue/devtools-shared@8.2.0'
+  - playwright-core@1.62.0
+  - playwright@1.62.0
+  - vite-plugin-vue-devtools@8.2.0
 peerDependencyRules:
   allowAny:
     - vue
