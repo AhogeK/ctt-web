@@ -16,6 +16,7 @@ minimumReleaseAgeExclude:
   - '@intlify/shared@11.4.8'
   - '@lucide/vue@1.27.0'
   - vue-i18n@11.4.8
+  - eslint-plugin-playwright@2.11.0
 peerDependencyRules:
   allowAny:
     - vue
