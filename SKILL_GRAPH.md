@@ -3,7 +3,7 @@
 > **用途**：AI 在会话开始时快速扫描本文件，了解所有可用技能并按需加载。
 > **维护**：当新增/删除/修改 skill 时同步更新本文件。
 > **位置**：项目根目录，与 `AGENTS.md`、`DESIGN.md` 同级。
-> **来源**：`~/.agents/skills/` (221) + `~/.config/opencode/skills/` (60) + 项目 `.agents/skills/`
+> **来源**：`~/.agents/skills/` (394) + `~/.config/opencode/skills/` (87) + 项目 `.agents/skills/` (38)
 
 ---
 
@@ -17,23 +17,18 @@
 | 🧪 测试与质量 | 14 | [→](#测试与质量) |
 | 🔒 安全与审查 | 8 | [→](#安全与审查) |
 | 📝 文档与写作 | 20 | [→](#文档与写作) |
-| 🌐 浏览器与自动化 | 15 | [→](#浏览器与自动化) |
+| 🌐 浏览器与自动化 | 16 | [→](#浏览器与自动化) |
 | 🔬 研究与分析 | 13 | [→](#研究与分析) |
 | 🛠️ CLI 工具集 | 60+ | [→](#cli-工具集) |
+| ☁️ ArkCLI (火山方舟) | 24 | [→](#arkcli-火山方舟-cli-生态) |
 | 📊 学术与出版 | 14 | [→](#学术与出版) |
 | 🍎 iOS 开发 | 5 | [→](#ios-开发) |
 | 🚀 GStack 工具套件 | 40+ | [→](#gstack-工具套件) |
-| 🎯 项目专属 | 15 | [→](#项目专属技能) |
+| 🎯 项目专属 | 38 | [→](#项目专属技能) |
 | 🧬 生物与化学 | 35 | [→](#生物与化学) |
 | 🧬 基因组学 | 33 | [→](#基因组学与生物信息学) |
 | 🤖 机器学习 | 22 | [→](#机器学习与深度学习) |
-| 📐 科学计算 | 15 | [→](#科学计算) |
-| 📊 科研写作 | 25 | [→](#研究与写作) |
-| 💾 数据与基础设施 | 11 | [→](#数据与基础设施) |
-| 🧬 生物与化学 | 35 | [→](#生物与化学) |
-| 🧬 基因组学 | 33 | [→](#基因组学与生物信息学) |
-| 🤖 机器学习 | 22 | [→](#机器学习与深度学习) |
-| 📐 科学计算 | 15 | [→](#科学计算) |
+| 📐 科学计算 | 17 | [→](#科学计算) |
 | 📊 科研写作 | 25 | [→](#研究与写作) |
 | 💾 数据与基础设施 | 11 | [→](#数据与基础设施) |
 
@@ -68,6 +63,7 @@
 | `grill-me` | 压力测试、计划审查 | 对计划进行无情采访 |
 | `grill-with-docs` | 压力测试、文档创建 | 压力测试同时创建 ADR 和术语表 |
 | `wizard` | 交互式向导、手动流程 | 生成交互式 bash 向导引导人工操作 |
+| `pi-agent` | Pi CLI、终端编码 agent | 使用 Pi 最小终端编码 harness，配置 provider/skill/extension
 
 ---
 
@@ -244,6 +240,7 @@
 | `troubleshooting` | 连接问题、目标问题 | 使用 Chrome DevTools 排查连接问题 |
 | `debug-optimize-lcp` | LCP、页面加载、CWV | 调试和优化最大内容绘制 |
 | `slack-qa-investigate` | Slack QA、只读调查 | 以只读模式调查仓库问题 |
+| `exa-search` | Exa 搜索、学术检索、URL 提取 | Exa 驱动的 Web 工具包（含学术论文过滤 + URL 内容提取） |
 
 ---
 
@@ -549,6 +546,66 @@
 
 ---
 
+## ArkCLI（火山方舟 CLI 生态）
+
+> 火山引擎方舟 ARK 平台的 CLI 技能族，位于 `~/.config/opencode/skills/`。围绕 `arkcli` 命令构建，覆盖认证、模型、部署、生成、诊断、账单、套餐、Agents 等全生命周期。
+
+### 会话入口 / 共享协议
+
+| Skill | 用途 |
+|-------|------|
+| `arkcli-shared` | 共享执行协议（认证闸门、命令路由、输出/安全规则）— 任何 arkcli-* 前置 |
+| `arkcli-auth` | 认证管理：登录、Volc SSO、生成 ARK API Key、CI 无交互引导 |
+| `arkcli-config` | 本地配置管理（0.1.16+ profile 类操作已迁往 `arkcli profile`）|
+| `arkcli-profile` | Profile 切面管理：列出/新建/切换/删除、default 模型、API Key 列表 |
+| `arkcli-connect` | 将 arkcli 内嵌 AI skills 安装到本机 AI Agent（Claude Code 等）|
+| `arkcli-api-explorer` | Raw API Explorer：调用已注册 Action，作为产品命令兜底 |
+| `arkcli-doctor` | 诊断入口：Ark 错误码/资源状态/用量配额/性能指标/自助修复 |
+
+### 模型与推理
+
+| Skill | 用途 |
+|-------|------|
+| `arkcli-models` | 公共基础模型（doubao 等 foundation models）查询与选型 |
+| `arkcli-custommodel` | 账号下自传/精调模型（`cm-xxx`）仓库管理、量化 |
+| `arkcli-resources` | 实时控制面查询：按 profile.type 列出可用 endpoint/plan 模型 ID |
+| `arkcli-infer-endpoint` | Endpoint **管理**：获取/列表/启停/更新/删除（管理 CRUD）|
+| `arkcli-deploy` | Endpoint **创建**（+deploy 工作流首选入口，含示例代码渲染）|
+| `arkcli-onboard` | 接入向导：从"我想用某模型"到拿到可调用 Endpoint 的端到端引导 |
+| `arkcli-helper` | 为 Claude Code / Codex / OpenCode 等 Agent 配置 Ark model/provider/MCP |
+| `arkcli-code-example` | 为基础模型生成多语言（Python/Go/Java/Node/curl）调用示例 |
+
+### 数据面工作流
+
+| Skill | 用途 |
+|-------|------|
+| `arkcli-chat` | +chat 对话/推理：多模态、流式、reasoning、多轮接续 |
+| `arkcli-understand` | +understand 多模态理解工作流：ASR/OCR/字幕/字段抽取/视频总结等 12 类任务 |
+| `arkcli-gen` | +gen 图片/视频生成（seedream/seedance）|
+
+### 训练与精调
+
+| Skill | 用途 |
+|-------|------|
+| `arkcli-train-finetune` | 创建/查询/管理精调训练任务，选择最佳 step 导出为 custom model |
+
+### 计费与用量
+
+| Skill | 用途 |
+|-------|------|
+| `arkcli-usage` | 用量查询：Token/请求数、套餐额度、余额、席位用量 |
+| `arkcli-billing` | 拆分账单明细（结算金额，T+1，财务口径）|
+| `arkcli-pricing` | 基础模型单价 + Agent/Coding Plan 套餐价格 |
+| `arkcli-plans` | 套餐管理（Agent/Coding Plan）+ 企业版席位管理（列/绑/分/轮换 APIKey）|
+
+### Managed Agents
+
+| Skill | 用途 |
+|-------|------|
+| `arkcli-agent` | 管理 ARK Managed Agents：Agent/Skill/Env/Session/File/Memory Store/Vault/MCP OAuth |
+
+---
+
 ## 生物与化学
 
 | Skill | 用途 |
@@ -679,6 +736,8 @@
 | `sympy` | 符号数学 |
 | `vaex` | 超内存 DataFrame |
 | `zarr-python` | 云端 N-D 数组存储 |
+| `statistical-analysis` | 引导式统计分析（选择检验、假设、效应量、APA 报告） |
+| `statistical-power` | 样本量与统计功效计算（含 Monte Carlo 模拟） |
 
 ---
 
@@ -842,6 +901,6 @@ task(category="deep", load_skills=["test-driven-development", "vue", "vitest"], 
 
 ---
 
-*最后更新: 2026-07-14*
-*技能总数: 432+*
-*来源: ~/.agents/skills/ (371) + ~/.config/opencode/skills/ (61) + 项目 .agents/skills/*
+*最后更新: 2026-07-30*
+*技能总数: 487（去重后）*
+*来源: ~/.agents/skills/ (394) + ~/.config/opencode/skills/ (87) + 项目 .agents/skills/ (38)*
