@@ -11,7 +11,7 @@ defineOptions({
   inheritAttrs: false,
 })
 
-const props = withDefaults(defineProps<SidebarProps>(), {
+const props = withDefaults(defineProps</* @vue-ignore */ SidebarProps>(), {
   side: 'left',
   variant: 'sidebar',
   collapsible: 'offcanvas',

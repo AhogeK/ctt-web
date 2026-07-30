@@ -3,6 +3,7 @@ import vue from '@vitejs/plugin-vue'
 import tailwindcss from '@tailwindcss/vite'
 import vueDevTools from 'vite-plugin-vue-devtools'
 import { fileURLToPath } from 'node:url'
+import fs from 'node:fs'
 
 // https://vite.dev/config/
 export default defineConfig({
@@ -139,7 +140,21 @@ export default defineConfig({
       typeCheck: true,
     },
   },
-  plugins: [tailwindcss(), vue(), vueDevTools()],
+  plugins: [tailwindcss(), vue({
+    script: {
+      fs: {
+        fileExists: fs.existsSync,
+        readFile: (id: string) => {
+          try {
+            if (!fs.existsSync(id) || fs.statSync(id).isDirectory()) return ''
+            return fs.readFileSync(id, 'utf-8')
+          } catch {
+            return ''
+          }
+        },
+      },
+    },
+  }), vueDevTools()],
   resolve: {
     // Read path aliases from tsconfig.json (TypeScript 6.0+ recommended)
     tsconfigPaths: true,
