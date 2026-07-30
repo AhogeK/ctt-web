@@ -2,10 +2,22 @@
 
 ## Current Status
 
-**Phase**: v0.10.x Security & Account Features + UI Polish
-**Version**: 0.10.13 (2026-07-06)
-**Branch**: develop, master at 9899288
-**Tests**: E2E 18/18 auth specs pass; `tsc --noEmit -p e2e/tsconfig.json` clean; `pnpm type-check` clean
+**Phase**: v0.11.x API Key Management + Build Fixes
+**Version**: 0.11.0 (2026-07-30)
+**Branch**: develop
+**Tests**: 928/928 pass (50 files); `pnpm build` (type-check + build-only) exit 0
+
+## Recent Activity (v0.11.0 — 2026-07-30)
+
+### API Key List Page (M1) + Build Fixes
+
+- **API Key Management M1**: Implemented `/settings/api-keys` list page with GitHub PAT-style table, loading skeleton, error state, empty state, status badges (ACTIVE/EXPIRED/REVOKED), scope chips, relative time formatting. Route was pre-registered; sidebar link added to Settings group.
+- **TypeScript 7.0.2 → 6.0.3**: Downgraded because TS7 removed all programmatic APIs (`findConfigFile`, `sys`, etc.) that `vue-tsc` and `@vue/compiler-sfc` depend on. Vue toolchain has not yet adapted to TS7's new modular `unstable/*` API.
+- **Rolldown build fix**: Added `script.fs` option to `@vitejs/plugin-vue` configuration for file system access when compiling SFC type-only props in Rolldown environment. Added `/* @vue-ignore */` workaround to `Sidebar.vue` for unresolvable `SidebarProps` type.
+- **AppSidebar test fix**: Added `KeyRound` mock, `/settings/api-keys` route, and navigation assertions.
+- **Bug fix**: `formatRelativeTime` now correctly handles future dates (`expiresAt`). Cleaned up unused `ApiKeysListResponseSchema` schema.
+- **New files**: `src/lib/schemas/api-key.schema.ts`, `src/lib/api/api-keys.ts`, `src/composables/useApiKeys.ts`
+- **Verification**: `pnpm build` exit 0; `pnpm test:unit` 928/928 pass; `pnpm lint` clean
 
 ## Recent Activity (v0.10.13 — 2026-07-06)
 

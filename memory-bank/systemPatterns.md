@@ -261,3 +261,19 @@ Request Change → Email Sent → User Clicks Link → Confirm with Token
 - **Contract reference**: `e2e/mocks/handlers/auth.ts` documents the exact API endpoint shapes (request/response) as typed constants. Previously contained MSW browser worker handlers; converted to pure contract reference in v0.10.13 because `setupWorker` requires `navigator.serviceWorker` which doesn't exist in Playwright's Node.js test runner.
 - **tsconfig**: `e2e/tsconfig.json` extends `@tsconfig/node24` and includes `"dom"` in `lib` for `document` / `localStorage` / `HTMLElement` types used in `page.evaluate()` callbacks.
 - **Module resolution**: `module: "nodenext" / moduleResolution: "node16"` requires explicit `.js` extension on relative imports.
+
+## API Key View Pattern (v0.11.0)
+
+TanStack Query four-state view (loading → error → empty → table) used by `ApiKeysView.vue`:
+
+```vue
+<div v-if="isPending">    <Skeleton />  </div>
+<div v-else-if="isError"> <AlertTriangle /> + Retry </div>
+<div v-else-if="!keys">   <KeyRound /> + CTA   </div>
+<div v-else>              GitHub PAT-style table </div>
+```
+
+**Table columns**: Name | Key Prefix (monospace) | Scopes (Badge group) | Status (Badge, color-coded) | Last Used (relative) | Created (date) | Expires (relative/italic "Never") | Actions (Revoke button, disabled)
+- No shadcn-vue Table component — custom Tailwind table
+- `formatRelativeTime()` handles both past (`lastUsedAt`) and future (`expiresAt`) dates
+- Status colors: ACTIVE=green (`bg-emerald-600`), EXPIRED=gray (outline), REVOKED=red (destructive)

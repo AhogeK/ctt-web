@@ -6,6 +6,7 @@
 | ------------- | -------------------------------------- | ------------ |
 | Build         | Vite+ (unified toolchain via `vp` CLI) | latest       |
 | Framework     | Vue 3 + TypeScript Strict              | ^3.6 (beta)  |
+| TypeScript    | TypeScript 6.0.3                       | ~6.0.3       |
 | Routing       | Vue Router                             | ^5           |
 | Server State  | TanStack Query                         | ^5           |
 | Global State  | Pinia                                  | ^3           |
@@ -34,7 +35,7 @@
 
 - Web users: JWT Bearer token (from ctt-server `/api/v1/auth/login`)
 - GitHub OAuth: supported via ctt-server OAuth flow
-- Device API keys: managed in devices section (for plugin pairing display)
+- API keys: managed in settings section (`/settings/api-keys`). `GET /api/v1/auth/api-keys` list, `POST /` create, `DELETE /{id}` revoke. Raw key shown only once at creation.
 
 ## API Layer Architecture
 

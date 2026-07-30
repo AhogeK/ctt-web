@@ -63,6 +63,7 @@ visualization.
 | GitHub OAuth            | OAuth login + account BIND/UNBIND flow from ProfileView with Dialog confirmation; 8-code BIND + 2-code UNBIND error mapping; TanStack Query status |
 | User Profile            | `GET /api/v1/users/me` — displayName/email resolution; AppHeader dropdown shows user identity; avatar hash seeded from displayName; Account section integration |
 | Email Change            | Email change flow with verification; Account section displays email/verification status/display name/registration time; EmailVerificationBanner for unverified users; integrated with Set Password for OAuth users |
+| API Key Management      | API Keys list view at `/settings/api-keys` with GitHub PAT-style table, status badges (ACTIVE/EXPIRED/REVOKED), scope chips, relative time formatting, loading/error/empty states |
 
 ## 🗺 Project Structure
 
