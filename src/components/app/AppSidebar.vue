@@ -14,7 +14,7 @@ import {
   useSidebar,
 } from '@/components/ui/sidebar'
 import { RouterLink } from 'vue-router'
-import { LayoutDashboard, Monitor, User } from '@lucide/vue'
+import { LayoutDashboard, Monitor, User, KeyRound } from '@lucide/vue'
 import PluginIcon from './PluginIcon.vue'
 
 /**
@@ -105,6 +105,14 @@ const { state, isMobile } = useSidebar()
                 <RouterLink to="/settings/profile">
                   <User />
                   <span>Profile</span>
+                </RouterLink>
+              </SidebarMenuButton>
+            </SidebarMenuItem>
+            <SidebarMenuItem>
+              <SidebarMenuButton as-child tooltip="API Keys" class="h-9 text-[15px] [&>svg]:size-[18px] [&>svg]:mr-0.5">
+                <RouterLink to="/settings/api-keys">
+                  <KeyRound />
+                  <span>API Keys</span>
                 </RouterLink>
               </SidebarMenuButton>
             </SidebarMenuItem>

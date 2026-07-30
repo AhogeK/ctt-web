@@ -49,6 +49,7 @@ vi.mock('@lucide/vue', () => ({
   Settings: { name: 'Settings', template: '<span data-icon="settings" />' },
   Monitor: { name: 'Monitor', template: '<span data-icon="monitor" />' },
   User: { name: 'User', template: '<span data-icon="user" />' },
+  KeyRound: { name: 'KeyRound', template: '<span data-icon="key-round" />' },
 }))
 
 const createTestRouter = () => {
@@ -58,6 +59,7 @@ const createTestRouter = () => {
       { path: '/dashboard', name: 'dashboard', component: { template: '<div>Dashboard</div>' } },
       { path: '/devices', name: 'devices', component: { template: '<div>Devices</div>' } },
       { path: '/settings/profile', name: 'settings-profile', component: { template: '<div>Settings</div>' } },
+      { path: '/settings/api-keys', name: 'settings-api-keys', component: { template: '<div>API Keys</div>' } },
     ],
   })
 }
@@ -111,6 +113,10 @@ describe('AppSidebar', () => {
       const settingsLink = wrapper.find('a[href="/settings/profile"]')
       expect(settingsLink.exists()).toBe(true)
       expect(settingsLink.text()).toContain('Profile')
+
+      const apiKeysLink = wrapper.find('a[href="/settings/api-keys"]')
+      expect(apiKeysLink.exists()).toBe(true)
+      expect(apiKeysLink.text()).toContain('API Keys')
 
       wrapper.unmount()
     })
