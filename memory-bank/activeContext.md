@@ -2,10 +2,24 @@
 
 ## Current Status
 
-**Phase**: v0.11.x API Key Management + Build Fixes
-**Version**: 0.11.0 (2026-07-30)
+**Phase**: v0.12.x API Key Management (Create Flow)
+**Version**: 0.12.0 (2026-07-31)
 **Branch**: develop
-**Tests**: 928/928 pass (50 files); `pnpm build` (type-check + build-only) exit 0
+**Tests**: 956/956 pass (54 files); `pnpm build` (type-check + build-only) exit 0
+
+## Recent Activity (v0.12.0 — 2026-07-31)
+
+### API Key Create Flow + RawKeyDialog (M2)
+
+- **CreateApiKeyDialog**: vee-validate + Zod form (name / scopes / expiration). Scope mode toggle (JetBrains recommended READ+SYNC vs custom 4-checkbox). Expiration presets (30/90/365 days, never) + custom native date input. 409 AUTH_014 shows inline limit banner without clearing the form; other errors toast.
+- **RawKeyDialog (core)**: one-time raw key display. Hard to dismiss (overlay click, Escape, and X button all blocked; only "Copied, close" exits). Strong constraint: close button disabled until copy succeeds. Three-tier clipboard fallback via `useCopyToClipboard` (navigator.clipboard → execCommand → manual hint). `role="alertdialog"` + aria labels + focus/select on open.
+- **CreateApiKeyRequestSchema**: `expiresAt` now `z.iso.datetime()` + future-time refine (UX only; server `@Future` remains authority).
+- **API/composable**: `createApiKey()` in `api-keys.ts`; `useCreateApiKey()` mutation invalidates `['api-keys']` on success.
+- **Error codes added**: `AUTH_014` (20-key limit), `AUTH_010` (BOLA generic) in `api-error.ts`.
+- **Files**: `features/settings/components/CreateApiKeyDialog.vue`, `RawKeyDialog.vue`, `composables/useCopyToClipboard.ts`; ApiKeysView integrated with create flow.
+- **Tests**: +28 (schema 8, clipboard 5, RawKeyDialog 9, CreateApiKeyDialog 6); 956/956 total.
+- **Verification**: `pnpm build` exit 0; `pnpm test:unit` 956/956; `pnpm lint` clean.
+- **Post-review fixes (sub-agent audit)**: `pendingRawKey` now cleared when RawKeyDialog closes (raw key not retained in memory after display); submit button disabled when scopes empty; added toast-error-path test (+1 → 957/957).
 
 ## Recent Activity (v0.11.0 — 2026-07-30)
 

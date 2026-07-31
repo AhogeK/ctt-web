@@ -35,7 +35,7 @@
 
 - Web users: JWT Bearer token (from ctt-server `/api/v1/auth/login`)
 - GitHub OAuth: supported via ctt-server OAuth flow
-- API keys: managed in settings section (`/settings/api-keys`). `GET /api/v1/auth/api-keys` list, `POST /` create, `DELETE /{id}` revoke. Raw key shown only once at creation.
+- API keys: managed in settings section (`/settings/api-keys`). `GET /api/v1/auth/api-keys` list, `POST /` create (rate 10/hr, limit 20 active), `GET /{id}` detail, `DELETE /{id}` revoke. Raw key shown only once at creation; errors: `AUTH_014` (limit), `AUTH_010` (BOLA), `RATE_LIMIT_001`.
 
 ## API Layer Architecture
 

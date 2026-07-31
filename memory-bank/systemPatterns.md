@@ -277,3 +277,22 @@ TanStack Query four-state view (loading → error → empty → table) used by `
 - No shadcn-vue Table component — custom Tailwind table
 - `formatRelativeTime()` handles both past (`lastUsedAt`) and future (`expiresAt`) dates
 - Status colors: ACTIVE=green (`bg-emerald-600`), EXPIRED=gray (outline), REVOKED=red (destructive)
+
+## One-Time Secret Dialog Pattern (v0.12.0)
+
+RawKeyDialog must be hard to dismiss because the raw key is unrecoverable:
+
+- Overlay click / Escape / X button all blocked: `@pointer-down-outside.prevent`, `@escape-key-down.prevent`, `show-close-button=false` on `DialogContent`
+- Copy-gated close: close button disabled until `copy()` succeeds (`hasCopied` ref)
+- Three-tier clipboard fallback (`useCopyToClipboard`): `navigator.clipboard.writeText` → hidden textarea `execCommand('copy')` → return false for manual-copy hint
+- `copied` flag flashes 2s then resets (button label "Copied" → back)
+- `role="alertdialog"` + `aria-labelledby`/`aria-describedby` + focus/select raw key on open
+- Raw key held only in component ref during dialog lifetime; never persisted
+
+## Create Form Dialog Pattern (v0.12.0)
+
+- vee-validate `useForm` + `toTypedSchema`(Zod) — the request Zod schema doubles as the form schema
+- Array field (`scopes`) driven via `form.values` + `form.setFieldValue`; reka-ui checkbox emits `BooleanValue` so a wrapper narrows `checked === true`
+- Mode toggles (scope recommended/custom, expiration preset/custom) are local refs, not form fields; preset selection writes the computed ISO string into the form field
+- Custom date uses native `<input type="date">` interpreted as end-of-local-day (`T23:59:59`), converted via `toISOString()`
+- 409 limit error (AUTH_014) renders as inline banner and does not reset the form; other errors toast via `getErrorMessage`
