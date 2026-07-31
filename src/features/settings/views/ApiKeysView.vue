@@ -2,24 +2,54 @@
 /**
  * API Keys List View - Displays all API keys for the current user.
  *
- * M1 (list page skeleton):
+ * Features:
  * - Lists keys with name, prefix, scopes, status, last used, created, expires
  * - Shows loading skeleton, empty state, and error state
  * - Status badges with semantic colors (ACTIVE=green, EXPIRED=gray, REVOKED=red)
  * - Scopes displayed as badge chips
  * - Relative time formatting for timestamps
+ * - Create flow: CreateApiKeyDialog form -> RawKeyDialog one-time display
  *
  * Route: /settings/api-keys
- * API:  GET /api/v1/auth/api-keys
+ * API:  GET /api/v1/auth/api-keys, POST /api/v1/auth/api-keys
  */
+import { ref } from 'vue'
 import { KeyRound, Plus, AlertTriangle, Loader2 } from '@lucide/vue'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { Skeleton } from '@/components/ui/skeleton'
 import { useApiKeys } from '@/composables/useApiKeys'
-import type { ApiKeyScope, ApiKeyStatus } from '@/lib/schemas/api-key.schema'
+import type { ApiKeyScope, ApiKeyStatus, CreateApiKeyResponse } from '@/lib/schemas/api-key.schema'
+import CreateApiKeyDialog from '@/features/settings/components/CreateApiKeyDialog.vue'
+import RawKeyDialog from '@/features/settings/components/RawKeyDialog.vue'
 
 const { data: keys, isPending, isError, error, refetch } = useApiKeys()
+
+const createDialogOpen = ref(false)
+const rawKeyDialogOpen = ref(false)
+/** Raw key awaiting display; kept only in memory for the dialog lifetime */
+const pendingRawKey = ref('')
+
+function openCreateDialog() {
+  createDialogOpen.value = true
+}
+
+function handleCreated(response: CreateApiKeyResponse) {
+  createDialogOpen.value = false
+  pendingRawKey.value = response.rawKey
+  rawKeyDialogOpen.value = true
+}
+
+/**
+ * Clears the raw key from memory once the display dialog is dismissed.
+ * The key is unrecoverable after this point; never keep it around.
+ */
+function handleRawKeyDialogClose(value: boolean) {
+  rawKeyDialogOpen.value = value
+  if (!value) {
+    pendingRawKey.value = ''
+  }
+}
 
 /**
  * Render a timestamp as a relative time string.
@@ -111,7 +141,7 @@ function statusClass(status: ApiKeyStatus): string {
           Manage API keys used for JetBrains plugin authentication. Keys are shown only once at creation.
         </p>
       </div>
-      <Button variant="default" size="sm" disabled class="shrink-0 gap-1.5">
+      <Button variant="default" size="sm" class="shrink-0 gap-1.5" @click="openCreateDialog">
         <Plus class="h-4 w-4" />
         Create API Key
       </Button>
@@ -157,7 +187,7 @@ function statusClass(status: ApiKeyStatus): string {
           Create an API key to use with the JetBrains plugin for secure authentication.
         </p>
       </div>
-      <Button variant="default" size="sm" disabled class="gap-1.5">
+      <Button variant="default" size="sm" class="gap-1.5" @click="openCreateDialog">
         <Plus class="h-4 w-4" />
         Create API Key
       </Button>
@@ -239,5 +269,9 @@ function statusClass(status: ApiKeyStatus): string {
         </tbody>
       </table>
     </div>
+
+    <!-- Create flow dialogs -->
+    <CreateApiKeyDialog v-model:open="createDialogOpen" @success="handleCreated" />
+    <RawKeyDialog v-model:open="rawKeyDialogOpen" :raw-key="pendingRawKey" @update:open="handleRawKeyDialogClose" />
   </div>
 </template>
