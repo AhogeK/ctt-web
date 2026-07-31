@@ -1,6 +1,12 @@
 import { apiFetch } from './instance'
 import { RestApiResponseSchema } from '@/lib/schemas/api.schema'
-import { ApiKeysPayloadSchema, type ApiKey } from '@/lib/schemas/api-key.schema'
+import {
+  ApiKeysPayloadSchema,
+  CreateApiKeyResponseSchema,
+  type ApiKey,
+  type CreateApiKeyRequest,
+  type CreateApiKeyResponse,
+} from '@/lib/schemas/api-key.schema'
 
 /**
  * Fetches all API keys for the authenticated user.
@@ -25,4 +31,32 @@ export async function listApiKeys(): Promise<ApiKey[]> {
   const wrapped = RestApiResponseSchema.parse(response)
   const payload = ApiKeysPayloadSchema.parse(wrapped.data)
   return payload.keys
+}
+
+/**
+ * Creates a new API key for the authenticated user.
+ *
+ * Endpoint: POST /api/v1/auth/api-keys (rate limited to 10/hour/user)
+ *
+ * Server returns: RestApiResponse<CreateApiKeyResponse> where
+ * CreateApiKeyResponse = { rawKey, apiKey }. The rawKey is returned exactly
+ * once; the server persists only its SHA-256 hash and it cannot be retrieved
+ * again. Callers must surface it to the user immediately.
+ *
+ * Known error codes:
+ * - 409 AUTH_014: per-user active key limit (20) reached
+ * - 429 RATE_LIMIT_001: creation rate limit exceeded
+ *
+ * @param data - Create request (name, scopes, optional expiresAt)
+ * @returns Create response containing the one-time rawKey and key metadata
+ * @throws Error if request fails or is rejected by validation
+ */
+export async function createApiKey(data: CreateApiKeyRequest): Promise<CreateApiKeyResponse> {
+  const response = await apiFetch<unknown>('/api/v1/auth/api-keys', {
+    method: 'POST',
+    body: data,
+  })
+
+  const wrapped = RestApiResponseSchema.parse(response)
+  return CreateApiKeyResponseSchema.parse(wrapped.data)
 }

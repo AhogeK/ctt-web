@@ -51,12 +51,18 @@ export const ApiKeysPayloadSchema = z.object({
  * Server expects:
  * - name: NotBlank, max 100 characters
  * - scopes: NotEmpty, at least one scope
- * - expiresAt: Optional Future timestamp (ISO 8601 with offset)
+ * - expiresAt: Optional Future timestamp (ISO 8601 with offset), enforced server-side via @Future.
+ *   Frontend validates format and future-only as UX; server remains the authority.
  */
 export const CreateApiKeyRequestSchema = z.object({
   name: z.string().min(1, 'Name is required').max(100, 'Name must not exceed 100 characters'),
   scopes: z.array(ApiKeyScopeEnum).min(1, 'At least one scope is required'),
-  expiresAt: z.string().optional(),
+  expiresAt: z.iso
+    .datetime({ message: 'Expiration must be a valid date and time' })
+    .refine((value) => new Date(value).getTime() > Date.now(), {
+      message: 'Expiration must be in the future',
+    })
+    .optional(),
 })
 
 /**
