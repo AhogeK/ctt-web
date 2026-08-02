@@ -31,6 +31,8 @@
 | simple-git-hooks | Pre-commit hooks                |
 | lint-staged      | Staged file lint/format         |
 
+Toolchain snapshot (2026-08-02): @playwright/test 1.62.1, lint-staged 17.3.0, vue-tsc 3.3.9, typescript 6.0.3 (pinned exact — `vp update -L` auto-bumps TS to 7.x which breaks the Vue toolchain; re-pin after every `-L` run).
+
 ## API Authentication
 
 - Web users: JWT Bearer token (from ctt-server `/api/v1/auth/login`)

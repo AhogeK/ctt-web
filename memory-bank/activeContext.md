@@ -5,7 +5,16 @@
 **Phase**: v0.12.x API Key Management (Create Flow)
 **Version**: 0.12.0 (2026-07-31)
 **Branch**: develop
-**Tests**: 956/956 pass (54 files); `pnpm build` (type-check + build-only) exit 0
+**Tests**: 957/957 pass (54 files); `pnpm build` (type-check + build-only) exit 0
+
+## Recent Activity (v0.12.0 — 2026-08-02)
+
+### Dependency Update (chore, no version bump)
+
+- `vp update -L`: @playwright/test 1.62.0→1.62.1, lint-staged 17.2.0→17.3.0, vue-tsc 3.3.8→3.3.9
+- TypeScript again auto-bumped to 7.0.2 by `-L` → re-pinned to 6.0.3 (TS7 removed programmatic APIs that vue-tsc/@vue/compiler-sfc depend on; must re-pin after every `-L` run)
+- Verified: `pnpm type-check` exit 0, `pnpm build` exit 0
+- Commits: develop `c8795ae`; cherry-picked to master `a79fa06` (non-AI content per R6.5)
 
 ## Recent Activity (v0.12.0 — 2026-07-31)
 
