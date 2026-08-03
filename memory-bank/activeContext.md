@@ -9,6 +9,14 @@
 
 ## Recent Activity (v0.12.0 — 2026-08-02)
 
+### Notion H 节完成总结更新（2026-08-02）
+
+- 已更新 Notion「🌐 ctt-web 开发计划」H 节（创建流程 + RawKey 一次性展示）为完成态：全部 checkbox `[x]`、交付物表格 `✅ 已完成`、验收标准逐条 `✅`、新增「完成记录」小节（v0.12.0）
+- 修正计划中的 4 处与实现不符的描述：组件路径 `src/features/api-keys/components/` → `src/features/settings/components/`；API 文件 `lib/api/api-key.ts` → `src/lib/api/api-keys.ts`；invalidate key `['api-keys', 'list']` → `['api-keys']`（`API_KEYS_QUERY_KEY` 常量）；`expiresAt` 类型 `z.string().datetime()` → `z.iso.datetime()`（ISO 8601 with offset）
+- 由子 agent（unspecified-high, bg_57515fc6）执行 `update_content` 精确替换整块 H 节；独立复核确认 G 节（2945 chars）与 I 节（1699 chars）字节级未变，仅 H 节被修改
+
+## Recent Activity (v0.12.0 — 2026-08-02)
+
 ### Dependency Update (chore, no version bump)
 
 - `vp update -L`: @playwright/test 1.62.0→1.62.1, lint-staged 17.2.0→17.3.0, vue-tsc 3.3.8→3.3.9
