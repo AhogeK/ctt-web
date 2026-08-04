@@ -1,5 +1,5 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/vue-query'
-import { listApiKeys, createApiKey } from '@/lib/api/api-keys'
+import { listApiKeys, createApiKey, revokeApiKey } from '@/lib/api/api-keys'
 import type { CreateApiKeyRequest } from '@/lib/schemas/api-key.schema'
 
 const API_KEYS_QUERY_KEY = ['api-keys'] as const
@@ -36,6 +36,38 @@ export function useCreateApiKey() {
 
   const mutation = useMutation({
     mutationFn: (data: CreateApiKeyRequest) => createApiKey(data),
+    onSuccess: () => {
+      void queryClient.invalidateQueries({ queryKey: API_KEYS_QUERY_KEY })
+    },
+  })
+
+  return { mutation }
+}
+
+/**
+ * Composable for revoking (soft-deleting) an API key.
+ *
+ * The revoke endpoint is idempotent: revoking an already-revoked key
+ * returns 204 and does NOT produce an error. On success the keys list
+ * query is invalidated so the revoked key disappears immediately.
+ *
+ * If the key does not exist or belongs to another user, the server
+ * returns 401 with code AUTH_010. The interceptor does NOT log the
+ * user out for this code; the error propagates to the caller, which
+ * should use `getErrorMessage` to surface the mapped BOLA message
+ * ("API key not found or no longer accessible") - `getErrorMessage`
+ * internally calls `mapApiErrorCode` which maps AUTH_010 to the
+ * generic text, so the caller does not need to inspect the code.
+ *
+ * @returns Object with the revoke mutation - call `mutation.mutate(id)`
+ *   to revoke a key. Exposes `mutation.isPending`, `mutation.isError`,
+ *   and `mutation.error` for UI state.
+ */
+export function useRevokeApiKey() {
+  const queryClient = useQueryClient()
+
+  const mutation = useMutation({
+    mutationFn: (id: string) => revokeApiKey(id),
     onSuccess: () => {
       void queryClient.invalidateQueries({ queryKey: API_KEYS_QUERY_KEY })
     },

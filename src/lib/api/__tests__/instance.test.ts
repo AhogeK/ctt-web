@@ -295,6 +295,61 @@ describe('API Instance', () => {
       expect(toast.error).not.toHaveBeenCalled()
     })
 
+    it('should NOT clear token or dispatch UNAUTHORIZED_EVENT on 401 with AUTH_010 (BOLA protection)', async () => {
+      const mockResponse = {
+        status: 401,
+        _data: { code: 'AUTH_010', message: 'API key invalid' },
+        url: 'https://api.example.com/test',
+      }
+      const mockContext = {
+        response: mockResponse,
+        request: 'https://api.example.com/test',
+        options: { method: 'DELETE' },
+      }
+
+      await capturedConfig.onResponseError!(mockContext)
+
+      expect(removeItemSpy).not.toHaveBeenCalled()
+      expect(dispatchEventSpy).not.toHaveBeenCalled()
+      expect(toast.error).not.toHaveBeenCalled()
+    })
+
+    it('should NOT clear token or dispatch event on 401 with AUTH_010 in wrapped format', async () => {
+      const mockResponse = {
+        status: 401,
+        _data: { data: { code: 'AUTH_010', message: 'API key invalid' } },
+        url: 'https://api.example.com/test',
+      }
+      const mockContext = {
+        response: mockResponse,
+        request: 'https://api.example.com/test',
+        options: { method: 'DELETE' },
+      }
+
+      await capturedConfig.onResponseError!(mockContext)
+
+      expect(removeItemSpy).not.toHaveBeenCalled()
+      expect(dispatchEventSpy).not.toHaveBeenCalled()
+    })
+
+    it('should still clear token on unknown 401 (non-AUTH_010) preserving existing behavior', async () => {
+      const mockResponse = {
+        status: 401,
+        _data: { code: 'UNKNOWN_CODE', message: 'Unauthorized' },
+        url: 'https://api.example.com/test',
+      }
+      const mockContext = {
+        response: mockResponse,
+        request: 'https://api.example.com/test',
+        options: { method: 'GET' },
+      }
+
+      await capturedConfig.onResponseError!(mockContext)
+
+      expect(removeItemSpy).toHaveBeenCalledWith('ctt_access_token')
+      expect(dispatchEventSpy).toHaveBeenCalled()
+    })
+
     it('should handle 403 by logging console warning', async () => {
       const mockResponse = {
         status: 403,
