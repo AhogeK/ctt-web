@@ -2,10 +2,23 @@
 
 ## Current Status
 
-**Phase**: v0.12.x API Key Management (Create Flow)
-**Version**: 0.12.0 (2026-07-31)
+**Phase**: v0.13.x API Key Management (Revoke Flow)
+**Version**: 0.13.0 (2026-08-03)
 **Branch**: develop
-**Tests**: 957/957 pass (54 files); `pnpm build` (type-check + build-only) exit 0
+**Tests**: 985/985 pass (58 files); `pnpm build` (type-check + build-only) exit 0
+
+## Recent Activity (v0.13.0 — 2026-08-03)
+
+### API Key Revoke Flow (M3)
+
+- **API layer**: `revokeApiKey(id)` in `src/lib/api/api-keys.ts` — DELETE, 204 empty body (idempotent, no RestApiResponseSchema parse since ofetch resolves null); `useRevokeApiKey()` in `src/composables/useApiKeys.ts` invalidates `['api-keys']` on success.
+- **Interceptor fix (blocking)**: `instance.ts` `handle401Error` previously logged the user out on ANY non-retryable 401. AUTH_010 (BOLA: key not found / not owned) is a resource-level 401 for an authenticated user — now excluded from token removal + UNAUTHORIZED_EVENT, error propagates to caller for the generic "API key not found or no longer accessible" message (acceptance criterion 4).
+- **UI**: `RevokeApiKeyDialog.vue` (AlertDialog destructive confirmation, key name + monospace prefix, Cancel default focus, pending guard blocks double-mutate/close, success toast + close, AUTH_010 error keeps dialog open + generic toast); `ApiKeysView.vue` Actions column Revoke button enabled for ACTIVE rows only.
+- **New UI primitives**: `src/components/ui/alert-dialog/` reka-ui wrappers (8 files) — were missing from the project; shadcn-vue style, mirrors existing `dialog/` wrappers.
+- **Tests**: api-keys.test.ts (+7), instance.test.ts (+3 AUTH_010 flat/wrapped), useApiKeys.test.ts (+5), RevokeApiKeyDialog.test.ts (+8 incl. focus), ApiKeysView.test.ts (+5, new). 985/985 pass (58 files); type-check + build + lint clean.
+- **Round-2 review (spec-axis)**: view-level success-flow test added (list refresh → row REVOKED badge + button gone); instance.ts AUTH_010 comment corrected to reference getErrorMessage (not extractErrorCode); focus mechanism kept (Round-1 fix verified against reka-ui source: AlertDialogContent.js:43-59 nextTick-focuses registered AlertDialogCancel, FocusScope.js:96-98 first-tabbable suppressed by preventDefault).
+- **Post-review fixes**: Cancel default focus made explicit via `@open-auto-focus` + preventDefault (reka-ui official mechanism — built-in AlertDialogContent handler focuses registered AlertDialogCancel; user handler runs first in mergeProps and suppresses first-tabbable default); `selectedKeyForRevoke` cleared on dialog close (stale-state cleanup, mirrors handleRawKeyDialogClose); JSDoc corrected (getErrorMessage not extractErrorCode; inline `@throws` type literal — importing ApiError triggered TS6133 as JSDoc-only reference); ApiKeysView integration test added (ACTIVE-only button, dialog wiring, fresh-key on reopen). AlertDialogAction kept (shadcn full primitive-set convention, matches dialog/).
+- **Note**: component path follows actual `src/features/settings/components/` (Notion plan's `api-keys/` path is stale).
 
 ## Recent Activity (v0.12.0 — 2026-08-02)
 
