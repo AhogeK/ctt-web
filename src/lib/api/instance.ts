@@ -140,6 +140,16 @@ async function handle401Error(
     return undefined
   }
 
+  // AUTH_010 is a resource-level BOLA 401: the user IS authenticated, but the
+  // requested API key does not exist or belongs to another user. Unlike a
+  // session-level 401, this must NOT clear the access token or dispatch
+  // UNAUTHORIZED_EVENT (which would log the user out). Return undefined so
+  // ofetch throws the original error to the caller, which surfaces the mapped
+  // "API key not found or no longer accessible" message via getErrorMessage.
+  if (errorCode === 'AUTH_010') {
+    return undefined
+  }
+
   localStorage.removeItem(STORAGE_KEYS.ACCESS_TOKEN)
   globalThis.dispatchEvent(new CustomEvent(UNAUTHORIZED_EVENT))
   return undefined

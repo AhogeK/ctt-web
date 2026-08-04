@@ -60,3 +60,33 @@ export async function createApiKey(data: CreateApiKeyRequest): Promise<CreateApi
   const wrapped = RestApiResponseSchema.parse(response)
   return CreateApiKeyResponseSchema.parse(wrapped.data)
 }
+
+/**
+ * Revokes (soft-deletes) an API key for the authenticated user.
+ *
+ * Endpoint: DELETE /api/v1/auth/api-keys/{id} (requires WRITE scope)
+ *
+ * Server returns HTTP 204 No Content with an EMPTY body on success.
+ * The operation is idempotent: revoking an already-revoked key still
+ * returns 204 (no error). For this reason the response is NOT parsed
+ * with RestApiResponseSchema - a 204 has no body, so ofetch resolves
+ * with null/undefined, and any schema parse would fail.
+ *
+ * BOLA protection: if the key does not exist OR belongs to another user,
+ * the server returns 401 with code AUTH_010 ("API key invalid"). Both
+ * cases are intentionally identical to prevent UUID enumeration. The
+ * interceptor does NOT treat AUTH_010 as a session failure - the error
+ * propagates to the caller, which should use `getErrorMessage` to
+ * surface the mapped "API key not found or no longer accessible"
+ * message (`getErrorMessage` maps AUTH_010 via `mapApiErrorCode`).
+ *
+ * @param id - UUID of the API key to revoke
+ * @throws {{ statusCode: number, data?: { code?: string } }} ofetch HTTP error
+ *   (ApiError shape from `@/lib/utils/api-error`) with `data.code === 'AUTH_010'`
+ *   if the key does not exist or is not owned by the current user
+ */
+export async function revokeApiKey(id: string): Promise<void> {
+  await apiFetch<unknown>(`/api/v1/auth/api-keys/${id}`, {
+    method: 'DELETE',
+  })
+}

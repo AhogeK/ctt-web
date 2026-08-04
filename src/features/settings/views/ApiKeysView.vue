@@ -19,9 +19,10 @@ import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { Skeleton } from '@/components/ui/skeleton'
 import { useApiKeys } from '@/composables/useApiKeys'
-import type { ApiKeyScope, ApiKeyStatus, CreateApiKeyResponse } from '@/lib/schemas/api-key.schema'
+import type { ApiKey, ApiKeyScope, ApiKeyStatus, CreateApiKeyResponse } from '@/lib/schemas/api-key.schema'
 import CreateApiKeyDialog from '@/features/settings/components/CreateApiKeyDialog.vue'
 import RawKeyDialog from '@/features/settings/components/RawKeyDialog.vue'
+import RevokeApiKeyDialog from '@/features/settings/components/RevokeApiKeyDialog.vue'
 
 const { data: keys, isPending, isError, error, refetch } = useApiKeys()
 
@@ -29,9 +30,20 @@ const createDialogOpen = ref(false)
 const rawKeyDialogOpen = ref(false)
 /** Raw key awaiting display; kept only in memory for the dialog lifetime */
 const pendingRawKey = ref('')
+const revokeDialogOpen = ref(false)
+/** API key currently selected for revocation; passed to RevokeApiKeyDialog */
+const selectedKeyForRevoke = ref<ApiKey | null>(null)
 
 function openCreateDialog() {
   createDialogOpen.value = true
+}
+
+/**
+ * Open the revoke confirmation dialog for the given API key.
+ */
+function openRevokeDialog(key: ApiKey) {
+  selectedKeyForRevoke.value = key
+  revokeDialogOpen.value = true
 }
 
 function handleCreated(response: CreateApiKeyResponse) {
@@ -48,6 +60,18 @@ function handleRawKeyDialogClose(value: boolean) {
   rawKeyDialogOpen.value = value
   if (!value) {
     pendingRawKey.value = ''
+  }
+}
+
+/**
+ * Clears the selected key when the revoke dialog closes so the dialog
+ * unmounts (via `v-if="selectedKeyForRevoke"`) and no stale key data
+ * lingers. Mirrors the handleRawKeyDialogClose pattern.
+ */
+function handleRevokeDialogClose(value: boolean) {
+  revokeDialogOpen.value = value
+  if (!value) {
+    selectedKeyForRevoke.value = null
   }
 }
 
@@ -259,8 +283,8 @@ function statusClass(status: ApiKeyStatus): string {
                 v-if="key.status === 'ACTIVE'"
                 variant="outline"
                 size="sm"
-                disabled
                 class="text-destructive hover:bg-destructive/10 hover:text-destructive"
+                @click="openRevokeDialog(key)"
               >
                 Revoke
               </Button>
@@ -273,5 +297,11 @@ function statusClass(status: ApiKeyStatus): string {
     <!-- Create flow dialogs -->
     <CreateApiKeyDialog v-model:open="createDialogOpen" @success="handleCreated" />
     <RawKeyDialog v-model:open="rawKeyDialogOpen" :raw-key="pendingRawKey" @update:open="handleRawKeyDialogClose" />
+    <RevokeApiKeyDialog
+      v-if="selectedKeyForRevoke"
+      :open="revokeDialogOpen"
+      :api-key="selectedKeyForRevoke"
+      @update:open="handleRevokeDialogClose"
+    />
   </div>
 </template>
