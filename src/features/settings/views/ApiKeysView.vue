@@ -262,86 +262,157 @@ function statusClass(status: ApiKeyStatus): string {
       </Button>
     </div>
 
-    <!-- API Key Table (GitHub PAT style) -->
-    <div v-else class="overflow-hidden rounded-lg border">
-      <table class="w-full">
-        <caption class="sr-only">
-          API keys
-        </caption>
-        <thead>
-          <tr class="border-b bg-muted/50 text-left text-xs font-medium uppercase tracking-wider text-muted-foreground">
-            <th class="px-4 py-3">Name</th>
-            <th class="px-4 py-3">Key Prefix</th>
-            <th class="px-4 py-3">Scopes</th>
-            <th class="px-4 py-3">Status</th>
-            <th class="px-4 py-3">Last Used</th>
-            <th class="px-4 py-3">Created</th>
-            <th class="px-4 py-3">Expires</th>
-            <th class="px-4 py-3"><span class="sr-only">Actions</span></th>
-          </tr>
-        </thead>
-        <tbody class="divide-y">
-          <tr v-for="key in keys" :key="key.id" class="transition-colors hover:bg-muted/30">
-            <!-- Name -->
-            <td class="px-4 py-3">
-              <span class="font-medium">{{ key.name }}</span>
-            </td>
-            <!-- Key Prefix -->
-            <td class="px-4 py-3">
-              <code class="rounded bg-muted px-1.5 py-0.5 text-xs font-mono text-muted-foreground">
-                {{ key.keyPrefix }}
-              </code>
-            </td>
-            <!-- Scopes -->
-            <td class="px-4 py-3">
-              <div class="flex flex-wrap gap-1">
-                <Badge v-for="scope in key.scopes" :key="scope" variant="secondary" class="text-[10px] font-medium">
-                  {{ scopeLabel(scope) }}
+    <!-- API Key List -->
+    <template v-else>
+      <!-- API Key Table (desktop) -->
+      <div class="hidden md:block overflow-hidden rounded-lg border" data-testid="api-key-table">
+        <table class="w-full">
+          <caption class="sr-only">
+            API keys
+          </caption>
+          <thead>
+            <tr
+              class="border-b bg-muted/50 text-left text-xs font-medium uppercase tracking-wider text-muted-foreground"
+            >
+              <th class="px-4 py-3">Name</th>
+              <th class="px-4 py-3">Key Prefix</th>
+              <th class="px-4 py-3">Scopes</th>
+              <th class="px-4 py-3">Status</th>
+              <th class="px-4 py-3">Last Used</th>
+              <th class="px-4 py-3">Created</th>
+              <th class="px-4 py-3">Expires</th>
+              <th class="px-4 py-3"><span class="sr-only">Actions</span></th>
+            </tr>
+          </thead>
+          <tbody class="divide-y">
+            <tr v-for="key in keys" :key="key.id" class="transition-colors hover:bg-muted/30">
+              <!-- Name -->
+              <td class="px-4 py-3">
+                <span class="font-medium">{{ key.name }}</span>
+              </td>
+              <!-- Key Prefix -->
+              <td class="px-4 py-3">
+                <code class="rounded bg-muted px-1.5 py-0.5 text-xs font-mono text-muted-foreground">
+                  {{ key.keyPrefix }}
+                </code>
+              </td>
+              <!-- Scopes -->
+              <td class="px-4 py-3">
+                <div class="flex flex-wrap gap-1">
+                  <Badge v-for="scope in key.scopes" :key="scope" variant="secondary" class="text-[10px] font-medium">
+                    {{ scopeLabel(scope) }}
+                  </Badge>
+                </div>
+              </td>
+              <!-- Status -->
+              <td class="px-4 py-3">
+                <Badge :variant="statusVariant(key.status)" :class="statusClass(key.status)" class="text-[11px]">
+                  {{ key.status }}
                 </Badge>
-              </div>
-            </td>
-            <!-- Status -->
-            <td class="px-4 py-3">
-              <Badge :variant="statusVariant(key.status)" :class="statusClass(key.status)" class="text-[11px]">
-                {{ key.status }}
-              </Badge>
-            </td>
-            <!-- Last Used -->
-            <td class="px-4 py-3 text-sm text-muted-foreground">
+              </td>
+              <!-- Last Used -->
+              <td class="px-4 py-3 text-sm text-muted-foreground">
+                <span :title="key.lastUsedAt ?? undefined">
+                  {{ formatRelativeTime(key.lastUsedAt) }}
+                </span>
+              </td>
+              <!-- Created -->
+              <td class="px-4 py-3 text-sm text-muted-foreground">
+                <span :title="key.createdAt">
+                  {{ formatDate(key.createdAt) }}
+                </span>
+              </td>
+              <!-- Expires -->
+              <td class="px-4 py-3 text-sm text-muted-foreground">
+                <span v-if="key.expiresAt" :title="key.expiresAt">
+                  {{ formatRelativeTime(key.expiresAt) }}
+                </span>
+                <span v-else class="italic">Never</span>
+              </td>
+              <!-- Actions (placeholder for M3) -->
+              <td class="px-4 py-3 text-right">
+                <Button
+                  v-if="key.status === 'ACTIVE'"
+                  variant="outline"
+                  size="sm"
+                  class="text-destructive hover:bg-destructive/10 hover:text-destructive"
+                  :aria-label="'Revoke ' + key.name"
+                  @click="openRevokeDialog(key)"
+                >
+                  Revoke
+                </Button>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+      <!-- API Key Cards (mobile) -->
+      <div class="md:hidden flex flex-col gap-3" data-testid="api-key-cards">
+        <div
+          v-for="key in keys"
+          :key="key.id"
+          data-testid="api-key-card"
+          class="flex flex-col gap-4 rounded-lg border p-4 transition-colors hover:bg-muted/30"
+        >
+          <!-- Header: name + status -->
+          <div class="flex items-center justify-between gap-2">
+            <span class="font-medium">{{ key.name }}</span>
+            <Badge :variant="statusVariant(key.status)" :class="statusClass(key.status)" class="text-[11px]">
+              {{ key.status }}
+            </Badge>
+          </div>
+
+          <!-- Key prefix -->
+          <code class="w-fit rounded bg-muted px-1.5 py-0.5 text-xs font-mono text-muted-foreground">
+            {{ key.keyPrefix }}
+          </code>
+
+          <!-- Scopes -->
+          <div class="flex flex-wrap gap-1">
+            <Badge v-for="scope in key.scopes" :key="scope" variant="secondary" class="text-[10px] font-medium">
+              {{ scopeLabel(scope) }}
+            </Badge>
+          </div>
+
+          <!-- Metadata -->
+          <div class="flex flex-col gap-1 text-sm text-muted-foreground">
+            <div class="flex items-center justify-between">
+              <span>Last used</span>
               <span :title="key.lastUsedAt ?? undefined">
                 {{ formatRelativeTime(key.lastUsedAt) }}
               </span>
-            </td>
-            <!-- Created -->
-            <td class="px-4 py-3 text-sm text-muted-foreground">
+            </div>
+            <div class="flex items-center justify-between">
+              <span>Created</span>
               <span :title="key.createdAt">
                 {{ formatDate(key.createdAt) }}
               </span>
-            </td>
-            <!-- Expires -->
-            <td class="px-4 py-3 text-sm text-muted-foreground">
+            </div>
+            <div class="flex items-center justify-between">
+              <span>Expires</span>
               <span v-if="key.expiresAt" :title="key.expiresAt">
                 {{ formatRelativeTime(key.expiresAt) }}
               </span>
               <span v-else class="italic">Never</span>
-            </td>
-            <!-- Actions (placeholder for M3) -->
-            <td class="px-4 py-3 text-right">
-              <Button
-                v-if="key.status === 'ACTIVE'"
-                variant="outline"
-                size="sm"
-                class="text-destructive hover:bg-destructive/10 hover:text-destructive"
-                :aria-label="'Revoke ' + key.name"
-                @click="openRevokeDialog(key)"
-              >
-                Revoke
-              </Button>
-            </td>
-          </tr>
-        </tbody>
-      </table>
-    </div>
+            </div>
+          </div>
+
+          <!-- Actions -->
+          <div v-if="key.status === 'ACTIVE'" class="flex justify-end">
+            <Button
+              variant="outline"
+              size="sm"
+              class="text-destructive hover:bg-destructive/10 hover:text-destructive"
+              :aria-label="'Revoke ' + key.name"
+              @click="openRevokeDialog(key)"
+            >
+              Revoke
+            </Button>
+          </div>
+        </div>
+      </div>
+    </template>
 
     <!-- Create flow dialogs -->
     <CreateApiKeyDialog v-model:open="createDialogOpen" @success="handleCreated" />

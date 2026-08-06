@@ -306,6 +306,33 @@ describe('ApiKeysView', () => {
       expect(wrapper.findAll('tbody tr')).toHaveLength(1)
     })
 
+    it('keeps the skeleton visible for at least 300ms on first load and hides both views', async () => {
+      vi.useFakeTimers()
+
+      queryData.value = undefined
+      queryIsPending.value = true
+      queryIsError.value = false
+
+      const wrapper = mount(ApiKeysView)
+      expect(wrapper.find('[data-testid="skeleton"]').exists()).toBe(true)
+      expect(wrapper.find('[data-testid="api-key-cards"]').exists()).toBe(false)
+
+      vi.advanceTimersByTime(100)
+      queryIsPending.value = false
+      queryData.value = [activeKey]
+      await wrapper.vm.$nextTick()
+
+      expect(wrapper.find('[data-testid="skeleton"]').exists()).toBe(true)
+      expect(wrapper.find('[data-testid="api-key-cards"]').exists()).toBe(false)
+
+      vi.advanceTimersByTime(250)
+      await wrapper.vm.$nextTick()
+
+      expect(wrapper.find('[data-testid="skeleton"]').exists()).toBe(false)
+      expect(wrapper.find('[data-testid="api-key-cards"]').exists()).toBe(true)
+      expect(wrapper.findAll('tbody tr')).toHaveLength(1)
+    })
+
     it('keeps the skeleton visible for at least 300ms when the query errors quickly', async () => {
       vi.useFakeTimers()
 
@@ -350,6 +377,74 @@ describe('ApiKeysView', () => {
       const revokeButton = wrapper.findAll('button').find((b) => b.text().includes('Revoke'))
       expect(revokeButton).toBeDefined()
       expect(revokeButton!.attributes('aria-label')).toBe(`Revoke ${activeKey.name}`)
+    })
+  })
+
+  describe('Mobile card view', () => {
+    it('renders one card per key with name, prefix and status', () => {
+      setKeys([activeKey, expiredKey, revokedKey])
+      const wrapper = mount(ApiKeysView)
+
+      const tableContainer = wrapper.find('[data-testid="api-key-table"]')
+      expect(tableContainer.exists()).toBe(true)
+      expect(tableContainer.find('table').exists()).toBe(true)
+
+      const cardContainer = wrapper.find('[data-testid="api-key-cards"]')
+      expect(cardContainer.exists()).toBe(true)
+
+      const cards = cardContainer.findAll('[data-testid="api-key-card"]')
+      expect(cards).toHaveLength(3)
+
+      expect(cards[0]!.text()).toContain(activeKey.name)
+      expect(cards[0]!.text()).toContain(activeKey.keyPrefix)
+      expect(cards[0]!.text()).toContain(activeKey.status)
+
+      expect(cards[1]!.text()).toContain(expiredKey.name)
+      expect(cards[2]!.text()).toContain(revokedKey.name)
+    })
+
+    it('shows Revoke button only for ACTIVE cards with descriptive aria-label', () => {
+      setKeys([activeKey, expiredKey, revokedKey])
+      const wrapper = mount(ApiKeysView)
+
+      const cards = wrapper.find('[data-testid="api-key-cards"]').findAll('[data-testid="api-key-card"]')
+      expect(cards).toHaveLength(3)
+
+      const activeCardButtons = cards[0]!.findAll('button')
+      const expiredCardButtons = cards[1]!.findAll('button')
+      const revokedCardButtons = cards[2]!.findAll('button')
+
+      const activeRevokeButton = activeCardButtons.find((b) => b.text().includes('Revoke'))
+      expect(activeRevokeButton).toBeDefined()
+      expect(activeRevokeButton!.attributes('aria-label')).toBe(`Revoke ${activeKey.name}`)
+
+      expect(expiredCardButtons.some((b) => b.text().includes('Revoke'))).toBe(false)
+      expect(revokedCardButtons.some((b) => b.text().includes('Revoke'))).toBe(false)
+    })
+
+    it('card metadata renders relative time and Never values', () => {
+      setKeys([activeKey])
+      const wrapper = mount(ApiKeysView)
+
+      const cardContainer = wrapper.find('[data-testid="api-key-cards"]')
+      expect(cardContainer.text()).toContain('Last used')
+      expect(cardContainer.text()).toContain('Created')
+      expect(cardContainer.text()).toContain('Expires')
+      expect(cardContainer.text()).toContain('Never')
+    })
+
+    it('opens the revoke dialog with the clicked card key', async () => {
+      setKeys([activeKey, expiredKey])
+      const wrapper = mount(ApiKeysView)
+
+      const activeCard = wrapper.find('[data-testid="api-key-cards"]').findAll('[data-testid="api-key-card"]')[0]!
+      const cardRevokeButton = activeCard.findAll('button').find((b) => b.text().includes('Revoke'))!
+      await cardRevokeButton.trigger('click')
+
+      const dialog = wrapper.find('[data-testid="revoke-dialog"]')
+      expect(dialog.exists()).toBe(true)
+      expect(wrapper.find('[data-testid="revoke-dialog-name"]').text()).toBe(activeKey.name)
+      expect(wrapper.find('[data-testid="revoke-dialog-prefix"]').text()).toBe(activeKey.keyPrefix)
     })
   })
 })
