@@ -2,10 +2,22 @@
 
 ## Current Status
 
-**Phase**: v0.13.x API Key Management (Revoke Flow)
-**Version**: 0.13.0 (2026-08-03)
+**Phase**: v0.14.x API Key Management (Edge Polish)
+**Version**: 0.14.0 (2026-08-07)
 **Branch**: develop
-**Tests**: 985/985 pass (58 files); `pnpm build` (type-check + build-only) exit 0
+**Tests**: 1003/1003 pass (58 files); `pnpm build` (type-check + build-only) exit 0
+
+## Recent Activity (v0.14.0 — 2026-08-07)
+
+### API Key Edge Polish (J): error mapping, skeleton anti-flicker, a11y, header entry
+
+- **429 rate-limit countdown**: `getRetryAfterSeconds(error)` in `src/lib/utils/api-error.ts` (exported via index barrel) — dual-source: (a) HTTP `Retry-After` header (delta-seconds or HTTP-date), (b) `retryAfter` ISO-8601 Instant in error body; fully defensive, never throws, null when absent. `CreateApiKeyDialog` shows countdown toast ("Please try again in Ns.") when timing exists, else falls back to static mapped message. **Backend gap (verified ctt-server source)**: API key create 429 sends NO Retry-After header and NO retryAfter field — countdown is future-proof only; users currently see the static message.
+- **First-load Skeleton anti-flicker**: `ApiKeysView` keeps skeleton visible ≥300ms (MIN_SKELETON_MS) even if the query resolves faster; gated so background refetches (data present) never re-show skeleton; timer cleared on unmount.
+- **A11y**: sr-only table caption "API keys"; per-row Revoke button aria-label "Revoke {name}".
+- **Header entry**: AppHeader avatar dropdown adds Settings item → `/settings/api-keys` (RouteNames.SETTINGS_API_KEYS constant), between Appearance submenu and Logout.
+- **Tests +18** (1003 total): getRetryAfterSeconds 10 cases (fake-timer deterministic), CreateApiKeyDialog 429 countdown/static/AUTH_014 regression, ApiKeysView skeleton-min (success + error paths)/caption/aria-label, AppHeader Settings navigation.
+- **Round review fixes**: removed speculative `error.retryAfter` top-level candidate in readBodyRetryAfter (ofetch body always at error.data; YAGNI — eliminated untested dead path); added Why comments for floor vs ceil rounding (RFC 7231 delta-seconds is whole; date-diff needs ceil to avoid premature retry); removed redundant `showSkeleton.value = false` in onUnmounted; added skeleton ≥300ms error-path test (+1). Kept: aria-label string concat (Vue template backtick literal breaks SFC compile).
+- **Deviations (project-consistency)**: dayjs NOT introduced (R12 — existing formatRelativeTime is functionally equivalent incl. future dates); no breadcrumb component added (project has none, sidebar nav already covers it); ApiKeysErrorState.vue / SettingsLayout.vue NOT created (inline error state already complete, no reuse case; spec deliverable paths are stale).
 
 ## Recent Activity (v0.13.0 — 2026-08-03)
 
