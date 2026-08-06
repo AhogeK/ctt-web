@@ -2,10 +2,20 @@
 
 ## Current Status
 
-**Phase**: v0.14.x API Key Management (Edge Polish)
-**Version**: 0.14.0 (2026-08-07)
+**Phase**: v0.15.x API Key Management (Responsive)
+**Version**: 0.15.0 (2026-08-07)
 **Branch**: develop
-**Tests**: 1003/1003 pass (58 files); `pnpm build` (type-check + build-only) exit 0
+**Tests**: 1008/1008 pass (58 files); `pnpm build` (type-check + build-only) exit 0
+
+## Recent Activity (v0.15.0 — 2026-08-07)
+
+### API Key Responsive Card View (J 节响应式，不延后 v2)
+
+- User decision: implement the deferred <768px card view now instead of v2.
+- `ApiKeysView.vue`: table branch wrapped in `hidden md:block` (desktop ≥768px, unchanged incl. caption/aria-labels); new sibling `md:hidden` card view — one card per key (`rounded-lg border p-4`, DeviceListView precedent): name + status badge, monospace key prefix, scope chips, Last used/Created/Expires metadata (formatRelativeTime/formatDate, null → "Never"), Revoke button only for ACTIVE (same destructive style + aria-label). No duplicate Create button (page header stays visible on mobile).
+- Tests +3 → 1006/1006: card per-key render, ACTIVE-only Revoke with aria-label, metadata/Never values.
+- **Round review fixes**: added `data-testid="api-key-table"` / `"api-key-cards"` / `"api-key-card"` (replaced fragile `.rounded-lg.border.p-4` / `[class*="md:hidden"]` selectors that could collide with skeleton/empty markup); unified card hover to `hover:bg-muted/30` (matches table row); added card Revoke click→dialog test (+1) and skeleton-period card-hidden assertion (+1) → 1008/1008.
+- Version 0.14.0 → 0.15.0 (new feature → MINOR).
 
 ## Recent Activity (v0.14.0 — 2026-08-07)
 
