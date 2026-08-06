@@ -13,6 +13,7 @@ const mockHandleSubmit = vi.hoisted(() => vi.fn<(...args: unknown[]) => unknown>
 /** Mutable pending flag read by the mocked composable at assertion time */
 const pendingState = vi.hoisted(() => ({ value: false }))
 const mockToastError = vi.hoisted(() => vi.fn<() => void>())
+const mockGetRetryAfterSeconds = vi.hoisted(() => vi.fn<(error: unknown) => number | null>())
 
 // ==========================================
 // Mocks
@@ -87,6 +88,7 @@ vi.mock('@/lib/utils/api-error', () => ({
   getErrorMessage: vi.fn<(error: unknown) => string>((error: unknown) =>
     error instanceof Error ? error.message : 'An unexpected error occurred. Please try again later.',
   ),
+  getRetryAfterSeconds: mockGetRetryAfterSeconds,
 }))
 
 vi.mock('vee-validate', () => ({
@@ -117,6 +119,8 @@ describe('CreateApiKeyDialog', () => {
     mockMutate.mockReset()
     mockHandleSubmit.mockReset()
     mockResetForm.mockReset()
+    mockGetRetryAfterSeconds.mockReset()
+    mockGetRetryAfterSeconds.mockReturnValue(null)
     // Simulate form.handleSubmit wiring: capture the callback and invoke it
     // with form values when the submit handler is used.
     mockHandleSubmit.mockImplementation((...args: unknown[]) => {
@@ -176,10 +180,30 @@ describe('CreateApiKeyDialog', () => {
     await wrapper.find('form').trigger('submit')
 
     expect(wrapper.text()).toContain('You have reached the maximum of 20 API keys')
+    expect(mockToastError).not.toHaveBeenCalled()
     expect(wrapper.emitted('success')).toBeUndefined()
   })
 
-  it('shows a toast for non-limit errors and keeps the dialog open', async () => {
+  it('shows a countdown toast on 429 RATE_LIMIT_001 when timing is available', async () => {
+    mockMutate.mockImplementation((...args: unknown[]) => {
+      const callbacks = args[1] as { onError?: (e: unknown) => void }
+      callbacks.onError?.({ data: { code: 'RATE_LIMIT_001' } })
+    })
+    mockGetRetryAfterSeconds.mockReturnValue(60)
+    mockToastError.mockClear()
+
+    const wrapper = createWrapper()
+    await wrapper.find('form').trigger('submit')
+
+    expect(mockGetRetryAfterSeconds).toHaveBeenCalledTimes(1)
+    expect(mockToastError).toHaveBeenCalledTimes(1)
+    const [title, options] = mockToastError.mock.calls[0] as unknown as [string, { description: string }]
+    expect(title).toBe('Failed to create API key')
+    expect(options.description).toBe('Please try again in 60s.')
+    expect(wrapper.text()).not.toContain('You have reached the maximum of 20 API keys')
+  })
+
+  it('falls back to the static mapped message on 429 without timing info', async () => {
     mockMutate.mockImplementation((...args: unknown[]) => {
       const callbacks = args[1] as { onError?: (e: unknown) => void }
       callbacks.onError?.({ data: { code: 'RATE_LIMIT_001' } })
@@ -189,7 +213,10 @@ describe('CreateApiKeyDialog', () => {
     const wrapper = createWrapper()
     await wrapper.find('form').trigger('submit')
 
-    expect(mockToastError).toHaveBeenCalled()
+    expect(mockGetRetryAfterSeconds).toHaveBeenCalledTimes(1)
+    expect(mockToastError).toHaveBeenCalledTimes(1)
+    const [, options] = mockToastError.mock.calls[0] as unknown as [string, { description: string }]
+    expect(options.description).not.toContain('Please try again in')
     expect(wrapper.text()).not.toContain('You have reached the maximum of 20 API keys')
   })
 

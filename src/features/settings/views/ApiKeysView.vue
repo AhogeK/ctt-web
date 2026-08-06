@@ -13,7 +13,7 @@
  * Route: /settings/api-keys
  * API:  GET /api/v1/auth/api-keys, POST /api/v1/auth/api-keys
  */
-import { ref } from 'vue'
+import { ref, watch, onUnmounted } from 'vue'
 import { KeyRound, Plus, AlertTriangle, Loader2 } from '@lucide/vue'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
@@ -33,6 +33,51 @@ const pendingRawKey = ref('')
 const revokeDialogOpen = ref(false)
 /** API key currently selected for revocation; passed to RevokeApiKeyDialog */
 const selectedKeyForRevoke = ref<ApiKey | null>(null)
+
+/** Minimum time the first-load skeleton must remain visible to avoid flicker (ms) */
+const MIN_SKELETON_MS = 300
+
+/**
+ * Gate that keeps the first-load skeleton on screen for at least MIN_SKELETON_MS.
+ *
+ * Starts tracking only when there is no cached data (keys.value === undefined),
+ * so background refetches never re-show the skeleton.
+ * If the query resolves faster than MIN_SKELETON_MS, the skeleton stays until
+ * the timer elapses.
+ * Cleans up the timer on unmount to avoid leaking timeouts.
+ */
+const showSkeleton = ref(false)
+let skeletonTimer: ReturnType<typeof setTimeout> | null = null
+
+function clearSkeletonTimer(): void {
+  if (skeletonTimer) {
+    clearTimeout(skeletonTimer)
+    skeletonTimer = null
+  }
+}
+
+watch(
+  isPending,
+  (pending) => {
+    if (pending && keys.value === undefined && skeletonTimer === null && !showSkeleton.value) {
+      showSkeleton.value = true
+      skeletonTimer = setTimeout(() => {
+        skeletonTimer = null
+        if (!isPending.value) {
+          showSkeleton.value = false
+        }
+      }, MIN_SKELETON_MS)
+    } else if (!pending && skeletonTimer === null && showSkeleton.value) {
+      // Query finished after the minimum display window; hide immediately.
+      showSkeleton.value = false
+    }
+  },
+  { immediate: true },
+)
+
+onUnmounted(() => {
+  clearSkeletonTimer()
+})
 
 function openCreateDialog() {
   createDialogOpen.value = true
@@ -172,7 +217,7 @@ function statusClass(status: ApiKeyStatus): string {
     </div>
 
     <!-- Loading State -->
-    <div v-if="isPending" class="flex flex-col gap-4">
+    <div v-if="showSkeleton" class="flex flex-col gap-4">
       <div v-for="i in 4" :key="i" class="flex items-center gap-4 rounded-lg border p-4">
         <div class="flex flex-1 flex-col gap-2">
           <Skeleton class="h-4 w-44" />
@@ -220,6 +265,9 @@ function statusClass(status: ApiKeyStatus): string {
     <!-- API Key Table (GitHub PAT style) -->
     <div v-else class="overflow-hidden rounded-lg border">
       <table class="w-full">
+        <caption class="sr-only">
+          API keys
+        </caption>
         <thead>
           <tr class="border-b bg-muted/50 text-left text-xs font-medium uppercase tracking-wider text-muted-foreground">
             <th class="px-4 py-3">Name</th>
@@ -284,6 +332,7 @@ function statusClass(status: ApiKeyStatus): string {
                 variant="outline"
                 size="sm"
                 class="text-destructive hover:bg-destructive/10 hover:text-destructive"
+                :aria-label="'Revoke ' + key.name"
                 @click="openRevokeDialog(key)"
               >
                 Revoke

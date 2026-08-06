@@ -171,3 +171,101 @@ export function getErrorMessage(error: unknown): string {
 
   return 'An unexpected error occurred. Please try again later.'
 }
+
+/**
+ * Read the HTTP `Retry-After` response header (RFC 7231) from an ofetch error.
+ *
+ * The header may be either a delta-seconds integer or an HTTP-date. Past
+ * dates and unparseable values fall through to `null` so the caller can try
+ * the next source. The function is fully defensive: any unexpected shape or
+ * throwing getter resolves to `null`.
+ *
+ * @param error - The error thrown by ofetch (or any unknown value)
+ * @returns Whole seconds to wait, or `null` when unavailable/invalid
+ */
+function readRetryAfterHeader(error: unknown): number | null {
+  if (!error || typeof error !== 'object') return null
+  const response = (error as { response?: unknown }).response
+  if (!response || typeof response !== 'object') return null
+  const headers = (response as { headers?: unknown }).headers
+  if (!headers || typeof headers !== 'object') return null
+  const get = (headers as { get?: unknown }).get
+  if (typeof get !== 'function') return null
+
+  let raw: unknown
+  try {
+    raw = (get as (name: string) => unknown).call(headers, 'retry-after')
+  } catch {
+    return null
+  }
+  if (typeof raw !== 'string') return null
+  const trimmed = raw.trim()
+  if (trimmed === '') return null
+
+  // delta-seconds per RFC 7231 (non-negative integer). Already a whole number,
+  // so floor is a no-op; guard against 0 since a zero countdown is meaningless.
+  if (/^\d+$/.test(trimmed)) {
+    const seconds = Number(trimmed)
+    return Number.isFinite(seconds) && seconds > 0 ? Math.floor(seconds) : null
+  }
+
+  // HTTP-date fallback. Round UP the remaining time so we never tell the user
+  // to retry before the server actually allows it.
+  const dateMs = Date.parse(trimmed)
+  if (Number.isNaN(dateMs)) return null
+  const remainingMs = dateMs - Date.now()
+  return remainingMs > 0 ? Math.ceil(remainingMs / 1000) : null
+}
+
+/**
+ * Read a `retryAfter` ISO-8601 Instant from the parsed error body.
+ *
+ * Some ctt-server endpoints embed `retryAfter` (an Instant such as
+ * `"2026-08-07T10:00:00Z"`) inside the `data` payload. ofetch exposes the
+ * parsed body at `error.data`, so this reads `error.data.retryAfter`.
+ * Past instants and unparseable values fall through to `null`.
+ *
+ * @param error - The error thrown by ofetch (or any unknown value)
+ * @returns Whole seconds to wait, or `null` when unavailable/invalid
+ */
+function readBodyRetryAfter(error: unknown): number | null {
+  if (!error || typeof error !== 'object') return null
+  const data = (error as { data?: unknown }).data
+  if (!data || typeof data !== 'object') return null
+  const raw = (data as { retryAfter?: unknown }).retryAfter
+  if (typeof raw !== 'string') return null
+  const trimmed = raw.trim()
+  if (trimmed === '') return null
+  const ms = Date.parse(trimmed)
+  if (Number.isNaN(ms)) return null
+  const remainingMs = ms - Date.now()
+  if (remainingMs <= 0) return null
+  return Math.ceil(remainingMs / 1000)
+}
+
+/**
+ * Extract the seconds remaining before a rate-limited request should be retried.
+ *
+ * Used to render a countdown on 429 responses. Sources are checked in priority
+ * order and the first usable value wins:
+ *
+ * 1. HTTP `Retry-After` response header (RFC 7231) - either a delta-seconds
+ *    integer or an HTTP-date. Past dates and unparseable values fall through.
+ * 2. `retryAfter` field on the parsed error body (ISO-8601 Instant, e.g.
+ *    `"2026-08-07T10:00:00Z"`) - the remaining seconds until that instant,
+ *    rounded up. Past instants fall through.
+ * 3. `null` when neither source yields a usable value.
+ *
+ * The function is fully defensive: any unexpected shape (non-object error,
+ * missing response, malformed header, throwing getter) resolves to `null`
+ * rather than throwing. Callers should treat `null` as "no timing info; use
+ * the static mapped message".
+ *
+ * @param error - The error thrown by ofetch (or any unknown value)
+ * @returns Whole seconds to wait, or `null` when unavailable/invalid
+ */
+export function getRetryAfterSeconds(error: unknown): number | null {
+  const headerSeconds = readRetryAfterHeader(error)
+  if (headerSeconds !== null) return headerSeconds
+  return readBodyRetryAfter(error)
+}

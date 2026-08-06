@@ -13,7 +13,7 @@ export function cn(...inputs: ClassValue[]) {
 }
 
 export { getOrCreateDeviceId } from './device'
-export { mapApiErrorCode, getErrorMessage, isApiError } from './api-error'
+export { mapApiErrorCode, getErrorMessage, isApiError, getRetryAfterSeconds } from './api-error'
 export type { ApiError, ApiErrorResponse } from './api-error'
 export { encodeBase64, decodeBase64 } from './codec'
 export { getCsrfToken, injectCsrfHeader } from './csrf'

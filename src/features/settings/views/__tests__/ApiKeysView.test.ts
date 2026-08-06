@@ -61,7 +61,7 @@ vi.mock('@/components/ui/badge', () => ({
 }))
 
 vi.mock('@/components/ui/skeleton', () => ({
-  Skeleton: { props: ['class'], template: '<div :class="class" data-testid="skeleton" />' },
+  Skeleton: { template: '<div data-testid="skeleton" />' },
 }))
 
 vi.mock('vue-sonner', () => ({
@@ -168,6 +168,10 @@ describe('ApiKeysView', () => {
     resetMocks()
   })
 
+  afterEach(() => {
+    vi.useRealTimers()
+  })
+
   describe('Revoke button visibility', () => {
     it('renders Revoke only for ACTIVE keys and hides it for EXPIRED/REVOKED', () => {
       setKeys([activeKey, expiredKey, revokedKey])
@@ -260,6 +264,92 @@ describe('ApiKeysView', () => {
 
       expect(wrapper.find('[data-testid="revoke-dialog-name"]').text()).toBe(secondActive.name)
       expect(wrapper.find('[data-testid="revoke-dialog-prefix"]').text()).toBe(secondActive.keyPrefix)
+    })
+  })
+
+  describe('First-load skeleton minimum display', () => {
+    it('keeps the skeleton visible for at least 300ms when the query resolves quickly', async () => {
+      vi.useFakeTimers()
+
+      queryData.value = undefined
+      queryIsPending.value = true
+      queryIsError.value = false
+
+      const wrapper = mount(ApiKeysView)
+      expect(wrapper.find('[data-testid="skeleton"]').exists()).toBe(true)
+
+      vi.advanceTimersByTime(100)
+      queryIsPending.value = false
+      queryData.value = [activeKey]
+      await wrapper.vm.$nextTick()
+
+      expect(wrapper.find('[data-testid="skeleton"]').exists()).toBe(true)
+      expect(wrapper.find('tbody tr').exists()).toBe(false)
+
+      vi.advanceTimersByTime(250)
+      await wrapper.vm.$nextTick()
+
+      expect(wrapper.find('[data-testid="skeleton"]').exists()).toBe(false)
+      expect(wrapper.findAll('tbody tr')).toHaveLength(1)
+    })
+
+    it('does not show the skeleton during a background refetch when data is already cached', async () => {
+      vi.useFakeTimers()
+
+      queryData.value = [activeKey]
+      queryIsPending.value = true
+      queryIsError.value = false
+
+      const wrapper = mount(ApiKeysView)
+
+      expect(wrapper.find('[data-testid="skeleton"]').exists()).toBe(false)
+      expect(wrapper.findAll('tbody tr')).toHaveLength(1)
+    })
+
+    it('keeps the skeleton visible for at least 300ms when the query errors quickly', async () => {
+      vi.useFakeTimers()
+
+      queryData.value = undefined
+      queryIsPending.value = true
+      queryIsError.value = false
+
+      const wrapper = mount(ApiKeysView)
+      expect(wrapper.find('[data-testid="skeleton"]').exists()).toBe(true)
+
+      vi.advanceTimersByTime(100)
+      queryIsPending.value = false
+      queryIsError.value = true
+      await wrapper.vm.$nextTick()
+
+      // Error state must not preempt the 300ms skeleton window.
+      expect(wrapper.find('[data-testid="skeleton"]').exists()).toBe(true)
+
+      vi.advanceTimersByTime(250)
+      await wrapper.vm.$nextTick()
+
+      expect(wrapper.find('[data-testid="skeleton"]').exists()).toBe(false)
+      expect(wrapper.text()).toContain('Failed to load API keys')
+    })
+  })
+
+  describe('Accessibility', () => {
+    it('renders a visually hidden table caption for screen readers', () => {
+      setKeys([activeKey])
+      const wrapper = mount(ApiKeysView)
+
+      const caption = wrapper.find('caption')
+      expect(caption.exists()).toBe(true)
+      expect(caption.text()).toBe('API keys')
+      expect(caption.classes()).toContain('sr-only')
+    })
+
+    it('adds a descriptive aria-label to each Revoke button', () => {
+      setKeys([activeKey])
+      const wrapper = mount(ApiKeysView)
+
+      const revokeButton = wrapper.findAll('button').find((b) => b.text().includes('Revoke'))
+      expect(revokeButton).toBeDefined()
+      expect(revokeButton!.attributes('aria-label')).toBe(`Revoke ${activeKey.name}`)
     })
   })
 })

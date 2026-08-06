@@ -4,8 +4,8 @@
  * Verifies that error codes are properly extracted from ofetch errors
  * and mapped to user-friendly messages.
  */
-import { describe, it, expect } from 'vite-plus/test'
-import { isApiError, mapApiErrorCode, getErrorMessage } from '@/lib/utils'
+import { describe, it, expect, vi, beforeEach, afterEach } from 'vite-plus/test'
+import { isApiError, mapApiErrorCode, getErrorMessage, getRetryAfterSeconds } from '@/lib/utils'
 
 describe('api-error', () => {
   describe('isApiError', () => {
@@ -124,6 +124,114 @@ describe('api-error', () => {
       expect(getErrorMessage(null)).toBe('An unexpected error occurred. Please try again later.')
       expect(getErrorMessage(undefined)).toBe('An unexpected error occurred. Please try again later.')
       expect(getErrorMessage({})).toBe('An unexpected error occurred. Please try again later.')
+    })
+  })
+
+  describe('getRetryAfterSeconds', () => {
+    beforeEach(() => {
+      vi.useFakeTimers()
+      vi.setSystemTime(new Date('2026-08-07T12:00:00Z'))
+    })
+    afterEach(() => {
+      vi.useRealTimers()
+    })
+
+    function makeHeaderError(headerValue: string | null): unknown {
+      return {
+        statusCode: 429,
+        response: {
+          status: 429,
+          headers: {
+            get: (name: string) => (name.toLowerCase() === 'retry-after' ? headerValue : null),
+          },
+        },
+      }
+    }
+
+    it('reads delta-seconds from the Retry-After header', () => {
+      expect(getRetryAfterSeconds(makeHeaderError('60'))).toBe(60)
+      expect(getRetryAfterSeconds(makeHeaderError('0'))).toBeNull()
+      expect(getRetryAfterSeconds(makeHeaderError('  120  '))).toBe(120)
+    })
+
+    it('reads an HTTP-date from the Retry-After header', () => {
+      // 90 seconds in the future -> ceil(90) = 90
+      const future = new Date('2026-08-07T12:01:30Z').toUTCString()
+      expect(getRetryAfterSeconds(makeHeaderError(future))).toBe(90)
+    })
+
+    it('returns null for a past HTTP-date header', () => {
+      const past = new Date('2026-08-07T11:00:00Z').toUTCString()
+      expect(getRetryAfterSeconds(makeHeaderError(past))).toBeNull()
+    })
+
+    it('reads a future retryAfter Instant from the error body', () => {
+      const error = {
+        statusCode: 429,
+        data: { retryAfter: '2026-08-07T12:02:00Z' },
+      }
+      expect(getRetryAfterSeconds(error)).toBe(120)
+    })
+
+    it('returns null for a past retryAfter body Instant', () => {
+      const error = {
+        statusCode: 429,
+        data: { retryAfter: '2026-08-07T11:00:00Z' },
+      }
+      expect(getRetryAfterSeconds(error)).toBeNull()
+    })
+
+    it('prefers the header over the body when both are present', () => {
+      const error = {
+        statusCode: 429,
+        response: {
+          headers: {
+            get: (name: string) => (name.toLowerCase() === 'retry-after' ? '30' : null),
+          },
+        },
+        data: { retryAfter: '2026-08-07T12:05:00Z' },
+      }
+      expect(getRetryAfterSeconds(error)).toBe(30)
+    })
+
+    it('falls back to the body when the header is absent', () => {
+      const error = {
+        statusCode: 429,
+        response: { headers: { get: () => null } },
+        data: { retryAfter: '2026-08-07T12:01:00Z' },
+      }
+      expect(getRetryAfterSeconds(error)).toBe(60)
+    })
+
+    it('returns null when neither source is present', () => {
+      expect(getRetryAfterSeconds({ statusCode: 429, data: { code: 'RATE_LIMIT_001' } })).toBeNull()
+      expect(getRetryAfterSeconds(makeHeaderError(null))).toBeNull()
+      expect(getRetryAfterSeconds(makeHeaderError(''))).toBeNull()
+    })
+
+    it('returns null for malformed inputs', () => {
+      expect(getRetryAfterSeconds(makeHeaderError('not-a-date'))).toBeNull()
+      expect(getRetryAfterSeconds(makeHeaderError('-5'))).toBeNull()
+      expect(getRetryAfterSeconds(makeHeaderError('1.5'))).toBeNull()
+      expect(getRetryAfterSeconds({ data: { retryAfter: 'garbage' } })).toBeNull()
+      expect(getRetryAfterSeconds({ data: { retryAfter: 123 } })).toBeNull()
+    })
+
+    it('never throws on unexpected shapes', () => {
+      const throwingHeaders = {
+        get: () => {
+          throw new Error('boom')
+        },
+      }
+      expect(getRetryAfterSeconds({ response: { headers: throwingHeaders } })).toBeNull()
+      expect(getRetryAfterSeconds(null)).toBeNull()
+      expect(getRetryAfterSeconds(undefined)).toBeNull()
+      expect(getRetryAfterSeconds('string')).toBeNull()
+      expect(getRetryAfterSeconds(42)).toBeNull()
+      expect(getRetryAfterSeconds({})).toBeNull()
+      expect(getRetryAfterSeconds({ response: {} })).toBeNull()
+      expect(getRetryAfterSeconds({ response: { headers: {} } })).toBeNull()
+      expect(getRetryAfterSeconds({ response: { headers: { get: 'not-a-fn' } } })).toBeNull()
     })
   })
 })
