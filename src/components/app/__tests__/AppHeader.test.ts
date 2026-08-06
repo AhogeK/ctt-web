@@ -2,6 +2,7 @@ import { describe, it, expect, vi, beforeEach } from 'vite-plus/test'
 import { mount } from '@vue/test-utils'
 import { ref } from 'vue'
 import AppHeader from '../AppHeader.vue'
+import { RouteNames } from '@/router/route-names'
 
 /**
  * Mock the auth store at module level. Both AppHeader and UserAvatar call
@@ -80,13 +81,15 @@ vi.mock('@lucide/vue', () => ({
   Sun: { name: 'Sun', template: '<svg data-testid="icon-sun" />' },
   Moon: { name: 'Moon', template: '<svg data-testid="icon-moon" />' },
   Monitor: { name: 'Monitor', template: '<svg data-testid="icon-monitor" />' },
+  Settings: { name: 'Settings', template: '<svg data-testid="icon-settings" />' },
+  LogOut: { name: 'LogOut', template: '<svg data-testid="icon-logout" />' },
+  Loader2: { name: 'Loader2', template: '<svg data-testid="icon-loader" />' },
 }))
 
-// Defensive stub: AppHeader itself does not import vue-router, but Reka UI
-// (used by the Tooltip / DropdownMenu wrappers) may transitively touch it.
-// Stubbing keeps the mount isolated from the real router instance.
+const mockRouterPush = vi.hoisted(() => vi.fn<(...args: unknown[]) => unknown>())
+
 vi.mock('vue-router', () => ({
-  useRouter: () => ({ push: vi.fn<(...args: unknown[]) => unknown>() }),
+  useRouter: () => ({ push: mockRouterPush }),
   useRoute: () => ({ query: {} }),
   RouterLink: { template: '<a><slot /></a>' },
 }))
@@ -104,7 +107,9 @@ vi.mock('vue-router', () => ({
  * - DropdownMenuItem is slot-free; the "no old-style Logout button" test
  *   asserts that no top-level header button claims "logout".
  */
-const mountAppHeader = () =>
+type StubOverrides = Record<string, unknown>
+
+const mountAppHeader = (overrides: { stubs?: StubOverrides } = {}) =>
   mount(AppHeader, {
     global: {
       stubs: {
@@ -136,6 +141,7 @@ const mountAppHeader = () =>
           template: '<div data-testid="dropdown-radio-item" :data-value="value"><slot /></div>',
         },
         UserAvatar: { template: '<div data-testid="user-avatar" />' },
+        ...overrides.stubs,
       },
     },
   })
@@ -296,6 +302,47 @@ describe('AppHeader', () => {
     const trigger = wrapper.find('[data-testid="dropdown-sub-trigger"]')
     expect(trigger.find('[data-testid="icon-sun"]').exists()).toBe(true)
     expect(trigger.find('[data-testid="appearance-current"]').text()).toBe('Light')
+
+    wrapper.unmount()
+  })
+
+  it('renders a Settings item in the avatar dropdown', () => {
+    const wrapper = mountAppHeader({
+      stubs: {
+        DropdownMenuItem: {
+          props: ['disabled'],
+          template: '<button data-testid="dropdown-menu-item"><slot /></button>',
+        },
+      },
+    })
+
+    const items = wrapper.findAll('[data-testid="dropdown-menu-item"]')
+    const settingsItem = items.find((el) => el.text().includes('Settings'))
+    expect(settingsItem).toBeDefined()
+    expect(settingsItem!.find('[data-testid="icon-settings"]').exists()).toBe(true)
+
+    wrapper.unmount()
+  })
+
+  it('navigates to the API keys settings route when the Settings item is selected', async () => {
+    const wrapper = mountAppHeader({
+      stubs: {
+        DropdownMenuItem: {
+          props: ['disabled'],
+          template: '<button data-testid="dropdown-menu-item" @click="$emit(\'select\', $event)"><slot /></button>',
+        },
+      },
+    })
+
+    const settingsItem = wrapper
+      .findAll('[data-testid="dropdown-menu-item"]')
+      .find((el) => el.text().includes('Settings'))
+    expect(settingsItem).toBeDefined()
+
+    await settingsItem!.trigger('click')
+
+    expect(mockRouterPush).toHaveBeenCalledTimes(1)
+    expect(mockRouterPush).toHaveBeenCalledWith({ name: RouteNames.SETTINGS_API_KEYS })
 
     wrapper.unmount()
   })

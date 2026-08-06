@@ -35,7 +35,7 @@ import {
   type ApiKeyScope,
   type CreateApiKeyResponse,
 } from '@/lib/schemas/api-key.schema'
-import { extractErrorCode, getErrorMessage } from '@/lib/utils/api-error'
+import { extractErrorCode, getErrorMessage, getRetryAfterSeconds } from '@/lib/utils/api-error'
 import { useCreateApiKey } from '@/composables/useApiKeys'
 
 const props = defineProps<{
@@ -143,6 +143,20 @@ const onSubmit = form.handleSubmit((values) => {
         limitError.value =
           'You have reached the maximum of 20 API keys. Revoke an unused key before creating a new one.'
       } else {
+        // 429 RATE_LIMIT_001: show a countdown when timing info is available
+        // (HTTP Retry-After header OR a retryAfter Instant in the body), else
+        // fall back to the static mapped message. The create endpoint sends
+        // neither today, so most users see the static text; other endpoints
+        // that add timing light up automatically. Form stays open either way.
+        if (code === 'RATE_LIMIT_001') {
+          const seconds = getRetryAfterSeconds(error)
+          if (seconds !== null) {
+            toast.error('Failed to create API key', {
+              description: `Please try again in ${seconds}s.`,
+            })
+            return
+          }
+        }
         toast.error('Failed to create API key', {
           description: getErrorMessage(error),
         })

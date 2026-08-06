@@ -15,9 +15,11 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu'
 import { SidebarTrigger, useSidebar } from '@/components/ui/sidebar'
-import { LogOut, Loader2, Sun, Moon, Monitor } from '@lucide/vue'
+import { LogOut, Loader2, Sun, Moon, Monitor, Settings } from '@lucide/vue'
+import { useRouter } from 'vue-router'
 import { useAuthStore } from '@/stores/auth'
 import { useThemeStore, type ThemeMode } from '@/stores/theme'
+import { RouteNames } from '@/router/route-names'
 import UserAvatar from './UserAvatar.vue'
 
 /**
@@ -40,6 +42,7 @@ import UserAvatar from './UserAvatar.vue'
  */
 const authStore = useAuthStore()
 const themeStore = useThemeStore()
+const router = useRouter()
 const { isMobile } = useSidebar()
 const isLoggingOut = ref(false)
 
@@ -121,6 +124,10 @@ function handleThemeChange(value: unknown): void {
   }
 }
 
+function navigateToSettings(): void {
+  router.push({ name: RouteNames.SETTINGS_API_KEYS })
+}
+
 async function handleLogout(): Promise<void> {
   if (isLoggingOut.value) return
   isLoggingOut.value = true
@@ -186,6 +193,11 @@ async function handleLogout(): Promise<void> {
                     </DropdownMenuRadioGroup>
                   </DropdownMenuSubContent>
                 </DropdownMenuSub>
+                <DropdownMenuSeparator />
+                <DropdownMenuItem @select="navigateToSettings">
+                  <Settings class="mr-2 h-4 w-4" />
+                  <span>Settings</span>
+                </DropdownMenuItem>
                 <DropdownMenuSeparator />
                 <DropdownMenuItem :disabled="isLoggingOut" @select="handleLogout">
                   <Loader2 v-if="isLoggingOut" class="mr-2 h-4 w-4 animate-spin" />
