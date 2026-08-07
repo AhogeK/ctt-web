@@ -50,8 +50,16 @@ vi.mock('@/components/ui/input', () => ({
   },
 }))
 
-vi.mock('@/components/ui/label', () => ({
-  Label: { template: '<label><slot /></label>' },
+vi.mock('@/components/ui/form', () => ({
+  FormField: {
+    props: ['name'],
+    template:
+      '<div><slot v-bind="{ componentField: { value: \'\', onInput: () => {}, onChange: () => {}, onBlur: () => {} } }" /></div>',
+  },
+  FormItem: { template: '<div><slot /></div>' },
+  FormLabel: { template: '<label><slot /></label>' },
+  FormControl: { template: '<div><slot /></div>' },
+  FormMessage: { template: '<p><slot /></p>' },
 }))
 
 vi.mock('@/lib/utils', () => ({
@@ -74,16 +82,6 @@ const mockHandleSubmit = vi.hoisted(() => vi.fn<(...args: unknown[]) => unknown>
 vi.mock('vee-validate', () => ({
   useForm: vi.fn<() => unknown>(() => ({
     handleSubmit: mockHandleSubmit,
-    defineField: vi.fn<(name: string) => unknown[]>((name: string) => {
-      return [
-        {
-          value: ref(name === 'email' ? 'new@example.com' : ''),
-          onBlur: vi.fn<() => void>(),
-          'onUpdate:modelValue': vi.fn<(value: string) => void>(),
-        },
-        {},
-      ]
-    }),
     errors: ref({}),
     resetForm: mockResetForm,
   })),

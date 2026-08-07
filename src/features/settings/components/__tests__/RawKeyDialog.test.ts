@@ -35,12 +35,13 @@ vi.mock('@/components/ui/dialog', () => ({
   },
   DialogContent: {
     props: ['showCloseButton'],
-    template: '<div data-testid="dialog-content" :data-show-close-button="showCloseButton"><slot /></div>',
+    template:
+      '<div data-testid="dialog-content" :data-show-close-button="showCloseButton" v-bind="$attrs"><slot /></div>',
   },
-  DialogDescription: { template: '<div data-testid="dialog-description"><slot /></div>' },
+  DialogDescription: { template: '<div data-testid="dialog-description" v-bind="$attrs"><slot /></div>' },
   DialogFooter: { template: '<div data-testid="dialog-footer"><slot /></div>' },
   DialogHeader: { template: '<div data-testid="dialog-header"><slot /></div>' },
-  DialogTitle: { template: '<div data-testid="dialog-title"><slot /></div>' },
+  DialogTitle: { template: '<div data-testid="dialog-title" v-bind="$attrs"><slot /></div>' },
 }))
 
 vi.mock('@/lib/utils', () => ({
@@ -69,6 +70,15 @@ describe('RawKeyDialog', () => {
     const wrapper = createWrapper()
     const input = wrapper.find('input')
     expect((input.element as HTMLInputElement).value).toBe(RAW_KEY)
+  })
+
+  it('labels the alertdialog via aria-labelledby/aria-describedby pointing at title/description ids', () => {
+    const wrapper = createWrapper()
+    const content = wrapper.find('[data-testid="dialog-content"]')
+    expect(content.attributes('aria-labelledby')).toBe('raw-key-dialog-title')
+    expect(content.attributes('aria-describedby')).toBe('raw-key-dialog-description')
+    expect(wrapper.find('#raw-key-dialog-title').exists()).toBe(true)
+    expect(wrapper.find('#raw-key-dialog-description').exists()).toBe(true)
   })
 
   it('shows the one-time warning text', () => {

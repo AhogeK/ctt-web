@@ -60,6 +60,18 @@ vi.mock('@/components/ui/label', () => ({
   Label: { template: '<label><slot /></label>' },
 }))
 
+vi.mock('@/components/ui/form', () => ({
+  FormField: {
+    props: ['name'],
+    template:
+      '<div><slot v-bind="{ componentField: { value: \'\', onInput: () => {}, onChange: () => {}, onBlur: () => {} } }" /></div>',
+  },
+  FormItem: { template: '<div><slot /></div>' },
+  FormLabel: { template: '<label><slot /></label>' },
+  FormControl: { template: '<div><slot /></div>' },
+  FormMessage: { template: '<p><slot /></p>' },
+}))
+
 vi.mock('@/components/ui/checkbox', () => ({
   Checkbox: {
     props: ['checked'],
@@ -94,14 +106,6 @@ vi.mock('@/lib/utils/api-error', () => ({
 vi.mock('vee-validate', () => ({
   useForm: vi.fn<() => unknown>(() => ({
     handleSubmit: mockHandleSubmit,
-    defineField: vi.fn<(name: string) => unknown[]>((name: string) => [
-      {
-        value: ref(name === 'name' ? 'My Key' : undefined),
-        onBlur: vi.fn<() => void>(),
-        'onUpdate:modelValue': vi.fn<(value: unknown) => void>(),
-      },
-      {},
-    ]),
     values: { name: 'My Key', scopes: ['READ', 'SYNC'], expiresAt: undefined },
     errors: ref({}),
     resetForm: mockResetForm,
