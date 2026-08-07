@@ -29,6 +29,9 @@ export default defineConfig({
     actionTimeout: 0,
     /* Base URL to use in actions like `await page.goto('/')`. */
     baseURL: process.env.CI ? 'http://localhost:4173' : 'http://localhost:5173',
+    /* Desktop 1080p viewport: the app sidebar overlays content at narrower
+     * widths in headless hit-testing, which breaks clicks on content rows. */
+    viewport: { width: 1920, height: 1080 },
 
     trace: 'on-first-retry',
     video: 'retain-on-failure',
@@ -96,7 +99,7 @@ export default defineConfig({
      * Use the preview server on CI for more realistic testing.
      * Playwright will re-use the local server if there is already a dev-server running.
      */
-    command: process.env.CI ? 'npm run preview' : 'npm run dev',
+    command: process.env.CI ? 'pnpm run preview' : 'pnpm run dev',
     port: process.env.CI ? 4173 : 5173,
     reuseExistingServer: !process.env.CI,
   },
