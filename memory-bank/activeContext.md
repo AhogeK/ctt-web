@@ -2,10 +2,23 @@
 
 ## Current Status
 
-**Phase**: v0.15.x API Key Management (Responsive)
-**Version**: 0.15.0 (2026-08-07)
+**Phase**: v0.15.1 API Key Test Coverage (E2E + bug fixes)
+**Version**: 0.15.1 (2026-08-07)
 **Branch**: develop
-**Tests**: 1008/1008 pass (58 files); `pnpm build` (type-check + build-only) exit 0
+**Tests**: 1026/1026 unit (61 files) + 13/13 API-key E2E; `pnpm build` (type-check + build-only) exit 0
+
+## Recent Activity (v0.15.1 — 2026-08-07)
+
+### API Key E2E Suite + Production Bug Fixes
+
+- **E2E suite created** (e2e/api-keys/, 7 files): fixtures.ts + helpers.ts (mutable-state page.route mocks, okEnvelope) + 5 specs: list (empty/3-key table/ACTIVE-only Revoke), create (full flow incl. copy-gated close), revoke (confirm→REVOKED→button gone), errors (409 banner+form preserved, 429 toast, 401 AUTH_010 toast + NOT logged out), rawkey-dialog (Esc/overlay no-close, copy-gated close). 13/13 pass (chromium).
+- **BUG FIX 1 (blocking, pre-existing since v0.12.0)**: CreateApiKeyDialog Name field bound via `v-bind="form.defineField('name')[0]"` — with the Input component's passive `useVModel`, input values never synced to the vee-validate model → "Name is required" forever → create-key feature was unusable. Fixed by switching to the standard `FormField + componentField` pattern (same as LoginForm) + removing `passive: true` from ui/input/Input.vue.
+- **BUG FIX 2 (same class, v0.10.x regressions)**: SetPasswordDialog + EmailChangeDialog used the same broken defineField binding — input never synced to the vee-validate model, so OAuth password-set and email-change forms were unusable (mocks masked it: they stubbed `onUpdate:modelValue` which real defineField never emits). Fixed both to FormField + componentField; mocks updated to ui/form stubs + real-vee-validate integration tests added (CreateApiKeyDialog.form.test.ts) so this binding class is now regression-guarded.
+- **E2E infra fixes**: playwright.config webServer command npm→pnpm (EBADDEVENGINES), viewport 1920×1080 (sidebar hit-test overlap in headless at 1280), native el.click() for content buttons (sidebar overlay intercepts pointer events in headless).
+- **Test updates**: CreateApiKeyDialog.test.ts added ui/form stubs; useApiKeys.test.ts +5 (useApiKeys query key/staleTime/listApiKeys, useCreateApiKey payload/invalidate/no-invalidate-on-error); RawKeyDialog.test.ts +1 (aria-labelledby/aria-describedby explicit assertion via $attrs pass-through mock); errors.spec.ts +1 (countdown toast when 429 body carries retryAfter instant — future-proof path now E2E-covered).
+- **Round review fixes (dual-axis)**: +3 createApiKey unit tests (api-keys.test.ts — POST URL/body incl. optional expiresAt, envelope parse, AUTH_014 propagation); errors.spec.ts cleaned (removed dead `type Page` import + `export type { Page }`, replaced inline GET fulfill with `route.fallback()` → setup handler); helpers.ts submitCreateForm comment corrected (no longer references removed passive useVModel). RevokeApiKeyDialog double-click idempotency: NOT added — test already existed (lines 189-203, pending-guard verification); Spec-axis finding was stale.
+- **Round-2 review fixes (user-mandated "fix all findings")**: (1) removed dead `defineField` mock from CreateApiKeyDialog.test.ts (standards-axis hard violation — component migrated to FormField, mock never called); (2) removed dead re-export `export { TEST_RAW_KEY, AUTH_014_BODY, ... }` from e2e/api-keys/helpers.ts (all specs already import from fixtures.js directly); (3) removed `as never` type escapes in useApiKeys.test.ts (typed `const request: CreateApiKeyRequest`); (4) added real-form integration tests for the two other bug-fixed dialogs — SetPasswordDialog.form.test.ts + EmailChangeDialog.form.test.ts (+6 total: empty-field schema error, typed-value→model sync, mismatch error, USER_013 password field sync) since the unit mocks cannot guard the binding class. Rejected with justification: ui/form mock block duplication across 3 test files (Vitest hoisting makes shared stubs cost > 15-line duplication; per-file self-contained mocks are community convention, not logic redundancy).
+- Version 0.15.0 → 0.15.1 (bug fixes → PATCH).
 
 ## Recent Activity (v0.15.0 — 2026-08-07)
 
