@@ -28,6 +28,7 @@ import {
 } from '@/components/ui/dialog'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
+import { FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form'
 import { cn } from '@/lib/utils'
 import {
   CreateApiKeyRequestSchema,
@@ -214,33 +215,32 @@ watch(
         </div>
 
         <!-- Name -->
-        <div class="flex flex-col gap-2">
-          <Label
-            for="api-key-name"
-            class="text-sm font-[510] text-muted-foreground [font-feature-settings:'cv01'_'ss03']"
-          >
-            Name
-          </Label>
-          <Input
-            id="api-key-name"
-            type="text"
-            maxlength="100"
-            placeholder="e.g. MacBook Pro - IntelliJ IDEA"
-            :class="
-              cn(
-                'h-10 rounded-md border border-input bg-muted text-foreground',
-                'placeholder:text-muted-foreground transition-all duration-200',
-                'focus:border-primary focus:bg-card focus:ring-2 focus:ring-primary/20',
-                'dark:border-border dark:bg-secondary dark:text-foreground dark:placeholder:text-muted-foreground/70',
-                'dark:focus:border-primary dark:focus:bg-card dark:focus:ring-primary/25',
-              )
-            "
-            v-bind="form.defineField('name')[0]"
-          />
-          <p v-if="form.errors.value.name" class="text-sm text-destructive">
-            {{ form.errors.value.name }}
-          </p>
-        </div>
+        <FormField v-slot="{ componentField }" name="name">
+          <FormItem>
+            <FormLabel class="text-sm font-[510] text-muted-foreground [font-feature-settings:'cv01'_'ss03']">
+              Name
+            </FormLabel>
+            <FormControl>
+              <Input
+                id="api-key-name"
+                type="text"
+                maxlength="100"
+                placeholder="e.g. MacBook Pro - IntelliJ IDEA"
+                :class="
+                  cn(
+                    'h-10 rounded-md border border-input bg-muted text-foreground',
+                    'placeholder:text-muted-foreground transition-all duration-200',
+                    'focus:border-primary focus:bg-card focus:ring-2 focus:ring-primary/20',
+                    'dark:border-border dark:bg-secondary dark:text-foreground dark:placeholder:text-muted-foreground/70',
+                    'dark:focus:border-primary dark:focus:bg-card dark:focus:ring-primary/25',
+                  )
+                "
+                v-bind="componentField"
+              />
+            </FormControl>
+            <FormMessage v-if="form.errors.value.name" />
+          </FormItem>
+        </FormField>
 
         <!-- Scopes -->
         <div class="flex flex-col gap-2">

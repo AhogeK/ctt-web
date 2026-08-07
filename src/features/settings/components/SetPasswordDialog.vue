@@ -24,7 +24,7 @@ import {
   DialogTitle,
 } from '@/components/ui/dialog'
 import { Input } from '@/components/ui/input'
-import { Label } from '@/components/ui/label'
+import { FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form'
 import { cn } from '@/lib/utils'
 import { StrongPasswordSchema } from '@/lib/schemas/auth.schema'
 import { extractErrorCode } from '@/lib/utils/api-error'
@@ -116,61 +116,59 @@ watch(
       </DialogHeader>
 
       <form @submit="onSubmit" class="flex flex-col gap-4">
-        <div class="flex flex-col gap-2">
-          <Label
-            for="new-password"
-            class="text-sm font-[510] text-muted-foreground [font-feature-settings:'cv01'_'ss03']"
-          >
-            New Password
-          </Label>
-          <Input
-            id="new-password"
-            type="password"
-            placeholder="8-64 characters, printable ASCII only"
-            autocomplete="new-password"
-            :class="
-              cn(
-                'h-10 rounded-md border border-input bg-muted text-foreground',
-                'placeholder:text-muted-foreground transition-all duration-200',
-                'focus:border-primary focus:bg-card focus:ring-2 focus:ring-primary/20',
-                'dark:border-border dark:bg-secondary dark:text-foreground dark:placeholder:text-muted-foreground/70',
-                'dark:focus:border-primary dark:focus:bg-card dark:focus:ring-primary/25',
-              )
-            "
-            v-bind="form.defineField('newPassword')[0]"
-          />
-          <p v-if="form.errors.value.newPassword" class="text-sm text-destructive">
-            {{ form.errors.value.newPassword }}
-          </p>
-        </div>
+        <FormField v-slot="{ componentField }" name="newPassword">
+          <FormItem>
+            <FormLabel class="text-sm font-[510] text-muted-foreground [font-feature-settings:'cv01'_'ss03']">
+              New Password
+            </FormLabel>
+            <FormControl>
+              <Input
+                id="new-password"
+                type="password"
+                placeholder="8-64 characters, printable ASCII only"
+                autocomplete="new-password"
+                :class="
+                  cn(
+                    'h-10 rounded-md border border-input bg-muted text-foreground',
+                    'placeholder:text-muted-foreground transition-all duration-200',
+                    'focus:border-primary focus:bg-card focus:ring-2 focus:ring-primary/20',
+                    'dark:border-border dark:bg-secondary dark:text-foreground dark:placeholder:text-muted-foreground/70',
+                    'dark:focus:border-primary dark:focus:bg-card dark:focus:ring-primary/25',
+                  )
+                "
+                v-bind="componentField"
+              />
+            </FormControl>
+            <FormMessage v-if="form.errors.value.newPassword" />
+          </FormItem>
+        </FormField>
 
-        <div class="flex flex-col gap-2">
-          <Label
-            for="confirm-password"
-            class="text-sm font-[510] text-muted-foreground [font-feature-settings:'cv01'_'ss03']"
-          >
-            Confirm Password
-          </Label>
-          <Input
-            id="confirm-password"
-            type="password"
-            placeholder="Re-enter your password"
-            autocomplete="new-password"
-            :class="
-              cn(
-                'h-10 rounded-md border border-input bg-muted text-foreground',
-                'placeholder:text-muted-foreground transition-all duration-200',
-                'focus:border-primary focus:bg-card focus:ring-2 focus:ring-primary/20',
-                'dark:border-border dark:bg-secondary dark:text-foreground dark:placeholder:text-muted-foreground/70',
-                'dark:focus:border-primary dark:focus:bg-card dark:focus:ring-primary/25',
-              )
-            "
-            v-bind="form.defineField('confirmPassword')[0]"
-          />
-          <p v-if="form.errors.value.confirmPassword" class="text-sm text-destructive">
-            {{ form.errors.value.confirmPassword }}
-          </p>
-        </div>
+        <FormField v-slot="{ componentField }" name="confirmPassword">
+          <FormItem>
+            <FormLabel class="text-sm font-[510] text-muted-foreground [font-feature-settings:'cv01'_'ss03']">
+              Confirm Password
+            </FormLabel>
+            <FormControl>
+              <Input
+                id="confirm-password"
+                type="password"
+                placeholder="Re-enter your password"
+                autocomplete="new-password"
+                :class="
+                  cn(
+                    'h-10 rounded-md border border-input bg-muted text-foreground',
+                    'placeholder:text-muted-foreground transition-all duration-200',
+                    'focus:border-primary focus:bg-card focus:ring-2 focus:ring-primary/20',
+                    'dark:border-border dark:bg-secondary dark:text-foreground dark:placeholder:text-muted-foreground/70',
+                    'dark:focus:border-primary dark:focus:bg-card dark:focus:ring-primary/25',
+                  )
+                "
+                v-bind="componentField"
+              />
+            </FormControl>
+            <FormMessage v-if="form.errors.value.confirmPassword" />
+          </FormItem>
+        </FormField>
 
         <div v-if="errorMessage" class="rounded-md bg-destructive/10 p-3">
           <p class="text-sm text-destructive">{{ errorMessage }}</p>
