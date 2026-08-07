@@ -42,6 +42,86 @@ describe('api-keys API', () => {
     })
   })
 
+  describe('createApiKey', () => {
+    it('sends POST request with the create payload and returns the parsed response', async () => {
+      vi.mocked(apiFetch).mockResolvedValue({
+        success: true,
+        message: 'OK',
+        timestamp: '2026-07-09T10:31:00Z',
+        data: {
+          rawKey: 'cttak_raw_secret_once',
+          apiKey: {
+            id: 'key-2',
+            name: 'New Key',
+            keyPrefix: 'cttak_ef012345',
+            scopes: ['READ', 'WRITE'],
+            lastUsedAt: null,
+            expiresAt: null,
+            revokedAt: null,
+            createdAt: '2026-07-09T10:31:00Z',
+            status: 'ACTIVE',
+          },
+        },
+      })
+
+      const result = await apiKeysApi.createApiKey({
+        name: 'New Key',
+        scopes: ['READ', 'WRITE'],
+      })
+
+      expect(apiFetch).toHaveBeenCalledWith('/api/v1/auth/api-keys', {
+        method: 'POST',
+        body: { name: 'New Key', scopes: ['READ', 'WRITE'] },
+      })
+      expect(result.rawKey).toBe('cttak_raw_secret_once')
+      expect(result.apiKey.id).toBe('key-2')
+    })
+
+    it('includes the optional expiresAt in the request body when provided', async () => {
+      const expiresAt = '2030-01-01T00:00:00Z'
+      vi.mocked(apiFetch).mockResolvedValue({
+        success: true,
+        message: 'OK',
+        timestamp: '2026-07-09T10:31:00Z',
+        data: {
+          rawKey: 'cttak_raw_secret_once',
+          apiKey: {
+            id: 'key-3',
+            name: 'Expiring Key',
+            keyPrefix: 'cttak_12345678',
+            scopes: ['READ'],
+            lastUsedAt: null,
+            expiresAt,
+            revokedAt: null,
+            createdAt: '2026-07-09T10:31:00Z',
+            status: 'ACTIVE',
+          },
+        },
+      })
+
+      await apiKeysApi.createApiKey({
+        name: 'Expiring Key',
+        scopes: ['READ'],
+        expiresAt,
+      })
+
+      expect(apiFetch).toHaveBeenCalledWith('/api/v1/auth/api-keys', {
+        method: 'POST',
+        body: { name: 'Expiring Key', scopes: ['READ'], expiresAt },
+      })
+    })
+
+    it('propagates AUTH_014 (key limit) error from ofetch without catching', async () => {
+      const limitError = {
+        statusCode: 409,
+        data: { code: 'AUTH_014', message: 'API key limit reached' },
+      }
+      vi.mocked(apiFetch).mockRejectedValue(limitError)
+
+      await expect(apiKeysApi.createApiKey({ name: 'X', scopes: ['READ'] })).rejects.toEqual(limitError)
+    })
+  })
+
   describe('revokeApiKey', () => {
     it('sends DELETE request to /api/v1/auth/api-keys/{id}', async () => {
       vi.mocked(apiFetch).mockResolvedValue(undefined)
