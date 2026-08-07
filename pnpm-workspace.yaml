@@ -36,3 +36,7 @@ peerDependencyRules:
   allowedVersions:
     vite: '*'
     vitest: '*'
+    # @vee-validate/zod still declares zod ^3.24.0, but zod 4 is a superset
+    # (v3 API preserved) and the real-form integration tests exercise the
+    # toTypedSchema chain against zod 4 — declaration lag, not a conflict.
+    zod: '^4.4.3'
