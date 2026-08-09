@@ -29,9 +29,12 @@ export const ApiKeySchema = z.object({
   name: z.string(),
   keyPrefix: z.string(),
   scopes: z.array(ApiKeyScopeEnum),
-  lastUsedAt: z.string().nullable(),
-  expiresAt: z.string().nullable(),
-  revokedAt: z.string().nullable(),
+  // .default(null): backend serializes null fields as ABSENT (Jackson
+  // default-property-inclusion: non_null), so these keys are undefined in
+  // the JSON payload — nullable() alone would throw on undefined.
+  lastUsedAt: z.string().nullable().default(null),
+  expiresAt: z.string().nullable().default(null),
+  revokedAt: z.string().nullable().default(null),
   createdAt: z.string(),
   status: ApiKeyStatusEnum,
 })

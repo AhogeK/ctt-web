@@ -24,9 +24,11 @@ export const OAuthAccountBindingSchema = z.object({
   // (google, gitlab) will be added server-side without a schema bump.
   provider: z.string().min(1, 'Provider is required'),
   // Login handle on the provider side (nullable per server contract).
-  providerLogin: z.string().nullable(),
+  // .default(null): backend omits null fields (Jackson non_null), so these
+  // keys arrive as undefined — nullable() alone would throw.
+  providerLogin: z.string().nullable().default(null),
   // Email on the provider side (nullable per server contract).
-  providerEmail: z.string().nullable(),
+  providerEmail: z.string().nullable().default(null),
   // Binding creation timestamp in ISO 8601 format.
   createdAt: z.iso.datetime(),
   // Last refresh/update timestamp in ISO 8601 format.
