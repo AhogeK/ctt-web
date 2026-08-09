@@ -2,10 +2,20 @@
 
 ## Current Status
 
-**Phase**: v0.15.5 API-key schema NON_NULL fix (real-integration)
-**Version**: 0.15.5 (2026-08-09)
+**Phase**: v0.16.0 API Key permanent delete
+**Version**: 0.16.0 (2026-08-10)
 **Branch**: develop
-**Tests**: 1029/1029 unit (61 files) + 13/13 API-key E2E; `pnpm build` (type-check + build-only) exit 0
+**Tests**: 1041/1041 unit (61 files) + 19/19 API-key E2E; `pnpm build` (type-check + build-only) exit 0
+
+## Recent Activity (v0.16.0 — 2026-08-10)
+
+### API Key permanent delete (REVOKED keys only)
+
+- **Feature**: REVOKED keys can now be permanently deleted (matches mainstream AI-platform UX; users can clean up dead rows). Backend delivered v0.41.0: `DELETE /api/v1/auth/api-keys/{id}/delete` → 204; only REVOKED keys allowed (409 AUTH_023); missing/foreign/already-deleted → 401 AUTH_010 (BOLA); audit via API_KEY_DELETED; JPA delete, no FK constraints.
+- **Frontend**: `deleteApiKey(id)` API (204 no-envelope, mirrors revokeApiKey); `useDeleteApiKey()` mutation (invalidates ['api-keys']); **shared `ConfirmApiKeyActionDialog.vue`** replacing the previously separate RevokeApiKeyDialog + DeleteApiKeyDialog (both were ~95% identical ~70-LOC shells; parameterised by title/description/labels/toast copy + passed mutation — extraction decided at 2 copies per review, not deferred to a 3rd); `ApiKeysView` shows Delete button only on REVOKED rows (desktop table + mobile cards); AUTH_023 mapped in api-error.ts; README API Key Management row updated (R4).
+- **Tests**: shared-dialog unit suite covers both revoke & delete configurations (13 cases incl. AUTH_023 error toast); ApiKeysView wiring tests migrated to shared-component stub (title prop distinguishes instances); E2E delete.spec.ts now 6 cases — happy flow, cancel, revoke→delete chained flow, AUTH_023 defensive toast, BOLA AUTH_010 toast (no logout), mobile-card view full flow. 1041/1041 unit, 19/19 E2E.
+- Design: ACTIVE/EXPIRED have NO delete path (revoke-first is the only route to removal; server enforces 409 AUTH_023 as second line).
+- Version 0.15.5 → 0.16.0 (new feature → MINOR).
 
 ## Recent Activity (v0.15.5 — 2026-08-09)
 
