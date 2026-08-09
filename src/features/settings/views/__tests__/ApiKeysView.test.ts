@@ -37,6 +37,14 @@ vi.mock('@/composables/useApiKeys', () => ({
       error: ref(null),
     },
   })),
+  useDeleteApiKey: vi.fn<() => unknown>(() => ({
+    mutation: {
+      mutate: mockMutate,
+      isPending: pendingState,
+      isError: ref(false),
+      error: ref(null),
+    },
+  })),
 }))
 
 vi.mock('@lucide/vue', () => ({
@@ -90,13 +98,17 @@ vi.mock('@/features/settings/components/RawKeyDialog.vue', () => ({
 
 // Named stub so tests can use findComponent({ name }) to emit update:open
 // for closing the dialog (exercises the stale-state cleanup in FIX 1).
-vi.mock('@/features/settings/components/RevokeApiKeyDialog.vue', () => ({
+// The title prop distinguishes the revoke instance from the delete instance
+// of the shared ConfirmApiKeyActionDialog.
+vi.mock('@/features/settings/components/ConfirmApiKeyActionDialog.vue', () => ({
   default: defineComponent({
-    name: 'RevokeApiKeyDialogStub',
-    props: ['open', 'apiKey'],
+    name: 'ConfirmApiKeyActionDialogStub',
+    props: ['open', 'apiKey', 'title'],
     emits: ['update:open'],
-    template:
-      '<div v-if="open" data-testid="revoke-dialog"><span data-testid="revoke-dialog-name">{{ apiKey?.name }}</span><span data-testid="revoke-dialog-prefix">{{ apiKey?.keyPrefix }}</span></div>',
+    template: `<div v-if="open" :data-testid="title === 'Delete API Key' ? 'delete-dialog' : 'revoke-dialog'">
+      <span :data-testid="title === 'Delete API Key' ? 'delete-dialog-name' : 'revoke-dialog-name'">{{ apiKey?.name }}</span>
+      <span :data-testid="title === 'Delete API Key' ? 'delete-dialog-prefix' : 'revoke-dialog-prefix'">{{ apiKey?.keyPrefix }}</span>
+    </div>`,
   }),
 }))
 
@@ -173,7 +185,7 @@ describe('ApiKeysView', () => {
   })
 
   describe('Revoke button visibility', () => {
-    it('renders Revoke only for ACTIVE keys and hides it for EXPIRED/REVOKED', () => {
+    it('renders Revoke only for ACTIVE keys, Delete for REVOKED, neither for EXPIRED', () => {
       setKeys([activeKey, expiredKey, revokedKey])
       const wrapper = mount(ApiKeysView)
 
@@ -185,8 +197,11 @@ describe('ApiKeysView', () => {
       const revokedRowButtons = rows[2]!.findAll('button')
 
       expect(activeRowButtons.some((b) => b.text().includes('Revoke'))).toBe(true)
+      expect(activeRowButtons.some((b) => b.text().includes('Delete'))).toBe(false)
       expect(expiredRowButtons.some((b) => b.text().includes('Revoke'))).toBe(false)
+      expect(expiredRowButtons.some((b) => b.text().includes('Delete'))).toBe(false)
       expect(revokedRowButtons.some((b) => b.text().includes('Revoke'))).toBe(false)
+      expect(revokedRowButtons.some((b) => b.text().includes('Delete'))).toBe(true)
     })
 
     it('renders no Revoke button when all keys are non-ACTIVE', () => {
@@ -195,6 +210,40 @@ describe('ApiKeysView', () => {
 
       const revokeButtons = wrapper.findAll('button').filter((b) => b.text().includes('Revoke'))
       expect(revokeButtons).toHaveLength(0)
+    })
+  })
+
+  describe('Delete dialog wiring', () => {
+    it('opens the delete dialog with the clicked REVOKED key name and prefix', async () => {
+      setKeys([revokedKey])
+      const wrapper = mount(ApiKeysView)
+
+      expect(wrapper.find('[data-testid="delete-dialog"]').exists()).toBe(false)
+
+      const deleteButton = wrapper.findAll('button').find((b) => b.text().includes('Delete'))
+      await deleteButton!.trigger('click')
+
+      const dialog = wrapper.find('[data-testid="delete-dialog"]')
+      expect(dialog.exists()).toBe(true)
+      expect(wrapper.find('[data-testid="delete-dialog-name"]').text()).toBe(revokedKey.name)
+      expect(wrapper.find('[data-testid="delete-dialog-prefix"]').text()).toBe(revokedKey.keyPrefix)
+    })
+
+    it('closes the delete dialog and clears the selected key on update:open false', async () => {
+      setKeys([revokedKey])
+      const wrapper = mount(ApiKeysView)
+
+      const deleteButton = wrapper.findAll('button').find((b) => b.text().includes('Delete'))
+      await deleteButton!.trigger('click')
+      expect(wrapper.find('[data-testid="delete-dialog"]').exists()).toBe(true)
+
+      // Close via the dialog stub; the selected key must be cleared so the
+      // dialog unmounts (no stale key lingers).
+      const dialogStub = wrapper.findComponent({ name: 'ConfirmApiKeyActionDialogStub' })
+      dialogStub.vm.$emit('update:open', false)
+      await wrapper.vm.$nextTick()
+
+      expect(wrapper.find('[data-testid="delete-dialog"]').exists()).toBe(false)
     })
   })
 
@@ -254,7 +303,7 @@ describe('ApiKeysView', () => {
       await firstRevoke.trigger('click')
       expect(wrapper.find('[data-testid="revoke-dialog-name"]').text()).toBe(activeKey.name)
 
-      const dialog = wrapper.findComponent({ name: 'RevokeApiKeyDialogStub' })
+      const dialog = wrapper.findComponent({ name: 'ConfirmApiKeyActionDialogStub' })
       dialog.vm.$emit('update:open', false)
       await wrapper.vm.$nextTick()
       expect(wrapper.find('[data-testid="revoke-dialog"]').exists()).toBe(false)

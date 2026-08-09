@@ -1,0 +1,151 @@
+import { test, expect } from '@playwright/test'
+import { setupApiKeysPage, fulfillError } from './helpers.js'
+import { TEST_ACTIVE_KEY, TEST_REVOKED_KEY, TEST_KEYS, AUTH_023_BODY, AUTH_010_BODY } from './fixtures.js'
+
+test.describe('API key permanent delete flow', () => {
+  test('deletes a REVOKED key after confirmation and the row disappears', async ({ page }) => {
+    await setupApiKeysPage(page, TEST_KEYS)
+
+    // Only the REVOKED row exposes a Delete button (ACTIVE row shows Revoke instead).
+    const revokedRow = page.getByTestId('api-key-table').locator('tbody tr').filter({ hasText: TEST_REVOKED_KEY.name })
+    const activeRow = page.getByTestId('api-key-table').locator('tbody tr').filter({ hasText: TEST_ACTIVE_KEY.name })
+    await expect(activeRow.getByRole('button', { name: `Delete ${TEST_ACTIVE_KEY.name}` })).toHaveCount(0)
+    await expect(revokedRow.getByRole('button', { name: `Delete ${TEST_REVOKED_KEY.name}` })).toHaveCount(1)
+
+    await revokedRow
+      .getByRole('button', { name: `Delete ${TEST_REVOKED_KEY.name}` })
+      .evaluate((el) => (el as HTMLElement).click())
+
+    // Confirmation dialog warns about permanence and shows the key identity.
+    const confirmDialog = page.getByRole('alertdialog')
+    await expect(confirmDialog).toBeVisible()
+    await expect(confirmDialog).toContainText(TEST_REVOKED_KEY.name)
+    await expect(confirmDialog).toContainText(TEST_REVOKED_KEY.keyPrefix)
+    await expect(confirmDialog).toContainText('cannot be recovered')
+
+    await confirmDialog.getByRole('button', { name: 'Delete permanently' }).click()
+
+    // Success toast + list refresh removes the row entirely.
+    await expect(page.getByText('API Key deleted')).toBeVisible()
+    await expect(
+      page.getByTestId('api-key-table').locator('tbody tr').filter({ hasText: TEST_REVOKED_KEY.name }),
+    ).toHaveCount(0)
+    // The ACTIVE row is untouched.
+    await expect(
+      page.getByTestId('api-key-table').locator('tbody tr').filter({ hasText: TEST_ACTIVE_KEY.name }),
+    ).toHaveCount(1)
+  })
+
+  test('cancel closes the dialog without deleting the key', async ({ page }) => {
+    await setupApiKeysPage(page, TEST_KEYS)
+
+    const revokedRow = page.getByTestId('api-key-table').locator('tbody tr').filter({ hasText: TEST_REVOKED_KEY.name })
+    await revokedRow
+      .getByRole('button', { name: `Delete ${TEST_REVOKED_KEY.name}` })
+      .evaluate((el) => (el as HTMLElement).click())
+
+    const confirmDialog = page.getByRole('alertdialog')
+    await expect(confirmDialog).toBeVisible()
+    await confirmDialog.getByRole('button', { name: 'Cancel' }).click()
+
+    await expect(confirmDialog).toHaveCount(0)
+    await expect(
+      page.getByTestId('api-key-table').locator('tbody tr').filter({ hasText: TEST_REVOKED_KEY.name }),
+    ).toHaveCount(1)
+  })
+
+  test('revokes then deletes an ACTIVE key end to end', async ({ page }) => {
+    await setupApiKeysPage(page, [TEST_ACTIVE_KEY])
+
+    // Revoke first: the ACTIVE row gains a Delete button once REVOKED.
+    const row = page.getByTestId('api-key-table').locator('tbody tr').filter({ hasText: TEST_ACTIVE_KEY.name })
+    await row
+      .getByRole('button', { name: `Revoke ${TEST_ACTIVE_KEY.name}` })
+      .evaluate((el) => (el as HTMLElement).click())
+    await page.getByRole('alertdialog').getByRole('button', { name: 'Revoke' }).click()
+    await expect(page.getByText('API Key revoked')).toBeVisible()
+    await expect(row).toContainText('REVOKED')
+    await expect(row.getByRole('button', { name: `Delete ${TEST_ACTIVE_KEY.name}` })).toHaveCount(1)
+
+    // Now permanently delete it: the row disappears entirely.
+    await row
+      .getByRole('button', { name: `Delete ${TEST_ACTIVE_KEY.name}` })
+      .evaluate((el) => (el as HTMLElement).click())
+    await page.getByRole('alertdialog').getByRole('button', { name: 'Delete permanently' }).click()
+    await expect(page.getByText('API Key deleted')).toBeVisible()
+    await expect(
+      page.getByTestId('api-key-table').locator('tbody tr').filter({ hasText: TEST_ACTIVE_KEY.name }),
+    ).toHaveCount(0)
+  })
+
+  test('shows the AUTH_023 toast when the server rejects a non-REVOKED delete', async ({ page }) => {
+    await setupApiKeysPage(page, TEST_KEYS)
+
+    // Defensive: the UI never offers Delete on ACTIVE keys, but a server
+    // rejection must still surface the mapped AUTH_023 message.
+    await page.route('**/api/v1/auth/api-keys/*/delete', async (route) => {
+      if (route.request().method() === 'DELETE') {
+        await fulfillError(route, 409, AUTH_023_BODY)
+        return
+      }
+      await route.fallback()
+    })
+
+    const row = page.getByTestId('api-key-table').locator('tbody tr').filter({ hasText: TEST_REVOKED_KEY.name })
+    await row
+      .getByRole('button', { name: `Delete ${TEST_REVOKED_KEY.name}` })
+      .evaluate((el) => (el as HTMLElement).click())
+    await page.getByRole('alertdialog').getByRole('button', { name: 'Delete permanently' }).click()
+
+    await expect(page.getByText('Only revoked API keys can be deleted', { exact: false })).toBeVisible()
+    // The dialog stays open and the row is untouched.
+    await expect(page.getByRole('alertdialog')).toBeVisible()
+    await expect(
+      page.getByTestId('api-key-table').locator('tbody tr').filter({ hasText: TEST_REVOKED_KEY.name }),
+    ).toHaveCount(1)
+  })
+
+  test('shows the BOLA toast on 401 AUTH_010 without logging out', async ({ page }) => {
+    await setupApiKeysPage(page, TEST_KEYS)
+
+    await page.route('**/api/v1/auth/api-keys/*/delete', async (route) => {
+      if (route.request().method() === 'DELETE') {
+        await fulfillError(route, 401, AUTH_010_BODY)
+        return
+      }
+      await route.fallback()
+    })
+
+    const row = page.getByTestId('api-key-table').locator('tbody tr').filter({ hasText: TEST_REVOKED_KEY.name })
+    await row
+      .getByRole('button', { name: `Delete ${TEST_REVOKED_KEY.name}` })
+      .evaluate((el) => (el as HTMLElement).click())
+    await page.getByRole('alertdialog').getByRole('button', { name: 'Delete permanently' }).click()
+
+    await expect(page.getByText('API key not found or no longer accessible.')).toBeVisible()
+    // The user is NOT logged out (AUTH_010 excluded from the logout path).
+    await expect(page).toHaveURL(/\/settings\/api-keys/)
+  })
+
+  test('mobile card view shows the Delete button on REVOKED keys', async ({ page }) => {
+    await page.setViewportSize({ width: 640, height: 900 })
+    await setupApiKeysPage(page, TEST_KEYS)
+
+    // Mobile renders cards instead of the table.
+    const card = page.getByTestId('api-key-card').filter({ hasText: TEST_REVOKED_KEY.name })
+    await expect(card).toBeVisible()
+    await expect(card.getByRole('button', { name: `Delete ${TEST_REVOKED_KEY.name}` })).toHaveCount(1)
+
+    // ACTIVE cards show Revoke, never Delete.
+    const activeCard = page.getByTestId('api-key-card').filter({ hasText: TEST_ACTIVE_KEY.name })
+    await expect(activeCard.getByRole('button', { name: `Delete ${TEST_ACTIVE_KEY.name}` })).toHaveCount(0)
+
+    // Full delete flow works from the card.
+    await card
+      .getByRole('button', { name: `Delete ${TEST_REVOKED_KEY.name}` })
+      .evaluate((el) => (el as HTMLElement).click())
+    await page.getByRole('alertdialog').getByRole('button', { name: 'Delete permanently' }).click()
+    await expect(page.getByText('API Key deleted')).toBeVisible()
+    await expect(page.getByTestId('api-key-card').filter({ hasText: TEST_REVOKED_KEY.name })).toHaveCount(0)
+  })
+})

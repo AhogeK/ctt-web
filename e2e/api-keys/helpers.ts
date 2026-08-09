@@ -63,6 +63,18 @@ export async function setupApiKeysPage(page: Page, initialKeys: ApiKeyFixture[] 
     await route.fulfill({ status: 204, body: '' })
   })
 
+  // Permanent delete: DELETE /api/v1/auth/api-keys/{id}/delete physically
+  // removes the key from the mocked list (row disappears on refetch).
+  await page.route('**/api/v1/auth/api-keys/*/delete', async (route) => {
+    if (route.request().method() !== 'DELETE') {
+      await route.fallback()
+      return
+    }
+    const id = route.request().url().split('/').at(-2) ?? ''
+    keys = keys.filter((k) => k.id !== id)
+    await route.fulfill({ status: 204, body: '' })
+  })
+
   await loginViaForm(page)
   await page.goto('/settings/api-keys')
   await expect(page.getByRole('heading', { name: 'API Keys' })).toBeVisible()

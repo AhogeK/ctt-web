@@ -86,6 +86,7 @@ export function mapApiErrorCode(code: string): string {
     AUTH_010: 'API key not found or no longer accessible.',
     AUTH_019: 'Terms of service have been updated. Please review and accept the new terms to continue.',
     AUTH_014: 'You have reached the maximum of 20 API keys. Revoke an unused key before creating a new one.',
+    AUTH_023: 'Only revoked API keys can be deleted. Revoke the key before removing it.',
 
     // CSRF errors
     CSRF_001: 'Your session has expired. The page will refresh automatically.',

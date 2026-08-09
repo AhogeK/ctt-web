@@ -1,6 +1,6 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vite-plus/test'
 import { ref } from 'vue'
-import { useApiKeys, useCreateApiKey, useRevokeApiKey } from '../useApiKeys'
+import { useApiKeys, useCreateApiKey, useRevokeApiKey, useDeleteApiKey } from '../useApiKeys'
 import * as apiKeysApi from '@/lib/api/api-keys'
 import type { CreateApiKeyRequest } from '@/lib/schemas/api-key.schema'
 
@@ -8,6 +8,7 @@ vi.mock('@/lib/api/api-keys', () => ({
   listApiKeys: vi.fn<() => Promise<unknown>>(),
   createApiKey: vi.fn<() => Promise<unknown>>(),
   revokeApiKey: vi.fn<() => Promise<unknown>>(),
+  deleteApiKey: vi.fn<() => Promise<unknown>>(),
 }))
 
 const mockInvalidateQueries = vi.fn<(...args: unknown[]) => Promise<void>>()
@@ -274,6 +275,58 @@ describe('useRevokeApiKey', () => {
 
     await vi.waitFor(() => {
       expect(apiKeysApi.revokeApiKey).toHaveBeenCalled()
+    })
+
+    // Give the microtask queue a chance to settle
+    await new Promise((resolve) => setTimeout(resolve, 0))
+
+    expect(mockInvalidateQueries).not.toHaveBeenCalled()
+  })
+})
+
+describe('useDeleteApiKey', () => {
+  beforeEach(() => {
+    vi.clearAllMocks()
+    setupMutationMock()
+  })
+
+  afterEach(() => {
+    vi.restoreAllMocks()
+  })
+
+  it('mutation.mutate calls deleteApiKey with the revoked key id', async () => {
+    vi.mocked(apiKeysApi.deleteApiKey).mockResolvedValue(undefined)
+
+    const { mutation } = useDeleteApiKey()
+    mutation.mutate('revoked-key-uuid')
+
+    await vi.waitFor(() => {
+      expect(apiKeysApi.deleteApiKey).toHaveBeenCalledWith('revoked-key-uuid')
+    })
+  })
+
+  it('invalidates the api-keys query on successful delete', async () => {
+    vi.mocked(apiKeysApi.deleteApiKey).mockResolvedValue(undefined)
+
+    const { mutation } = useDeleteApiKey()
+    mutation.mutate('revoked-key-uuid')
+
+    await vi.waitFor(() => {
+      expect(mockInvalidateQueries).toHaveBeenCalledWith({ queryKey: ['api-keys'] })
+    })
+  })
+
+  it('does not invalidate the query when deleteApiKey throws', async () => {
+    vi.mocked(apiKeysApi.deleteApiKey).mockRejectedValue({
+      statusCode: 401,
+      data: { code: 'AUTH_010', message: 'API key invalid' },
+    })
+
+    const { mutation } = useDeleteApiKey()
+    mutation.mutate('missing-or-foreign-key')
+
+    await vi.waitFor(() => {
+      expect(apiKeysApi.deleteApiKey).toHaveBeenCalled()
     })
 
     // Give the microtask queue a chance to settle
