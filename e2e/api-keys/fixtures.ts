@@ -102,3 +102,5 @@ export const RATE_LIMIT_WITH_RETRY_AFTER_BODY: Record<string, unknown> = {
   retryAfter: new Date(Date.now() + 60_000).toISOString(),
 }
 export const AUTH_010_BODY = errorBody('AUTH_010', 'API key invalid')
+/** 409 for permanent delete of a non-REVOKED key (backend AUTH_023). */
+export const AUTH_023_BODY = errorBody('AUTH_023', 'Only revoked API keys can be deleted')

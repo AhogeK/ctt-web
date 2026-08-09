@@ -90,3 +90,33 @@ export async function revokeApiKey(id: string): Promise<void> {
     method: 'DELETE',
   })
 }
+
+/**
+ * Permanently deletes a REVOKED API key for the authenticated user.
+ *
+ * Endpoint: DELETE /api/v1/auth/api-keys/{id}/delete
+ *
+ * Server returns HTTP 204 No Content with an EMPTY body on success.
+ * The key is physically removed from storage and disappears from the
+ * list; the operation is NOT reversible. Like revokeApiKey, the 204
+ * response is not parsed with RestApiResponseSchema (no body).
+ *
+ * Safety: only REVOKED keys can be deleted. ACTIVE/EXPIRED keys are
+ * rejected with 409 AUTH_023 ("Only revoked API keys can be deleted")
+ * so an accidental delete cannot take down a key still in use — revoke
+ * first is the only path to removal.
+ *
+ * BOLA protection mirrors revokeApiKey: a missing, foreign, or already
+ * deleted key returns 401 AUTH_010, indistinguishable from each other.
+ *
+ * @param id - UUID of the REVOKED API key to delete
+ * @throws {{ statusCode: number, data?: { code?: string } }} ofetch HTTP error
+ *   with `data.code === 'AUTH_010'` if the key does not exist / is not owned
+ *   / was already deleted, or `data.code === 'AUTH_023'` (409) if the key is
+ *   not in REVOKED state
+ */
+export async function deleteApiKey(id: string): Promise<void> {
+  await apiFetch<unknown>(`/api/v1/auth/api-keys/${id}/delete`, {
+    method: 'DELETE',
+  })
+}

@@ -181,4 +181,44 @@ describe('api-keys API', () => {
       })
     })
   })
+
+  describe('deleteApiKey', () => {
+    it('sends DELETE request to /api/v1/auth/api-keys/{id}/delete', async () => {
+      vi.mocked(apiFetch).mockResolvedValue(undefined)
+
+      await apiKeysApi.deleteApiKey('key-uuid-123')
+
+      expect(apiFetch).toHaveBeenCalledWith('/api/v1/auth/api-keys/key-uuid-123/delete', {
+        method: 'DELETE',
+      })
+    })
+
+    it('resolves void on 204 No Content (empty body, no envelope parse)', async () => {
+      // 204 has no body — ofetch resolves with null/undefined. deleteApiKey
+      // must NOT attempt RestApiResponseSchema parsing (same as revokeApiKey).
+      vi.mocked(apiFetch).mockResolvedValue(null)
+
+      await expect(apiKeysApi.deleteApiKey('key-uuid-456')).resolves.toBeUndefined()
+    })
+
+    it('propagates AUTH_010 (BOLA) and AUTH_023 (not revoked) errors from ofetch', async () => {
+      vi.mocked(apiFetch).mockRejectedValueOnce({
+        statusCode: 401,
+        data: { code: 'AUTH_010', message: 'API key invalid' },
+      })
+      await expect(apiKeysApi.deleteApiKey('missing-or-foreign-key')).rejects.toMatchObject({
+        statusCode: 401,
+        data: { code: 'AUTH_010' },
+      })
+
+      vi.mocked(apiFetch).mockRejectedValueOnce({
+        statusCode: 409,
+        data: { code: 'AUTH_023', message: 'Only revoked API keys can be deleted' },
+      })
+      await expect(apiKeysApi.deleteApiKey('active-key')).rejects.toMatchObject({
+        statusCode: 409,
+        data: { code: 'AUTH_023' },
+      })
+    })
+  })
 })

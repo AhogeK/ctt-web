@@ -18,21 +18,26 @@ import { KeyRound, Plus, AlertTriangle, Loader2 } from '@lucide/vue'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { Skeleton } from '@/components/ui/skeleton'
-import { useApiKeys } from '@/composables/useApiKeys'
+import { useApiKeys, useRevokeApiKey, useDeleteApiKey } from '@/composables/useApiKeys'
 import type { ApiKey, ApiKeyScope, ApiKeyStatus, CreateApiKeyResponse } from '@/lib/schemas/api-key.schema'
 import CreateApiKeyDialog from '@/features/settings/components/CreateApiKeyDialog.vue'
 import RawKeyDialog from '@/features/settings/components/RawKeyDialog.vue'
-import RevokeApiKeyDialog from '@/features/settings/components/RevokeApiKeyDialog.vue'
+import ConfirmApiKeyActionDialog from '@/features/settings/components/ConfirmApiKeyActionDialog.vue'
 
 const { data: keys, isPending, isError, error, refetch } = useApiKeys()
+const { mutation: revokeMutation } = useRevokeApiKey()
+const { mutation: deleteMutation } = useDeleteApiKey()
 
 const createDialogOpen = ref(false)
 const rawKeyDialogOpen = ref(false)
 /** Raw key awaiting display; kept only in memory for the dialog lifetime */
 const pendingRawKey = ref('')
 const revokeDialogOpen = ref(false)
-/** API key currently selected for revocation; passed to RevokeApiKeyDialog */
+/** API key currently selected for revocation; passed to the confirm dialog */
 const selectedKeyForRevoke = ref<ApiKey | null>(null)
+const deleteDialogOpen = ref(false)
+/** API key currently selected for permanent deletion; passed to the confirm dialog */
+const selectedKeyForDelete = ref<ApiKey | null>(null)
 
 /** Minimum time the first-load skeleton must remain visible to avoid flicker (ms) */
 const MIN_SKELETON_MS = 300
@@ -91,6 +96,16 @@ function openRevokeDialog(key: ApiKey) {
   revokeDialogOpen.value = true
 }
 
+/**
+ * Open the permanent-delete confirmation dialog for a REVOKED API key.
+ * Only REVOKED rows expose the Delete button; ACTIVE/EXPIRED keys must be
+ * revoked first (server enforces this too with 409 AUTH_023).
+ */
+function openDeleteDialog(key: ApiKey) {
+  selectedKeyForDelete.value = key
+  deleteDialogOpen.value = true
+}
+
 function handleCreated(response: CreateApiKeyResponse) {
   createDialogOpen.value = false
   pendingRawKey.value = response.rawKey
@@ -117,6 +132,18 @@ function handleRevokeDialogClose(value: boolean) {
   revokeDialogOpen.value = value
   if (!value) {
     selectedKeyForRevoke.value = null
+  }
+}
+
+/**
+ * Clears the selected key when the delete dialog closes so the dialog
+ * unmounts (via `v-if="selectedKeyForDelete"`) and no stale key data
+ * lingers. Mirrors the handleRevokeDialogClose pattern.
+ */
+function handleDeleteDialogClose(value: boolean) {
+  deleteDialogOpen.value = value
+  if (!value) {
+    selectedKeyForDelete.value = null
   }
 }
 
@@ -329,7 +356,7 @@ function statusClass(status: ApiKeyStatus): string {
                 </span>
                 <span v-else class="italic">Never</span>
               </td>
-              <!-- Actions (placeholder for M3) -->
+              <!-- Actions -->
               <td class="px-4 py-3 text-right">
                 <Button
                   v-if="key.status === 'ACTIVE'"
@@ -340,6 +367,16 @@ function statusClass(status: ApiKeyStatus): string {
                   @click="openRevokeDialog(key)"
                 >
                   Revoke
+                </Button>
+                <Button
+                  v-else-if="key.status === 'REVOKED'"
+                  variant="outline"
+                  size="sm"
+                  class="text-destructive hover:bg-destructive/10 hover:text-destructive"
+                  :aria-label="'Delete ' + key.name"
+                  @click="openDeleteDialog(key)"
+                >
+                  Delete
                 </Button>
               </td>
             </tr>
@@ -410,6 +447,17 @@ function statusClass(status: ApiKeyStatus): string {
               Revoke
             </Button>
           </div>
+          <div v-else-if="key.status === 'REVOKED'" class="flex justify-end">
+            <Button
+              variant="outline"
+              size="sm"
+              class="text-destructive hover:bg-destructive/10 hover:text-destructive"
+              :aria-label="'Delete ' + key.name"
+              @click="openDeleteDialog(key)"
+            >
+              Delete
+            </Button>
+          </div>
         </div>
       </div>
     </template>
@@ -417,11 +465,33 @@ function statusClass(status: ApiKeyStatus): string {
     <!-- Create flow dialogs -->
     <CreateApiKeyDialog v-model:open="createDialogOpen" @success="handleCreated" />
     <RawKeyDialog v-model:open="rawKeyDialogOpen" :raw-key="pendingRawKey" @update:open="handleRawKeyDialogClose" />
-    <RevokeApiKeyDialog
+    <ConfirmApiKeyActionDialog
       v-if="selectedKeyForRevoke"
       :open="revokeDialogOpen"
       :api-key="selectedKeyForRevoke"
+      :mutation="revokeMutation"
+      title="Revoke API Key"
+      description="After revocation, devices using this key can no longer sync data. This action cannot be undone."
+      confirm-label="Revoke"
+      pending-label="Revoking..."
+      success-title="API Key revoked"
+      :success-description="(name) => `${name} can no longer be used to authenticate.`"
+      error-title="Failed to revoke API key"
       @update:open="handleRevokeDialogClose"
+    />
+    <ConfirmApiKeyActionDialog
+      v-if="selectedKeyForDelete"
+      :open="deleteDialogOpen"
+      :api-key="selectedKeyForDelete"
+      :mutation="deleteMutation"
+      title="Delete API Key"
+      description="This permanently deletes the key. It cannot be recovered, and any audit references to it are removed."
+      confirm-label="Delete permanently"
+      pending-label="Deleting..."
+      success-title="API Key deleted"
+      :success-description="(name) => `${name} has been permanently removed.`"
+      error-title="Failed to delete API key"
+      @update:open="handleDeleteDialogClose"
     />
   </div>
 </template>

@@ -1,5 +1,5 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/vue-query'
-import { listApiKeys, createApiKey, revokeApiKey } from '@/lib/api/api-keys'
+import { listApiKeys, createApiKey, revokeApiKey, deleteApiKey } from '@/lib/api/api-keys'
 import type { CreateApiKeyRequest } from '@/lib/schemas/api-key.schema'
 
 const API_KEYS_QUERY_KEY = ['api-keys'] as const
@@ -68,6 +68,35 @@ export function useRevokeApiKey() {
 
   const mutation = useMutation({
     mutationFn: (id: string) => revokeApiKey(id),
+    onSuccess: () => {
+      void queryClient.invalidateQueries({ queryKey: API_KEYS_QUERY_KEY })
+    },
+  })
+
+  return { mutation }
+}
+
+/**
+ * Composable for permanently deleting a REVOKED API key.
+ *
+ * Only keys in REVOKED state can be deleted (server rejects ACTIVE/EXPIRED
+ * with 409 AUTH_023); the key is physically removed and the operation is
+ * not reversible. On success the keys list query is invalidated so the
+ * row disappears from the list.
+ *
+ * Errors: AUTH_010 (missing/foreign/already-deleted, BOLA-safe) and
+ * AUTH_023 (not revoked) propagate to the caller for `getErrorMessage`
+ * mapping.
+ *
+ * @returns Object with the delete mutation - call `mutation.mutate(id)`
+ *   to delete a revoked key. Exposes `mutation.isPending`,
+ *   `mutation.isError`, and `mutation.error` for UI state.
+ */
+export function useDeleteApiKey() {
+  const queryClient = useQueryClient()
+
+  const mutation = useMutation({
+    mutationFn: (id: string) => deleteApiKey(id),
     onSuccess: () => {
       void queryClient.invalidateQueries({ queryKey: API_KEYS_QUERY_KEY })
     },
