@@ -3,7 +3,7 @@
 > **用途**：AI 在会话开始时快速扫描本文件，了解所有可用技能并按需加载。
 > **维护**：当新增/删除/修改 skill 时同步更新本文件。
 > **位置**：项目根目录，与 `AGENTS.md`、`DESIGN.md` 同级。
-> **来源**：`~/.agents/skills/` (394) + `~/.config/opencode/skills/` (87) + 项目 `.agents/skills/` (38)
+> **来源**：`~/.agents/skills/` (393) + `~/.config/opencode/skills/` (88) + 项目 `.agents/skills/` (38) + 项目 `.claude/skills/` (35)
 
 ---
 
@@ -167,6 +167,7 @@
 | `memory-leak-debugging` | 内存泄漏、堆快照 | 诊断和解决内存泄漏 |
 | `api-contract-verification` | API 集成、后端对接 | **必须**用于 ctt-web 与 ctt-server API 集成 |
 | `qa` | QA 测试、系统化测试、bug 发现 | 系统化 QA 测试 Web 应用并修复 bug |
+| `test-auth-bootstrap` | 自动获取测试 token、认证引导、captcha 测试密钥、mailpit 验证 | 在 dev/test 环境自动注册+邮箱验证+登录拿 token（hCaptcha/reCAPTCHA 官方测试密钥 + 邮件捕获工具），E2E 联调无需人工提供凭证 |
 | `full-output-enforcement` | 完整输出、截断、token 限制 | 强制完整代码生成，禁止截断 |
 | `migrate-to-shoehorn` | shoehorn、类型断言、测试迁移 | 将测试文件从 `as` 断言迁移到 shoehorn |
 | `terraform-style-check` | Terraform、HCL、基础设施 | 生成遵循 HashiCorp 风格的 Terraform 代码 |
@@ -901,6 +902,6 @@ task(category="deep", load_skills=["test-driven-development", "vue", "vitest"], 
 
 ---
 
-*最后更新: 2026-07-30*
+*最后更新: 2026-08-10*
 *技能总数: 487（去重后）*
-*来源: ~/.agents/skills/ (394) + ~/.config/opencode/skills/ (87) + 项目 .agents/skills/ (38)*
+*来源: ~/.agents/skills/ (393) + ~/.config/opencode/skills/ (88) + 项目 .agents/skills/ (38) + 项目 .claude/skills/ (35)*
