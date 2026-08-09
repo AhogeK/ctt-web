@@ -2,10 +2,20 @@
 
 ## Current Status
 
-**Phase**: v0.15.1 API Key Test Coverage (E2E + bug fixes)
-**Version**: 0.15.1 (2026-08-07)
+**Phase**: v0.15.4 Sidebar layout regression fix
+**Version**: 0.15.4 (2026-08-09)
 **Branch**: develop
 **Tests**: 1026/1026 unit (61 files) + 13/13 API-key E2E; `pnpm build` (type-check + build-only) exit 0
+
+## Recent Activity (v0.15.4 — 2026-08-09)
+
+### Sidebar regression fix: circular-import dropped defineProps declaration
+
+- **BUG (layout-breaking, introduced by f702f32 TS 6.0.3 downgrade)**: `Sidebar.vue` used `defineProps</* @vue-ignore */ SidebarProps>()` importing `SidebarProps` from `'.'` (index barrel) — a circular import (index.ts re-exports Sidebar.vue). Rolldown's SFC compiler could not resolve the type, so with `@vue-ignore` suppressing the error it **silently dropped the entire props declaration** (`withDefaults` defaults never compiled). Runtime: `side` undefined → template ternary `side === 'left' ? 'left-0' : 'right-0'` always rendered `right-0` (sidebar on the RIGHT); `collapsible`/`variant` undefined → collapse feature and styling broken. Affected dev AND build (verified in compiled vendor JS: no `props:` field).
+- **Fix**: new `src/components/ui/sidebar/props.ts` holds `SidebarProps`; `Sidebar.vue` imports from `./props` (breaks the cycle); `index.ts` re-exports the type; `@vue-ignore` removed (build passes without it — vue-tsc also clean). Compiled output now has `props:{side:{default:'left'},variant:{default:'sidebar'},collapsible:{default:'offcanvas'},class:{}}`.
+- **Lesson (R15 candidate)**: `@vue-ignore` on a `defineProps<Type>()` whose type import is circular can make @vue/compiler-sfc silently emit a component with NO props — defaults vanish without any error. Circular type imports from index barrels in shadcn-style components are the trigger; keep prop interfaces in standalone files.
+- Verification: browser check (Playwright) → `data-side:left`, `data-state:expanded`, inner div `position:fixed, left:0`, width 224px; collapse/reopen toggles. unit 1026/1026, type-check, lint, build green.
+
 ## Recent Activity (v0.15.1 — 2026-08-07)
 
 ### API Key E2E Suite + Production Bug Fixes
