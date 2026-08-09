@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import type { SidebarProps } from '.'
+import type { SidebarProps } from './props'
 import { Sheet, SheetContent } from '@/components/ui/sheet'
 import SheetDescription from '@/components/ui/sheet/SheetDescription.vue'
 import SheetHeader from '@/components/ui/sheet/SheetHeader.vue'
@@ -11,7 +11,7 @@ defineOptions({
   inheritAttrs: false,
 })
 
-const props = withDefaults(defineProps</* @vue-ignore */ SidebarProps>(), {
+const props = withDefaults(defineProps<SidebarProps>(), {
   side: 'left',
   variant: 'sidebar',
   collapsible: 'offcanvas',
