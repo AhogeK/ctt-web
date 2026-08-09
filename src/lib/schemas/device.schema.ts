@@ -21,15 +21,17 @@ export const DeviceSchema = z.object({
   // Device unique identifier in UUID format
   id: z.uuid('Invalid device ID format'),
   // Human-readable device name (may be null if not set by client)
-  deviceName: z.string().nullable(),
+  // .default(null): backend omits null fields (Jackson non_null), so these
+  // keys arrive as undefined — nullable() alone would throw.
+  deviceName: z.string().nullable().default(null),
   // Operating system platform (e.g., "macOS", "Windows", "Linux")
-  platform: z.string().nullable(),
+  platform: z.string().nullable().default(null),
   // IDE name (e.g., "IntelliJ IDEA", "PyCharm")
-  ideName: z.string().nullable(),
+  ideName: z.string().nullable().default(null),
   // IDE version (e.g., "2024.1")
-  ideVersion: z.string().nullable(),
+  ideVersion: z.string().nullable().default(null),
   // Application or plugin version (e.g., "1.2.0")
-  appVersion: z.string().nullable(),
+  appVersion: z.string().nullable().default(null),
   // Device registration timestamp in ISO 8601 format
   createdAt: z.string(),
   // Last activity timestamp in ISO 8601 format
