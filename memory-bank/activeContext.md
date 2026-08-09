@@ -2,10 +2,19 @@
 
 ## Current Status
 
-**Phase**: v0.15.4 Sidebar layout regression fix
-**Version**: 0.15.4 (2026-08-09)
+**Phase**: v0.15.5 API-key schema NON_NULL fix (real-integration)
+**Version**: 0.15.5 (2026-08-09)
 **Branch**: develop
-**Tests**: 1026/1026 unit (61 files) + 13/13 API-key E2E; `pnpm build` (type-check + build-only) exit 0
+**Tests**: 1029/1029 unit (61 files) + 13/13 API-key E2E; `pnpm build` (type-check + build-only) exit 0
+
+## Recent Activity (v0.15.5 — 2026-08-09)
+
+### Schema fix: Jackson NON_NULL omits null fields → .nullable() threw on undefined
+
+- **BUG (real-integration, blocking create)**: clicking Create API Key threw `ZodError: expected string, received undefined` for apiKey.lastUsedAt/expiresAt/revokedAt/createdAt. Root cause: ctt-server runs `jackson.default-property-inclusion: non_null` (application.yaml), so null Instant fields are OMITTED from JSON — the frontend `z.string().nullable()` accepts null but NOT undefined → parse threw. This affects BOTH create (fresh key: lastUsedAt/revokedAt null) and list responses.
+- **Fix**: `ApiKeySchema` nullable timestamps → `.nullable().default(null)` (aligns with existing user.schema.ts lastLoginAt precedent). **Blast sweep**: same latent bug fixed in `device.schema.ts` (deviceName/platform/ideName/ideVersion/appVersion — "may be null if not set by client") and `oauth-account.schema.ts` (providerLogin/providerEmail). All nullable-without-default occurrences in src/lib/schemas/ eliminated (only `api.schema.ts` data field uses `.nullable().optional()` which is intentional).
+- **Regression tests**: api-key.schema.test.ts +3 (explicit null accepted; ABSENT fields accepted & coerced to null; missing createdAt rejected). 1029/1029 green, type-check/lint/build clean.
+- **Lesson (R15 candidate)**: ctt-server's global NON_NULL Jackson config means any nullable backend field arrives as undefined. Frontend schema rule: nullable backend fields MUST use `.nullable().default(null)`, never bare `.nullable()`.
 
 ## Recent Activity (v0.15.4 — 2026-08-09)
 
