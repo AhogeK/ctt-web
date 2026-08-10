@@ -2,10 +2,23 @@
 
 ## Current Status
 
-**Phase**: v0.16.0 API Key permanent delete
-**Version**: 0.16.0 (2026-08-10)
+**Phase**: v0.16.1 hCaptcha CSP sentry fix
+**Version**: 0.16.1 (2026-08-10)
 **Branch**: develop
 **Tests**: 1041/1041 unit (61 files) + 19/19 API-key E2E; `pnpm build` (type-check + build-only) exit 0
+
+## Recent Activity (v0.16.1 — 2026-08-10)
+
+### hCaptcha CSP: disable sentry to stop prepare.js inline-script violations
+
+- **BUG**: login page console kept reporting `prepare.js:1 Executing inline script violates CSP script-src` (no 'unsafe-inline'). Two-layer root cause:
+  1. **Backend (ctt-server v0.41.1)**: CSP header hCaptcha hosts were quoted (`'https://hcaptcha.com'`) — CSP3 forbids quotes on host-sources, browser ignored them → whitelist dead. Backend fixed (removed quotes).
+  2. **Frontend (this fix)**: CaptchaWidget didn't pass `sentry` → vue3-hcaptcha default `sentry: true` → api.js loads `sentry=true` → hCaptcha initialises its Sentry error reporter via inline script injection → blocked by CSP. Hash differs per browser (dynamic) — confirmed the sentry channel.
+- **Fix**: `src/components/CaptchaWidget.vue` adds `:sentry="false"` (standard hCaptcha embed doesn't need Sentry reporting; strict-CSP sites should disable it). api.js URL now `sentry=false`; headed-Chrome checkbox click → zero CSP violations.
+- **Verification**: 1041/1041 unit + type-check + lint + build green; headed browser no CSP violation after reload.
+- Version 0.16.0 → 0.16.1 (bug fix → PATCH).
+
+## Recent Activity (v0.16.0 — 2026-08-10)
 
 ## Recent Activity (v0.16.0 — 2026-08-10)
 

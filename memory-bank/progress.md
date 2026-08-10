@@ -24,6 +24,8 @@
 
 ## Completed (Recent)
 
+- [x] **v0.16.1** hCaptcha CSP sentry fix — CaptchaWidget `:sentry="false"` stops api.js loading with sentry=true, eliminating the inline-script CSP violation (`prepare.js` console error on login page). Backend ctt-server v0.41.1 separately fixed quoted CSP hosts. 1041/1041 unit + 19/19 E2E green.
+
 - [x] **v0.16.0** API Key permanent delete — REVOKED keys deletable (backed by ctt-server v0.41.0 `DELETE /{id}/delete`); ACTIVE/EXPIRED no delete path (revoke-first, 409 AUTH_023 server-enforced). Frontend: deleteApiKey API + useDeleteApiKey + **shared ConfirmApiKeyActionDialog** (revoke & delete unified — 95%-duplicate dialogs merged per review, not deferred to a 3rd) + REVOKED-row Delete buttons (table + mobile cards); AUTH_023 mapping; README sync. Tests: 1041/1041 unit + 19/19 E2E (incl. chained revoke→delete, AUTH_023/BOLA toasts, mobile card flow).
 
 - [x] **v0.15.5** API-key schema NON_NULL fix (real-integration, blocking create) — ctt-server `jackson.default-property-inclusion: non_null` omits null fields → frontend `.nullable()` threw "expected string, received undefined" on create (fresh key lastUsedAt/revokedAt absent; backend v0.40.2 also fixed createdAt omission server-side). Fixed ApiKeySchema + blast-swept device.schema/oauth-account.schema to `.nullable().default(null)` (user.schema precedent). +3 regression tests; 1029/1029 green. Verified against real backend v0.40.2: create/list/get/revoke/BOLA all pass, keyPrefix now 14-char cttak_ prefixed.
