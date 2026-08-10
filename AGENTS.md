@@ -153,6 +153,12 @@
 
 可使用skills访问 gemini.google.com / perplexity.ai 咨询高级AI（需选择模型）及网络搜索。
 
+### R22: 子任务只读约束（强制）
+
+审查/检查/调查类子任务（code-review、explore 等）必须**严格只读**：禁止执行任何 `--fix` 类命令（`lint --fix`、`oxfmt`、`prettier --write`）或文件写入。需要验证时仅允许只读检查（`type-check`、不带 `--fix` 的 `lint`、不写文件系统的测试）。
+
+红线：子 agent 运行 `--fix` 会全项目格式化污染工作区（2026-08-11 v0.16.5 审查事故：16 个无关文件被重排）。
+
 ## 执行流程
 
 会话开始 → 读memory-bank → 创建todo（如需）→ 处理请求 → 清理临时文件 → 更新记忆
