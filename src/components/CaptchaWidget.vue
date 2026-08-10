@@ -81,6 +81,7 @@ defineExpose({
       :theme="theme"
       :size="size"
       :language="language"
+      :sentry="false"
       @verify="onVerify"
       @expired="onExpire"
       @error="onError"
