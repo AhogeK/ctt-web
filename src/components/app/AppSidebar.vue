@@ -23,10 +23,21 @@ import PluginIcon from './PluginIcon.vue'
  * Header behavior:
  * - Desktop, expanded:  Plugin icon left, collapse trigger right
  * - Desktop, collapsed: Plugin icon centered, swaps to themed expand trigger on hover
- * - Mobile:             Header contents are hidden (sheet overlay owns its own close
- *                       affordance); the open trigger lives in AppHeader.
+ * - Mobile:             No header chrome — AppHeader owns the open trigger and the
+ *                       Sheet closes via overlay click or navigation (see handleNavigate).
  */
-const { state, isMobile } = useSidebar()
+const { state, isMobile, setOpenMobile } = useSidebar()
+
+/**
+ * Close the mobile Sheet after a navigation click.
+ * Desktop is a no-op (isMobile false); on mobile the Sheet would otherwise stay
+ * open covering the destination page.
+ */
+function handleNavigate() {
+  if (isMobile.value) {
+    setOpenMobile(false)
+  }
+}
 </script>
 
 <template>
@@ -50,8 +61,10 @@ const { state, isMobile } = useSidebar()
             SidebarTrigger keeps its native click → toggleSidebar (no custom button needed).
             The opaque (visible) child gets pointer events; the opacity-0 child gets `pointer-events-none`
             so clicks always reach the trigger when it's visible.
+            Mobile (neither branch matches): no header chrome at all — AppHeader owns
+            the open trigger, overlay click or navigation closes the Sheet.
           -->
-          <div v-else class="group/trigger mx-auto grid h-9 w-9 place-items-center">
+          <div v-else-if="!isMobile" class="group/trigger mx-auto grid h-9 w-9 place-items-center">
             <PluginIcon
               class="col-start-1 row-start-1 h-7 w-7 transition-opacity duration-150 group-hover/trigger:pointer-events-none group-hover/trigger:opacity-0"
             />
@@ -75,6 +88,7 @@ const { state, isMobile } = useSidebar()
                 as-child
                 tooltip="Dashboard"
                 class="h-9 text-[15px] [&>svg]:size-[18px] [&>svg]:mr-0.5"
+                @click="handleNavigate"
               >
                 <RouterLink to="/dashboard">
                   <LayoutDashboard />
@@ -83,7 +97,12 @@ const { state, isMobile } = useSidebar()
               </SidebarMenuButton>
             </SidebarMenuItem>
             <SidebarMenuItem>
-              <SidebarMenuButton as-child tooltip="Devices" class="h-9 text-[15px] [&>svg]:size-[18px] [&>svg]:mr-0.5">
+              <SidebarMenuButton
+                as-child
+                tooltip="Devices"
+                class="h-9 text-[15px] [&>svg]:size-[18px] [&>svg]:mr-0.5"
+                @click="handleNavigate"
+              >
                 <RouterLink to="/devices">
                   <Monitor />
                   <span>Devices</span>
@@ -101,7 +120,12 @@ const { state, isMobile } = useSidebar()
         <SidebarGroupContent>
           <SidebarMenu>
             <SidebarMenuItem>
-              <SidebarMenuButton as-child tooltip="Profile" class="h-9 text-[15px] [&>svg]:size-[18px] [&>svg]:mr-0.5">
+              <SidebarMenuButton
+                as-child
+                tooltip="Profile"
+                class="h-9 text-[15px] [&>svg]:size-[18px] [&>svg]:mr-0.5"
+                @click="handleNavigate"
+              >
                 <RouterLink to="/settings/profile">
                   <User />
                   <span>Profile</span>
@@ -109,7 +133,12 @@ const { state, isMobile } = useSidebar()
               </SidebarMenuButton>
             </SidebarMenuItem>
             <SidebarMenuItem>
-              <SidebarMenuButton as-child tooltip="API Keys" class="h-9 text-[15px] [&>svg]:size-[18px] [&>svg]:mr-0.5">
+              <SidebarMenuButton
+                as-child
+                tooltip="API Keys"
+                class="h-9 text-[15px] [&>svg]:size-[18px] [&>svg]:mr-0.5"
+                @click="handleNavigate"
+              >
                 <RouterLink to="/settings/api-keys">
                   <KeyRound />
                   <span>API Keys</span>
