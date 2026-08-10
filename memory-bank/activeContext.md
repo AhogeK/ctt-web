@@ -2,12 +2,21 @@
 
 ## Current Status
 
-**Phase**: v0.16.1 hCaptcha CSP sentry fix
-**Version**: 0.16.1 (2026-08-10)
+**Phase**: v0.16.2 RawKeyDialog a11y warning fix
+**Version**: 0.16.2 (2026-08-11)
 **Branch**: develop
-**Tests**: 1041/1041 unit (61 files) + 19/19 API-key E2E; `pnpm build` (type-check + build-only) exit 0
+**Tests**: 1044/1044 unit (62 files) + 20/20 API-key E2E; vue-tsc + lint exit 0
 
-## Recent Activity (v0.16.1 — 2026-08-10)
+## Recent Activity (v0.16.2 — 2026-08-11)
+
+### RawKeyDialog: reka-ui a11y warnings on create flow (fix)
+
+- **BUG**: console warnings `DialogContent requires a DialogTitle` + `Missing Description or aria-describedby` fired every time the create flow switched CreateApiKeyDialog → RawKeyDialog.
+- **Root cause**: RawKeyDialog passed manual `id` attrs to `DialogTitle`/`DialogDescription` + manual `aria-labelledby`/`aria-describedby` to `DialogContent`. reka-ui doesn't declare `id` as a prop → it lands in `$attrs` and overrides reka's internally generated `titleId`/`descriptionId` (`DialogContentImpl` `rootContext.titleId ||= useId(...)`; Primitive renders attrs last). reka's dev-only `useWarning` (`Dialog/utils.ts` onMounted) then looks up its own orphaned ids via `document.getElementById` → null → both warnings. All other dialogs (SetPassword, CreateApiKey, EmailChange, Terms) use the standard pattern → no warnings.
+- **Fix**: `RawKeyDialog.vue` removed the manual ids/aria attrs (kept `role="alertdialog"` + hard-to-dismiss handlers). reka now generates ids and wires content↔title↔description automatically.
+- **Tests**: updated `RawKeyDialog.test.ts` aria test (defers wiring to primitives), added `RawKeyDialog.a11y.test.ts` (real reka-ui: content aria-labelledby/describedby resolve to existing title/desc ids, no warnings) and `e2e/api-keys/a11y-warnings.spec.ts` (browser: zero warnings across two create flows + aria resolution). Post-review: `RawKeyDialog.a11y.test.ts` console.warn interception moved to beforeEach/afterEach (assertion-failure-proof restore); `vi.fn` mock types aligned to useCopyToClipboard signature; E2E console handler extracted + explicitly `page.off`'d; **Created/Last Used/Expires hover titles all unified to `formatDateTime`** (previously only Created; other columns still showed raw ISO) with +2 unit assertions (1046 total).
+- **Verification**: 1044/1044 unit (62 files) + 20/20 api-keys E2E + vue-tsc + lint green; browser console clean during create flow.
+- Version 0.16.1 → 0.16.2 (bug fix → PATCH).
 
 ### hCaptcha CSP: disable sentry to stop prepare.js inline-script violations
 
