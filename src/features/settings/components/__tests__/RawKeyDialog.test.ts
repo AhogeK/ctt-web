@@ -72,13 +72,18 @@ describe('RawKeyDialog', () => {
     expect((input.element as HTMLInputElement).value).toBe(RAW_KEY)
   })
 
-  it('labels the alertdialog via aria-labelledby/aria-describedby pointing at title/description ids', () => {
+  it('defers title/description aria wiring to the dialog primitives (no manual ids)', () => {
+    // reka-ui's DialogContent generates the title/description ids and wires
+    // aria-labelledby/aria-describedby itself. Passing manual ids would orphan
+    // reka's generated ids and trip its dev-mode a11y warnings. The real
+    // wiring (content -> title/description ids) is covered in
+    // RawKeyDialog.a11y.test.ts with the real reka-ui stack.
     const wrapper = createWrapper()
     const content = wrapper.find('[data-testid="dialog-content"]')
-    expect(content.attributes('aria-labelledby')).toBe('raw-key-dialog-title')
-    expect(content.attributes('aria-describedby')).toBe('raw-key-dialog-description')
-    expect(wrapper.find('#raw-key-dialog-title').exists()).toBe(true)
-    expect(wrapper.find('#raw-key-dialog-description').exists()).toBe(true)
+    expect(content.attributes('aria-labelledby')).toBeUndefined()
+    expect(content.attributes('aria-describedby')).toBeUndefined()
+    expect(wrapper.find('[data-testid="dialog-title"]').attributes('id')).toBeUndefined()
+    expect(wrapper.find('[data-testid="dialog-description"]').attributes('id')).toBeUndefined()
   })
 
   it('shows the one-time warning text', () => {

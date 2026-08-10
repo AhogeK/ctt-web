@@ -94,8 +94,6 @@ watch(
   <Dialog :open="props.open" @update:open="handleClose">
     <DialogContent
       role="alertdialog"
-      aria-labelledby="raw-key-dialog-title"
-      aria-describedby="raw-key-dialog-description"
       :show-close-button="false"
       class="sm:max-w-md"
       @escape-key-down="blockDismiss"
@@ -103,10 +101,8 @@ watch(
       @interact-outside="blockDismiss"
     >
       <DialogHeader>
-        <DialogTitle id="raw-key-dialog-title">API Key created</DialogTitle>
-        <DialogDescription id="raw-key-dialog-description">
-          Copy the key now. You will not be able to view it again.
-        </DialogDescription>
+        <DialogTitle>API Key created</DialogTitle>
+        <DialogDescription> Copy the key now. You will not be able to view it again. </DialogDescription>
       </DialogHeader>
 
       <!-- Warning banner -->
