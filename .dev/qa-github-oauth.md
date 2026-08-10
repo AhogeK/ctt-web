@@ -20,10 +20,12 @@
 **目的**: 验证 GitHub 登录按钮正确显示
 
 **步骤**:
+
 1. 打开浏览器访问 `http://localhost:5173/login`
 2. 观察页面内容
 
 **预期结果**:
+
 - [x] 页面显示 "Welcome back" 标题
 - [x] 显示 Email 输入框
 - [x] 显示 Password 输入框
@@ -34,6 +36,7 @@
 - [x] GitHub 按钮样式为 outline 风格（边框 + 白色背景）
 
 **视觉检查**:
+
 - [x] 亮色主题下：GitHub 按钮边框可见，文字清晰
 - [x] 暗色主题下：GitHub 按钮边框可见，文字清晰
 - [x] 按钮 hover 时有视觉反馈（背景色变化）
@@ -45,12 +48,14 @@
 **目的**: 验证点击 GitHub 按钮后正确跳转到 GitHub 授权页面
 
 **步骤**:
+
 1. 打开 `http://localhost:5173/login`
 2. 打开开发者工具 → Network 面板
 3. 点击 "Continue with GitHub" 按钮
 4. 观察 Network 面板的请求
 
 **预期结果**:
+
 - [x] Network 面板显示 `GET /api/v1/auth/oauth/github/authorize` 请求
 - [x] 请求状态码为 200
 - [x] 响应包含 `authUrl` 字段，格式为 `https://github.com/login/oauth/authorize?...`
@@ -59,6 +64,7 @@
 - [x] GitHub 页面显示请求的权限范围 (read:user, user:email)
 
 **Network 请求详情**:
+
 ```
 Request: GET /api/v1/auth/oauth/github/authorize
 Response: { "code": 200, "message": "OK", "data": { "authUrl": "https://github.com/login/oauth/authorize?..." } }
@@ -71,10 +77,12 @@ Response: { "code": 200, "message": "OK", "data": { "authUrl": "https://github.c
 **目的**: 验证用户授权后正确回调并登录
 
 **步骤**:
+
 1. 在 GitHub 授权页面点击 "Authorize {应用名}" 按钮
 2. 观察页面跳转
 
 **预期结果**:
+
 - [x] GitHub 重定向到后端 callback 地址
 - [x] 后端处理后重定向到前端 `/oauth/callback`
 - [x] 页面显示 "Completing sign in..." 加载提示
@@ -83,6 +91,7 @@ Response: { "code": 200, "message": "OK", "data": { "authUrl": "https://github.c
 - [x] Dashboard 页面正常显示（不是空白页）
 
 **验证 Token 存储**:
+
 1. 打开开发者工具 → Application 面板 → Local Storage
 2. 检查以下 key 是否存在:
    - [x] `ctt_access_token` - 非空字符串
@@ -90,6 +99,7 @@ Response: { "code": 200, "message": "OK", "data": { "authUrl": "https://github.c
    - [x] `ctt_user_id` - UUID 格式字符串
 
 **验证 URL 清理**:
+
 - [x] 浏览器地址栏 URL 不包含 `accessToken`、`refreshToken` 等查询参数
 - [x] URL 应为 `http://localhost:5173/dashboard`（无参数）
 
@@ -100,11 +110,13 @@ Response: { "code": 200, "message": "OK", "data": { "authUrl": "https://github.c
 **目的**: 验证用户拒绝授权时的错误处理
 
 **步骤**:
+
 1. 打开 `http://localhost:5173/login`
 2. 点击 "Continue with GitHub"
 3. 在 GitHub 授权页面点击 "Cancel" 或拒绝授权
 
 **预期结果**:
+
 - [ ] 浏览器跳转到 `/oauth/error` 页面
 - [ ] 页面显示 "Sign in failed" 标题
 - [ ] 页面显示错误信息 "GitHub authorization was cancelled or failed."
@@ -113,6 +125,7 @@ Response: { "code": 200, "message": "OK", "data": { "authUrl": "https://github.c
 - [ ] 显示 "Back to home" 按钮
 
 **交互测试**:
+
 1. 点击 "Try again" 按钮
    - [ ] 跳转到登录页 `/login`
 2. 返回错误页，点击 "Back to home" 按钮
@@ -125,26 +138,28 @@ Response: { "code": 200, "message": "OK", "data": { "authUrl": "https://github.c
 **目的**: 验证各种错误码的显示
 
 **步骤**:
+
 1. 手动访问以下 URL，检查显示的错误信息:
 
-| URL | 预期错误信息 |
-|-----|-------------|
-| `/oauth/error?code=AUTH_013` | Authorization session expired. Please try again. |
-| `/oauth/error?code=AUTH_015` | GitHub authorization failed. Please try again. |
-| `/oauth/error?code=AUTH_016` | This GitHub account is already linked to another user. |
-| `/oauth/error?code=AUTH_017` | This GitHub account is not linked to any user. |
-| `/oauth/error?code=AUTH_018` | Cannot unlink the last login method. |
-| `/oauth/error?code=AUTH_004` | Account is temporarily locked. Please try again later. |
-| `/oauth/error?code=AUTH_005` | Account has been disabled. Please contact support. |
-| `/oauth/error?code=AUTH_006` | Please verify your email address first. |
-| `/oauth/error?code=AUTH_019` | Terms of service need to be accepted. |
-| `/oauth/error?code=OAUTH_PROVIDER_ERROR` | GitHub authorization was cancelled or failed. |
-| `/oauth/error?code=MISSING_OAUTH_PARAMS` | Invalid authorization request. Please try again. |
-| `/oauth/error?code=INVALID_STATE_ACTION` | Invalid authorization request. Please try again. |
-| `/oauth_ERROR?code=OAUTH_INTERNAL_ERROR` | Service error. Please try again later. |
-| `/oauth/error` (无 code) | An unexpected error occurred. Please try again. |
+| URL                                      | 预期错误信息                                           |
+| ---------------------------------------- | ------------------------------------------------------ |
+| `/oauth/error?code=AUTH_013`             | Authorization session expired. Please try again.       |
+| `/oauth/error?code=AUTH_015`             | GitHub authorization failed. Please try again.         |
+| `/oauth/error?code=AUTH_016`             | This GitHub account is already linked to another user. |
+| `/oauth/error?code=AUTH_017`             | This GitHub account is not linked to any user.         |
+| `/oauth/error?code=AUTH_018`             | Cannot unlink the last login method.                   |
+| `/oauth/error?code=AUTH_004`             | Account is temporarily locked. Please try again later. |
+| `/oauth/error?code=AUTH_005`             | Account has been disabled. Please contact support.     |
+| `/oauth/error?code=AUTH_006`             | Please verify your email address first.                |
+| `/oauth/error?code=AUTH_019`             | Terms of service need to be accepted.                  |
+| `/oauth/error?code=OAUTH_PROVIDER_ERROR` | GitHub authorization was cancelled or failed.          |
+| `/oauth/error?code=MISSING_OAUTH_PARAMS` | Invalid authorization request. Please try again.       |
+| `/oauth/error?code=INVALID_STATE_ACTION` | Invalid authorization request. Please try again.       |
+| `/oauth_ERROR?code=OAUTH_INTERNAL_ERROR` | Service error. Please try again later.                 |
+| `/oauth/error` (无 code)                 | An unexpected error occurred. Please try again.        |
 
 **检查项**:
+
 - [x] 每个错误码显示对应的错误信息
 - [x] 页面底部显示错误代码
 - [x] 错误代码格式正确（如 `AUTH_013`）
@@ -156,6 +171,7 @@ Response: { "code": 200, "message": "OK", "data": { "authUrl": "https://github.c
 **目的**: 验证恶意 redirect 参数被阻止
 
 **步骤**:
+
 1. 手动访问以下恶意 URL:
 
 ```
@@ -165,14 +181,17 @@ http://localhost:5173/oauth/callback?accessToken=fake&refreshToken=fake&redirect
 ```
 
 **预期结果**:
+
 - [x] 所有恶意 redirect 被忽略
 - [x] 页面跳转到 Dashboard (`/dashboard`)，而不是恶意网站
 - [x] 不会出现外站跳转
 
 **合法 redirect 测试**:
+
 ```
 http://localhost:5173/oauth/callback?accessToken=fake&refreshToken=fake&redirect=/settings
 ```
+
 - [x] 跳转到 `/settings`（相对路径有效）
 
 ---
@@ -182,10 +201,12 @@ http://localhost:5173/oauth/callback?accessToken=fake&refreshToken=fake&redirect
 **目的**: 验证设置页的 GitHub 绑定功能
 
 **步骤**:
+
 1. 先正常登录（邮箱密码方式）
 2. 访问 `http://localhost:5173/settings/profile`
 
 **预期结果**:
+
 - [x] 页面显示 "Profile Settings" 标题
 - [x] 页面显示 "Connected Accounts" 区域
 - [x] 显示 GitHub 图标和 "GitHub" 文字
@@ -193,10 +214,12 @@ http://localhost:5173/oauth/callback?accessToken=fake&refreshToken=fake&redirect
 - [x] 显示 "Connect GitHub" 按钮
 
 **交互测试**:
+
 1. 点击 "Connect GitHub" 按钮
 2. 观察 Network 面板
 
 **预期结果**:
+
 - [x] Network 面板显示 `GET /api/v1/auth/oauth/github/authorize` 请求
 - [x] 请求成功（200 状态码）
 - [x] 浏览器跳转到 GitHub 授权页面
@@ -210,25 +233,30 @@ http://localhost:5173/oauth/callback?accessToken=fake&refreshToken=fake&redirect
 **目的**: 验证设置页的 GitHub 解绑功能（Disconnect）
 
 **前提**:
+
 - 用户已登录
 - 用户已通过 GitHub OAuth 绑定 GitHub 账户
 - 访问 `http://localhost:5173/settings/profile`
 
 **步骤**:
+
 1. 观察页面内容
 
 **预期结果**:
+
 - [ ] 页面显示 "Connected as {githubLogin}" 状态
 - [ ] 不再显示 "Connect GitHub" 按钮
 - [ ] 显示 "Disconnect GitHub" 按钮
 
 **交互测试（成功路径）**:
+
 1. 点击 "Disconnect GitHub" 按钮
 2. 弹出确认对话框，标题 "Disconnect GitHub account?"
 3. 点击 "Disconnect" 确认
 4. 观察 Network 面板
 
 **预期结果**:
+
 - [ ] Network 显示 `DELETE /api/v1/auth/oauth/accounts/github` 请求，状态码 204
 - [ ] 显示成功 toast "GitHub account disconnected"
 - [ ] 页面状态变为 "Not connected"
@@ -236,20 +264,24 @@ http://localhost:5173/oauth/callback?accessToken=fake&refreshToken=fake&redirect
 - [ ] 关闭确认对话框
 
 **交互测试（取消路径）**:
+
 1. 点击 "Disconnect GitHub" 按钮
 2. 在弹出的确认对话框中点击 "Cancel"
 
 **预期结果**:
+
 - [ ] 对话框关闭
 - [ ] 不发出网络请求
 - [ ] 状态保持 "Connected"
 
 **交互测试（最后登录方式保护）**:
+
 1. 用户只有 GitHub 登录（无密码）
 2. 点击 "Disconnect GitHub" → 点击确认
 3. 观察响应
 
 **预期结果**:
+
 - [ ] Network 返回 409 + AUTH_018
 - [ ] Toast "Cannot unlink the last login method. Please set a password first."
 - [ ] GitHub 仍然绑定
@@ -263,10 +295,12 @@ http://localhost:5173/oauth/callback?accessToken=fake&refreshToken=fake&redirect
 **目的**: 验证快速重复点击不会导致问题
 
 **步骤**:
+
 1. 打开 `http://localhost:5173/login`
 2. 快速连续点击 "Continue with GitHub" 按钮 5 次
 
 **预期结果**:
+
 - [ ] 只发送 1 个 authorize 请求（不是 5 个）
 - [ ] 页面正常跳转到 GitHub
 - [ ] 不会出现错误或崩溃
@@ -278,11 +312,13 @@ http://localhost:5173/oauth/callback?accessToken=fake&refreshToken=fake&redirect
 **目的**: 验证网络请求失败时的错误处理
 
 **步骤**:
+
 1. 打开开发者工具 → Network 面板
 2. 勾选 "Offline" 模拟断网
 3. 点击 "Continue with GitHub" 按钮
 
 **预期结果**:
+
 - [ ] 页面显示错误提示 "GitHub login failed"
 - [ ] 错误描述显示 "Unable to start GitHub authorization. Please try again."
 - [ ] 页面不崩溃，用户可以重试
@@ -296,9 +332,11 @@ http://localhost:5173/oauth/callback?accessToken=fake&refreshToken=fake&redirect
 **前提**: 后端配置 terms 版本过期
 
 **步骤**:
+
 1. 使用 GitHub 登录一个 terms 已过期的账号
 
 **预期结果**:
+
 - [ ] 回调页正常处理 token
 - [ ] 弹出 Terms of Service 对话框
 - [ ] 用户必须接受条款才能继续
@@ -311,12 +349,14 @@ http://localhost:5173/oauth/callback?accessToken=fake&refreshToken=fake&redirect
 **目的**: 验证两个主题下 UI 正确显示
 
 **步骤**:
+
 1. 打开 `http://localhost:5173/login`
 2. 检查亮色主题下的 GitHub 按钮
 3. 切换到暗色主题
 4. 检查暗色主题下的 GitHub 按钮
 
 **预期结果**:
+
 - [ ] 亮色主题：按钮边框深色，文字深色，背景白色
 - [ ] 暗色主题：按钮边框浅色，文字浅色，背景深色
 - [ ] hover 效果在两个主题下都正常
@@ -328,11 +368,13 @@ http://localhost:5173/oauth/callback?accessToken=fake&refreshToken=fake&redirect
 **目的**: 验证移动端显示正常
 
 **步骤**:
+
 1. 打开开发者工具
 2. 切换到移动端模拟（如 iPhone 14）
 3. 访问 `http://localhost:5173/login`
 
 **预期结果**:
+
 - [ ] GitHub 按钮完整显示，不被截断
 - [ ] 按钮宽度适应屏幕
 - [ ] 点击区域足够大（至少 44px 高度）
@@ -345,11 +387,13 @@ http://localhost:5173/oauth/callback?accessToken=fake&refreshToken=fake&redirect
 **目的**: 验证 OAuth 登录后 token 刷新正常
 
 **步骤**:
+
 1. 通过 GitHub 登录
 2. 等待 accessToken 过期（或手动修改 localStorage 中的过期时间）
 3. 执行需要认证的操作（如访问 Dashboard）
 
 **预期结果**:
+
 - [ ] 自动使用 refreshToken 刷新 accessToken
 - [ ] 用户无感知，操作正常继续
 - [ ] localStorage 中的 token 已更新
@@ -361,11 +405,13 @@ http://localhost:5173/oauth/callback?accessToken=fake&refreshToken=fake&redirect
 **目的**: 验证多个并发请求时 token 刷新不会重复
 
 **步骤**:
+
 1. 通过 GitHub 登录
 2. 让 accessToken 过期
 3. 同时触发多个 API 请求（如快速切换页面）
 
 **预期结果**:
+
 - [ ] 只发送 1 个 refresh 请求
 - [ ] 所有并发请求使用同一个新 token
 - [ ] 不会出现 "Thundering Herd" 问题
@@ -377,11 +423,13 @@ http://localhost:5173/oauth/callback?accessToken=fake&refreshToken=fake&redirect
 **目的**: 验证登出后 OAuth 相关状态被清理
 
 **步骤**:
+
 1. 通过 GitHub 登录
 2. 点击登出按钮
 3. 检查 localStorage
 
 **预期结果**:
+
 - [ ] localStorage 中的 `ctt_access_token` 被清除
 - [ ] localStorage 中的 `ctt_refresh_token` 被清除
 - [ ] localStorage 中的 `ctt_user_id` 被清除
@@ -400,24 +448,24 @@ http://localhost:5173/oauth/callback?accessToken=fake&refreshToken=fake&redirect
 
 ## 测试完成检查表
 
-| 测试用例 | 状态 | 备注 |
-|---------|------|------|
-| 1. GitHub 按钮显示 | ⬜ | |
-| 2. 授权页面跳转 | ⬜ | |
-| 3. 授权成功回调 | ⬜ | |
-| 4. 授权拒绝处理 | ⬜ | |
-| 5. 错误码显示 | ⬜ | |
-| 6. Open Redirect 防护 | ⬜ | |
-| 7. GitHub 绑定按钮 | ⬜ | |
-| 8. GitHub 解绑按钮 | ⬜ | |
-| 9. 重复点击防护 | ⬜ | |
-| 10. 网络错误处理 | ⬜ | |
-| 11. Terms Expired | ⬜ | |
-| 12. 亮暗主题 | ⬜ | |
-| 13. 移动端响应式 | ⬜ | |
-| 14. Token 刷新 | ⬜ | |
-| 15. 并发请求防护 | ⬜ | |
-| 16. 登出状态清理 | ⬜ | |
+| 测试用例              | 状态 | 备注 |
+| --------------------- | ---- | ---- |
+| 1. GitHub 按钮显示    | ⬜   |      |
+| 2. 授权页面跳转       | ⬜   |      |
+| 3. 授权成功回调       | ⬜   |      |
+| 4. 授权拒绝处理       | ⬜   |      |
+| 5. 错误码显示         | ⬜   |      |
+| 6. Open Redirect 防护 | ⬜   |      |
+| 7. GitHub 绑定按钮    | ⬜   |      |
+| 8. GitHub 解绑按钮    | ⬜   |      |
+| 9. 重复点击防护       | ⬜   |      |
+| 10. 网络错误处理      | ⬜   |      |
+| 11. Terms Expired     | ⬜   |      |
+| 12. 亮暗主题          | ⬜   |      |
+| 13. 移动端响应式      | ⬜   |      |
+| 14. Token 刷新        | ⬜   |      |
+| 15. 并发请求防护      | ⬜   |      |
+| 16. 登出状态清理      | ⬜   |      |
 
 ---
 
@@ -428,7 +476,7 @@ http://localhost:5173/oauth/callback?accessToken=fake&refreshToken=fake&redirect
 ```
 **测试用例**: [编号]
 **问题描述**: [简要描述]
-**复现步骤**: 
+**复现步骤**:
 1. [步骤1]
 2. [步骤2]
 **预期结果**: [应该发生什么]

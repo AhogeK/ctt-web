@@ -149,14 +149,19 @@ Email change uses module-level `ref` for shared dialog state across components:
 const isDialogOpen = ref(false) // Module-level — shared across all consumers
 
 export function useEmailChange() {
-  const openDialog = () => { isDialogOpen.value = true }
-  const closeDialog = () => { isDialogOpen.value = false }
+  const openDialog = () => {
+    isDialogOpen.value = true
+  }
+  const closeDialog = () => {
+    isDialogOpen.value = false
+  }
 
   return { isDialogOpen, openDialog, closeDialog }
 }
 ```
 
 **Key points:**
+
 - State declared at module scope, not inside composable function
 - All components importing `useEmailChange()` share the same `isDialogOpen` ref
 - Avoids prop drilling or Pinia for simple UI state coordination
@@ -177,6 +182,7 @@ const handleApiError = (error: ApiError) => {
 ```
 
 **Pattern:**
+
 - `USER_013` = password verification required for sensitive operations
 - Form schema dynamically includes password field when `requiresPassword` is true
 - Zod schema uses `.optional()` for password, then `.refine()` when required
@@ -191,6 +197,7 @@ Request Change → Email Sent → User Clicks Link → Confirm with Token
 ```
 
 **States:**
+
 - `unverified` — Current email not verified (shows `EmailVerificationBanner`)
 - `pending` — Change requested, awaiting confirmation
 - `verified` — Email confirmed and active
@@ -274,6 +281,7 @@ TanStack Query four-state view (loading → error → empty → table) used by `
 ```
 
 **Table columns**: Name | Key Prefix (monospace) | Scopes (Badge group) | Status (Badge, color-coded) | Last Used (relative) | Created (date) | Expires (relative/italic "Never") | Actions (Revoke button, disabled)
+
 - No shadcn-vue Table component — custom Tailwind table
 - `formatRelativeTime()` handles both past (`lastUsedAt`) and future (`expiresAt`) dates
 - Status colors: ACTIVE=green (`bg-emerald-600`), EXPIRED=gray (outline), REVOKED=red (destructive)

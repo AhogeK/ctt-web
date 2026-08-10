@@ -101,11 +101,13 @@ Toolchain snapshot (2026-08-02): @playwright/test 1.62.1, lint-staged 17.3.0, vu
 ### OAuth Flow Discriminator Pattern
 
 GitHub OAuth has three flows with the same authorize endpoint (or DELETE for unbind):
+
 - `action='login'`: public endpoint, used by LoginForm for first-time sign-in
 - `action='bind'`: requires JWT, used by ProfileView to link existing account
 - `DELETE /api/v1/auth/oauth/accounts/{provider}`: requires JWT, used by ProfileView to unlink account
 
 Implementation notes:
+
 - `getGitHubAuthorizeUrl(action: 'login' | 'bind' = 'login')` in `src/lib/api/auth.ts`
 - `unbindOAuthAccount(provider)` in `src/lib/api/oauth-account.ts` (v0.8.42+)
 - For bind/unbind flows, JWT is auto-injected by `apiFetch` interceptor (`instance.ts:188-196`)
@@ -117,18 +119,17 @@ Implementation notes:
 - Frontend listens for BIND query params in ProfileView `onMounted` and clears URL via `router.replace({ query: {} })` to prevent toast re-trigger on refresh
 - UNBIND uses shadcn-vue Dialog for confirmation; click handler is single-purpose
 
-
 ### Email Change API (v0.31.2)
 
 5 endpoints under `/api/v1/users/me/email/`. All require JWT Bearer auth. Frontend implementation: `src/lib/api/email.ts`.
 
-| Method   | Path                                 | Description                          |
-| -------- | ------------------------------------ | ------------------------------------ |
-| `GET`    | `/api/v1/users/me/email/status`      | Get current email + verification status |
-| `POST`   | `/api/v1/users/me/email/change-request`  | Initiate email change (sends verification to new address) |
-| `POST`   | `/api/v1/users/me/email/change-confirm`  | Confirm email change with token from email |
-| `DELETE` | `/api/v1/users/me/email/change-request`  | Cancel pending email change          |
-| `POST`   | `/api/v1/users/me/email/resend-verification` | Resend verification email for pending change |
+| Method   | Path                                         | Description                                               |
+| -------- | -------------------------------------------- | --------------------------------------------------------- |
+| `GET`    | `/api/v1/users/me/email/status`              | Get current email + verification status                   |
+| `POST`   | `/api/v1/users/me/email/change-request`      | Initiate email change (sends verification to new address) |
+| `POST`   | `/api/v1/users/me/email/change-confirm`      | Confirm email change with token from email                |
+| `DELETE` | `/api/v1/users/me/email/change-request`      | Cancel pending email change                               |
+| `POST`   | `/api/v1/users/me/email/resend-verification` | Resend verification email for pending change              |
 
 **Request/Response formats:**
 
@@ -151,13 +152,13 @@ Implementation notes:
 
 **Error codes:**
 
-| Code       | Meaning                              |
-| ---------- | ------------------------------------ |
-| `USER_009` | New email same as current email      |
-| `USER_010` | Email already in use by another user |
+| Code       | Meaning                                   |
+| ---------- | ----------------------------------------- |
+| `USER_009` | New email same as current email           |
+| `USER_010` | Email already in use by another user      |
 | `USER_011` | No pending email change to confirm/cancel |
-| `USER_013` | Invalid or expired confirmation token |
-| `USER_014` | Password verification failed         |
+| `USER_013` | Invalid or expired confirmation token     |
+| `USER_014` | Password verification failed              |
 
 **Security considerations:**
 
@@ -173,12 +174,12 @@ ctt-server v0.33.1 implements CSRF protection using the synchronizer token patte
 
 **Mechanism:**
 
-| Step | Location | Description |
-| ---- | -------- | ----------- |
-| Token source | `XSRF-TOKEN` cookie | Backend sets cookie on login/session start |
-| Cookie read | `src/lib/api/instance.ts` | Parses `document.cookie` to extract `XSRF-TOKEN` value |
-| Header injection | `onRequest` interceptor | Adds `X-XSRF-TOKEN` header to POST/PUT/PATCH/DELETE requests |
-| Error handling | `onResponseError` interceptor | 403 + CSRF error body → Sonner toast + page reload |
+| Step             | Location                      | Description                                                  |
+| ---------------- | ----------------------------- | ------------------------------------------------------------ |
+| Token source     | `XSRF-TOKEN` cookie           | Backend sets cookie on login/session start                   |
+| Cookie read      | `src/lib/api/instance.ts`     | Parses `document.cookie` to extract `XSRF-TOKEN` value       |
+| Header injection | `onRequest` interceptor       | Adds `X-XSRF-TOKEN` header to POST/PUT/PATCH/DELETE requests |
+| Error handling   | `onResponseError` interceptor | 403 + CSRF error body → Sonner toast + page reload           |
 
 **Implementation details:**
 
@@ -197,9 +198,9 @@ ctt-server v0.33.1 implements CSRF protection using the synchronizer token patte
 
 1 endpoint under `/api/v1/users/me/password/`. Requires JWT Bearer auth. Frontend implementation: `src/lib/api/user.ts`.
 
-| Method   | Path                                 | Description                          |
-| -------- | ------------------------------------ | ------------------------------------ |
-| `POST`   | `/api/v1/users/me/password/set`      | Set password for OAuth users who don't have one yet |
+| Method | Path                            | Description                                         |
+| ------ | ------------------------------- | --------------------------------------------------- |
+| `POST` | `/api/v1/users/me/password/set` | Set password for OAuth users who don't have one yet |
 
 **Request/Response formats:**
 
@@ -210,9 +211,9 @@ ctt-server v0.33.1 implements CSRF protection using the synchronizer token patte
 
 **Error codes:**
 
-| Code       | Meaning                              |
-| ---------- | ------------------------------------ |
-| `USER_015` | User already has a password (cannot set again) |
+| Code         | Meaning                                              |
+| ------------ | ---------------------------------------------------- |
+| `USER_015`   | User already has a password (cannot set again)       |
 | `COMMON_003` | Invalid password format (8-64 printable ASCII chars) |
 
 **Security considerations:**
@@ -227,7 +228,6 @@ ctt-server v0.33.1 implements CSRF protection using the synchronizer token patte
 - `src/components/app/AppSidebar.vue` header displays the full project name "Code Time Tracker" (instead of abbreviated "CTT")
 - Footer shows copyright line "© 2026 AhogeK"
 - Logout button removed from sidebar; the `useAuthStore.logout()` method is still used by other code paths (token expiry interceptor)
-
 
 ## Key Architectural Decisions
 
