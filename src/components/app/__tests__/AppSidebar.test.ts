@@ -1,9 +1,19 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vite-plus/test'
 import { mount } from '@vue/test-utils'
-import { ref } from 'vue'
+import { computed, ref } from 'vue'
 import { createRouter, createMemoryHistory } from 'vue-router'
 import { createTestingPinia } from '@pinia/testing'
 import AppSidebar from '../AppSidebar.vue'
+
+/**
+ * Mutable sidebar-context state shared by the useSidebar mock and the tests.
+ * vi.hoisted runs before imports resolve, so this must be a plain object box;
+ * the mock factory (lazy) wraps it in a computed ref.
+ */
+const sidebarMock = vi.hoisted(() => ({
+  isMobile: { value: false },
+  setOpenMobile: vi.fn<(open: boolean) => void>(),
+}))
 
 vi.mock('@vueuse/core', async (importOriginal) => {
   const actual = await importOriginal<typeof import('@vueuse/core')>()
@@ -36,10 +46,10 @@ vi.mock('@/components/ui/sidebar', () => ({
     state: ref('expanded'),
     open: ref(true),
     openMobile: ref(false),
-    isMobile: ref(false),
+    isMobile: computed(() => sidebarMock.isMobile.value),
     toggleSidebar: vi.fn<() => void>(),
     setOpen: vi.fn<() => void>(),
-    setOpenMobile: vi.fn<() => void>(),
+    setOpenMobile: sidebarMock.setOpenMobile,
   }),
   SidebarTrigger: { name: 'SidebarTrigger', template: '<button data-slot="sidebar-trigger" />' },
 }))
@@ -131,6 +141,45 @@ describe('AppSidebar', () => {
       // v0.10.4 replaced brand text with PluginIcon component
       const pluginIcon = sidebarHeader.find('[role="img"][aria-label="Code Time Tracker"]')
       expect(pluginIcon.exists()).toBe(true)
+
+      wrapper.unmount()
+    })
+
+    it('omits the header chrome on mobile (no brand icon, no collapse trigger)', () => {
+      sidebarMock.isMobile.value = true
+      const { wrapper } = createWrapper()
+
+      const sidebarHeader = wrapper.find('[data-slot="sidebar-header"]')
+      expect(sidebarHeader.exists()).toBe(true)
+      // Mobile sheets carry no header chrome at all — the open trigger lives in
+      // AppHeader and the Sheet closes via overlay click or navigation.
+      expect(sidebarHeader.find('[role="img"][aria-label="Code Time Tracker"]').exists()).toBe(false)
+      expect(sidebarHeader.find('[data-slot="sidebar-trigger"]').exists()).toBe(false)
+
+      sidebarMock.isMobile.value = false
+      wrapper.unmount()
+    })
+
+    it('closes the mobile sheet when a navigation link is clicked', async () => {
+      sidebarMock.isMobile.value = true
+      const { wrapper } = createWrapper()
+
+      const dashboardLink = wrapper.find('a[href="/dashboard"]')
+      await dashboardLink.trigger('click')
+
+      expect(sidebarMock.setOpenMobile).toHaveBeenCalledWith(false)
+
+      sidebarMock.isMobile.value = false
+      wrapper.unmount()
+    })
+
+    it('does not touch the mobile sheet state on desktop navigation clicks', async () => {
+      const { wrapper } = createWrapper()
+
+      const dashboardLink = wrapper.find('a[href="/dashboard"]')
+      await dashboardLink.trigger('click')
+
+      expect(sidebarMock.setOpenMobile).not.toHaveBeenCalled()
 
       wrapper.unmount()
     })
