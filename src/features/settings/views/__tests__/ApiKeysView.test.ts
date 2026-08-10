@@ -496,4 +496,75 @@ describe('ApiKeysView', () => {
       expect(wrapper.find('[data-testid="revoke-dialog-prefix"]').text()).toBe(activeKey.keyPrefix)
     })
   })
+
+  describe('Column date formatting', () => {
+    it('shows relative time and a readable tooltip instead of the raw ISO string (desktop)', () => {
+      vi.useFakeTimers()
+      vi.setSystemTime(new Date('2026-01-02T01:00:00Z'))
+
+      const key = makeKey({ createdAt: '2026-01-02T00:00:00Z' })
+      setKeys([key])
+      const wrapper = mount(ApiKeysView)
+
+      // Created is the 6th column: Name, Key Prefix, Scopes, Status, Last Used, Created
+      const createdCell = wrapper.findAll('tbody tr')[0]!.findAll('td')[5]!
+      expect(createdCell.text()).toBe('1h ago')
+      expect(createdCell.find('span').attributes('title')).toBe(new Date(key.createdAt).toLocaleString())
+    })
+
+    it('shows readable tooltips for Last Used and Expires (desktop)', () => {
+      vi.useFakeTimers()
+      vi.setSystemTime(new Date('2026-01-02T01:00:00Z'))
+
+      const key = makeKey({
+        lastUsedAt: '2026-01-02T00:00:00Z',
+        expiresAt: '2026-02-01T00:00:00Z',
+      })
+      setKeys([key])
+      const wrapper = mount(ApiKeysView)
+
+      // Last Used is the 5th column, Expires is the 7th (Name, Key Prefix, Scopes, Status, Last Used, Created, Expires)
+      const cells = wrapper.findAll('tbody tr')[0]!.findAll('td')
+      const lastUsedCell = cells[4]!
+      const expiresCell = cells[6]!
+      expect(lastUsedCell.find('span').attributes('title')).toBe(new Date(key.lastUsedAt!).toLocaleString())
+      expect(expiresCell.find('span').attributes('title')).toBe(new Date(key.expiresAt!).toLocaleString())
+    })
+
+    it('mobile cards use the same relative time and readable tooltip for Created', () => {
+      vi.useFakeTimers()
+      vi.setSystemTime(new Date('2026-01-02T01:00:00Z'))
+
+      const key = makeKey({ createdAt: '2026-01-02T00:00:00Z' })
+      setKeys([key])
+      const wrapper = mount(ApiKeysView)
+
+      const card = wrapper.find('[data-testid="api-key-cards"]').find('[data-testid="api-key-card"]')!
+      // In this fixture lastUsedAt/expiresAt are null, so Created is the only
+      // span carrying a title attribute.
+      const createdSpan = card.findAll('span').find((s) => s.attributes('title') !== undefined)!
+      expect(createdSpan.text()).toBe('1h ago')
+      expect(createdSpan.attributes('title')).toBe(new Date(key.createdAt).toLocaleString())
+    })
+
+    it('mobile cards show readable tooltips for Last Used and Expires', () => {
+      vi.useFakeTimers()
+      vi.setSystemTime(new Date('2026-01-02T01:00:00Z'))
+
+      const key = makeKey({
+        lastUsedAt: '2026-01-02T00:00:00Z',
+        expiresAt: '2026-02-01T00:00:00Z',
+      })
+      setKeys([key])
+      const wrapper = mount(ApiKeysView)
+
+      const card = wrapper.find('[data-testid="api-key-cards"]').find('[data-testid="api-key-card"]')!
+      const titles = card
+        .findAll('span')
+        .map((s) => s.attributes('title'))
+        .filter((t) => t !== undefined)
+      expect(titles).toContain(new Date(key.lastUsedAt!).toLocaleString())
+      expect(titles).toContain(new Date(key.expiresAt!).toLocaleString())
+    })
+  })
 })

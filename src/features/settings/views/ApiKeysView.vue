@@ -180,11 +180,12 @@ function formatRelativeTime(dateStr: string | null): string {
 }
 
 /**
- * Render a date string as a short localised date.
- * Used for the "Created" and "Expires" columns.
+ * Render a date string as a human-readable absolute datetime.
+ * Used as the column/card tooltips (Last Used, Created, Expires) so hovering
+ * shows a readable timestamp instead of the raw ISO string.
  */
-function formatDate(dateStr: string): string {
-  return new Date(dateStr).toLocaleDateString()
+function formatDateTime(dateStr: string): string {
+  return new Date(dateStr).toLocaleString()
 }
 
 /**
@@ -339,19 +340,19 @@ function statusClass(status: ApiKeyStatus): string {
               </td>
               <!-- Last Used -->
               <td class="px-4 py-3 text-sm text-muted-foreground">
-                <span :title="key.lastUsedAt ?? undefined">
+                <span :title="key.lastUsedAt ? formatDateTime(key.lastUsedAt) : undefined">
                   {{ formatRelativeTime(key.lastUsedAt) }}
                 </span>
               </td>
               <!-- Created -->
               <td class="px-4 py-3 text-sm text-muted-foreground">
-                <span :title="key.createdAt">
-                  {{ formatDate(key.createdAt) }}
+                <span :title="formatDateTime(key.createdAt)">
+                  {{ formatRelativeTime(key.createdAt) }}
                 </span>
               </td>
               <!-- Expires -->
               <td class="px-4 py-3 text-sm text-muted-foreground">
-                <span v-if="key.expiresAt" :title="key.expiresAt">
+                <span v-if="key.expiresAt" :title="formatDateTime(key.expiresAt)">
                   {{ formatRelativeTime(key.expiresAt) }}
                 </span>
                 <span v-else class="italic">Never</span>
@@ -416,19 +417,19 @@ function statusClass(status: ApiKeyStatus): string {
           <div class="flex flex-col gap-1 text-sm text-muted-foreground">
             <div class="flex items-center justify-between">
               <span>Last used</span>
-              <span :title="key.lastUsedAt ?? undefined">
+              <span :title="key.lastUsedAt ? formatDateTime(key.lastUsedAt) : undefined">
                 {{ formatRelativeTime(key.lastUsedAt) }}
               </span>
             </div>
             <div class="flex items-center justify-between">
               <span>Created</span>
-              <span :title="key.createdAt">
-                {{ formatDate(key.createdAt) }}
+              <span :title="formatDateTime(key.createdAt)">
+                {{ formatRelativeTime(key.createdAt) }}
               </span>
             </div>
             <div class="flex items-center justify-between">
               <span>Expires</span>
-              <span v-if="key.expiresAt" :title="key.expiresAt">
+              <span v-if="key.expiresAt" :title="formatDateTime(key.expiresAt)">
                 {{ formatRelativeTime(key.expiresAt) }}
               </span>
               <span v-else class="italic">Never</span>
