@@ -2,10 +2,27 @@
 
 ## Current Status
 
-**Phase**: v0.16.2 RawKeyDialog a11y warning fix
-**Version**: 0.16.2 (2026-08-11)
+**Phase**: v0.16.5 mobile sidebar final UX (no header chrome + auto-close on nav)
+**Version**: 0.16.5 (2026-08-11)
 **Branch**: develop
-**Tests**: 1044/1044 unit (62 files) + 20/20 API-key E2E; vue-tsc + lint exit 0
+**Tests**: 1049/1049 unit (62 files) + 38/38 chromium E2E (api-keys 20 + auth 18); vue-tsc + lint exit 0
+
+## Recent Activity (v0.16.5 — 2026-08-11)
+
+### Mobile sidebar: drop header icon entirely + auto-close sheet on navigation
+
+- **User QA round 3 (DevTools <768px)**: brand icon is not wanted on mobile at all ("放在里面看起来怪怪的"); also the sheet must collapse after tapping a menu item.
+- **Fix 1**: removed the mobile header branch from `AppSidebar.vue` — neither header branch matches on mobile (v-if desktop expanded / v-else-if desktop collapsed), so no chrome renders inside the Sheet. Open trigger stays in AppHeader; close via overlay click or navigation.
+- **Fix 2**: `handleNavigate()` in AppSidebar — `if (isMobile.value) setOpenMobile(false)`, wired to all 4 SidebarMenuButtons via `@click`. Desktop is a no-op.
+- **Tests**: AppSidebar.test.ts — `useSidebar` mock exposes a shared `setOpenMobile` spy (same vi.hoisted box); mobile test asserts no PluginIcon/no trigger in header; +2 tests: mobile nav click closes the sheet (`setOpenMobile(false)` called), desktop nav click leaves sheet state untouched. 1049/1049 unit.
+- **Verified in real browser (Playwright 375×812)**: sheet opens with `iconInSheet: false`; after clicking the Dashboard link the sheet is removed from the DOM. (Script's post-nav redirect to /auth/login is a mock-completeness artifact — the catch-all envelope lacks dashboard endpoint shapes — unrelated to this change.)
+- Version 0.16.4 → 0.16.5 (bug fix → PATCH).
+
+### Code review (dual-axis) — mobile sidebar fixes PASS + sub-agent incident
+
+- Dual-axis review (2 omo sub-agents, bg_0701d1e2 Standards + bg_5b776f8a Spec) of the uncommitted mobile-sidebar changes: **both PASS** (no hard violations, no missing requirements, no scope creep). Minor notes: 4× @click="handleNavigate" judged explicit-not-DRY (acceptable); version 0.16.2→0.16.5 cumulative PATCH (R6.5 overrides R14); only Dashboard link covered by close test (sufficient — all 4 share one handler); memory-bank Chinese quotes of user feedback kept (R9 .md English rule judged N/A for AI memory quoting user words).
+- **Incident**: Standards sub-agent violated read-only review by running `lint --fix` → reformatted 11 unrelated files (README.md/SKILL_GRAPH.md/docs/*/e2e/*/vite.config.ts/.dev/*/memory-bank systemPatterns+techContext). User chose to KEEP the formatting noise. Root-cause guard added as **AGENTS.md R22** (review subtasks strictly read-only; only type-check / non-fix lint allowed).
+- Full verification: 1049/1049 unit (62 files) + 38/38 chromium E2E (api-keys 20 + auth 18) + vue-tsc + lint exit 0.
 
 ## Recent Activity (v0.16.2 — 2026-08-11)
 
@@ -193,7 +210,7 @@
 - **Architectural decision — MSW interception at runtime is NOT yet active.** The MSW browser worker requires `navigator.serviceWorker`, which doesn't exist in Node (where Playwright's `globalSetup` and `test.beforeAll` run). Two paths to actually intercept at runtime:
   1. **Per-spec `test.beforeAll(async () => { await page.addInitScript(...) })`** — requires the worker setup to be served by the dev server (e.g. via `public/msw-init.js`), which means either moving the `e2e/mocks/` modules into Vite's source path or configuring Vite to serve `e2e/`.
   2. **Move MSW bootstrap to `src/`** — wrap `setupWorker` in a dedicated module that Vite bundles, gated by `import.meta.env.MODE === 'test'`, and call from `main.ts`. Same effect, fewer moving parts.
-  Either is a follow-up. The current state (lazy proxy + globalSetup + SW file in `public/`) is the prerequisite for either path; the spec files use shared fixtures and `page.route()` (via the auth-helpers) so the data shape is already aligned with the MSW handlers — migrating the mocking layer later is a 1:1 swap of the helper body.
+     Either is a follow-up. The current state (lazy proxy + globalSetup + SW file in `public/`) is the prerequisite for either path; the spec files use shared fixtures and `page.route()` (via the auth-helpers) so the data shape is already aligned with the MSW handlers — migrating the mocking layer later is a 1:1 swap of the helper body.
 - **Verification**:
   - `pnpm type-check` (vue-tsc --build) → clean
   - `pnpm exec tsc --noEmit -p e2e/tsconfig.json` → clean
