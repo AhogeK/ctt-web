@@ -365,7 +365,7 @@ Auth forms (login, register, forgot-password) include optional hCaptcha verifica
 captchaToken: z.string().optional()
 
 // PublicConfig (fetched on app init)
-captchaSiteKey: z.string().nullable()  // null = captcha disabled
+captchaSiteKey: z.string().nullable() // null = captcha disabled
 ```
 
 **Frontend behavior:**
@@ -391,10 +391,10 @@ captchaSiteKey: z.string().nullable()  // null = captcha disabled
 
 GitHub OAuth serves two distinct flows through a single authorize endpoint:
 
-| Flow    | `action` query | Auth required | Callback behavior                                                                |
-| ------- | -------------- | ------------- | -------------------------------------------------------------------------------- |
-| `login` | `login`        | No (public)   | Creates/signs in user; redirects to `/oauth/callback?accessToken=…`              |
-| `bind`  | `bind`         | Yes (Bearer)  | Attaches GitHub to current user; redirects to `/settings/profile?linked=github`  |
+| Flow    | `action` query | Auth required | Callback behavior                                                               |
+| ------- | -------------- | ------------- | ------------------------------------------------------------------------------- |
+| `login` | `login`        | No (public)   | Creates/signs in user; redirects to `/oauth/callback?accessToken=…`             |
+| `bind`  | `bind`         | Yes (Bearer)  | Attaches GitHub to current user; redirects to `/settings/profile?linked=github` |
 
 **Implementation:**
 
@@ -430,10 +430,10 @@ See also:
 In addition to the BIND flow (above), OAuth account management uses two
 non-discriminated endpoints that operate on existing bindings:
 
-| Method   | Endpoint                                   | Auth       | Purpose                                                            |
-| -------- | ------------------------------------------ | ---------- | ------------------------------------------------------------------ |
-| `GET`    | `/api/v1/auth/oauth/accounts`              | Bearer JWT | List current user's OAuth bindings (provider + providerLogin)      |
-| `DELETE` | `/api/v1/auth/oauth/accounts/{provider}`   | Bearer JWT | Unbind a single provider from the current user (e.g. GitHub)       |
+| Method   | Endpoint                                 | Auth       | Purpose                                                       |
+| -------- | ---------------------------------------- | ---------- | ------------------------------------------------------------- |
+| `GET`    | `/api/v1/auth/oauth/accounts`            | Bearer JWT | List current user's OAuth bindings (provider + providerLogin) |
+| `DELETE` | `/api/v1/auth/oauth/accounts/{provider}` | Bearer JWT | Unbind a single provider from the current user (e.g. GitHub)  |
 
 **Implementation:**
 
@@ -457,9 +457,9 @@ non-discriminated endpoints that operate on existing bindings:
 
 ### User Profile Endpoint
 
-| Method | Endpoint             | Auth       | Purpose                                                         |
-| ------ | -------------------- | ---------- | --------------------------------------------------------------- |
-| `GET`  | `/api/v1/users/me`   | Bearer JWT | Current user's profile (id, email, displayName, emailVerified)  |
+| Method | Endpoint           | Auth       | Purpose                                                        |
+| ------ | ------------------ | ---------- | -------------------------------------------------------------- |
+| `GET`  | `/api/v1/users/me` | Bearer JWT | Current user's profile (id, email, displayName, emailVerified) |
 
 **Implementation:**
 
@@ -483,13 +483,13 @@ The email change feature allows users to update their email address with a two-s
 
 #### API Endpoints
 
-| Method   | Endpoint                                       | Auth       | Purpose                                              |
-| -------- | ---------------------------------------------- | ---------- | ---------------------------------------------------- |
-| `GET`    | `/api/v1/users/me/email/status`                | Bearer JWT | Fetch email status (verified, pending change, etc.)  |
-| `POST`   | `/api/v1/users/me/email/change-request`        | Bearer JWT | Initiate email change, sends verification email      |
-| `POST`   | `/api/v1/users/me/email/change-confirm`        | Bearer JWT | Confirm email change with token from email link      |
-| `DELETE` | `/api/v1/users/me/email/change-request`        | Bearer JWT | Cancel a pending email change request                |
-| `POST`   | `/api/v1/users/me/email/resend-verification`   | Bearer JWT | Resend verification email for pending change         |
+| Method   | Endpoint                                     | Auth       | Purpose                                             |
+| -------- | -------------------------------------------- | ---------- | --------------------------------------------------- |
+| `GET`    | `/api/v1/users/me/email/status`              | Bearer JWT | Fetch email status (verified, pending change, etc.) |
+| `POST`   | `/api/v1/users/me/email/change-request`      | Bearer JWT | Initiate email change, sends verification email     |
+| `POST`   | `/api/v1/users/me/email/change-confirm`      | Bearer JWT | Confirm email change with token from email link     |
+| `DELETE` | `/api/v1/users/me/email/change-request`      | Bearer JWT | Cancel a pending email change request               |
+| `POST`   | `/api/v1/users/me/email/resend-verification` | Bearer JWT | Resend verification email for pending change        |
 
 #### Frontend Component Structure
 
@@ -520,10 +520,10 @@ const isDialogOpen = ref(false)
 export function useEmailChange() {
   const queryClient = useQueryClient()
 
-  const requestMutation = useMutation({ /* POST /change-request */ })
-  const confirmMutation = useMutation({ /* POST /change-confirm */ })
-  const cancelMutation = useMutation({ /* DELETE /change-request */ })
-  const resendMutation = useMutation({ /* POST /resend-verification */ })
+  const requestMutation = useMutation({/* POST /change-request */})
+  const confirmMutation = useMutation({/* POST /change-confirm */})
+  const cancelMutation = useMutation({/* DELETE /change-request */})
+  const resendMutation = useMutation({/* POST /resend-verification */})
 
   return {
     requestMutation,
@@ -556,13 +556,16 @@ if the backend returns `USER_013` (password required), the password field appear
 
 ```typescript
 // Phase 1: Try without password
-requestMutation.mutate({ newEmail, password: '' }, {
-  onError: (error) => {
-    if (extractErrorCode(error) === 'USER_013') {
-      showPasswordField.value = true  // Reveal password field
-    }
+requestMutation.mutate(
+  { newEmail, password: '' },
+  {
+    onError: (error) => {
+      if (extractErrorCode(error) === 'USER_013') {
+        showPasswordField.value = true // Reveal password field
+      }
+    },
   },
-})
+)
 
 // Phase 2: Submit with password
 requestMutation.mutate({ newEmail, password })
@@ -572,13 +575,13 @@ This avoids asking for a password when the backend doesn't require it (e.g., rec
 
 #### Error Codes
 
-| Code        | Meaning              | Frontend Behavior                                          |
-| ----------- | -------------------- | ---------------------------------------------------------- |
-| `USER_009`  | Already pending      | Toast with suggestion to cancel existing request           |
-| `USER_010`  | Token expired        | Toast suggesting to request a new change                   |
-| `USER_011`  | Invalid token        | Toast suggesting to check the email link                   |
-| `USER_013`  | Password required    | Reveals password field in dialog (first attempt)           |
-| `USER_014`  | Wrong password       | Toast error (subsequent attempts with password)            |
+| Code       | Meaning           | Frontend Behavior                                |
+| ---------- | ----------------- | ------------------------------------------------ |
+| `USER_009` | Already pending   | Toast with suggestion to cancel existing request |
+| `USER_010` | Token expired     | Toast suggesting to request a new change         |
+| `USER_011` | Invalid token     | Toast suggesting to check the email link         |
+| `USER_013` | Password required | Reveals password field in dialog (first attempt) |
+| `USER_014` | Wrong password    | Toast error (subsequent attempts with password)  |
 
 Error code mapping lives in `src/lib/utils/api-error.ts`.
 

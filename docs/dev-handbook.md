@@ -13,6 +13,7 @@
 - **特性路由**（`modules/` 目录）：按功能模块组织（auth、dashboard、settings 等）
 
 路由实例创建后自动调用 `setupRouterGuards(router)` 设置全局守卫，包含：
+
 - 文档标题自动设置：`{meta.title} - CTT`
 - NProgress 进度条
 - 认证守卫：`requiresAuth: true` 的路由未登录时重定向到登录页，并携带 `redirect` 查询参数
@@ -77,13 +78,13 @@ export const RouteNames = {
 
 在 `src/types/vue-router.d.ts` 中定义，所有可用字段：
 
-| 字段             | 类型                | 必填 | 说明                   |
-|----------------|-------------------|----|----------------------|
-| `title`        | `string`          | 是  | 页面标题，用于浏览器 tab 和导航菜单 |
-| `requiresAuth` | `boolean`         | 否  | 是否需要认证，默认 `false`    |
-| `roles`        | `string[]`        | 否  | RBAC 角色权限（预留）        |
-| `layout`       | `'auth' \| 'app'` | 否  | 使用的布局模板              |
-| `hideInMenu`   | `boolean`         | 否  | 是否在侧边栏隐藏此路由          |
+| 字段           | 类型              | 必填 | 说明                                |
+| -------------- | ----------------- | ---- | ----------------------------------- |
+| `title`        | `string`          | 是   | 页面标题，用于浏览器 tab 和导航菜单 |
+| `requiresAuth` | `boolean`         | 否   | 是否需要认证，默认 `false`          |
+| `roles`        | `string[]`        | 否   | RBAC 角色权限（预留）               |
+| `layout`       | `'auth' \| 'app'` | 否   | 使用的布局模板                      |
+| `hideInMenu`   | `boolean`         | 否   | 是否在侧边栏隐藏此路由              |
 
 ### 1.5 注意事项
 
@@ -110,13 +111,13 @@ HTTP Client (apiFetch) → API Functions → Schemas (Zod)
 - **自动注入 Bearer token**：从 `localStorage` 读取 `ctt_access_token` 并设置 `Authorization` 头
 - **全局错误处理**（`onResponseError` 拦截器）：
 
-| 状态码  | 行为                                                |
-|------|---------------------------------------------------|
-| 401  | 清除 token + toast 提示 + 派发 `api:unauthorized` 自定义事件 |
-| 403  | toast 提示 "Permission denied"                      |
-| 404  | `console.warn`（交由组件处理）                            |
-| 422  | 跳过（由表单验证组件处理）                                     |
-| 500+ | toast 提示 "Server error"                           |
+| 状态码 | 行为                                                         |
+| ------ | ------------------------------------------------------------ |
+| 401    | 清除 token + toast 提示 + 派发 `api:unauthorized` 自定义事件 |
+| 403    | toast 提示 "Permission denied"                               |
+| 404    | `console.warn`（交由组件处理）                               |
+| 422    | 跳过（由表单验证组件处理）                                   |
+| 500+   | toast 提示 "Server error"                                    |
 
 ### 2.2 步骤
 
@@ -195,9 +196,7 @@ export type GitHubAuthorizeResponse = z.infer<typeof GitHubAuthorizeResponseSche
 
 export type GitHubOAuthAction = 'login' | 'bind'
 
-export async function getGitHubAuthorizeUrl(
-  action: GitHubOAuthAction = 'login',
-): Promise<GitHubAuthorizeResponse> {
+export async function getGitHubAuthorizeUrl(action: GitHubOAuthAction = 'login'): Promise<GitHubAuthorizeResponse> {
   const response = await apiFetch<unknown>('/api/v1/auth/oauth/github/authorize', {
     method: 'GET',
     query: { action },
@@ -215,10 +214,14 @@ const githubMutation = useMutation({
   // Wrap in 0-arg arrow so TanStack Query infers TVariables = void
   // and `mutate()` works without arguments.
   mutationFn: () => getGitHubAuthorizeUrl('login'),
-  onSuccess: (data) => { window.location.href = data.authUrl },
+  onSuccess: (data) => {
+    window.location.href = data.authUrl
+  },
 })
 
-function handleGitHubLogin() { githubMutation.mutate() }
+function handleGitHubLogin() {
+  githubMutation.mutate()
+}
 ```
 
 ```typescript
@@ -226,10 +229,14 @@ function handleGitHubLogin() { githubMutation.mutate() }
 const githubMutation = useMutation({
   // Explicit 1-arg type so TVariables = 'bind'; mutate('bind') is type-safe.
   mutationFn: (_action: 'bind') => getGitHubAuthorizeUrl('bind'),
-  onSuccess: (data) => { window.location.href = data.authUrl },
+  onSuccess: (data) => {
+    window.location.href = data.authUrl
+  },
 })
 
-function handleBindGitHub() { githubMutation.mutate('bind') }
+function handleBindGitHub() {
+  githubMutation.mutate('bind')
+}
 ```
 
 **Key points:**
@@ -319,14 +326,14 @@ const UsersPagedSchema = createPagedResponseSchema(UserSchema)
 
 ### 3.1 测试基础设施
 
-| 工具                        | 版本 | 用途                         |
-|---------------------------|----|----------------------------|
-| Vitest                    | 4  | 测试运行器                      |
-| @vue/test-utils           | 2  | Vue 组件挂载                   |
-| @testing-library/vue      | 8  | 语义化断言                      |
-| @testing-library/jest-dom | 6  | 额外匹配器（toBeInTheDocument 等） |
-| @faker-js/faker           | 9  | 测试数据生成                     |
-| jsdom                     | 29 | 浏览器环境模拟                    |
+| 工具                      | 版本 | 用途                               |
+| ------------------------- | ---- | ---------------------------------- |
+| Vitest                    | 4    | 测试运行器                         |
+| @vue/test-utils           | 2    | Vue 组件挂载                       |
+| @testing-library/vue      | 8    | 语义化断言                         |
+| @testing-library/jest-dom | 6    | 额外匹配器（toBeInTheDocument 等） |
+| @faker-js/faker           | 9    | 测试数据生成                       |
+| jsdom                     | 29   | 浏览器环境模拟                     |
 
 **关键配置**（`vitest.config.ts`）：
 
@@ -347,8 +354,8 @@ afterEach(() => {
 })
 
 // Mock matchMedia + ResizeObserver for Radix UI / shadcn-vue
-Object.defineProperty(window, 'matchMedia', { /* ... */ })
-global.ResizeObserver = vi.fn().mockImplementation(() => ({ /* ... */ }))
+Object.defineProperty(window, 'matchMedia', {/* ... */})
+global.ResizeObserver = vi.fn().mockImplementation(() => ({/* ... */}))
 ```
 
 ### 3.2 测试文件组织
@@ -462,7 +469,7 @@ describe('Auth Store', () => {
     })
 
     expect(authApi.login).toHaveBeenCalledWith(
-      expect.objectContaining({ email: 'test@example.com', deviceId: expect.any(String) })
+      expect.objectContaining({ email: 'test@example.com', deviceId: expect.any(String) }),
     )
     expect(result).toStrictEqual(mockResponse)
     expect(store.accessToken).toBe('token')
@@ -477,7 +484,9 @@ describe('Auth Store', () => {
 ```typescript
 vi.mock('ofetch', () => ({
   ofetch: {
-    create: vi.fn((config) => { /* capture config */ }),
+    create: vi.fn((config) => {
+      /* capture config */
+    }),
   },
 }))
 ```
@@ -588,19 +597,19 @@ pnpm build && pnpm test:e2e       # CI — 必须先构建
 
 ### 4.2 可用类型
 
-| 类型         | 说明           | 示例                                                       |
-|------------|--------------|----------------------------------------------------------|
-| `feat`     | 新功能          | `feat(auth): add token refresh with concurrency control` |
-| `fix`      | Bug 修复       | `fix(router): preserve query params in redirect`         |
-| `docs`     | 文档变更         | `docs: add development handbook`                         |
-| `style`    | 代码格式（不影响功能）  | `style: format imports with oxfmt`                       |
+| 类型       | 说明                     | 示例                                                     |
+| ---------- | ------------------------ | -------------------------------------------------------- |
+| `feat`     | 新功能                   | `feat(auth): add token refresh with concurrency control` |
+| `fix`      | Bug 修复                 | `fix(router): preserve query params in redirect`         |
+| `docs`     | 文档变更                 | `docs: add development handbook`                         |
+| `style`    | 代码格式（不影响功能）   | `style: format imports with oxfmt`                       |
 | `refactor` | 重构（非新功能、非修复） | `refactor(api): extract error handling to interceptor`   |
-| `perf`     | 性能优化         | `perf: lazy load dashboard charts`                       |
-| `test`     | 测试相关         | `test(auth): add concurrent refresh dedup test`          |
-| `build`    | 构建系统/外部依赖    | `build: upgrade vitest to v4`                            |
-| `ci`       | CI 配置变更      | `ci: add playwright e2e workflow`                        |
-| `chore`    | 其他不修改源码的变更   | `chore: update gitignore`                                |
-| `revert`   | 撤销之前的提交      | `revert: feat(auth): add token refresh`                  |
+| `perf`     | 性能优化                 | `perf: lazy load dashboard charts`                       |
+| `test`     | 测试相关                 | `test(auth): add concurrent refresh dedup test`          |
+| `build`    | 构建系统/外部依赖        | `build: upgrade vitest to v4`                            |
+| `ci`       | CI 配置变更              | `ci: add playwright e2e workflow`                        |
+| `chore`    | 其他不修改源码的变更     | `chore: update gitignore`                                |
+| `revert`   | 撤销之前的提交           | `revert: feat(auth): add token refresh`                  |
 
 ### 4.3 示例
 
@@ -631,7 +640,11 @@ The createApiResponseSchema factory now returns a different shape."
 export default {
   extends: ['@commitlint/config-conventional'],
   rules: {
-    'type-enum': [2, 'always', ['feat', 'fix', 'docs', 'style', 'refactor', 'perf', 'test', 'build', 'ci', 'chore', 'revert']],
+    'type-enum': [
+      2,
+      'always',
+      ['feat', 'fix', 'docs', 'style', 'refactor', 'perf', 'test', 'build', 'ci', 'chore', 'revert'],
+    ],
     'type-case': [2, 'always', 'lower-case'],
     'subject-max-length': [2, 'always', 72],
     'scope-case': [2, 'always', 'lower-case'],
@@ -658,9 +671,9 @@ export default {
 
 ### 5.1 E2E 测试基础设施
 
-| 工具         | 版本 | 用途                                       |
-|------------|----|------------------------------------------|
-| Playwright | 1.x | 端到端测试运行器（Chromium / Firefox / WebKit）          |
+| 工具       | 版本 | 用途                                            |
+| ---------- | ---- | ----------------------------------------------- |
+| Playwright | 1.x  | 端到端测试运行器（Chromium / Firefox / WebKit） |
 
 **关键配置**（`playwright.config.ts`）：
 
@@ -717,23 +730,23 @@ test.describe('Auth flow', () => {
 
 **辅助函数**（`e2e/utils/auth-helpers.ts`）：
 
-| 函数                          | 用途                       |
-|-----------------------------|--------------------------|
+| 函数                        | 用途                               |
+| --------------------------- | ---------------------------------- |
 | `mockAuthApis(page)`        | 注册默认 auth API mock（9 个端点） |
-| `loginViaForm(page, creds)` | 通过表单提交登录                |
-| `clickLogout(page)`         | 点击登出按钮                   |
-| `readAuthStore(page, key)`  | 读取 Pinia auth store 中的字段   |
+| `loginViaForm(page, creds)` | 通过表单提交登录                   |
+| `clickLogout(page)`         | 点击登出按钮                       |
+| `readAuthStore(page, key)`  | 读取 Pinia auth store 中的字段     |
 
 **Fixture 数据**（`e2e/fixtures/auth.ts`）：
 
-| 常量                       | 用途                          |
-|--------------------------|-----------------------------|
-| `TEST_USER_ID`           | 规范化的测试用户 UUID                |
-| `TEST_USER_EMAIL`        | 测试邮箱                        |
-| `TEST_USER_CREDENTIALS`  | 登录表单使用的 email + password  |
-| `INVALID_CREDENTIALS`    | 触发 401 AUTH_001 的凭证         |
-| `TEST_LOGIN_RESPONSE`    | 登录成功响应                      |
-| `TEST_USER_PROFILE`      | `/users/me` 响应              |
+| 常量                    | 用途                            |
+| ----------------------- | ------------------------------- |
+| `TEST_USER_ID`          | 规范化的测试用户 UUID           |
+| `TEST_USER_EMAIL`       | 测试邮箱                        |
+| `TEST_USER_CREDENTIALS` | 登录表单使用的 email + password |
+| `INVALID_CREDENTIALS`   | 触发 401 AUTH_001 的凭证        |
+| `TEST_LOGIN_RESPONSE`   | 登录成功响应                    |
+| `TEST_USER_PROFILE`     | `/users/me` 响应                |
 
 ### 5.4 自定义 Mock 覆盖
 

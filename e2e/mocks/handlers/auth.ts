@@ -172,10 +172,7 @@ export const PASSWORD_RESET_CONFIRM_RESPONSE = restOk(
  *
  * Response: `RestApiResponse<{ termsVersion, captchaSiteKey }>`
  */
-export const CONFIG_PUBLIC_RESPONSE = restOk(
-  { termsVersion: '1', captchaSiteKey: null },
-  'Success',
-)
+export const CONFIG_PUBLIC_RESPONSE = restOk({ termsVersion: '1', captchaSiteKey: null }, 'Success')
 
 /**
  * `GET /api/v1/users/me`
