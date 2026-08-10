@@ -1,10 +1,6 @@
 import { expect, type Page, type Route } from '@playwright/test'
 import { mockAuthApis, loginViaForm, okEnvelope, nowIso } from '../utils/auth-helpers.js'
-import {
-  TEST_CREATE_RESPONSE,
-  TEST_NEW_KEY,
-  type ApiKeyFixture,
-} from './fixtures.js'
+import { TEST_CREATE_RESPONSE, TEST_NEW_KEY, type ApiKeyFixture } from './fixtures.js'
 
 export interface ApiKeysPageSetup {
   /** Snapshot of the current keys array (what GET returns). */
@@ -93,7 +89,10 @@ export async function openCreateDialog(page: Page): Promise<void> {
   // Chromium the app sidebar's tooltip/grace-area overlay intercepts pointer
   // events on content buttons (a rendering difference, not a functional bug,
   // the click still reaches the Vue handler via the DOM event).
-  await page.getByRole('button', { name: 'Create API Key' }).first().evaluate((el) => (el as HTMLElement).click())
+  await page
+    .getByRole('button', { name: 'Create API Key' })
+    .first()
+    .evaluate((el) => (el as HTMLElement).click())
   await expect(page.getByRole('dialog')).toContainText('Create API Key')
 }
 
