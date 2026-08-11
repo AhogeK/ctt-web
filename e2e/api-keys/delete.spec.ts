@@ -1,6 +1,13 @@
 import { test, expect } from '@playwright/test'
 import { setupApiKeysPage, fulfillError } from './helpers.js'
-import { TEST_ACTIVE_KEY, TEST_REVOKED_KEY, TEST_KEYS, AUTH_023_BODY, AUTH_010_BODY } from './fixtures.js'
+import {
+  TEST_ACTIVE_KEY,
+  TEST_EXPIRED_KEY,
+  TEST_REVOKED_KEY,
+  TEST_KEYS,
+  AUTH_023_BODY,
+  AUTH_010_BODY,
+} from './fixtures.js'
 
 test.describe('API key permanent delete flow', () => {
   test('deletes a REVOKED key after confirmation and the row disappears', async ({ page }) => {
@@ -78,7 +85,7 @@ test.describe('API key permanent delete flow', () => {
     ).toHaveCount(0)
   })
 
-  test('shows the AUTH_023 toast when the server rejects a non-REVOKED delete', async ({ page }) => {
+  test('shows the AUTH_023 toast when the server rejects an ACTIVE-key delete', async ({ page }) => {
     await setupApiKeysPage(page, TEST_KEYS)
 
     // Defensive: the UI never offers Delete on ACTIVE keys, but a server
@@ -97,12 +104,30 @@ test.describe('API key permanent delete flow', () => {
       .evaluate((el) => (el as HTMLElement).click())
     await page.getByRole('alertdialog').getByRole('button', { name: 'Delete permanently' }).click()
 
-    await expect(page.getByText('Only revoked API keys can be deleted', { exact: false })).toBeVisible()
+    await expect(
+      page.getByText('Active API keys must be revoked before they can be deleted', { exact: false }),
+    ).toBeVisible()
     // The dialog stays open and the row is untouched.
     await expect(page.getByRole('alertdialog')).toBeVisible()
     await expect(
       page.getByTestId('api-key-table').locator('tbody tr').filter({ hasText: TEST_REVOKED_KEY.name }),
     ).toHaveCount(1)
+  })
+
+  test('deletes an EXPIRED key directly after confirmation and the row disappears', async ({ page }) => {
+    await setupApiKeysPage(page, TEST_KEYS)
+
+    const row = page.getByTestId('api-key-table').locator('tbody tr').filter({ hasText: TEST_EXPIRED_KEY.name })
+    await row
+      .getByRole('button', { name: `Delete ${TEST_EXPIRED_KEY.name}` })
+      .evaluate((el) => (el as HTMLElement).click())
+    await expect(page.getByRole('alertdialog')).toBeVisible()
+    await page.getByRole('alertdialog').getByRole('button', { name: 'Delete permanently' }).click()
+
+    await expect(page.getByText('API Key deleted')).toBeVisible()
+    await expect(
+      page.getByTestId('api-key-table').locator('tbody tr').filter({ hasText: TEST_EXPIRED_KEY.name }),
+    ).toHaveCount(0)
   })
 
   test('shows the BOLA toast on 401 AUTH_010 without logging out', async ({ page }) => {
@@ -139,6 +164,10 @@ test.describe('API key permanent delete flow', () => {
     // ACTIVE cards show Revoke, never Delete.
     const activeCard = page.getByTestId('api-key-card').filter({ hasText: TEST_ACTIVE_KEY.name })
     await expect(activeCard.getByRole('button', { name: `Delete ${TEST_ACTIVE_KEY.name}` })).toHaveCount(0)
+
+    // EXPIRED cards show Delete (backend v0.42.0 deletes them directly).
+    const expiredCard = page.getByTestId('api-key-card').filter({ hasText: TEST_EXPIRED_KEY.name })
+    await expect(expiredCard.getByRole('button', { name: `Delete ${TEST_EXPIRED_KEY.name}` })).toHaveCount(1)
 
     // Full delete flow works from the card.
     await card

@@ -28,12 +28,14 @@ test.describe('API keys list', () => {
     await expect(rows.nth(2)).toContainText('REVOKED')
   })
 
-  test('shows the Revoke button only on the ACTIVE row', async ({ page }) => {
+  test('shows Revoke on ACTIVE, Delete on EXPIRED and REVOKED rows', async ({ page }) => {
     await setupApiKeysPage(page, TEST_KEYS)
 
     const rows = page.getByTestId('api-key-table').locator('tbody tr')
     await expect(rows.nth(0).getByRole('button', { name: `Revoke ${TEST_ACTIVE_KEY.name}` })).toBeVisible()
+    // EXPIRED keys cannot be reactivated; backend v0.42.0 deletes them directly.
+    await expect(rows.nth(1).getByRole('button', { name: `Delete ${TEST_EXPIRED_KEY.name}` })).toBeVisible()
     await expect(rows.nth(1).getByRole('button', { name: /Revoke/i })).toHaveCount(0)
-    await expect(rows.nth(2).getByRole('button', { name: /Revoke/i })).toHaveCount(0)
+    await expect(rows.nth(2).getByRole('button', { name: `Delete ${TEST_REVOKED_KEY.name}` })).toBeVisible()
   })
 })
