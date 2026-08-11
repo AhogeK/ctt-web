@@ -2,10 +2,22 @@
 
 ## Current Status
 
-**Phase**: v0.16.5 mobile sidebar final UX (no header chrome + auto-close on nav)
-**Version**: 0.16.5 (2026-08-11)
+**Phase**: v0.16.6 confirm-dialog description alignment fix
+**Version**: 0.16.6 (2026-08-11)
 **Branch**: develop
-**Tests**: 1049/1049 unit (62 files) + 38/38 chromium E2E (api-keys 20 + auth 18); vue-tsc + lint exit 0
+**Tests**: 1050/1050 unit (62 files) + 38/38 chromium E2E (api-keys 20 + auth 18); vue-tsc + lint exit 0
+
+## Recent Activity (v0.16.6 — 2026-08-11)
+
+### ConfirmApiKeyActionDialog: description first line offset on mobile
+
+- **BUG (user QA, mobile revoke dialog)**: the description's first word ("After") was not flush with the left edge; wrapped lines looked misaligned, and the rendering "style" varied across phone widths. PC was fine.
+- **Root cause 1 (leading space)**: `AlertDialogDescription` used multi-line interpolation (`\n  {{ props.description }}\n`) — Vue 3 default `whitespace: 'condense'` collapses that whitespace into a single leading space → textContent starts with `" After revocation..."`, offsetting the first line only.
+- **Root cause 2 (mobile centering)**: `AlertDialogHeader` default `text-center sm:text-left` centers the whole header on mobile (<640px). Combined with the leading space, narrow phones showed a messy "one line off + centered wrapped lines" look that changed per breakpoint.
+- **Fix**: single-line interpolation (`<AlertDialogDescription>{{ props.description }}</AlertDialogDescription>`) + `<AlertDialogHeader class="text-left">`. Note: AlertDialogHeader uses native `:class="[...defaults, props.class]"` (not cn()/tailwind-merge) — the override wins via CSS cascade (Tailwind emits text-left after text-center; sm:text-left variant sorts after base utilities), so left alignment applies at every breakpoint.
+- **Tests**: +1 regression in ConfirmApiKeyActionDialog.test.ts (description text starts with 'After' with no leading space; header has text-left class). 1050/1050 unit.
+- **Verified in real browser** (Playwright 320/375/390/414/640/768/1024px): leadingSpace=false, computed text-align=left everywhere.
+- Version 0.16.5 → 0.16.6 (bug fix → PATCH).
 
 ## Recent Activity (v0.16.5 — 2026-08-11)
 
