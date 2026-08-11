@@ -112,11 +112,13 @@ function handleOpenAutoFocus(event: Event) {
 <template>
   <AlertDialog :open="props.open" @update:open="handleOpenChange">
     <AlertDialogContent class="sm:max-w-md" @open-auto-focus="handleOpenAutoFocus">
-      <AlertDialogHeader>
+      <AlertDialogHeader class="text-left">
         <AlertDialogTitle>{{ props.title }}</AlertDialogTitle>
-        <AlertDialogDescription>
-          {{ props.description }}
-        </AlertDialogDescription>
+        <!-- Single-line interpolation: whitespace around multi-line {{ }} would be
+             condensed into a leading space, offsetting the first line of the
+             description from its wrapped lines. text-left keeps the description
+             aligned on mobile, where the default header centers it. -->
+        <AlertDialogDescription>{{ props.description }}</AlertDialogDescription>
       </AlertDialogHeader>
 
       <!-- Key identity -->

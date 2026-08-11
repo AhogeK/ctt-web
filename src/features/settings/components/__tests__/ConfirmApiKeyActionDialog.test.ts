@@ -242,6 +242,20 @@ describe('ConfirmApiKeyActionDialog', () => {
       expect(wrapper.text()).toContain('Revoke API Key')
       expect(wrapper.text()).toContain('can no longer sync data')
     })
+
+    it('renders the description without a leading space and left-aligned', () => {
+      const wrapper = createWrapper()
+
+      // Multi-line {{ }} interpolation would condense into a leading space,
+      // pushing the first line off the left edge (visible on narrow screens).
+      const description = wrapper.find('[data-testid="alert-dialog-description"]')
+      expect(description.text().startsWith('After')).toBe(true)
+      expect(description.text().startsWith(' ')).toBe(false)
+
+      // text-left overrides the mobile-centered header default so the
+      // description stays left-aligned at every breakpoint.
+      expect(wrapper.find('[data-testid="alert-dialog-header"]').classes()).toContain('text-left')
+    })
   })
 
   describe('delete configuration', () => {
