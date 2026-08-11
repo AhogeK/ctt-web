@@ -370,7 +370,7 @@ function statusClass(status: ApiKeyStatus): string {
                   Revoke
                 </Button>
                 <Button
-                  v-else-if="key.status === 'REVOKED'"
+                  v-else-if="key.status === 'REVOKED' || key.status === 'EXPIRED'"
                   variant="outline"
                   size="sm"
                   class="text-destructive hover:bg-destructive/10 hover:text-destructive"
@@ -448,7 +448,7 @@ function statusClass(status: ApiKeyStatus): string {
               Revoke
             </Button>
           </div>
-          <div v-else-if="key.status === 'REVOKED'" class="flex justify-end">
+          <div v-else-if="key.status === 'REVOKED' || key.status === 'EXPIRED'" class="flex justify-end">
             <Button
               variant="outline"
               size="sm"

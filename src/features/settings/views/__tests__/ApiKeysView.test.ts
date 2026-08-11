@@ -184,8 +184,8 @@ describe('ApiKeysView', () => {
     vi.useRealTimers()
   })
 
-  describe('Revoke button visibility', () => {
-    it('renders Revoke only for ACTIVE keys, Delete for REVOKED, neither for EXPIRED', () => {
+  describe('Revoke/Delete button visibility', () => {
+    it('renders Revoke for ACTIVE, Delete for REVOKED and EXPIRED', () => {
       setKeys([activeKey, expiredKey, revokedKey])
       const wrapper = mount(ApiKeysView)
 
@@ -198,18 +198,12 @@ describe('ApiKeysView', () => {
 
       expect(activeRowButtons.some((b) => b.text().includes('Revoke'))).toBe(true)
       expect(activeRowButtons.some((b) => b.text().includes('Delete'))).toBe(false)
+      // EXPIRED keys cannot be reactivated and the backend (v0.42.0) deletes
+      // them directly — no revoke round trip needed.
       expect(expiredRowButtons.some((b) => b.text().includes('Revoke'))).toBe(false)
-      expect(expiredRowButtons.some((b) => b.text().includes('Delete'))).toBe(false)
+      expect(expiredRowButtons.some((b) => b.text().includes('Delete'))).toBe(true)
       expect(revokedRowButtons.some((b) => b.text().includes('Revoke'))).toBe(false)
       expect(revokedRowButtons.some((b) => b.text().includes('Delete'))).toBe(true)
-    })
-
-    it('renders no Revoke button when all keys are non-ACTIVE', () => {
-      setKeys([expiredKey, revokedKey])
-      const wrapper = mount(ApiKeysView)
-
-      const revokeButtons = wrapper.findAll('button').filter((b) => b.text().includes('Revoke'))
-      expect(revokeButtons).toHaveLength(0)
     })
   })
 
@@ -452,7 +446,7 @@ describe('ApiKeysView', () => {
       expect(cards[2]!.text()).toContain(revokedKey.name)
     })
 
-    it('shows Revoke button only for ACTIVE cards with descriptive aria-label', () => {
+    it('shows Delete on EXPIRED and REVOKED cards, Revoke only on ACTIVE', () => {
       setKeys([activeKey, expiredKey, revokedKey])
       const wrapper = mount(ApiKeysView)
 
@@ -467,8 +461,13 @@ describe('ApiKeysView', () => {
       expect(activeRevokeButton).toBeDefined()
       expect(activeRevokeButton!.attributes('aria-label')).toBe(`Revoke ${activeKey.name}`)
 
-      expect(expiredCardButtons.some((b) => b.text().includes('Revoke'))).toBe(false)
-      expect(revokedCardButtons.some((b) => b.text().includes('Revoke'))).toBe(false)
+      const expiredDeleteButton = expiredCardButtons.find((b) => b.text().includes('Delete'))
+      expect(expiredDeleteButton).toBeDefined()
+      expect(expiredDeleteButton!.attributes('aria-label')).toBe(`Delete ${expiredKey.name}`)
+
+      const revokedDeleteButton = revokedCardButtons.find((b) => b.text().includes('Delete'))
+      expect(revokedDeleteButton).toBeDefined()
+      expect(revokedDeleteButton!.attributes('aria-label')).toBe(`Delete ${revokedKey.name}`)
     })
 
     it('card metadata renders relative time and Never values', () => {
