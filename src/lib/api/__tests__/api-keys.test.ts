@@ -201,7 +201,7 @@ describe('api-keys API', () => {
       await expect(apiKeysApi.deleteApiKey('key-uuid-456')).resolves.toBeUndefined()
     })
 
-    it('propagates AUTH_010 (BOLA) and AUTH_023 (not revoked) errors from ofetch', async () => {
+    it('propagates AUTH_010 (BOLA) and AUTH_023 (still active) errors from ofetch', async () => {
       vi.mocked(apiFetch).mockRejectedValueOnce({
         statusCode: 401,
         data: { code: 'AUTH_010', message: 'API key invalid' },
@@ -213,7 +213,7 @@ describe('api-keys API', () => {
 
       vi.mocked(apiFetch).mockRejectedValueOnce({
         statusCode: 409,
-        data: { code: 'AUTH_023', message: 'Only revoked API keys can be deleted' },
+        data: { code: 'AUTH_023', message: 'Active API keys must be revoked before they can be deleted' },
       })
       await expect(apiKeysApi.deleteApiKey('active-key')).rejects.toMatchObject({
         statusCode: 409,
