@@ -77,19 +77,19 @@ export function useRevokeApiKey() {
 }
 
 /**
- * Composable for permanently deleting a REVOKED API key.
+ * Composable for permanently deleting a REVOKED or EXPIRED API key.
  *
- * Only keys in REVOKED state can be deleted (server rejects ACTIVE/EXPIRED
- * with 409 AUTH_023); the key is physically removed and the operation is
- * not reversible. On success the keys list query is invalidated so the
- * row disappears from the list.
+ * ACTIVE keys are rejected by the server (409 AUTH_023 — revoke first);
+ * REVOKED and EXPIRED keys delete directly (backend v0.42.0). The key is
+ * physically removed and the operation is not reversible. On success the
+ * keys list query is invalidated so the row disappears from the list.
  *
  * Errors: AUTH_010 (missing/foreign/already-deleted, BOLA-safe) and
- * AUTH_023 (not revoked) propagate to the caller for `getErrorMessage`
+ * AUTH_023 (still active) propagate to the caller for `getErrorMessage`
  * mapping.
  *
  * @returns Object with the delete mutation - call `mutation.mutate(id)`
- *   to delete a revoked key. Exposes `mutation.isPending`,
+ *   to delete a revoked or expired key. Exposes `mutation.isPending`,
  *   `mutation.isError`, and `mutation.error` for UI state.
  */
 export function useDeleteApiKey() {
