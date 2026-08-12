@@ -2,10 +2,22 @@
 
 ## Current Status
 
-**Phase**: v0.16.11 long-name UX fixes (counter + overflow)
-**Version**: 0.16.11 (2026-08-13)
+**Phase**: v0.16.12 sidebar active-state highlight
+**Version**: 0.16.12 (2026-08-13)
 **Branch**: develop
-**Tests**: 1053/1053 unit (62 files) + 39/39 chromium E2E (api-keys 21 + auth 18); vue-tsc + lint exit 0
+**Tests**: 1055/1055 unit (62 files) + 39/39 chromium E2E (api-keys 21 + auth 18); vue-tsc + lint exit 0
+
+## Recent Activity (v0.16.12 — 2026-08-13)
+
+### Sidebar: highlight the current route's menu item
+
+- **Bug (user QA)**: no way to tell which page you are on from the sidebar — no active-state design in expanded, collapsed, or mobile-sheet modes.
+- **Investigation**: all infrastructure already existed — `SidebarMenuButtonChild` supports `isActive` → `data-active`, `sidebarMenuButtonVariants` has `data-[active=true]:bg-sidebar-accent`, and `--sidebar-accent: #7170ff` (DESIGN.md's brand violet) is defined for both themes. The only gap: `AppSidebar` never passed `is-active`.
+- **Fix**: `useRoute()` + `isPathActive(path)` exact-match helper (leaf pages only — prefix matching would bleed across /settings siblings); `:is-active` bound on all 4 menu buttons. Zero CSS changes; DESIGN.md compliant.
+- **Tests**: SidebarMenuButton mock now exposes isActive + renders data-active; +2 tests (active route highlights, no /settings sibling bleed). 1055/1055 unit.
+- **Verified in browser** (Playwright): expanded sidebar on /settings/api-keys shows API Keys with `data-active="true"` and background `rgb(113,112,255)` (#7170ff); other items transparent; mobile sheet highlights "API Keys" too. Collapsed icon mode uses the same element/style (bg block is the indicator).
+- Note: in reka-ui as-child nesting the `data-slot` attr is replaced by `data-sidebar` on rendered DOM — use `[data-sidebar="menu-button"]` in selectors.
+- Version 0.16.11 → 0.16.12 (bug fix → PATCH).
 
 ## Recent Activity (v0.16.11 — 2026-08-13)
 
