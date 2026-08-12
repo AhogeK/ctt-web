@@ -146,6 +146,9 @@ describe('ConfirmApiKeyActionDialog', () => {
     it('renders the key name and prefix', () => {
       const wrapper = createWrapper()
       expect(wrapper.text()).toContain(activeKey.name)
+      // break-all prevents long space-less names from overflowing the dialog
+      const nameEl = wrapper.findAll('p').find((p) => p.text().includes(activeKey.name))
+      expect(nameEl?.classes()).toContain('break-all')
       expect(wrapper.text()).toContain(activeKey.keyPrefix)
     })
 
