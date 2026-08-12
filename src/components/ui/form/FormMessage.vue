@@ -12,8 +12,9 @@ const { name, formMessageId } = useFormField()
 </script>
 
 <template>
-  <!-- Always-rendered wrapper reserves space for up to 2 lines to prevent layout shift -->
-  <div class="min-h-8">
+  <!-- Always-rendered wrapper reserves one error line (min-h-5 = 20px, text-sm)
+       to prevent layout shift when a validation message appears. -->
+  <div class="min-h-5">
     <ErrorMessage
       :id="formMessageId"
       data-slot="form-message"

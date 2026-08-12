@@ -238,7 +238,10 @@ watch(
                 v-bind="componentField"
               />
             </FormControl>
-            <FormMessage v-if="form.errors.value.name" />
+            <!-- No v-if here: FormMessage always renders its min-h wrapper so
+                 the error line reserves space and the form does not shift when
+                 "Name is required" appears. -->
+            <FormMessage />
           </FormItem>
         </FormField>
 

@@ -139,7 +139,7 @@ watch(
                 v-bind="componentField"
               />
             </FormControl>
-            <FormMessage v-if="form.errors.value.newPassword" />
+            <FormMessage />
           </FormItem>
         </FormField>
 
@@ -166,7 +166,7 @@ watch(
                 v-bind="componentField"
               />
             </FormControl>
-            <FormMessage v-if="form.errors.value.confirmPassword" />
+            <FormMessage />
           </FormItem>
         </FormField>
 
