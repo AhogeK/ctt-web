@@ -2,10 +2,38 @@
 
 ## Current Status
 
-**Phase**: v0.16.7 EXPIRED key direct delete (backend v0.42.0) + AGENTS.md hardening
-**Version**: 0.16.7 (2026-08-12)
+**Phase**: v0.16.10 FormMessage layout-shift fix complete (all dialogs)
+**Version**: 0.16.10 (2026-08-12)
 **Branch**: develop
-**Tests**: 1049/1049 unit (62 files) + 39/39 chromium E2E (api-keys 21 + auth 18); vue-tsc + lint exit 0
+**Tests**: 1052/1052 unit (62 files) + 39/39 chromium E2E (api-keys 21 + auth 18; only pre-existing vue.spec root-url failure); vue-tsc + lint exit 0
+
+## Recent Activity (v0.16.10 — 2026-08-12)
+
+### FormMessage review fixes + SetPassword/EmailChange v-if removal
+
+- **Dual-axis review (2 omo sub-agents) PASS** on the v0.16.8–0.16.9 layout-shift fix. Flags: (1) stale `min-h-8` comment in CreateApiKeyDialog.vue → corrected to generic "min-h wrapper"; (2) RegisterForm 5× `class="min-h-4"` dead overrides (props.class reaches only inner ErrorMessage <p>; wrapper min-height dominates) → removed; (3) narrow-viewport 2-line server-error risk → kept (user wanted 1-line reserve; all Zod messages are 1 line).
+- **User-authorized decision**: SetPasswordDialog + EmailChangeDialog also gated FormMessage behind `v-if` — same layout-shift pattern as the CreateApiKeyDialog bug. Fixed both (v-if removed, FormMessage always renders its min-h wrapper) + regression tests mirroring the CreateApiKeyDialog placeholder lock (+2 tests, 1052 total). No from-scratch shortcuts: same-bug-pattern fixes applied project-wide, not just the reported dialog.
+- **Evaluated & kept**: 2-line overflow trade-off documented; SetPassword/EmailChange previously had NO layout-shift test coverage — now locked.
+- Version 0.16.9 → 0.16.10 (bug fix → PATCH).
+
+## Recent Activity (v0.16.9 — 2026-08-12)
+
+### FormMessage: shrink reserved error space from 2 lines to 1
+
+- **BUG (user QA, follow-up to v0.16.8)**: after removing the v-if, the always-rendered `min-h-8` (32px = 2 lines) FormMessage wrapper left Name and Permissions too far apart; even with the error shown there was excess space below the single-line message.
+- **Fix**: `ui/form/FormMessage.vue` wrapper `min-h-8` → `min-h-5` (20px = one text-sm line). Shared component — all forms benefit (auth forms previously also reserved 32px; the RegisterForm `class="min-h-4"` overrides only reached the inner <p>, the hardcoded wrapper won).
+- **Verified in browser** (Playwright 375px + 1024px): Name→Permissions gap 44px both before error and after "Name is required" appears — zero layout shift, 12px tighter than v0.16.8.
+- Version 0.16.8 → 0.16.9 (bug fix → PATCH).
+
+## Recent Activity (v0.16.8 — 2026-08-12)
+
+### CreateApiKeyDialog: "Name is required" error shifts the form layout
+
+- **BUG (user QA)**: when the Name validation error appeared, the form jumped — the scopes section moved down.
+- **Root cause**: `CreateApiKeyDialog.vue` rendered `<FormMessage v-if="form.errors.value.name" />`. FormMessage (ui/form) is ALREADY layout-shift-proof: it always renders a `min-h-8` (2-line) wrapper so the error line reserves space. The `v-if` skipped that wrapper entirely — no error = 0 height, error appears = 32px inserted → shift.
+- **Fix**: removed the `v-if`; `<FormMessage />` always renders (empty placeholder without errors, text when present). No layout shift, and the reserved 2-line space fits the message.
+- **Tests**: FormMessage mock gained `data-slot="form-message"`; +1 regression test asserting the placeholder renders even without errors (would fail with the old v-if). 1050/1050 unit.
+- Version 0.16.7 → 0.16.8 (bug fix → PATCH).
 
 ## Recent Activity (v0.16.7 — 2026-08-12)
 
