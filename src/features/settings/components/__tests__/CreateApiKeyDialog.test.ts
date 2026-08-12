@@ -69,7 +69,7 @@ vi.mock('@/components/ui/form', () => ({
   FormItem: { template: '<div><slot /></div>' },
   FormLabel: { template: '<label><slot /></label>' },
   FormControl: { template: '<div><slot /></div>' },
-  FormMessage: { template: '<p><slot /></p>' },
+  FormMessage: { template: '<p data-slot="form-message"><slot /></p>' },
 }))
 
 vi.mock('@/components/ui/checkbox', () => ({
@@ -148,6 +148,14 @@ describe('CreateApiKeyDialog', () => {
     expect(wrapper.text()).toContain('Name')
     expect(wrapper.text()).toContain('Permissions')
     expect(wrapper.text()).toContain('Expiration')
+  })
+
+  it('always renders the FormMessage placeholder so errors do not shift the layout', () => {
+    const wrapper = createWrapper()
+    // Regression: the Name field must not gate FormMessage behind v-if — the
+    // component's min-h wrapper reserves space, so "Name is required" appearing
+    // cannot push the scopes section down.
+    expect(wrapper.find('[data-slot="form-message"]').exists()).toBe(true)
   })
 
   it('submits form values through the create mutation', async () => {

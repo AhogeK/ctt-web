@@ -59,7 +59,7 @@ vi.mock('@/components/ui/form', () => ({
   FormItem: { template: '<div><slot /></div>' },
   FormLabel: { template: '<label><slot /></label>' },
   FormControl: { template: '<div><slot /></div>' },
-  FormMessage: { template: '<p><slot /></p>' },
+  FormMessage: { template: '<p data-slot="form-message"><slot /></p>' },
 }))
 
 vi.mock('@/lib/utils', () => ({
@@ -124,6 +124,14 @@ describe('SetPasswordDialog', () => {
 
       expect(wrapper.find('[data-testid="dialog-content"]').exists()).toBe(true)
       expect(wrapper.text()).toContain('Set Password')
+    })
+
+    it('always renders the FormMessage placeholder so errors do not shift the layout', () => {
+      const wrapper = mount(SetPasswordDialog, {
+        props: { open: true },
+      })
+
+      expect(wrapper.find('[data-slot="form-message"]').exists()).toBe(true)
     })
 
     it('emits update:open with false when close is triggered', async () => {
