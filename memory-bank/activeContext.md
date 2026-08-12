@@ -2,10 +2,21 @@
 
 ## Current Status
 
-**Phase**: v0.16.10 FormMessage layout-shift fix complete (all dialogs)
-**Version**: 0.16.10 (2026-08-12)
+**Phase**: v0.16.11 long-name UX fixes (counter + overflow)
+**Version**: 0.16.11 (2026-08-13)
 **Branch**: develop
-**Tests**: 1052/1052 unit (62 files) + 39/39 chromium E2E (api-keys 21 + auth 18; only pre-existing vue.spec root-url failure); vue-tsc + lint exit 0
+**Tests**: 1053/1053 unit (62 files) + 39/39 chromium E2E (api-keys 21 + auth 18); vue-tsc + lint exit 0
+
+## Recent Activity (v0.16.11 — 2026-08-13)
+
+### Silent maxlength truncation + long-name dialog overflow (QA 3.1b follow-up)
+
+- **User QA verdict**: pasting 110 chars silently truncates to 100 at the input layer (browser maxlength) — user considers silent truncation a BUG (no user feedback). Also: 100-char key names overflow the Revoke/Delete confirm dialog.
+- **Fixes**:
+  1. **Character counter** (CreateApiKeyDialog): live `n/100` next to the Name label (tabular-nums, turns destructive at 100) — makes the maxlength limit visible. maxlength=100 kept as the hard boundary; Zod max(100) + backend @Size(max=100) unchanged (all three layers already agreed).
+  2. **break-all on all key-name displays** (blast radius: ConfirmApiKeyActionDialog key identity p; ApiKeysView table name column; mobile card name span + min-w-0 so the status badge stays inside the card). Verified in browser: name element 942px → 398px, no longer overflows the 448px dialog.
+- **Tests** (+3): CreateApiKeyDialog counter ("6/100"); ConfirmApiKeyActionDialog name p has break-all; ApiKeysView table + card name spans have break-all. Mock note: vee-validate values accessed object-style in templates (form.values.name) — the useForm mock keeps a plain object.
+- Version 0.16.10 → 0.16.11 (bug fix → PATCH).
 
 ## Recent Activity (v0.16.10 — 2026-08-12)
 
