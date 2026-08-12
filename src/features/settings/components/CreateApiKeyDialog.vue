@@ -217,9 +217,19 @@ watch(
         <!-- Name -->
         <FormField v-slot="{ componentField }" name="name">
           <FormItem>
-            <FormLabel class="text-sm font-[510] text-muted-foreground [font-feature-settings:'cv01'_'ss03']">
-              Name
-            </FormLabel>
+            <div class="flex items-center justify-between">
+              <FormLabel class="text-sm font-[510] text-muted-foreground [font-feature-settings:'cv01'_'ss03']">
+                Name
+              </FormLabel>
+              <!-- Live counter: maxlength silently truncates pasted text, so the
+                   counter makes the 100-char limit visible to the user -->
+              <span
+                class="text-xs tabular-nums text-muted-foreground"
+                :class="{ 'text-destructive': form.values.name.length >= 100 }"
+              >
+                {{ form.values.name.length }}/100
+              </span>
+            </div>
             <FormControl>
               <Input
                 id="api-key-name"

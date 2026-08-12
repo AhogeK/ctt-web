@@ -316,7 +316,9 @@ function statusClass(status: ApiKeyStatus): string {
             <tr v-for="key in keys" :key="key.id" class="transition-colors hover:bg-muted/30">
               <!-- Name -->
               <td class="px-4 py-3">
-                <span class="font-medium">{{ key.name }}</span>
+                <!-- break-all: names up to 100 chars have no spaces; without it a
+                     long name widens the whole table column -->
+                <span class="font-medium break-all">{{ key.name }}</span>
               </td>
               <!-- Key Prefix -->
               <td class="px-4 py-3">
@@ -395,7 +397,9 @@ function statusClass(status: ApiKeyStatus): string {
         >
           <!-- Header: name + status -->
           <div class="flex items-center justify-between gap-2">
-            <span class="font-medium">{{ key.name }}</span>
+            <!-- break-all + min-w-0: long space-less names wrap instead of
+                 pushing the status badge out of the card -->
+            <span class="font-medium min-w-0 break-all">{{ key.name }}</span>
             <Badge :variant="statusVariant(key.status)" :class="statusClass(key.status)" class="text-[11px]">
               {{ key.status }}
             </Badge>
