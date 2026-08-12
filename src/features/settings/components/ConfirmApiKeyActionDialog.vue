@@ -123,7 +123,9 @@ function handleOpenAutoFocus(event: Event) {
 
       <!-- Key identity -->
       <div class="rounded-md border bg-muted/50 p-3">
-        <p class="text-sm font-medium">{{ apiKey.name }}</p>
+        <!-- break-all: key names up to 100 chars have no spaces; without it the
+               text overflows the dialog on narrow screens -->
+        <p class="text-sm font-medium break-all">{{ apiKey.name }}</p>
         <code class="text-xs font-mono text-muted-foreground">
           {{ apiKey.keyPrefix }}
         </code>
