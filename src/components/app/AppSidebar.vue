@@ -13,7 +13,7 @@ import {
   SidebarTrigger,
   useSidebar,
 } from '@/components/ui/sidebar'
-import { RouterLink } from 'vue-router'
+import { RouterLink, useRoute } from 'vue-router'
 import { LayoutDashboard, Monitor, User, KeyRound } from '@lucide/vue'
 import PluginIcon from './PluginIcon.vue'
 
@@ -25,8 +25,21 @@ import PluginIcon from './PluginIcon.vue'
  * - Desktop, collapsed: Plugin icon centered, swaps to themed expand trigger on hover
  * - Mobile:             No header chrome — AppHeader owns the open trigger and the
  *                       Sheet closes via overlay click or navigation (see handleNavigate).
+ *
+ * Active state: the current route highlights its menu item via the shared
+ * sidebar data-active styles (brand violet background, DESIGN.md compliant).
  */
+const route = useRoute()
 const { state, isMobile, setOpenMobile } = useSidebar()
+
+/**
+ * Whether the given menu path matches the current route exactly.
+ * Exact match (not prefix): all sidebar targets are leaf pages, so a prefix
+ * rule would wrongly highlight Profile when API Keys is active (/settings/*).
+ */
+function isPathActive(path: string): boolean {
+  return route.path === path
+}
 
 /**
  * Close the mobile Sheet after a navigation click.
@@ -89,6 +102,7 @@ function handleNavigate() {
                 tooltip="Dashboard"
                 class="h-9 text-[15px] [&>svg]:size-[18px] [&>svg]:mr-0.5"
                 @click="handleNavigate"
+                :is-active="isPathActive('/dashboard')"
               >
                 <RouterLink to="/dashboard">
                   <LayoutDashboard />
@@ -102,6 +116,7 @@ function handleNavigate() {
                 tooltip="Devices"
                 class="h-9 text-[15px] [&>svg]:size-[18px] [&>svg]:mr-0.5"
                 @click="handleNavigate"
+                :is-active="isPathActive('/devices')"
               >
                 <RouterLink to="/devices">
                   <Monitor />
@@ -125,6 +140,7 @@ function handleNavigate() {
                 tooltip="Profile"
                 class="h-9 text-[15px] [&>svg]:size-[18px] [&>svg]:mr-0.5"
                 @click="handleNavigate"
+                :is-active="isPathActive('/settings/profile')"
               >
                 <RouterLink to="/settings/profile">
                   <User />
@@ -138,6 +154,7 @@ function handleNavigate() {
                 tooltip="API Keys"
                 class="h-9 text-[15px] [&>svg]:size-[18px] [&>svg]:mr-0.5"
                 @click="handleNavigate"
+                :is-active="isPathActive('/settings/api-keys')"
               >
                 <RouterLink to="/settings/api-keys">
                   <KeyRound />
