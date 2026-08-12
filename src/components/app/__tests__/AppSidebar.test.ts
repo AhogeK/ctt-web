@@ -1,6 +1,6 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vite-plus/test'
 import { mount } from '@vue/test-utils'
-import { computed, ref } from 'vue'
+import { computed, nextTick, ref } from 'vue'
 import { createRouter, createMemoryHistory } from 'vue-router'
 import { createTestingPinia } from '@pinia/testing'
 import AppSidebar from '../AppSidebar.vue'
@@ -32,8 +32,8 @@ vi.mock('@/components/ui/sidebar', () => ({
   SidebarMenu: { name: 'SidebarMenu', template: '<ul data-slot="sidebar-menu"><slot /></ul>' },
   SidebarMenuButton: {
     name: 'SidebarMenuButton',
-    props: ['asChild', 'size'],
-    template: '<li data-slot="sidebar-menu-button"><slot /></li>',
+    props: ['asChild', 'size', 'isActive'],
+    template: '<li data-slot="sidebar-menu-button" :data-active="isActive || undefined"><slot /></li>',
   },
   SidebarMenuItem: { name: 'SidebarMenuItem', template: '<li data-slot="sidebar-menu-item"><slot /></li>' },
   SidebarGroup: { name: 'SidebarGroup', template: '<div data-slot="sidebar-group"><slot /></div>' },
@@ -127,6 +127,35 @@ describe('AppSidebar', () => {
       const apiKeysLink = wrapper.find('a[href="/settings/api-keys"]')
       expect(apiKeysLink.exists()).toBe(true)
       expect(apiKeysLink.text()).toContain('API Keys')
+
+      wrapper.unmount()
+    })
+
+    it('highlights the menu item of the active route', async () => {
+      const { wrapper, router } = createWrapper()
+      await router.push('/settings/api-keys')
+      await nextTick()
+
+      const menuButtonFor = (href: string) =>
+        wrapper.findAll('[data-slot="sidebar-menu-button"]').find((li) => li.find(`a[href="${href}"]`).exists())!
+
+      expect(menuButtonFor('/settings/api-keys').attributes('data-active')).toBeDefined()
+      expect(menuButtonFor('/dashboard').attributes('data-active')).toBeUndefined()
+      expect(menuButtonFor('/settings/profile').attributes('data-active')).toBeUndefined()
+
+      wrapper.unmount()
+    })
+
+    it('does not bleed active state across /settings sibling routes', async () => {
+      const { wrapper, router } = createWrapper()
+      await router.push('/settings/profile')
+      await nextTick()
+
+      const menuButtonFor = (href: string) =>
+        wrapper.findAll('[data-slot="sidebar-menu-button"]').find((li) => li.find(`a[href="${href}"]`).exists())!
+
+      expect(menuButtonFor('/settings/profile').attributes('data-active')).toBeDefined()
+      expect(menuButtonFor('/settings/api-keys').attributes('data-active')).toBeUndefined()
 
       wrapper.unmount()
     })
