@@ -106,6 +106,7 @@ vi.mock('@/lib/utils/api-error', () => ({
 vi.mock('vee-validate', () => ({
   useForm: vi.fn<() => unknown>(() => ({
     handleSubmit: mockHandleSubmit,
+    // vee-validate values are accessed object-style in templates (form.values.name)
     values: { name: 'My Key', scopes: ['READ', 'SYNC'], expiresAt: undefined },
     errors: ref({}),
     resetForm: mockResetForm,
@@ -148,6 +149,13 @@ describe('CreateApiKeyDialog', () => {
     expect(wrapper.text()).toContain('Name')
     expect(wrapper.text()).toContain('Permissions')
     expect(wrapper.text()).toContain('Expiration')
+  })
+
+  it('shows a live character counter next to the Name label', () => {
+    const wrapper = createWrapper()
+    // maxlength truncates pasted text silently; the counter makes the 100-char
+    // limit visible ("6/100" for the mock's 'My Key').
+    expect(wrapper.text()).toContain('6/100')
   })
 
   it('always renders the FormMessage placeholder so errors do not shift the layout', () => {

@@ -439,6 +439,8 @@ describe('ApiKeysView', () => {
       expect(cards).toHaveLength(3)
 
       expect(cards[0]!.text()).toContain(activeKey.name)
+      // break-all + min-w-0 keep the name inside the card, badge intact
+      expect(cards[0]!.find('span.font-medium')!.classes()).toContain('break-all')
       expect(cards[0]!.text()).toContain(activeKey.keyPrefix)
       expect(cards[0]!.text()).toContain(activeKey.status)
 
