@@ -115,7 +115,7 @@ defineExpose({
             v-bind="componentField"
           />
         </FormControl>
-        <FormMessage class="min-h-4" />
+        <FormMessage />
       </FormItem>
     </FormField>
 
@@ -141,7 +141,7 @@ defineExpose({
             v-bind="componentField"
           />
         </FormControl>
-        <FormMessage class="min-h-4" />
+        <FormMessage />
       </FormItem>
     </FormField>
 
@@ -182,7 +182,7 @@ defineExpose({
           </div>
         </FormControl>
         <PasswordStrengthMeter :password="passwordValue ?? ''" />
-        <FormMessage class="min-h-4" />
+        <FormMessage />
       </FormItem>
     </FormField>
 
@@ -222,7 +222,7 @@ defineExpose({
             </button>
           </div>
         </FormControl>
-        <FormMessage class="min-h-4" />
+        <FormMessage />
       </FormItem>
     </FormField>
 
@@ -245,7 +245,7 @@ defineExpose({
             </div>
           </div>
         </FormControl>
-        <FormMessage class="min-h-4" />
+        <FormMessage />
       </FormItem>
     </FormField>
 
