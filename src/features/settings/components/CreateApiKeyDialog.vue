@@ -83,23 +83,6 @@ const PRESET_EXPIRATION_DAYS = [
 
 const ALL_SCOPES = ApiKeyScopeEnum.options
 
-function isScopeSelected(scope: ApiKeyScope): boolean {
-  return form.values.scopes.includes(scope)
-}
-
-function toggleScope(scope: ApiKeyScope, checked: boolean) {
-  const current = form.values.scopes
-  form.setFieldValue('scopes', checked ? [...current, scope] : current.filter((s) => s !== scope))
-}
-
-/**
- * Wraps the reka-ui checkbox update event (boolean | 'indeterminate')
- * and treats any non-true value as unchecked.
- */
-function onScopeToggle(scope: ApiKeyScope, checked: unknown) {
-  toggleScope(scope, checked === true)
-}
-
 function selectScopeMode(mode: 'recommended' | 'custom') {
   scopeMode.value = mode
   form.setFieldValue('scopes', ['READ', 'SYNC'])
@@ -290,15 +273,27 @@ watch(
           </div>
 
           <div v-else class="grid grid-cols-2 gap-2">
-            <label
-              v-for="scope in ALL_SCOPES"
-              :key="scope"
-              class="flex cursor-pointer items-center gap-2 rounded-md border px-3 py-2 text-sm"
-              :class="isScopeSelected(scope) ? 'border-primary/50 bg-primary/5' : 'border-input'"
-            >
-              <Checkbox :checked="isScopeSelected(scope)" @update:checked="onScopeToggle(scope, $event)" />
-              <span>{{ scope }}</span>
-            </label>
+            <!-- FormField registers scopes so the submitted values stay in sync
+                 with the checkboxes: without registration vee-validate's
+                 handleSubmit snapshot falls back to initialValues and the
+                 payload ignores unchecked boxes (v0.16.13 regression fix). -->
+            <FormField v-slot="{ value, handleChange }" name="scopes">
+              <template v-for="scope in ALL_SCOPES" :key="scope">
+                <label
+                  class="flex cursor-pointer items-center gap-2 rounded-md border px-3 py-2 text-sm"
+                  :class="value.includes(scope) ? 'border-primary/50 bg-primary/5' : 'border-input'"
+                >
+                  <Checkbox
+                    :model-value="value.includes(scope)"
+                    @update:model-value="
+                      (v: unknown) =>
+                        handleChange(v === true ? [...value, scope] : value.filter((s: ApiKeyScope) => s !== scope))
+                    "
+                  />
+                  <span>{{ scope }}</span>
+                </label>
+              </template>
+            </FormField>
           </div>
           <p v-if="form.errors.value.scopes" class="text-sm text-destructive">
             {{ form.errors.value.scopes }}

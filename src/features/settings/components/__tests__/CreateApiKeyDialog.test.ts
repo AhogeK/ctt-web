@@ -14,6 +14,14 @@ const mockHandleSubmit = vi.hoisted(() => vi.fn<(...args: unknown[]) => unknown>
 const pendingState = vi.hoisted(() => ({ value: false }))
 const mockToastError = vi.hoisted(() => vi.fn<() => void>())
 const mockGetRetryAfterSeconds = vi.hoisted(() => vi.fn<(error: unknown) => number | null>())
+/**
+ * Mutable form values shared by the useForm mock, the FormField scopes slot
+ * and the handleSubmit callback, so checkbox toggles flow into the payload.
+ * Plain object box: vi.hoisted runs before imports resolve.
+ */
+const mockFormValues = vi.hoisted(() => ({
+  value: { name: 'My Key', scopes: ['READ', 'SYNC'], expiresAt: undefined },
+}))
 
 // ==========================================
 // Mocks
@@ -63,8 +71,21 @@ vi.mock('@/components/ui/label', () => ({
 vi.mock('@/components/ui/form', () => ({
   FormField: {
     props: ['name'],
-    template:
-      '<div><slot v-bind="{ componentField: { value: \'\', onInput: () => {}, onChange: () => {}, onBlur: () => {} } }" /></div>',
+    setup(props: { name: string }, { slots }: { slots: { default?: (ctx: Record<string, unknown>) => unknown[] } }) {
+      return () => {
+        if (props.name === 'scopes') {
+          return slots.default!({
+            value: mockFormValues.value.scopes,
+            handleChange: (next: unknown) => {
+              mockFormValues.value = { ...mockFormValues.value, scopes: next as string[] }
+            },
+          })
+        }
+        return slots.default!({
+          componentField: { value: '', onInput: () => {}, onChange: () => {}, onBlur: () => {} },
+        })
+      }
+    },
   },
   FormItem: { template: '<div><slot /></div>' },
   FormLabel: { template: '<label><slot /></label>' },
@@ -74,10 +95,12 @@ vi.mock('@/components/ui/form', () => ({
 
 vi.mock('@/components/ui/checkbox', () => ({
   Checkbox: {
-    props: ['checked'],
-    emits: ['update:checked'],
+    props: ['modelValue'],
+    emits: ['update:modelValue'],
+    // Mirrors reka-ui's controlled API: modelValue drives the native checked
+    // attribute and changes emit update:modelValue. No `as` in template.
     template:
-      '<input type="checkbox" :checked="checked" @change="$emit(\'update:checked\', ($event.target as HTMLInputElement).checked)" />',
+      '<input type="checkbox" :checked="modelValue" @change="$emit(\'update:modelValue\', $event.target.checked)" />',
   },
 }))
 
@@ -107,10 +130,12 @@ vi.mock('vee-validate', () => ({
   useForm: vi.fn<() => unknown>(() => ({
     handleSubmit: mockHandleSubmit,
     // vee-validate values are accessed object-style in templates (form.values.name)
-    values: { name: 'My Key', scopes: ['READ', 'SYNC'], expiresAt: undefined },
+    values: mockFormValues.value,
     errors: ref({}),
     resetForm: mockResetForm,
-    setFieldValue: vi.fn<() => void>(),
+    setFieldValue: vi.fn<(field: string, value: unknown) => void>((field, value) => {
+      mockFormValues.value = { ...mockFormValues.value, [field]: value }
+    }),
   })),
 }))
 
@@ -127,12 +152,12 @@ describe('CreateApiKeyDialog', () => {
     mockGetRetryAfterSeconds.mockReset()
     mockGetRetryAfterSeconds.mockReturnValue(null)
     // Simulate form.handleSubmit wiring: capture the callback and invoke it
-    // with form values when the submit handler is used.
+    // with the current mockFormValues so payload assertions see live toggles.
     mockHandleSubmit.mockImplementation((...args: unknown[]) => {
       const cb = args[0] as (values: unknown) => void
       return (event: Event) => {
         event.preventDefault()
-        cb({ name: 'My Key', scopes: ['READ', 'SYNC'], expiresAt: undefined })
+        cb(mockFormValues.value)
       }
     })
   })
@@ -175,6 +200,22 @@ describe('CreateApiKeyDialog', () => {
     const [values, callbacks] = mockMutate.mock.calls[0] as [unknown, { onSuccess?: (r: unknown) => void }]
     expect(values).toEqual({ name: 'My Key', scopes: ['READ', 'SYNC'], expiresAt: undefined })
     expect(callbacks.onSuccess).toBeTypeOf('function')
+  })
+
+  it('submits the live scopes after unchecking a Custom-mode checkbox', async () => {
+    const wrapper = createWrapper()
+    // Switch to Custom mode, then uncheck READ via the checkbox change event.
+    const customButton = wrapper.findAll('button').find((b) => b.text().trim() === 'Custom')!
+    await customButton.trigger('click')
+    const readCheckbox = wrapper.find('input[type="checkbox"]')
+    await readCheckbox.setValue(false)
+    await readCheckbox.trigger('change')
+
+    await wrapper.find('form').trigger('submit')
+
+    const [values] = mockMutate.mock.calls[0] as [unknown]
+    expect((values as { scopes: string[] }).scopes).not.toContain('READ')
+    expect((values as { scopes: string[] }).scopes).toEqual(['SYNC'])
   })
 
   it('emits success with the create response', async () => {
