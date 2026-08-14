@@ -2,10 +2,22 @@
 
 ## Current Status
 
-**Phase**: v0.16.12 sidebar active-state highlight
-**Version**: 0.16.12 (2026-08-13)
+**Phase**: v0.16.13 Custom-mode scope toggling fix
+**Version**: 0.16.13 (2026-08-13)
 **Branch**: develop
-**Tests**: 1055/1055 unit (62 files) + 39/39 chromium E2E (api-keys 21 + auth 18); vue-tsc + lint exit 0
+**Tests**: 1056/1056 unit (62 files) + 39/39 chromium E2E; vue-tsc + lint exit 0
+
+## Recent Activity (v0.16.13 — 2026-08-13)
+
+### Custom-mode scopes: unchecked boxes still submitted + phantom highlight (QA 3.1c)
+
+- **Bug (user QA)**: in Custom permission mode, unchecking all 4 scopes still submitted READ+SYNC; READ/SYNC labels stayed highlighted while the checkboxes showed unchecked.
+- **Root cause (verified against reka-ui source)**: `Checkbox.vue` wrapper bound `:checked` + `@update:checked`, but reka-ui CheckboxRoot's controlled API is `modelValue` + `update:modelValue` (emits: ["update:modelValue"] only). The old listener never fired — checkbox clicks only flipped reka-ui's internal state, never the form. So `form.values.scopes` stayed at initialValues ['READ','SYNC'] → payload always READ/SYNC, labels always highlighted, checkboxes visually desynced. A secondary issue: scopes was not registered as a FormField, so even a working toggle would not reach the handleSubmit snapshot.
+- **Fix**: scopes area wrapped in `<FormField name="scopes">` (vee-validate field registration — single source for UI + submission + Zod min(1) validation); checkbox bound with `:model-value` + `@update:model-value` (correct reka-ui controlled API); removed dead isScopeSelected/toggleScope/onScopeToggle.
+- **Tests**: FormField mock now serves a scopes slot (value/handleChange over a shared mutable values box), useForm values/setFieldValue/handleSubmit all share it; Checkbox mock mirrors reka-ui modelValue API; +1 regression test (uncheck READ → submit payload excludes READ). 1056/1056 unit.
+- **Verified in browser**: payload now reflects live checkbox state (uncheck/cancel sequences), labels and checkboxes stay in sync.
+- Note: reka-ui Checkbox = modelValue (NOT checked); useVModel passive:false when modelValue provided.
+- Version 0.16.12 → 0.16.13 (bug fix → PATCH).
 
 ## Recent Activity (v0.16.12 — 2026-08-13)
 
