@@ -2,10 +2,24 @@
 
 ## Current Status
 
-**Phase**: v0.16.14 scope descriptions in Custom mode
-**Version**: 0.16.14 (2026-08-14)
+**Phase**: v0.16.15 date field opens native picker on click
+**Version**: 0.16.15 (2026-08-16)
 **Branch**: develop
-**Tests**: 1057/1057 unit (62 files) + 39/39 chromium E2E; vue-tsc + lint exit 0
+**Tests**: 1059/1059 unit (62 files); vue-tsc + lint exit 0 (1 pre-existing e2e warning)
+
+## Recent Activity (v0.16.15 — 2026-08-16)
+
+### Create API Key: click the mm/dd/yyyy text area opens the date picker
+
+- **UX gap (user feedback)**: the custom expiration date field is a native `<input type="date">`; browsers only open the picker via the calendar indicator icon — clicking the mm/dd/yyyy text area did nothing. Follow-up: clicking a segment (e.g. "dd") highlighted/selected that text.
+- **Fix (iterated)**: `handleDateFieldClick` calls the native `showPicker()` API (Chrome 99+/Firefox 101+/Safari 16.4+; user-gesture gated) on `@click` of the field, wrapped in try/catch so an already-open picker (InvalidStateError) or unsupported browsers silently degrade to native behavior. `handleDateFieldMouseDown` prevents the native segment text selection on mousedown (only when showPicker is available).
+  - **Iteration 1 mistake**: also called `input.focus()` after preventDefault — focusing a date input makes Chrome auto-select its FIRST segment ("mm"), so every click highlighted mm. Removed the manual focus.
+  - **Iteration 2**: dropping focus entirely also dropped the focus ring (user noticed: "选择时的边框高亮不见了"). CSS cannot restore it — verified pixel-identical screenshots for every variant (`::-webkit-datetime-edit-*-field:focus`, `::selection`, `user-select`) in headed Chrome; Chrome's segment highlight is UA-internal and unstylable. Final design: keep mousedown preventDefault (no real focus, no segment selection) and FAKE the focus styling via `dateFieldActive` ref (border-primary + ring tokens) while the picker interaction is active; cleared on date change, outside click, dialog close.
+  - **Gotcha**: the document-level mousedown listener that clears the fake focus must register in the CAPTURE phase — reka-ui DialogContent stops propagation of bubble-phase mousedown inside the dialog. Also: headless Chromium does not render datetime-edit pseudo-elements at all (computed style returns defaults), so screenshot-based verification of segment highlight MUST use headed Chrome.
+  - Diagnostic insight: ArrowUp value changes while the picker is open are picker-internal preview highlights (reverted on Escape), NOT field segment selection — do not mistake them for a regression.
+- **Tests**: +3 (text-area click calls showPicker; already-open picker does not crash; mousedown prevents default + shows fake focus + clears on change). 1060/1060 unit. Test helper `installShowPickerMock` uses property descriptors (oxlint unbound-method rule); attachTo: document.body needed for focus assertions; nextTick after dispatchEvent for class assertions.
+- **Verified in real Chrome** (Playwright, headed): click → activeElement stays empty (no real focus, no segment selection, ArrowUp after Escape is a no-op), simulated focus ring appears on click and clears on outside click; screenshots: ~/Pictures/screenshots/v0.16.15-date-simulated-focus.png.
+- Version 0.16.14 → 0.16.15 (UX fix → PATCH).
 
 ## Recent Activity (v0.16.14 — 2026-08-14)
 
