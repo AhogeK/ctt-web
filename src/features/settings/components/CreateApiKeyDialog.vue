@@ -83,6 +83,18 @@ const PRESET_EXPIRATION_DAYS = [
 
 const ALL_SCOPES = ApiKeyScopeEnum.options
 
+/**
+ * Human-readable one-line purpose per scope, aligned with the ctt-server
+ * ApiKeyScope semantics (READ = read-only queries, WRITE = managing API keys
+ * and devices, SYNC = bidirectional sync engine, ADMIN = superset).
+ */
+const SCOPE_DESCRIPTIONS: Record<ApiKeyScope, string> = {
+  READ: 'Read-only access',
+  WRITE: 'Manage API keys & devices',
+  SYNC: 'Bidirectional data sync',
+  ADMIN: 'Full admin access (supersedes all)',
+}
+
 function selectScopeMode(mode: 'recommended' | 'custom') {
   scopeMode.value = mode
   form.setFieldValue('scopes', ['READ', 'SYNC'])
@@ -280,17 +292,24 @@ watch(
             <FormField v-slot="{ value, handleChange }" name="scopes">
               <template v-for="scope in ALL_SCOPES" :key="scope">
                 <label
-                  class="flex cursor-pointer items-center gap-2 rounded-md border px-3 py-2 text-sm"
+                  class="flex cursor-pointer items-start gap-2 rounded-md border px-3 py-2 text-sm"
                   :class="value.includes(scope) ? 'border-primary/50 bg-primary/5' : 'border-input'"
                 >
                   <Checkbox
+                    class="mt-0.5"
                     :model-value="value.includes(scope)"
                     @update:model-value="
                       (v: unknown) =>
                         handleChange(v === true ? [...value, scope] : value.filter((s: ApiKeyScope) => s !== scope))
                     "
                   />
-                  <span>{{ scope }}</span>
+                  <span class="flex min-w-0 flex-col">
+                    <span>{{ scope }}</span>
+                    <!-- Always-visible description (GitHub PAT style): the purpose
+                         of each scope is decision-critical at checkbox time, and
+                         hover-only tooltips vanish on touch devices. -->
+                    <span class="text-xs leading-snug text-muted-foreground">{{ SCOPE_DESCRIPTIONS[scope] }}</span>
+                  </span>
                 </label>
               </template>
             </FormField>
