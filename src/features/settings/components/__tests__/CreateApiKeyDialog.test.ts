@@ -1,6 +1,6 @@
 import { beforeEach, describe, expect, it, vi } from 'vite-plus/test'
 import { mount } from '@vue/test-utils'
-import { ref } from 'vue'
+import { nextTick, ref } from 'vue'
 import CreateApiKeyDialog from '../CreateApiKeyDialog.vue'
 
 // ==========================================
@@ -144,6 +144,30 @@ vi.mock('@vee-validate/zod', () => ({
 }))
 
 describe('CreateApiKeyDialog', () => {
+  /**
+   * jsdom does not implement HTMLInputElement.showPicker; install a
+   * configurable mock so click behavior is observable. Returns the spy plus
+   * a restore fn that puts the original prototype property back.
+   */
+  function installShowPickerMock(impl?: () => void) {
+    const showPicker = vi.fn<() => void>(impl)
+    const descriptor = Object.getOwnPropertyDescriptor(HTMLInputElement.prototype, 'showPicker')
+    Object.defineProperty(HTMLInputElement.prototype, 'showPicker', {
+      configurable: true,
+      value: showPicker,
+    })
+    return {
+      showPicker,
+      restore: () => {
+        if (descriptor) {
+          Object.defineProperty(HTMLInputElement.prototype, 'showPicker', descriptor)
+        } else {
+          delete (HTMLInputElement.prototype as { showPicker?: unknown }).showPicker
+        }
+      },
+    }
+  }
+
   beforeEach(() => {
     pendingState.value = false
     mockMutate.mockReset()
@@ -162,9 +186,10 @@ describe('CreateApiKeyDialog', () => {
     })
   })
 
-  function createWrapper(open = true) {
+  function createWrapper(open = true, attachTo?: HTMLElement) {
     return mount(CreateApiKeyDialog, {
       props: { open },
+      ...(attachTo ? { attachTo } : {}),
     })
   }
 
@@ -308,5 +333,77 @@ describe('CreateApiKeyDialog', () => {
     // Footer order: Cancel, then submit (last button).
     const submitButton = wrapper.findAll('button').at(-1)
     expect(submitButton?.attributes('disabled')).toBeDefined()
+  })
+
+  it('opens the native date picker when the date field text is clicked', async () => {
+    const { showPicker, restore } = installShowPickerMock()
+    try {
+      const wrapper = createWrapper()
+      // Switch to Custom date so the date input appears.
+      const customDateButton = wrapper.findAll('button').find((b) => b.text().trim() === 'Custom date')!
+      await customDateButton.trigger('click')
+
+      // Clicking the mm/dd/yyyy area must open the picker, not only the
+      // calendar indicator icon.
+      await wrapper.find('input[type="date"]').trigger('click')
+
+      expect(showPicker).toHaveBeenCalledTimes(1)
+    } finally {
+      restore()
+    }
+  })
+
+  it('does not crash when the date picker is already open', async () => {
+    const { showPicker, restore } = installShowPickerMock(() => {
+      // Browsers throw InvalidStateError when showPicker() is called while
+      // the picker is already showing (e.g. rapid double-click on the icon).
+      throw new DOMException('Picker already showing', 'InvalidStateError')
+    })
+    try {
+      const wrapper = createWrapper()
+      const customDateButton = wrapper.findAll('button').find((b) => b.text().trim() === 'Custom date')!
+      await customDateButton.trigger('click')
+
+      const dateInput = wrapper.find('input[type="date"]')
+      await dateInput.trigger('click')
+      await dateInput.trigger('click')
+
+      expect(showPicker).toHaveBeenCalledTimes(2)
+    } finally {
+      restore()
+    }
+  })
+
+  it('prevents segment text selection on mousedown and shows simulated focus', async () => {
+    const { showPicker, restore } = installShowPickerMock()
+    try {
+      // attachTo: focus assertions need the element mounted into the document.
+      const wrapper = createWrapper(true, document.body)
+      const customDateButton = wrapper.findAll('button').find((b) => b.text().trim() === 'Custom date')!
+      await customDateButton.trigger('click')
+
+      const dateInput = wrapper.find('input[type="date"]')
+      // mousedown's default would select the clicked segment ("dd"); the
+      // handler prevents that and fakes focus styling instead. It must NOT
+      // refocus the field — focusing a date input makes Chrome auto-select
+      // its first segment ("mm").
+      const mousedownEvent = new MouseEvent('mousedown', { bubbles: true, cancelable: true })
+      dateInput.element.dispatchEvent(mousedownEvent)
+      await nextTick()
+
+      expect(mousedownEvent.defaultPrevented).toBe(true)
+      expect(document.activeElement).not.toBe(dateInput.element)
+      // Simulated focus: the same visual tokens as a focused input appear.
+      expect(dateInput.classes()).toContain('ring-primary/20')
+      expect(showPicker).not.toHaveBeenCalled() // picker opens on click, not mousedown
+
+      // Choosing a date commits the value and clears the simulated focus.
+      await dateInput.setValue('2026-09-01')
+      await dateInput.trigger('change')
+      await nextTick()
+      expect(dateInput.classes()).not.toContain('ring-primary/20')
+    } finally {
+      restore()
+    }
   })
 })
