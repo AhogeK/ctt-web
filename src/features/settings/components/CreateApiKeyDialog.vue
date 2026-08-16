@@ -11,7 +11,7 @@
  *   keeps the form values intact.
  * - 429 RATE_LIMIT_001 and other failures surface as a toast.
  */
-import { ref, watch } from 'vue'
+import { onUnmounted, ref, watch } from 'vue'
 import { toTypedSchema } from '@vee-validate/zod'
 import { useForm } from 'vee-validate'
 import { toast } from 'vue-sonner'
@@ -72,6 +72,14 @@ const expiresMode = ref<'preset' | 'custom'>('preset')
 const selectedPresetDays = ref<number | null>(null)
 /** Custom expiration date in YYYY-MM-DD (native date input) */
 const customExpiresDate = ref('')
+/**
+ * Simulated focus feedback for the date field.
+ *
+ * mousedown preventDefault blocks real focus (real focus makes Chrome select
+ * the first segment "mm"), so focus styling is faked while the picker is open
+ * and cleared when a date is chosen or a click lands outside the field.
+ */
+const dateFieldActive = ref(false)
 /** Inline banner for the per-user key limit error */
 const limitError = ref<string | null>(null)
 
@@ -126,6 +134,100 @@ function applyCustomExpiration() {
   // Interpret the picked date as the end of that local day.
   form.setFieldValue('expiresAt', new Date(`${customExpiresDate.value}T23:59:59`).toISOString())
 }
+
+/**
+ * Open the native date picker when the field itself is clicked.
+ *
+ * Browsers only open the picker via the calendar indicator; the mm/dd/yyyy
+ * text area is otherwise inert. showPicker() is a user-gesture API that opens
+ * it programmatically — the click IS the gesture. Guarded so it silently
+ * degrades to the default behavior when the picker is already open
+ * (InvalidStateError) or the API is unsupported (older browsers).
+ */
+function handleDateFieldClick(event: MouseEvent) {
+  const input = event.currentTarget
+  if (!(input instanceof HTMLInputElement)) return
+  try {
+    input.showPicker()
+  } catch {
+    // Picker already open or showPicker() unsupported — native behavior applies.
+  }
+}
+
+/**
+ * Suppress the native segment selection (clicking "dd" highlights that part).
+ *
+ * The whole field should behave as one picker trigger, so mousedown's default
+ * text-selection is prevented. Deliberately NOT refocusing the field:
+ * focusing a date input makes Chrome auto-select its first segment ("mm"),
+ * which is exactly the highlight we want to avoid. Focus styling is faked via
+ * dateFieldActive instead (see above). Only applied when showPicker is
+ * available — otherwise the native click-to-open path stays untouched.
+ */
+function handleDateFieldMouseDown(event: MouseEvent) {
+  const input = event.currentTarget
+  if (!(input instanceof HTMLInputElement) || typeof input.showPicker !== 'function') return
+  event.preventDefault()
+  dateFieldActive.value = true
+}
+
+/**
+ * Close the simulated focus feedback when the chosen date is committed.
+ * A real change event only fires after the picker confirms a value.
+ */
+function handleDateFieldChange() {
+  applyCustomExpiration()
+  dateFieldActive.value = false
+}
+
+/**
+ * Clear the simulated focus when a click lands outside the date field
+ * (e.g. the picker was dismissed by clicking elsewhere).
+ */
+function handleDocumentMouseDown(event: MouseEvent) {
+  const target = event.target
+  if (!(target instanceof HTMLElement) || !target.closest('#api-key-expires')) {
+    dateFieldActive.value = false
+  }
+}
+
+// Reset form state every time the dialog opens.
+watch(
+  () => props.open,
+  (isOpen) => {
+    if (isOpen) {
+      limitError.value = null
+      form.resetForm()
+      scopeMode.value = 'recommended'
+      expiresMode.value = 'preset'
+      selectedPresetDays.value = null
+      customExpiresDate.value = ''
+      dateFieldActive.value = false
+      form.setFieldValue('scopes', ['READ', 'SYNC'])
+    }
+  },
+)
+
+// Simulated focus needs a document-level mousedown listener to be cleared;
+// registered in the CAPTURE phase because reka-ui DialogContent stops
+// propagation of bubble-phase mousedown inside the dialog. Removed on
+// unmount so the listener never leaks.
+watch(
+  () => props.open,
+  (isOpen) => {
+    if (isOpen) {
+      document.addEventListener('mousedown', handleDocumentMouseDown, true)
+    } else {
+      document.removeEventListener('mousedown', handleDocumentMouseDown, true)
+    }
+  },
+  { immediate: true },
+)
+
+// Safety net for unmount while the dialog is still open.
+onUnmounted(() => {
+  document.removeEventListener('mousedown', handleDocumentMouseDown, true)
+})
 
 const onSubmit = form.handleSubmit((values) => {
   limitError.value = null
@@ -367,10 +469,16 @@ watch(
                 'h-10 w-fit rounded-md border border-input bg-muted text-foreground',
                 'focus:border-primary focus:bg-card focus:ring-2 focus:ring-primary/20',
                 'dark:border-border dark:bg-secondary dark:text-foreground',
+                // The field never receives real focus (mousedown preventDefault
+                // stops the native segment selection), so the active state is
+                // faked with the same visual tokens as a focused input.
+                dateFieldActive && 'border-primary bg-card ring-2 ring-primary/20',
               )
             "
             v-model="customExpiresDate"
-            @change="applyCustomExpiration"
+            @change="handleDateFieldChange"
+            @mousedown="handleDateFieldMouseDown"
+            @click="handleDateFieldClick"
           />
           <p v-if="form.errors.value.expiresAt" class="text-sm text-destructive">
             {{ form.errors.value.expiresAt }}
