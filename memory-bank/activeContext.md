@@ -2,10 +2,21 @@
 
 ## Current Status
 
-**Phase**: v0.16.13 Custom-mode scope toggling fix
-**Version**: 0.16.13 (2026-08-13)
+**Phase**: v0.16.14 scope descriptions in Custom mode
+**Version**: 0.16.14 (2026-08-14)
 **Branch**: develop
-**Tests**: 1056/1056 unit (62 files) + 39/39 chromium E2E; vue-tsc + lint exit 0
+**Tests**: 1057/1057 unit (62 files) + 39/39 chromium E2E; vue-tsc + lint exit 0
+
+## Recent Activity (v0.16.14 — 2026-08-14)
+
+### Custom-mode scope descriptions (GitHub PAT style)
+
+- **UX gap (user QA follow-up)**: the 4 Custom-mode scopes (READ/SYNC/WRITE/ADMIN) showed only names — users cannot tell what each grants (user had to ask). Decision: always-visible one-line descriptions instead of hover tooltips (tooltips vanish on touch devices; scope purpose is decision-critical at checkbox time).
+- **Fix**: `SCOPE_DESCRIPTIONS` map (aligned with ctt-server ApiKeyScope semantics: READ=Read-only access, WRITE=Manage API keys & devices, SYNC=Bidirectional data sync, ADMIN=Full admin access (supersedes all)); label layout changed to checkbox + two-line text (name + muted description).
+- **Tests**: +1 (all 4 descriptions render in Custom mode). 1057/1057 unit.
+- **Verified in browser** (1024px + 375px): all 4 descriptions render on desktop AND mobile.
+- Version 0.16.13 → 0.16.14 (bug fix → PATCH).
+- **Dual-axis review (2 omo sub-agents, bg_30b0d502 Standards + bg_b34fbf3a Spec): both PASS, 0 findings. Committed as 4 atomic commits (code / version / memory / skills).
 
 ## Recent Activity (v0.16.13 — 2026-08-13)
 

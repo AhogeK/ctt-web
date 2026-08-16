@@ -24,6 +24,8 @@
 
 ## Completed (Recent)
 
+- [x] **v0.16.14** Custom-mode scope descriptions (GitHub PAT style) — always-visible one-line purpose text for READ/WRITE/SYNC/ADMIN at checkbox time (hover tooltips rejected: vanish on touch devices; scope purpose is decision-critical). SCOPE_DESCRIPTIONS map aligned with ctt-server ApiKeyScope semantics; label layout checkbox + two-line text (name + muted description); dual-axis code review PASS (2 omo sub-agents, 0 findings). Tests 1057/1057 unit + 21/21 api-keys E2E + vue-tsc/lint green. Version 0.16.13 → 0.16.14.
+
 - [x] **v0.16.6** ConfirmApiKeyActionDialog description alignment fix — mobile revoke dialog's description first word ("After") was offset from the left edge and rendering varied across phone widths. Two causes: (1) multi-line `{{ }}` interpolation condensed into a leading space (Vue whitespace:condense); (2) AlertDialogHeader default `text-center sm:text-left` centered the header on mobile. Fixed via single-line interpolation + `AlertDialogHeader class="text-left"`. +1 regression test. Browser-verified at 7 widths (320–1024px): no leading space, text-align left everywhere. 1050/1050 unit + 38/38 chromium E2E.
 
 - [x] **v0.16.5** Mobile sidebar final UX — brand icon dropped from mobile entirely (user: "放在里面看起来怪怪的"); mobile sheet now auto-closes on navigation (`handleNavigate` → `setOpenMobile(false)` on all 4 menu items; desktop no-op). Mobile header chrome: none (neither header branch matches). AppSidebar tests: shared setOpenMobile spy via vi.hoisted box; +2 nav-close tests. Browser-verified: sheet opens with no icon, removed from DOM after menu click. 1049/1049 unit + 38/38 chromium E2E.
