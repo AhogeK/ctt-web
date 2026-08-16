@@ -183,6 +183,19 @@ describe('CreateApiKeyDialog', () => {
     expect(wrapper.text()).toContain('6/100')
   })
 
+  it('shows a one-line purpose description next to every Custom-mode scope', async () => {
+    const wrapper = createWrapper()
+    const customButton = wrapper.findAll('button').find((b) => b.text().trim() === 'Custom')!
+    await customButton.trigger('click')
+
+    // Always-visible descriptions (GitHub PAT style) — decision-critical at
+    // checkbox time and touch-device safe, unlike hover-only tooltips.
+    expect(wrapper.text()).toContain('Read-only access')
+    expect(wrapper.text()).toContain('Manage API keys & devices')
+    expect(wrapper.text()).toContain('Bidirectional data sync')
+    expect(wrapper.text()).toContain('Full admin access (supersedes all)')
+  })
+
   it('always renders the FormMessage placeholder so errors do not shift the layout', () => {
     const wrapper = createWrapper()
     // Regression: the Name field must not gate FormMessage behind v-if — the
