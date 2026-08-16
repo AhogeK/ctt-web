@@ -53,3 +53,6 @@ src/__tests__/*.js
 .agents/
 .claude/
 .opencode/
+
+# Skills lock cache (regenerable)
+skills-lock.fast-update-cache.json
