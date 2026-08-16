@@ -63,8 +63,10 @@ vi.mock('@/components/ui/checkbox', () => ({
   Checkbox: {
     props: ['checked'],
     emits: ['update:checked'],
-    template:
-      '<input type="checkbox" :checked="checked" @change="$emit(\'update:checked\', ($event.target as HTMLInputElement).checked)" />',
+    // Runtime-compiled template: TS `as` casts are not allowed in mock
+    // strings (SyntaxError: Unexpected identifier). Target inference via
+    // $event.target.checked works because $emit reifies the event.
+    template: '<input type="checkbox" :checked="checked" @change="$emit(\'update:checked\', $event.target.checked)" />',
   },
 }))
 
@@ -179,6 +181,37 @@ describe('CreateApiKeyDialog (real form integration)', () => {
 
     expect(wrapper.emitted('success')).toBeTruthy()
     expect(wrapper.emitted('success')![0]![0]).toEqual(expect.objectContaining({ rawKey: 'cttak_raw_secret_once' }))
+    wrapper.unmount()
+  })
+
+  it('keeps scopes defined when toggling Custom -> Recommended (unregister regression)', async () => {
+    const wrapper = mount(CreateApiKeyDialog, {
+      props: { open: true },
+      attachTo: document.body,
+    })
+    await flushPromises()
+
+    // Real vee-validate path: mounting the scopes FormField in Custom mode
+    // registers the field; unmounting it (switch back to Recommended) used to
+    // unregister it, leaving form.values.scopes undefined and crashing the
+    // submit-button binding (Cannot read properties of undefined 'length').
+    await wrapper.find('#api-key-name').setValue('Toggle Key')
+    await wrapper.find('#api-key-name').trigger('blur')
+    await flushPromises()
+
+    const customButton = wrapper.findAll('button').find((b) => b.text().includes('Custom'))!
+    const recommendedButton = wrapper.findAll('button').find((b) => b.text().includes('JetBrains plugin'))!
+    await customButton.trigger('click')
+    await flushPromises()
+    await recommendedButton.trigger('click')
+    await flushPromises()
+
+    // Regression: values.scopes must still be defined and renderable.
+    expect(exposedForm(wrapper).values.scopes).toEqual(['READ', 'SYNC'])
+    expect(wrapper.text()).toContain('Create API Key')
+
+    await submitViaSetupState(wrapper)
+    expect(mockMutate).toHaveBeenCalledWith(expect.objectContaining({ scopes: ['READ', 'SYNC'] }), expect.anything())
     wrapper.unmount()
   })
 })

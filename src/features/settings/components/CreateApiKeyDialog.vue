@@ -62,6 +62,11 @@ const form = useForm<{ name: string; scopes: ApiKeyScope[]; expiresAt?: string }
     scopes: ['READ', 'SYNC'],
     expiresAt: undefined,
   },
+  // The scopes FormField only exists in Custom mode; switching back to
+  // Recommended unmounts it, and vee-validate unregisters the field on
+  // unmount — leaving form.values.scopes undefined and crashing the
+  // submit-button binding (scopes.length). Keep the value across unmounts.
+  keepValuesOnUnmount: true,
 })
 
 /** Scope selection mode: preset JetBrains recommendation or manual pick */
