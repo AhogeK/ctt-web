@@ -2,10 +2,20 @@
 
 ## Current Status
 
-**Phase**: v0.16.16 scopes unregister crash fix
-**Version**: 0.16.16 (2026-08-16)
+**Phase**: v0.16.17 4.5.2 defense verification + E2E double-click test
+**Version**: 0.16.17 (2026-08-17)
 **Branch**: develop
-**Tests**: 1061/1061 unit (62 files); vue-tsc + lint exit 0 (1 pre-existing e2e warning)
+**Tests**: 1061/1061 unit (62 files); 22/22 api-keys E2E; vue-tsc + lint exit 0
+
+## Recent Activity (v0.16.17 — 2026-08-17)
+
+### 4.5.2 delete-constraint verification (defense) + E2E double-click coverage
+
+- **Verification (4.5.2b/c/d/e, real backend via 2 bootstrapped accounts)**: ACTIVE delete → 409 AUTH_023 (actual message "Active API keys must be revoked before they can be deleted" — acceptance doc's "Only revoked API keys can be deleted" is stale, backend v0.42.0 authoritative); nonexistent UUID → 401 AUTH_010; repeat delete → 204→204→401 AUTH_010; BOLA cross-account → 401 AUTH_010, owner's key untouched. All PASS.
+- **Verification (4.5.2a/f, code + tests)**: ACTIVE shows Revoke only; REVOKED **and EXPIRED** show Delete (acceptance doc says "REVOKED only" — intended drift since v0.16.7, backend v0.42.0 deletes EXPIRED directly); double-click guard verified (JS isPending early-return + :disabled + dialog-close block + unit test "does not double-mutate").
+- **Coverage gap closed**: added E2E `rapid double-click on the confirm button fires exactly one delete request` (delete.spec.ts) — holds the delete response open (route + manual release) so the mutation stays pending across both clicks, dispatches the 2nd click via dispatchEvent (a real click() blocks on actionability since the button disables; the accessible name also switches to "Deleting..." so locators must be re-resolved), asserts deleteRequests === 1 via expect.poll. E2E api-keys suite now 22/22.
+- Playwright chromium browsers were missing from cache — reinstalled via `pnpm exec playwright install chromium` (npm refuses: EBADDEVENGINES pnpm-only).
+- Version 0.16.16 → 0.16.17 (test coverage → PATCH).
 
 ## Recent Activity (v0.16.16 — 2026-08-16)
 
