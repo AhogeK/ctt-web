@@ -177,4 +177,60 @@ test.describe('API key permanent delete flow', () => {
     await expect(page.getByText('API Key deleted')).toBeVisible()
     await expect(page.getByTestId('api-key-card').filter({ hasText: TEST_REVOKED_KEY.name })).toHaveCount(0)
   })
+
+  test('rapid double-click on the confirm button fires exactly one delete request', async ({ page }) => {
+    const setup = await setupApiKeysPage(page, TEST_KEYS)
+
+    // Hold the delete response open so the mutation stays pending across
+    // both clicks — the guard under test is isPending, which only exists
+    // while the request is in flight. An instantly-fulfilled mock would let
+    // the second click become a second request and defeat the test.
+    // The handler also removes the key from the mocked list on release,
+    // mirroring the shared helper's delete logic (this handler supersedes it).
+    let releaseDelete: (() => void) | undefined
+    let deleteRequests = 0
+    await page.route('**/api/v1/auth/api-keys/*/delete', async (route) => {
+      if (route.request().method() !== 'DELETE') {
+        await route.fallback()
+        return
+      }
+      deleteRequests++
+      const id = route.request().url().split('/').at(-2) ?? ''
+      await new Promise<void>((resolve) => {
+        releaseDelete = resolve
+      })
+      setup.setKeys(setup.getKeys().filter((k) => k.id !== id))
+      await route.fulfill({ status: 204, body: '' })
+    })
+
+    const row = page.getByTestId('api-key-table').locator('tbody tr').filter({ hasText: TEST_REVOKED_KEY.name })
+    await row
+      .getByRole('button', { name: `Delete ${TEST_REVOKED_KEY.name}` })
+      .evaluate((el) => (el as HTMLElement).click())
+    const confirmButton = page.getByRole('alertdialog').getByRole('button', { name: 'Delete permanently' })
+    const dialog = page.getByRole('alertdialog')
+
+    // Double-click while the request is pending: the pending guard must
+    // swallow the second invocation (button disabled + isPending early
+    // return), so only one DELETE hits the network. The second click is
+    // dispatched directly (bypassing actionability waits) to simulate a
+    // real rapid double-click — a real click() would block waiting for the
+    // button to become enabled again, which is itself the guard working.
+    await confirmButton.click()
+    // The confirm button's accessible name switches to the pending label
+    // ("Deleting...") while disabled, so re-resolving by the original name
+    // would fail; assert the disabled state on the dialog instead.
+    await expect(dialog.getByRole('button', { name: 'Deleting...' })).toBeDisabled()
+    await dialog.getByRole('button', { name: 'Deleting...' }).dispatchEvent('click')
+
+    // Give the second click a chance to misfire before releasing the held
+    // response, then let the mutation resolve.
+    await expect.poll(() => deleteRequests).toBe(1)
+    releaseDelete?.()
+    await expect(page.getByText('API Key deleted')).toBeVisible()
+    await expect.poll(async () => deleteRequests, { message: 'delete mutation must fire exactly once' }).toBe(1)
+    await expect(
+      page.getByTestId('api-key-table').locator('tbody tr').filter({ hasText: TEST_REVOKED_KEY.name }),
+    ).toHaveCount(0)
+  })
 })
