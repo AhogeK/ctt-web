@@ -7,7 +7,7 @@
  * create response so the parent can open the RawKeyDialog (raw key shown once).
  *
  * Error handling:
- * - 409 AUTH_014 (per-user limit of 20 reached) shows an inline banner and
+ * - 409 AUTH_024 (per-user limit of 20 reached) shows an inline banner and
  *   keeps the form values intact.
  * - 429 RATE_LIMIT_001 and other failures surface as a toast.
  */
@@ -53,7 +53,7 @@ const emit = defineEmits<{
 
 const { mutation } = useCreateApiKey()
 
-const API_KEY_LIMIT_REACHED = 'AUTH_014'
+const API_KEY_LIMIT_REACHED = 'AUTH_024'
 
 const form = useForm<{ name: string; scopes: ApiKeyScope[]; expiresAt?: string }>({
   validationSchema: toTypedSchema(CreateApiKeyRequestSchema),
@@ -306,7 +306,7 @@ watch(
       </DialogHeader>
 
       <form @submit="onSubmit" class="flex flex-col gap-4">
-        <!-- Per-user limit banner (409 AUTH_014) -->
+        <!-- Per-user limit banner (409 AUTH_024) -->
         <div
           v-if="limitError"
           role="alert"

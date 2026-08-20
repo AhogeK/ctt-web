@@ -26,7 +26,7 @@ export function useApiKeys() {
  * responsible for showing it in the RawKeyDialog and never persisting it.
  *
  * Error codes handled by the caller via `extractErrorCode`:
- * - AUTH_014: per-user active key limit reached (409)
+ * - AUTH_024: per-user active key limit reached (409)
  * - RATE_LIMIT_001: creation rate limit exceeded (429)
  *
  * @returns Object with the create mutation

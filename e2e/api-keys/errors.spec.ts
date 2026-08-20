@@ -1,7 +1,7 @@
 import { test, expect } from '@playwright/test'
 import { setupApiKeysPage, openCreateDialog, submitCreateForm, fulfillError } from './helpers.js'
 import {
-  AUTH_014_BODY,
+  AUTH_024_BODY,
   RATE_LIMIT_BODY,
   RATE_LIMIT_WITH_RETRY_AFTER_BODY,
   AUTH_010_BODY,
@@ -10,13 +10,13 @@ import {
 } from './fixtures.js'
 
 test.describe('API keys error paths', () => {
-  test('shows the limit banner on 409 AUTH_014 and keeps the form intact', async ({ page }) => {
+  test('shows the limit banner on 409 AUTH_024 and keeps the form intact', async ({ page }) => {
     await setupApiKeysPage(page, [])
 
     // Override POST with a 409; fall through to the setup handler for GET.
     await page.route('**/api/v1/auth/api-keys', async (route) => {
       if (route.request().method() === 'POST') {
-        await fulfillError(route, 409, AUTH_014_BODY)
+        await fulfillError(route, 409, AUTH_024_BODY)
         return
       }
       await route.fallback()
@@ -27,8 +27,18 @@ test.describe('API keys error paths', () => {
 
     const dialog = page.getByRole('dialog')
     await expect(dialog).toContainText('You have reached the maximum of 20 API keys')
-    // Form content is preserved.
+    // 5.1b: Form content is preserved so the user can edit and retry.
     await expect(dialog.locator('#api-key-name')).toHaveValue('Limit Test Key')
+
+    // 5.1c: closing the dialog and reopening must clear the banner and
+    // reset the form (new-session normal state).
+    await dialog.getByRole('button', { name: 'Cancel' }).click()
+    await expect(dialog).toHaveCount(0)
+    await openCreateDialog(page)
+    const reopened = page.getByRole('dialog')
+    await expect(reopened).toBeVisible()
+    await expect(reopened.getByText('You have reached the maximum of 20 API keys')).toHaveCount(0)
+    await expect(reopened.locator('#api-key-name')).toHaveValue('')
   })
 
   test('shows a toast on 429 RATE_LIMIT_001', async ({ page }) => {

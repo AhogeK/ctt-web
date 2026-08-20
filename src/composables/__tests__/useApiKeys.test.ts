@@ -192,7 +192,7 @@ describe('useCreateApiKey', () => {
   it('does not invalidate the query when createApiKey throws', async () => {
     vi.mocked(apiKeysApi.createApiKey).mockRejectedValue({
       statusCode: 409,
-      data: { code: 'AUTH_014', message: 'API key limit reached' },
+      data: { code: 'AUTH_024', message: 'API key limit reached' },
     })
 
     const { mutation } = useCreateApiKey()

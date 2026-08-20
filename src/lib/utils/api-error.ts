@@ -85,7 +85,7 @@ export function mapApiErrorCode(code: string): string {
     AUTH_009: 'Refresh token reuse detected. Please sign in again.',
     AUTH_010: 'API key not found or no longer accessible.',
     AUTH_019: 'Terms of service have been updated. Please review and accept the new terms to continue.',
-    AUTH_014: 'You have reached the maximum of 20 API keys. Revoke an unused key before creating a new one.',
+    AUTH_024: 'You have reached the maximum of 20 API keys. Revoke an unused key before creating a new one.',
     AUTH_023: 'Active API keys must be revoked before they can be deleted.',
 
     // CSRF errors

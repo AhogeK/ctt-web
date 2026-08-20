@@ -111,10 +111,10 @@ describe('api-keys API', () => {
       })
     })
 
-    it('propagates AUTH_014 (key limit) error from ofetch without catching', async () => {
+    it('propagates AUTH_024 (key limit) error from ofetch without catching', async () => {
       const limitError = {
         statusCode: 409,
-        data: { code: 'AUTH_014', message: 'API key limit reached' },
+        data: { code: 'AUTH_024', message: 'API key limit reached' },
       }
       vi.mocked(apiFetch).mockRejectedValue(limitError)
 

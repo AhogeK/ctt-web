@@ -91,8 +91,8 @@ export function errorBody(code: string, message: string): Record<string, unknown
   }
 }
 
-export const AUTH_014_BODY = errorBody(
-  'AUTH_014',
+export const AUTH_024_BODY = errorBody(
+  'AUTH_024',
   'You have reached the maximum of 20 API keys. Revoke an unused key before creating a new one.',
 )
 export const RATE_LIMIT_BODY = errorBody('RATE_LIMIT_001', 'Too many requests, please try again later.')

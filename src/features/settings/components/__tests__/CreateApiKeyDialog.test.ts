@@ -269,10 +269,10 @@ describe('CreateApiKeyDialog', () => {
     expect(wrapper.emitted('success')?.at(-1)).toEqual([response])
   })
 
-  it('shows the per-user limit banner on AUTH_014 and does not close', async () => {
+  it('shows the per-user limit banner on AUTH_024 and does not close', async () => {
     mockMutate.mockImplementation((...args: unknown[]) => {
       const callbacks = args[1] as { onError?: (e: unknown) => void }
-      callbacks.onError?.({ data: { code: 'AUTH_014' } })
+      callbacks.onError?.({ data: { code: 'AUTH_024' } })
     })
 
     const wrapper = createWrapper()
