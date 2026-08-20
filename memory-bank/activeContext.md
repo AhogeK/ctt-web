@@ -2,10 +2,20 @@
 
 ## Current Status
 
-**Phase**: v0.16.17 4.5.2 defense verification + E2E double-click test
-**Version**: 0.16.17 (2026-08-17)
+**Phase**: v0.16.18 AUTH_014→AUTH_024 code split (API key limit)
+**Version**: 0.16.18 (2026-08-19)
 **Branch**: develop
-**Tests**: 1061/1061 unit (62 files); 22/22 api-keys E2E; vue-tsc + lint exit 0
+**Tests**: 1061/1061 unit; 22/22 api-keys E2E; vue-tsc + lint exit 0
+
+## Recent Activity (v0.16.18 — 2026-08-19)
+
+### Error-code split: API key limit AUTH_014 → AUTH_024 (backend contract change)
+
+- **Why**: ctt-server `ErrorCode.AUTH_014 = "Token creation failed"` was a dual-semantic code — used BOTH for the per-user API-key 20-limit (`ApiKeyServiceImpl.createApiKey`) AND for three token unique-constraint conflicts (`GlobalExceptionHandler` refresh/email-verification/password-reset token hash). "Token creation failed" fits the token cases but is non-descriptive for the key-limit case; changing its message would break the token cases. Split into AUTH_024 (key limit) per single-code-single-semantic convention.
+- **Backend (ctt-server, by user)**: new `AUTH_024("Maximum active API keys reached", 409)`; create-api-key throws AUTH_024; AUTH_014 retained for token conflicts; Controller `@ExampleObject` updated; tests re-asserted; message intentionally has no hardcoded "20" (maxKeysPerUser is @DefaultValue("20")/configurable).
+- **Frontend sync (this round)**: all API-key-limit references `AUTH_014 → AUTH_024` across 8 files — `api-error.ts` mapping (user-facing text unchanged), `CreateApiKeyDialog.vue` (`API_KEY_LIMIT_REACHED` constant + comments), `useApiKeys.ts`/`api-keys.ts` JSDoc, 3 unit-test mocks, `e2e/api-keys/fixtures.ts` (`AUTH_014_BODY` → `AUTH_024_BODY`), `errors.spec.ts`. AUTH_014 has zero remaining references in ctt-web (token conflict case is backend/other-client only).
+- **Verification**: 1061/1061 unit, 22/22 api-keys E2E (errors.spec asserts AUTH_024 banner + form preservation + reset), lint 0 error, type-check clean. A live-backend 21st-create probe was attempted but blocked by the 10/hr Redis rate limit (key-clearing via raw TCP DEL succeeded but the shell JWT-sub decode failed on macOS `base64 -d` vs `-D`); E2E mock coverage is sufficient for the frontend contract.
+- Version 0.16.17 → 0.16.18 (contract sync → PATCH).
 
 ## Recent Activity (v0.16.17 — 2026-08-17)
 
