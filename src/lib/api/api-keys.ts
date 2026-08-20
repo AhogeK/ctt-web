@@ -44,7 +44,7 @@ export async function listApiKeys(): Promise<ApiKey[]> {
  * again. Callers must surface it to the user immediately.
  *
  * Known error codes:
- * - 409 AUTH_014: per-user active key limit (20) reached
+ * - 409 AUTH_024: per-user active key limit (20) reached
  * - 429 RATE_LIMIT_001: creation rate limit exceeded
  *
  * @param data - Create request (name, scopes, optional expiresAt)
