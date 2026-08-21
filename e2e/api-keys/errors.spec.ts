@@ -55,7 +55,13 @@ test.describe('API keys error paths', () => {
     await openCreateDialog(page)
     await submitCreateForm(page, 'Rate Limited Key')
 
+    const dialog = page.getByRole('dialog')
+    // 5.2a: static rate-limit toast.
     await expect(page.getByText('Too many requests', { exact: false })).toBeVisible()
+    // 5.2b: the dialog stays open and the typed name is preserved so the
+    // user can retry once the window resets (toast path, no banner).
+    await expect(dialog).toBeVisible()
+    await expect(dialog.locator('#api-key-name')).toHaveValue('Rate Limited Key')
   })
 
   test('shows the countdown toast when the 429 body carries a retryAfter instant', async ({ page }) => {
