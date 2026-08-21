@@ -2,10 +2,20 @@
 
 ## Current Status
 
-**Phase**: v0.16.18 AUTH_014→AUTH_024 code split (API key limit)
-**Version**: 0.16.18 (2026-08-19)
+**Phase**: v0.16.19 5.2 rate-limit (429) verification + 5.2b E2E
+**Version**: 0.16.19 (2026-08-21)
 **Branch**: develop
 **Tests**: 1061/1061 unit; 22/22 api-keys E2E; vue-tsc + lint exit 0
+
+## Recent Activity (v0.16.19 — 2026-08-21)
+
+### 5.2 rate-limit verification (429 RATE_LIMIT_001) + E2E form-preservation
+
+- **Backend 5.2a/c verified (real API, fresh account)**: creates #1-10 return 201, #11 returns **429 RATE_LIMIT_001**. **Backend 0.43.0 now ships retry timing on ALL 429s**: `Retry-After: 3599` header (RFC 7231 delta-seconds) + body `retryAfter: "2026-08-21T08:48:28Z"` (ISO-8601 window-reset instant, nullable). Verified against the real probe values: `getRetryAfterSeconds` returns header 3599 (priority) / body ≈3529s at probe time (clock-dependent). Rate-limit Redis key `rate_limit:user:ApiKeyController.createApiKey:{userId}` can be DEL'd between batches (raw socket RESP; AUTH reply must be consumed before next command — pipelining yields `-NOAUTH`).
+- **Frontend 5.2a**: toast "Too many requests. Please wait a moment before trying again." (api-error.ts:128 RATE_LIMIT_001); countdown path (`/Please try again in \d+s\./`) covered by errors.spec.ts with RATE_LIMIT_WITH_RETRY_AFTER_BODY mock; real-format parsing locked by vitest probes (header delta-seconds, body ISO instant, priority, null fallback).
+- **Coverage gap closed (5.2b)**: added E2E assertions that on 429 the dialog stays open and the typed name is preserved (`toHaveValue('Rate Limited Key')`) — previously only toast visibility was asserted. api-keys E2E 22/22.
+- **CSRF note**: scripted POST to api-keys succeeds with plain Bearer (no XSRF) — `ApiKeySecurityConfig` header matcher ignores it; general rule: 403 in scripts → read SecurityConfig FIRST, don't rewrite requests blindly. Experience documented in test-auth-bootstrap references/ctt-server.md.
+- Version 0.16.18 → 0.16.19 (test coverage → PATCH).
 
 ## Recent Activity (v0.16.18 — 2026-08-19)
 
