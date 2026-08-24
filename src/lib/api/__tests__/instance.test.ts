@@ -332,6 +332,43 @@ describe('API Instance', () => {
       expect(dispatchEventSpy).not.toHaveBeenCalled()
     })
 
+    it('should NOT clear token or dispatch event on 401 with USER_014 (password change business check)', async () => {
+      const mockResponse = {
+        status: 401,
+        _data: { code: 'USER_014', message: 'Invalid password' },
+        url: 'https://api.example.com/test',
+      }
+      const mockContext = {
+        response: mockResponse,
+        request: 'https://api.example.com/test',
+        options: { method: 'POST' },
+      }
+
+      await capturedConfig.onResponseError!(mockContext)
+
+      expect(removeItemSpy).not.toHaveBeenCalled()
+      expect(dispatchEventSpy).not.toHaveBeenCalled()
+      expect(toast.error).not.toHaveBeenCalled()
+    })
+
+    it('should NOT clear token or dispatch event on 401 with USER_014 in wrapped format', async () => {
+      const mockResponse = {
+        status: 401,
+        _data: { data: { code: 'USER_014', message: 'Invalid password' } },
+        url: 'https://api.example.com/test',
+      }
+      const mockContext = {
+        response: mockResponse,
+        request: 'https://api.example.com/test',
+        options: { method: 'POST' },
+      }
+
+      await capturedConfig.onResponseError!(mockContext)
+
+      expect(removeItemSpy).not.toHaveBeenCalled()
+      expect(dispatchEventSpy).not.toHaveBeenCalled()
+    })
+
     it('should still clear token on unknown 401 (non-AUTH_010) preserving existing behavior', async () => {
       const mockResponse = {
         status: 401,
