@@ -35,6 +35,10 @@ vi.mock('@/features/settings/composables/useSetPassword', () => ({
       mutate: mockSetPassword,
       isPending: pendingState,
     },
+    changePasswordMutation: {
+      mutate: vi.fn<(...args: unknown[]) => unknown>(),
+      isPending: pendingState,
+    },
     SET_PASSWORD_ERROR_CODES: { ALREADY_HAS_PASSWORD: 'USER_015', INVALID_FORMAT: 'COMMON_003' },
   })),
 }))
@@ -64,6 +68,13 @@ vi.mock('@/lib/utils', () => ({
 
 vi.mock('@/lib/utils/api-error', () => ({
   extractErrorCode: vi.fn<(error: unknown) => string | null>(() => null),
+}))
+
+vi.mock('@/features/auth/components/PasswordStrengthMeter.vue', () => ({
+  default: {
+    props: ['password'],
+    template: '<div data-testid="password-strength-meter" />',
+  },
 }))
 
 // ==========================================
