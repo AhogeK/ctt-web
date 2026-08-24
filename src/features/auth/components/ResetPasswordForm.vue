@@ -53,7 +53,7 @@ const onSubmit = form.handleSubmit((values) => {
               "
               v-bind="componentField"
             />
-            <PasswordStrengthMeter :password="form.values.newPassword as string" />
+            <PasswordStrengthMeter :password="form.values.newPassword ?? ''" />
           </div>
         </FormControl>
         <FormMessage />
