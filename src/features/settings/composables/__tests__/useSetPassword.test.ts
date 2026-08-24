@@ -5,6 +5,7 @@ import * as apiError from '@/lib/utils/api-error'
 
 vi.mock('@/lib/api/user', () => ({
   setPassword: vi.fn<() => Promise<unknown>>(),
+  changePassword: vi.fn<() => Promise<unknown>>(),
 }))
 
 vi.mock('@/lib/utils/api-error', () => ({
@@ -292,6 +293,109 @@ describe('useSetPassword', () => {
 
       expect(mutation.mutateAsync).toBeDefined()
       expect(typeof mutation.mutateAsync).toBe('function')
+    })
+
+    it('exposes changePasswordMutation', () => {
+      const { changePasswordMutation } = useSetPassword()
+
+      expect(changePasswordMutation).toBeDefined()
+      expect(changePasswordMutation.mutateAsync).toBeDefined()
+      expect(typeof changePasswordMutation.mutateAsync).toBe('function')
+    })
+  })
+
+  describe('changePasswordMutation', () => {
+    it('calls changePassword API with current and new password', async () => {
+      vi.mocked(userApi.changePassword).mockResolvedValueOnce(undefined)
+
+      const { changePasswordMutation } = useSetPassword()
+      await changePasswordMutation.mutateAsync({
+        currentPassword: 'OldPass123!',
+        newPassword: 'NewPass456!',
+      })
+
+      expect(userApi.changePassword).toHaveBeenCalledWith({
+        currentPassword: 'OldPass123!',
+        newPassword: 'NewPass456!',
+      })
+      expect(userApi.changePassword).toHaveBeenCalledTimes(1)
+    })
+
+    it('shows success toast on successful password change', async () => {
+      vi.mocked(userApi.changePassword).mockResolvedValueOnce(undefined)
+
+      const { changePasswordMutation } = useSetPassword()
+      await changePasswordMutation.mutateAsync({
+        currentPassword: 'OldPass123!',
+        newPassword: 'NewPass456!',
+      })
+
+      expect(mockToast.success).toHaveBeenCalledWith('Password changed successfully', {
+        description: 'Your password has been updated.',
+      })
+    })
+
+    it('closes dialog on successful password change', async () => {
+      vi.mocked(userApi.changePassword).mockResolvedValueOnce(undefined)
+
+      const { isDialogOpen: dialogState, changePasswordMutation } = useSetPassword()
+      dialogState.value = true
+      await changePasswordMutation.mutateAsync({
+        currentPassword: 'OldPass123!',
+        newPassword: 'NewPass456!',
+      })
+
+      expect(dialogState.value).toBe(false)
+    })
+
+    it('invalidates user query on successful password change', async () => {
+      vi.mocked(userApi.changePassword).mockResolvedValueOnce(undefined)
+
+      const { changePasswordMutation } = useSetPassword()
+      await changePasswordMutation.mutateAsync({
+        currentPassword: 'OldPass123!',
+        newPassword: 'NewPass456!',
+      })
+
+      expect(mockInvalidateQueries).toHaveBeenCalledWith({ queryKey: ['users'] })
+    })
+
+    it('shows error toast with mapped message for USER_014', async () => {
+      const error = new Error('Incorrect password')
+      vi.mocked(userApi.changePassword).mockRejectedValueOnce(error)
+      mockExtractErrorCode.mockReturnValue('USER_014')
+      mockMapApiErrorCode.mockReturnValue('Incorrect password. Please try again.')
+
+      const { changePasswordMutation } = useSetPassword()
+
+      await expect(
+        changePasswordMutation.mutateAsync({
+          currentPassword: 'wrong',
+          newPassword: 'NewPass456!',
+        }),
+      ).rejects.toThrow('Incorrect password')
+
+      expect(mockToast.error).toHaveBeenCalledWith('Failed to change password', {
+        description: 'Incorrect password. Please try again.',
+      })
+    })
+
+    it('does not close dialog on error', async () => {
+      const error = new Error('Server error')
+      vi.mocked(userApi.changePassword).mockRejectedValueOnce(error)
+      mockExtractErrorCode.mockReturnValue(undefined)
+
+      const { isDialogOpen: dialogState, changePasswordMutation } = useSetPassword()
+      dialogState.value = true
+
+      await expect(
+        changePasswordMutation.mutateAsync({
+          currentPassword: 'OldPass123!',
+          newPassword: 'NewPass456!',
+        }),
+      ).rejects.toThrow('Server error')
+
+      expect(dialogState.value).toBe(true)
     })
   })
 })
