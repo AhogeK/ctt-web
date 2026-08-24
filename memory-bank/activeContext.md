@@ -2,10 +2,50 @@
 
 ## Current Status
 
-**Phase**: v0.16.19 5.2 rate-limit (429) verification + 5.2b E2E
-**Version**: 0.16.19 (2026-08-21)
+**Phase**: v0.17.3 SetPasswordDialog show-password toggles (parity with Login/Register)
+**Version**: 0.17.3 (2026-08-24)
 **Branch**: develop
-**Tests**: 1061/1061 unit; 22/22 api-keys E2E; vue-tsc + lint exit 0
+**Tests**: 1078/1078 unit; vue-tsc + lint 0 error (2 pre-existing e2e warnings)
+
+## Recent Activity (v0.17.3 — 2026-08-24)
+
+### SetPasswordDialog: password visibility toggles (parity with Login/Register)
+
+- **Bug (user report)**: password fields in the Set/Change Password dialog had no show/hide toggle, while Login/Register forms do.
+- **Fix**: mirrored the LoginForm/RegisterForm pattern — `showCurrentPassword`/`showNewPassword`/`showConfirmPassword` refs + Eye/EyeOff buttons in `relative` input wrappers (`pr-10` for icon space, `absolute right-2.5` button, `tabindex="-1"`, aria-label "Show/Hide …"). Three fields: currentPassword (change mode), newPassword (wrapped with PasswordStrengthMeter), confirmPassword.
+- **Tests**: +2 (new password toggle password→text→password; current password toggle in change mode). 1076→1078.
+- Version 0.17.2 → 0.17.3 (bug fix → PATCH).
+
+## Recent Activity (v0.17.2 — 2026-08-24)
+
+### SetPasswordDialog: server errors moved from bottom banner to field-level FormMessage
+
+- **Bug (user report)**: "Current password is incorrect." appeared in a bottom error banner → (1) the banner's conditional mount/unmount shifted the layout (form jump), (2) style inconsistent with per-field validation errors (FormMessage under the input).
+- **Fix**: removed the `errorMessage` ref + bottom `bg-destructive/10` div entirely. Server-side business errors now map onto the matching vee-validate field via `form.setFieldError(...)` so they render in the same FormMessage slot as validation errors — no layout jump, consistent styling:
+  - USER_014 → currentPassword; PASSWORD_SAME_AS_OLD / COMMON_003 / USER_015 → newPassword.
+  - Unknown errors: no inline message (toast from composable covers them — same as before via composable onError).
+- **Tests**: error-handling suite rewritten (4 tests now assert setFieldError mapping per code instead of errorMessage ref rendering); `useForm` mock gained `setFieldError`; `ref` import removed from component. 1075→1076.
+- Version 0.17.1 → 0.17.2 (bug fix → PATCH).
+
+## Recent Activity (v0.17.1 — 2026-08-24)
+
+### USER_014 401 triggered logout on password change (bug fix)
+
+- **Bug (user report, real backend v0.44.0)**: changing password with an incorrect current password returned 401 USER_014 (correct backend behavior), but the frontend LOGGED THE USER OUT and redirected to login. Root cause: `handle401Error` (instance.ts) treated every 401 except AUTH_002/003 (refreshable), TERMINAL_AUTH_CODES, and AUTH_010 as a session-level failure → `removeItem(accessToken)` + `UNAUTHORIZED_EVENT`. USER_014 ("Invalid password" on password change) is a RESOURCE-level business 401 — the user IS authenticated, the operation failed a business check — so it must not clear auth.
+- **Fix**: added USER_014 to the same no-logout branch as AUTH_010 (resource-level 401 whitelist). Comment updated to document both codes and the implicit contract (resource vs session 401 distinction is regression-prone).
+- **Tests**: +2 in instance.test.ts (flat + wrapped formats, mirroring AUTH_010 tests): USER_014 must NOT call removeItem / dispatch UNAUTHORIZED_EVENT / toast. 1073→1075.
+- Version 0.17.0 → 0.17.1 (bug fix → PATCH).
+
+## Recent Activity (v0.17.0 — 2026-08-23)
+
+### Change Password feature (dual-mode dialog) + Set Password bug fixes
+
+- **Feature (user-reported logic gap)**: Account button flips "Set Password"→"Change Password" by hasPassword, but the dialog was hardcoded "Set Password" and the backend has ONLY POST /api/v1/users/me/password/set (409 USER_015 if already set) → "Change Password" was a dead end. Decision: implement REAL change-password flow (not cosmetic label fix). Frontend done this round; backend endpoint POST /api/v1/users/me/password/change is a REQUIREMENT TEXT handed to user (R3): body { currentPassword, newPassword } (both base64-encoded like setPassword — backend does NOT decode), wrong current → 401 USER_014, same-as-old → 409 PASSWORD_SAME_AS_OLD, weak → 400 COMMON_003 (all codes already exist in ErrorCode.java).
+- **Implementation**: user.ts `changePassword()` (both fields base64); useSetPassword.ts `changePasswordMutation` (distinct toast "Password changed successfully", closes shared isDialogOpen, invalidates user query); SetPasswordDialog dual-mode via `hasPassword` prop + computed `mode` (dynamic title/desc/submit label, conditional "Current Password" FormField id=current-password autocomplete=current-password, change submits {currentPassword,newPassword}, USER_014/PASSWORD_SAME_AS_OLD inline errors); AccountSection passes :has-password="authStore.hasPassword".
+- **Bug fixes folded in**: (1) SetPasswordDialog was missing PasswordStrengthMeter (ResetPasswordForm had it) — mirrored the exact pattern; (2) dialog never closed on success — AccountSection used its own local ref while useSetPassword's module-level shared isDialogOpen did the closing → now consumes the shared ref; (3) `:password="form.values.newPassword ?? ''"` on both meters (prop is string; `as string` masked undefined → Vue warn).
+- **Review fixes (main agent)**: subagent left `as any` on toTypedSchema (R8 violation) + schema built once at setup (not reactive to hasPassword → current-password required check would fail after Set→profile refresh→reopen). Fixed: computed schema passed as computed to validationSchema (vee-validate supports MaybeRef schemas). Also form.test.ts mock lacked changePasswordMutation (3 crashes) — added.
+- **Tests**: +changePassword API (base64 both fields, envelope, Zod reject); +6 composable (exposes mutation, calls API, success toast, closes dialog, invalidates, USER_014 toast, no close on error); dialog dual-mode unit (set: no current-password field, title Set; change: field visible, title Change, submits change mutation); form.test.ts real vee-validate stays green with mock sync. 1063→1073.
+- Version 0.16.20 → 0.17.0 (new feature → MINOR; 0.16.20 was never committed).
 
 ## Recent Activity (v0.16.19 — 2026-08-21)
 
