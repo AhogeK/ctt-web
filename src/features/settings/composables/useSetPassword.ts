@@ -1,7 +1,7 @@
 import { ref } from 'vue'
 import { useMutation, useQueryClient } from '@tanstack/vue-query'
 import { toast } from 'vue-sonner'
-import { setPassword } from '@/lib/api/user'
+import { setPassword, changePassword } from '@/lib/api/user'
 import { extractErrorCode, mapApiErrorCode } from '@/lib/utils/api-error'
 import { userKeys } from '@/lib/query-keys'
 
@@ -23,12 +23,13 @@ const SET_PASSWORD_ERROR_CODES = {
 const isDialogOpen = ref(false)
 
 /**
- * Composable for OAuth set password functionality.
+ * Composable for OAuth set/change password functionality.
  *
- * Provides a mutation for setting a password on OAuth accounts
- * and shared dialog state for the SetPasswordDialog component.
+ * Provides mutations for setting a password on OAuth accounts
+ * and changing an existing password, plus shared dialog state
+ * for the SetPasswordDialog component.
  *
- * @returns Object with mutation, dialog state, and error code constants
+ * @returns Object with mutations, dialog state, and error code constants
  */
 export function useSetPassword() {
   const queryClient = useQueryClient()
@@ -78,8 +79,30 @@ export function useSetPassword() {
     },
   })
 
+  /**
+   * Change password for users who already have one.
+   *
+   * Endpoint: POST /api/v1/users/me/password/change
+   */
+  const changePasswordMutation = useMutation({
+    mutationFn: (data: { currentPassword: string; newPassword: string }) => changePassword(data),
+    onSuccess: () => {
+      toast.success('Password changed successfully', {
+        description: 'Your password has been updated.',
+      })
+      isDialogOpen.value = false
+      invalidateUserQuery()
+    },
+    onError: (error: unknown) => {
+      toast.error('Failed to change password', {
+        description: getErrorMessage(error),
+      })
+    },
+  })
+
   return {
     mutation,
+    changePasswordMutation,
     isDialogOpen,
     SET_PASSWORD_ERROR_CODES,
   }
