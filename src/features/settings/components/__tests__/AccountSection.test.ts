@@ -24,6 +24,7 @@ let emailStatusDataValue:
 let isEmailStatusPendingValue = false
 let isDialogOpenValue = false
 let authStoreHasPassword = false
+const akSetPasswordDialogOpen = ref(false)
 
 // ==========================================
 // Mocks
@@ -50,11 +51,22 @@ vi.mock('@/features/settings/composables/useEmailChange', () => ({
   })),
 }))
 
+vi.mock('@/features/settings/composables/useSetPassword', () => ({
+  useSetPassword: vi.fn<() => unknown>(() => ({
+    isDialogOpen: akSetPasswordDialogOpen,
+    mutation: {
+      mutate: vi.fn<(...args: unknown[]) => void>(),
+      isPending: ref(false),
+    },
+    SET_PASSWORD_ERROR_CODES: { ALREADY_HAS_PASSWORD: 'USER_015', INVALID_FORMAT: 'COMMON_003' },
+  })),
+}))
+
 vi.mock('../SetPasswordDialog.vue', () => ({
   default: {
     props: ['open'],
     emits: ['update:open', 'success'],
-    template: '<div data-testid="set-password-dialog" />',
+    template: '<div v-if="open" data-testid="set-password-dialog" />',
   },
 }))
 
@@ -92,6 +104,7 @@ function resetMocks(): void {
   isEmailStatusPendingValue = false
   isDialogOpenValue = false
   authStoreHasPassword = false
+  akSetPasswordDialogOpen.value = false
 }
 
 function setEmailStatus(
@@ -374,7 +387,21 @@ describe('AccountSection', () => {
       const setPasswordButton = wrapper.find('[data-testid="set-password-button"]')
       await setPasswordButton.trigger('click')
 
-      expect(setPasswordButton.exists()).toBe(true)
+      expect(akSetPasswordDialogOpen.value).toBe(true)
+    })
+
+    it('closes SetPasswordDialog when isDialogOpen ref is set to false', async () => {
+      akSetPasswordDialogOpen.value = true
+      const wrapper = mount(AccountSection)
+
+      const dialog = wrapper.find('[data-testid="set-password-dialog"]')
+      expect(dialog.exists()).toBe(true)
+
+      akSetPasswordDialogOpen.value = false
+      await wrapper.vm.$nextTick()
+
+      const dialogAfter = wrapper.find('[data-testid="set-password-dialog"]')
+      expect(dialogAfter.exists()).toBe(false)
     })
   })
 })
