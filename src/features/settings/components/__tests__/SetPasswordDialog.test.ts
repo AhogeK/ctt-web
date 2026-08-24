@@ -8,8 +8,11 @@ import SetPasswordDialog from '../SetPasswordDialog.vue'
 // ==========================================
 
 const mockSetPassword = vi.hoisted(() => vi.fn<(...args: unknown[]) => Promise<unknown>>())
+const mockChangePassword = vi.hoisted(() => vi.fn<(...args: unknown[]) => Promise<unknown>>())
 const mockResetForm = vi.hoisted(() => vi.fn<() => void>())
+const mockSetFieldError = vi.hoisted(() => vi.fn<(field: string, message: string) => void>())
 let isPendingValue = false
+const isChangePendingValue = false
 
 // ==========================================
 // Mocks
@@ -21,6 +24,11 @@ vi.mock('@/features/settings/composables/useSetPassword', () => ({
       mutate: mockSetPassword,
       isPending: ref(isPendingValue),
     },
+    changePasswordMutation: {
+      mutate: mockChangePassword,
+      isPending: ref(isChangePendingValue),
+    },
+    SET_PASSWORD_ERROR_CODES: { ALREADY_HAS_PASSWORD: 'USER_015', INVALID_FORMAT: 'COMMON_003' },
     isDialogOpen: ref(false),
   })),
 }))
@@ -62,6 +70,13 @@ vi.mock('@/components/ui/form', () => ({
   FormMessage: { template: '<p data-slot="form-message"><slot /></p>' },
 }))
 
+vi.mock('@/features/auth/components/PasswordStrengthMeter.vue', () => ({
+  default: {
+    props: ['password'],
+    template: '<div data-testid="password-strength-meter">PasswordStrengthMeter</div>',
+  },
+}))
+
 vi.mock('@/lib/utils', () => ({
   cn: (...inputs: unknown[]) => inputs.filter(Boolean).join(' '),
 }))
@@ -89,8 +104,10 @@ const mockHandleSubmit = vi.hoisted(() => vi.fn<(...args: unknown[]) => unknown>
 vi.mock('vee-validate', () => ({
   useForm: vi.fn<() => unknown>(() => ({
     handleSubmit: mockHandleSubmit,
+    values: ref({ newPassword: '', confirmPassword: '' }),
     errors: ref({}),
     resetForm: mockResetForm,
+    setFieldError: mockSetFieldError,
   })),
 }))
 
@@ -224,64 +241,134 @@ describe('SetPasswordDialog', () => {
       const confirmInput = wrapper.find('#confirm-password')
       expect(confirmInput.attributes('placeholder')).toBe('Re-enter your password')
     })
+
+    it('renders PasswordStrengthMeter for new password', () => {
+      const wrapper = mount(SetPasswordDialog, {
+        props: { open: true },
+      })
+
+      const meter = wrapper.find('[data-testid="password-strength-meter"]')
+      expect(meter.exists()).toBe(true)
+    })
+
+    it('toggles new password visibility with the show-password button', async () => {
+      const wrapper = mount(SetPasswordDialog, {
+        props: { open: true },
+      })
+
+      const passwordInput = wrapper.find('#new-password')
+      expect(passwordInput.attributes('type')).toBe('password')
+
+      const toggle = wrapper.find('button[aria-label="Show new password"]')
+      expect(toggle.exists()).toBe(true)
+      await toggle.trigger('click')
+
+      expect(passwordInput.attributes('type')).toBe('text')
+      await wrapper.find('button[aria-label="Hide new password"]').trigger('click')
+      expect(passwordInput.attributes('type')).toBe('password')
+    })
+
+    it('toggles current password visibility in change mode', async () => {
+      const wrapper = mount(SetPasswordDialog, {
+        props: { open: true, hasPassword: true },
+      })
+
+      const currentInput = wrapper.find('#current-password')
+      expect(currentInput.attributes('type')).toBe('password')
+
+      await wrapper.find('button[aria-label="Show current password"]').trigger('click')
+      expect(currentInput.attributes('type')).toBe('text')
+    })
   })
 
   describe('error handling', () => {
-    it('shows error message when errorMessage ref is set', async () => {
+    // form.handleSubmit is mocked; the component calls handleSubmit(callback),
+    // so invoking the captured callback runs the real submit logic.
+    const triggerSubmit = () => {
+      const submitCallback = mockHandleSubmit.mock.calls[0]![0] as (values: unknown) => void
+      submitCallback({ newPassword: 'NewPass123!', confirmPassword: 'NewPass123!', currentPassword: 'OldPass123!' })
+    }
+
+    it('maps USER_014 to the currentPassword field on change-mode submit error', async () => {
       const wrapper = mount(SetPasswordDialog, {
-        props: { open: true },
+        props: { open: true, hasPassword: true },
       })
 
-      const vm = wrapper.vm as unknown as { errorMessage: string | null }
-      vm.errorMessage = 'You already have a password set.'
+      triggerSubmit()
       await wrapper.vm.$nextTick()
 
-      expect(wrapper.text()).toContain('You already have a password set.')
+      const [, options] = mockChangePassword.mock.calls[0] as unknown as [
+        unknown,
+        { onError: (error: unknown) => void },
+      ]
+      options.onError({ data: { code: 'USER_014' } })
+
+      expect(mockSetFieldError).toHaveBeenCalledWith('currentPassword', 'Current password is incorrect.')
     })
 
-    it('hides error message when errorMessage is null', async () => {
+    it('maps PASSWORD_SAME_AS_OLD to the newPassword field on change-mode submit error', async () => {
       const wrapper = mount(SetPasswordDialog, {
-        props: { open: true },
+        props: { open: true, hasPassword: true },
       })
 
-      const vm = wrapper.vm as unknown as { errorMessage: string | null }
-      vm.errorMessage = 'Some error'
+      triggerSubmit()
       await wrapper.vm.$nextTick()
-      expect(wrapper.text()).toContain('Some error')
 
-      vm.errorMessage = null
-      await wrapper.vm.$nextTick()
-      expect(wrapper.text()).not.toContain('Some error')
+      const [, options] = mockChangePassword.mock.calls[0] as unknown as [
+        unknown,
+        { onError: (error: unknown) => void },
+      ]
+      options.onError({ data: { code: 'PASSWORD_SAME_AS_OLD' } })
+
+      expect(mockSetFieldError).toHaveBeenCalledWith(
+        'newPassword',
+        'New password cannot be the same as your current password.',
+      )
     })
 
-    it('clears error message when dialog reopens', async () => {
+    it('maps COMMON_003 to the newPassword field on set-mode submit error', async () => {
       const wrapper = mount(SetPasswordDialog, {
         props: { open: true },
       })
 
-      const vm = wrapper.vm as unknown as { errorMessage: string | null }
-      vm.errorMessage = 'You already have a password set.'
+      triggerSubmit()
       await wrapper.vm.$nextTick()
-      expect(wrapper.text()).toContain('You already have a password set.')
+
+      const [, options] = mockSetPassword.mock.calls[0] as unknown as [unknown, { onError: (error: unknown) => void }]
+      options.onError({ data: { code: 'COMMON_003' } })
+
+      expect(mockSetFieldError).toHaveBeenCalledWith(
+        'newPassword',
+        'Password does not meet requirements. Please check and try again.',
+      )
+    })
+
+    it('maps USER_015 to the newPassword field on set-mode submit error', async () => {
+      const wrapper = mount(SetPasswordDialog, {
+        props: { open: true },
+      })
+
+      triggerSubmit()
+      await wrapper.vm.$nextTick()
+
+      const [, options] = mockSetPassword.mock.calls[0] as unknown as [unknown, { onError: (error: unknown) => void }]
+      options.onError({ data: { code: 'USER_015' } })
+
+      expect(mockSetFieldError).toHaveBeenCalledWith(
+        'newPassword',
+        'You already have a password set. Please use the change password option instead.',
+      )
+    })
+
+    it('clears field errors when dialog reopens', async () => {
+      const wrapper = mount(SetPasswordDialog, {
+        props: { open: true },
+      })
 
       await wrapper.setProps({ open: false })
       await wrapper.setProps({ open: true })
 
-      expect(wrapper.text()).not.toContain('You already have a password set.')
-    })
-
-    it('error message is displayed in destructive style container', async () => {
-      const wrapper = mount(SetPasswordDialog, {
-        props: { open: true },
-      })
-
-      const vm = wrapper.vm as unknown as { errorMessage: string | null }
-      vm.errorMessage = 'Test error'
-      await wrapper.vm.$nextTick()
-
-      const errorContainer = wrapper.find('.bg-destructive\\/10')
-      expect(errorContainer.exists()).toBe(true)
-      expect(errorContainer.text()).toContain('Test error')
+      expect(mockResetForm).toHaveBeenCalled()
     })
   })
 
