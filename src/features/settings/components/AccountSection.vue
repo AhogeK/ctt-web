@@ -5,11 +5,12 @@
  * Displays user email (with verification badge), display name,
  * registration time, and email change management actions.
  */
-import { ref, computed } from 'vue'
+import { computed } from 'vue'
 import { useAuthStore } from '@/stores/auth'
 import { useEmailStatus } from '@/features/settings/composables/useEmailStatus'
 import { useEmailChange } from '@/features/settings/composables/useEmailChange'
 import { useResendVerification } from '@/features/auth/composables/useResendVerification'
+import { useSetPassword } from '@/features/settings/composables/useSetPassword'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { cn } from '@/lib/utils'
@@ -20,8 +21,8 @@ const { data: emailStatus, isPending: isEmailStatusPending } = useEmailStatus()
 const { isDialogOpen } = useEmailChange()
 const { resend, countdown, isPending: isResendPending } = useResendVerification()
 
-/** Whether the set password dialog is open */
-const isSetPasswordDialogOpen = ref(false)
+/** Shared dialog state from useSetPassword composable */
+const { isDialogOpen: isSetPasswordDialogOpen } = useSetPassword()
 
 /** Label for the password button based on detection state */
 const passwordButtonLabel = computed(() => {
@@ -169,6 +170,7 @@ function handleSetPasswordSuccess() {
 
   <SetPasswordDialog
     :open="isSetPasswordDialogOpen"
+    :has-password="authStore.hasPassword"
     @update:open="isSetPasswordDialogOpen = $event"
     @success="handleSetPasswordSuccess"
   />
