@@ -177,4 +177,61 @@ describe('user API', () => {
       expect(callArgs[1]).not.toHaveProperty('query')
     })
   })
+
+  describe('changePassword', () => {
+    it('sends POST to /api/v1/users/me/password/change with base64-encoded fields', async () => {
+      vi.mocked(apiFetch).mockResolvedValue({
+        success: true,
+        message: 'Operation successful',
+        timestamp: '2026-07-01T09:15:00Z',
+        data: null,
+      })
+
+      await userApi.changePassword({
+        currentPassword: 'OldPass123!',
+        newPassword: 'NewPass456!',
+      })
+
+      expect(apiFetch).toHaveBeenCalledWith('/api/v1/users/me/password/change', {
+        method: 'POST',
+        body: expect.objectContaining({
+          currentPassword: expect.any(String) as string,
+          newPassword: expect.any(String) as string,
+        }),
+      })
+
+      const callArgs = vi.mocked(apiFetch).mock.calls[0]!
+      const body = (callArgs[1] as { body: { currentPassword: string; newPassword: string } }).body
+      expect(body.currentPassword.length).toBeGreaterThan(0)
+      expect(body.newPassword.length).toBeGreaterThan(0)
+      // Should not be sending plaintext
+      expect(body.currentPassword).not.toBe('OldPass123!')
+      expect(body.newPassword).not.toBe('NewPass456!')
+    })
+
+    it('parses the REST API response envelope', async () => {
+      vi.mocked(apiFetch).mockResolvedValue({
+        success: true,
+        message: 'Operation successful',
+        timestamp: '2026-07-01T09:15:00Z',
+        data: null,
+      })
+
+      await expect(
+        userApi.changePassword({ currentPassword: 'OldPass123!', newPassword: 'NewPass456!' }),
+      ).resolves.toBeUndefined()
+    })
+
+    it('throws on invalid response envelope', async () => {
+      vi.mocked(apiFetch).mockResolvedValue({
+        success: false,
+        message: 'Error',
+        // missing timestamp
+      })
+
+      await expect(
+        userApi.changePassword({ currentPassword: 'OldPass123!', newPassword: 'NewPass456!' }),
+      ).rejects.toThrow(/invalid/i)
+    })
+  })
 })
