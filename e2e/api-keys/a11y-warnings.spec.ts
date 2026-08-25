@@ -2,14 +2,23 @@ import { test, expect } from '@playwright/test'
 import type { ConsoleMessage } from '@playwright/test'
 import { setupApiKeysPage, openCreateDialog, submitCreateForm, copyRawKey } from './helpers.js'
 
+/**
+ * Collects reka-ui a11y console warnings. Module-level so the test body and its
+ * closure contain no conditionals (playwright no-conditional-in-test rule).
+ * The returned array accumulates matches until it is removed via page.off.
+ */
+function collectRekaA11yWarnings(warnings: string[]): (msg: ConsoleMessage) => void {
+  return (msg: ConsoleMessage) => {
+    if (msg.type() === 'warning' && msg.text().includes('DialogContent')) {
+      warnings.push(msg.text())
+    }
+  }
+}
+
 test.describe('API key create flow a11y', () => {
   test('does not emit reka-ui a11y warnings and wires the alertdialog aria correctly', async ({ page }) => {
     const warnings: string[] = []
-    const onConsoleWarning = (msg: ConsoleMessage) => {
-      if (msg.type() === 'warning' && msg.text().includes('DialogContent')) {
-        warnings.push(msg.text())
-      }
-    }
+    const onConsoleWarning = collectRekaA11yWarnings(warnings)
     page.on('console', onConsoleWarning)
 
     await setupApiKeysPage(page, [])
