@@ -2,10 +2,20 @@
 
 ## Current Status
 
-**Phase**: v0.17.3 SetPasswordDialog show-password toggles (parity with Login/Register)
-**Version**: 0.17.3 (2026-08-24)
+**Phase**: deps update (vp update -L) + lint warnings cleanup
+**Version**: 0.17.3 (2026-08-24, unchanged — deps-only per task constraint)
 **Branch**: develop
-**Tests**: 1078/1078 unit; vue-tsc + lint 0 error (2 pre-existing e2e warnings)
+**Tests**: 1078/1078 unit; e2e a11y 1/1; vue-tsc + lint 0 error 0 warning
+
+## Recent Activity (deps update — 2026-08-24)
+
+### Dependency update (vp update -L) + lint warning cleanup
+
+- **Deps updated**: @lucide/vue 1.30.0→1.34.0, @tanstack/vue-query 5.101.4→5.102.2, pinia 4.0.2→4.0.3, reka-ui 2.10.1→2.10.3, vue-i18n 11.4.8→11.4.9, @commitlint/* 21.2.x→21.2.2, @faker-js/faker 10.5.0→10.6.0, @testing-library/jest-dom 7.0.0→7.0.1, @tsconfig/node24 24.0.4→24.0.5, @types/jsdom 28.0.3→30.0.0, @types/node 26.1.2→26.2.0, @vitest/* 4.1.10→4.1.11, eslint-plugin-oxlint ~1.77.0→~1.79.0, vite(vite-plus-core) 0.2.8→0.3.0, vite-plus 0.2.8→0.3.0, vitest 4.1.10→4.1.11, vue-tsc 3.3.9→3.3.11.
+- **TypeScript 7 attempt — REJECTED by verification**: `vp update -L` bumps TS→7.0.2. Tried it (vue-tsc@3.3.11 peer says `typescript >=5.0.0` which LOOKS compatible), but type-check FAILS with `ERR_PACKAGE_PATH_NOT_EXPORTED` (vue-tsc can't resolve TS7's tsc path — the known programmatic-API removal). Reverted to exact `6.0.3`. RULE REINFORCED: TS must stay 6.0.3 pinned; vue-tsc's `>=5.0.0` peer is misleading (does NOT actually support 7). Verified all green on 6.0.3.
+- **Lint warnings cleanup (user: no "pre-existing, don't fix" excuses)**: 2 long-standing `playwright(no-conditional-in-test)` warnings in e2e/api-keys/a11y-warnings.spec.ts fixed by extracting the console-warning collector to a module-level factory function (test body no longer contains conditionals). lint now 0 error 0 warning.
+- **Verification (all green)**: peers check clean (zod peer rule intact), type-check PASS, build PASS, unit 1078/1078, lint 0/0, a11y e2e 1/1. pnpm-workspace.yaml untouched (zod `^4.4.3` peer rule preserved).
+- Version unchanged (0.17.3) — deps + lint cleanup only, per task instruction.
 
 ## Recent Activity (v0.17.3 — 2026-08-24)
 
