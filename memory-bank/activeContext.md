@@ -2,10 +2,20 @@
 
 ## Current Status
 
-**Phase**: deps update (vp update -L) + lint warnings cleanup
-**Version**: 0.17.3 (2026-08-24, unchanged — deps-only per task constraint)
+**Phase**: SKILL_GRAPH.md sync (skills index rebuild)
+**Version**: 0.17.3 (2026-08-24, unchanged — docs-only)
 **Branch**: develop
-**Tests**: 1078/1078 unit; e2e a11y 1/1; vue-tsc + lint 0 error 0 warning
+**Tests**: 1078/1078 unit; vue-tsc + lint 0 error 0 warning
+
+## Recent Activity (SKILL_GRAPH sync — 2026-08-24)
+
+### SKILL_GRAPH.md rebuilt against actual skill sources
+
+- **Task**: compare project skills + built-in skills + ~/.agents/skills + ~/.config/opencode/skills vs SKILL_GRAPH.md; update to cover all.
+- **Measured reality**: ~/.agents/skills 371 (doc said 393), config 88, project .agents 38, project .claude 35 → 465 deduped (doc said 487). 0 skills missing from the graph after sync.
+- **Ghost refs fixed (52)**: (1) 22 superpowers skills REMOVED (plugin uninstalled — brainstorming, systematic-debugging, test-driven-development, writing-plans, using-superpowers, etc.); flow references in 流程速查/优先级/加载模式 replaced with available alternatives (idea-refine, tdd, debugging/hunt). (2) 19 gstack unprefixed names FIXED to gstack-* (careful→gstack-careful, qa→gstack-qa, spec→gstack-spec, ios-*→gstack-ios-*). (3) 6 opencode built-ins ADDED (debugging, visual-qa, review-work, remove-ai-slops, init-deep, customize-opencode — marked 内置). (4) 5 stale/typos REMOVED (iso-13485-certification, obsidian-vault, finish-a-development-branch, finishing-a-development-branch). (5) arkcli/as/cm-xxx confirmed as description text, kept.
+- Header stats updated (393→371, 487→465, date 2026-08-24, built-in note).
+- Commit as AI content — NOT cherry-picked to master (per user).
 
 ## Recent Activity (deps update — 2026-08-24)
 

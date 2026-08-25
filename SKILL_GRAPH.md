@@ -3,7 +3,7 @@
 > **用途**：AI 在会话开始时快速扫描本文件，了解所有可用技能并按需加载。
 > **维护**：当新增/删除/修改 skill 时同步更新本文件。
 > **位置**：项目根目录，与 `AGENTS.md`、`DESIGN.md` 同级。
-> **来源**：`~/.agents/skills/` (393) + `~/.config/opencode/skills/` (88) + 项目 `.agents/skills/` (38) + 项目 `.claude/skills/` (35)
+> **来源**：`~/.agents/skills/` (371) + `~/.config/opencode/skills/` (88) + 项目 `.agents/skills/` (38) + 项目 `.claude/skills/` (35)
 
 ---
 
@@ -38,31 +38,23 @@
 
 | Skill                         | 触发词                       | 说明                                                        |
 | ----------------------------- | ---------------------------- | ----------------------------------------------------------- |
-| `using-superpowers`           | 会话开始、技能发现           | **会话开始时强制加载**，建立技能使用规则                    |
 | `using-agent-skills`          | 技能发现、任务匹配           | 发现并调用 agent 技能                                       |
-| `brainstorming`               | 新功能、创建组件、修改行为   | **必须**在任何创造性工作前使用                              |
 | `think`                       | 规划、架构、设计方向、可行性 | 将粗略想法转化为结构化计划                                  |
 | `idea-refine`                 | 精炼想法、压力测试、发散收敛 | 结构化发散/收敛思维                                         |
 | `planning-and-task-breakdown` | 任务分解、工作量估算         | 将工作分解为有序任务                                        |
-| `writing-plans`               | 多步骤任务、编写代码前       | 创建结构化计划                                              |
-| `executing-plans`             | 执行计划、分步实施           | 在独立会话中执行实现计划                                    |
 | `incremental-implementation`  | 多文件变更、渐进式交付       | 逐步交付变更                                                |
-| `subagent-driven-development` | 当前会话、独立任务           | 使用并行子代理执行计划                                      |
-| `dispatching-parallel-agents` | 2+独立任务、并行化           | 并行分发多个独立任务                                        |
-| `using-git-worktrees`         | 功能隔离、独立工作区         | 确保隔离工作区存在                                          |
 | `implement`                   | PRD、问题集、实现            | 基于 PRD 或问题集实现工作                                   |
 | `prototype`                   | 原型、设计问题、验证         | 构建一次性原型回答设计问题                                  |
 | `spec-driven-development`     | 规格先行、新项目、新功能     | 创建规格后再编码                                            |
 | `handoff`                     | 交接、上下文压缩             | 将当前对话压缩为交接文档                                    |
 | `claude-handoff`              | 交接、新 agent               | 将当前对话交给新 agent                                      |
 | `context-engineering`         | 上下文设置、规则文件         | 优化 agent 上下文设置                                       |
-| `context-save`                | 保存进度、保存状态           | 捕获 git 状态和决策                                         |
-| `context-restore`             | 恢复上下文、继续工作         | 恢复之前保存的工作上下文                                    |
+| `gstack-context-save`        | 保存进度、保存状态           | 捕获 git 状态和决策（GStack 套件）                     |
+| `gstack-context-restore`     | 恢复上下文、继续工作         | 恢复之前保存的工作上下文（GStack 套件）                |
 | `loop-me`                     | 工作流规格、压力测试         | 在工作区内压力测试工作流规格                                |
 | `grilling`                    | 压力测试、设计审查           | 对计划或设计进行无情质询                                    |
 | `grill-me`                    | 压力测试、计划审查           | 对计划进行无情采访                                          |
 | `grill-with-docs`             | 压力测试、文档创建           | 压力测试同时创建 ADR 和术语表                               |
-| `wizard`                      | 交互式向导、手动流程         | 生成交互式 bash 向导引导人工操作                            |
 | `pi-agent`                    | Pi CLI、终端编码 agent       | 使用 Pi 最小终端编码 harness，配置 provider/skill/extension |
 
 ---
@@ -84,7 +76,6 @@
 | `stitch-design-taste`        | Google Stitch、语义设计      | 为 Google Stitch 生成 DESIGN.md     |
 | `redesign-existing-projects` | 升级、高质量、现有项目       | 将现有网站升级到高级质量            |
 | `emil-design-eng`            | UI 打磨、组件设计            | Emil Kowalski 的 UI 打磨哲学        |
-| `design-an-interface`        | 设计接口、并行子代理         | 为模块生成多个不同接口设计          |
 | `animation-vocabulary`       | 动画术语、运动效果命名       | 将模糊描述转为精确动画术语          |
 | `review-animations`          | 动画审查、运动代码           | 对动画代码进行高标准审查            |
 | `transitions-dev`            | CSS 过渡、通知、下拉、模态   | 生产就绪的 CSS 过渡实现             |
@@ -96,7 +87,6 @@
 | `a11y-debugging`             | 无障碍、a11y、焦点、键盘导航 | 使用 Chrome DevTools 进行无障碍调试 |
 | `brandkit`                   | 品牌套件、logo、身份         | 高端品牌套件图片生成                |
 | `diagram-design`             | 架构图、流程图、时序图       | 创建技术/产品图表（HTML + SVG）     |
-| `design-an-interface`        | 设计接口、并行子代理         | 为模块生成多个不同接口设计          |
 
 ---
 
@@ -109,8 +99,6 @@
 | `git-guardrails-claude-code`     | 阻止危险 git、安全钩子        | 设置 Claude Code 钩子阻止危险 git 命令              |
 | `resolving-merge-conflicts`      | 合并/变基冲突                 | 解决进行中的合并/变基冲突                           |
 | `create-pull-request`            | 创建 PR、提交审查             | 遵循项目约定创建 GitHub PR                          |
-| `requesting-code-review`         | 完成任务、合并前              | 验证工作符合需求                                    |
-| `receiving-code-review`          | 收到代码审查反馈              | 接收代码审查反馈前使用                              |
 | `code-review`                    | 代码审查、PR 审查             | 沿两个轴审查：标准和规格                            |
 | `check`                          | 代码审查、PR 分类、发布门控   | 审查代码差异、PR、发布就绪性                        |
 | `code-review-and-quality`        | 多维度代码审查                | 合并前评估代码质量                                  |
@@ -131,19 +119,17 @@
 | `vercel-react-native-skills`     | React Native、Expo、移动端    | React Native/Expo 最佳实践                          |
 | `vercel-react-view-transitions`  | 视图过渡、页面动画            | React 视图过渡 API 实现                             |
 | `shipping-and-launch`            | 生产部署、预发布检查          | 准备生产发布                                        |
-| `finish-a-development-branch`    | 完成开发、合并、PR            | 引导完成开发工作的集成                              |
-| `to-issues`                      | 拆分问题、issue tracker       | 将计划拆分为独立可抓取的问题                        |
-| `to-prd`                         | 转为 PRD、发布到 tracker      | 将对话转为 PRD 并发布                               |
 | `to-spec`                        | 转为规格、发布到 tracker      | 将当前对话合成为规格并发布到 issue tracker          |
 | `to-tickets`                     | 拆分票、tracer-bullet         | 将计划/规格拆分为 tracer-bullet tickets（含阻塞边） |
-| `spec`                           | 规格化、文件问题              | 将模糊意图转为精确可执行规格                        |
+| `gstack-spec`                           | 规格化、文件问题              | 将模糊意图转为精确可执行规格                        |
 | `wayfinder`                      | 大块工作、调查票              | 将大块工作规划为共享调查票地图                      |
-| `request-refactor-plan`          | 重构计划、RFC、增量步骤       | 创建详细的重构计划                                  |
-| `finishing-a-development-branch` | 完成开发、合并、PR            | 引导完成开发工作的集成                              |
 | `triage`                         | 问题分类、外部 PR             | 将问题和外部 PR 通过分类角色状态机                  |
 | `github-bug-report-triage`       | GitHub bug、问题评估          | 评估 bug 报告的可操作性                             |
 | `github-issue-dedupe`            | 重复问题、语义搜索            | 检测重复 GitHub 问题                                |
 | `scaffold-exercises`             | 练习目录、课程章节            | 创建练习目录结构                                    |
+| `remove-ai-slops` (内置)         | 清理 AI 代码、去模板化         | 移除 AI 生成代码的异味（先加回归测试再清理，内置 skill） |
+| `init-deep` (内置)               | 初始化 AGENTS.md、知识库       | 初始化分层 AGENTS.md 知识库（内置 skill）           |
+| `customize-opencode` (内置)      | 配置 opencode、agent、skill    | 编辑 opencode 自身配置（opencode.json/.opencode/，内置 skill） |
 
 ---
 
@@ -151,13 +137,10 @@
 
 | Skill                            | 触发词                                                       | 说明                                                                                                                       |
 | -------------------------------- | ------------------------------------------------------------ | -------------------------------------------------------------------------------------------------------------------------- |
-| `test-driven-development`        | 实现功能、修复 bug、红绿重构                                 | **必须**在编写实现代码前使用                                                                                               |
 | `tdd`                            | 红绿重构、集成测试                                           | 测试驱动开发                                                                                                               |
-| `systematic-debugging`           | bug、测试失败、意外行为                                      | 遇到任何 bug 前使用                                                                                                        |
 | `debugging-and-error-recovery`   | 系统化调试、根因分析                                         | 引导系统化根因调试                                                                                                         |
 | `diagnosing-bugs`                | 诊断、调试、根因分析                                         | 硬 bug 和性能回归的诊断循环                                                                                                |
 | `hunt`                           | 错误、崩溃、回归、失败测试                                   | 在应用修复前找到根因                                                                                                       |
-| `verification-before-completion` | 声称完成、修复、通过                                         | 声称工作完成前必须运行验证                                                                                                 |
 | `vitest`                         | Vitest、单元测试、覆盖率                                     | Vitest 快速单元测试框架                                                                                                    |
 | `vue-testing-best-practices`     | Vue 测试、组件测试                                           | Vue.js 测试最佳实践                                                                                                        |
 | `webapp-testing`                 | Web 应用测试、Playwright                                     | 使用 Playwright 测试本地 Web 应用                                                                                          |
@@ -166,11 +149,14 @@
 | `performance-optimization`       | 性能优化、Core Web Vitals                                    | 优化应用性能                                                                                                               |
 | `memory-leak-debugging`          | 内存泄漏、堆快照                                             | 诊断和解决内存泄漏                                                                                                         |
 | `api-contract-verification`      | API 集成、后端对接                                           | **必须**用于 ctt-web 与 ctt-server API 集成                                                                                |
-| `qa`                             | QA 测试、系统化测试、bug 发现                                | 系统化 QA 测试 Web 应用并修复 bug                                                                                          |
+| `gstack-qa`                             | QA 测试、系统化测试、bug 发现                                | 系统化 QA 测试 Web 应用并修复 bug                                                                                          |
 | `test-auth-bootstrap`            | 自动获取测试 token、认证引导、captcha 测试密钥、mailpit 验证 | 在 dev/test 环境自动注册+邮箱验证+登录拿 token（hCaptcha/reCAPTCHA 官方测试密钥 + 邮件捕获工具），E2E 联调无需人工提供凭证 |
 | `full-output-enforcement`        | 完整输出、截断、token 限制                                   | 强制完整代码生成，禁止截断                                                                                                 |
 | `migrate-to-shoehorn`            | shoehorn、类型断言、测试迁移                                 | 将测试文件从 `as` 断言迁移到 shoehorn                                                                                      |
 | `terraform-style-check`          | Terraform、HCL、基础设施                                     | 生成遵循 HashiCorp 风格的 Terraform 代码                                                                                   |
+| `debugging` (内置)               | 调试、崩溃、静默失败、逆向                                     | **必须**用于任何真实运行时调试（假设驱动循环，内置 skill）                                                                 |
+| `visual-qa` (内置)               | 视觉 QA、截图、UI 检查                                         | **必须**在构建/修改任何 UI 后使用（浏览器 + 终端 UI 视觉验证，内置 skill）                                               |
+| `review-work` (内置)             | 审查工作、验证实现、QA                                         | 实现后审查编排（并行子 agent：目标/质量/安全/QA/上下文，内置 skill）                                                       |
 
 ---
 
@@ -181,9 +167,9 @@
 | `security-research`                        | 安全审查、漏洞研究           | 编排 3 个漏洞猎人并行审计 |
 | `security-review`                          | 安全审查、漏洞审计           | security-research 的别名  |
 | `security-and-hardening`                   | 用户输入、认证、数据存储     | 加固代码抵御漏洞          |
-| `cso`                                      | 安全审计、威胁模型、OWASP    | 首席安全官模式            |
-| `careful`                                  | 安全护栏、rm -rf、DROP TABLE | 在破坏性命令前发出警告    |
-| `guard`                                    | 完整安全模式、目录范围编辑   | 破坏性命令警告 + 目录限制 |
+| `gstack-cso`                                      | 安全审计、威胁模型、OWASP    | 首席安全官模式            |
+| `gstack-careful`                                  | 安全护栏、rm -rf、DROP TABLE | 在破坏性命令前发出警告    |
+| `gstack-guard`                                    | 完整安全模式、目录范围编辑   | 破坏性命令警告 + 目录限制 |
 | `reverse-engineering`                      | 逆向工程、二进制分析         | 逆向工程和二进制分析      |
 | `software-engineering-laws-and-philosophy` | 工程定律、架构决策           | 56 条软件工程定律指导决策 |
 
@@ -194,26 +180,22 @@
 | Skill                    | 触发词                          | 说明                             |
 | ------------------------ | ------------------------------- | -------------------------------- |
 | `write`                  | 起草、重写、校对、润色          | 重写和润色中文或英文散文         |
-| `edit-article`           | 编辑、修改、改进文章            | 重组章节和改进清晰度             |
 | `writing-beats`          | 写作、素材组装                  | 将原始素材组装成节拍旅程         |
 | `writing-fragments`      | 写作、原始片段                  | 挖掘原始片段                     |
 | `writing-shape`          | 写作、段落成型                  | 将素材逐段成型为文章             |
 | `writing-guidelines`     | 审查文档、写作风格              | 检查写作指南合规性               |
-| `writing-great-skills`   | 编写技能、技能参考              | 编写和编辑技能的参考             |
-| `writing-skills`         | 创建技能、验证技能              | 创建新技能或验证现有技能         |
 | `docs-update`            | 更新文档、文档变更              | 代码变更时更新用户文档           |
 | `documentation-and-adrs` | 架构决策、API 变更              | 记录决策和文档                   |
 | `doc-coauthoring`        | 写文档、提案、技术规格          | 结构化文档共同编写工作流         |
 | `internal-comms`         | 内部通信、状态报告              | 编写各种内部通信                 |
 | `research`               | 研究主题、收集文档              | 调查问题并捕获发现               |
 | `researchwrite`          | 科学写作、提案优先              | 提案优先的科学写作流水线         |
-| `make-pdf`               | 制作 PDF、导出 PDF              | 将 Markdown 转为出版级 PDF       |
+| `gstack-make-pdf`               | 制作 PDF、导出 PDF              | 将 Markdown 转为出版级 PDF       |
 | `kami`                   | 排版、简历、白皮书、落地页、PPT | 专业文档排版（羊皮纸+墨蓝+衬线） |
-| `document-generate`      | 生成文档、教程                  | 从头生成缺失文档                 |
-| `document-release`       | 发布后文档、同步文档            | 发布后更新文档                   |
+| `gstack-document-generate`      | 生成文档、教程                  | 从头生成缺失文档                 |
+| `gstack-document-release`       | 发布后文档、同步文档            | 发布后更新文档                   |
 | `read`                   | 读取 URL、PDF、摘要             | 读取 URL 和 PDF 内容             |
 | `teach`                  | 教授技能、概念                  | 在工作区内教授新技能或概念       |
-| `ubiquitous-language`    | DDD、术语表、领域模型           | 提取 DDD 风格的通用语言术语表    |
 | `domain-modeling`        | 领域模型、术语、ADR             | 构建和锐化项目的领域模型         |
 
 ---
@@ -229,9 +211,9 @@
 | `browser-testing-with-devtools` | DOM 检查、控制台错误         | 在真实浏览器中测试                                     |
 | `chrome-devtools`               | 调试、自动化、性能分析       | 通过 MCP 使用 Chrome DevTools                          |
 | `chrome-devtools-cli`           | Shell 脚本、浏览器自动化     | 编写 Shell 脚本自动化浏览器                            |
-| `open-gstack-browser`           | 打开浏览器、启动浏览器       | 启动 AI 控制的 Chromium                                |
+| `gstack-open-gstack-browser`           | 打开浏览器、启动浏览器       | 启动 AI 控制的 Chromium                                |
 | `transient-ui-capture`          | Toast、动画、加载态          | 捕获短暂 UI 元素的技巧                                 |
-| `scrape`                        | 抓取、提取数据               | 从网页拉取数据                                         |
+| `gstack-scrape`                        | 抓取、提取数据               | 从网页拉取数据                                         |
 | `dokobot`                       | 读取网页、搜索               | 使用真实 Chrome 读取网页                               |
 | `doko-search`                   | 免费网页搜索                 | 通过 Chrome 读取搜索引擎结果                           |
 | `doko-summarize`                | 网页摘要                     | 生成网页的简洁摘要                                     |
@@ -251,18 +233,17 @@
 | -------------------------- | ---------------------------- | ----------------------------------------------------------------------- |
 | `find-skills`              | 查找技能、发现功能           | 帮助用户发现和安装 agent 技能                                           |
 | `skill-creator`            | 创建技能、编辑技能           | 创建新技能、修改和改进                                                  |
-| `skillify`                 | 固化、保存抓取               | 将成功的抓取流固化为永久技能                                            |
+| `gstack-skillify`                 | 固化、保存抓取               | 将成功的抓取流固化为永久技能                                            |
 | `opencli-usage`            | OpenCLI、发现适配器          | OpenCLI 会话开始时使用                                                  |
 | `cli-hub-meta-skill`       | CLI 工具目录、发现工具       | 发现 agent 原生 CLI                                                     |
 | `analysis-artifacts`       | SQL、Python 可视化、BigQuery | 生成可重现的分析制品                                                    |
 | `dbt-model-index`          | dbt 模型、BigQuery、数据仓库 | 提供 dbt 模型查找索引                                                   |
 | `health`                   | 代码质量、健康检查           | 代码质量仪表板                                                          |
 | `learn`                    | 项目学习、经验教训           | 管理项目学习                                                            |
-| `retro`                    | 周回顾、工程回顾             | 每周工程回顾                                                            |
+| `gstack-retro`                    | 周回顾、工程回顾             | 每周工程回顾                                                            |
 | `scheduler`                | 定时提醒、本地操作           | 安排设备端提醒和本地操作                                                |
 | `seo-aeo-audit`            | SEO、优化搜索、结构化数据    | 优化搜索引擎可见性                                                      |
 | `ask-matt`                 | 技能路由、哪个技能           | 询问哪个技能或流程适合当前情况                                          |
-| `obsidian-vault`           | Obsidian、笔记、知识库       | 在 Obsidian vault 中搜索/创建/管理笔记                                  |
 | `setup-matt-pocock-skills` | 配置仓库、工程技能           | 为工程技能配置仓库                                                      |
 | `notion-mcp`               | Notion、MCP、页面管理        | 通过 MCP 与 Notion 工作区交互（创建/搜索/更新页面、数据库、视图、评论） |
 
@@ -420,11 +401,11 @@
 
 | Skill               | 触发词                        | 说明                    |
 | ------------------- | ----------------------------- | ----------------------- |
-| `ios-qa`            | iOS QA、iPhone 测试、设备测试 | 真实设备 iOS QA         |
-| `ios-fix`           | iOS bug、修复 iPhone 应用     | 自主 iOS bug 修复器     |
-| `ios-sync`          | 同步 iOS 调试桥               | 重新生成 iOS 调试桥     |
-| `ios-clean`         | 清理 iOS 调试桥               | 移除 DebugBridge SPM 包 |
-| `ios-design-review` | iOS 设计审查、iPhone UI       | iOS 应用视觉设计审计    |
+| `gstack-ios-qa`            | iOS QA、iPhone 测试、设备测试 | 真实设备 iOS QA         |
+| `gstack-ios-fix`           | iOS bug、修复 iPhone 应用     | 自主 iOS bug 修复器     |
+| `gstack-ios-sync`          | 同步 iOS 调试桥               | 重新生成 iOS 调试桥     |
+| `gstack-ios-clean`         | 清理 iOS 调试桥               | 移除 DebugBridge SPM 包 |
+| `gstack-ios-design-review` | iOS 设计审查、iPhone UI       | iOS 应用视觉设计审计    |
 
 ---
 
@@ -665,7 +646,6 @@
 | `etetoolkit`                | 系统发育树工具包                |
 | `experimental-design`       | 实验设计（DOE）                 |
 | `gtars`                     | 基因组区间分析 Rust 工具        |
-| `iso-13485-certification`   | 医疗器械 QMS 文档               |
 | `nextflow`                  | Nextflow 数据流水线             |
 | `onekgpd`                   | 千人基因组计划查询              |
 | `pacsomatic`                | nf-core/pacsomatic 肿瘤正常匹配 |
@@ -839,28 +819,28 @@
 ### 会话开始
 
 ```
-1. using-superpowers (强制)
-2. 读取 memory-bank/
+1. 读取 memory-bank/（R1 强制）
+2. 浏览本 SKILL_GRAPH.md 了解可用技能
 3. 根据任务加载相关技能
 ```
 
 ### 新功能开发
 
 ```
-1. brainstorming → 探索意图
-2. think / planning-and-task-breakdown → 规划
-3. test-driven-development → 红绿重构
-4. verification-before-completion → 验证
+1. idea-refine / think → 探索意图与发散收敛
+2. planning-and-task-breakdown → 规划
+3. tdd → 红绿重构
+4. vp test / pnpm test:unit → 验证
 5. code-review / check → 审查
 ```
 
 ### Bug 修复
 
 ```
-1. systematic-debugging → 系统化调试
-2. hunt → 假设驱动调查
-3. test-driven-development → 测试先行
-4. verification-before-completion → 验证
+1. debugging / hunt → 系统化调试与根因调查
+2. diagnosing-bugs → 假设驱动调查
+3. tdd → 测试先行
+4. vp test / pnpm test:unit → 验证
 ```
 
 ### 前端 UI 工作
@@ -885,7 +865,7 @@
 ## 技能优先级规则
 
 1. **用户指令** > **技能** > **默认行为**
-2. **流程技能优先**：brainstorming、systematic-debugging 等先于实现技能
+2. **流程技能优先**：`tdd`、`debugging`、`hunt` 等先于实现技能
 3. **项目技能优先**：`vue-best-practices` 优先于通用 `frontend`
 4. **用户安装优先**：用户安装的技能覆盖内置默认
 5. **多技能可叠加**：可同时加载多个相关技能
@@ -902,11 +882,12 @@ task(category="quick", load_skills=["git-master"], ...)
 task(category="visual-engineering", load_skills=["frontend", "vue-best-practices", "transitions-dev"], ...)
 
 // 流程 + 实现组合
-task(category="deep", load_skills=["test-driven-development", "vue", "vitest"], ...)
+task(category="deep", load_skills=["tdd", "vue", "vitest"], ...)
 ```
 
 ---
 
-_最后更新: 2026-08-10_
-_技能总数: 487（去重后）_
-_来源: ~/.agents/skills/ (393) + ~/.config/opencode/skills/ (88) + 项目 .agents/skills/ (38) + 项目 .claude/skills/ (35)_
+_最后更新: 2026-08-24_
+_技能总数: 465（去重后，不含已移除的 superpowers 内置技能与 opencode 内置命令）_
+_来源: ~/.agents/skills/ (371) + ~/.config/opencode/skills/ (88) + 项目 .agents/skills/ (38) + 项目 .claude/skills/ (35)_
+_内置（工具提供，非目录）: playwright / frontend / git-master / debugging / security-research / security-review / customize-opencode 等_
