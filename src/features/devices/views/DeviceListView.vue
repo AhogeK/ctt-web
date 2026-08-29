@@ -178,11 +178,12 @@ function getDeviceDisplayName(device: Device): string {
     </div>
 
     <!-- Device List -->
-    <div v-else class="flex flex-col gap-3">
+    <div v-else class="flex flex-col gap-3" data-testid="device-list">
       <div
         v-for="device in devices"
         :key="device.id"
         class="flex flex-col gap-4 rounded-lg border p-4 transition-colors hover:bg-muted/50 sm:flex-row sm:items-center"
+        data-testid="device-card"
       >
         <!-- Device Icon -->
         <div class="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-muted">
