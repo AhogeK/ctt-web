@@ -105,6 +105,14 @@ function isDeviceActive(device: Device): boolean {
   return lastSeen > sevenDaysAgo
 }
 
+/**
+ * Whether the device was revoked (backend `revokedAt` non-null, v0.50.0).
+ * Revoked devices render a destructive label and lose the Revoke action.
+ */
+function isDeviceRevoked(device: Device): boolean {
+  return device.revokedAt !== null && device.revokedAt !== undefined
+}
+
 function getPlatformIcon(platform: string | null) {
   const p = platform?.toLowerCase() ?? ''
   if (p.includes('windows')) return Monitor
@@ -194,8 +202,11 @@ function getDeviceDisplayName(device: Device): string {
         <div class="flex flex-1 flex-col gap-1">
           <div class="flex items-center gap-2">
             <span class="font-medium">{{ getDeviceDisplayName(device) }}</span>
-            <Badge :variant="isDeviceActive(device) ? 'default' : 'outline'" class="text-xs">
-              {{ isDeviceActive(device) ? 'Active' : 'Inactive' }}
+            <Badge
+              :variant="isDeviceRevoked(device) ? 'destructive' : isDeviceActive(device) ? 'default' : 'outline'"
+              class="text-xs"
+            >
+              {{ isDeviceRevoked(device) ? 'Revoked' : isDeviceActive(device) ? 'Active' : 'Inactive' }}
             </Badge>
           </div>
           <div class="flex flex-wrap gap-x-4 gap-y-1 text-sm text-muted-foreground">
@@ -209,6 +220,7 @@ function getDeviceDisplayName(device: Device): string {
 
         <!-- Actions -->
         <Button
+          v-if="!isDeviceRevoked(device)"
           variant="outline"
           size="sm"
           class="text-destructive hover:bg-destructive/10 hover:text-destructive"

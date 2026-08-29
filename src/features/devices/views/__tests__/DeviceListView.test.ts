@@ -92,6 +92,15 @@ const macDevice: Device = {
   appVersion: '1.2.0',
   createdAt: '2026-08-28T10:00:00Z',
   lastSeenAt: new Date(Date.now() - 2 * 3600000).toISOString(),
+  revokedAt: null,
+}
+
+const revokedDevice: Device = {
+  ...macDevice,
+  id: '9a8b7c6d-5e4f-4a3b-9c8d-7e6f5a4b3c2d',
+  deviceName: 'Revoked Laptop',
+  platform: 'Linux',
+  revokedAt: '2026-08-29T17:00:00Z',
 }
 
 const inactiveDevice: Device = {
@@ -150,6 +159,15 @@ describe('DeviceListView states', () => {
     queryData.value = [{ ...macDevice, deviceName: null }]
     const wrapper = mount(DeviceListView)
     expect(wrapper.text()).toContain('IntelliJ IDEA 2026.1')
+  })
+
+  it('renders revoked devices with a Revoked badge and no Revoke button', () => {
+    queryData.value = [revokedDevice]
+    const wrapper = mount(DeviceListView)
+
+    expect(wrapper.text()).toContain('Revoked Laptop')
+    expect(wrapper.text()).toContain('Revoked')
+    expect(wrapper.find('button[aria-label="Revoke Revoked Laptop"]').exists()).toBe(false)
   })
 })
 

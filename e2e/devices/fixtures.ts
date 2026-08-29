@@ -13,6 +13,7 @@ export interface DeviceFixture {
   appVersion: string | null
   createdAt: string
   lastSeenAt: string
+  revokedAt: string | null
 }
 
 export const MAC_DEVICE_ID = '550e8400-e29b-41d4-a716-446655440000'
@@ -29,6 +30,7 @@ export const TEST_MAC_DEVICE: DeviceFixture = {
   appVersion: '1.2.0',
   createdAt: '2026-08-28T10:00:00Z',
   lastSeenAt: nowIso(),
+  revokedAt: null,
 }
 
 /** Device whose last activity is 30 days old — renders Inactive and "1mo ago". */
@@ -41,6 +43,7 @@ export const TEST_WINDOWS_DEVICE: DeviceFixture = {
   appVersion: null,
   createdAt: '2026-06-01T10:00:00Z',
   lastSeenAt: new Date(Date.now() - 30 * 86400000).toISOString(),
+  revokedAt: null,
 }
 
 /** Device with no deviceName — the view falls back to the IDE name. */
@@ -53,6 +56,7 @@ export const TEST_LINUX_DEVICE: DeviceFixture = {
   appVersion: '1.1.0',
   createdAt: '2026-07-15T10:00:00Z',
   lastSeenAt: nowIso(),
+  revokedAt: null,
 }
 
 export const TEST_DEVICES: DeviceFixture[] = [TEST_MAC_DEVICE, TEST_WINDOWS_DEVICE, TEST_LINUX_DEVICE]

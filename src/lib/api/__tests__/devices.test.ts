@@ -21,6 +21,7 @@ const devicePayload = {
   appVersion: '1.2.0',
   createdAt: '2026-08-29T16:13:47.695149Z',
   lastSeenAt: '2026-08-29T16:13:47.693590Z',
+  revokedAt: null,
 }
 
 /** RestApiResponse envelope as returned by the backend list endpoint. */
@@ -62,6 +63,7 @@ describe('devices API', () => {
         ideName: _ideName,
         ideVersion: _ideVersion,
         appVersion: _appVersion,
+        revokedAt: _revokedAt,
         ...core
       } = devicePayload
       mockApiFetch.mockResolvedValue({ ...listEnvelope, data: [{ ...core }] })
@@ -74,6 +76,7 @@ describe('devices API', () => {
       expect(result!.ideName).toBeNull()
       expect(result!.ideVersion).toBeNull()
       expect(result!.appVersion).toBeNull()
+      expect(result!.revokedAt).toBeNull()
     })
 
     it('propagates the API error from ofetch without catching', async () => {
