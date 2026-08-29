@@ -2,10 +2,22 @@
 
 ## Current Status
 
-**Phase**: SKILL_GRAPH.md sync (skills index rebuild)
-**Version**: 0.17.3 (2026-08-24, unchanged — docs-only)
+**Phase**: Device Management N: error-code mapping + edge polish
+**Version**: 0.18.0 (2026-08-29)
 **Branch**: develop
-**Tests**: 1078/1078 unit; vue-tsc + lint 0 error 0 warning
+**Tests**: 1102/1102 unit; vue-tsc + lint 0 error 0 warning
+
+## Recent Activity (v0.18.0 — 2026-08-29)
+
+### Device Management N: error-code mapping + edge polish
+
+- **Error-code mapping** (`src/lib/utils/api-error.ts`): COMMON_002 remapped from rate-limit text to "The requested resource was not found or you do not have access to it." — stale legacy mapping (backend 429 really returns RATE_LIMIT_001, verified live; COMMON_002 = 404 Resource not found per ErrorCode.java, surfaces on device 404). Added DEVICE_001 ("Device already registered to another user.").
+- **Shared time utils** (`src/lib/utils/time.ts` + barrel export): `formatRelativeTime` / `formatDateTime` extracted from ApiKeysView inlines; DeviceListView + ApiKeysView now use them (no dayjs, R12).
+- **DeviceListView polish**: first-load Skeleton ≥300ms anti-flicker (ApiKeysView pattern), Revoke button per-row aria-label, relative-time `title` shows absolute datetime, empty state gains "Install the JetBrains plugin" link to the plugin repo, unified relative time (30d/12mo granularity replaces the old 7-day cutoff).
+- **ApiKeysView**: inline format helpers deleted (now import the shared util); `(name)` params in success-description explicitly typed `(name: string)` — vue-tsc loses contextual typing for these template arrow params once the helpers move to an import (TS7006 without the annotation).
+- **Gotchas**: (1) edit-tool hygiene — bare non-`＋` lines in an edit payload can DELETE the matched anchor lines; api-error.ts + index.ts lost exports twice this session, caught by type-check. (2) DeviceListView RevokeDialog keeps default reka-ui focus (first tabbable = Cancel), no open-auto-focus needed — unlike AlertDialog.
+- **Tests**: +time.test.ts (12), +DeviceListView.test.ts (11), +3 api-error mapping cases → 1102/1102 (64 files). Browser-verified: empty state + install link, device card (name/platform/relative time/Active), Revoke aria-label, dialog open, hover title; screenshot ~/Pictures/screenshots/v0.18.0-device-list.png.
+- Version 0.17.3 → 0.18.0.
 
 ## Recent Activity (SKILL_GRAPH sync — 2026-08-24)
 

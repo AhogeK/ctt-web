@@ -34,6 +34,12 @@ export const fetchStats = (params: StatsParams) =>
 - ErrorBoundary: `onErrorCaptured` → fallback UI + retry, dev-only details, no white-screen
 - Query views: `<ErrorState v-if="isError"> <LoadingState v-else-if="isPending"> <template v-else>`; first-load skeleton ≥300ms anti-flicker (ApiKeysView precedent)
 
+## Time Formatting (v0.18.0)
+
+- Shared utils in `src/lib/utils/time.ts` (barrel-exported): `formatRelativeTime` (null → "Never", past/future, 30d/12mo granularity, locale-date fallback) + `formatDateTime` (locale absolute). DeviceListView + ApiKeysView import these — do NOT inline per-view formatters.
+- No dayjs (R12); the hand-rolled formatter covers all cases.
+- vue-tsc gotcha (v0.18.0): template inline arrow functions bound to a function-typed prop (e.g. `:success-description="(name) => ..."`) lose contextual typing when the component imports a helper that moves out of the SFC — annotate the param explicitly `(name: string)` to silence TS7006.
+
 ## Router Architecture
 
 ```
