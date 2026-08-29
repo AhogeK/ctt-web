@@ -43,9 +43,18 @@ describe('api-error', () => {
       expect(message).toBe('UNKNOWN_CODE')
     })
 
-    it('maps auth error codes correctly', () => {
-      expect(mapApiErrorCode('AUTH_001')).toBe('Invalid email or password. Please check your credentials.')
-      expect(mapApiErrorCode('AUTH_006')).toBe('Please verify your email before signing in.')
+    it('maps DEVICE_001 to a friendly message', () => {
+      expect(mapApiErrorCode('DEVICE_001')).toBe('Device already registered to another user.')
+    })
+
+    it('maps COMMON_002 as a not-found resource message (404)', () => {
+      expect(mapApiErrorCode('COMMON_002')).toBe(
+        'The requested resource was not found or you do not have access to it.',
+      )
+    })
+
+    it('keeps RATE_LIMIT_001 as the rate-limit message', () => {
+      expect(mapApiErrorCode('RATE_LIMIT_001')).toBe('Too many requests. Please wait a moment before trying again.')
     })
   })
 

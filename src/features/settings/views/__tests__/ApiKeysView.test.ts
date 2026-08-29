@@ -3,6 +3,7 @@ import { mount } from '@vue/test-utils'
 import { ref, defineComponent, type Ref } from 'vue'
 import ApiKeysView from '../ApiKeysView.vue'
 import type { ApiKey } from '@/lib/schemas/api-key.schema'
+import type * as Utils from '@/lib/utils'
 
 // ==========================================
 // Hoisted Mock Variables
@@ -76,9 +77,13 @@ vi.mock('vue-sonner', () => ({
   toast: { success: vi.fn<() => void>(), error: vi.fn<() => void>() },
 }))
 
-vi.mock('@/lib/utils', () => ({
-  cn: (...inputs: unknown[]) => inputs.filter(Boolean).join(' '),
-}))
+vi.mock('@/lib/utils', async () => {
+  const actual = await vi.importActual<typeof Utils>('@/lib/utils')
+  return {
+    ...actual,
+    cn: (...inputs: unknown[]) => inputs.filter(Boolean).join(' '),
+  }
+})
 
 vi.mock('@/features/settings/components/CreateApiKeyDialog.vue', () => ({
   default: {
