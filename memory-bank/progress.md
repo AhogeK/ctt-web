@@ -24,6 +24,8 @@
 
 ## Completed (Recent)
 
+- [x] **v0.18.2 (2026-08-30)** Device Management O (E2E coverage) — e2e/devices suite (fixtures/helpers + list/revoke/errors specs, 9/9 chromium); DeviceListView data-testid=device-list/device-card added for stable locators. Gotchas: CI=true forces preview mode (4173) — run E2E via `env -u CI` to reuse dev server; page.reload() after setup bounces to login with mock tokens — seed failing routes before first navigation instead. 1126/1126 unit + 9/9 E2E, type-check/build/lint green. 0.18.1 → 0.18.2 (PATCH).
+
 - [x] **v0.18.1 (2026-08-30)** Device Management O (unit + component coverage) — new devices.test.ts (7) + device.schema.test.ts (10) + useDevices.test.ts (6); consistency fix: useRevokeDevice return shape unified to `{ mutation }` (was raw useMutation, diverged from useRevokeApiKey) with DeviceListView.vue + its test updated; DeviceListView.test.ts component suite (11, from v0.18.0) adapted. 1126/1126 (67 files), type-check/build/lint green. 0.18.0 → 0.18.1 (PATCH). E2E pending next.
 
 - [x] **v0.18.0 (2026-08-29)** Device Management N: error-code mapping + edge polish — COMMON_002 remapped to not-found semantics (real 429 is RATE_LIMIT_001, verified); DEVICE_001 added; shared time utils extracted to src/lib/utils/time.ts (formatRelativeTime/formatDateTime) used by DeviceListView + ApiKeysView; DeviceListView first-load Skeleton ≥300ms anti-flicker, per-row Revoke aria-label, absolute-time hover title, empty-state "Install the JetBrains plugin" link; ApiKeysView inline formatters removed + explicit (name: string) typing for dialog success-description arrows (vue-tsc TS7006 after helper extraction). Tests… 1102/1102 (64 files, +26), type-check/build/lint green, browser-verified. 0.17.3 → 0.18.0 (develop).

@@ -2,10 +2,20 @@
 
 ## Current Status
 
-**Phase**: Device Management O: test coverage (unit + component done; E2E in progress)
-**Version**: 0.18.1 (2026-08-30)
+**Phase**: Device Management O: test coverage complete (unit + component + E2E)
+**Version**: 0.18.2 (2026-08-30)
 **Branch**: develop
-**Tests**: 1126/1126 unit; vue-tsc + lint 0 error 0 warning
+**Tests**: 1126/1126 unit + 9/9 devices E2E; vue-tsc + lint 0 error 0 warning
+
+## Recent Activity (v0.18.2 — 2026-08-30)
+
+### Device Management O: E2E test coverage
+
+- **New E2E suite** `e2e/devices/`: fixtures.ts (DeviceFixture + TEST_DEVICES + error bodies), helpers.ts (setupDevicesPage: mockAuthApis + mutable devices route + loginViaForm + goto), list.spec.ts (empty state + install link, 3-card render with relative time/Active-Inactive, Revoke aria-labels), revoke.spec.ts (confirm → toast + list refresh; cancel), errors.spec.ts (list 404/network → ErrorState + Retry; revoke 404/409 → toast, dialog stays open). 9/9 chromium pass.
+- **DeviceListView.vue**: added `data-testid="device-list"` / `data-testid="device-card"` (aligns with ApiKeysView api-key-* testids for stable E2E locators).
+- **Gotchas**: (1) `CI=true` in this environment makes Playwright use the preview server (port 4173) — a stale preview process blocked startup; run E2E with `env -u CI ... playwright test` to reuse the running dev server (5173). (2) `page.reload()` after setup made the devices page bounce to login (mock-token auth re-init race) — project pattern for list-error tests is to seed the failing route BEFORE the first navigation (mockAuthApis + failing /api/v1/devices route + loginViaForm + goto), no reload needed.
+- Tests: unit 1126/1126 (67 files) + devices E2E 9/9. type-check / build / lint clean.
+- Version 0.18.1 → 0.18.2 (test coverage → PATCH).
 
 ## Recent Activity (v0.18.1 — 2026-08-30)
 
