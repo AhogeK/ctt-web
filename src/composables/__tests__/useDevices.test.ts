@@ -104,6 +104,7 @@ const macDevice = {
   appVersion: '1.2.0',
   createdAt: '2026-08-29T16:13:47.695149Z',
   lastSeenAt: '2026-08-29T16:13:47.693590Z',
+  revokedAt: null,
 }
 
 describe('useDevices', () => {

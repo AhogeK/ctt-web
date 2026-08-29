@@ -1,5 +1,5 @@
 import { expect, type Page } from '@playwright/test'
-import { mockAuthApis, loginViaForm, okEnvelope } from '../utils/auth-helpers.js'
+import { mockAuthApis, loginViaForm, okEnvelope, nowIso } from '../utils/auth-helpers.js'
 import type { DeviceFixture } from './fixtures.js'
 
 export interface DevicesPageSetup {
@@ -15,9 +15,10 @@ export interface DevicesPageSetup {
  *
  * The GET /api/v1/devices handler reads the mutable `devices` array by
  * closure, so tests can mutate it and the next refetch (triggered by query
- * invalidation after revoke) returns the updated list. DELETE removes the
- * target device from the list — the revoke flow's refetch then shows the
- * remaining devices.
+ * invalidation after revoke) returns the updated list. DELETE mirrors the
+ * backend contract (v0.50.0): revoking KEEPS the record and sets `revokedAt`
+ * on it — the refetch then renders the device as Revoked instead of removing
+ * it.
  *
  * Error tests override the GET / DELETE handlers after this helper returns
  * (last registered handler wins in Playwright).
@@ -40,7 +41,7 @@ export async function setupDevicesPage(page: Page, initialDevices: DeviceFixture
   await page.route('**/api/v1/devices/*', async (route) => {
     if (route.request().method() === 'DELETE') {
       const id = new URL(route.request().url()).pathname.split('/').pop() ?? ''
-      devices = devices.filter((d) => d.id !== id)
+      devices = devices.map((d) => (d.id === id ? { ...d, revokedAt: nowIso() } : d))
       await route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify(okEnvelope(null)) })
     } else {
       await route.continue()

@@ -16,6 +16,7 @@ import { z } from 'zod'
  * - appVersion: Application or plugin version
  * - createdAt: Device registration timestamp (ISO 8601)
  * - lastSeenAt: Last activity timestamp (ISO 8601)
+ * - revokedAt: Revocation timestamp (Instant | null, backend v0.50.0)
  */
 export const DeviceSchema = z.object({
   // Device unique identifier in UUID format
@@ -36,6 +37,9 @@ export const DeviceSchema = z.object({
   createdAt: z.string(),
   // Last activity timestamp in ISO 8601 format
   lastSeenAt: z.string(),
+  // Revocation timestamp; non-null means the device was revoked (sessions
+  // terminated). Backend v0.50.0; Jackson non_null omits null → default null.
+  revokedAt: z.string().nullable().default(null),
 })
 
 /**

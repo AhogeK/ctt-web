@@ -11,6 +11,7 @@ const fullDevice = {
   appVersion: '1.2.0',
   createdAt: '2026-08-29T16:13:47.695149Z',
   lastSeenAt: '2026-08-29T16:13:47.693590Z',
+  revokedAt: null,
 }
 
 describe('DeviceSchema', () => {
@@ -34,6 +35,7 @@ describe('DeviceSchema', () => {
       ideName: _ideName,
       ideVersion: _ideVersion,
       appVersion: _appVersion,
+      revokedAt: _revokedAt,
       ...core
     } = fullDevice
     const result = DeviceSchema.parse(core)
@@ -43,6 +45,12 @@ describe('DeviceSchema', () => {
     expect(result.ideName).toBeNull()
     expect(result.ideVersion).toBeNull()
     expect(result.appVersion).toBeNull()
+    expect(result.revokedAt).toBeNull()
+  })
+
+  it('accepts a non-null revokedAt (device was revoked)', () => {
+    const result = DeviceSchema.parse({ ...fullDevice, revokedAt: '2026-08-29T17:00:00Z' })
+    expect(result.revokedAt).toBe('2026-08-29T17:00:00Z')
   })
 
   it('rejects a non-UUID id', () => {
