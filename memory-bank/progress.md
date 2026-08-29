@@ -24,6 +24,8 @@
 
 ## Completed (Recent)
 
+- [x] **v0.18.3 (2026-08-30)** Device revoked state (user-reported bug: revoke left the list unchanged) — backend v0.50.0 adds `revokedAt` to DeviceResponse (set on revoke, cleared on re-registration); frontend DeviceSchema + revokedAt, DeviceListView renders destructive "Revoked" badge + hides Revoke button. Tests updated across schema/API/component/E2E (helper DELETE now SETS revokedAt, revoke.spec asserts Revoked). Real-backend verified: null → timestamp on revoke, card flips to Revoked, button gone, record kept. 1128/1128 unit + 9/9 E2E, type-check/build/lint green. 0.18.2 → 0.18.3 (PATCH).
+
 - [x] **v0.18.2 (2026-08-30)** Device Management O (E2E coverage) — e2e/devices suite (fixtures/helpers + list/revoke/errors specs, 9/9 chromium); DeviceListView data-testid=device-list/device-card added for stable locators. Gotchas: CI=true forces preview mode (4173) — run E2E via `env -u CI` to reuse dev server; page.reload() after setup bounces to login with mock tokens — seed failing routes before first navigation instead. 1126/1126 unit + 9/9 E2E, type-check/build/lint green. 0.18.1 → 0.18.2 (PATCH).
 
 - [x] **v0.18.1 (2026-08-30)** Device Management O (unit + component coverage) — new devices.test.ts (7) + device.schema.test.ts (10) + useDevices.test.ts (6); consistency fix: useRevokeDevice return shape unified to `{ mutation }` (was raw useMutation, diverged from useRevokeApiKey) with DeviceListView.vue + its test updated; DeviceListView.test.ts component suite (11, from v0.18.0) adapted. 1126/1126 (67 files), type-check/build/lint green. 0.18.0 → 0.18.1 (PATCH). E2E pending next.

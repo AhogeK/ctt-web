@@ -2,10 +2,24 @@
 
 ## Current Status
 
-**Phase**: Device Management O: test coverage complete (unit + component + E2E)
-**Version**: 0.18.2 (2026-08-30)
+**Phase**: Device Management: revoked state integration (backend v0.50.0 revokedAt)
+**Version**: 0.18.3 (2026-08-30)
 **Branch**: develop
-**Tests**: 1126/1126 unit + 9/9 devices E2E; vue-tsc + lint 0 error 0 warning
+**Tests**: 1128/1128 unit + 9/9 devices E2E; vue-tsc + lint 0 error 0 warning
+
+## Recent Activity (v0.18.3 — 2026-08-30)
+
+### Device revoked state (backend ctt-server v0.50.0 `revokedAt`)
+
+- **Bug (user report)**: after confirming a device revoke, the list showed no change — the device stayed Active with the Revoke button visible, so the user could not tell the revoke took effect. Root cause: backend revoke kept the record and exposed NO status field (this was the original requirement report to ctt-server).
+- **Backend (by user)**: v0.50.0 adds `revokedAt` (Instant | null) to DeviceResponse — set on revoke (refresh-token revoke point), cleared on device re-registration; pure additive, Jackson non_null omits null.
+- **Frontend (this round)**:
+  - `DeviceSchema` + `revokedAt: z.string().nullable().default(null)` (JSDoc updated).
+  - `DeviceListView`: `isDeviceRevoked(device)` → destructive "Revoked" badge; Revoke button hidden (`v-if="!isDeviceRevoked(device)"`); Active/Inactive logic unchanged for non-revoked devices.
+  - Tests: device.schema.test.ts (+1 revokedAt case, defaults-omitted now excludes revokedAt), devices.test.ts payload/deconstruct +revokedAt, DeviceListView.test.ts (+revokedDevice fixture + "Revoked badge, no Revoke button" case), E2E fixtures `revokedAt: string | null` + helper DELETE now SETS revokedAt (was: removed from list — corrected to backend contract) + revoke.spec asserts Revoked badge/button-gone/card-count-unchanged.
+- **Real-backend verification (v0.50.0)**: register → `revokedAt: null`; revoke (DELETE 200) → `revokedAt: 2026-08-29T18:46:20Z`; browser: card flips to "Revoked" badge + Revoke button gone + record kept + toast. Screenshot ~/Pictures/screenshots/v0.18.3-device-revoked-state.png.
+- Tests: 1128/1128 (67 files) + 9/9 devices E2E. type-check / build / lint clean.
+- Version 0.18.2 → 0.18.3 (bug fix → PATCH).
 
 ## Recent Activity (v0.18.2 — 2026-08-30)
 
