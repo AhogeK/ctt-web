@@ -2,10 +2,20 @@
 
 ## Current Status
 
-**Phase**: Device Management N: error-code mapping + edge polish
-**Version**: 0.18.0 (2026-08-29)
+**Phase**: Device Management O: test coverage (unit + component done; E2E in progress)
+**Version**: 0.18.1 (2026-08-30)
 **Branch**: develop
-**Tests**: 1102/1102 unit; vue-tsc + lint 0 error 0 warning
+**Tests**: 1126/1126 unit; vue-tsc + lint 0 error 0 warning
+
+## Recent Activity (v0.18.1 — 2026-08-30)
+
+### Device Management O: unit + component test coverage
+
+- **New unit tests**: `src/lib/api/__tests__/devices.test.ts` (list GET + envelope parse + non_null null-default + error propagation; revoke DELETE + void + error propagation, 7 cases), `src/lib/schemas/__tests__/device.schema.test.ts` (full/null/missing-field/empty-array/non-array + safeParse rejection, 10 cases), `src/composables/__tests__/useDevices.test.ts` (query key/staleTime/listDevices delegate; revoke mutation payload/invalidate/success toast/error toast-no-invalidate, 6 cases).
+- **Consistency fix (found while testing)**: `useRevokeDevice` returned the raw `useMutation(...)` while `useRevokeApiKey` returns `{ mutation }` — unified to `{ mutation }` (JSDoc updated, DeviceListView.vue destructures `{ mutation: revokeMutation }`, DeviceListView.test.ts mock wraps `mutation`).
+- **Component test** (`DeviceListView.test.ts`, 11 cases) already landed in v0.18.0; mock updated for the new return shape.
+- **Tests**: +23 → 1126/1126 (67 files). type-check / build / lint clean.
+- Version 0.18.0 → 0.18.1 (test coverage → PATCH).
 
 ## Recent Activity (v0.18.0 — 2026-08-29)
 

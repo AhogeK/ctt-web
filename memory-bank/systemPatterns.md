@@ -34,6 +34,10 @@ export const fetchStats = (params: StatsParams) =>
 - ErrorBoundary: `onErrorCaptured` → fallback UI + retry, dev-only details, no white-screen
 - Query views: `<ErrorState v-if="isError"> <LoadingState v-else-if="isPending"> <template v-else>`; first-load skeleton ≥300ms anti-flicker (ApiKeysView precedent)
 
+## Composable Mutation Return Shape (v0.18.1)
+
+- Mutation composables return `{ mutation }` (e.g. `useRevokeApiKey`, `useRevokeDevice`) — call `mutation.mutate(...)`. Do NOT return the raw `useMutation(...)`; the wrapped shape is the project convention (v0.18.1 unified useRevokeDevice after drift was caught by a new test).
+
 ## Time Formatting (v0.18.0)
 
 - Shared utils in `src/lib/utils/time.ts` (barrel-exported): `formatRelativeTime` (null → "Never", past/future, 30d/12mo granularity, locale-date fallback) + `formatDateTime` (locale absolute). DeviceListView + ApiKeysView import these — do NOT inline per-view formatters.
