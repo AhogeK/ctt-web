@@ -26,7 +26,7 @@ import { formatRelativeTime, formatDateTime } from '@/lib/utils'
 import type { Device } from '@/lib/schemas/device.schema'
 
 const { data: devices, isPending, isError, error, refetch } = useDevices()
-const revokeMutation = useRevokeDevice()
+const { mutation: revokeMutation } = useRevokeDevice()
 
 const deviceToRevoke = ref<Device | null>(null)
 const isDialogOpen = ref(false)

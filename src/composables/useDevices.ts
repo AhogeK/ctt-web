@@ -22,13 +22,14 @@ export function useDevices() {
 /**
  * Composable for revoking a device.
  *
- * Returns a mutation that invalidates the devices query on success
- * and shows a toast notification.
+ * Returns `{ mutation }` — call `mutation.mutate({ deviceId })`. On success
+ * invalidates the devices query and shows a toast; on error shows a toast.
+ * (Return shape mirrors useRevokeApiKey for consistency.)
  */
 export function useRevokeDevice() {
   const queryClient = useQueryClient()
 
-  return useMutation({
+  const mutation = useMutation({
     mutationFn: ({ deviceId }: { deviceId: string }) => revokeDevice(deviceId),
     onSuccess: () => {
       void queryClient.invalidateQueries({ queryKey: DEVICES_QUERY_KEY })
@@ -38,4 +39,6 @@ export function useRevokeDevice() {
       toast.error(getErrorMessage(error))
     },
   })
+
+  return { mutation }
 }

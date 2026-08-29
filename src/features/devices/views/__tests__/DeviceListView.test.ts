@@ -30,10 +30,12 @@ vi.mock('@/composables/useDevices', () => ({
     refetch: mockRefetch,
   })),
   useRevokeDevice: vi.fn<() => unknown>(() => ({
-    mutate: mockMutate,
-    isPending: pendingState,
-    isError: ref(false),
-    error: ref(null),
+    mutation: {
+      mutate: mockMutate,
+      isPending: pendingState,
+      isError: ref(false),
+      error: ref(null),
+    },
   })),
 }))
 
