@@ -117,12 +117,17 @@ export function mapApiErrorCode(code: string): string {
     USER_014: 'Incorrect password. Please try again.',
     USER_015: 'You already have a password set. Please use the change password option instead.',
 
-    // Password reset errors
-    PASSWORD_SAME_AS_OLD: 'New password cannot be the same as your current password.',
-
-    // Common errors
-    COMMON_002: 'Too many requests. Please wait a moment before trying again.',
+    // COMMON_002 = 404 Resource not found (ctt-server ErrorCode.java official
+    // definition). Formerly mapped to a rate-limit message — that was a stale
+    // legacy mapping: the real 429 path returns RATE_LIMIT_001 (verified
+    // against live backend), and COMMON_002 surfaces on 404s such as a device
+    // that does not exist or is not owned by the user. BOLA-style wording so
+    // the message does not reveal whether a resource exists.
+    COMMON_002: 'The requested resource was not found or you do not have access to it.',
     COMMON_003: 'Invalid input. Please check your entries and try again.',
+
+    // Device errors (DEVICE_XXX from ctt-server)
+    DEVICE_001: 'Device already registered to another user.',
 
     // Rate limiting
     RATE_LIMIT_001: 'Too many requests. Please wait a moment before trying again.',

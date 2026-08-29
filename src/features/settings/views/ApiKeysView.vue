@@ -23,6 +23,7 @@ import type { ApiKey, ApiKeyScope, ApiKeyStatus, CreateApiKeyResponse } from '@/
 import CreateApiKeyDialog from '@/features/settings/components/CreateApiKeyDialog.vue'
 import RawKeyDialog from '@/features/settings/components/RawKeyDialog.vue'
 import ConfirmApiKeyActionDialog from '@/features/settings/components/ConfirmApiKeyActionDialog.vue'
+import { formatRelativeTime, formatDateTime } from '@/lib/utils'
 
 const { data: keys, isPending, isError, error, refetch } = useApiKeys()
 const { mutation: revokeMutation } = useRevokeApiKey()
@@ -145,47 +146,6 @@ function handleDeleteDialogClose(value: boolean) {
   if (!value) {
     selectedKeyForDelete.value = null
   }
-}
-
-/**
- * Render a timestamp as a relative time string.
- * Handles both past (lastUsedAt) and future (expiresAt) dates.
- * Matches the formatLastSeen pattern in DeviceListView for past dates.
- */
-function formatRelativeTime(dateStr: string | null): string {
-  if (!dateStr) return 'Never'
-
-  const date = new Date(dateStr)
-  const now = new Date()
-  const diffMs = date.getTime() - now.getTime()
-  const diffMins = Math.floor(Math.abs(diffMs) / 60000)
-  const diffHours = Math.floor(Math.abs(diffMs) / 3600000)
-  const diffDays = Math.floor(Math.abs(diffMs) / 86400000)
-
-  if (diffMs < 0) {
-    // Past date — relative past
-    if (diffMins < 1) return 'Just now'
-    if (diffMins < 60) return `${diffMins}m ago`
-    if (diffHours < 24) return `${diffHours}h ago`
-    if (diffDays < 30) return `${diffDays}d ago`
-    if (diffDays < 365) return `${Math.floor(diffDays / 30)}mo ago`
-    return date.toLocaleDateString()
-  }
-
-  // Future date — relative future
-  if (diffDays === 0) return 'Today'
-  if (diffDays < 30) return `in ${diffDays}d`
-  if (diffDays < 365) return `in ${Math.floor(diffDays / 30)}mo`
-  return date.toLocaleDateString()
-}
-
-/**
- * Render a date string as a human-readable absolute datetime.
- * Used as the column/card tooltips (Last Used, Created, Expires) so hovering
- * shows a readable timestamp instead of the raw ISO string.
- */
-function formatDateTime(dateStr: string): string {
-  return new Date(dateStr).toLocaleString()
 }
 
 /**
@@ -480,7 +440,7 @@ function statusClass(status: ApiKeyStatus): string {
       confirm-label="Revoke"
       pending-label="Revoking..."
       success-title="API Key revoked"
-      :success-description="(name) => `${name} can no longer be used to authenticate.`"
+      :success-description="(name: string) => `${name} can no longer be used to authenticate.`"
       error-title="Failed to revoke API key"
       @update:open="handleRevokeDialogClose"
     />
@@ -494,7 +454,7 @@ function statusClass(status: ApiKeyStatus): string {
       confirm-label="Delete permanently"
       pending-label="Deleting..."
       success-title="API Key deleted"
-      :success-description="(name) => `${name} has been permanently removed.`"
+      :success-description="(name: string) => `${name} has been permanently removed.`"
       error-title="Failed to delete API key"
       @update:open="handleDeleteDialogClose"
     />

@@ -8,7 +8,7 @@
  * - Allows revoking individual devices with confirmation dialog
  * - Uses TanStack Query for data fetching and caching
  */
-import { ref } from 'vue'
+import { ref, watch, onUnmounted } from 'vue'
 import { Monitor, Smartphone, Laptop, Globe, Trash2, Loader2, AlertTriangle } from '@lucide/vue'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
@@ -22,6 +22,7 @@ import {
   DialogTitle,
 } from '@/components/ui/dialog'
 import { useDevices, useRevokeDevice } from '@/composables/useDevices'
+import { formatRelativeTime, formatDateTime } from '@/lib/utils'
 import type { Device } from '@/lib/schemas/device.schema'
 
 const { data: devices, isPending, isError, error, refetch } = useDevices()
@@ -29,6 +30,51 @@ const revokeMutation = useRevokeDevice()
 
 const deviceToRevoke = ref<Device | null>(null)
 const isDialogOpen = ref(false)
+
+/** Minimum time the first-load skeleton must remain visible to avoid flicker (ms) */
+const MIN_SKELETON_MS = 300
+
+/**
+ * Gate that keeps the first-load skeleton on screen for at least MIN_SKELETON_MS.
+ *
+ * Starts tracking only when there is no cached data (devices.value === undefined),
+ * so background refetches never re-show the skeleton.
+ * If the query resolves faster than MIN_SKELETON_MS, the skeleton stays until
+ * the timer elapses.
+ * Cleans up the timer on unmount to avoid leaking timeouts.
+ */
+const showSkeleton = ref(false)
+let skeletonTimer: ReturnType<typeof setTimeout> | null = null
+
+function clearSkeletonTimer(): void {
+  if (skeletonTimer) {
+    clearTimeout(skeletonTimer)
+    skeletonTimer = null
+  }
+}
+
+watch(
+  isPending,
+  (pending) => {
+    if (pending && devices.value === undefined && skeletonTimer === null && !showSkeleton.value) {
+      showSkeleton.value = true
+      skeletonTimer = setTimeout(() => {
+        skeletonTimer = null
+        if (!isPending.value) {
+          showSkeleton.value = false
+        }
+      }, MIN_SKELETON_MS)
+    } else if (!pending && skeletonTimer === null && showSkeleton.value) {
+      // Query finished after the minimum display window; hide immediately.
+      showSkeleton.value = false
+    }
+  },
+  { immediate: true },
+)
+
+onUnmounted(() => {
+  clearSkeletonTimer()
+})
 
 function openRevokeDialog(device: Device) {
   deviceToRevoke.value = device
@@ -51,21 +97,6 @@ function confirmRevoke() {
       },
     },
   )
-}
-
-function formatLastSeen(dateStr: string): string {
-  const date = new Date(dateStr)
-  const now = new Date()
-  const diffMs = now.getTime() - date.getTime()
-  const diffMins = Math.floor(diffMs / 60000)
-  const diffHours = Math.floor(diffMs / 3600000)
-  const diffDays = Math.floor(diffMs / 86400000)
-
-  if (diffMins < 1) return 'Just now'
-  if (diffMins < 60) return `${diffMins}m ago`
-  if (diffHours < 24) return `${diffHours}h ago`
-  if (diffDays < 7) return `${diffDays}d ago`
-  return date.toLocaleDateString()
 }
 
 function isDeviceActive(device: Device): boolean {
@@ -103,7 +134,7 @@ function getDeviceDisplayName(device: Device): string {
     </div>
 
     <!-- Loading State -->
-    <div v-if="isPending" class="flex flex-col gap-4">
+    <div v-if="showSkeleton" class="flex flex-col gap-4">
       <div v-for="i in 3" :key="i" class="flex items-center gap-4 rounded-lg border p-4">
         <Skeleton class="h-10 w-10 rounded-full" />
         <div class="flex flex-1 flex-col gap-2">
@@ -139,6 +170,11 @@ function getDeviceDisplayName(device: Device): string {
         <p class="font-medium">No devices registered</p>
         <p class="mt-1 text-sm text-muted-foreground">Devices will appear here when you log in from a new device.</p>
       </div>
+      <Button variant="outline" size="sm" as-child>
+        <a href="https://github.com/AhogeK/code-time-tracker" target="_blank" rel="noreferrer">
+          Install the JetBrains plugin
+        </a>
+      </Button>
     </div>
 
     <!-- Device List -->
@@ -164,7 +200,9 @@ function getDeviceDisplayName(device: Device): string {
           <div class="flex flex-wrap gap-x-4 gap-y-1 text-sm text-muted-foreground">
             <span v-if="device.platform">{{ device.platform }}</span>
             <span v-if="device.ideName">{{ device.ideName }} {{ device.ideVersion ?? '' }}</span>
-            <span>Last seen: {{ formatLastSeen(device.lastSeenAt) }}</span>
+            <span :title="formatDateTime(device.lastSeenAt)"
+              >Last seen: {{ formatRelativeTime(device.lastSeenAt) }}</span
+            >
           </div>
         </div>
 
@@ -174,6 +212,7 @@ function getDeviceDisplayName(device: Device): string {
           size="sm"
           class="text-destructive hover:bg-destructive/10 hover:text-destructive"
           :disabled="revokeMutation.isPending.value"
+          :aria-label="'Revoke ' + getDeviceDisplayName(device)"
           @click="openRevokeDialog(device)"
         >
           <Trash2 class="h-4 w-4" />
