@@ -57,3 +57,28 @@ export function formatRelativeTime(dateStr: string | null): string {
 export function formatDateTime(dateStr: string): string {
   return new Date(dateStr).toLocaleString()
 }
+
+/**
+ * Format a duration in seconds as a compact human-readable string.
+ *
+ * Used by the dashboard overview cards:
+ * - under a minute → "45s"
+ * - under an hour → "45m"
+ * - under a day → "2h 15m"
+ * - a day or more → "2d 3h"
+ *
+ * @param totalSeconds - Duration in whole seconds (non-negative)
+ * @returns Compact duration label
+ */
+export function formatDuration(totalSeconds: number): string {
+  if (totalSeconds < 60) return `${totalSeconds}s`
+  const hours = Math.floor(totalSeconds / 3600)
+  const minutes = Math.floor((totalSeconds % 3600) / 60)
+  if (hours >= 24) {
+    const days = Math.floor(hours / 24)
+    const restHours = hours % 24
+    return restHours > 0 ? `${days}d ${restHours}h` : `${days}d`
+  }
+  if (hours > 0) return minutes > 0 ? `${hours}h ${minutes}m` : `${hours}h`
+  return `${minutes}m`
+}
