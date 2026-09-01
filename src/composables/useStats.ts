@@ -1,47 +1,57 @@
+import { computed, toValue, type MaybeRefOrGetter } from 'vue'
 import { useQuery } from '@tanstack/vue-query'
 import {
   getStatsAchievements,
   getStatsDistribution,
   getStatsHeatmap,
   getStatsHourly,
+  getStatsIdeFilters,
   getStatsRecent,
   getStatsStreaks,
   getStatsSummary,
   DEFAULT_RECENT_LIMIT,
+  type StatsFilterParams,
 } from '@/lib/api/stats'
 import type { DistributionType } from '@/lib/schemas/stats.schema'
 
 /**
  * Query key factories — keys isolate by endpoint + params so caches never
- * collide across dimensions. deviceId is part of the key: switching filters
- * yields independent cache entries.
+ * collide across dimensions. The origin filter (deviceId / ideName, mutually
+ * exclusive) is part of the key: switching filters yields independent cache
+ * entries.
  */
 export const STATS_QUERY_KEYS = {
-  summary: (deviceId?: string) => ['stats', 'summary', deviceId ?? 'all'] as const,
-  heatmap: (start?: string, end?: string, deviceId?: string) =>
-    ['stats', 'heatmap', start ?? 'auto', end ?? 'auto', deviceId ?? 'all'] as const,
-  streaks: (deviceId?: string) => ['stats', 'streaks', deviceId ?? 'all'] as const,
-  distribution: (type: DistributionType, deviceId?: string) =>
-    ['stats', 'distribution', type, deviceId ?? 'all'] as const,
-  hourly: (deviceId?: string) => ['stats', 'hourly', deviceId ?? 'all'] as const,
-  recent: (limit: number, deviceId?: string) => ['stats', 'recent', limit, deviceId ?? 'all'] as const,
+  summary: (filter?: StatsFilterParams) => ['stats', 'summary', filterKey(filter)] as const,
+  heatmap: (start?: string, end?: string, filter?: StatsFilterParams) =>
+    ['stats', 'heatmap', start ?? 'auto', end ?? 'auto', filterKey(filter)] as const,
+  streaks: (filter?: StatsFilterParams) => ['stats', 'streaks', filterKey(filter)] as const,
+  distribution: (type: DistributionType, filter?: StatsFilterParams) =>
+    ['stats', 'distribution', type, filterKey(filter)] as const,
+  hourly: (filter?: StatsFilterParams) => ['stats', 'hourly', filterKey(filter)] as const,
+  recent: (limit: number, filter?: StatsFilterParams) => ['stats', 'recent', limit, filterKey(filter)] as const,
   achievements: () => ['stats', 'achievements'] as const,
+  ideFilters: () => ['stats', 'ide-filters'] as const,
 } as const
+
+/** Stable key fragment for the origin filter ('all' when unfiltered). */
+function filterKey(filter?: StatsFilterParams): string {
+  return filter?.deviceId ?? filter?.ideName ?? 'all'
+}
 
 /** Cache window for summary / heatmap / achievements — aligns with the server's 60s cache. */
 const STATS_LONG_STALE_TIME = 1000 * 60
-
 /**
  * Coding activity summary (today / daily average / week / month / year /
  * lifetime totals in seconds).
  *
- * @param params - Optional origin-device filter (static value; filters are
- * part of the query key, so changing devices yields a separate cache entry)
+ * @param params - Optional origin filter (deviceId / ideName, mutually
+ * exclusive). Accepts a plain object or a reactive getter; the query key
+ * re-resolves when params change, so passing a computed ref drives a refetch.
  */
-export function useStatsSummary(params: { deviceId?: string } = {}) {
+export function useStatsSummary(params: MaybeRefOrGetter<StatsFilterParams> = {}) {
   return useQuery({
-    queryKey: STATS_QUERY_KEYS.summary(params.deviceId),
-    queryFn: () => getStatsSummary({ deviceId: params.deviceId }),
+    queryKey: computed(() => STATS_QUERY_KEYS.summary(toValue(params))),
+    queryFn: () => getStatsSummary(toValue(params)),
     staleTime: STATS_LONG_STALE_TIME,
   })
 }
@@ -50,10 +60,16 @@ export function useStatsSummary(params: { deviceId?: string } = {}) {
  * Daily coding heatmap over an inclusive date range (dense, includes
  * zero-value days). Defaults to this calendar year server-side.
  */
-export function useStatsHeatmap(params: { start?: string; end?: string; deviceId?: string } = {}) {
+export function useStatsHeatmap(params: MaybeRefOrGetter<{ start?: string; end?: string } & StatsFilterParams> = {}) {
   return useQuery({
-    queryKey: STATS_QUERY_KEYS.heatmap(params.start, params.end, params.deviceId),
-    queryFn: () => getStatsHeatmap({ start: params.start, end: params.end, deviceId: params.deviceId }),
+    queryKey: computed(() => {
+      const p = toValue(params)
+      return STATS_QUERY_KEYS.heatmap(p.start, p.end, p)
+    }),
+    queryFn: () => {
+      const p = toValue(params)
+      return getStatsHeatmap(p)
+    },
     staleTime: STATS_LONG_STALE_TIME,
   })
 }
@@ -61,10 +77,10 @@ export function useStatsHeatmap(params: { start?: string; end?: string; deviceId
 /**
  * Current and longest consecutive coding day streaks.
  */
-export function useStatsStreaks(params: { deviceId?: string } = {}) {
+export function useStatsStreaks(params: MaybeRefOrGetter<StatsFilterParams> = {}) {
   return useQuery({
-    queryKey: STATS_QUERY_KEYS.streaks(params.deviceId),
-    queryFn: () => getStatsStreaks({ deviceId: params.deviceId }),
+    queryKey: computed(() => STATS_QUERY_KEYS.streaks(toValue(params))),
+    queryFn: () => getStatsStreaks(toValue(params)),
     staleTime: 1000 * 30,
   })
 }
@@ -73,10 +89,10 @@ export function useStatsStreaks(params: { deviceId?: string } = {}) {
  * Coding duration distribution by dimension (buckets ordered by duration
  * descending).
  */
-export function useStatsDistribution(type: DistributionType, params: { deviceId?: string } = {}) {
+export function useStatsDistribution(type: DistributionType, params: MaybeRefOrGetter<StatsFilterParams> = {}) {
   return useQuery({
-    queryKey: STATS_QUERY_KEYS.distribution(type, params.deviceId),
-    queryFn: () => getStatsDistribution(type, { deviceId: params.deviceId }),
+    queryKey: computed(() => STATS_QUERY_KEYS.distribution(type, toValue(params))),
+    queryFn: () => getStatsDistribution(type, toValue(params)),
     staleTime: 1000 * 30,
   })
 }
@@ -84,10 +100,10 @@ export function useStatsDistribution(type: DistributionType, params: { deviceId?
 /**
  * Per-hour average coding seconds across active days.
  */
-export function useStatsHourly(params: { deviceId?: string } = {}) {
+export function useStatsHourly(params: MaybeRefOrGetter<StatsFilterParams> = {}) {
   return useQuery({
-    queryKey: STATS_QUERY_KEYS.hourly(params.deviceId),
-    queryFn: () => getStatsHourly({ deviceId: params.deviceId }),
+    queryKey: computed(() => STATS_QUERY_KEYS.hourly(toValue(params))),
+    queryFn: () => getStatsHourly(toValue(params)),
     staleTime: 1000 * 30,
   })
 }
@@ -95,11 +111,16 @@ export function useStatsHourly(params: { deviceId?: string } = {}) {
 /**
  * Most recent coding sessions (start time descending).
  */
-export function useStatsRecent(params: { limit?: number; deviceId?: string } = {}) {
-  const limit = params.limit ?? DEFAULT_RECENT_LIMIT
+export function useStatsRecent(params: MaybeRefOrGetter<{ limit?: number } & StatsFilterParams> = {}) {
   return useQuery({
-    queryKey: STATS_QUERY_KEYS.recent(limit, params.deviceId),
-    queryFn: () => getStatsRecent({ limit, deviceId: params.deviceId }),
+    queryKey: computed(() => {
+      const p = toValue(params)
+      return STATS_QUERY_KEYS.recent(p.limit ?? DEFAULT_RECENT_LIMIT, p)
+    }),
+    queryFn: () => {
+      const p = toValue(params)
+      return getStatsRecent(p)
+    },
     staleTime: 1000 * 30,
   })
 }
@@ -113,5 +134,17 @@ export function useStatsAchievements() {
     queryKey: STATS_QUERY_KEYS.achievements(),
     queryFn: () => getStatsAchievements(),
     staleTime: STATS_LONG_STALE_TIME,
+  })
+}
+
+/**
+ * Distinct registered IDE names for the dashboard IDE filter dropdown
+ * (alphabetical; includes revoked devices; never "Unknown IDE").
+ */
+export function useStatsIdeFilters() {
+  return useQuery({
+    queryKey: STATS_QUERY_KEYS.ideFilters(),
+    queryFn: () => getStatsIdeFilters(),
+    staleTime: 1000 * 60,
   })
 }
