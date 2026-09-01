@@ -78,6 +78,7 @@
 
 - Notion「🌐 ctt-web 开发计划」updated via MCP: D2 section rewritten to completed state (✅ v0.20.0 — full delivery record: user acceptance fixes, design iterations/revert, tests, dual-axis review, branch state) matching the D1 completed-section format; D3 section rewritten to completed state (✅ v0.20.0 — 6 cards, formatDuration rules, three states, responsive grid, design iteration history); Dashboard delivery checklist table D1/D2/D3 rows flipped from ⬜ to ✅ with corrected actuals (D1: 7 composables not 5). D4–D7 untouched.
 - Note: D3 was delivered as part of the D2 batch (v0.20.0) — no separate commit; the Notion record documents this explicitly ("随 D2 框架同批交付").
+- Delivery report for the summary cards added: `.omp/summary-cards-delivery-report.md` (data flow / formatDuration rules table / design iteration + revert rationale / acceptance matrix — mirrors the D2 report structure).
 
 ## Recent Activity (v0.19.0 — 2026-08-31)
 
