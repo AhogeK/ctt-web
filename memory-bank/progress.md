@@ -12,7 +12,7 @@
 | GitHub OAuth                      | ✅ Complete | 0.8.3          |
 | hCaptcha Integration              | ✅ Complete | 0.7.6          |
 | Terms Acceptance                  | ✅ Complete | 0.7.0          |
-| Dashboard                         | ⏳ Pending  | 0.9.0          |
+| Dashboard                         | ✅ Complete | 0.20.0         |
 | Device Management                 | ⏳ Pending  | 0.9.0          |
 | Leaderboard                       | ⏳ Pending  | 1.0.0          |
 | Set Password                      | ✅ Complete | 0.10.0         |
@@ -23,6 +23,8 @@
 | Production Deploy                 | ⏳ Pending  | 1.0.0          |
 
 ## Completed (Recent)
+
+- [x] **v0.20.0 (2026-09-01)** Dashboard D2 + panel parity + IDE filtering — URL filter state (start/end/deviceId/ideName, All-time default resolving explicit 2000-01-01 range, presets month/90d/year/custom, router.replace, device/IDE mutual exclusion at setter level per backend v0.60.0 contract); useStats composables on MaybeRef params with StatsFilterParams (ideName threaded through all 6 filterable endpoints + new getStatsIdeFilters/useStatsIdeFilters); DashboardHome with 10 plugin-parity panels (heatmap filter-range, 30-day trend, language/project/time-of-day/IDE/weekday distributions, streaks, hourly) each with three-state ChartSection and reserved chart mount points; DashboardFilters gains All-time + IDE selects; SummaryCards 6 fields with clean typographic design (micro charts tried and reverted by user decision). Real-backend verified: URL restore, filter→request chains incl. ideName, mutual exclusion both directions. 1181/1181 (72 files), type-check/lint/build green. 0.19.0 → 0.20.0 (MINOR).
 
 - [x] **v0.19.0 (2026-08-31)** Dashboard D1: stats API contract layer — stats.schema.ts (7 response schemas + DistributionType enum, z.infer only), lib/api/stats.ts (7 functions, timezoneOffset auto from browser per request, optional deviceId filter), useStats.ts composables (STATS_QUERY_KEYS factory isolating endpoint+params, staleTime 60s summary/heatmap/achievements per server cache, 30s rest), stats.test.ts 14 cases. Contract read from ctt-server StatsController source (R13). 1142/1142 (68 files), type-check/lint green. 0.18.3 → 0.19.0 (MINOR).
 - [x] **v0.18.3 (2026-08-30)** Device revoked state (user-reported bug: revoke left the list unchanged) — backend v0.50.0 adds `revokedAt` to DeviceResponse (set on revoke, cleared on re-registration); frontend DeviceSchema + revokedAt, DeviceListView renders destructive "Revoked" badge + hides Revoke button. Tests updated across schema/API/component/E2E (helper DELETE now SETS revokedAt, revoke.spec asserts Revoked). Real-backend verified: null → timestamp on revoke, card flips to Revoked, button gone, record kept. 1128/1128 unit + 9/9 E2E, type-check/build/lint green. 0.18.2 → 0.18.3 (PATCH).

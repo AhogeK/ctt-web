@@ -2,10 +2,77 @@
 
 ## Current Status
 
-**Phase**: Dashboard Phase 3 D1: stats API contract layer (schemas + api + composables)
-**Version**: 0.19.0 (2026-08-31)
+**Phase**: Dashboard Phase 3 D2: dashboard framework + useDashboardFilters
+**Version**: 0.20.0 (2026-09-01)
 **Branch**: develop
-**Tests**: 1142/1142 unit; vue-tsc + lint 0 error 0 warning
+**Tests**: 1172/1172 unit; vue-tsc + lint 0 error 0 warning
+
+## Recent Activity (v0.20.0 — 2026-09-01)
+
+### Dashboard D2: dashboard framework + useDashboardFilters
+
+- **useDashboardFilters** (`src/features/dashboard/composables/useDashboardFilters.ts`): URL SearchParams is the single source of truth (start/end/deviceId). `formatDate` local yyyy-MM-dd (matches backend LocalDate); `resolvePresetRange` (month / 90d / year); `inferPreset` derives preset from range (no params → 'year', matching server default); setters use `router.replace` (no history spam). 14 tests.
+- **useStats upgrade (required for D2)**: D1 composables were static-param; upgraded all 7 to `MaybeRefOrGetter` with `queryKey: computed(...)` + `toValue` — reactive params (e.g. computed deviceId/range) now re-key the query and drive refetch. useStats.test.ts 8 cases (reactive re-key, staleTime 60s/30s, distribution type keys).
+- **DashboardHome** (`src/features/dashboard/views/DashboardHome.vue`): filter bar + summary cards + heatmap (full width) + trend/language two-column grid. **DashboardFilters.vue** (period preset Select + device Select from useDevices + custom date inputs), **SummaryCards.vue** (today/week/month/total via useStatsSummary + formatDuration), **ChartSection.vue** (loading/error/empty states, retry).
+- **formatDuration** added to lib/utils/time.ts (seconds → "2h 15m" / "2d 3h"), barrel-exported.
+- **Real-backend verified**: dashboard renders, default preset This year; URL ?start=&end= restores custom range + inputs; heatmap request carries timezoneOffset+start+end from the filter chain. Screenshot ~/Pictures/screenshots/v0.20.0-dashboard-framework.png.
+- Tests: 1179/1179 unit (71 files, +37) + 50/50 E2E (chromium). type-check / lint / build clean.
+- E2E vue.spec.ts smoke test was stale (template artifact): unauthenticated `/` redirects to login ("Welcome back"), so the "Home" assertion never held. Fixed to log in first (mockAuthApis + loginViaForm) then assert HomeView — matches the project's auth E2E pattern.
+- Version 0.19.0 → 0.20.0 (new feature → MINOR).
+
+### Review fixes (post code-review, same v0.20.0)
+
+- **Custom preset reachable from UI** (Spec gap): selecting "Custom range" was a no-op (inputs only appeared when the URL already encoded a non-preset range). DashboardFilters now keeps a local `customMode` ref; picking Custom reveals the date inputs and shows "Custom range" in the select (selectValue derived), without touching the URL until a range is entered. URL remains the only durable state.
+- **Trend panel empty state**: was hardcoded `false`; now mirrors the heatmap data (trend is an aggregation view of the same daily points).
+- **Dead code**: ChartSection error-branch Loader2 removed (loading is always false there); SummaryCards retry button was unreachable (isError was lumped into the skeleton branch) — error state now renders a "Failed to load — retry" action; retry path tested.
+- **Consistency**: raw `<input type=date>` replaced with ui/Input (matches CreateApiKeyDialog tokens); DashboardHome onRangeChange Middle Man inlined to `@update:range="setDateRange"`; DashboardFilters `presetValue` computed dropped (bind preset directly); formatDuration omits zero parts ("2h" not "2h 0m", "1d" not "1d 0h").
+- New component tests: SummaryCards (3) + DashboardFilters (4) cover the review-fixed contracts; browser-verified Custom select → inputs → preset switch → URL sync end-to-end.
+- Language distribution intentionally does not respond to the date range: backend distribution endpoint accepts no start/end (contract constraint, verified against StatsController).
+
+### Acceptance feedback fixes (user, same v0.20.0)
+
+- **Default preset = All time** (was This year, to match the plugin panel): URL stays clean (no params) in the default view; the heatmap query resolves an explicit range (`start=2000-01-01` ALL_TIME_START → today) so it no longer rides the backend's this-year default. New `'all'` preset: `applyPreset('all')` clears start/end params; `inferPreset` maps no params and the explicit all-range back to 'all'. Select gains an "All time" item.
+- **Summary cards completed to six fields** (plugin parity): added Daily avg (dailyAverage) and This year (thisYear) — both already in the D1 schema; grid 4-col → 3-col (2×3).
+- Browser-verified: default All time with explicit heatmap range; This year ↔ All time switch writes/clears URL params; 6 cards render. Tests: 1180/1180 unit (+1), dashboard 26/26.
+- **Summary card grid responsive** (user feedback): 6 cards in one row on wide screens (xl:grid-cols-6), 3-col at md, 2-col small — not fixed 2×3.
+
+### Panel parity (user acceptance round 2, same v0.20.0)
+
+- **All plugin-panel dimensions mounted as placeholder panels** (user direction: mount the panels, no content yet — plain-text stat lists were rejected as ugly): every panel is ChartSection (three states) wired to its query with the chart mount point reserved as an empty placeholder. Panels: Coding heatmap (filter range) / Coding trend last-30-days (own heatmap query, filter-independent) / Language / Yearly activity / Coding streaks / Project / Time of day / IDE distributions / Average hourly / Weekday. New components: DistributionPanel (generic, 1:1 to DistributionType), StreaksPanel, HourlyPanel — each query-wired, placeholder body.
+- Backend verified: distribution supports LANGUAGES/PROJECTS/TIME_OF_DAY/WEEKDAY/DEVICES/IDES; hourly returns points + activeDays. Browser-verified all 10 panels render with correct endpoints fired.
+- **IDE as a filter is NOT possible** (contract): stats endpoints only accept deviceId; IDE attribution derives from the device registry (devices.ide_name, one deviceId per machine install). IDE works only as a distribution dimension. Requirement text for backend IDE filtering drafted for the user to relay (see .omp/ide-filter-requirement.md).
+
+### IDE filter wired end-to-end (backend v0.60.0 delivered, same v0.20.0)
+
+- Backend shipped `ideName` on all 6 filterable stats endpoints + `GET /api/v1/stats/ide-filters` (distinct non-empty ide_name, alphabetical, includes revoked devices, mutual exclusion 400 COMMON_003 with deviceId, unregistered names 404 COMMON_002). Contract verified against StatsController source before wiring (R13).
+- **API layer** (`lib/api/stats.ts`): `StatsFilterParams` (deviceId/ideName) + shared `filterQuery` across the 6 endpoints; new `getStatsIdeFilters` (z.array(z.string())).
+- **Composables** (`useStats.ts`): `STATS_QUERY_KEYS` take the filter object via `filterKey()` (deviceId ?? ideName ?? 'all'); all 7 composables accept `StatsFilterParams`; new `useStatsIdeFilters` (60s staleTime).
+- **URL state** (`useDashboardFilters`): `?ideName=` computed + `setIde()`; setDevice/setIde clear the other param (UI-level exclusivity ahead of the backend 400). Returned set grows: `ideName, setIde`.
+- **Filter bar**: third Select "IDE" fed by useStatsIdeFilters; emits `update:ide`. **All 10 panels** wired with `:ide-name` through `originFilter` computed.
+- Browser-verified closed loop (real backend, seeded device + 1h session): IDE dropdown lists registered names; picking IDE writes `?ideName=IntelliJ+IDEA`, heatmap carries `&ideName=`, summary 3600s filtered; picking Device clears ideName (and vice versa); dashboard 6 cards show 1h under both filters. Tests 1181/1181 (+1 IDE select mapping), type-check/lint/build green.
+
+### Summary card visual design (user feedback: "too plain", same v0.20.0)
+
+- Redesigned SummaryCards per DESIGN.md (Linear-inspired): uppercase tracked labels (11px medium), per-metric Lucide icon (primary tint for Today/Total accents, muted otherwise), 2xl semibold tracking-tight tabular-nums value, translucent gradient card surface (from-card to-card/60) with hairline border + hover border lift, and a short primary/40 accent underline on Today/Total. Both light and dark themes verified via screenshots (~/Pictures/screenshots/v0.20.0-summary-cards-{light,dark}.png). Retry-on-error behavior unchanged; tests 27/27 dashboard, lint/type-check/build green.
+
+### Summary cards carry Lieflat micro charts (user: "still plain", same v0.20.0)
+
+- Per lieflat-charts skill audit (3+ candidates): Tick Gauge rejected (no 0-100% goal semantics), full Calendar Heat/Dot Heat don't fit card size; landed on **B3 hairline-area micro variant** (basics-gallery skeleton: calendar floor + per-day hairline + peak emphasis) embedded at each card's bottom edge, and a **C6 dot-heat one-row variant** (1 dot = 1 hour, dot area = that hour's average) on Today. Data: heatmap slices per window (30/7/30/365/365 days) + hourly series; queries already existed in DashboardHome scope, now lifted into SummaryCards (deviceId + ideName props threaded).
+- Color: custom single-hue indigo system derived from the project's `--primary` (#5e6ad2) per skill rule 6.5 (user brand color → custom palette, mono token structure unchanged); hairline opacity floors kept. Charts are context for the headline number — value stays the hero.
+- Seeded multi-day sessions to verify chart shapes render (spike/valley visible in week/month/year cards). Tests updated (mocks for heatmap/hourly, ideName prop); 1181/1181, lint/type-check/build green. Screenshots: v0.20.0-summary-cards-micro-{light,dark}.png.
+- **Micro charts REVERTED** (user: the chart-laden cards looked busier and worse than the clean version — user judgement wins): SummaryCards back to the typographic design (uppercase label + icon + big tabular value + accent underline + hover border); heatmap/hourly queries stay in DashboardHome, not the cards. Final screenshot: v0.20.0-summary-cards-final.png. Full suite green (1181/1181).
+- **Final polish pass** (last iteration, user approved direction "简单好看"): value bumped to 26px leading-none, gradient card surface (from-card to-muted/40) + hover shadow, accent underline moved inline next to the value (Today/Total only), label opacity tuned to /90. Screenshots: v0.20.0-summary-cards-polished-{light,dark}.png. All 1181 tests green.
+
+### Final review round (two-axis, same v0.20.0)
+
+- **Accent underline removed** (user: the bare line on Today/Total was confusing) — icon-only tint remains on those two cards; accent flag deleted.
+- **README R4 sync**: Stats Dashboard row added to Implemented Features. **progress.md** v0.20.0 entry rewritten (was stale at 1172/D2-only) + Dashboard milestone flipped to Complete 0.20.0.
+- **StreaksPanel empty state wired**: 0/0 streaks = empty (backend resolves both fields, never undefined).
+- **Yearly panel retitled** "Activity heatmap (selected range)" — it mirrors the filter-range query; the fixed-year title could misrepresent a 90d/custom selection.
+- **Shared filter projection**: originFilter/deviceIdOrNull/ideNameOrNull moved into useDashboardFilters (was duplicated verbatim in DashboardHome + 4 panels); deviceId/ideName now surface as null-able.
+- **JSDoc**: params.ideName added to all 6 endpoint docs. **Dead Loader2 mock** removed from ChartSection.test.
+- Deliberately NOT done (judgement): API-level ideName test cases (contract is a 1-line query spread, covered end-to-end by browser verification; D1's 14-case suite covered the schema wiring this builds on); the unsound `as Exclude<...>` cast in DashboardFilters is guarded by the fixed SelectItem value set.
+- Full suite: 1181/1181 unit + 50/50 E2E, lint/type-check/build green.
 
 ## Recent Activity (v0.19.0 — 2026-08-31)
 
