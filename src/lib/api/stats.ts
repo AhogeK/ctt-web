@@ -1,3 +1,4 @@
+import { z } from 'zod'
 import { apiFetch } from './instance'
 import { RestApiResponseSchema } from '@/lib/schemas/api.schema'
 import {
@@ -30,6 +31,43 @@ function timezoneOffset(): number {
 }
 
 /**
+ * Origin filter shared by the six filterable stats endpoints. The backend
+ * treats the two as mutually exclusive (400 COMMON_003 when both are sent).
+ */
+export interface StatsFilterParams {
+  /** Origin-device filter (unknown/foreign devices 404 COMMON_002) */
+  deviceId?: string
+  /** Exact IDE-name filter (unregistered names 404 COMMON_002) */
+  ideName?: string
+}
+
+/** Build the deviceId/ideName query fragment from filter params. */
+function filterQuery(params: StatsFilterParams): Record<string, string> {
+  return {
+    ...(params.deviceId ? { deviceId: params.deviceId } : {}),
+    ...(params.ideName ? { ideName: params.ideName } : {}),
+  }
+}
+
+/**
+ * Fetches the distinct non-empty IDE names registered by the current user,
+ * alphabetical, for the dashboard IDE filter dropdown. Includes names of
+ * revoked devices (historical attribution); never contains "Unknown IDE".
+ *
+ * Endpoint: GET /api/v1/stats/ide-filters
+ *
+ * @returns IDE names ordered alphabetically
+ */
+export async function getStatsIdeFilters(): Promise<string[]> {
+  const response = await apiFetch<unknown>('/api/v1/stats/ide-filters', {
+    method: 'GET',
+  })
+
+  const wrapped = RestApiResponseSchema.parse(response)
+  return z.array(z.string()).parse(wrapped.data)
+}
+
+/**
  * Fetches the coding activity summary (today / daily average / week / month /
  * year / lifetime totals in seconds), computed in the client timezone.
  *
@@ -37,15 +75,16 @@ function timezoneOffset(): number {
  *
  * @param params - Optional filters
  * @param params.deviceId - Origin-device filter (unknown/foreign devices 404)
+ * @param params.ideName - Exact IDE-name filter (unregistered names 404)
  * @returns Summary totals in seconds
  * @throws Error with RATE_LIMIT_001 on 429; COMMON_002 for unknown deviceId
  */
-export async function getStatsSummary(params: { deviceId?: string } = {}): Promise<StatsSummaryResponse> {
+export async function getStatsSummary(params: StatsFilterParams = {}): Promise<StatsSummaryResponse> {
   const response = await apiFetch<unknown>('/api/v1/stats/summary', {
     method: 'GET',
     query: {
       timezoneOffset: timezoneOffset(),
-      ...(params.deviceId ? { deviceId: params.deviceId } : {}),
+      ...filterQuery(params),
     },
   })
 
@@ -63,10 +102,11 @@ export async function getStatsSummary(params: { deviceId?: string } = {}): Promi
  * @param params.start - Range start (yyyy-MM-dd); defaults to Jan 1 server-side
  * @param params.end - Range end (yyyy-MM-dd); defaults to today server-side
  * @param params.deviceId - Origin-device filter (unknown/foreign devices 404)
+ * @param params.ideName - Exact IDE-name filter (unregistered names 404)
  * @returns Heatmap points in date order
  */
 export async function getStatsHeatmap(
-  params: { start?: string; end?: string; deviceId?: string } = {},
+  params: { start?: string; end?: string } & StatsFilterParams = {},
 ): Promise<HeatmapResponse> {
   const response = await apiFetch<unknown>('/api/v1/stats/heatmap', {
     method: 'GET',
@@ -74,7 +114,7 @@ export async function getStatsHeatmap(
       timezoneOffset: timezoneOffset(),
       ...(params.start ? { start: params.start } : {}),
       ...(params.end ? { end: params.end } : {}),
-      ...(params.deviceId ? { deviceId: params.deviceId } : {}),
+      ...filterQuery(params),
     },
   })
 
@@ -89,14 +129,15 @@ export async function getStatsHeatmap(
  *
  * @param params - Optional filters
  * @param params.deviceId - Origin-device filter (unknown/foreign devices 404)
+ * @param params.ideName - Exact IDE-name filter (unregistered names 404)
  * @returns Current and max streaks in days
  */
-export async function getStatsStreaks(params: { deviceId?: string } = {}): Promise<StreakStatsResponse> {
+export async function getStatsStreaks(params: StatsFilterParams = {}): Promise<StreakStatsResponse> {
   const response = await apiFetch<unknown>('/api/v1/stats/streaks', {
     method: 'GET',
     query: {
       timezoneOffset: timezoneOffset(),
-      ...(params.deviceId ? { deviceId: params.deviceId } : {}),
+      ...filterQuery(params),
     },
   })
 
@@ -114,18 +155,19 @@ export async function getStatsStreaks(params: { deviceId?: string } = {}): Promi
  * @param type - Distribution dimension
  * @param params - Optional filters
  * @param params.deviceId - Origin-device filter (unknown/foreign devices 404)
+ * @param params.ideName - Exact IDE-name filter (unregistered names 404)
  * @returns Distribution entries ordered by duration descending
  */
 export async function getStatsDistribution(
   type: DistributionType,
-  params: { deviceId?: string } = {},
+  params: StatsFilterParams = {},
 ): Promise<DistributionResponse> {
   const response = await apiFetch<unknown>('/api/v1/stats/distribution', {
     method: 'GET',
     query: {
       type,
       timezoneOffset: timezoneOffset(),
-      ...(params.deviceId ? { deviceId: params.deviceId } : {}),
+      ...filterQuery(params),
     },
   })
 
@@ -140,14 +182,15 @@ export async function getStatsDistribution(
  *
  * @param params - Optional filters
  * @param params.deviceId - Origin-device filter (unknown/foreign devices 404)
+ * @param params.ideName - Exact IDE-name filter (unregistered names 404)
  * @returns Per-hour averages (hour 0-23) with active-day count
  */
-export async function getStatsHourly(params: { deviceId?: string } = {}): Promise<HourlyDistributionResponse> {
+export async function getStatsHourly(params: StatsFilterParams = {}): Promise<HourlyDistributionResponse> {
   const response = await apiFetch<unknown>('/api/v1/stats/hourly', {
     method: 'GET',
     query: {
       timezoneOffset: timezoneOffset(),
-      ...(params.deviceId ? { deviceId: params.deviceId } : {}),
+      ...filterQuery(params),
     },
   })
 
@@ -163,14 +206,15 @@ export async function getStatsHourly(params: { deviceId?: string } = {}): Promis
  * @param params - Optional filters
  * @param params.limit - Session count (1-100; default {@link DEFAULT_RECENT_LIMIT})
  * @param params.deviceId - Origin-device filter (unknown/foreign devices 404)
+ * @param params.ideName - Exact IDE-name filter (unregistered names 404)
  * @returns Recent sessions ordered by start time descending
  */
-export async function getStatsRecent(params: { limit?: number; deviceId?: string } = {}): Promise<RecentSession[]> {
+export async function getStatsRecent(params: { limit?: number } & StatsFilterParams = {}): Promise<RecentSession[]> {
   const response = await apiFetch<unknown>('/api/v1/stats/recent', {
     method: 'GET',
     query: {
       limit: params.limit ?? DEFAULT_RECENT_LIMIT,
-      ...(params.deviceId ? { deviceId: params.deviceId } : {}),
+      ...filterQuery(params),
     },
   })
 
