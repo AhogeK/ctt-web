@@ -2,10 +2,22 @@
 
 ## Current Status
 
-**Phase**: Device Management: revoked state integration (backend v0.50.0 revokedAt)
-**Version**: 0.18.3 (2026-08-30)
+**Phase**: Dashboard Phase 3 D1: stats API contract layer (schemas + api + composables)
+**Version**: 0.19.0 (2026-08-31)
 **Branch**: develop
-**Tests**: 1128/1128 unit + 9/9 devices E2E; vue-tsc + lint 0 error 0 warning
+**Tests**: 1142/1142 unit; vue-tsc + lint 0 error 0 warning
+
+## Recent Activity (v0.19.0 — 2026-08-31)
+
+### Dashboard D1: stats API contract layer
+
+- **Contract source (R13)**: ctt-server StatsController (7 endpoints, JWT, 60 req/min, `timezoneOffset` ±720 min) + DTO records read from source — StatsSummaryResponse (6 longs, seconds), HeatmapResponse (dense points incl zero days), StreakStatsResponse (current/max), DistributionResponse (type enum LANGUAGES/PROJECTS/TIME_OF_DAY/WEEKDAY/DEVICES/IDES + entries desc), HourlyDistributionResponse (points + activeDays), RecentSessionResponse (sessionId/sessionUuid/projectName/language/startTime/endTime/durationSeconds), AchievementResponse (code/displayName/description/unlocked/unlockedAt nullable/progress/target/unit). All support optional `deviceId` filter (except achievements) — 404 COMMON_002 for unknown/foreign devices.
+- **Schema** (`src/lib/schemas/stats.schema.ts`): all 7 response schemas + DailyStatPoint/DistributionEntry/HourlyStatPoint sub-schemas + DistributionTypeSchema enum; z.infer types only.
+- **API** (`src/lib/api/stats.ts`): getStatsSummary/getStatsHeatmap({start,end})/getStatsStreaks/getStatsDistribution(type)/getStatsHourly/getStatsRecent({limit})/getStatsAchievements — private `timezoneOffset()` returns `-new Date().getTimezoneOffset()` per request (browser-following); optional deviceId omitted from query when absent.
+- **Composables** (`src/composables/useStats.ts`): useStatsSummary/useStatsHeatmap/useStatsStreaks/useStatsDistribution(type)/useStatsHourly/useStatsRecent/useStatsAchievements — STATS_QUERY_KEYS factory isolates by endpoint+params (`['stats', endpoint, ...args, deviceId ?? 'all']`); staleTime 60s for summary/heatmap/achievements (server 60s cache), 30s for the rest.
+- **Tests**: stats.test.ts 14 cases (query params incl timezoneOffset/deviceId/type/limit, envelope parse, error propagation RATE_LIMIT_001/COMMON_002).
+- Tests: 1142/1142 (68 files). type-check / lint clean.
+- Version 0.18.3 → 0.19.0 (new feature → MINOR).
 
 ## Recent Activity (v0.18.3 — 2026-08-30)
 
