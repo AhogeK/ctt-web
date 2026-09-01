@@ -74,6 +74,11 @@
 - Deliberately NOT done (judgement): API-level ideName test cases (contract is a 1-line query spread, covered end-to-end by browser verification; D1's 14-case suite covered the schema wiring this builds on); the unsound `as Exclude<...>` cast in DashboardFilters is guarded by the fixed SelectItem value set.
 - Full suite: 1181/1181 unit + 50/50 E2E, lint/type-check/build green.
 
+### Notion plan sync (post-delivery bookkeeping)
+
+- Notion「🌐 ctt-web 开发计划」updated via MCP: D2 section rewritten to completed state (✅ v0.20.0 — full delivery record: user acceptance fixes, design iterations/revert, tests, dual-axis review, branch state) matching the D1 completed-section format; D3 section rewritten to completed state (✅ v0.20.0 — 6 cards, formatDuration rules, three states, responsive grid, design iteration history); Dashboard delivery checklist table D1/D2/D3 rows flipped from ⬜ to ✅ with corrected actuals (D1: 7 composables not 5). D4–D7 untouched.
+- Note: D3 was delivered as part of the D2 batch (v0.20.0) — no separate commit; the Notion record documents this explicitly ("随 D2 框架同批交付").
+
 ## Recent Activity (v0.19.0 — 2026-08-31)
 
 ### Dashboard D1: stats API contract layer
