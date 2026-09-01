@@ -5,7 +5,7 @@
  * deterministic without fake timers.
  */
 import { describe, it, expect } from 'vite-plus/test'
-import { formatRelativeTime, formatDateTime } from '@/lib/utils'
+import { formatRelativeTime, formatDateTime, formatDuration } from '@/lib/utils'
 
 const minutesAgo = (m: number) => new Date(Date.now() - m * 60000).toISOString()
 const hoursAgo = (h: number) => new Date(Date.now() - h * 3600000).toISOString()
@@ -67,5 +67,28 @@ describe('formatDateTime', () => {
   it('formats an ISO string to locale datetime', () => {
     const iso = '2026-08-29T12:00:00.000Z'
     expect(formatDateTime(iso)).toBe(new Date(iso).toLocaleString())
+  })
+})
+
+describe('formatDuration', () => {
+  it('formats sub-minute durations in seconds', () => {
+    expect(formatDuration(0)).toBe('0s')
+    expect(formatDuration(45)).toBe('45s')
+    expect(formatDuration(59)).toBe('59s')
+  })
+
+  it('formats sub-hour durations in minutes', () => {
+    expect(formatDuration(60)).toBe('1m')
+    expect(formatDuration(2700)).toBe('45m')
+  })
+
+  it('formats sub-day durations as hours and minutes', () => {
+    expect(formatDuration(3600)).toBe('1h')
+    expect(formatDuration(8100)).toBe('2h 15m')
+  })
+
+  it('formats day-plus durations as days and hours', () => {
+    expect(formatDuration(86400)).toBe('1d')
+    expect(formatDuration(194400)).toBe('2d 6h')
   })
 })
