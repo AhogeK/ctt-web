@@ -47,6 +47,6 @@ const isEmpty = computed(() => !!distribution.data.value && distribution.data.va
     @retry="() => distribution.refetch()"
   >
     <!-- Chart mount point: pie / bar per dimension (reserved for a later pass) -->
-    <div class="py-8 text-center text-sm text-muted-foreground">{{ title }} chart</div>
+    <div class="flex min-h-36 items-center justify-center text-sm text-muted-foreground">{{ title }} chart</div>
   </ChartSection>
 </template>

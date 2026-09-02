@@ -37,6 +37,6 @@ const isEmpty = computed(() => !!hourly.data.value && hourly.data.value.points.l
     @retry="() => hourly.refetch()"
   >
     <!-- Chart mount point: per-hour bar chart (reserved for a later pass) -->
-    <div class="py-8 text-center text-sm text-muted-foreground">Hourly chart</div>
+    <div class="flex min-h-36 items-center justify-center text-sm text-muted-foreground">Hourly chart</div>
   </ChartSection>
 </template>

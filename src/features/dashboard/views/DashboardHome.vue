@@ -2,13 +2,13 @@
 /**
  * Dashboard home view — the stats dashboard container.
  *
- * Layout: filter bar → overview summary cards → heatmap panel (reflects the
- * active filter range) → Coding trend (30-day) + Language distribution →
- * Yearly activity + streaks → Project / Time-of-day / Weekday / IDE
- * distributions → hourly stats. Every panel renders its loading / error /
- * empty states through ChartSection so a slow or failing endpoint never
- * blocks the grid; chart bodies are a later pass and each panel reserves its
- * mount point.
+ * Layout: filter bar → overview summary cards → heatmap + streaks (2-col,
+ * heatmap keeps panel width for GitHub-sized cells) → Coding trend (30-day)
+ * + Language distribution → hourly stats + Project distribution →
+ * Time-of-day → IDE / Weekday distributions. Every panel renders its loading / error / empty states
+ * through ChartSection so a slow or failing endpoint never blocks the grid.
+ * The heat-map chart body is live (ECharts); other chart bodies remain
+ * reserved mount points for later passes.
  *
  * Filters live in the URL (useDashboardFilters): date range presets + custom
  * range + origin-device filter. Changing them re-keys the stats queries
@@ -21,6 +21,7 @@ import { ALL_TIME_START, formatDate, useDashboardFilters } from '../composables/
 import DashboardFilters from '../components/DashboardFilters.vue'
 import SummaryCards from '../components/SummaryCards.vue'
 import ChartSection from '../components/ChartSection.vue'
+import HeatmapChart from '../components/HeatmapChart.vue'
 import DistributionPanel from '../components/DistributionPanel.vue'
 import StreaksPanel from '../components/StreaksPanel.vue'
 import HourlyPanel from '../components/HourlyPanel.vue'
@@ -79,17 +80,29 @@ const heatmap30 = useStatsHeatmap(last30)
     <!-- Overview cards -->
     <SummaryCards :device-id="deviceIdOrNull" :ide-name="ideNameOrNull" />
 
-    <!-- Heatmap over the active filter range (full width) -->
-    <ChartSection
-      title="Coding heatmap"
-      :loading="heatmap.isPending.value"
-      :error="heatmap.isError.value"
-      :empty="!!heatmap.data.value && heatmap.data.value.points.length === 0"
-      @retry="() => heatmap.refetch()"
-    >
-      <!-- Chart body: heatmap grid (reserved mount point) -->
-      <div class="py-8 text-center text-sm text-muted-foreground">Heatmap chart</div>
-    </ChartSection>
+    <!-- Heatmap + streaks: container query on THIS row's width — the heatmap
+         card needs ≥729px content width; two columns only fit when the row is
+         ≥ 2×(729+32 pad) + 24 gap ≈ 1546px. Below that the heatmap takes the
+         full row (its cells stay ≥13px). -->
+    <div class="@container">
+      <div class="grid grid-cols-1 gap-6 @[1546px]:grid-cols-2">
+        <ChartSection
+          title="Coding heatmap"
+          :loading="heatmap.isPending.value"
+          :error="heatmap.isError.value"
+          :empty="!!heatmap.data.value && heatmap.data.value.points.length === 0"
+          @retry="() => heatmap.refetch()"
+        >
+          <HeatmapChart
+            :points="heatmap.data.value?.points ?? []"
+            :device-id="deviceIdOrNull"
+            :ide-name="ideNameOrNull"
+          />
+        </ChartSection>
+
+        <StreaksPanel :device-id="deviceIdOrNull" :ide-name="ideNameOrNull" />
+      </div>
+    </div>
 
     <!-- Two-column row: last-30-days trend + language distribution -->
     <div class="grid grid-cols-1 gap-6 lg:grid-cols-2">
@@ -112,45 +125,30 @@ const heatmap30 = useStatsHeatmap(last30)
       />
     </div>
 
-    <!-- Two-column row: filtered-range activity + streaks. The heatmap
-         panel above already owns the filter range; this panel mirrors it
-         with the same query (single fetch, two views) so the title states
-         the active range instead of promising a fixed year. -->
+    <!-- Two-column row: hourly stats + project distribution -->
     <div class="grid grid-cols-1 gap-6 lg:grid-cols-2">
-      <ChartSection
-        title="Activity heatmap (selected range)"
-        :loading="heatmap.isPending.value"
-        :error="heatmap.isError.value"
-        :empty="!!heatmap.data.value && heatmap.data.value.points.length === 0"
-        @retry="() => heatmap.refetch()"
-      >
-        <!-- Chart body: range heatmap (reserved mount point) -->
-        <div class="py-8 text-center text-sm text-muted-foreground">Range heatmap</div>
-      </ChartSection>
-
-      <StreaksPanel :device-id="deviceIdOrNull" :ide-name="ideNameOrNull" />
-    </div>
-
-    <!-- Three-column row: project / time-of-day / IDE distributions -->
-    <div class="grid grid-cols-1 gap-6 lg:grid-cols-3">
+      <HourlyPanel :device-id="deviceIdOrNull" :ide-name="ideNameOrNull" />
       <DistributionPanel
         type="PROJECTS"
         title="Project distribution"
         :device-id="deviceIdOrNull"
         :ide-name="ideNameOrNull"
       />
+    </div>
+
+    <!-- Two-column row: time-of-day distribution -->
+    <div class="grid grid-cols-1 gap-6 lg:grid-cols-2">
       <DistributionPanel
         type="TIME_OF_DAY"
         title="Time of day distribution"
         :device-id="deviceIdOrNull"
         :ide-name="ideNameOrNull"
       />
-      <DistributionPanel type="IDES" title="IDE distribution" :device-id="deviceIdOrNull" :ide-name="ideNameOrNull" />
     </div>
 
-    <!-- Two-column row: hourly stats + weekday distribution -->
+    <!-- Two-column row: IDE + weekday distributions -->
     <div class="grid grid-cols-1 gap-6 lg:grid-cols-2">
-      <HourlyPanel :device-id="deviceIdOrNull" :ide-name="ideNameOrNull" />
+      <DistributionPanel type="IDES" title="IDE distribution" :device-id="deviceIdOrNull" :ide-name="ideNameOrNull" />
       <DistributionPanel
         type="WEEKDAY"
         title="Weekday distribution"
