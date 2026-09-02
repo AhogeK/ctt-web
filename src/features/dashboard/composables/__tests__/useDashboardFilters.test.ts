@@ -156,4 +156,30 @@ describe('useDashboardFilters', () => {
     Object.assign(routeQuery, { start: customStart, end: today })
     expect(preset.value).toBe('custom')
   })
+
+  it('setHeatmapYear writes the year param and null clears it', () => {
+    const { setHeatmapYear } = useDashboardFilters()
+
+    setHeatmapYear(2025)
+    expect(mockReplace).toHaveBeenLastCalledWith({ query: { year: '2025' } })
+
+    setHeatmapYear(null)
+    expect(mockReplace).toHaveBeenLastCalledWith({ query: {} })
+  })
+
+  it('heatmapYear reads the URL param and surfaces null when unset', () => {
+    const filters = useDashboardFilters()
+    expect(filters.heatmapYear.value).toBeNull()
+
+    Object.assign(routeQuery, { year: '2024' })
+    expect(filters.heatmapYear.value).toBe(2024)
+  })
+
+  it('setHeatmapYear preserves unrelated query params', () => {
+    Object.assign(routeQuery, { deviceId: 'dev-1' })
+    const { setHeatmapYear } = useDashboardFilters()
+
+    setHeatmapYear(2025)
+    expect(mockReplace).toHaveBeenLastCalledWith({ query: { deviceId: 'dev-1', year: '2025' } })
+  })
 })
