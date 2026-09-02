@@ -23,6 +23,7 @@ import DashboardFilters from '../components/DashboardFilters.vue'
 import SummaryCards from '../components/SummaryCards.vue'
 import ChartSection from '../components/ChartSection.vue'
 import HeatmapChart from '../components/HeatmapChart.vue'
+import TrendChart from '../components/TrendChart.vue'
 import HeatmapYearSelect from '../components/HeatmapYearSelect.vue'
 import DistributionPanel from '../components/DistributionPanel.vue'
 import StreaksPanel from '../components/StreaksPanel.vue'
@@ -133,8 +134,8 @@ const heatmap30 = useStatsHeatmap(last30)
         :empty="!!heatmap30.data.value && heatmap30.data.value.points.length === 0"
         @retry="() => heatmap30.refetch()"
       >
-        <!-- Chart body: 30-day line (reserved mount point) -->
-        <div class="py-8 text-center text-sm text-muted-foreground">Trend chart</div>
+        <!-- Chart body: 30-day smooth line + gradient area (filter-independent) -->
+        <TrendChart :points="heatmap30.data.value?.points ?? []" />
       </ChartSection>
 
       <DistributionPanel
