@@ -4,6 +4,7 @@ import {
   getStatsAchievements,
   getStatsDistribution,
   getStatsHeatmap,
+  getStatsHeatmapYears,
   getStatsHourly,
   getStatsIdeFilters,
   getStatsRecent,
@@ -30,6 +31,7 @@ export const STATS_QUERY_KEYS = {
   hourly: (filter?: StatsFilterParams) => ['stats', 'hourly', filterKey(filter)] as const,
   recent: (limit: number, filter?: StatsFilterParams) => ['stats', 'recent', limit, filterKey(filter)] as const,
   achievements: () => ['stats', 'achievements'] as const,
+  heatmapYears: () => ['stats', 'heatmap-years'] as const,
   ideFilters: () => ['stats', 'ide-filters'] as const,
 } as const
 
@@ -146,5 +148,18 @@ export function useStatsIdeFilters() {
     queryKey: STATS_QUERY_KEYS.ideFilters(),
     queryFn: () => getStatsIdeFilters(),
     staleTime: 1000 * 60,
+  })
+}
+
+/**
+ * Calendar years containing valid coding sessions, newest first — feed for
+ * the heatmap year dropdown. Server caches for 60s; the aligned client
+ * staleTime avoids hammering the endpoint on re-mounts.
+ */
+export function useStatsHeatmapYears() {
+  return useQuery({
+    queryKey: STATS_QUERY_KEYS.heatmapYears(),
+    queryFn: () => getStatsHeatmapYears(),
+    staleTime: STATS_LONG_STALE_TIME,
   })
 }

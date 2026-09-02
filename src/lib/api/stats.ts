@@ -5,13 +5,15 @@ import {
   AchievementSchema,
   DistributionResponseSchema,
   HeatmapResponseSchema,
+  HeatmapYearsResponseSchema,
   HourlyDistributionResponseSchema,
   RecentSessionSchema,
   StatsSummaryResponseSchema,
   StreakStatsResponseSchema,
   type DistributionType,
-  type StatsSummaryResponse,
   type HeatmapResponse,
+  type HeatmapYearsResponse,
+  type StatsSummaryResponse,
   type StreakStatsResponse,
   type DistributionResponse,
   type HourlyDistributionResponse,
@@ -65,6 +67,26 @@ export async function getStatsIdeFilters(): Promise<string[]> {
 
   const wrapped = RestApiResponseSchema.parse(response)
   return z.array(z.string()).parse(wrapped.data)
+}
+
+/**
+ * Fetches the calendar years containing valid coding sessions for the
+ * current user, newest first, for the heatmap year dropdown. Derived from
+ * session data (start < end), not the lazily bootstrapped materialized
+ * table, so cold-start users never get a truncated list.
+ *
+ * Endpoint: GET /api/v1/stats/heatmap-years
+ *
+ * @returns Years ordered newest first; empty array when the user has no
+ * valid sessions
+ */
+export async function getStatsHeatmapYears(): Promise<HeatmapYearsResponse> {
+  const response = await apiFetch<unknown>('/api/v1/stats/heatmap-years', {
+    method: 'GET',
+  })
+
+  const wrapped = RestApiResponseSchema.parse(response)
+  return HeatmapYearsResponseSchema.parse(wrapped.data)
 }
 
 /**

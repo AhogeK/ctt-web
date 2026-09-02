@@ -3,6 +3,7 @@ import {
   getStatsAchievements,
   getStatsDistribution,
   getStatsHeatmap,
+  getStatsHeatmapYears,
   getStatsHourly,
   getStatsRecent,
   getStatsStreaks,
@@ -201,6 +202,31 @@ describe('getStatsAchievements', () => {
     expect(result).toHaveLength(1)
     expect(result[0]!.unlocked).toBe(false)
     expect(result[0]!.unlockedAt).toBeNull()
+  })
+})
+
+describe('getStatsHeatmapYears', () => {
+  it('sends GET to heatmap-years and returns parsed years newest-first', async () => {
+    mockApiFetch.mockResolvedValue(statsEnvelope([2026, 2025, 2024]))
+
+    const result = await getStatsHeatmapYears()
+
+    const call = mockApiFetch.mock.calls[0]!
+    expect(call[0]).toBe('/api/v1/stats/heatmap-years')
+    expect(call[1]!.method).toBe('GET')
+    expect(result).toEqual([2026, 2025, 2024])
+  })
+
+  it('returns an empty array for a user with no valid sessions', async () => {
+    mockApiFetch.mockResolvedValue(statsEnvelope([]))
+
+    await expect(getStatsHeatmapYears()).resolves.toEqual([])
+  })
+
+  it('rejects non-integer entries (schema guard)', async () => {
+    mockApiFetch.mockResolvedValue(statsEnvelope([2026, '2025']))
+
+    await expect(getStatsHeatmapYears()).rejects.toThrow('Invalid input')
   })
 })
 
