@@ -117,14 +117,22 @@ export const AchievementSchema = z.object({
   unit: z.string(),
 })
 
+/**
+ * Calendar years with valid coding sessions, newest first (backend derives
+ * from session start years, not the materialized table). Feed for the
+ * heatmap year dropdown.
+ */
+export const HeatmapYearsResponseSchema = z.array(z.number().int())
+
 // Type exports (z.infer — never hand-write interfaces)
 export type StatsSummaryResponse = z.infer<typeof StatsSummaryResponseSchema>
 export type DailyStatPoint = z.infer<typeof DailyStatPointSchema>
 export type HeatmapResponse = z.infer<typeof HeatmapResponseSchema>
+export type RecentSession = z.infer<typeof RecentSessionSchema>
+export type Achievement = z.infer<typeof AchievementSchema>
 export type StreakStatsResponse = z.infer<typeof StreakStatsResponseSchema>
 export type DistributionEntry = z.infer<typeof DistributionEntrySchema>
 export type DistributionResponse = z.infer<typeof DistributionResponseSchema>
 export type HourlyStatPoint = z.infer<typeof HourlyStatPointSchema>
 export type HourlyDistributionResponse = z.infer<typeof HourlyDistributionResponseSchema>
-export type RecentSession = z.infer<typeof RecentSessionSchema>
-export type Achievement = z.infer<typeof AchievementSchema>
+export type HeatmapYearsResponse = z.infer<typeof HeatmapYearsResponseSchema>

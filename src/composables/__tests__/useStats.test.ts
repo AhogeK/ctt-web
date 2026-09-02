@@ -4,6 +4,7 @@ import {
   useStatsAchievements,
   useStatsDistribution,
   useStatsHeatmap,
+  useStatsHeatmapYears,
   useStatsHourly,
   useStatsRecent,
   useStatsStreaks,
@@ -15,8 +16,8 @@ vi.mock('@tanstack/vue-query', () => ({
 }))
 
 vi.mock('@/lib/api/stats', () => ({
-  getStatsSummary: vi.fn<() => Promise<unknown>>(() => Promise.resolve({})),
   getStatsHeatmap: vi.fn<() => Promise<unknown>>(() => Promise.resolve({ points: [] })),
+  getStatsHeatmapYears: vi.fn<() => Promise<unknown>>(() => Promise.resolve([2026])),
   getStatsStreaks: vi.fn<() => Promise<unknown>>(() => Promise.resolve({ current: 0, max: 0 })),
   getStatsDistribution: vi.fn<() => Promise<unknown>>(() => Promise.resolve({ type: 'LANGUAGES', entries: [] })),
   getStatsHourly: vi.fn<() => Promise<unknown>>(() => Promise.resolve({ points: [], activeDays: 0 })),
@@ -134,5 +135,13 @@ describe('recent limit default', () => {
   it('uses DEFAULT_RECENT_LIMIT (20) when limit omitted', () => {
     useStatsRecent({})
     expect(toValue(queryConfig?.queryKey)).toEqual(['stats', 'recent', 20, 'all'])
+  })
+})
+
+describe('useStatsHeatmapYears', () => {
+  it('uses the heatmap-years key with 60s staleTime', () => {
+    useStatsHeatmapYears()
+    expect(toValue(queryConfig?.queryKey)).toEqual(['stats', 'heatmap-years'])
+    expect(queryConfig?.staleTime).toBe(60_000)
   })
 })
