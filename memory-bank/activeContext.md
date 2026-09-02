@@ -2,10 +2,21 @@
 
 ## Current Status
 
-**Phase**: Heatmap bucket recalibration (pending commit)
-**Version**: 0.22.1 (2026-09-02)
+**Phase**: 30-day trend chart (pending commit)
+**Version**: 0.23.0 (2026-09-02)
 **Branch**: develop
-**Tests**: 1197/1197 unit; vue-tsc + lint 0 error 0 warning; build green
+**Tests**: 1203/1203 unit; vue-tsc + lint 0 error 0 warning; build green
+
+## Recent Activity (v0.23.0 — 2026-09-02)
+
+### TrendChart: 30-day coding activity trend (placeholder → live chart)
+
+- **Component** (`features/dashboard/components/TrendChart.vue`): ECharts smooth line (smooth 0.4) + gradient stroke + vertical linear-gradient area — single brand-indigo family by DESIGN.md, deliberately NOT the plugin's blue→green two-hue ramp.
+- **Data**: reuses the existing `heatmap30` query (same HeatmapResponse contract, zero new endpoint); filter-independent window (last 30 days computed in DashboardHome) — mirror of the plugin panel's behavior.
+- **Line gradient v3-final (user feedback round 4 — "top/bottom contrast not obvious enough")**: palette widened — dark `lineTop #b9c1ff` / `lineBottom #4a53b8`, light `#8a97f2` / `#3d49ad`, midstop `#8290f0`; channel delta up ~55% in light mode (50→77), dark verified by pixel sample (top rgb(137,150,242) vs bottom rgb(64,77,176)). Still DESIGN.md indigo family — spread widened within the hue, no new hue introduced.
+- **echarts-setup**: +LineChart + GraphicComponent registrations (both tree-shaken; GraphicComponent omission caused the silent no-op above).
+- **Tests**: +5 TrendChart component cases (init-once/setOption-on-change, equidistant-scale + split-line ramp assertions, dense-series mapping, a11y window label, dispose). Gotcha: `vi.mock` factories are hoisted — mocks referenced inside must come from `vi.hoisted` (test went through 3 iterations to land the shape).
+- **Browser-verified final** (real backend, 1h peaks): gridlines `0 → 1.25 h` equidistant with visible bottom→top indigo fade (hue + alpha) in BOTH themes via real Appearance menu; peak plateau sits below the 1h line. Full suite 1203/1203, lint/tc/build green. Version 0.22.1 → 0.23.0 (MINOR, new chart).
 
 ## Recent Activity (v0.22.1 — 2026-09-02)
 
