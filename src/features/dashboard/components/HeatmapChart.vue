@@ -7,10 +7,11 @@
  * GitHub-style: columns are weeks, rows are weekdays (Mon-first). Tooltip
  * shows the full date and formatted duration.
  *
- * Bucket coloring matches the plugin panel: <5min / 5–15min / 15–60min /
- * 1–3h / 3–6h / >6h. Discrete duration buckets (not a continuous ramp) so a
- * 20-minute day is visibly different from a quiet day regardless of the
- * range's maximum — the plugin-reference look.
+ * Discrete duration buckets (not a continuous ramp): <15min / 15–60min /
+ * 1–2h / 2–5h / 5–8h / >8h — precision concentrated in the 1–8h core range
+ * where most coding days fall (web-side calibration; the plugin panel still
+ * uses its original <5m/5–15m/15m–1h/1–3h/3–6h/>6h ramp). A 20-minute day is
+ * visibly different from a quiet day regardless of the range's maximum.
  *
  * Rendering is ECharts (tree-shaken: canvas renderer + heatmap series +
  * calendar coordinate + tooltip — see ./echarts-setup). Square cells adapt
@@ -66,7 +67,7 @@ interface Palette {
   tooltipText: string
 }
 
-const LEGEND_LABELS = ['< 5 min', '5–15 min', '15–60 min', '1–3 h', '3–6 h', '> 6 h'] as const
+const LEGEND_LABELS = ['< 15 min', '15–60 min', '1–2 h', '2–5 h', '5–8 h', '> 8 h'] as const
 
 const palette = computed<Palette>(() => {
   const dark = theme.isDark
@@ -91,8 +92,8 @@ const palette = computed<Palette>(() => {
       }
 })
 
-/** Duration buckets in seconds — mirrors the plugin heatmap legend. */
-const BUCKETS = [5 * 60, 15 * 60, 60 * 60, 3 * 3600, 6 * 3600] as const
+/** Duration bucket upper bounds in seconds (bucket i covers (BUCKETS[i-1], BUCKETS[i]]). */
+const BUCKETS = [15 * 60, 60 * 60, 2 * 3600, 5 * 3600, 8 * 3600] as const
 
 function bucketIndex(seconds: number): number {
   let idx = 0
