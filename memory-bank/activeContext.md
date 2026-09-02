@@ -2,8 +2,8 @@
 
 ## Current Status
 
-**Phase**: Dashboard Phase 3 D2: dashboard framework + useDashboardFilters
-**Version**: 0.20.0 (2026-09-01)
+**Phase**: Dashboard Phase 3 D4: heatmap chart (pending commit)
+**Version**: 0.21.0 (2026-09-01)
 **Branch**: develop
 **Tests**: 1172/1172 unit; vue-tsc + lint 0 error 0 warning
 
@@ -73,6 +73,17 @@
 - **JSDoc**: params.ideName added to all 6 endpoint docs. **Dead Loader2 mock** removed from ChartSection.test.
 - Deliberately NOT done (judgement): API-level ideName test cases (contract is a 1-line query spread, covered end-to-end by browser verification; D1's 14-case suite covered the schema wiring this builds on); the unsound `as Exclude<...>` cast in DashboardFilters is guarded by the fixed SelectItem value set.
 - Full suite: 1181/1181 unit + 50/50 E2E, lint/type-check/build green.
+
+### D4: heatmap chart implemented (v0.21.0, in progress — pending commit)
+
+- **HeatmapChart.vue** (`features/dashboard/components/`): GitHub-style calendar heatmap. ECharts 6 tree-shaken via `src/components/charts/echarts-setup.ts` (core + CanvasRenderer + HeatmapChart + Calendar + Tooltip + VisualMap, `echarts/renderers` export path). Square cells sized from live container width (`floor(usable/53)` clamped 7–16), chart height derived from cell size (no fixed h-*, no dead space). Palette from theme store (isDark watch → setOption update, never re-init → no flicker); tooltip = weekday + date + formatDuration; zero days render as visible quiet cells (#31343a dark / #e4e6e8 light) with 1px card-bg gaps and 3px radius.
+- **Rolling 12-month render window**: All time = 14 years → calendar squeeze made cells invisible (first browser pass showed a thin band). Render trims to the trailing 366 days; full range stays queryable via date filter. No horizontal scrollbar (user rejected scroll approach).
+- **Duplicate panel removed**: the placeholder-era "Activity heatmap (selected range)" mirrored the primary heatmap with the same query — deleted (live chart made the mirror visibly redundant); panels rebalanced to 2-col rows (streaks+hourly, project+time, IDE+weekday).
+- **Layout fixes**: ChartSection gets `min-w-0`; heatmap wrapper `w-0 min-w-full overflow-x-auto` pattern was rejected with the scroll approach → final: content-height chart, no overflow needed. Placeholder panels centered in `min-h-36` so rows look intentional next to the heatmap card.
+- **Chunk**: vite.config codeSplitting adds `vendor-echarts` group (echarts+zrender = 467KB raw / 156KB gzip, lazy-loaded with the dashboard route); vendor chunk back to 637KB raw / 205KB gzip (was 350KB with echarts merged). Chart body itself lives in feature-dashboard chunk (8KB gzip).
+- **Verified in browser** (1920×1080, dark + light): square cells visible, tooltip renders (Tue, 2026-02-17 / 0s coded), theme switch updates palette via option update, empty/quiet cells distinguishable. Unit 1181/1181, lint/type-check/build green. Version 0.20.0 → 0.21.0 pending commit.
+- **Typography + color fixes from user screenshots** (2 rounds): bucket colors were uniform because ECharts visualMap defaults to the LAST data dimension (bucket hint 0-5) while pieces were authored in seconds — fixed with `dimension: 1` (colors now match duration buckets exactly: 28800s → brightest). Palette switched to DESIGN.md brand indigo monotone ramp (#5e6ad2-derived; green was wrong). Footer/legend typography aligned with SummaryCards language: uppercase tracked muted labels + white tabular values (Total active days 15 · Max streak 3d · Current streak 1d), legend centered tracked. Light theme quiet cells read correctly (#e9ebf0 on white cards).
+- **Panel title: unified with summary-card label language** (user feedback ×2: big H3 "宣兵夺主", then plain body style "缺少设计" — final = card-label treatment): 11px uppercase tracked muted, identical to the TODAY/DAILY AVG label row. H2 kept for a11y semantics, styled as label. Header spacing back to mb-4. All 9 panels inherit via ChartSection.
 
 ### Notion plan sync (post-delivery bookkeeping)
 
