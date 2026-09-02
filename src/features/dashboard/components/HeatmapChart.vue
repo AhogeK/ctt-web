@@ -27,6 +27,7 @@ import { formatDuration } from '@/lib/utils'
 import { useStatsStreaks } from '@/composables/useStats'
 import { useThemeStore } from '@/stores/theme'
 import '@/components/charts/echarts-setup'
+import { heatmapRenderWindow, countWeekColumns } from './heatmap-window'
 
 const props = defineProps<{
   /** Dense daily points (date + seconds) in date order */
@@ -35,6 +36,11 @@ const props = defineProps<{
   deviceId: string | null
   /** Exact IDE-name filter (null → all IDEs); mutually exclusive with deviceId */
   ideName: string | null
+  /**
+   * Human-readable render window for the a11y description (e.g.
+   * "2025" for a year view, "the last 12 months" for the rolling default).
+   */
+  windowLabel?: string
 }>()
 
 const theme = useThemeStore()
@@ -100,11 +106,20 @@ const WEEKDAY_NAMES = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat']
 /** Category rows for the heatmap grid (Mon-first). */
 const DOW_LABELS = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun']
 
-/** Rolling window — slice(-365) + Monday backfill fills exactly 53 columns (371 cells). */
-const renderedPoints = computed(() => props.points.slice(-365))
+/**
+ * Render window: dense points trimmed to the trailing 366-day span (see
+ * ./heatmap-window). Year mode feeds exactly one calendar year, which always
+ * fits — no point is dropped, including Jan 1 of leap years.
+ */
+const renderedPoints = computed(() => heatmapRenderWindow(props.points))
+
+/**
+ * Week columns for the geometry loop — derived from the real date span,
+ * floored at 53 so a partial trailing window still fills a GitHub-like grid.
+ */
+const weekColumns = computed(() => Math.max(53, countWeekColumns(renderedPoints.value)))
 
 // ── Geometry: one closed loop — cell → fonts → labelBand → pitch → cell ──
-const WEEKS = 53
 const PAD = 12
 
 function clamp(n: number, lo: number, hi: number): number {
@@ -123,17 +138,16 @@ const geometry = computed(() => {
     // One shared gap between label and grid for both axes (month→top row,
     // weekday→first column): identical spacing on both sides.
     const labelGap = clamp(Math.round(cell * 1.2), 8, 16)
-    const labelBand =
-      labelGap + Math.ceil(weekdayFont * 2.3) + Math.ceil(cell / 2) + 4
+    const labelBand = labelGap + Math.ceil(weekdayFont * 2.3) + Math.ceil(cell / 2) + 4
     return { cell, pitch, monthFont, weekdayFont, labelGap, labelBand }
   }
 
+  const weeks = weekColumns.value
   // Two passes break the pitch → cell → font → labelBand → pitch loop.
-  let g = derive(Math.max(12, Math.floor((availW - 40 - PAD) / WEEKS)))
-  g = derive(Math.max(12, Math.floor((availW - g.labelBand - PAD) / WEEKS)))
+  let g = derive(Math.max(12, Math.floor((availW - 40 - PAD) / weeks)))
+  g = derive(Math.max(12, Math.floor((availW - g.labelBand - PAD) / weeks)))
 
-  const gridLeft =
-    g.labelBand + Math.round((availW - g.labelBand - PAD - WEEKS * g.pitch) / 2)
+  const gridLeft = g.labelBand + Math.round((availW - g.labelBand - PAD - weeks * g.pitch) / 2)
   return { ...g, gridLeft }
 })
 
@@ -143,10 +157,8 @@ const chartHeight = computed(() => {
   return lastCellBottom + 14
 })
 
-
-
 function buildOption(points: DailyStatPoint[], pal: Palette) {
-  // Rolling 12-month window (see renderedPoints).
+  // Windowed points (see renderedPoints / heatmap-window).
   const first = points[0]?.date ?? '1970-01-01'
   const last = points[points.length - 1]?.date ?? first
 
@@ -164,9 +176,7 @@ function buildOption(points: DailyStatPoint[], pal: Palette) {
   const startDow = (start.getDay() + 6) % 7 // Mon=0
   const gridStart = new Date(start)
   gridStart.setDate(gridStart.getDate() - startDow)
-  const totalDays = Math.round(
-    (new Date(`${last}T00:00:00`).getTime() - gridStart.getTime()) / 86_400_000,
-  ) + 1
+  const totalDays = Math.round((new Date(`${last}T00:00:00`).getTime() - gridStart.getTime()) / 86_400_000) + 1
 
   interface Cell {
     date: string
@@ -329,9 +339,15 @@ watch(palette, render)
 <template>
   <div>
     <!-- Duration legend, plugin-parity -->
-    <div class="mb-3 flex flex-wrap items-center justify-center gap-x-4 gap-y-1 text-[10px] font-medium uppercase tracking-wider text-muted-foreground">
+    <div
+      class="mb-3 flex flex-wrap items-center justify-center gap-x-4 gap-y-1 text-[10px] font-medium uppercase tracking-wider text-muted-foreground"
+    >
       <span class="flex items-center gap-1.5">
-        <span class="inline-block h-3 w-3 rounded-[3px]" :style="{ background: palette.quietCell }" aria-hidden="true" />No coding
+        <span
+          class="inline-block h-3 w-3 rounded-[3px]"
+          :style="{ background: palette.quietCell }"
+          aria-hidden="true"
+        />No coding
       </span>
       <span v-for="(label, i) in LEGEND_LABELS" :key="label" class="flex items-center gap-1.5">
         <span
@@ -346,16 +362,19 @@ watch(palette, render)
       class="mx-auto w-full max-w-full"
       :style="{ height: `${chartHeight}px` }"
       role="img"
-      :aria-label="`Coding heatmap for the last 12 months, ${renderedPoints.length} days from ${renderedPoints[0]?.date ?? ''} to ${renderedPoints[renderedPoints.length - 1]?.date ?? ''}`"
+      :aria-label="`Coding heatmap for ${props.windowLabel ?? 'the last 12 months'}, ${renderedPoints.length} days from ${renderedPoints[0]?.date ?? ''} to ${renderedPoints[renderedPoints.length - 1]?.date ?? ''}`"
     />
 
     <!-- Plugin-parity footer: activity totals + streak context (quiet metadata) -->
-    <div class="mt-2 flex flex-wrap items-center justify-between gap-x-4 gap-y-1 text-[10px] tracking-wide text-muted-foreground/90">
-      <span>Total active days: <span class="tabular-nums">{{ activeDays }}</span></span>
+    <div
+      class="mt-2 flex flex-wrap items-center justify-between gap-x-4 gap-y-1 text-[10px] tracking-wide text-muted-foreground/90"
+    >
+      <span
+        >Total active days: <span class="tabular-nums">{{ activeDays }}</span></span
+      >
       <span v-if="streaks.data.value">
-        Max streak: <span class="tabular-nums">{{ streaks.data.value.max }}d</span>
-        ·
-        Current streak: <span class="tabular-nums">{{ streaks.data.value.current }}d</span>
+        Max streak: <span class="tabular-nums">{{ streaks.data.value.max }}d</span> · Current streak:
+        <span class="tabular-nums">{{ streaks.data.value.current }}d</span>
       </span>
     </div>
   </div>
