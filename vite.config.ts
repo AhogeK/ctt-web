@@ -183,6 +183,10 @@ export default defineConfig({
         codeSplitting: {
           groups: [
             {
+              test: /node_modules\/(echarts|zrender)/,
+              name: 'vendor-echarts',
+            },
+            {
               test: /node_modules/,
               name: 'vendor',
             },

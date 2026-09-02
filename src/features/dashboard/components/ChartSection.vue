@@ -11,7 +11,7 @@ import { AlertTriangle } from '@lucide/vue'
 import { Button } from '@/components/ui/button'
 import { Skeleton } from '@/components/ui/skeleton'
 
-defineProps<{
+const props = defineProps<{
   /** Section heading shown above the chart area */
   title: string
   /** True while the underlying query is fetching */
@@ -29,9 +29,9 @@ defineEmits<{
 </script>
 
 <template>
-  <section class="rounded-lg border border-border/50 bg-card p-4">
+  <section :class="['group min-w-0 rounded-xl border border-border/60 p-4 transition-colors hover:border-border', 'group min-w-0 rounded-xl border border-border/60 bg-linear-to-b from-card to-muted/40 p-4 transition-colors hover:border-border']">
     <header class="mb-4">
-      <h2 class="text-sm font-medium text-foreground">{{ title }}</h2>
+      <h2 class="text-[11px] font-medium uppercase tracking-wider text-muted-foreground">{{ title }}</h2>
     </header>
 
     <!-- Loading -->
@@ -49,7 +49,7 @@ defineEmits<{
     </div>
 
     <!-- Empty -->
-    <div v-else-if="empty" class="py-8 text-center text-sm text-muted-foreground" data-testid="chart-empty">
+    <div v-else-if="empty" class="flex min-h-36 items-center justify-center text-center text-sm text-muted-foreground" data-testid="chart-empty">
       No data for the selected range
     </div>
 

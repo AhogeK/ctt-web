@@ -41,6 +41,6 @@ const isEmpty = computed(() => {
     @retry="() => streaks.refetch()"
   >
     <!-- Chart mount point: streak calendar strip (reserved for a later pass) -->
-    <div class="py-8 text-center text-sm text-muted-foreground">Streak calendar</div>
+    <div class="flex min-h-36 items-center justify-center text-sm text-muted-foreground">Streak calendar</div>
   </ChartSection>
 </template>
