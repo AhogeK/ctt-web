@@ -2,10 +2,23 @@
 
 ## Current Status
 
-**Phase**: Dashboard Phase 3 D4: heatmap chart (pending commit)
-**Version**: 0.21.0 (2026-09-01)
+**Phase**: Dashboard heatmap year selector (pending commit)
+**Version**: 0.22.0 (2026-09-02)
 **Branch**: develop
-**Tests**: 1172/1172 unit; vue-tsc + lint 0 error 0 warning
+**Tests**: 1197/1197 unit; vue-tsc + lint 0 error 0 warning; build green
+
+## Recent Activity (v0.22.0 — 2026-09-02)
+
+### Heatmap year selector (backend ctt-server v0.61.0 `GET /api/v1/stats/heatmap-years`)
+
+- **Contract (R13, verified from StatsController/StatsService source)**: `heatmap-years` returns `List<Integer>` newest-first, derived from valid sessions (`start_time < end_time`, same aggregation rule as heatmap — listed years always render non-empty), empty user `[]`, JWT/READ 60/min. `data: [2026,2025,2024]` live-probed with a bootstrapped account (12 sessions across 2024/2025/2026 via device-register + sync/push).
+- **Contract layer**: `HeatmapYearsResponseSchema = z.array(z.number().int())` (stats.schema.ts); `getStatsHeatmapYears()` (stats.ts, mirrors ide-filters two-step parse); `STATS_QUERY_KEYS.heatmapYears()` + `useStatsHeatmapYears()` (60s staleTime, server-cache aligned).
+- **Design correction (user, same round)**: the heatmap's time axis is owned EXCLUSIVELY by the year selector — "Last 12 months" is a FIXED rolling window (366-day trailing span computed in DashboardHome), NOT the filter-bar range. Period (start/end) drives summary cards + all other panels only. Verified: switching Period (90d/This year) leaves `?year=` and the heatmap aria untouched; picking a year coexists with any Period range (`?year=2025&start=…&end=…`).
+- **UI**: new `HeatmapYearSelect.vue` (Select with fixed "Last 12 months" item mapping null↔'rolling'); `ChartSection` gains optional `actions` header slot (hidden on loading/error/empty); DashboardHome `heatmapRange` computed = rolling 366-day span (no year) or `Y-01-01..Y-12-31` (year picked) + `windowLabel` prop for a11y.
+- **Render-window root-cause fix (new `heatmap-window.ts` pure helpers, 9 unit tests)**: old `slice(-365)` dropped Jan 1 of leap years (366-point years) and the hard `WEEKS=53` would clip a 54-column grid (leap year starting Sunday, e.g. 2012: backfill → 372 days). Now: `heatmapRenderWindow` trims trailing 366-day span (short spans untouched), `countWeekColumns` derives columns from the real date span (geometry floors at 53 so partial windows still fill a GitHub grid). Verified live: 2024 = 366 days / 2025 = 365 days, both full Jan–Dec grids.
+- **Browser-verified** (headless CDP instance, real backend): selector lists [Last 12 months, 2026, 2025, 2024]; pick 2024 → `?year=2024` + aria "Coding heatmap for 2024, 366 days from 2024-01-01 to 2024-12-31"; reload restores; 2025 ↔ default switch clears URL; light + dark palettes correct (dark verified through the real Appearance submenu). NOTE: headless hCaptcha widget does not auto-pass — login done via scripted API + localStorage token injection (initializeAuth validates via refresh endpoint; UI captcha untestable headless).
+- **Pre-existing quirk documented**: App.vue:56 `setTheme('auto')` on every mount stomps a persisted dark preference on reload (theme resets to System each boot) — pre-existing, not touched this round.
+- Tests 1181→1197 (+16: 9 heatmap-window, 3 getStatsHeatmapYears, 1 useStatsHeatmapYears, 3 useDashboardFilters year). type-check/lint/build green. Version 0.21.0 → 0.22.0 (MINOR, new feature).
 
 ## Recent Activity (v0.20.0 — 2026-09-01)
 
