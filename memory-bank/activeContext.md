@@ -2,10 +2,18 @@
 
 ## Current Status
 
-**Phase**: Dashboard heatmap year selector (pending commit)
-**Version**: 0.22.0 (2026-09-02)
+**Phase**: Heatmap bucket recalibration (pending commit)
+**Version**: 0.22.1 (2026-09-02)
 **Branch**: develop
 **Tests**: 1197/1197 unit; vue-tsc + lint 0 error 0 warning; build green
+
+## Recent Activity (v0.22.1 — 2026-09-02)
+
+### Heatmap bucket recalibration (user direction)
+
+- **Buckets**: `<5min / 5–15min / 15–60min / 1–3h / 3–6h / >6h` (plugin parity) → `<15min / 15–60min / 1–2h / 2–5h / 5–8h / >8h`. Rationale (user proposal + my 15m lower-bound tweak): old low-end was too fine (5m vs 15m days look identical on a year grid) while the 1–8h core where most days fall was coarse. Precision moved from the edges to the middle. LEGEND_LABELS + BUCKETS + component JSDoc updated together; plugin panel intentionally unchanged (parity break documented).
+- **Boundary probe** (node, 10 edge cases): 15m→idx0, 15m+1s→idx1, 1h→idx1, 1h+1s→idx2, 2h→idx2, 3h→idx3, 5h→idx3, 8h→idx4, 8h+1s→idx5 — bucketIndex semantics (`seconds > bound` increments) preserved.
+- **Browser-verified** (real backend): legend renders the 6 new labels; the seeded 1h days fill with bucket-1 color (#b7bfec, canvas pixel-sampled); light + dark themes both confirmed via real Appearance menu. Full suite 1197/1197, lint/tc/build green. Version 0.22.0 → 0.22.1 (visual calibration → PATCH).
 
 ## Recent Activity (v0.22.0 — 2026-09-02)
 
