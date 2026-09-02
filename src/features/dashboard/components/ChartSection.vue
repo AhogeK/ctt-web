@@ -6,6 +6,9 @@
  *
  * Slot content is rendered only when data is ready (not loading, no error,
  * not empty). Retry emits `retry` so the owner can refetch its query.
+ * The optional `actions` slot renders in the header next to the title,
+ * under the same visibility rule — for panel-scoped controls like the
+ * heatmap year selector.
  */
 import { AlertTriangle } from '@lucide/vue'
 import { Button } from '@/components/ui/button'
@@ -29,9 +32,19 @@ defineEmits<{
 </script>
 
 <template>
-  <section :class="['group min-w-0 rounded-xl border border-border/60 p-4 transition-colors hover:border-border', 'group min-w-0 rounded-xl border border-border/60 bg-linear-to-b from-card to-muted/40 p-4 transition-colors hover:border-border']">
-    <header class="mb-4">
+  <section
+    :class="[
+      'group min-w-0 rounded-xl border border-border/60 p-4 transition-colors hover:border-border',
+      'group min-w-0 rounded-xl border border-border/60 bg-linear-to-b from-card to-muted/40 p-4 transition-colors hover:border-border',
+    ]"
+  >
+    <header class="mb-4 flex items-center justify-between gap-3">
       <h2 class="text-[11px] font-medium uppercase tracking-wider text-muted-foreground">{{ title }}</h2>
+      <!-- Optional panel-scoped actions (e.g. the heatmap year selector);
+           hidden while loading/error/empty so a dead control never shows -->
+      <div v-if="!loading && !error && !empty" class="flex items-center gap-2">
+        <slot name="actions" />
+      </div>
     </header>
 
     <!-- Loading -->
@@ -49,7 +62,11 @@ defineEmits<{
     </div>
 
     <!-- Empty -->
-    <div v-else-if="empty" class="flex min-h-36 items-center justify-center text-center text-sm text-muted-foreground" data-testid="chart-empty">
+    <div
+      v-else-if="empty"
+      class="flex min-h-36 items-center justify-center text-center text-sm text-muted-foreground"
+      data-testid="chart-empty"
+    >
       No data for the selected range
     </div>
 

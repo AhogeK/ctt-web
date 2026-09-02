@@ -88,6 +88,17 @@ export function useDashboardFilters() {
   const deviceId = computed(() => queryString(route.query.deviceId))
   /** Exact IDE-name filter, or undefined for all IDEs. */
   const ideName = computed(() => queryString(route.query.ideName))
+  /**
+   * Heatmap panel year selection (yyyy as string), or undefined for the
+   * default rolling 12-month view. Panel-scoped: it re-keys only the
+   * heatmap query and never touches the filter-bar range.
+   */
+  const heatmapYear = computed(() => {
+    const raw = queryString(route.query.year)
+    if (raw === undefined) return null
+    const year = Number(raw)
+    return Number.isInteger(year) && year >= 2000 && year <= 9999 ? year : null
+  })
   /** Preset the current range maps to ('custom' when it matches none). */
   const preset = computed(() => inferPreset(start.value, end.value))
 
@@ -138,6 +149,15 @@ export function useDashboardFilters() {
   }
 
   /**
+   * Select the heatmap year view (yyyy) or clear it (null → rolling
+   * 12-month default). Independent of the filter-bar range: the year view
+   * is heatmap-panel context, so start/end stay untouched.
+   */
+  function setHeatmapYear(year: number | null): void {
+    updateQuery({ year: year === null ? undefined : String(year) })
+  }
+
+  /**
    * Origin filter in API params shape (undefined = unfiltered), shared by
    * every stats consumer so the null/undefined conversion lives in one place.
    */
@@ -147,17 +167,18 @@ export function useDashboardFilters() {
   }))
   const deviceIdOrNull = computed(() => deviceId.value ?? null)
   const ideNameOrNull = computed(() => ideName.value ?? null)
-
   return {
     start,
     end,
     deviceId: deviceIdOrNull,
     ideName: ideNameOrNull,
+    heatmapYear,
     originFilter,
     preset,
     setDateRange,
     applyPreset,
     setDevice,
     setIde,
+    setHeatmapYear,
   }
 }

@@ -10,18 +10,20 @@
  * The heat-map chart body is live (ECharts); other chart bodies remain
  * reserved mount points for later passes.
  *
- * Filters live in the URL (useDashboardFilters): date range presets + custom
- * range + origin-device filter. Changing them re-keys the stats queries
- * (keys include range and deviceId), so every chart refetches for the new
- * selection.
+ * State lives in the URL (useDashboardFilters): the filter bar (date range
+ * presets + custom range + device/IDE origin) drives the summary cards and
+ * the distribution/streak/hourly panels; the heatmap's time axis is owned
+ * exclusively by its own year selector (?year=, "Last 12 months" rolling
+ * default). Changing any of them re-keys the affected stats queries.
  */
 import { computed } from 'vue'
-import { useStatsHeatmap } from '@/composables/useStats'
-import { ALL_TIME_START, formatDate, useDashboardFilters } from '../composables/useDashboardFilters'
+import { useStatsHeatmap, useStatsHeatmapYears } from '@/composables/useStats'
+import { formatDate, useDashboardFilters } from '../composables/useDashboardFilters'
 import DashboardFilters from '../components/DashboardFilters.vue'
 import SummaryCards from '../components/SummaryCards.vue'
 import ChartSection from '../components/ChartSection.vue'
 import HeatmapChart from '../components/HeatmapChart.vue'
+import HeatmapYearSelect from '../components/HeatmapYearSelect.vue'
 import DistributionPanel from '../components/DistributionPanel.vue'
 import StreaksPanel from '../components/StreaksPanel.vue'
 import HourlyPanel from '../components/HourlyPanel.vue'
@@ -32,22 +34,32 @@ const {
   originFilter,
   deviceId: deviceIdOrNull,
   ideName: ideNameOrNull,
+  heatmapYear,
   preset,
   setDateRange,
   applyPreset,
   setDevice,
   setIde,
+  setHeatmapYear,
 } = useDashboardFilters()
-// "No URL params" means All time: resolve an explicit backend range (the
-// backend's own no-param default would be this calendar year only).
-const effectiveRange = computed(() => ({
-  start: start.value ?? ALL_TIME_START,
-  end: end.value ?? formatDate(new Date()),
+const heatmapYears = useStatsHeatmapYears()
+// The heatmap panel's time axis is owned EXCLUSIVELY by the year selector:
+// "Last 12 months" (no ?year=) is a fixed rolling window, and picking a year
+// shows that calendar year. The filter-bar Period (start/end) drives every
+// other panel but never the heatmap.
+const today = new Date()
+const rollingRange = computed(() => ({
+  start: formatDate(new Date(today.getTime() - 365 * 86_400_000)),
+  end: formatDate(today),
 }))
-const heatmap = useStatsHeatmap(computed(() => ({ ...effectiveRange.value, ...originFilter.value })))
+const heatmapRange = computed(() => {
+  if (heatmapYear.value === null) return rollingRange.value
+  return { start: `${heatmapYear.value}-01-01`, end: `${heatmapYear.value}-12-31` }
+})
+const heatmap = useStatsHeatmap(computed(() => ({ ...heatmapRange.value, ...originFilter.value })))
+
 // The 30-day trend panel always shows the last 30 days regardless of the
 // filter range (mirrors the plugin panel "Coding Activity (Last 30 Days)").
-const today = new Date()
 const last30 = computed(() => ({
   start: formatDate(new Date(today.getTime() - 29 * 86_400_000)),
   end: formatDate(today),
@@ -93,10 +105,18 @@ const heatmap30 = useStatsHeatmap(last30)
           :empty="!!heatmap.data.value && heatmap.data.value.points.length === 0"
           @retry="() => heatmap.refetch()"
         >
+          <template #actions>
+            <HeatmapYearSelect
+              :year="heatmapYear"
+              :years="heatmapYears.data.value ?? []"
+              @update:year="setHeatmapYear"
+            />
+          </template>
           <HeatmapChart
             :points="heatmap.data.value?.points ?? []"
             :device-id="deviceIdOrNull"
             :ide-name="ideNameOrNull"
+            :window-label="heatmapYear === null ? undefined : String(heatmapYear)"
           />
         </ChartSection>
 
