@@ -2,10 +2,24 @@
 
 ## Current Status
 
-**Phase**: 30-day trend chart (pending commit)
-**Version**: 0.23.0 (2026-09-02)
+**Phase**: Weekly activity by hour (pending commit)
+**Version**: 0.24.0 (2026-09-03)
 **Branch**: develop
-**Tests**: 1203/1203 unit; vue-tsc + lint 0 error 0 warning; build green
+**Tests**: 1209/1209 unit; vue-tsc + lint 0 error 0 warning; build green
+
+## Recent Activity (v0.24.0 — 2026-09-03)
+
+### WeekHourPanel: weekly coding activity by hour (7×24 heatmap)
+
+- **Backend (ctt-server v0.63.0, user-relayed, NOT touched by me)**: `GET /api/v1/stats/week-hour` — sparse non-zero (dayOfWeek×hour) cells + weekdayCounts divisors; params timezoneOffset/start/end/deviceId/ideName (window optional = all history). Verified live: 10:30–12:15Z UTC+8 → hour 18/19/20 = 1800/3600/900s three cells + cross-day split (R13 probe with fresh account).
+- **Contract layer**: `WeekHourStatPointSchema` + `WeekHourResponseSchema` (stats.schema.ts); `getStatsWeekHour({start?,end?}+filter)` (stats.ts, mirrors heatmap's optional-window pattern); `STATS_QUERY_KEYS.weekHour(start,end,filter)` + `useStatsWeekHour` (MaybeRefOrGetter, 60s staleTime).
+- **Matrix builder** (`components/week-hour-matrix.ts`): `buildWeekHourMatrix` zero-fills the full 168-cell grid from sparse points (weekdayCounts divisor per cell, normalized to ISO key order regardless of backend Map iteration order); `WEEKDAY_LABELS` Mon-first; 6 unit tests.
+- **Layout (user round 3)**: moved from a full-width row to a two-column row paired with HourlyPanel (both hour-dimension); Project distribution relocated to the Time-of-day row (fills its empty half). Week-hour canvas at half-card ~627px still yields square cells (cell clamped 8–26).
+- **Rendering rewritten after user correction ("I clearly didn't study the plugin panel")**: native ECharts `heatmap` was WRONG on two plugin-fidelity axes — (a) FIXED bucket ladder vs the plugin's DYNAMIC scale, (b) rectangular cells. Final: ECharts **custom series with manual pixel layout** (same architecture as the main HeatmapChart) — **square cells** sized from the container width, centered via leftover-width split, and the **plugin's calculable visualMap** (continuous, vertical, right rail, min 0 → max=window peak) owns the color: `renderItem` uses `api.visual('color')` so dragging the scroll bar re-shades cells live. Legend shows the dynamic readout (`0 … maxH`). maxHoursLabel uses adaptive precision (3 decimals below 0.1h — a 10min peak reads "0.17 h", never "0.0 h").
+- **Headless note**: the calculable handle drag cannot be automated in headless CDP (zrender gesture events don't fire) — verified the scroll bar renders (dual handles + ramp + 0/maxH ticks) and `api.visual` colors are live (value↔shade exact); handle interaction is ECharts' built-in `selectDataRange` action (ContinuousView), left for real-browser manual check.
+- **3D lift (user round 4)**: cells carry `emphasis.style { shadowBlur: 10, shadowColor: palette.cellShadow, shadowOffsetY: 2 }` (dark rgba(0,0,0,0.55) / light 0.28) — the plugin's pop effect; visualMap `hoverLink: true` lifts cells in the hovered scroll-bar value range through the same emphasis state. Browser-verified: hovered cell (Tue 20:00) lifts with a clear drop shadow, neighbors stay flat.
+- **Dynamic-scale semantics note**: a session is hour-sliced, so a single cell ≤ 1h (4h session → 4×1h cells); maxSeconds stays ≤ 3600s per single-week window, but multi-week windows shift cell averages via weekdayCounts — the shade moves with the window, as the plugin does.
+- **Verified live** (real backend): square cells (pixel-measured 23×23), 7×24 complete, dynamic colors via api.visual exact (Tue 19=3600s deepest, 18=1800s / Wed 8=600s paler), hour labels, Mon→Sun order, tooltip, centered, two-column layout (grid lg:grid-cols-2 with HourlyPanel). Filter bar This-month writes `?start&end` and re-fires week-hour with the window. Full suite 1209/1209 (+6 matrix tests), lint/tc/build green. Version 0.23.0 → 0.24.0 (MINOR, new panel).
 
 ## Recent Activity (v0.23.0 — 2026-09-02)
 
