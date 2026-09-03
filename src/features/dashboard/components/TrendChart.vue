@@ -21,6 +21,7 @@
 import { computed, onBeforeUnmount, onMounted, ref, watch } from 'vue'
 import { graphic, init, type EChartsType } from 'echarts/core'
 import type { DailyStatPoint } from '@/lib/schemas/stats.schema'
+import { formatHourLabel, getHourAxisScale } from './axis-scale'
 import { formatDuration } from '@/lib/utils'
 import { useThemeStore } from '@/stores/theme'
 import '@/components/charts/echarts-setup'
@@ -84,14 +85,6 @@ let resizeObserver: ResizeObserver | null = null
 /** Chart height in px — content-driven, no dead space under the axis. */
 const CHART_HEIGHT = 180
 
-/** Hour-formatted Y axis label — adaptive precision ("0.25 h", "1.5 h", "2 h"). */
-function hourLabel(value: number): string {
-  const hours = value / 3600
-  if (hours === 0) return '0 h'
-  const precision = hours < 1 ? 2 : 1
-  return `${Number(hours.toFixed(precision))} h`
-}
-
 /**
  * The line stroke is colored by VERTICAL POSITION — near 0h the curve is
  * deep indigo, at the top of the plot it brightens. LinearGradient coords
@@ -103,44 +96,6 @@ function createLineGradient(pal: Palette) {
     { offset: 0.48, color: '#8290f0' },
     { offset: 1, color: pal.lineBottom },
   ])
-}
-
-/** Human-friendly hour steps — the chosen step is always exactly readable. */
-const HOUR_STEPS = [0.25, 0.5, 1, 1.5, 2, 3, 4, 6, 8] as const
-
-/**
- * Pick a readable, evenly-spaced Y axis scale for the data's peak.
- *
- * Slides a 3–6 tick window across the readable HOUR_STEPS and takes the
- * first (finest) step whose ceiling holds the peak — so 1h57m tops at 2h
- * (step 0.5), 2h01m at 2.5h, and 2h29m stays at 2.5h (step would not jump
- * just because the peak crept past the midpoint). When the peak lands
- * EXACTLY on a gridline, one extra step is added so the curve never rides
- * the top line. Split lines stay strictly equidistant: both `max` and
- * `interval` are explicit.
- */
-function getYAxisScale(maxSeconds: number): { intervalSeconds: number; maxSeconds: number; tickCount: number } {
-  const maxHours = maxSeconds / 3600
-  let stepHours = 8
-  let ticks = Math.ceil(maxHours / 8)
-  let peakOnGridline = false
-  for (const step of HOUR_STEPS) {
-    const raw = maxHours / step
-    const ceiling = Math.ceil(raw - 1e-9)
-    if (ceiling >= 3 && ceiling <= 6) {
-      stepHours = step
-      ticks = ceiling
-      peakOnGridline = Math.abs(raw - ceiling) < 1e-9
-      break
-    }
-  }
-  const totalTicks = peakOnGridline ? ticks + 1 : ticks
-  const maxHoursRounded = Math.max(totalTicks * stepHours, stepHours * 2)
-  return {
-    intervalSeconds: stepHours * 3600,
-    maxSeconds: maxHoursRounded * 3600,
-    tickCount: Math.round(maxHoursRounded / stepHours) + 1,
-  }
 }
 
 interface RgbaColor {
@@ -174,9 +129,9 @@ function interpolateRgba(from: string, to: string, progress: number): string {
 }
 
 function buildOption(points: DailyStatPoint[], pal: Palette) {
-  // Readable equidistant scale: explicit max + interval (see getYAxisScale).
+  // Readable equidistant scale: explicit max + interval (see axis-scale.ts).
   const maxSeconds = Math.max(...points.map((p) => p.seconds), 0)
-  const yScale = getYAxisScale(maxSeconds)
+  const yScale = getHourAxisScale(maxSeconds)
 
   return {
     backgroundColor: 'transparent',
@@ -225,8 +180,7 @@ function buildOption(points: DailyStatPoint[], pal: Palette) {
       axisLabel: {
         color: pal.axisLabel,
         fontSize: 10,
-        fontFamily: 'Inter, sans-serif',
-        formatter: hourLabel,
+        formatter: formatHourLabel,
       },
       // Grid lines are drawn as ECharts `graphic` elements (see
       // buildGridGraphics) — splitLine's per-line color array cannot express
@@ -321,7 +275,7 @@ function buildGridGraphics(
 function render(): void {
   if (!chart || container.value === null) return
   const maxSeconds = Math.max(...props.points.map((point) => point.seconds), 0)
-  const yScale = getYAxisScale(maxSeconds)
+  const yScale = getHourAxisScale(maxSeconds)
 
   chart.setOption(buildOption(props.points, palette.value), true)
   // Second pass writes the hand-drawn grid into the live instance (not a
