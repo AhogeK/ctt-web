@@ -43,13 +43,19 @@ export interface StatsFilterParams {
   deviceId?: string
   /** Exact IDE-name filter (unregistered names 404 COMMON_002) */
   ideName?: string
+  /** Optional date range filter (yyyy-MM-dd); backend clips sessions to [start, end] */
+  start?: string
+  /** Optional date range filter (yyyy-MM-dd); backend clips sessions to [start, end] */
+  end?: string
 }
 
-/** Build the deviceId/ideName query fragment from filter params. */
+/** Build the deviceId/ideName/start/end query fragment from filter params. */
 function filterQuery(params: StatsFilterParams): Record<string, string> {
   return {
     ...(params.deviceId ? { deviceId: params.deviceId } : {}),
     ...(params.ideName ? { ideName: params.ideName } : {}),
+    ...(params.start ? { start: params.start } : {}),
+    ...(params.end ? { end: params.end } : {}),
   }
 }
 
