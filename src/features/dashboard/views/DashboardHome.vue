@@ -17,7 +17,7 @@
  * default). Changing any of them re-keys the affected stats queries.
  */
 import { computed } from 'vue'
-import { useStatsHeatmap, useStatsHeatmapYears } from '@/composables/useStats'
+import { useStatsHeatmap, useStatsHeatmapYears, useStatsWeekHour } from '@/composables/useStats'
 import { formatDate, useDashboardFilters } from '../composables/useDashboardFilters'
 import DashboardFilters from '../components/DashboardFilters.vue'
 import SummaryCards from '../components/SummaryCards.vue'
@@ -28,6 +28,7 @@ import HeatmapYearSelect from '../components/HeatmapYearSelect.vue'
 import DistributionPanel from '../components/DistributionPanel.vue'
 import StreaksPanel from '../components/StreaksPanel.vue'
 import HourlyPanel from '../components/HourlyPanel.vue'
+import WeekHourPanel from '../components/WeekHourPanel.vue'
 
 const {
   start,
@@ -67,6 +68,17 @@ const last30 = computed(() => ({
   ...originFilter.value,
 }))
 const heatmap30 = useStatsHeatmap(last30)
+
+// Weekly activity by hour follows the filter bar: window = the resolved
+// range (All time → full history), origin filters applied. Changing the
+// range or filter re-keys the query.
+const weekHour = useStatsWeekHour(
+  computed(() => ({
+    start: start.value,
+    end: end.value,
+    ...originFilter.value,
+  })),
+)
 </script>
 
 <template>
@@ -125,6 +137,29 @@ const heatmap30 = useStatsHeatmap(last30)
       </div>
     </div>
 
+    <!-- Two-column row: weekly activity by hour + average hourly duration —
+         both hour-dimension panels. week-hour is driven by the filter bar
+         (range + origin), unlike the heatmap's year selector and the trend's
+         fixed window. -->
+    <div class="grid grid-cols-1 gap-6 lg:grid-cols-2">
+      <ChartSection
+        title="Weekly coding activity by hour"
+        :loading="weekHour.isPending.value"
+        :error="weekHour.isError.value"
+        :empty="!!weekHour.data.value && weekHour.data.value.points.length === 0"
+        @retry="() => weekHour.refetch()"
+      >
+        <WeekHourPanel
+          :start="start ?? undefined"
+          :end="end ?? undefined"
+          :device-id="deviceIdOrNull"
+          :ide-name="ideNameOrNull"
+        />
+      </ChartSection>
+
+      <HourlyPanel :device-id="deviceIdOrNull" :ide-name="ideNameOrNull" />
+    </div>
+
     <!-- Two-column row: last-30-days trend + language distribution -->
     <div class="grid grid-cols-1 gap-6 lg:grid-cols-2">
       <ChartSection
@@ -146,19 +181,14 @@ const heatmap30 = useStatsHeatmap(last30)
       />
     </div>
 
-    <!-- Two-column row: hourly stats + project distribution -->
+    <!-- Two-column row: project + time-of-day distributions -->
     <div class="grid grid-cols-1 gap-6 lg:grid-cols-2">
-      <HourlyPanel :device-id="deviceIdOrNull" :ide-name="ideNameOrNull" />
       <DistributionPanel
         type="PROJECTS"
         title="Project distribution"
         :device-id="deviceIdOrNull"
         :ide-name="ideNameOrNull"
       />
-    </div>
-
-    <!-- Two-column row: time-of-day distribution -->
-    <div class="grid grid-cols-1 gap-6 lg:grid-cols-2">
       <DistributionPanel
         type="TIME_OF_DAY"
         title="Time of day distribution"

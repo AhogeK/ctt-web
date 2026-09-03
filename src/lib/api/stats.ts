@@ -10,6 +10,7 @@ import {
   RecentSessionSchema,
   StatsSummaryResponseSchema,
   StreakStatsResponseSchema,
+  WeekHourResponseSchema,
   type DistributionType,
   type HeatmapResponse,
   type HeatmapYearsResponse,
@@ -17,6 +18,7 @@ import {
   type StreakStatsResponse,
   type DistributionResponse,
   type HourlyDistributionResponse,
+  type WeekHourResponse,
   type RecentSession,
   type Achievement,
 } from '@/lib/schemas/stats.schema'
@@ -218,6 +220,37 @@ export async function getStatsHourly(params: StatsFilterParams = {}): Promise<Ho
 
   const wrapped = RestApiResponseSchema.parse(response)
   return HourlyDistributionResponseSchema.parse(wrapped.data)
+}
+
+/**
+ * Fetches the weekly coding activity heatmap — one cell per (ISO weekday ×
+ * hour), the average seconds over the weekday's appearances in the window.
+ * Non-zero cells only; clients zero-fill the full 7×24 matrix.
+ *
+ * Endpoint: GET /api/v1/stats/week-hour?timezoneOffset=…[&start=…&end=…][&deviceId=…]
+ *
+ * @param params - Optional window + filters
+ * @param params.start - Window start (yyyy-MM-dd, inclusive); omitted = all history
+ * @param params.end - Window end (yyyy-MM-dd, inclusive); omitted = all history
+ * @param params.deviceId - Origin-device filter (unknown/foreign devices 404)
+ * @param params.ideName - Exact IDE-name filter (unregistered names 404)
+ * @returns Non-zero week×hour cells + weekday appearance counts (divisors)
+ */
+export async function getStatsWeekHour(
+  params: { start?: string; end?: string } & StatsFilterParams = {},
+): Promise<WeekHourResponse> {
+  const response = await apiFetch<unknown>('/api/v1/stats/week-hour', {
+    method: 'GET',
+    query: {
+      timezoneOffset: timezoneOffset(),
+      ...(params.start ? { start: params.start } : {}),
+      ...(params.end ? { end: params.end } : {}),
+      ...filterQuery(params),
+    },
+  })
+
+  const wrapped = RestApiResponseSchema.parse(response)
+  return WeekHourResponseSchema.parse(wrapped.data)
 }
 
 /**

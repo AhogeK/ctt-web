@@ -97,6 +97,24 @@ export const RecentSessionSchema = z.object({
   durationSeconds: z.number().int().nonnegative(),
 })
 
+/** One week×hour cell of the weekly activity heatmap. */
+export const WeekHourStatPointSchema = z.object({
+  // ISO weekday: 1=Monday .. 7=Sunday
+  dayOfWeek: z.number().int().min(1).max(7),
+  // Hour of day (0-23)
+  hour: z.number().int().min(0).max(23),
+  // Average seconds = cell total ÷ weekday appearances in the window
+  averageSeconds: z.number().int().nonnegative(),
+})
+
+/** Weekly (7×24) coding activity heatmap over a date window. */
+export const WeekHourResponseSchema = z.object({
+  // Non-zero cells only — clients zero-fill the full matrix
+  points: z.array(WeekHourStatPointSchema),
+  // Weekday appearances in the window (key "1".."7") — the averaging divisor
+  weekdayCounts: z.record(z.string(), z.number().int().nonnegative()),
+})
+
 /** A coding achievement badge with unlock state and progress. */
 export const AchievementSchema = z.object({
   // Stable achievement code (e.g. STREAK_7)
@@ -136,3 +154,5 @@ export type DistributionResponse = z.infer<typeof DistributionResponseSchema>
 export type HourlyStatPoint = z.infer<typeof HourlyStatPointSchema>
 export type HourlyDistributionResponse = z.infer<typeof HourlyDistributionResponseSchema>
 export type HeatmapYearsResponse = z.infer<typeof HeatmapYearsResponseSchema>
+export type WeekHourStatPoint = z.infer<typeof WeekHourStatPointSchema>
+export type WeekHourResponse = z.infer<typeof WeekHourResponseSchema>

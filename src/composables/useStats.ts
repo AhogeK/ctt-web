@@ -10,6 +10,7 @@ import {
   getStatsRecent,
   getStatsStreaks,
   getStatsSummary,
+  getStatsWeekHour,
   DEFAULT_RECENT_LIMIT,
   type StatsFilterParams,
 } from '@/lib/api/stats'
@@ -32,6 +33,8 @@ export const STATS_QUERY_KEYS = {
   recent: (limit: number, filter?: StatsFilterParams) => ['stats', 'recent', limit, filterKey(filter)] as const,
   achievements: () => ['stats', 'achievements'] as const,
   heatmapYears: () => ['stats', 'heatmap-years'] as const,
+  weekHour: (start?: string, end?: string, filter?: StatsFilterParams) =>
+    ['stats', 'week-hour', start ?? 'auto', end ?? 'auto', filterKey(filter)] as const,
   ideFilters: () => ['stats', 'ide-filters'] as const,
 } as const
 
@@ -160,6 +163,25 @@ export function useStatsHeatmapYears() {
   return useQuery({
     queryKey: STATS_QUERY_KEYS.heatmapYears(),
     queryFn: () => getStatsHeatmapYears(),
+    staleTime: STATS_LONG_STALE_TIME,
+  })
+}
+
+/**
+ * Weekly (7×24) coding activity heatmap over a date window. Accepts
+ * reactive params — the query re-keys when the range or origin filter
+ * changes, so the dashboard filter bar drives it.
+ */
+export function useStatsWeekHour(params: MaybeRefOrGetter<{ start?: string; end?: string } & StatsFilterParams> = {}) {
+  return useQuery({
+    queryKey: computed(() => {
+      const p = toValue(params)
+      return STATS_QUERY_KEYS.weekHour(p.start, p.end, p)
+    }),
+    queryFn: () => {
+      const p = toValue(params)
+      return getStatsWeekHour(p)
+    },
     staleTime: STATS_LONG_STALE_TIME,
   })
 }
