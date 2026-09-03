@@ -1,6 +1,6 @@
 import { use } from 'echarts/core'
 import { CanvasRenderer } from 'echarts/renderers'
-import { CustomChart, HeatmapChart, LineChart } from 'echarts/charts'
+import { BarChart, CustomChart, HeatmapChart, LineChart } from 'echarts/charts'
 import {
   CalendarComponent,
   GraphicComponent,
@@ -15,6 +15,7 @@ import {
 // explicit value axes (roundRect cells, engine ignores heatmap borderRadius).
 // LineChart: the 30-day trend panel (smooth line + gradient area).
 // GraphicComponent: the trend panel's hand-drawn gradient grid lines.
+// BarChart: the average-hourly panel (24 indigo gradient bars).
 use([
   CanvasRenderer,
   HeatmapChart,
@@ -25,4 +26,5 @@ use([
   VisualMapComponent,
   LineChart,
   GraphicComponent,
+  BarChart,
 ])

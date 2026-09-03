@@ -17,7 +17,7 @@
  * default). Changing any of them re-keys the affected stats queries.
  */
 import { computed } from 'vue'
-import { useStatsHeatmap, useStatsHeatmapYears, useStatsWeekHour } from '@/composables/useStats'
+import { useStatsHeatmap, useStatsHeatmapYears, useStatsHourly, useStatsWeekHour } from '@/composables/useStats'
 import { formatDate, useDashboardFilters } from '../composables/useDashboardFilters'
 import DashboardFilters from '../components/DashboardFilters.vue'
 import SummaryCards from '../components/SummaryCards.vue'
@@ -73,6 +73,16 @@ const heatmap30 = useStatsHeatmap(last30)
 // range (All time → full history), origin filters applied. Changing the
 // range or filter re-keys the query.
 const weekHour = useStatsWeekHour(
+  computed(() => ({
+    start: start.value,
+    end: end.value,
+    ...originFilter.value,
+  })),
+)
+
+// Average hourly duration — origin filters + date range; drives the ChartSection
+// wrapper for HourlyPanel. Backend v0.64.0 clips sessions to [start, end].
+const hourly = useStatsHourly(
   computed(() => ({
     start: start.value,
     end: end.value,
@@ -157,7 +167,20 @@ const weekHour = useStatsWeekHour(
         />
       </ChartSection>
 
-      <HourlyPanel :device-id="deviceIdOrNull" :ide-name="ideNameOrNull" />
+      <ChartSection
+        title="Average hourly coding duration"
+        :loading="hourly.isPending.value"
+        :error="hourly.isError.value"
+        :empty="!!hourly.data.value && hourly.data.value.points.length === 0"
+        @retry="() => hourly.refetch()"
+      >
+        <HourlyPanel
+          :start="start ?? undefined"
+          :end="end ?? undefined"
+          :device-id="deviceIdOrNull"
+          :ide-name="ideNameOrNull"
+        />
+      </ChartSection>
     </div>
 
     <!-- Two-column row: last-30-days trend + language distribution -->
