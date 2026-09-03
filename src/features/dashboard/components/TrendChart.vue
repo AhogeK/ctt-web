@@ -20,6 +20,7 @@
  */
 import { computed, onBeforeUnmount, onMounted, ref, watch } from 'vue'
 import { graphic, init, type EChartsType } from 'echarts/core'
+import type { DailyStatPoint } from '@/lib/schemas/stats.schema'
 import { formatDuration } from '@/lib/utils'
 import { useThemeStore } from '@/stores/theme'
 import '@/components/charts/echarts-setup'
@@ -192,7 +193,7 @@ function buildOption(points: DailyStatPoint[], pal: Palette) {
       textStyle: { color: pal.tooltipText, fontFamily: 'Inter, sans-serif', fontSize: 12 },
       formatter: (params: Array<{ dataIndex: number }>) => {
         const p = params[0]
-        const point = points[p?.dataIndex]
+        const point = p === undefined ? undefined : points[p.dataIndex]
         if (!point) return ''
         const d = new Date(`${point.date}T00:00:00`)
         const weekday = d.toLocaleString('en-US', { weekday: 'short' })
@@ -269,6 +270,16 @@ function buildOption(points: DailyStatPoint[], pal: Palette) {
   }
 }
 
+/** One hand-drawn grid line — shape matches the ECharts `graphic` line element. */
+interface GridLine {
+  id: string
+  type: 'line'
+  silent: boolean
+  z: number
+  shape: { x1: number; y1: number; x2: number; y2: number }
+  style: { stroke: string; lineWidth: number; lineDash: number[] }
+}
+
 /**
  * Draw the grid lines as explicit `graphic` elements at the real pixel Y of
  * each tick — color interpolated bottom→top through the palette endpoints
@@ -279,7 +290,7 @@ function buildGridGraphics(
   points: DailyStatPoint[],
   yScale: { intervalSeconds: number; maxSeconds: number; tickCount: number },
   pal: Palette,
-): Array<Record<string, unknown>> {
+): GridLine[] {
   if (!chart || points.length === 0) return []
 
   const left = chart.convertToPixel({ xAxisIndex: 0 }, points[0]!.date)
@@ -304,7 +315,7 @@ function buildGridGraphics(
         lineDash: [4, 4],
       },
     }
-  }).filter((g): g is Record<string, unknown> => g !== null)
+  }).filter((g): g is GridLine => g !== null)
 }
 
 function render(): void {
