@@ -29,7 +29,8 @@ export const STATS_QUERY_KEYS = {
   streaks: (filter?: StatsFilterParams) => ['stats', 'streaks', filterKey(filter)] as const,
   distribution: (type: DistributionType, filter?: StatsFilterParams) =>
     ['stats', 'distribution', type, filterKey(filter)] as const,
-  hourly: (filter?: StatsFilterParams) => ['stats', 'hourly', filterKey(filter)] as const,
+  hourly: (start?: string, end?: string, filter?: StatsFilterParams) =>
+    ['stats', 'hourly', start ?? 'auto', end ?? 'auto', filterKey(filter)] as const,
   recent: (limit: number, filter?: StatsFilterParams) => ['stats', 'recent', limit, filterKey(filter)] as const,
   achievements: () => ['stats', 'achievements'] as const,
   heatmapYears: () => ['stats', 'heatmap-years'] as const,
@@ -101,14 +102,20 @@ export function useStatsDistribution(type: DistributionType, params: MaybeRefOrG
     staleTime: 1000 * 30,
   })
 }
-
 /**
  * Per-hour average coding seconds across active days.
+ * Accepts optional date range (start/end) — backend clips sessions to [start, end].
  */
-export function useStatsHourly(params: MaybeRefOrGetter<StatsFilterParams> = {}) {
+export function useStatsHourly(params: MaybeRefOrGetter<{ start?: string; end?: string } & StatsFilterParams> = {}) {
   return useQuery({
-    queryKey: computed(() => STATS_QUERY_KEYS.hourly(toValue(params))),
-    queryFn: () => getStatsHourly(toValue(params)),
+    queryKey: computed(() => {
+      const p = toValue(params)
+      return STATS_QUERY_KEYS.hourly(p.start, p.end, p)
+    }),
+    queryFn: () => {
+      const p = toValue(params)
+      return getStatsHourly(p)
+    },
     staleTime: 1000 * 30,
   })
 }
