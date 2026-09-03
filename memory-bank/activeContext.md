@@ -2,10 +2,36 @@
 
 ## Current Status
 
-**Phase**: Weekly activity by hour (pending commit)
-**Version**: 0.24.0 (2026-09-03)
+**Phase**: Hourly date-range wiring (pending commit)
+**Version**: 0.26.0 (2026-09-04)
 **Branch**: develop
-**Tests**: 1209/1209 unit; vue-tsc + lint 0 error 0 warning; build green
+**Tests**: 1215/1215 unit; vue-tsc + lint 0 error 0 warning; build green
+
+## Recent Activity (v0.26.0 — 2026-09-04)
+
+### HourlyPanel date-range wiring (backend v0.64.0)
+
+- **Root cause (Spec review finding)**: HourlyPanel had its own `useStatsHourly` query that didn't receive `start`/`end` props, so the chart always rendered all-history data regardless of filter range. DashboardHome's query was only used for ChartSection's loading/error/empty states.
+- **Fix**: Added `start?`/`end?` props to HourlyPanel (string | null), threaded into internal `useStatsHourly` computed. DashboardHome passes `:start="start ?? undefined"` `:end="end ?? undefined"` from filter bar state. Now both queries share the same range — single source of truth.
+- **API layer** (`lib/api/stats.ts`): `StatsFilterParams` extended with `start?`/`end?`; `filterQuery` transmits them to backend.
+- **Composable** (`composables/useStats.ts`): `STATS_QUERY_KEYS.hourly` now takes `(start, end, filter)`; `useStatsHourly` signature updated to `{ start?, end? } & StatsFilterParams`.
+- **Backend verified** (ctt-server v0.64.0, user-relayed): `GET /api/v1/stats/hourly` accepts optional `start`/`end` (yyyy-MM-dd), clips sessions to `[start, end]`, `activeDays` reflects window-only count, invalid range → 400 COMMON_003. Verified live: 2025-06-15 + 2026-01-15 sessions → activeDays=2 unfiltered, activeDays=1 with `start=2025-06-01&end=2025-12-31`.
+- **JSDoc fix**: HourlyPanel header docblock updated (was stale: "no date-range param — all history"; now cites backend v0.64.0).
+- **Tests**: 1215/1215 (no new tests needed — existing HourlyPanel mocks cover the wiring; range propagation verified via live backend probe).
+- **Verification**: vue-tsc 0, lint 0, build green. Full suite 1215/1215. Version 0.25.0 → 0.26.0 (MINOR, feature: hourly date-range support).
+
+## Recent Activity (v0.25.0 — 2026-09-03)
+
+### HourlyPanel: average hourly coding duration (24-bar chart)
+
+- **Data**: reuses the existing `GET /stats/hourly` (per-hour averages + activeDays; backend v0.64.0 now accepts optional `start`/`end` to clip sessions). No new endpoint.
+- **Component**: HourlyPanel.vue placeholder → live ECharts bar chart — 24 bars (hour 00–23, missing hours zero-fill), DESIGN.md indigo vertical gradient (bright top `#7b85e0`/`#5e6ad2` → deep base), rounded bar tops (heatmap cell language), Y axis reuses the shared `getHourAxisScale` (readable hour steps, explicit interval — peak never rides the top), X labels every 3h, tooltip `09:00 — 1h 15m coded`, footer `based on N active days`.
+- **Shared-axis extraction + the "0/8/16 h" root cause (user round 1)**: TrendChart's local `getYAxisScale` extracted to `components/axis-scale.ts` as `getHourAxisScale` — consumed by TrendChart AND HourlyPanel. **Root cause of the user's "0 / 8 / 16 h" axis**: HOUR_STEPS bottomed at 0.25h with an 8h fallback — a minute-scale peak (90s avg = 0.025h) hit no step and fell to the 16h fallback axis. Fixed: HOUR_STEPS widened to 0.01h (36s) … 24h; getHourAxisScale(90s) → step 0.01h, 3 ticks, max 0.03h (exactly the plugin's scale for the same data). `formatHourLabel(seconds)` / `formatHourLabelHours(hours)` added — the old local `hourLabel` (which divided by 3600) was lost in the extraction, making labels read "108 h" instead of "0.03 h"; both panels consume the s…
+- **Architecture fix (chart-render bug found in browser QA)**: HourlyPanel originally wrapped its own ChartSection — on mount the query was still pending so the section rendered the loading branch and the chart's `ref` container was never mounted (`container.value === null`, init skipped forever). Fixed to the project's panel pattern (same as WeekHourPanel/TrendChart): HourlyPanel is a PURE chart component, DashboardHome owns the hourly query + ChartSection three-state wrapper (loading/error/empty/retry).
+- **echarts-setup**: +BarChart registration (tree-shaken alongside LineChart).
+- **Tests**: +6 HourlyPanel component cases (init once, 24 bars zero-fill, Y scale headroom, a11y label with active-days, footer note, dispose).
+- **Verified live** (real backend, seeded 5 non-zero hours): gradient bars with rounded tops, Y 0–1h 0.25h steps, X 00:00/03:00/… labels, footer note, both themes. Full suite 1215/1215 (+6), lint/tc/build green. Version 0.24.0 → 0.25.0 (MINOR, new chart).
+
 
 ## Recent Activity (v0.24.0 — 2026-09-03)
 
