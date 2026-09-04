@@ -55,7 +55,7 @@ describe('SummaryCards', () => {
 
     const wrapper = mount(SummaryCards, { props: { deviceId: null, ideName: null } })
     const values = wrapper.findAll('[data-testid="summary-value"]').map((n) => n.text())
-    expect(values).toEqual(['1h 30m', '20m', '2h', '1d', '2d 19h', '1d 1h'])
+    expect(values).toEqual(['1h 30m', '20m 17s', '2h', '24h', '67h 12m 39s', '25h'])
   })
 
   it('shows a retry action on failure and refetches on click', async () => {
