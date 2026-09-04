@@ -1,3 +1,4 @@
+- [x] **v0.27.0 (2026-09-04)** formatDuration fix — stats durations capped at hours (no days), seconds precision preserved, zero values omitted. SummaryCards + 4 chart tooltips unified. 1215/1215 tests pass. 0.26.0 → 0.27.0 (PATCH).
 # Progress: ctt-web
 
 ## Milestone Overview

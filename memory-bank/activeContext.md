@@ -1,3 +1,14 @@
+
+## Recent Activity (v0.27.0 — 2026-09-04)
+
+### formatDuration: hours-capped with seconds precision
+
+- **Root cause**: `formatDuration` in `src/lib/utils/time.ts:73` allowed days (`Xd Yh`) and truncated seconds (`61s → '1m'`)
+- **Fix**: removed day branch, preserved seconds precision, omitted zero values (`24h` not `'24h 0m 0s'`)
+- **Impact**: 6 consumers unified (SummaryCards + 4 chart tooltips + barrel export)
+- **Tests**: time.test.ts (15 cases) + SummaryCards.test.ts (3 cases) updated
+- **Verified**: 1215/1215 tests pass
+
 # Active Context: ctt-web
 
 ## Current Status
