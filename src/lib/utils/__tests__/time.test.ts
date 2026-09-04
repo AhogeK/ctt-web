@@ -77,9 +77,11 @@ describe('formatDuration', () => {
     expect(formatDuration(59)).toBe('59s')
   })
 
-  it('formats sub-hour durations in minutes', () => {
+  it('formats sub-hour durations with seconds', () => {
     expect(formatDuration(60)).toBe('1m')
     expect(formatDuration(2700)).toBe('45m')
+    expect(formatDuration(61)).toBe('1m 1s')
+    expect(formatDuration(90)).toBe('1m 30s')
   })
 
   it('formats sub-day durations as hours and minutes', () => {
@@ -87,8 +89,10 @@ describe('formatDuration', () => {
     expect(formatDuration(8100)).toBe('2h 15m')
   })
 
-  it('formats day-plus durations as days and hours', () => {
-    expect(formatDuration(86400)).toBe('1d')
-    expect(formatDuration(194400)).toBe('2d 6h')
+  it('formats day-plus durations capped at hours with seconds', () => {
+    expect(formatDuration(86400)).toBe('24h')
+    expect(formatDuration(194400)).toBe('54h')
+    expect(formatDuration(86461)).toBe('24h 1m 1s')
+    expect(formatDuration(86500)).toBe('24h 1m 40s')
   })
 })
