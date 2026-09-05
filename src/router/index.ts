@@ -47,7 +47,10 @@ const router = createRouter({
   },
 })
 
-// Handle chunk load errors (e.g., new deployment deleted old files)
+// Handle chunk load errors (e.g., new deployment deleted old files).
+// First failure: hard reload once (?retried=1) so the fresh chunk map loads.
+// Second failure: the manual `console.error` of the old shape left a silent
+// blank view — surface a toast with a retry action instead.
 router.onError((error, to) => {
   const isChunkLoadFailed =
     error.message.includes('Failed to fetch dynamically imported module') ||
@@ -60,6 +63,7 @@ router.onError((error, to) => {
     globalThis.location.href = `${targetPath}${separator}retried=1`
   } else if (isChunkLoadFailed) {
     console.error('[Router] Chunk load failed after retry, manual refresh required:', error)
+    globalThis.dispatchEvent(new CustomEvent('chunk-load-failed', { detail: { path: to.fullPath } }))
   }
 })
 

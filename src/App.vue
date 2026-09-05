@@ -55,16 +55,47 @@ function handleTermsRejected() {
 onMounted(() => {
   useThemeStore().setTheme('auto')
   globalThis.addEventListener(TERMS_EXPIRED_EVENT, handleTermsExpired)
+  globalThis.addEventListener('chunk-load-failed', handleChunkLoadFailed)
 })
 
 onUnmounted(() => {
   globalThis.removeEventListener(TERMS_EXPIRED_EVENT, handleTermsExpired)
+  globalThis.removeEventListener('chunk-load-failed', handleChunkLoadFailed)
 })
+
+/**
+ * Chunk load retry failed even after a hard reload — the view would stay
+ * blank with only a console error. Surface a toast with a manual retry
+ * action so the user can recover without guessing.
+ */
+function handleChunkLoadFailed() {
+  toast.error('Failed to load the page. Please try again.', {
+    action: {
+      label: 'Retry',
+      onClick: () => globalThis.location.reload(),
+    },
+    duration: Number.POSITIVE_INFINITY,
+  })
+}
 </script>
 
 <template>
   <ErrorBoundary>
-    <RouterView />
+    <RouterView v-slot="{ Component }">
+      <template v-if="Component">
+        <Suspense>
+          <!-- Route content (async chunks resolve before paint) -->
+          <component :is="Component" />
+          <!-- Fallback: chunk still loading — skeleton, never blank -->
+          <template #fallback>
+            <div class="flex min-h-[50vh] flex-col items-center justify-center gap-3" data-testid="route-loading">
+              <div class="h-8 w-8 animate-spin rounded-full border-2 border-muted border-t-primary" />
+              <p class="text-sm text-muted-foreground">Loading…</p>
+            </div>
+          </template>
+        </Suspense>
+      </template>
+    </RouterView>
   </ErrorBoundary>
   <Toaster position="top-right" :expand="true" rich-colors />
   <TermsDialog
