@@ -63,8 +63,11 @@ const cells = computed(() => (query.data.value ? buildWeekHourMatrix(query.data.
 
 interface Palette {
   quiet: string
-  /** Dynamic-ramp endpoints: 0s → quiet, >0 → dataLow … dataHigh as seconds/max grows */
+  /** Dynamic-ramp spine: quiet → brand indigo → peak. The mid-stop keeps
+   *  mid intensities on DESIGN.md's #5e6ad2 instead of a muddy gray-blue
+   *  (a two-point #313a5c→#bcc2f4 lerp bottoms out at desaturated slate). */
   dataLow: string
+  dataMid: string
   dataHigh: string
   axisLabel: string
   /** Hover/3D-lift shadow for emphasized cells (plugin's shadowBlur effect) */
@@ -79,6 +82,7 @@ const palette = computed<Palette>(() => {
     ? {
         quiet: '#26282b',
         dataLow: '#313a5c',
+        dataMid: '#5e6ad2',
         dataHigh: '#bcc2f4',
         axisLabel: '#8a8f98',
         cellShadow: 'rgba(0, 0, 0, 0.55)',
@@ -88,6 +92,7 @@ const palette = computed<Palette>(() => {
     : {
         quiet: '#e9ebf0',
         dataLow: '#d9ddf2',
+        dataMid: '#5e6ad2',
         dataHigh: '#2f3a9e',
         axisLabel: '#62666d',
         cellShadow: 'rgba(0, 0, 0, 0.28)',
@@ -209,7 +214,7 @@ function buildOption(cellsForOption: ReturnType<typeof buildWeekHourMatrix>, pal
       dimension: 2,
       text: [maxHoursLabel.value, '0'],
       textStyle: { color: pal.axisLabel, fontSize: 9, fontFamily: 'Inter, sans-serif' },
-      inRange: { color: [pal.dataLow, pal.dataHigh] },
+      inRange: { color: [pal.dataLow, pal.dataMid, pal.dataHigh] },
       seriesIndex: 0,
       // Hovering the scroll bar highlights the cells in that value range
       // (plugin behavior) — the custom series elements carry an `emphasis`
