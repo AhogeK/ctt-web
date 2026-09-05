@@ -46,7 +46,8 @@ const props = defineProps<{
 
 const theme = useThemeStore()
 
-// Same query as StreaksPanel — TanStack dedupes identical keys, no extra request.
+// Streak footer data — the heatmap's own Max/Current streak line; TanStack
+// caches it under the shared streaks key.
 const streaks = useStatsStreaks(
   computed(() => ({ deviceId: props.deviceId ?? undefined, ideName: props.ideName ?? undefined })),
 )

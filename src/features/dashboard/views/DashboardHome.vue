@@ -2,14 +2,11 @@
 /**
  * Dashboard home view — the stats dashboard container.
  *
- * Layout: filter bar → overview summary cards → heatmap + streaks (2-col,
- * heatmap keeps panel width for GitHub-sized cells) → Coding trend (30-day)
- * + Language distribution → hourly stats + Project distribution →
- * Time-of-day → IDE / Weekday distributions. Every panel renders its loading / error / empty states
- * through ChartSection so a slow or failing endpoint never blocks the grid.
- * The heat-map chart body is live (ECharts); other chart bodies remain
- * reserved mount points for later passes.
- *
+ * Layout: filter bar → overview summary cards → one 2-column grid holding
+ * every panel. No privileges: every card is exactly half width at ≥lg and
+ * stacks below — heatmap included (its cell renderer clamps to the
+ * available width). Every panel renders its loading / error / empty states
+ * through ChartSection.
  * State lives in the URL (useDashboardFilters): the filter bar (date range
  * presets + custom range + device/IDE origin) drives the summary cards and
  * the distribution/streak/hourly panels; the heatmap's time axis is owned
@@ -17,7 +14,13 @@
  * default). Changing any of them re-keys the affected stats queries.
  */
 import { computed } from 'vue'
-import { useStatsHeatmap, useStatsHeatmapYears, useStatsHourly, useStatsWeekHour } from '@/composables/useStats'
+import {
+  useStatsDistribution,
+  useStatsHeatmap,
+  useStatsHeatmapYears,
+  useStatsHourly,
+  useStatsWeekHour,
+} from '@/composables/useStats'
 import { formatDate, useDashboardFilters } from '../composables/useDashboardFilters'
 import DashboardFilters from '../components/DashboardFilters.vue'
 import SummaryCards from '../components/SummaryCards.vue'
@@ -25,9 +28,8 @@ import ChartSection from '../components/ChartSection.vue'
 import HeatmapChart from '../components/HeatmapChart.vue'
 import TrendChart from '../components/TrendChart.vue'
 import HeatmapYearSelect from '../components/HeatmapYearSelect.vue'
-import DistributionPanel from '../components/DistributionPanel.vue'
-import StreaksPanel from '../components/StreaksPanel.vue'
 import HourlyPanel from '../components/HourlyPanel.vue'
+import TimeOfDayPanel from '../components/TimeOfDayPanel.vue'
 import WeekHourPanel from '../components/WeekHourPanel.vue'
 
 const {
@@ -89,6 +91,11 @@ const hourly = useStatsHourly(
     ...originFilter.value,
   })),
 )
+
+// Time of day distribution — origin filters (the endpoint has no date
+// range yet); DashboardHome owns the query and drives the ChartSection
+// three-state wrapper for the pure-renderer TimeOfDayPanel.
+const timeOfDay = useStatsDistribution('TIME_OF_DAY', originFilter)
 </script>
 
 <template>
@@ -115,43 +122,29 @@ const hourly = useStatsHourly(
     <!-- Overview cards -->
     <SummaryCards :device-id="deviceIdOrNull" :ide-name="ideNameOrNull" />
 
-    <!-- Heatmap + streaks: container query on THIS row's width — the heatmap
-         card needs ≥729px content width; two columns only fit when the row is
-         ≥ 2×(729+32 pad) + 24 gap ≈ 1546px. Below that the heatmap takes the
-         full row (its cells stay ≥13px). -->
-    <div class="@container">
-      <div class="grid grid-cols-1 gap-6 @[1546px]:grid-cols-2">
-        <ChartSection
-          title="Coding heatmap"
-          :loading="heatmap.isPending.value"
-          :error="heatmap.isError.value"
-          :empty="!!heatmap.data.value && heatmap.data.value.points.length === 0"
-          @retry="() => heatmap.refetch()"
-        >
-          <template #actions>
-            <HeatmapYearSelect
-              :year="heatmapYear"
-              :years="heatmapYears.data.value ?? []"
-              @update:year="setHeatmapYear"
-            />
-          </template>
-          <HeatmapChart
-            :points="heatmap.data.value?.points ?? []"
-            :device-id="deviceIdOrNull"
-            :ide-name="ideNameOrNull"
-            :window-label="heatmapYear === null ? undefined : String(heatmapYear)"
-          />
-        </ChartSection>
-
-        <StreaksPanel :device-id="deviceIdOrNull" :ide-name="ideNameOrNull" />
-      </div>
-    </div>
-
-    <!-- Two-column row: weekly activity by hour + average hourly duration —
-         both hour-dimension panels. week-hour is driven by the filter bar
-         (range + origin), unlike the heatmap's year selector and the trend's
-         fixed window. -->
+    <!-- All panels live in ONE grid, zero privileges: every card is exactly
+         half width at ≥lg and full width below — heatmap included (its cell
+         renderer clamps to the available width). Content areas center
+         vertically inside equal-height cards. -->
     <div class="grid grid-cols-1 gap-6 lg:grid-cols-2">
+      <ChartSection
+        title="Coding heatmap"
+        :loading="heatmap.isPending.value"
+        :error="heatmap.isError.value"
+        :empty="!!heatmap.data.value && heatmap.data.value.points.length === 0"
+        @retry="() => heatmap.refetch()"
+      >
+        <template #actions>
+          <HeatmapYearSelect :year="heatmapYear" :years="heatmapYears.data.value ?? []" @update:year="setHeatmapYear" />
+        </template>
+        <HeatmapChart
+          :points="heatmap.data.value?.points ?? []"
+          :device-id="deviceIdOrNull"
+          :ide-name="ideNameOrNull"
+          :window-label="heatmapYear === null ? undefined : String(heatmapYear)"
+        />
+      </ChartSection>
+
       <ChartSection
         title="Weekly coding activity by hour"
         :loading="weekHour.isPending.value"
@@ -181,10 +174,7 @@ const hourly = useStatsHourly(
           :ide-name="ideNameOrNull"
         />
       </ChartSection>
-    </div>
 
-    <!-- Two-column row: last-30-days trend + language distribution -->
-    <div class="grid grid-cols-1 gap-6 lg:grid-cols-2">
       <ChartSection
         title="Coding trend (last 30 days)"
         :loading="heatmap30.isPending.value"
@@ -196,39 +186,15 @@ const hourly = useStatsHourly(
         <TrendChart :points="heatmap30.data.value?.points ?? []" />
       </ChartSection>
 
-      <DistributionPanel
-        type="LANGUAGES"
-        title="Language distribution"
-        :device-id="deviceIdOrNull"
-        :ide-name="ideNameOrNull"
-      />
-    </div>
-
-    <!-- Two-column row: project + time-of-day distributions -->
-    <div class="grid grid-cols-1 gap-6 lg:grid-cols-2">
-      <DistributionPanel
-        type="PROJECTS"
-        title="Project distribution"
-        :device-id="deviceIdOrNull"
-        :ide-name="ideNameOrNull"
-      />
-      <DistributionPanel
-        type="TIME_OF_DAY"
+      <ChartSection
         title="Time of day distribution"
-        :device-id="deviceIdOrNull"
-        :ide-name="ideNameOrNull"
-      />
-    </div>
-
-    <!-- Two-column row: IDE + weekday distributions -->
-    <div class="grid grid-cols-1 gap-6 lg:grid-cols-2">
-      <DistributionPanel type="IDES" title="IDE distribution" :device-id="deviceIdOrNull" :ide-name="ideNameOrNull" />
-      <DistributionPanel
-        type="WEEKDAY"
-        title="Weekday distribution"
-        :device-id="deviceIdOrNull"
-        :ide-name="ideNameOrNull"
-      />
+        :loading="timeOfDay.isPending.value"
+        :error="timeOfDay.isError.value"
+        :empty="!!timeOfDay.data.value && timeOfDay.data.value.entries.length === 0"
+        @retry="() => timeOfDay.refetch()"
+      >
+        <TimeOfDayPanel :device-id="deviceIdOrNull" :ide-name="ideNameOrNull" />
+      </ChartSection>
     </div>
   </div>
 </template>
