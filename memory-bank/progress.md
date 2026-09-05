@@ -1,3 +1,5 @@
+- [x] **v0.28.1 (2026-09-04)** Placeholder cleanup + blank-view guard — 4 DistributionPanel placeholders removed (file deleted), trend/TOD full rows, route Suspense skeleton + chunk-failure toast. Import-loss hunt closed. 1222/1222, tc/lint/build green. 0.28.0 → 0.28.1 (PATCH).
+- [x] **v0.28.0 (2026-09-04)** Time of day distribution live (4-bucket donut Night/Morning/Daytime/Evening, indigo ramp, icon redundancy, fixed clock order, center total) via `distribution?type=TIME_OF_DAY`; `PieChart+LegendComponent` in echarts-setup; backend verified full-history. 1221/1221 tests pass. 0.27.0 → 0.28.0 (MINOR).
 - [x] **v0.27.0 (2026-09-04)** formatDuration fix — stats durations capped at hours (no days), seconds precision preserved, zero values omitted. SummaryCards + 4 chart tooltips unified. 1215/1215 tests pass. 0.26.0 → 0.27.0 (PATCH).
 # Progress: ctt-web
 

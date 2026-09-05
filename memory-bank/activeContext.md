@@ -1,4 +1,48 @@
 
+# Active Context: ctt-web
+
+## Current Status
+
+**Phase**: Placeholder cleanup + blank-view guard (pending commit)
+**Version**: 0.28.1 (2026-09-04)
+**Branch**: develop
+**Tests**: 1222/1222 unit; vue-tsc + lint 0 error 0 warning; build green
+
+### Uniform 2-col rhythm + vertical centering (user: "大伙都一样，没有个例")
+
+- **All spans removed** — heatmap included. Every card is exactly half width at ≥lg; heatmap's cell renderer clamps to available width (44 weeks verified readable at 1139px). TOD lands alone on row 5 (5 odd cards) — accepted consequence of uniformity.
+- **ChartSection rebuilt**: section is now `flex flex-col`; loading/error/empty/data branches all `flex-1` + `justify-center` → sparse panels center vertically and match their row sibling's height. Duplicate class-array leftover (two :class entries, one without bg gradient) collapsed; template rewritten clean via full-file write after a partial-edit mangling.
+- **Verified live at 2621**: all 5 cards w=1139 equal, heatmap/weekly pair + hourly/trend pair rows aligned, empty card height matches. 1222/1222, tc/lint/build green.
+### WeekHourPanel ramp: brand indigo mid-stop (user: "weekly 颜色不符合 DESIGN.md")
+
+- **Root cause**: continuous `visualMap inRange` was a two-point lerp `#313a5c → #bcc2f4` — midpoint bottoms out at desaturated slate `#767ea8`, bypassing DESIGN.md's `#5e6ad2` entirely (the only chromatic color). Heatmap's discrete buckets pass through `#5e6ad2`, so weekly looked muddy next to it.
+- **Fix**: 3-point spine `[dataLow, dataMid=#5e6ad2, dataHigh]` in both themes (dark: `#313a5c→#5e6ad2→#bcc2f4`; light: `#d9ddf2→#5e6ad2→#2f3a9e`). Dynamic-scale semantics (plugin-faithful) preserved; only the ramp shape changed.
+- **Verified live**: dark-mode canvas pixel sampling shows mid cells at `#6878d8/#7888d8` (was muddy slate); e2e rewritten for the uniform-grid contract (equal-width + pair-rows + column alignment, 3/3 green).
+- **Bootstrap notes**: JWT POST needs CSRF (cookie GET-trigger + `X-XSRF-TOKEN` header, raw value); `/sync/push` requires a pre-registered `deviceId` via `POST /api/v1/devices`.
+## Recent Activity (v0.28.1 — 2026-09-04)
+
+### Placeholder removal + route blank-view guard (user: "只留开发过的")
+
+- **Removed**: 4 `DistributionPanel` placeholders (LANGUAGES/PROJECTS/IDES/WEEKDAY — pure `{{ title }} chart` text) from `DashboardHome`; `DistributionPanel.vue` deleted (zero references after removal — verified). StreaksPanel KEPT (has own query + ChartSection tri-state + 3 e2e layout assertions in `heatmap-layout.spec.ts`).
+- **Layout**: orphaned rows collapsed — Coding trend + Time-of-day each take a full row until their row partners ship ("no placeholders, slot in as siblings").
+- **Blank-view guard (user: "偶发空白页")**: root cause = async route chunks can pend/fail with no fallback (`App.vue` had bare `<RouterView/>`; `onErrorCaptured` never fires on pending, only on throw). Fix: `RouterView v-slot` + `<Suspense>` skeleton fallback (`route-loading` testid); chunk double-failure now dispatches `chunk-load-failed` → App listens → persistent toast with Retry (was a silent `console.error`).
+- **Import-loss incident resolved** (the "disordered cards" hunt): restored `DistributionPanel/StreaksPanel` imports swallowed by an earlier edit; re-measured 2-col at 1600px — all 10 live cards pair at equal y.
+- **Verification**: tc 0, lint 0, 1222/1222, build green. 0.28.0 → 0.28.1 (PATCH).
+
+## Recent Activity (v0.28.0 — 2026-09-04)
+
+### TimeOfDayPanel: time of day distribution (4-bucket capsule strip)
+
+- **Data**: `GET /stats/distribution?type=TIME_OF_DAY` (full history — endpoint has no start/end; requirement text handed to user for backend). Buckets by session START hour in aggregation timezone (ctt-server `TimeOfDay.fromHour`, verified from source R13).
+- **KEY CONTRACT GOTCHA (the "all zeros" bug)**: backend returns bucket names as UPPERCASE enums (`EVENING/NIGHT/...` — `StatsService` uses `.name()`); the first implementation matched `'Night'` title-case and every lookup missed → all zeros. Fixed: `BUCKET_ORDER` uses enum keys + `BUCKET_LABEL` maps display names (legend/a11y/tooltip all consume the label). Tests rewritten on the enum contract so a case drift on either side goes red.
+- **Design (chart-designer + lieflat-charts audit, user rejected donut v1)**: horizontal 100% stacked capsule — segment width = duration (honest part-to-whole), single-hue indigo ramp following the daylight metaphor (Night deepest → Daytime brightest), ALL text in HTML (legend 2-col + Total; canvas draws only the strip + tooltip — canvas glyphs in a half-width card were the v1 "messy text" failure). Zero-width segments drop out with rounded-end reattachment; lone segment fully rounded (regression-tested).
+- **echarts-setup**: PieChart/LegendComponent registered for v1 donut then removed after redesign (no consumers — BarChart stacking reuses existing registration).
+- **Component**: `TimeOfDayPanel.vue` (pure renderer; ChartSection three-state in DashboardHome `TIME_OF_DAY` slot). prefers-reduced-motion honored; aria-label carries bucket %s + total.
+- **Tests**: +7 (init once, stacked clock order with zero-drop, lone-segment rounding, 100% single bucket, a11y label, zero-dash, dispose). 1222/1222, lint/tc/build green.
+- **Verified live** (bootstrapped account, 4 sessions seeding all buckets UTC+8): strip widths match durations exactly (2h/28% · 1h30m/21% · 45m/10% · 3h/41%, Total 7h15m), light theme screenshot-checked. 0.27.0 → 0.28.0 (MINOR).
+- **Layout incident (user: "卡片位置是乱的")**: `DashboardHome.vue` had silently lost its `import DistributionPanel` + `import StreaksPanel` lines — an earlier `PUT 1.=10:` JSDoc rewrite covered the import block and the auto-repair echo dropped them. Vue renders un-imported components as empty native custom elements with NO runtime warning → 5 cards vanished, right column collapsed, grid looked "disordered". Fixed by restoring the imports; TimeOfDayPanel reverted to a pure renderer with DashboardHome owning the `timeOfDay` query + ChartSection three-state (HourlyPanel mount-order precedent). 2-col layout re-measured at 1600px: all 10 cards render, rows pair at equal y. **Lesson: after ANY edit-tool warning that mentions dropped/echoed body lines, re-read the touched region — a swallowed import is a silent runtime failure type-check cannot catch (vue-tsc passes because the template's component refs resolve through script setup scope only when imported).**
+- **Pending Phase 2**: distribution `start/end` passthrough once backend ships it (hourly v0.64.0 pattern; `StatsFilterParams` already carries the keys).
+
 ## Recent Activity (v0.27.0 — 2026-09-04)
 
 ### formatDuration: hours-capped with seconds precision
@@ -8,15 +52,6 @@
 - **Impact**: 6 consumers unified (SummaryCards + 4 chart tooltips + barrel export)
 - **Tests**: time.test.ts (15 cases) + SummaryCards.test.ts (3 cases) updated
 - **Verified**: 1215/1215 tests pass
-
-# Active Context: ctt-web
-
-## Current Status
-
-**Phase**: Hourly date-range wiring (pending commit)
-**Version**: 0.26.0 (2026-09-04)
-**Branch**: develop
-**Tests**: 1215/1215 unit; vue-tsc + lint 0 error 0 warning; build green
 
 ## Recent Activity (v0.26.0 — 2026-09-04)
 
