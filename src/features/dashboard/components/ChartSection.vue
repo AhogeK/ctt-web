@@ -33,10 +33,7 @@ defineEmits<{
 
 <template>
   <section
-    :class="[
-      'group min-w-0 rounded-xl border border-border/60 p-4 transition-colors hover:border-border',
-      'group min-w-0 rounded-xl border border-border/60 bg-linear-to-b from-card to-muted/40 p-4 transition-colors hover:border-border',
-    ]"
+    class="group flex min-w-0 flex-col rounded-xl border border-border/60 bg-linear-to-b from-card to-muted/40 p-4 transition-colors hover:border-border"
   >
     <header class="mb-4 flex items-center justify-between gap-3">
       <h2 class="text-[11px] font-medium uppercase tracking-wider text-muted-foreground">{{ title }}</h2>
@@ -48,29 +45,35 @@ defineEmits<{
     </header>
 
     <!-- Loading -->
-    <div v-if="loading" class="flex flex-col gap-3" data-testid="chart-loading">
+    <div v-if="loading" class="flex flex-1 flex-col justify-center gap-3" data-testid="chart-loading">
       <Skeleton class="h-8 w-full" />
       <Skeleton class="h-8 w-3/4" />
       <Skeleton class="h-8 w-1/2" />
     </div>
 
     <!-- Error -->
-    <div v-else-if="error" class="flex flex-col items-center gap-3 py-8" data-testid="chart-error">
+    <div
+      v-else-if="error"
+      class="flex flex-1 flex-col items-center justify-center gap-3 py-8"
+      data-testid="chart-error"
+    >
       <AlertTriangle class="h-8 w-8 text-destructive" />
       <p class="text-sm text-muted-foreground">Failed to load data</p>
       <Button variant="outline" size="sm" @click="$emit('retry')"> Retry </Button>
     </div>
 
-    <!-- Empty -->
+    <!-- Empty: flex-1 + centered so a sparse panel matches its row sibling's height -->
     <div
       v-else-if="empty"
-      class="flex min-h-36 items-center justify-center text-center text-sm text-muted-foreground"
+      class="flex flex-1 items-center justify-center text-center text-sm text-muted-foreground"
       data-testid="chart-empty"
     >
       No data for the selected range
     </div>
 
     <!-- Data -->
-    <slot v-else />
+    <div v-else class="flex flex-1 flex-col justify-center">
+      <slot />
+    </div>
   </section>
 </template>
