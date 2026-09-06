@@ -151,8 +151,12 @@ describe('useDashboardFilters', () => {
     Object.assign(routeQuery, { start: year.start, end: year.end })
     expect(preset.value).toBe('year')
 
-    const customStart = formatDate(new Date(Date.now() - 5 * 86_400_000))
-    const today = formatDate(new Date())
+    // 2nd of this month: provably never a preset start (month starts on the
+    // 1st; 90d start is always earlier than this month; year starts Jan 1;
+    // all uses the fixed lower bound) — immune to run-date collisions.
+    const now = new Date()
+    const customStart = formatDate(new Date(now.getFullYear(), now.getMonth(), 2))
+    const today = formatDate(now)
     Object.assign(routeQuery, { start: customStart, end: today })
     expect(preset.value).toBe('custom')
   })
