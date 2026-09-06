@@ -19,6 +19,12 @@
 - **Fix**: 3-point spine `[dataLow, dataMid=#5e6ad2, dataHigh]` in both themes (dark: `#313a5c→#5e6ad2→#bcc2f4`; light: `#d9ddf2→#5e6ad2→#2f3a9e`). Dynamic-scale semantics (plugin-faithful) preserved; only the ramp shape changed.
 - **Verified live**: dark-mode canvas pixel sampling shows mid cells at `#6878d8/#7888d8` (was muddy slate); e2e rewritten for the uniform-grid contract (equal-width + pair-rows + column alignment, 3/3 green).
 - **Bootstrap notes**: JWT POST needs CSRF (cookie GET-trigger + `X-XSRF-TOKEN` header, raw value); `/sync/push` requires a pre-registered `deviceId` via `POST /api/v1/devices`.
+## Dependency Update (2026-09-06, no version bump)
+
+- `vp update -L`: vue-router 5.3.1, zod 4.5.4, vue-i18n 11.4.10, @lucide/vue 1.41.0, reka-ui 2.10.4, vue-echarts 8.2.0, @vueuse 14.4, @types/node 26.4.1, playwright 1.63.0 (+ chromium-1243 install), lint-staged 17.5.0, @vue/test-utils 2.5.0, simple-git-hooks 2.14.0, eslint-plugin-oxlint 1.81.0.
+- **Held back**: typescript 6.0.3 exact (TS7 breaks vue-tsc/compiler-sfc — red line), vitest + coverage-v8 4.1.11 exact (vite-plus@0.3.0 hard-pin; 5.0.0 caused dual-instance peer conflict). pnpm-workspace.yaml peer rules untouched.
+- **Fixed latent flaky**: useDashboardFilters custom-preset test used "5 days ago", which equals the month start on the 6th of any month → 'month' inference → failed today. Now anchors on the 2nd (provably never a preset start).
+- Verified: peers 0 / vue-tsc 0 / build 0 / 1222 unit / lint 0 / e2e layout 3/3 on chromium-1243.
 ## Recent Activity (v0.28.1 — 2026-09-04)
 
 ### Placeholder removal + route blank-view guard (user: "只留开发过的")

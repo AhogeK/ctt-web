@@ -24,7 +24,8 @@
 ## Dev Toolchain (Vite+ Unified)
 
 - `vp` CLI (dev/build/test/lint/fmt), Playwright (E2E), vue-tsc (type check), simple-git-hooks + lint-staged (pre-commit)
-- Snapshot (2026-08-02): @playwright/test 1.62.1, lint-staged 17.3.0, vue-tsc 3.3.9, **typescript 6.0.3 pinned exact** — `vp update -L` auto-bumps TS to 7.x which breaks the Vue toolchain; re-pin after every `-L` run
+- Snapshot (2026-09-06): @playwright/test 1.63.0, lint-staged 17.5.0, vue-tsc 3.3.11, **typescript 6.0.3 pinned exact** — `vp update -L` auto-bumps TS to 7.x which breaks the Vue toolchain; re-pin after every `-L` run (`pnpm add -D typescript@6.0.3 --save-exact`)
+- **vitest must stay 4.1.11** (exact): vite-plus@0.3.0 hard-pins `vitest: 4.1.11` as a dependency; letting `-L` bump the direct devDep to 5.x creates a dual-instance peer conflict (`peers check` exit 1). Re-pin vitest + @vitest/coverage-v8 to 4.1.11 after every `-L` run. Playwright major bumps need `pnpm exec playwright install chromium` (new browser build).
 
 ## API Authentication
 
