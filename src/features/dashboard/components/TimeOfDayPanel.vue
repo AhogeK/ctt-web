@@ -54,10 +54,10 @@ const BUCKET_LABEL: Record<BucketKey, string> = {
  * ramp for white-background contrast; dark mode lifts it off #0f1011.
  */
 const BUCKET_COLORS: Record<BucketKey, { light: string; dark: string }> = {
-  NIGHT: { light: '#1e2260', dark: '#3a42a8' },
-  MORNING: { light: '#3f4ab0', dark: '#5e6ad2' },
-  DAYTIME: { light: '#a3aef2', dark: '#b7c1ff' },
-  EVENING: { light: '#5e6ad2', dark: '#7b85e0' },
+  NIGHT: { light: '#1e2260', dark: '#333b9a' },
+  MORNING: { light: '#3f4ab0', dark: '#4d59c9' },
+  DAYTIME: { light: '#a3aef2', dark: '#bcc5ff' },
+  EVENING: { light: '#5e6ad2', dark: '#8b95ea' },
 }
 
 interface BucketView {
