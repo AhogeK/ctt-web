@@ -34,6 +34,25 @@
 
 - M(#5e6ad2) vs E(#7b85e0) measured 1.40:1 — the two middle stops were too close even after round 1. Full 4-stop re-anchor: NIGHT #3a42a8→#333b9a, MORNING #5e6ad2→#4d59c9, EVENING #7b85e0→#8b95ea, DAYTIME #b7c1ff (lifted). M-E now 2.11:1; adjacent ladder 1.61/3.50/1.66:1. Light ramp unchanged.
 - Verified dark via CDP emulateMediaFeatures + seeded 4-bucket data. 0.28.3.
+### TOD "data looks wrong" investigation (user report; no code change)
+
+- Chain verified end-to-end with a seeded account: push 20d × (晨9h/昼12h/昏6h/夜3h local) → backend `distribution?type=TIME_OF_DAY&timezoneOffset=480` returns 270/360/180/90h → panel legend renders exactly 30/40/20/10% + Total 900h. **Frontend chain is correct; no bug.**
+- Root of confusion #1: `.sisyphus/get-token.sh` registers a NEW timestamped account every run — earlier test data lived in throwaway accounts, so "the account" users check has none.
+- Root of confusion #2: my earlier seed script generated hours in UTC, but the backend buckets by **session start hour in the aggregation timezone** (`timezoneOffset` param, browser-local). UTC 23:00 = next-day 07:00 in UTC+8 → NIGHT data landed in MORNING. Fixed seeding to generate local-time then convert.
+- **Contract facts (read-only, verified in source)**: ctt-server `TimeOfDay.fromHour` buckets Morning 5-11 / Daytime 12-16 / Evening 17-21 / Night 22-4 **by session start hour, no cross-bucket splitting**. Plugin (JetBrains) splits sessions across bucket boundaries and uses Night 0-5 / Morning 6-11 / Daytime 12-17 / Evening 18-23 — **server vs plugin semantics differ**; flagged to user as backend-side product decision (report delivered, per R3 no cross-repo changes).
+- TimeOfDayPanel JSDoc still says "plugin's hour buckets" — misleading vs actual server contract; note for next code touch.
+### Backend v0.65.0 TOD contract landed (user relayed delivery note)
+
+- Verified live with the delivery note's locked case: 11:00-13:00 + 23:50-00:10 (local UTC+8) → MORNING 3600s / DAYTIME 3600s / EVENING 600s / NIGHT 600s; bucket sum 8400 == summary.total ✓ (invariant holds).
+- Panel E2E on seeded data: legend renders Night 10m 7% / Morning 1h 43% / Daytime 1h 43% / Evening 10m 7%, Total 2h20m — exact match. Response schema unchanged; frontend mapping untouched.
+- Only frontend delta: TimeOfDayPanel JSDoc bucket boundaries corrected (old comment had stale 22-04/05-11/12-16/17-21 that matched neither old server nor plugin). No behavioral code change; 1222/1222 green.
+- Pending commit (user confirmation per R6): AGENTS.md R6 line, activeContext entries, TimeOfDayPanel JSDoc.
+### Container-query layout thresholds (user: 卡<830 占整行 / Summary 行<1430 换行)
+
+- **Component-width semantics, not viewport** — user clarified both thresholds measure the component/row itself, so sidebar collapse and layout changes stay honest. Implemented with Tailwind v4 container queries: `@container/page` on DashboardHome's root column + `@[1684px]/page:grid-cols-2` on the panel grid (1684 = 2×830 + gap 24); `@container/sc` wrapper inside SummaryCards + `@[1430px]/sc:grid-cols-6` (below: md 3-col / base 2-col). Old `lg:grid-cols-2` / `xl:grid-cols-6` removed.
+- **Gotcha (cost a round-trip)**: a container element cannot query ITSELF — `@container/x` and `@[..]/x:` on the same div silently never matches. The container declaration must sit on an ancestor (page root / a wrapper div).
+- Verified with a multi-viewport probe (1600/1920/2048/2621): panel cols 1/1/2/2, summary cols 3/6/6/6 — exactly the 830/1430 floors (1920 card = 796px < 830 → single column; 2048 card = 860 ≥ 830 → pair).
+- e2e rewritten to the threshold contract (4 cases: collapse@1920, pair@2100, summary 6@2100, summary 3@1600). 1222 unit + 4 e2e green.
 ## Recent Activity (v0.28.1 — 2026-09-04)
 
 ### Placeholder removal + route blank-view guard (user: "只留开发过的")
