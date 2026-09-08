@@ -25,6 +25,11 @@
 - **Held back**: typescript 6.0.3 exact (TS7 breaks vue-tsc/compiler-sfc — red line), vitest + coverage-v8 4.1.11 exact (vite-plus@0.3.0 hard-pin; 5.0.0 caused dual-instance peer conflict). pnpm-workspace.yaml peer rules untouched.
 - **Fixed latent flaky**: useDashboardFilters custom-preset test used "5 days ago", which equals the month start on the 6th of any month → 'month' inference → failed today. Now anchors on the 2nd (provably never a preset start).
 - Verified: peers 0 / vue-tsc 0 / build 0 / 1222 unit / lint 0 / e2e layout 3/3 on chromium-1243.
+### TOD capsule ramp contrast fix (user: "各项之间色差没差距")
+
+- Old dark ramp (#6a71d8/#8a92ea/#aab4ff/#7b85e0) had adjacent-segment contrast of only 1.45–1.70:1 — segments blur together. Quantified with WCAG luminance math, rebuilt both ramps around brand anchors: dark `#3a42a8 → #5e6ad2 → #7b85e0 → #b7c1ff` (adjacent 1.77/2.70/1.93:1), light `#1e2260 → #3f4ab0 → #5e6ad2 → #a3aef2` (1.94/3.51/2.21:1). Middle anchors sit exactly on `#5e6ad2`.
+- **Theme-verification gotcha**: `App.vue` onMounted `setTheme('auto')` overrides any injected localStorage mode — headless dark screenshots MUST use CDP `page.emulateMediaFeatures([{name:'prefers-color-scheme',value:'dark'}])`, not storage injection.
+- Verified on seeded data (4 buckets 6/9/18/12h) via canvas pixel sampling: dark capsule renders `#3a42a8/#5e6ad2/#b7c1ff` family. tc/lint/build green.
 ## Recent Activity (v0.28.1 — 2026-09-04)
 
 ### Placeholder removal + route blank-view guard (user: "只留开发过的")
