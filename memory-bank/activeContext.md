@@ -30,6 +30,10 @@
 - Old dark ramp (#6a71d8/#8a92ea/#aab4ff/#7b85e0) had adjacent-segment contrast of only 1.45–1.70:1 — segments blur together. Quantified with WCAG luminance math, rebuilt both ramps around brand anchors: dark `#3a42a8 → #5e6ad2 → #7b85e0 → #b7c1ff` (adjacent 1.77/2.70/1.93:1), light `#1e2260 → #3f4ab0 → #5e6ad2 → #a3aef2` (1.94/3.51/2.21:1). Middle anchors sit exactly on `#5e6ad2`.
 - **Theme-verification gotcha**: `App.vue` onMounted `setTheme('auto')` overrides any injected localStorage mode — headless dark screenshots MUST use CDP `page.emulateMediaFeatures([{name:'prefers-color-scheme',value:'dark'}])`, not storage injection.
 - Verified on seeded data (4 buckets 6/9/18/12h) via canvas pixel sampling: dark capsule renders `#3a42a8/#5e6ad2/#b7c1ff` family. tc/lint/build green.
+### TOD dark ramp round 2 (user: "Morning 跟 Evening 差距不太明显")
+
+- M(#5e6ad2) vs E(#7b85e0) measured 1.40:1 — the two middle stops were too close even after round 1. Full 4-stop re-anchor: NIGHT #3a42a8→#333b9a, MORNING #5e6ad2→#4d59c9, EVENING #7b85e0→#8b95ea, DAYTIME #b7c1ff (lifted). M-E now 2.11:1; adjacent ladder 1.61/3.50/1.66:1. Light ramp unchanged.
+- Verified dark via CDP emulateMediaFeatures + seeded 4-bucket data. 0.28.3.
 ## Recent Activity (v0.28.1 — 2026-09-04)
 
 ### Placeholder removal + route blank-view guard (user: "只留开发过的")
