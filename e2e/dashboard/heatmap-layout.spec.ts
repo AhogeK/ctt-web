@@ -2,12 +2,17 @@ import { test, expect } from '@playwright/test'
 import { mockAuthApis, loginViaForm } from '../utils/auth-helpers.js'
 
 /**
- * Dashboard layout contract (uniform grid, zero width privileges):
- * - Every panel card is exactly half the content width at ≥lg — heatmap
- *   included (its cell renderer clamps to the available width). No card is
- *   wider than another; nothing spans a full row.
- * - Cards flow 2-across, so consecutive pairs share a top line; the odd
- *   trailing card (time of day) starts a fresh row.
+ * Dashboard layout contract (container-query driven, component-width based):
+ *
+ * Panel grid: every card is exactly half width when a 2-col share stays
+ * ≥830px wide (grid row ≥1684px — the 830px readability floor for the
+ * weekly heatmap's 168 cells); below that the grid collapses to one column.
+ *
+ * SummaryCards: 6-across only when the row is ≥1430px (each card ≥224px);
+ * below that 3-across (md) / 2-across (narrow).
+ *
+ * Both thresholds are container queries on the page column, so sidebar
+ * collapse and future layout changes keep them honest.
  */
 
 const TITLES = [
@@ -40,33 +45,38 @@ async function cardBoxes(page: import('@playwright/test').Page) {
   return out
 }
 
-test('all panel cards are equal width at 1920 (no full-row span)', async ({ page }) => {
-  await gotoDashboard(page, 1920)
-  const cards = await cardBoxes(page)
-  const widths = Object.values(cards).map((c) => c.width)
-  const max = Math.max(...widths)
-  const min = Math.min(...widths)
-  // Uniform rhythm: every card within a hair of the same width, and none
-  // stretches to the full content row (~1600 at this viewport).
-  expect(max - min, 'cards must share one width').toBeLessThan(4)
-  expect(max, 'no card may span the full row').toBeLessThan(1500)
-})
-
-test('cards pair two-across; consecutive rows share a top line', async ({ page }) => {
+test('panels collapse to one column when a 2-col card would drop under 830px', async ({ page }) => {
   await gotoDashboard(page, 1920)
   const c = await cardBoxes(page)
-  // heatmap+weekly row 1, hourly+trend row 2 → each pair on one top line.
+  // All cards share one full-width track and stack row by row.
+  const widths = Object.values(c).map((v) => v.width)
+  expect(Math.max(...widths) - Math.min(...widths)).toBeLessThan(4)
+  const ys = Object.values(c).map((v) => v.y)
+  for (let i = 1; i < ys.length; i++) expect(ys[i]).toBeGreaterThanOrEqual(ys[i - 1])
+  expect(c['Coding heatmap'].y).not.toBe(c['Weekly coding activity by hour'].y)
+})
+
+test('panels pair two-across once a card keeps ≥830px', async ({ page }) => {
+  await gotoDashboard(page, 2100)
+  const c = await cardBoxes(page)
+  for (const title of TITLES) expect(c[title].width, title).toBeGreaterThanOrEqual(825)
   expect(Math.abs(c['Coding heatmap'].y - c['Weekly coding activity by hour'].y)).toBeLessThan(4)
   expect(Math.abs(c['Average hourly coding duration'].y - c['Coding trend (last 30 days)'].y)).toBeLessThan(4)
-  // The odd trailing card drops to its own row below the others.
   expect(c['Time of day distribution'].y).toBeGreaterThan(c['Coding trend (last 30 days)'].y)
 })
 
-test('left column aligns and right column aligns', async ({ page }) => {
-  await gotoDashboard(page, 1920)
-  const c = await cardBoxes(page)
-  // Left-column cards share x; right-column cards share x.
-  expect(Math.abs(c['Coding heatmap'].x - c['Average hourly coding duration'].x)).toBeLessThan(4)
-  expect(Math.abs(c['Weekly coding activity by hour'].x - c['Coding trend (last 30 days)'].x)).toBeLessThan(4)
-  expect(c['Weekly coding activity by hour'].x).toBeGreaterThan(c['Coding heatmap'].x)
+test('summary cards go 6-across only when the row keeps ≥1430px', async ({ page }) => {
+  await gotoDashboard(page, 2100)
+  const wide = await page
+    .getByTestId('summary-cards')
+    .evaluate((el) => getComputedStyle(el).gridTemplateColumns.split(' ').length)
+  expect(wide).toBe(6)
+})
+
+test('summary cards fall back to 3-across below the 1430px row', async ({ page }) => {
+  await gotoDashboard(page, 1600)
+  const narrow = await page
+    .getByTestId('summary-cards')
+    .evaluate((el) => getComputedStyle(el).gridTemplateColumns.split(' ').length)
+  expect(narrow).toBe(3)
 })

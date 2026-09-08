@@ -99,7 +99,7 @@ const timeOfDay = useStatsDistribution('TIME_OF_DAY', originFilter)
 </script>
 
 <template>
-  <div class="flex flex-col gap-6 p-6">
+  <div class="@container/page flex flex-col gap-6 p-6">
     <!-- Page header -->
     <div class="flex flex-col gap-2">
       <h1 class="text-2xl font-semibold">Dashboard Overview</h1>
@@ -122,11 +122,13 @@ const timeOfDay = useStatsDistribution('TIME_OF_DAY', originFilter)
     <!-- Overview cards -->
     <SummaryCards :device-id="deviceIdOrNull" :ide-name="ideNameOrNull" />
 
-    <!-- All panels live in ONE grid, zero privileges: every card is exactly
-         half width at ≥lg and full width below — heatmap included (its cell
-         renderer clamps to the available width). Content areas center
-         vertically inside equal-height cards. -->
-    <div class="grid grid-cols-1 gap-6 lg:grid-cols-2">
+    <!-- All panels live in ONE grid, zero privileges. Container query against
+         the page column (its content width == the grid's row width): below
+         1684px each 2-col card would drop under 830px (share minus gap), so
+         the grid collapses to one column; at ≥1684px every card is exactly
+         half width — heatmap included (its cell renderer clamps to the
+         available width). -->
+    <div class="grid grid-cols-1 gap-6 @[1684px]/page:grid-cols-2">
       <ChartSection
         title="Coding heatmap"
         :loading="heatmap.isPending.value"
