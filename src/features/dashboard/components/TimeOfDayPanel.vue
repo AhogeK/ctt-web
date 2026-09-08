@@ -1,10 +1,18 @@
 <script setup lang="ts">
 /**
- * TimeOfDayPanel — "Time of day distribution": a horizontal 100% stacked
- * capsule (Night / Morning / Daytime / Evening) over the backend's
+ * TimeOfDayPanel — "Time of day distribution" over the backend's
  * plugin-aligned buckets (Night 00-06 / Morning 06-12 / Daytime 12-18 /
  * Evening 18-24, local timezone) — sessions split across bucket edges
  * since ctt-server v0.65.0; each entry = enum name + aggregated seconds.
+ *
+ * Design (Linear-inspired, lieflat-flavored): the capsule IS the day —
+ * segments sit in fixed clock order; a 2px paper seam separates neighbours.
+ * Legend glyphs are Lucide day-phase icons (plugin-parity semantics);
+ * percent leads the value hierarchy, duration follows.
+ *
+ * Hover: chart mouse events set `activeSeg`, which raises a fixed info chip
+ * anchored to the segment's center (never cursor-following) and dims the
+ * other legend entries.
  *
  * This component owns rendering only: fetching and the loading / error /
  * empty wrapper live in the parent (ChartSection) — the project's panel
@@ -13,6 +21,7 @@
  */
 import { computed, onBeforeUnmount, onMounted, ref, watch } from 'vue'
 import { init, type EChartsType } from 'echarts/core'
+import { Moon, Sun, Sunrise, Sunset, type LucideIcon } from '@lucide/vue'
 import { useStatsDistribution } from '@/composables/useStats'
 import { formatDuration } from '@/lib/utils'
 import { useThemeStore } from '@/stores/theme'
@@ -50,15 +59,33 @@ const BUCKET_LABEL: Record<BucketKey, string> = {
   EVENING: 'Evening',
 }
 
+/** Day-phase glyph per bucket — Lucide parity with the plugin's emoji legend. */
+const BUCKET_ICON: Record<BucketKey, LucideIcon> = {
+  NIGHT: Moon,
+  MORNING: Sunrise,
+  DAYTIME: Sun,
+  EVENING: Sunset,
+}
+
+/** Human clock range per bucket (backend v0.65.0 plugin-aligned edges). */
+const BUCKET_RANGE: Record<BucketKey, string> = {
+  NIGHT: '00–06',
+  MORNING: '06–12',
+  DAYTIME: '12–18',
+  EVENING: '18–24',
+}
+
 /**
  * Single-hue indigo ramp following the daylight metaphor: Night deepest,
  * Daytime brightest, Evening settling back down. Light mode darkens the
  * ramp for white-background contrast; dark mode lifts it off #0f1011.
+ * Endpoint-vs-surface contrast was tuned up (user feedback) — adjacent
+ * segment distinctness is carried by the 2px paper seams instead.
  */
 const BUCKET_COLORS: Record<BucketKey, { light: string; dark: string }> = {
-  NIGHT: { light: '#1e2260', dark: '#333b9a' },
+  NIGHT: { light: '#1e2260', dark: '#4149bd' },
   MORNING: { light: '#3f4ab0', dark: '#4d59c9' },
-  DAYTIME: { light: '#a3aef2', dark: '#bcc5ff' },
+  DAYTIME: { light: '#939ff0', dark: '#bcc5ff' },
   EVENING: { light: '#5e6ad2', dark: '#8b95ea' },
 }
 
@@ -119,8 +146,57 @@ const segments = computed(() => {
   }))
 })
 
+/**
+ * Seam positions between surviving segments (cumulative percent). Rendered
+ * as an HTML overlay because ECharts stacked bars paint over any border.
+ */
+const seams = computed(() => {
+  const visible = segments.value
+  const out: { name: BucketKey; left: string }[] = []
+  let acc = 0
+  for (const seg of visible) {
+    acc += seg.percent
+    if (seg !== visible[visible.length - 1]) out.push({ name: seg.name, left: `${acc}%` })
+  }
+  return out
+})
+
+/**
+ * Hover state: which segment is under the pointer (null = none). Drives the
+ * fixed info chip above the capsule and the legend highlight — replaces the
+ * ECharts floating tooltip, which drifted with the cursor and read as noise.
+ */
+const activeSeg = ref<BucketKey | null>(null)
+
+/** Center-x of each visible segment as a percent of the capsule width. */
+const segmentCenters = computed(() => {
+  const out = new Map<BucketKey, number>()
+  let acc = 0
+  for (const seg of segments.value) {
+    out.set(seg.name, acc + seg.percent / 2)
+    acc += seg.percent
+  }
+  return out
+})
+
+const activeView = computed(() => buckets.value.find((b) => b.name === activeSeg.value) ?? null)
+
+/** Info-chip position: segment center, clamped so the chip never overflows. */
+const chipLeft = computed(() => {
+  if (!activeSeg.value) return 0
+  const c = segmentCenters.value.get(activeSeg.value) ?? 50
+  return Math.min(86, Math.max(14, c))
+})
+
+function onSegEnter(name: BucketKey): void {
+  activeSeg.value = name
+}
+
+function onSegLeave(): void {
+  activeSeg.value = null
+}
+
 function buildOption(): Record<string, unknown> {
-  const dark = theme.isDark
   return {
     backgroundColor: 'transparent',
     // Honor the OS reduce-motion preference (lieflat hard rule).
@@ -130,32 +206,32 @@ function buildOption(): Record<string, unknown> {
     grid: { left: 0, right: 0, top: 0, bottom: 0 },
     xAxis: { type: 'value', max: totalSeconds.value || 1, show: false },
     yAxis: { type: 'category', data: ['tod'], show: false },
-    tooltip: {
-      trigger: 'item',
-      confine: true,
-      backgroundColor: dark ? '#f7f8f8' : '#08090a',
-      borderWidth: 0,
-      padding: [8, 12],
-      textStyle: {
-        color: dark ? '#08090a' : '#f7f8f8',
-        fontFamily: 'Inter, sans-serif',
-        fontSize: 12,
-      },
-      formatter: (params: { name: string; value: number; data: { percent: number } }) =>
-        `<b>${BUCKET_LABEL[params.name as BucketKey]}</b> · ${formatDuration(params.value)} · ${params.data.percent}%`,
-    },
+    // Hover is handled by chart events + an HTML chip (see activeSeg) — the
+    // floating ECharts tooltip drifted with the cursor and was hard to read.
+    tooltip: { show: false },
     series: segments.value.map((seg, i) => ({
       type: 'bar',
+      name: seg.name,
       stack: 'tod',
       barWidth: 24,
       animationDelay: i * 90,
-      data: [{ value: seg.seconds, percent: seg.percent }],
+      data: [{ name: seg.name, value: seg.seconds, percent: seg.percent }],
       itemStyle: { color: seg.color, borderRadius: seg.borderRadius },
       label: { show: false },
-      emphasis: { disabled: true },
       cursor: 'pointer',
     })),
   }
+}
+
+function bindHoverEvents(): void {
+  if (!chart || typeof chart.on !== 'function') return
+  chart.on('mouseover', (params: { seriesName?: string }) => {
+    const name = params.seriesName as BucketKey | undefined
+    if (name && BUCKET_ORDER.includes(name)) activeSeg.value = name
+  })
+  chart.on('mouseout', () => {
+    activeSeg.value = null
+  })
 }
 
 function render(): void {
@@ -171,6 +247,7 @@ onMounted(() => {
   if (container.value === null) return
   chart = init(container.value)
   render()
+  bindHoverEvents()
   resizeObserver = new ResizeObserver(syncSize)
   resizeObserver.observe(container.value)
 })
@@ -186,25 +263,88 @@ watch([buckets, () => theme.isDark], render)
 </script>
 
 <template>
-  <div class="flex flex-col gap-3">
-    <!-- Capsule strip — widths are the shares; glyphs live in HTML below -->
-    <div ref="container" class="w-full" :style="{ height: `${STRIP_HEIGHT}px` }" role="img" :aria-label="ariaLabel" />
-
-    <!-- Legend: clock order, HTML text (crisp), duration · percent right-aligned -->
-    <ul class="grid grid-cols-1 gap-x-10 gap-y-1.5 sm:grid-cols-2">
-      <li v-for="bucket in buckets" :key="bucket.name" class="flex items-center gap-2 text-xs">
+  <div class="flex flex-col gap-4">
+    <!-- Capsule strip — widths are the shares. An overlay draws the paper
+         seams between buckets (ECharts stacked bars have no inter-segment
+         gap; a border hack gets overpainted by the neighbour). Hovering a
+         segment raises the fixed info chip above it — anchored to the
+         segment center, not the cursor — and highlights its legend entry. -->
+    <div class="relative">
+      <div ref="container" class="w-full" :style="{ height: `${STRIP_HEIGHT}px` }" role="img" :aria-label="ariaLabel" />
+      <div class="pointer-events-none absolute inset-0" aria-hidden="true">
         <span
-          class="h-2.5 w-2.5 shrink-0 rounded-full"
+          v-for="seg in seams"
+          :key="seg.name"
+          class="absolute top-0 h-full w-0.5 -translate-x-1/2"
+          :style="{ left: seg.left, background: theme.isDark ? '#191a1b' : '#ffffff' }"
+        ></span>
+      </div>
+
+      <!-- Fixed info chip: shows the hovered bucket, anchored above its center -->
+      <Transition
+        enter-active-class="transition duration-150 ease-out"
+        enter-from-class="opacity-0 -translate-y-1"
+        leave-active-class="transition duration-100 ease-in"
+        leave-to-class="opacity-0"
+      >
+        <div
+          v-if="activeView && activeSeg"
+          class="pointer-events-none absolute bottom-full left-0 mb-2 flex items-center gap-2 whitespace-nowrap rounded-lg border border-border/60 bg-popover px-3 py-1.5 shadow-md"
+          :style="{ left: chipLeft + '%', transform: 'translateX(-50%)' }"
+          data-testid="tod-info-chip"
+        >
+          <component
+            :is="BUCKET_ICON[activeSeg]"
+            class="h-3.5 w-3.5"
+            :style="{ color: theme.isDark ? BUCKET_COLORS[activeSeg].dark : BUCKET_COLORS[activeSeg].light }"
+          />
+          <span class="text-xs font-semibold text-popover-foreground">{{ BUCKET_LABEL[activeSeg] }}</span>
+          <span class="text-[10px] tabular-nums text-muted-foreground">{{ BUCKET_RANGE[activeSeg] }}</span>
+          <span class="text-xs font-semibold tabular-nums text-popover-foreground">{{ activeView.percent }}%</span>
+          <span class="text-[11px] tabular-nums text-muted-foreground">{{ formatDuration(activeView.seconds) }}</span>
+        </div>
+      </Transition>
+    </div>
+
+    <!-- Legend: clock order, Lucide day-phase glyph, percent leads · duration
+         follows; the hovered bucket's entry highlights in sync with the chip -->
+    <ul class="flex flex-wrap justify-around gap-y-2.5">
+      <li
+        v-for="bucket in buckets"
+        :key="bucket.name"
+        class="flex items-center gap-2.5 rounded-lg px-2 py-1 transition-opacity"
+        :class="activeSeg && activeSeg !== bucket.name ? 'opacity-45' : ''"
+        @mouseenter="onSegEnter(bucket.name)"
+        @mouseleave="onSegLeave()"
+      >
+        <span
+          class="flex h-7 w-7 shrink-0 items-center justify-center rounded-md"
           :style="{
-            backgroundColor: theme.isDark ? BUCKET_COLORS[bucket.name].dark : BUCKET_COLORS[bucket.name].light,
+            backgroundColor: theme.isDark
+              ? 'color-mix(in srgb, ' + BUCKET_COLORS[bucket.name].dark + ' 30%, transparent)'
+              : 'color-mix(in srgb, ' + BUCKET_COLORS[bucket.name].light + ' 22%, transparent)',
           }"
           aria-hidden="true"
-        />
-        <span class="font-medium tracking-wide">{{ BUCKET_LABEL[bucket.name] }}</span>
-        <span class="ml-auto tabular-nums text-muted-foreground">
-          <template v-if="bucket.seconds > 0">{{ formatDuration(bucket.seconds) }}</template>
-          <template v-else>—</template>
-          <span class="ml-2 inline-block w-9 text-right">{{ bucket.percent }}%</span>
+        >
+          <component
+            :is="BUCKET_ICON[bucket.name]"
+            class="h-4 w-4"
+            :stroke-width="2.25"
+            :style="{ color: theme.isDark ? BUCKET_COLORS[bucket.name].dark : BUCKET_COLORS[bucket.name].light }"
+          />
+        </span>
+        <span class="flex min-w-0 flex-col leading-tight">
+          <span class="text-xs font-medium tracking-wide">
+            {{ BUCKET_LABEL[bucket.name] }}
+            <span class="ml-1 text-[10px] tabular-nums text-muted-foreground/60">{{ BUCKET_RANGE[bucket.name] }}</span>
+          </span>
+          <span class="text-sm font-semibold tabular-nums text-foreground">
+            {{ bucket.percent }}%
+            <span class="ml-1.5 text-[11px] font-normal tabular-nums text-muted-foreground">
+              <template v-if="bucket.seconds > 0">{{ formatDuration(bucket.seconds) }}</template>
+              <template v-else>—</template>
+            </span>
+          </span>
         </span>
       </li>
     </ul>
