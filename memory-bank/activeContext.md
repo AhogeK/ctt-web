@@ -53,6 +53,30 @@
 - **Gotcha (cost a round-trip)**: a container element cannot query ITSELF — `@container/x` and `@[..]/x:` on the same div silently never matches. The container declaration must sit on an ancestor (page root / a wrapper div).
 - Verified with a multi-viewport probe (1600/1920/2048/2621): panel cols 1/1/2/2, summary cols 3/6/6/6 — exactly the 830/1430 floors (1920 card = 796px < 830 → single column; 2048 card = 860 ≥ 830 → pair).
 - e2e rewritten to the threshold contract (4 cases: collapse@1920, pair@2100, summary 6@2100, summary 3@1600). 1222 unit + 4 e2e green.
+### TOD panel redesign (user: "缺少设计，参考插件端 + chart-designer/lieflat-charts")
+
+- Skill audit (R20): chart-designer (chart-type matrix), lieflat-charts (63-template taste system). Candidate audit per lieflat §1: G4 Dot Waffle (honest unit-decomposition but loses the clock metaphor), F4 Tick Donut (weak time semantics), **kept the stacked capsule** (the capsule IS the 24h day — strongest ontology for time-of-day) and absorbed lieflat design language instead.
+- Redesign shipped: (1) 24h hairline ruler above the capsule with ticks at 00/06/12/18/24 — segment edges now visibly align with real bucket boundaries; (2) paper seams between segments via an HTML overlay at cumulative-percent positions (ECharts stacked bars overpaint any borderColor hack — lesson recorded); (3) legend upgraded from color dots to Lucide day-phase icons (Moon/Sunrise/Sun/Sunset — plugin emoji parity) in tinted chips, percent leading + duration secondary; (4) tooltip now shows clock range.
+- Multi-edit gotcha: my edit-tool range repair left duplicated blocks (segments declared twice, a mangled textStyle) — rebuilt buildOption wholesale with a python regex replace, then deleted the orphan. Verify with a full-file read after any multi-hunk edit on this file.
+- Verified light+dark screenshots (segment seams, ruler, legend legibility). 1222/1222 unit, tc/lint/build green.
+### TOD panel feedback round (user: legend spacing / misleading ruler / endpoint contrast)
+
+- Legend spread: `grid-cols-2` hugging left → `flex flex-wrap justify-around` — four entries distribute across the card width.
+- Ruler honesty fix: the capsule encodes composition share, so clock-position ticks (00/06/12/18/24) could NOT align with data-driven segment positions — misleading. Ruler now shows percent ticks (0/25/50/75/100%) that line up exactly with the seams; clock ranges remain in legend labels (00–06 etc.).
+- Endpoint contrast: light DAYTIME #a3aef2→#939ff0 (vs white 2.12→2.48), dark NIGHT #333b9a→#4149bd (vs surface 1.85→2.42). Adjacent-segment distinctness now leans on the 2px paper seams (part of the design), freeing the luminance budget for segment-vs-card contrast — the two constraints otherwise deadlock.
+- 1222/1222 unit; light+dark screenshots verified (legend spread, aligned ruler, floating endpoints).
+### TOD feedback round 2 (user: percent ruler meaningless / tooltip shows undefined)
+
+- **Ruler deleted**: percent ticks carried no information (every segment has its own share; 0-100 adds nothing the capsule doesn't already show). The 24h clock version was dropped earlier for misalignment — lesson: this chart's x-axis is ordinal composition, any axis invites misreading; the legend's clock-range labels are the only time reference needed.
+- **Tooltip `undefined` fixed**: stacked-bar `data` entries lacked `name` — ECharts `params.name` comes from `data.name`/`series.name`, neither was set. Added `name: seg.name`; verified live: hover renders "Daytime 12–18h · 84h · 30%".
+- 1222/1222 unit, tc/lint/build green.
+### TOD hover redesign (user: tooltip cursor-following felt off)
+
+- **ECharts floating tooltip removed**; replaced with a fixed HTML info chip: hovering a segment raises a chip anchored to the segment's center-x (clamped 14-86% so it never overflows), showing icon + label + clock range + percent + duration. Non-hovered legend entries dim (opacity-45); legend entries also trigger the chip via mouseenter.
+- Implementation: `activeSeg` ref driven by `chart.on('mouseover'/'mouseout')` (needs `series.name` set — `params.seriesName` reads series-level name, not data-level) + `segmentCenters` computed from cumulative percents. `tooltip: {show:false}`.
+- **Test-mock compatibility**: the component test's mockChart lacks `.on` — `bindHoverEvents` guards `typeof chart.on === 'function'`.
+- **Process lesson (self-inflicted, round-trips wasted)**: repeated edit-tool hunks on this file kept mis-registering (stale anchors + boundary echoes mangled the template twice). After the second corruption, wholesale `write` of the full file was the correct move — for template-heavy edits, prefer one full-file write over incremental hunks.
+- 1222/1222 unit, tc/lint/build green; verified live (chip anchored at segment center, legend sync).
 ## Recent Activity (v0.28.1 — 2026-09-04)
 
 ### Placeholder removal + route blank-view guard (user: "只留开发过的")
