@@ -1,8 +1,10 @@
 <script setup lang="ts">
 /**
  * TimeOfDayPanel — "Time of day distribution": a horizontal 100% stacked
- * capsule (Night / Morning / Daytime / Evening) with the plugin's hour
- * buckets [22-04 / 05-11 / 12-16 / 17-21].
+ * capsule (Night / Morning / Daytime / Evening) over the backend's
+ * plugin-aligned buckets (Night 00-06 / Morning 06-12 / Daytime 12-18 /
+ * Evening 18-24, local timezone) — sessions split across bucket edges
+ * since ctt-server v0.65.0; each entry = enum name + aggregated seconds.
  *
  * This component owns rendering only: fetching and the loading / error /
  * empty wrapper live in the parent (ChartSection) — the project's panel
