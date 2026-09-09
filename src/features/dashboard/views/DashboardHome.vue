@@ -93,10 +93,19 @@ const hourly = useStatsHourly(
   })),
 )
 
-// Time of day distribution — origin filters (the endpoint has no date
-// range yet); DashboardHome owns the query and drives the ChartSection
-const timeOfDay = useStatsDistribution('TIME_OF_DAY', originFilter)
-const languages = useStatsDistribution('LANGUAGES', originFilter)
+// Distribution panels — since backend v0.66.0 the endpoint accepts the same
+// inclusive start/end window as summary/hourly, so every panel follows the
+// filter bar. LanguageDistributionPanel owns its own query (start/end are
+// props); TOD is held here per the pure-renderer panel pattern.
+const distributionWindow = computed(() => ({ start: start.value ?? undefined, end: end.value ?? undefined }))
+const timeOfDay = useStatsDistribution(
+  'TIME_OF_DAY',
+  computed(() => ({ ...distributionWindow.value, ...originFilter.value })),
+)
+const languages = useStatsDistribution(
+  'LANGUAGES',
+  computed(() => ({ ...distributionWindow.value, ...originFilter.value })),
+)
 </script>
 
 <template>
@@ -206,7 +215,12 @@ const languages = useStatsDistribution('LANGUAGES', originFilter)
         :empty="!!languages.data.value && languages.data.value.entries.length === 0"
         @retry="() => languages.refetch()"
       >
-        <LanguageDistributionPanel :device-id="deviceIdOrNull" :ide-name="ideNameOrNull" />
+        <LanguageDistributionPanel
+          :start="start ?? undefined"
+          :end="end ?? undefined"
+          :device-id="deviceIdOrNull"
+          :ide-name="ideNameOrNull"
+        />
       </ChartSection>
     </div>
   </div>

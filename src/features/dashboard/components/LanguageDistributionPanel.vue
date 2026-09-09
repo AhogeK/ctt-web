@@ -24,6 +24,10 @@ import { useThemeStore } from '@/stores/theme'
 import '@/components/charts/echarts-setup'
 
 const props = defineProps<{
+  /** Inclusive window start (yyyy-MM-dd); omitted = full history */
+  start?: string
+  /** Inclusive window end (yyyy-MM-dd); omitted = full history */
+  end?: string
   /** Origin-device filter (null → all devices) */
   deviceId: string | null
   /** Exact IDE-name filter (null → all IDEs); mutually exclusive with deviceId */
@@ -35,6 +39,8 @@ const theme = useThemeStore()
 const distribution = useStatsDistribution(
   'LANGUAGES',
   computed(() => ({
+    start: props.start,
+    end: props.end,
     deviceId: props.deviceId ?? undefined,
     ideName: props.ideName ?? undefined,
   })),
@@ -74,11 +80,9 @@ const bars = computed<LangBar[]>(() => {
   return main
 })
 
-const totalLabel = computed(() => formatDuration(totalSeconds.value))
-
 const ariaLabel = computed(() => {
   const parts = bars.value.map((b) => `${b.name} ${b.percent}%`).join(', ')
-  return `Language distribution: ${parts}. Total ${totalLabel.value}`
+  return `Language distribution: ${parts}`
 })
 
 const container = ref<HTMLDivElement | null>(null)
@@ -206,9 +210,5 @@ watch([bars, () => theme.isDark], () => {
 <template>
   <div class="flex flex-col gap-3">
     <div ref="container" class="w-full" role="img" :aria-label="ariaLabel" />
-
-    <p class="text-right text-[11px] tracking-wide text-muted-foreground">
-      Total <span class="font-medium text-foreground">{{ totalLabel }}</span>
-    </p>
   </div>
 </template>
