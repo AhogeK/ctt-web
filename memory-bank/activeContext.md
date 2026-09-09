@@ -77,6 +77,13 @@
 - **Test-mock compatibility**: the component test's mockChart lacks `.on` — `bindHoverEvents` guards `typeof chart.on === 'function'`.
 - **Process lesson (self-inflicted, round-trips wasted)**: repeated edit-tool hunks on this file kept mis-registering (stale anchors + boundary echoes mangled the template twice). After the second corruption, wholesale `write` of the full file was the correct move — for template-heavy edits, prefer one full-file write over incremental hunks.
 - 1222/1222 unit, tc/lint/build green; verified live (chip anchored at segment center, legend sync).
+### Language Distribution panel shipped (user directive; chart-designer + lieflat audit)
+
+- **Fixed test account**: `.sisyphus/get-token.sh` now persists `<prefix>` emails to `.sisyphus/.test-account-<prefix>` and logs straight in on later runs (FRESH=1 to force re-register) — test data accumulates on ONE account instead of piling up throwaway registrations (user request). Verified: reuse login → seeded 10-language data persists.
+- **Design audit** (lieflat §1, ≥3 candidates): G4 Dot Waffle (honest units but loses label capacity), F4 Tick Donut (weak semantics for arbitrary-length names), **ranked horizontal bars won** — arbitrary language labels fit naturally, length ∝ time is honest composition encoding, BarChart already registered (zero bundle delta). Plugin uses pie+scroll-legend; user asked for own style.
+- **LanguageDistributionPanel.vue**: ranked bars (entries arrive duration-descending), 0.1% floor folds tail into Others (plugin parity), indigo luminance ramp decaying with rank (same family as weekly heatmap), `% · duration` end labels, Total footer, tooltip with full info. Chart height = N rows × 26px, grows with language count. Filter reactivity + loading/error/empty via parent ChartSection.
+- **DashboardHome**: panel added after TOD (grid auto-flows; 6 cards now). `useStatsDistribution('LANGUAGES', originFilter)` in the view.
+- 4 new unit tests (rank order, Others folding, 0.1% threshold boundary, a11y label) — 1226/1226, tc/lint/build green; light+dark verified with seeded 10-language account.
 ## Recent Activity (v0.28.1 — 2026-09-04)
 
 ### Placeholder removal + route blank-view guard (user: "只留开发过的")
