@@ -126,7 +126,8 @@ describe('LanguageDistributionPanel', () => {
     await wrapper.vm.$nextTick()
     const label = wrapper.find('[role="img"]').attributes('aria-label')
     expect(label).toContain('TypeScript 62%')
-    expect(label).toContain('Total')
+    expect(label).toContain('Java 38%')
+    expect(label).not.toContain('Total') // categorical buckets have no meaningful total
     wrapper.unmount()
   })
 })
