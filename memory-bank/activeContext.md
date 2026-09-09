@@ -84,6 +84,18 @@
 - **LanguageDistributionPanel.vue**: ranked bars (entries arrive duration-descending), 0.1% floor folds tail into Others (plugin parity), indigo luminance ramp decaying with rank (same family as weekly heatmap), `% · duration` end labels, Total footer, tooltip with full info. Chart height = N rows × 26px, grows with language count. Filter reactivity + loading/error/empty via parent ChartSection.
 - **DashboardHome**: panel added after TOD (grid auto-flows; 6 cards now). `useStatsDistribution('LANGUAGES', originFilter)` in the view.
 - 4 new unit tests (rank order, Others folding, 0.1% threshold boundary, a11y label) — 1226/1226, tc/lint/build green; light+dark verified with seeded 10-language account.
+### Feedback #1 investigated: TOTAL vs TOD vs summary mismatch (user report)
+
+- **Backend-level check**: `summary.total` == `TIME_OF_DAY` bucket sum on identical requests (1011600 == 1011600, seeded repro). The pure data path is consistent.
+- **Root cause confirmed — backend capability gap**: the filter bar's date range drives `summary` (start/end supported) but NOT the distribution panels. `GET /distribution` accepts only type/timezoneOffset/deviceId/ideName — **no start/end**; unknown params are silently ignored (verified: windowed request returns identical full-history sum). Frontend `filterQuery` already sends start/end when the parent provides them; distribution queries intentionally pass only originFilter (documented limitation).
+- User-visible effect: switching the filter-bar preset changes the summary cards but leaves every distribution panel on all-history — the mismatch the user saw.
+- **Per R3**: fix requires backend window params on `/distribution` (report handed to user). No frontend code change can close the gap.
+### Backend v0.66.0 window params wired into distribution panels
+
+- Backend shipped `start`/`end` on `/distribution` (inclusive, default full history, end<start → 400 COMMON_003). Verified live: full 1011600 vs single-day window 64800, 400 on inverted range.
+- **TOD + LANGUAGES now follow the filter-bar window**: DashboardHome builds `distributionWindow` (start/end) into both queries; LanguageDistributionPanel takes start/end props (own query, TOD stays in the view per panel pattern). Verified live: All-time → summary.total 281h == TOD Total 281h; September window → TOD 143h (previously stuck at 281h forever).
+- **Total semantics clarified** (user's backend ruling): time-axis distributions (TIME_OF_DAY) must equal summary.total (merged-dedup conservation) and KEEP their Total footer as a cross-check; categorical distributions (LANGUAGES/PROJECTS/…) sum ≥ real activity (parallel-session overlap is legal) so their Total has no business meaning — LANGUAGES footer removed, a11y label drops Total (test updated).
+- 1226/1226 unit, tc/lint/build green.
 ## Recent Activity (v0.28.1 — 2026-09-04)
 
 ### Placeholder removal + route blank-view guard (user: "只留开发过的")

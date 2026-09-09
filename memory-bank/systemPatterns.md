@@ -104,3 +104,9 @@ RawKeyDialog is hard to dismiss (raw key unrecoverable): overlay/Escape/X blocke
 ## Discriminated API Endpoints
 
 `mutationFn` signature drives `TVariables`: literal discriminator → 1-arg literal form; structured payload → 1-arg payload form; no args → 0-arg form. Without literal annotation TS infers `undefined` and `mutate('bind')` fails type-check.
+
+## Distribution Semantics (backend v0.66.0 ruling)
+
+- Time-axis distributions (TIME_OF_DAY): sessions merged-deduped; bucket sum MUST equal summary.total — the Total footer stays as a cross-check.
+- Categorical distributions (LANGUAGES/PROJECTS/DEVICES/IDES): raw accumulation; overlap (same-second multi-language/project) is legal so bucket sum >= activity — no Total footer, none in a11y labels.
+- All distribution panels follow the filter-bar window (backend v0.66.0 start/end, inclusive, default full history).
