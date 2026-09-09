@@ -30,6 +30,7 @@ import TrendChart from '../components/TrendChart.vue'
 import HeatmapYearSelect from '../components/HeatmapYearSelect.vue'
 import HourlyPanel from '../components/HourlyPanel.vue'
 import TimeOfDayPanel from '../components/TimeOfDayPanel.vue'
+import LanguageDistributionPanel from '../components/LanguageDistributionPanel.vue'
 import WeekHourPanel from '../components/WeekHourPanel.vue'
 
 const {
@@ -94,8 +95,8 @@ const hourly = useStatsHourly(
 
 // Time of day distribution — origin filters (the endpoint has no date
 // range yet); DashboardHome owns the query and drives the ChartSection
-// three-state wrapper for the pure-renderer TimeOfDayPanel.
 const timeOfDay = useStatsDistribution('TIME_OF_DAY', originFilter)
+const languages = useStatsDistribution('LANGUAGES', originFilter)
 </script>
 
 <template>
@@ -196,6 +197,16 @@ const timeOfDay = useStatsDistribution('TIME_OF_DAY', originFilter)
         @retry="() => timeOfDay.refetch()"
       >
         <TimeOfDayPanel :device-id="deviceIdOrNull" :ide-name="ideNameOrNull" />
+      </ChartSection>
+
+      <ChartSection
+        title="Language distribution"
+        :loading="languages.isPending.value"
+        :error="languages.isError.value"
+        :empty="!!languages.data.value && languages.data.value.entries.length === 0"
+        @retry="() => languages.refetch()"
+      >
+        <LanguageDistributionPanel :device-id="deviceIdOrNull" :ide-name="ideNameOrNull" />
       </ChartSection>
     </div>
   </div>
