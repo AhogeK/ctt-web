@@ -62,10 +62,25 @@ in disguise.
 "see every language". The list now scrolls and reports the total count instead.
 
 ## P7. DESIGN.md and existing panels are the style authority
-
 `DESIGN.md` (Linear-style, light/dark dual mode) is authoritative for colour, spacing and
 elevation; existing charts are the precedent for gradient language. Inventing a new third
 gradient or a colour outside the file is not a design choice, it is drift.
 
 *Consequence*: a new chart reuses an existing panel's gradient stops verbatim rather than
 picking "similar" values.
+
+## P8. A readout must never render as its own absence
+
+A value that is present must not print as `0` (or `—`, or blank) because the display resolution
+was too coarse. "No data" and "a vanishingly small amount of data" are different facts and the
+readout has to keep them apart — otherwise the UI reports the opposite of the truth for exactly
+the rows a user opened the detail view to inspect.
+
+**Consequence**: precision is not a fixed property of the panel; it follows the value down until
+the value is visible. Uniform precision is a tie-breaker, never a constraint that justifies
+printing `0%`. Applies to any unit that can sit orders of magnitude below its display step
+(percent shares, durations, rates).
+
+*Evidence*: shares in the "Others" popover printed as `0%` at two decimals; the user's report was
+"hiding data behind a 0%". See `practices.md` → Numeric readouts for the formula and the lane
+sizing it forces.

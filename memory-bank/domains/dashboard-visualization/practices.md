@@ -53,10 +53,25 @@ outer box, so the overlay always has somewhere to appear and the layout never sh
 *Measured after the fix*: wide card (397px) → 66 / 68 / 68 / 26 px distribution with the readout
 77px from the card top; short card (241px) → readout 51px, header bottom 35px, no overlap.
 
+## Card height budget
+
+A card's height = its own chrome + whatever the body needs, and the grid row then follows the
+tallest card. Work out the budget from the measured chrome before choosing a viewport cap:
+
+```
+card = 32 padding (p-4) + 18 header + 16 header gap (mb-4) + body
+body = scroll viewport + 8 gap (gap-2) + 18 footer
+=> chrome = 92px   (so a 228px viewport lands the card at ~320px)
+```
+
+Measured for the language panel: 228px viewport → 321px card, 9 rows visible, still scrollable.
+State the derivation in a comment next to the cap — the numbers are otherwise unexplainable six
+months later.
+
 ## Bounded-height scrolling list
 
 ```
-scroll viewport: max-h-[19rem] overflow-y-auto
+scroll viewport: max-h-[228px] overflow-y-auto
                  scrollbar-width: thin
                  scrollbar-color: transparent transparent   /* hidden at rest */
                  scrollbar-gutter: stable                    /* lane reserved, no reflow */
@@ -78,6 +93,22 @@ edge fades:      mask-image, applied per edge only
 
 - Two decimals with trailing zeros trimmed for shares (`41.67%` / `0.21%` / `5%`) — integer
   rounding flattens small values to `0%`.
+- **Below that resolution the precision follows the value.** A share can legitimately sit far
+  under 0.01 (the "Others" popover exists precisely to show that tail), and a fixed two decimals
+  prints each of them as `0%` — indistinguishable from a language with no time at all. Extend one
+  digit past the value's first significant digit, capped at 6:
+
+  ```
+  decimals = v >= 0.01 ? 2 : min(6, ceil(-log10(v)) + 1)
+  ```
+
+  `0.0033 → 0.0033%`, `0.000004 → 0.000004%`. Zero itself still prints `0`. The cap of 6 stays
+  non-zero down to one second in ~6 years of tracked time, so the readout can never round a real
+  value back to `0` — which is the whole point of the rule (P8).
+- **Size the value lane for the longest output, not the common one.** Max output is
+  `0.000000%` = 9 chars = 62.5px at 11px `tabular-nums`; a 3.5rem (56px) lane let it spill 6.5px
+  into the 10px column gap — survivable only by luck. Use 4.25rem (68px) so the worst case stays
+  inside its own column. Right-aligned + `tabular-nums` keeps the `%` column aligned regardless.
 - Every readout path uses the **same** formatter. Missing one (e.g. the bar-end label) leaks
   float tails like `41.66666666666667%` straight into the render — screenshot it, don't assume.
 - Give each value its own fixed, right-aligned, `tabular-nums` column so numbers stack down the

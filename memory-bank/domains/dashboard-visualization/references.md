@@ -60,12 +60,14 @@ Floors: panel card ≥830px (row ≥1684px), summary row ≥1430px.
 
 | Parameter                | Value                                                          |
 | ------------------------ | -------------------------------------------------------------- |
-| Scroll viewport max-h    | `19rem`                                                        |
+| Scroll viewport max-h    | `228px` (card lands at ~320px; chrome = 92px)                  |
 | Scrollbar width          | `thin` (Chrome renders an 11px lane)                           |
 | Thumb idle-hide delay    | ~900ms                                                         |
 | Edge fade depth          | ~18px top / ~26px bottom                                       |
 | Row stagger (entrance)   | 45–55ms per row, `IntersectionObserver` threshold .25           |
 | Segment seam width       | 1.5–2px, card-surface colour                                   |
+| Language row grid        | `5.5rem` label / `1fr` track / `4.25rem` percent / `4.75rem` duration |
+| Percent readout decimals | `2`, or `min(6, ceil(-log10(v)) + 1)` below `0.01` (P8)         |
 
 ## Files worth knowing
 
