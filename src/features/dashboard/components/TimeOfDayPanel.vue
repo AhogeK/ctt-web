@@ -263,13 +263,22 @@ watch([buckets, () => theme.isDark], render)
 </script>
 
 <template>
-  <div class="flex flex-col gap-4">
+  <!-- The card stretches to its grid row (a sibling may be much taller), so the
+       panel fills that height and spreads its three blocks — capsule, legend,
+       total — with space-around instead of huddling in the vertical centre.
+       Other panels keep the default centring: a chart with a fixed plot height
+       should not be stretched, but a stack of small blocks reads better
+       distributed. -->
+  <div class="flex flex-1 flex-col justify-around gap-4">
     <!-- Capsule strip — widths are the shares. An overlay draws the paper
          seams between buckets (ECharts stacked bars have no inter-segment
          gap; a border hack gets overpainted by the neighbour). Hovering a
          segment raises the fixed info chip above it — anchored to the
-         segment center, not the cursor — and highlights its legend entry. -->
-    <div class="relative">
+         segment center, not the cursor — and highlights its legend entry.
+         `mt-10` reserves exactly the chip's height (32px) plus its 8px gap, so
+         the chip always has somewhere to appear: without it, a short card puts
+         the strip at the top and the chip would land on the card header. -->
+    <div class="relative mt-10">
       <div ref="container" class="w-full" :style="{ height: `${STRIP_HEIGHT}px` }" role="img" :aria-label="ariaLabel" />
       <div class="pointer-events-none absolute inset-0" aria-hidden="true">
         <span
