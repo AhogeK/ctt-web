@@ -7,6 +7,10 @@
 **Branch**: develop
 **Tests**: 1233/1233 unit; vue-tsc + lint 0 error 0 warning; build green
 
+> 本文件只记「现在与最近」。**跨轮次可复用的判断在 [`domains/`](./domains/README.md)**（R24）：
+> `dashboard-visualization`（图表/配色/布局/交互）、`backend-contract`（接口契约与统计语义）、
+> `ai-workflow`（记忆/版本/提交/验证/资源）。
+
 ## Dashboard 面板（v0.28 – v0.34）
 
 ### 布局：容器查询阈值（组件宽语义，非视口）
