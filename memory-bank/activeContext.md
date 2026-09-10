@@ -96,6 +96,10 @@
 - **TOD + LANGUAGES now follow the filter-bar window**: DashboardHome builds `distributionWindow` (start/end) into both queries; LanguageDistributionPanel takes start/end props (own query, TOD stays in the view per panel pattern). Verified live: All-time → summary.total 281h == TOD Total 281h; September window → TOD 143h (previously stuck at 281h forever).
 - **Total semantics clarified** (user's backend ruling): time-axis distributions (TIME_OF_DAY) must equal summary.total (merged-dedup conservation) and KEEP their Total footer as a cross-check; categorical distributions (LANGUAGES/PROJECTS/…) sum ≥ real activity (parallel-session overlap is legal) so their Total has no business meaning — LANGUAGES footer removed, a11y label drops Total (test updated).
 - 1226/1226 unit, tc/lint/build green.
+### LANGUAGES percent precision (user: small values all read 0%)
+
+- Percent values now full precision internally; displayed via `formatPercent` (2 decimals, trailing zeros trimmed — user ruling): 41.67% / 0.21% / 5%. Applied at all three readouts: bar-end label, tooltip, aria label (initially missed the bar-end formatter — floats leaked into the render; caught by screenshot).
+- Tests updated to 2-decimal expectations (rank order [50, 31.25, 18.75]; a11y shares 61.54/38.46). 1226/1226, tc/lint/build green; verified with the 10-language fixed account (HTML 0.31% / CSS 0.21% now distinct).
 ## Recent Activity (v0.28.1 — 2026-09-04)
 
 ### Placeholder removal + route blank-view guard (user: "只留开发过的")
