@@ -106,6 +106,65 @@
 - Tooltip formatter surfaces `(N folded)` on the Others bar for information reachability. New unit test locks 12-language input → 9 rows (8 + Others).
 - **Debug lesson**: dev-server `504 Outdated Optimize Dep` after dependency-graph changes — `rm -rf node_modules/.vite` + restart clears it; page then renders blank ("no #app") until refresh.
 - 1227/1227 unit, tc/lint/build green.
+### Language panel → treemap (user: small shares invisible in Others; right side wasted)
+
+- **3-candidate audit**: G4/L14 waffle (1 dot = 1% cannot encode 0.21% shares — fails "see everything"; L14 limited to <=6 categories), F4 donut (ring leaves the exact whitespace being complained about, legend steals width) → **F13 Nested Treemap adopted** (single-level: language data is flat, so F13's parent bands become paper seams).
+- **Fixes both complaints**: measured 92% ink coverage on the card (zero dead space, was empty on the right); area encodes time continuously so even 0.21% stays a visible tile; fixed 240px height so language count no longer stretches the grid row (Top-8 cap removed — 24-slice ceiling with Others beyond).
+- **F13 hard rules honoured**: area already encodes the value so colour does NOT repeat it — one brand indigo fill + paper seams (Others gets a muted step of the same hue); over-long labels are dropped (never shrunk) and details live in the tooltip; Others tooltip lists the folded languages.
+- **Verified with a 33-language tail account**: Others tooltip renders "9 folded / Lang19 0.31% … Rare0 0.02% / …and 3 more" — nothing unreachable. Bug caught on the way: treemap data carries seconds under `value`, so the tooltip's duration field was empty until it read `params.value`.
+- 1229/1229 unit, tc/lint/build green.
+### Language panel: treemap rejected → ranked bar list (user: treemap too heavy, slabs, short rows illegible)
+
+- Treemap (single-hue fill, area = seconds) measured 92% ink coverage but read as one big colour slab when a language dominates, and small tiles were unreadable — user rejected it. Reverted the TreemapChart registration.
+- **Third design, closest relative F5/C1 Tick Rows** (lieflat §6 translation): ranked rows of 8px capsules, bar length scaled to the LONGEST language (so rank 1 fills the row instead of leaving a gap), rank-driven indigo luminance ramp (light: deep→pale; dark: bright→deep) so no two neighbouring rows share a shade, percent + duration readout always visible next to every bar (the number carries precision where the bar is tiny), quarter ticks on the track turn the unused length into a measurable scale (lieflat 环境结构层: furniture rather than more data).
+- **Empty right side solved structurally**: `@container/langs` + `@[1000px]/langs:columns-2` — on genuinely wide cards the list splits into two columns (column 1 = top ranks, column 2 = tail) so the card fills; below 1000px the single column keeps the track ≥ ~630px so the smallest bar stays a visible nub (8.4px at an 879px card).
+- Entrance: IntersectionObserver reveal (threshold .25) with 55ms/row stagger; `motion-reduce:transition-none` for the reduced-motion path.
+- 1229/1229 unit, tc/lint/build green; light + dark verified at 2100/2621 (cols 1/2, ramps correct).
+### Language panel: completeness over truncation (user: "must see every language")
+
+- **My error, corrected**: I had capped the list at 8 rows + Others. The user had already suggested internal scrolling in the original height feedback; I dismissed it on my own preference and substituted truncation — which is exactly what made languages 9+ invisible. Row caps removed.
+- Now: **every language above the 0.1% floor gets a row**; the CARD bounds height (`max-h-[19rem] overflow-y-auto`), never the data. Verified with a 33-language account: 30 rows rendered (29 + Others), scrollHeight 768 vs clientHeight 304, card 397px; scrolling to the bottom hides both the fade cue and the "scroll for more" hint; the last row (Others 0.07% · 4m 48s) is reachable.
+- Footer reports the listed count ("30 languages[ · scroll for more]") so the total is never a guess.
+- Kept from the previous round: 8px capsules, longest-scaled bar length, rank luminance ramp (cycling after 8 stops so neighbouring rows stay distinct), quarter-tick rails, scroll-triggered entrance, and the Others hover list of folded names.
+- 1230/1230 unit (new: no-cap 20-language case + count footer), tc/lint/build green; light + dark verified.
+### Language list scroll area designed (user: default scrollbar was jarring)
+
+- **Scrollbar follows the project's existing recipe** (TermsDialog.vue: `scrollbar-width: thin` + `scrollbar-color` + webkit fallbacks) extended to overlay behaviour: thumb fully transparent at rest, revealed on hover / `:focus-visible` / while `is-scrolling` (900ms idle timer in the component). A standing grey bar on a card reads as chrome; the edge fades and footer hint carry discoverability instead.
+- **Scroll lane reserved** (`scrollbar-gutter: stable` + `pr-2`) — measured gap to card edge stays 36px and the readout column never shifts when the list starts overflowing. Chrome renders `thin` as an 11px lane (its webkit rules are ignored once `scrollbar-width` is set — same as TermsDialog).
+- **Edge fades on both ends**, each shown only when it actually hides content (`atTop` / `moreBelow` tracked on scroll); card gradient vs `from-card` measured ~1.3% lightness apart, so the fade does not band.
+- **Keyboard access fixed**: the scroll region is `tabindex="0"` with a `:focus-visible` inset ring (ring token at 45%) so WCAG 2.1.1 keyboard scrolling works — verified ArrowDown scrolls (80px) and focus-visible matches.
+- 1231/1231 unit (new: scroll region is keyboard-focusable), tc/lint/build green; light + dark verified.
+### Language panel: fade seam, value alignment, colour logic (3 user reports)
+
+- **Fade seam (dark mode) — root cause**: the edge fades were painted overlays (`bg-gradient-to-b from-card`), but the card itself is a gradient (`from-card to-muted/40`) whose bottom is DARKER in dark mode — so the overlay's lighter `#191a1b` banded against it. Replaced with `mask-image` on the scroll viewport: a mask has no colour, so nothing can mismatch. Masks are applied per-edge via classes (`fade-top` / `fade-bottom`) so a short, non-scrolling list gets no mask at all (verified `maskImage: none` with 10 rows) and there are no duplicated gradient stops to clip a row.
+- **Value alignment**: percent and duration now own fixed right-aligned lanes (`grid-cols-[5.5rem_minmax(0,1fr)_3.25rem_4rem]`, tabular-nums) instead of trailing each bar at a different x — measured identical right edges across rows (1435 / 1509 in both themes).
+- **Colour logic (was "messy")**: the per-rank 8-stop ramp measured only 1.2-1.4:1 between neighbours AND cycled back to its first stop after 8 rows — no information, self-contradicting. Now colour encodes exactly one thing: rank 0 (the headline language) takes the brand accent, every other language is neutral, Others is the palest step. Contrast vs track — light 4.49 / 3.11 / 1.39, dark 4.87 / 3.87 / 1.59.
+- 1232/1232 unit (new: headline-only-accent case), tc/lint/build green; dark + light verified.
+### Language bars: one global gradient across the track (user's idea, adopted)
+
+- Per-bar gradients replaced by a **single ramp spanning the whole bar region**: deepest at the track's left edge, brightest at its right edge. Implemented with `container-type: inline-size` on the track + `background-size: 100cqw 100%` on the bar — the bar paints a track-wide ramp and its own width clips it, so every row exposes the SAME scale (a long bar sweeps dark→bright; a short bar only touches the deep end).
+- Pixel-verified: all rows start at the identical deep stop (#4338ca light / #6366f1 dark) while the right edge brightens with length (358px bar ends #7980e1 / #a2b1fc; a 72px bar ends #4d46ce / #6f74f3). Stops chosen so both ends clear 3:1 against the track (light 7.56 / 3.25; dark 4.19 / 9.39).
+- Duration column widened (4rem → 4.75rem) + `whitespace-nowrap`; verified uniform 18px rows with zero wrapping across all 30 entries.
+- **Process correction (user)**: only tear down services *I* started. Verified ownership by PID before killing; the 5173 server (46960, started 16:39) is the user's and was left running. A stale PID-file match is not proof of ownership — check the actual listener.
+- 1233/1233 unit, tc/lint/build green; light + dark pixel-verified.
+### Language bars: gradient restored (user: "渐变是渐变而不是分割", left end too dark)
+
+- My stepped ladder was wrong twice over: discrete rungs read as SEGMENTS (a gradient must interpolate), and #1e1b4b at the deep end was near-black rather than brand indigo. Reverted to a smooth 3-stop gradient.
+- **Stops copied from TrendChart** (the gradient the user pointed at as good): light `#3d49ad / #8290f0 / #8a97f2`, dark `#4a53b8 / #8290f0 / #b9c1ff`, offsets 0 / 48% / 100% mirroring the trend's own gradient — so both panels now speak one gradient language. Dark deep end nudged to `#4f58c0` purely to clear the 3:1 floor on the track.
+- Kept the track-wide mechanism (`background-size: 100cqw`) so the sweep is one shared scale across the panel, per the earlier request.
+- Verified by dense pixel sampling of the longest bar: 12 points climb continuously (`#3e4aae → #4a57ba → … → #8996f2`) with no jumps, and the left edge is indigo, not black. Dark: `#5059c1 → #b4bdfe`.
+- 1233/1233 unit (assertion now also rejects stop-pair syntax so a future edit cannot silently re-segment the ramp), tc/lint/build green.
+### Others row: design-system popover + same gradient (user feedback)
+
+- **Native `title` replaced by the project Tooltip** (`@/components/ui/tooltip`, the AppHeader recipe): the aggregate row's hover now renders a structured popover — "N languages folded in" plus each folded language with its share (capped at 8, remainder reported as a count). Verified 146x108 with the design-system surface/radius/arrow, inverting correctly per theme (light: dark bubble, dark: light bubble). Rows without folded content render no popover (`v-if` on TooltipContent).
+- **Others bar re-joined the gradient family**: it previously used a flat muted fill, which the user read as inconsistent with the language rows. It now paints the SAME shared ramp and steps back via `opacity: 0.75` — one gradient language across the panel, with the aggregate reading as part of the family without competing for attention.
+- Tooltip DOM note: reka-ui mirrors the content into a 1x1 visually-hidden span for `aria-describedby`, so `textContent` reads doubled — the visible popup is single. Not a duplication bug.
+- 1233/1233 unit (assertions updated: gradient + `lang-bar--aggregate` class, and no native title), tc/lint/build green; light + dark verified.
+### Others bar: opacity removed (user: colours still differ)
+
+- Root cause was my own addition: `opacity: 0.75` on `lang-bar--aggregate`, which dimmed the aggregate's gradient by 25% — the user's "others 的渐变颜色跟其他不一样" was exactly this. Removing it also removes a self-contradiction: the panel's premise is that colour carries NO data (length + label do), so tinting the aggregate could only re-imply "colour means something".
+- Verified: 30 rows report ONE unique `backgroundImage` string and a single opacity value (1) — the aggregate is now painted byte-identically to every language row. Dead code (`isOthers` field, the empty modifier class) removed with it.
+- 1233/1233 unit (assertion now compares the aggregate's gradient string against a language row's and forbids opacity), tc/lint/build green.
 ## Recent Activity (v0.28.1 — 2026-09-04)
 
 ### Placeholder removal + route blank-view guard (user: "只留开发过的")
