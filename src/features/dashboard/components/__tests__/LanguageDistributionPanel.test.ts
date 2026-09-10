@@ -229,6 +229,25 @@ describe('LanguageDistributionPanel', () => {
     wrapper.unmount()
   })
 
+  it('reads the sub-0.01% tail with real precision instead of 0%', async () => {
+    // At two decimals every one of these prints as "0%" — the same thing as
+    // showing no data at all, on the row AND inside the Others popover.
+    const total = 100 * 3600
+    feed.entries = [
+      { name: 'TypeScript', seconds: total - 12 },
+      { name: 'Rare1', seconds: 4 }, // 0.0011%
+      { name: 'Rare2', seconds: 4 },
+      { name: 'Rare3', seconds: 4 },
+    ]
+    const wrapper = mountPanel()
+    await wrapper.vm.$nextTick()
+    const others = rowWrappers(wrapper)[1]
+    expect(others!.text()).toContain('Others')
+    expect(others!.text()).toContain('0.0033%')
+    expect(wrapper.find('[role="list"]').attributes('aria-label')).toContain('Others 0.0033%')
+    wrapper.unmount()
+  })
+
   it('exposes the list as a keyboard-focusable scroll region', async () => {
     feed.entries = [
       { name: 'TypeScript', seconds: 40 * 3600 },

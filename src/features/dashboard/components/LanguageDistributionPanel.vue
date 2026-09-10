@@ -58,10 +58,21 @@ const MIN_PERCENT = 0.1
 /** Quarter ticks on every track: the scale that makes lengths comparable. */
 const TICKS = [25, 50, 75] as const
 
-/** Percent readout: 2 decimals, trailing zeros trimmed (41.67% / 0.21% / 5%). */
+/**
+ * Percent readout. Two decimals, trailing zeros trimmed (41.67% / 0.21% / 5%).
+ *
+ * The "Others" popover lists shares well below that resolution, and a fixed
+ * two decimals prints every one of them as "0%" — indistinguishable from a
+ * language with no time at all, which is what the popover is there to show.
+ * So below 0.01 the precision follows the value: one digit past its first
+ * significant one (0.004 -> 0.004%, 0.00004 -> 0.00004%). The cap of 6 is
+ * still non-zero for a single second out of ~6 years of tracked time.
+ */
 function formatPercent(v: number): string {
-  const s = v.toFixed(2)
-  return s.endsWith('.00') ? s.slice(0, -3) : s.endsWith('0') ? s.slice(0, -1) : s
+  if (v <= 0) return '0'
+  const decimals = v >= 0.01 ? 2 : Math.min(6, Math.ceil(-Math.log10(v)) + 1)
+  const s = v.toFixed(decimals)
+  return s.includes('.') ? s.replace(/0+$/, '').replace(/\.$/, '') : s
 }
 
 interface LangRow {
@@ -243,11 +254,14 @@ function foldedBreakdown(row: LangRow): { shown: { name: string; percent: number
          The scroll viewport fades its own content with a mask instead of
          painting a card-coloured overlay on top: an overlay can never match a
          card that carries a gradient, which is what produced the visible seam
-         in dark mode. A mask has no colour, so there is nothing to mismatch. -->
+         in dark mode. A mask has no colour, so there is nothing to mismatch.
+         Height budget: this card spends 92px on chrome (32 padding + 18 header
+         + 16 header gap + 8 gap + 18 footer), so a 228px viewport puts the card
+         at ~320px — the agreed ceiling for the two-column layout. -->
     <div class="relative">
       <ul
         ref="listEl"
-        class="lang-scroll max-h-[19rem] overflow-y-auto"
+        class="lang-scroll max-h-[228px] overflow-y-auto"
         :class="{ 'is-scrolling': scrolling, 'fade-top': !atTop, 'fade-bottom': moreBelow }"
         role="list"
         :aria-label="ariaLabel"
@@ -257,8 +271,12 @@ function foldedBreakdown(row: LangRow): { shown: { name: string; percent: number
           <TooltipProvider :delay-duration="200">
             <Tooltip>
               <TooltipTrigger as-child>
+                <!-- Percent lane is sized for the LONGEST readout the formatter
+                     can emit, not the common one: a sub-0.01% share keeps up to
+                     6 decimals, so "0.000012%" (62.5px at 11px tabular-nums)
+                     must fit without spilling into the track. -->
                 <span
-                  class="grid grid-cols-[5.5rem_minmax(0,1fr)_3.5rem_4.75rem] items-center gap-2.5"
+                  class="grid grid-cols-[5.5rem_minmax(0,1fr)_4.25rem_4.75rem] items-center gap-2.5"
                   data-testid="language-row-body"
                 >
                   <!-- Label column -->
