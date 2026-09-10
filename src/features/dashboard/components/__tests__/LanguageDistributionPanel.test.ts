@@ -117,6 +117,22 @@ describe('LanguageDistributionPanel', () => {
     wrapper.unmount()
   })
 
+  it('caps the display window at 8 ranked bars, folding the rest into Others', async () => {
+    const total = 20 * 3600
+    feed.entries = Array.from({ length: 12 }, (_, i) => ({
+      name: `Lang${i}`,
+      seconds: Math.round((total / 12) * (1 - i * 0.05)),
+    }))
+    const wrapper = mount(LanguageDistributionPanel, { props: { deviceId: null, ideName: null } })
+    await wrapper.vm.$nextTick()
+    const opt = lastOption()
+    // 8 visible + 1 Others = 9 rows, never more.
+    expect(opt.yAxis.data.length).toBe(9)
+    expect(opt.yAxis.data.slice(0, 8)).toEqual(['Lang0', 'Lang1', 'Lang2', 'Lang3', 'Lang4', 'Lang5', 'Lang6', 'Lang7'])
+    expect(opt.yAxis.data[8]).toBe('Others')
+    wrapper.unmount()
+  })
+
   it('exposes an a11y label with per-language shares and the total', async () => {
     feed.entries = [
       { name: 'TypeScript', seconds: 40 * 3600 },

@@ -64,25 +64,43 @@ interface LangBar {
 const totalSeconds = computed(() => distribution.data.value?.entries.reduce((acc, e) => acc + e.seconds, 0) ?? 0)
 
 /**
- * Ranked bars: entries already arrive duration-descending; the sub-threshold
- * tail collapses into a single "Others" bar so the chart stays readable no
- * matter how many languages a year of history accumulates.
+ * Ranked bars with a bounded display window (height control): entries
+ * arrive duration-descending; the sub-0.1% tail folds into "Others"
+ * (plugin parity), and the top MAX_VISIBLE ranking bars cap the card
+ * height — anything beyond folds into that same Others bar. Without the
+ * cap, a year of polyglot history stretches this card unbounded and
+ * blows up the grid's row rhythm.
  */
+const MAX_VISIBLE = 8
+
+const foldedCount = computed(() => {
+  const entries = distribution.data.value?.entries ?? []
+  const total = totalSeconds.value
+  if (total <= 0) return 0
+  const aboveFloor = entries.filter((e) => (e.seconds / total) * 100 >= MIN_PERCENT)
+  return aboveFloor.length - Math.min(aboveFloor.length, MAX_VISIBLE)
+})
+
 const bars = computed<LangBar[]>(() => {
   const entries = distribution.data.value?.entries ?? []
   const total = totalSeconds.value
   if (total <= 0) return []
-  const main: LangBar[] = []
-  let othersSeconds = 0
-  for (const e of entries) {
-    if ((e.seconds / total) * 100 >= MIN_PERCENT) {
-      main.push({ name: e.name, seconds: e.seconds, percent: (e.seconds / total) * 100 })
-    } else {
-      othersSeconds += e.seconds
-    }
+  const aboveFloor = entries.filter((e) => (e.seconds / total) * 100 >= MIN_PERCENT)
+  const visible = aboveFloor.slice(0, MAX_VISIBLE)
+  const overflow = aboveFloor.slice(MAX_VISIBLE)
+  const barsOut: LangBar[] = visible.map((e) => ({
+    name: e.name,
+    seconds: e.seconds,
+    percent: (e.seconds / total) * 100,
+  }))
+  const othersSeconds = entries
+    .filter((e) => (e.seconds / total) * 100 < MIN_PERCENT)
+    .concat(overflow)
+    .reduce((acc, e) => acc + e.seconds, 0)
+  if (othersSeconds > 0) {
+    barsOut.push({ name: 'Others', seconds: othersSeconds, percent: (othersSeconds / total) * 100 })
   }
-  if (othersSeconds > 0) main.push({ name: 'Others', seconds: othersSeconds, percent: (othersSeconds / total) * 100 })
-  return main
+  return barsOut
 })
 
 const ariaLabel = computed(() => {
@@ -152,8 +170,12 @@ function buildOption(): Record<string, unknown> {
         fontFamily: 'Inter, sans-serif',
         fontSize: 12,
       },
-      formatter: (params: { name: string; value: number; data: { percent: number } }) =>
-        `<b>${params.name}</b> · ${formatDuration(Number(params.value))} · ${formatPercent(params.data.percent)}%`,
+      formatter: (params: { name: string; value: number; data: { percent: number } }) => {
+        const name = params.name
+        // Others carries the folded tail — surface how much is in there.
+        const extra = name === 'Others' && foldedCount.value > 0 ? ` <i>(${foldedCount.value} folded)</i>` : ''
+        return `<b>${name}</b>${extra} · ${formatDuration(Number(params.value))} · ${formatPercent(params.data.percent)}%`
+      },
     },
     series: [
       {
