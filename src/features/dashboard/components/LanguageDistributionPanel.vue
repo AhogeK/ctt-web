@@ -49,6 +49,12 @@ const distribution = useStatsDistribution(
 /** Languages below this share fold into "Others" (plugin parity: 0.1%). */
 const MIN_PERCENT = 0.1
 
+/** Percent readout: 2 decimals, trailing zeros trimmed (41.67% / 0.21% / 5%). */
+function formatPercent(v: number): string {
+  const s = v.toFixed(2)
+  return s.endsWith('.00') ? s.slice(0, -3) : s.endsWith('0') ? s.slice(0, -1) : s
+}
+
 interface LangBar {
   name: string
   seconds: number
@@ -70,18 +76,17 @@ const bars = computed<LangBar[]>(() => {
   let othersSeconds = 0
   for (const e of entries) {
     if ((e.seconds / total) * 100 >= MIN_PERCENT) {
-      main.push({ name: e.name, seconds: e.seconds, percent: Math.round((e.seconds / total) * 100) })
+      main.push({ name: e.name, seconds: e.seconds, percent: (e.seconds / total) * 100 })
     } else {
       othersSeconds += e.seconds
     }
   }
-  if (othersSeconds > 0)
-    main.push({ name: 'Others', seconds: othersSeconds, percent: Math.round((othersSeconds / total) * 100) })
+  if (othersSeconds > 0) main.push({ name: 'Others', seconds: othersSeconds, percent: (othersSeconds / total) * 100 })
   return main
 })
 
 const ariaLabel = computed(() => {
-  const parts = bars.value.map((b) => `${b.name} ${b.percent}%`).join(', ')
+  const parts = bars.value.map((b) => `${b.name} ${formatPercent(b.percent)}%`).join(', ')
   return `Language distribution: ${parts}`
 })
 
@@ -148,7 +153,7 @@ function buildOption(): Record<string, unknown> {
         fontSize: 12,
       },
       formatter: (params: { name: string; value: number; data: { percent: number } }) =>
-        `<b>${params.name}</b> · ${formatDuration(Number(params.value))} · ${params.data.percent}%`,
+        `<b>${params.name}</b> · ${formatDuration(Number(params.value))} · ${formatPercent(params.data.percent)}%`,
     },
     series: [
       {
@@ -169,7 +174,7 @@ function buildOption(): Record<string, unknown> {
           fontSize: 11,
           color: dark ? '#8a8f98' : '#62666d',
           formatter: (p: { data: { percent: number; value: number } }) =>
-            `${p.data.percent}% · ${formatDuration(Number(p.data.value))}`,
+            `${formatPercent(p.data.percent)}% · ${formatDuration(Number(p.data.value))}`,
         },
       },
     ],
