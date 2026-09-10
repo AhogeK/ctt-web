@@ -24,6 +24,35 @@ chart's indigo ramp (`references.md`). Offsets `0 / 48% / 100%` mirror that char
 - hand a per-row gradient (each bar sweeping on its own) — that is a decoration, not a scale;
 - build a hard-stop "ladder" — that reads as segments, not a gradient.
 
+## Vertical distribution inside a card
+
+A card stretches to its grid row, so a panel whose sibling is taller has spare height. Two
+behaviours, chosen per panel:
+
+- **Fixed-height plot** (trend, hourly) → leave it centred; stretching a chart's plot area is
+  worse than empty space around it.
+- **A stack of small blocks** (capsule + legend + footer) → fill the card and distribute:
+  `flex flex-1 flex-col justify-around` on the panel root. The blocks then spread across the
+  height instead of huddling in the vertical centre.
+
+```
+root:  flex flex-1 flex-col justify-around gap-4     /* panel opts in */
+parent (ChartSection data area): flex flex-1 flex-col justify-center
+```
+
+`flex-1` makes the root fill the data area (measured: root height == parent height), after which
+`justify-around` has space to distribute.
+
+**Trap — reserve room for absolutely-positioned overlays.** `space-around` gives the first block
+only `free/6` above it (with three children), where centring used to give it `free/2`. Any overlay
+anchored *above* a block (`bottom-full` hover readout) therefore moves much closer to the card
+header, and on a short card it lands on top of the title. Reserve the overlay's exact height as a
+margin on that block (`mt-10` = 32px overlay + 8px gap); the margin is part of the flex item's
+outer box, so the overlay always has somewhere to appear and the layout never shifts.
+
+*Measured after the fix*: wide card (397px) → 66 / 68 / 68 / 26 px distribution with the readout
+77px from the card top; short card (241px) → readout 51px, header bottom 35px, no overlap.
+
 ## Bounded-height scrolling list
 
 ```

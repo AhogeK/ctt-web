@@ -58,6 +58,17 @@ with what the panel renders.
 3. Rows trailing off to a hairline → length must be normalised to the **largest** value, and the
    small end needs the numeric readout to stay legible (the bar only carries position).
 
+## S4b. "The panel's content huddles in the middle of a tall card"
+
+1. The card is stretched by a taller grid-row sibling; the content sits at its natural size and the
+   default centring puts it in the middle → the panel should opt into filling:
+   `flex flex-1 flex-col justify-around` on its root (see `practices.md`).
+2. Only do this for panels made of small blocks. A panel with a fixed-height plot stays centred —
+   stretching the plot is worse than the empty space.
+3. Immediately re-check any overlay anchored above a block: `space-around` cuts the space above the
+   first block to `free/6`, which can push a hover readout onto the card header. Reserve the
+   overlay's height as a margin on that block.
+
 ## S5. "Rows/segments are hard to distinguish"
 
 1. Add a structural separator (paper seam) rather than more colour difference — P3.
