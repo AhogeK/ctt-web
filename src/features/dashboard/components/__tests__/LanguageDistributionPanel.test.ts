@@ -85,7 +85,7 @@ describe('LanguageDistributionPanel', () => {
     const opt = lastOption()
     // Longest bar on top (inverse y-axis: first category = first entry).
     expect(opt.yAxis.data).toEqual(['TypeScript', 'Java', 'Python'])
-    expect(opt.series[0]?.data.map((d) => d.percent)).toEqual([50, 31, 19])
+    expect(opt.series[0]?.data.map((d) => d.percent)).toEqual([50, 31.25, 18.75])
     wrapper.unmount()
   })
 
@@ -125,8 +125,8 @@ describe('LanguageDistributionPanel', () => {
     const wrapper = mount(LanguageDistributionPanel, { props: { deviceId: null, ideName: null } })
     await wrapper.vm.$nextTick()
     const label = wrapper.find('[role="img"]').attributes('aria-label')
-    expect(label).toContain('TypeScript 62%')
-    expect(label).toContain('Java 38%')
+    expect(label).toContain('TypeScript 61.54%')
+    expect(label).toContain('Java 38.46%')
     expect(label).not.toContain('Total') // categorical buckets have no meaningful total
     wrapper.unmount()
   })
