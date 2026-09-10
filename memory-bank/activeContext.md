@@ -100,6 +100,12 @@
 
 - Percent values now full precision internally; displayed via `formatPercent` (2 decimals, trailing zeros trimmed — user ruling): 41.67% / 0.21% / 5%. Applied at all three readouts: bar-end label, tooltip, aria label (initially missed the bar-end formatter — floats leaked into the render; caught by screenshot).
 - Tests updated to 2-decimal expectations (rank order [50, 31.25, 18.75]; a11y shares 61.54/38.46). 1226/1226, tc/lint/build green; verified with the 10-language fixed account (HTML 0.31% / CSS 0.21% now distinct).
+### Language panel bounded display window (user: unbounded card growth)
+
+- **Top-8 cap**: `MAX_VISIBLE = 8` — rank 1-8 render as bars; everything past that folds into the same Others bar as the sub-0.1% tail. Chart height now has a hard ceiling (9 rows × 26px + 16 = 250px; card ~318px), keeping the grid's row rhythm (TOD sibling 201px, content centered).
+- Tooltip formatter surfaces `(N folded)` on the Others bar for information reachability. New unit test locks 12-language input → 9 rows (8 + Others).
+- **Debug lesson**: dev-server `504 Outdated Optimize Dep` after dependency-graph changes — `rm -rf node_modules/.vite` + restart clears it; page then renders blank ("no #app") until refresh.
+- 1227/1227 unit, tc/lint/build green.
 ## Recent Activity (v0.28.1 — 2026-09-04)
 
 ### Placeholder removal + route blank-view guard (user: "只留开发过的")
