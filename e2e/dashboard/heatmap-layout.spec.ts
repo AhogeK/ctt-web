@@ -15,11 +15,14 @@ import { mockAuthApis, loginViaForm } from '../utils/auth-helpers.js'
  * collapse and future layout changes keep them honest.
  */
 
+/** In RENDER order — the y-monotonicity assertion below depends on it. */
 const TITLES = [
+  'Language distribution',
+  'Project distribution',
   'Coding heatmap',
+  'Coding trend (last 30 days)',
   'Weekly coding activity by hour',
   'Average hourly coding duration',
-  'Coding trend (last 30 days)',
   'Time of day distribution',
 ] as const
 
@@ -53,16 +56,21 @@ test('panels collapse to one column when a 2-col card would drop under 830px', a
   expect(Math.max(...widths) - Math.min(...widths)).toBeLessThan(4)
   const ys = Object.values(c).map((v) => v.y)
   for (let i = 1; i < ys.length; i++) expect(ys[i]).toBeGreaterThanOrEqual(ys[i - 1])
-  expect(c['Coding heatmap'].y).not.toBe(c['Weekly coding activity by hour'].y)
+  expect(c['Language distribution'].y).not.toBe(c['Project distribution'].y)
 })
 
 test('panels pair two-across once a card keeps ≥830px', async ({ page }) => {
   await gotoDashboard(page, 2100)
   const c = await cardBoxes(page)
   for (const title of TITLES) expect(c[title].width, title).toBeGreaterThanOrEqual(825)
-  expect(Math.abs(c['Coding heatmap'].y - c['Weekly coding activity by hour'].y)).toBeLessThan(4)
-  expect(Math.abs(c['Average hourly coding duration'].y - c['Coding trend (last 30 days)'].y)).toBeLessThan(4)
-  expect(c['Time of day distribution'].y).toBeGreaterThan(c['Coding trend (last 30 days)'].y)
+  // Row 1 — the two categorical shares.
+  expect(Math.abs(c['Language distribution'].y - c['Project distribution'].y)).toBeLessThan(4)
+  // Row 2 — the calendar and the trend.
+  expect(Math.abs(c['Coding heatmap'].y - c['Coding trend (last 30 days)'].y)).toBeLessThan(4)
+  // Row 3 — the two rhythm views.
+  expect(Math.abs(c['Weekly coding activity by hour'].y - c['Average hourly coding duration'].y)).toBeLessThan(4)
+  // The odd seventh card owns the last row on its own.
+  expect(c['Time of day distribution'].y).toBeGreaterThan(c['Average hourly coding duration'].y)
 })
 
 test('summary cards go 6-across only when the row keeps ≥1430px', async ({ page }) => {
