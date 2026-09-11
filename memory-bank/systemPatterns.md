@@ -98,50 +98,15 @@ lowercase). Do not "unify" it by renaming — that breaks find-by-source-name fo
 If a folder's mixed appearance is the real complaint, the fix is to relocate a misplaced file
 (see Value Formatters above), not to restyle the names.
 
-## Scrollable List a11y (and the two attributes linters call redundant)
-
-A scrollable list region carries **both** `role="list"` and `tabindex="0"`, and generic linters
-flag each as redundant. They are not:
-
-| Attribute      | Why it stays                                                                                      |
-| -------------- | ------------------------------------------------------------------------------------------------- |
-| `role="list"`  | Tailwind preflight sets `list-style: none`, which drops list semantics in Safari/VoiceOver — the explicit role is the documented fix |
-| `tabindex="0"` | The region scrolls and its rows are not focusable, so without it a keyboard user cannot reach the rows below the fold (WCAG 2.1.1; the standard scrollable-region pattern) |
-
-**Tooltip triggers must be reachable too.** reka-ui's `TooltipTrigger` opens on `focus` as well as
-hover, but `as-child` on a plain `<span>` yields an unfocusable element — so any pointer-only
-detail it reveals is keyboard-unreachable. Give those elements a tab stop **only when they have
-something to reveal** (a per-row predicate, not on every row — 33 dead tab stops is worse than
-none) plus a `:focus-visible` indicator (WCAG 2.4.7). Every other `TooltipTrigger` in this project
-wraps a real `<button>`; follow that.
-
-## Chart container a11y (do not "fix" role="img")
-
-Every chart panel puts `role="img"` + `aria-label` on its ECharts container. Generic linters flag
-this (`Web:S6819`, "use <img>/<svg> instead"), and the flag is wrong here:
-
-- it is **ECharts' own pattern** — `visual/aria.js` sets exactly these two attributes when the
-  `aria` option is enabled (verified in echarts 6.1.0, line 132), so a project writing them by hand
-  is reproducing the library's behaviour, and with a more informative label than the generated one;
-- an `<img>`/`<svg>` **cannot** replace a live canvas the library draws into;
-- `role="img"` requires the label — a bare `<div aria-label>` is ignored by many screen readers.
-
-Charts that expose per-value text elsewhere (the time-of-day legend) additionally keep that text in
-the DOM, so the data is readable without the label.
-
 ## Tailwind scans comments (class-like tokens become real CSS)
 
-Tailwind v4 scans **raw source text**, comments included. Writing a utility name in a comment
-emits that utility into the production bundle.
+Tailwind v4 scans **raw source text**, comments included: a utility name written in a comment is
+emitted into the production bundle. *Verified* — a comment naming the canonical form of a
+max-height produced a dead rule in `dist/assets/*.css`; rewording it (prose "step 57" instead of
+the class-shaped token) removed the rule and changed the CSS hash.
 
-*Verified*: a comment mentioning the canonical form of a max-height produced a dead
-`.max-h-57{max-height:calc(var(--spacing) * 57)}` rule in `dist/assets/*.css`; rewording the
-comment (dropping the class-shaped token, keeping the value in `calc()` prose) removed it and
-changed the emitted CSS hash. Contained experiment, no other variable changed.
-
-**Practice**: when a comment must explain *why* a utility was declined, describe it in prose
-("the canonical spacing-scale form, step 57") rather than quoting the class. When auditing the
-built CSS, `rm -rf dist` first — the build does not always purge stale chunks.
+When explaining why a utility was declined, describe it in prose rather than quoting the class.
+When auditing built CSS, `rm -rf dist` first — the build does not always purge stale chunks.
 
 ## Forbidden Patterns
 

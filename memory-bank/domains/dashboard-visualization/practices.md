@@ -106,6 +106,17 @@ edge fades:      mask-image, applied per edge only
   is unreachable by keyboard (WCAG 2.1.1).
 - Report the row count in the footer; add "scroll for more" only while there is more.
 
+**Two attributes here are deliberate though linters call them redundant.** `role="list"`:
+preflight sets `list-style: none`, dropping list semantics in Safari/VoiceOver (`Web:S6822` misses
+this). `tabindex="0"`: rows are not focusable, so without it the keyboard cannot reach rows below
+the fold (`Web:S6845` misses this).
+
+**Tooltip triggers must be reachable too.** reka-ui's `TooltipTrigger` opens on `focus` as well as
+hover, but `as-child` on a plain `<span>` is unfocusable — so pointer-only detail (truncated name,
+folded breakdown) becomes keyboard-unreachable. Give those elements a tab stop **only when they
+have something to reveal** (a per-row predicate — 33 dead stops beat none), plus a `:focus-visible`
+indicator (WCAG 2.4.7). Every other `TooltipTrigger` here wraps a real `<button>`; follow that.
+
 ## Numeric readouts
 
 - Two decimals with trailing zeros trimmed for shares (`41.67%` / `0.21%` / `5%`) — integer
@@ -175,8 +186,15 @@ Injecting the theme into `localStorage` does not work — the app calls `setThem
 and overwrites it. Verify colours by sampling rendered pixels or computed styles, never by
 reading the source values back.
 
-## When the component file fights back
+## Chart container a11y (do not "fix" role="img")
 
-Multi-hunk edits on a template-heavy `.vue` file repeatedly mis-registered (stale anchors →
-mangled template, twice). Once an edit has corrupted the structure: read the whole file, then
-**rewrite it in one `write`** rather than patching hunks. Then re-verify with the full test run.
+Every chart panel puts `role="img"` + `aria-label` on its ECharts container. Generic linters flag
+this (`Web:S6819`, "use <img>/<svg>") and are wrong here:
+
+- it is **ECharts' own pattern** — `visual/aria.js` sets exactly these two when the `aria` option
+  is enabled (echarts 6.1.0:132), so writing them by hand reproduces the library with a better label;
+- an `<img>`/`<svg>` cannot replace a live canvas the library draws into;
+- `role="img"` *requires* the label — a bare `<div aria-label>` is ignored by many screen readers.
+
+Charts that also expose their values as DOM text (the time-of-day legend) are readable either way;
+that is the pattern to prefer when the data is small enough to show.

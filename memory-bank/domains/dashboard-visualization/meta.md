@@ -8,7 +8,8 @@ wide a panel may be, and the hover/scroll interaction inside a panel.
 
 **In scope**: panel composition, chart-type selection, colour ramps for data, axis/scale
 helpers, panel-scoped interaction, ECharts config and registration, panel-level empty/loading
-states.
+states, and **panel a11y** (scroll-region reachability, tooltip reachability, the chart container's
+`role="img"`).
 
 **Out of scope** (belongs elsewhere):
 

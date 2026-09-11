@@ -42,6 +42,22 @@
 - 列宽按「该列可能出现的最大值」定，不按常见值：百分比 `4.5rem`（容 `<0.000001%` = 69.5px）、时长 `6rem`（容 `10000h 59m 59s`）。实测 11px tabular-nums。长名截断后 hover 出全名（用 `scrollWidth > clientWidth` **实测**判定，不猜字符数）。
 - 实测（langtail，2621 两列）：Language 33 行可滚动、Project 9 行且 39 字符名被正确判定截断；条形 rank1 满轨 784px、所有条共用 1 条渐变、`backgroundSize: 783.5px 100%`（证明 cqw 解析到轨道宽）。
 
+### 记忆分层整理（v0.35.0）
+
+`systemPatterns.md` 一度到 199/200 行，其中三节其实是**图表领域专属**而非横切规范，已按 R24 迁移：
+
+| 内容 | 去向 |
+| --- | --- |
+| Scrollable List a11y（`role="list"` / `tabindex` 为何必要、Tooltip 可达性） | **并入** `dashboard-visualization/practices.md` 的「Bounded-height scrolling list」（同一组件，合并而非并列） |
+| Chart container a11y（`role="img"` 是 ECharts 官方模式，勿改成 `<img>`） | 新增节 → 同文件 |
+| Tailwind scans comments（注释里的类名 token 会进产物） | **保留**在 `systemPatterns.md`（跨切面构建行为，非领域专属），压缩到 8 行 |
+
+顺带修掉一处 **R24 违规**：`dashboard-visualization/practices.md` 的「When the component file
+fights back」与 `ai-workflow/practices.md` 的「When an edit tool corrupts a file」是同一事实两处
+存放 —— 删除前者，保留更完整的 ai-workflow 版本（该事实属「agent 如何编辑文件」，非领域知识）。
+
+结果：`systemPatterns.md` 164 行、`dashboard-visualization/practices.md` 200 行，均在限内。
+
 ### 正则回溯告警（v0.35.0）
 
 - `percent.ts` 的 `/0+$/` 被 `S8786` 判为超线性：**实测属实**——量词在每个起始位置重试，结尾非 0 时退化为二次（长度 ×10 → 耗时 ×100：1.1µs → 27µs → 2.3ms → 228ms → 22s）。
@@ -51,20 +67,21 @@
 
 ### SonarLint 反馈处理（v0.35.0）
 
-针对 6 条 IDE 告警逐条取证，区分「真问题」与「通用规则在本项目失效」：
+两轮共 12 条 IDE 告警，逐条取证后**真问题照修、误报写明依据并保留**。可复用的结论已沉淀，此处只留索引：
 
-| 告警 | 判定 | 处理 |
+| 告警 | 判定 | 结论去向 |
 | --- | --- | --- |
-| `S3863` `@/lib/utils` 重复导入 ×2 | **真问题** | 合并导入；全仓库复扫发现 **`TimeOfDayPanel.vue` 同类真重复**（上一轮漏查）一并修 |
-| `S4624` 嵌套模板字符串 | **真问题** | 提出 `RAMP_OFFSETS` 模块常量 + 先算 `stopList` 再插值（顺带消除 computed 每次分配数组） |
-| `Web:S6822` `ul` 上 `role="list"` 冗余 | **误报** | Tailwind preflight 置 `list-style: none` → Safari/VoiceOver 丢失列表语义，显式 role 是官方修法。保留 + 源码注释说明 |
-| `Web:S6845` `tabIndex` 应在可交互元素 | **误报** | 滚动区域必须可聚焦（WCAG 2.1.1 / axe scrollable-region-focusable）。保留 + 说明 |
-| Tailwind `suggestCanonicalClasses` `max-h-[228px]` | **有意识地拒绝** | 228 是推导出的高度预算（320−92），不是 spacing 阶梯；canonical 形式编译为 `calc(var(--spacing)*57)`，主题化 spacing 会静默破坏上限。保留 px + 写明理由 |
-| `S3358` 嵌套三元（TOD 圆角） | **真问题** | 4 层嵌套三元 → 提为命名函数 `capsuleCorners(index, count)`；顺带把 `barWidth: 24` 提为 `BAR_WIDTH`、`CAPSULE_RADIUS = BAR_WIDTH/2`（半径必须恰为厚度一半，否则直边与弧线之间露缝）。补中间段用例（原测试只覆盖单段/两段，**中间分支未被断言**），红绿验证过 |
-| `Web:S6819` `role="img"` 应换成 `<img>` | **误报** | ECharts 6.1.0 自身的 `visual/aria.js:132` 就设 `role="img"` + `aria-label`——这是库的官方模式，5 个图表面板一致使用；内容是由库绘制的实时 canvas，无法用 `<img>` 替代。保留 + 源码注释说明依据 |
-| — | **新发现的真缺陷** | `TooltipTrigger as-child` 包 `<span>`（无 tabindex）→ 键盘用户无法聚焦，截断名/Others 明细完全不可达。修：`hasDetail(row)` 为真的行给 tabindex + `:focus-visible` 指示环，且与 popover 的 `v-if` 复用同一判定 |
+| `S3863` 重复导入 ×3（含我上轮漏查的 `TimeOfDayPanel`） | 真问题 | 已修；`components/ui/` 的 value+type 分离是惯用写法，**不动** |
+| `S4624` 嵌套模板字符串（TOD 圆角，4 层） | 真问题 | 提为 `capsuleCorners()`，`CAPSULE_RADIUS = BAR_WIDTH/2` 同源；补中间段用例 |
+| `S8786` 正则超线性（`/0+$/`） | 真问题 | 实测确认二次退化，但输入仅几字符 → 提出 `trimTrailingZeros()`（表意 > 性能） |
+| `S3358` 另一处嵌套三元 | — | 全仓库复扫无同类 |
+| `Web:S6822` `role="list"` 冗余 | **误报** | → `dashboard-visualization/practices.md` 滚动列表节 |
+| `Web:S6845` 非交互元素不该有 tabIndex | **误报** | 同上 |
+| `Web:S6819` `role="img"` 应换 `<img>` | **误报** | → 同文件「Chart container a11y」节 |
+| Tailwind `suggestCanonicalClasses` | **有意识拒绝** | 228px 是推导的高度预算而非 spacing 阶梯；canonical 形式编译为 `calc(var(--spacing)*57)`，主题化会静默破坏上限 |
+| — | **新发现的真缺陷** | `TooltipTrigger as-child` 包 `<span>` → 键盘不可达（截断名/Others 明细）；修法见 practices 滚动列表节 |
 
-- 附带发现并证实：**Tailwind v4 会扫描注释**，注释里写出类名 token 会把该工具类打进产物（对照实验：改写注释 → 死规则消失、CSS 哈希变化）→ 记入 `systemPatterns.md`。
+误报的共同根因：**通用规则不知道本项目的约定**（preflight 去掉列表语义、ECharts 自设 role、推导值不是 spacing 阶梯）。遇到时先取证，不要照改。
 
 ### 格式化器归属纠正（v0.35.0）
 
