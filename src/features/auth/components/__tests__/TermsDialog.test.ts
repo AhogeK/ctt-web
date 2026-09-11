@@ -157,7 +157,7 @@ describe('TermsDialog', () => {
       })
 
       const buttons = wrapper.findAll('button')
-      expect(buttons.length).toBe(2)
+      expect(buttons).toHaveLength(2)
       expect(buttons[0]!.text()).toContain('Decline')
       expect(buttons[1]!.text()).toContain('Accept')
     })
@@ -481,7 +481,7 @@ describe('TermsDialog', () => {
       })
 
       const buttons = wrapper.findAll('button')
-      expect(buttons.length).toBe(1)
+      expect(buttons).toHaveLength(1)
       expect(buttons[0]!.text()).toContain('Close')
     })
 
