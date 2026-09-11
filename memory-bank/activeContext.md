@@ -42,6 +42,12 @@
 - 列宽按「该列可能出现的最大值」定，不按常见值：百分比 `4.5rem`（容 `<0.000001%` = 69.5px）、时长 `6rem`（容 `10000h 59m 59s`）。实测 11px tabular-nums。长名截断后 hover 出全名（用 `scrollWidth > clientWidth` **实测**判定，不猜字符数）。
 - 实测（langtail，2621 两列）：Language 33 行可滚动、Project 9 行且 39 字符名被正确判定截断；条形 rank1 满轨 784px、所有条共用 1 条渐变、`backgroundSize: 783.5px 100%`（证明 cqw 解析到轨道宽）。
 
+### Dashboard 卡片顺序（v0.35.1）
+
+- 按行分组重排：**第 1 行 Language / Project distribution**（两个分类占比）、**第 2 行 Coding heatmap / Coding trend (last 30 days)**（日历 + 趋势），第 3 行 Weekly by hour / Average hourly，第 4 行 Time of day（奇数第 7 张独占）。
+- 顺序在 `DashboardHome.vue` 模板中即为布局（单 grid，无 span 特例），改动即 DOM 顺序；已在网格注释写明「按行配对」的意图。
+- **e2e `heatmap-layout.spec.ts` 钉住了配对关系**：`TITLES` 必须是**渲染顺序**（y 单调性断言依赖它），2 列测试断言第 1/2/3 行各自共行、TOD 在最后。改顺序必须同步更新它——已一并改并跑通（4 passed）。
+
 ### 记忆分层整理（v0.35.0）
 
 `systemPatterns.md` 一度到 199/200 行，其中三节其实是**图表领域专属**而非横切规范，已按 R24 迁移：
