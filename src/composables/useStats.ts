@@ -27,8 +27,14 @@ export const STATS_QUERY_KEYS = {
   heatmap: (start?: string, end?: string, filter?: StatsFilterParams) =>
     ['stats', 'heatmap', start ?? 'auto', end ?? 'auto', filterKey(filter)] as const,
   streaks: (filter?: StatsFilterParams) => ['stats', 'streaks', filterKey(filter)] as const,
+  /**
+   * Distribution buckets by dimension. The window belongs in the key: the
+   * queryFn reads start/end, so leaving them out would let the first-fetched
+   * window answer every later one (measured: switching Period refetched
+   * week-hour and hourly but not this, leaving full-history figures on screen).
+   */
   distribution: (type: DistributionType, filter?: StatsFilterParams) =>
-    ['stats', 'distribution', type, filterKey(filter)] as const,
+    ['stats', 'distribution', type, filter?.start ?? 'auto', filter?.end ?? 'auto', filterKey(filter)] as const,
   hourly: (start?: string, end?: string, filter?: StatsFilterParams) =>
     ['stats', 'hourly', start ?? 'auto', end ?? 'auto', filterKey(filter)] as const,
   recent: (limit: number, filter?: StatsFilterParams) => ['stats', 'recent', limit, filterKey(filter)] as const,
