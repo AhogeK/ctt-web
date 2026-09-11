@@ -31,6 +31,7 @@ import HeatmapYearSelect from '../components/HeatmapYearSelect.vue'
 import HourlyPanel from '../components/HourlyPanel.vue'
 import TimeOfDayPanel from '../components/TimeOfDayPanel.vue'
 import LanguageDistributionPanel from '../components/LanguageDistributionPanel.vue'
+import ProjectDistributionPanel from '../components/ProjectDistributionPanel.vue'
 import WeekHourPanel from '../components/WeekHourPanel.vue'
 
 const {
@@ -104,6 +105,10 @@ const timeOfDay = useStatsDistribution(
 )
 const languages = useStatsDistribution(
   'LANGUAGES',
+  computed(() => ({ ...distributionWindow.value, ...originFilter.value })),
+)
+const projects = useStatsDistribution(
+  'PROJECTS',
   computed(() => ({ ...distributionWindow.value, ...originFilter.value })),
 )
 </script>
@@ -216,6 +221,21 @@ const languages = useStatsDistribution(
         @retry="() => languages.refetch()"
       >
         <LanguageDistributionPanel
+          :start="start ?? undefined"
+          :end="end ?? undefined"
+          :device-id="deviceIdOrNull"
+          :ide-name="ideNameOrNull"
+        />
+      </ChartSection>
+
+      <ChartSection
+        title="Project distribution"
+        :loading="projects.isPending.value"
+        :error="projects.isError.value"
+        :empty="!!projects.data.value && projects.data.value.entries.length === 0"
+        @retry="() => projects.refetch()"
+      >
+        <ProjectDistributionPanel
           :start="start ?? undefined"
           :end="end ?? undefined"
           :device-id="deviceIdOrNull"
