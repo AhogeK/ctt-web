@@ -4,6 +4,7 @@ import {
   getStatsAchievements,
   getStatsDistribution,
   getStatsHeatmap,
+  getStatsHeatmapMonths,
   getStatsHeatmapYears,
   getStatsHourly,
   getStatsIdeFilters,
@@ -40,6 +41,7 @@ export const STATS_QUERY_KEYS = {
   recent: (limit: number, filter?: StatsFilterParams) => ['stats', 'recent', limit, filterKey(filter)] as const,
   achievements: () => ['stats', 'achievements'] as const,
   heatmapYears: () => ['stats', 'heatmap-years'] as const,
+  heatmapMonths: () => ['stats', 'heatmap-months'] as const,
   weekHour: (start?: string, end?: string, filter?: StatsFilterParams) =>
     ['stats', 'week-hour', start ?? 'auto', end ?? 'auto', filterKey(filter)] as const,
   ideFilters: () => ['stats', 'ide-filters'] as const,
@@ -176,6 +178,20 @@ export function useStatsHeatmapYears() {
   return useQuery({
     queryKey: STATS_QUERY_KEYS.heatmapYears(),
     queryFn: () => getStatsHeatmapYears(),
+    staleTime: STATS_LONG_STALE_TIME,
+  })
+}
+
+/**
+ * Months (`yyyy-MM`) containing at least one day with coding time, newest
+ * first — feed for the trend panel's month picker. Same timezone rule as the
+ * year list, and the server derives both from one source, so a listed month
+ * always belongs to a listed year and always has something to draw.
+ */
+export function useStatsHeatmapMonths() {
+  return useQuery({
+    queryKey: STATS_QUERY_KEYS.heatmapMonths(),
+    queryFn: () => getStatsHeatmapMonths(),
     staleTime: STATS_LONG_STALE_TIME,
   })
 }

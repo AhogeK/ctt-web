@@ -5,6 +5,7 @@ import {
   AchievementSchema,
   DistributionResponseSchema,
   HeatmapResponseSchema,
+  HeatmapMonthsResponseSchema,
   HeatmapYearsResponseSchema,
   HourlyDistributionResponseSchema,
   RecentSessionSchema,
@@ -14,6 +15,7 @@ import {
   type DistributionType,
   type HeatmapResponse,
   type HeatmapYearsResponse,
+  type HeatmapMonthsResponse,
   type StatsSummaryResponse,
   type StreakStatsResponse,
   type DistributionResponse,
@@ -91,10 +93,32 @@ export async function getStatsIdeFilters(): Promise<string[]> {
 export async function getStatsHeatmapYears(): Promise<HeatmapYearsResponse> {
   const response = await apiFetch<unknown>('/api/v1/stats/heatmap-years', {
     method: 'GET',
+    // The list must resolve years in the same timezone the heatmap renders in,
+    // or the selector offers a year whose panel is empty (and omits the one
+    // that is not).
+    query: { timezoneOffset: timezoneOffset() },
   })
 
   const wrapped = RestApiResponseSchema.parse(response)
   return HeatmapYearsResponseSchema.parse(wrapped.data)
+}
+
+/**
+ * Fetches the months (`yyyy-MM`, newest first) that contain coding time, for
+ * the trend panel's month picker.
+ *
+ * Endpoint: GET /api/v1/stats/heatmap-months
+ *
+ * @returns Months with at least one non-zero day, in the client's timezone
+ */
+export async function getStatsHeatmapMonths(): Promise<HeatmapMonthsResponse> {
+  const response = await apiFetch<unknown>('/api/v1/stats/heatmap-months', {
+    method: 'GET',
+    query: { timezoneOffset: timezoneOffset() },
+  })
+
+  const wrapped = RestApiResponseSchema.parse(response)
+  return HeatmapMonthsResponseSchema.parse(wrapped.data)
 }
 
 /**
