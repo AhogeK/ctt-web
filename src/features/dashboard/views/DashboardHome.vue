@@ -10,13 +10,13 @@
  * State lives in the URL (useDashboardFilters): the filter bar (date range
  * presets + custom range + device/IDE origin) drives the summary cards and
  * the distribution/streak/hourly panels; the heatmap's time axis is owned
- * exclusively by its own year selector (?year=, "Last 12 months" rolling
- * default). Changing any of them re-keys the affected stats queries.
+ * exclusively by its own year selector ("Last 12 months" rolling default). Changing any of them re-keys the affected stats queries.
  */
 import { computed } from 'vue'
 import {
   useStatsDistribution,
   useStatsHeatmap,
+  useStatsHeatmapMonths,
   useStatsHeatmapYears,
   useStatsHourly,
   useStatsWeekHour,
@@ -27,6 +27,7 @@ import SummaryCards from '../components/SummaryCards.vue'
 import ChartSection from '../components/ChartSection.vue'
 import HeatmapChart from '../components/HeatmapChart.vue'
 import TrendChart from '../components/TrendChart.vue'
+import TrendMonthSelect from '../components/TrendMonthSelect.vue'
 import HeatmapYearSelect from '../components/HeatmapYearSelect.vue'
 import HourlyPanel from '../components/HourlyPanel.vue'
 import TimeOfDayPanel from '../components/TimeOfDayPanel.vue'
@@ -41,18 +42,21 @@ const {
   deviceId: deviceIdOrNull,
   ideName: ideNameOrNull,
   heatmapYear,
+  trendMonth,
   preset,
   setDateRange,
   applyPreset,
   setDevice,
   setIde,
   setHeatmapYear,
+  setTrendMonth,
 } = useDashboardFilters()
 const heatmapYears = useStatsHeatmapYears()
+const heatmapMonths = useStatsHeatmapMonths()
 // The heatmap panel's time axis is owned EXCLUSIVELY by the year selector:
-// "Last 12 months" (no ?year=) is a fixed rolling window, and picking a year
-// shows that calendar year. The filter-bar Period (start/end) drives every
-// other panel but never the heatmap.
+// "Last 12 months" is a fixed rolling window, and picking a year shows that
+// calendar year. The filter-bar Period (start/end) drives every other panel but
+// never the heatmap.
 const today = new Date()
 const rollingRange = computed(() => ({
   start: formatDate(new Date(today.getTime() - 365 * 86_400_000)),
@@ -64,14 +68,19 @@ const heatmapRange = computed(() => {
 })
 const heatmap = useStatsHeatmap(computed(() => ({ ...heatmapRange.value, ...originFilter.value })))
 
-// The 30-day trend panel always shows the last 30 days regardless of the
-// filter range (mirrors the plugin panel "Coding Activity (Last 30 Days)").
-const last30 = computed(() => ({
-  start: formatDate(new Date(today.getTime() - 29 * 86_400_000)),
-  end: formatDate(today),
-  ...originFilter.value,
-}))
-const heatmap30 = useStatsHeatmap(last30)
+// The trend panel owns its window, like the heatmap owns its year: it defaults
+// to the plugin's "Last 30 Days" view and otherwise shows one calendar month.
+// The filter-bar Period deliberately does NOT drive it.
+const trendRange = computed(() => {
+  if (trendMonth.value === null) {
+    return { start: formatDate(new Date(today.getTime() - 29 * 86_400_000)), end: formatDate(today) }
+  }
+  // `monthEnd` day 0 of the next month is the last day of this one, leap-safe.
+  const [y, m] = trendMonth.value.split('-').map(Number)
+  const lastDay = new Date(y!, m!, 0).getDate()
+  return { start: `${trendMonth.value}-01`, end: `${trendMonth.value}-${String(lastDay).padStart(2, '0')}` }
+})
+const trend = useStatsHeatmap(computed(() => ({ ...trendRange.value, ...originFilter.value })))
 
 // Weekly activity by hour follows the filter bar: window = the resolved
 // range (All time → full history), origin filters applied. Changing the
@@ -146,8 +155,8 @@ const projects = useStatsDistribution(
 
          Order is deliberate, in row pairs: the two categorical shares lead
          (language, project), then the two calendar/time-series reads (heatmap,
-         30-day trend), then the three rhythm views. The e2e layout spec pins
-         these pairs, so reordering means updating it too. -->
+         trend), then the three rhythm views. The e2e layout spec pins these
+         pairs, so reordering means updating it too. -->
     <div class="grid grid-cols-1 gap-6 @[1684px]/page:grid-cols-2">
       <ChartSection
         title="Language distribution"
@@ -195,14 +204,22 @@ const projects = useStatsDistribution(
         />
       </ChartSection>
       <ChartSection
-        title="Coding trend (last 30 days)"
-        :loading="heatmap30.isPending.value"
-        :error="heatmap30.isError.value"
-        :empty="!!heatmap30.data.value && heatmap30.data.value.points.length === 0"
-        @retry="() => heatmap30.refetch()"
+        title="Coding trend"
+        :loading="trend.isPending.value"
+        :error="trend.isError.value"
+        :empty="!!trend.data.value && trend.data.value.points.length === 0"
+        @retry="() => trend.refetch()"
       >
-        <!-- Chart body: 30-day smooth line + gradient area (filter-independent) -->
-        <TrendChart :points="heatmap30.data.value?.points ?? []" />
+        <template #actions>
+          <TrendMonthSelect
+            :month="trendMonth"
+            :months="heatmapMonths.data.value ?? []"
+            @update:month="setTrendMonth"
+          />
+        </template>
+        <!-- Chart body: smooth line + gradient area over the panel's own window
+             (30-day rolling by default, a calendar month when one is picked) -->
+        <TrendChart :points="trend.data.value?.points ?? []" />
       </ChartSection>
       <ChartSection
         title="Weekly coding activity by hour"
