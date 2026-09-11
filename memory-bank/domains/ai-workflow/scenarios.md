@@ -59,7 +59,7 @@ Triggered only by an explicit commit/push instruction (P2).
    - Milestone → `progress.md`
    - Nothing new → record nothing (do not pad)
 2. Update the file's existing entry if the topic exists; never append a second, competing version.
-3. Keep every memory file ≤200 lines. Over the limit → move history to `docs/archives/`, keep the
+3. Keep every memory file ≤200 lines. Over the limit → move history to `memory-bank/archives/`, keep the
    current truth.
 
 ## S7. A file has grown beyond its limit
@@ -67,7 +67,7 @@ Triggered only by an explicit commit/push instruction (P2).
 Precedent flow (used for `activeContext.md` 549 → 63 lines):
 
 1. Split by nature: **durable judgement** → domains; **history** → a dated archive under
-   `docs/archives/`; **status** → a short current-status block.
+   `memory-bank/archives/`; **status** → a short current-status block.
 2. Rewrite the file as status + topic summaries + cross-cutting lessons.
 3. Update the archive index line at the bottom so the chain stays traceable.
 

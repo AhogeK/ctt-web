@@ -53,6 +53,23 @@ outer box, so the overlay always has somewhere to appear and the layout never sh
 *Measured after the fix*: wide card (397px) → 66 / 68 / 68 / 26 px distribution with the readout
 77px from the card top; short card (241px) → readout 51px, header bottom 35px, no overlap.
 
+## One implementation for the categorical panels
+
+A second categorical dimension must not be built by copying the first panel. Copying duplicates
+every hard-won detail (mask edges, the `cqw`-clipped gradient, the readout precision, the folding
+popover, the overlay scrollbar), and the next fix then lands in one copy only — the same failure
+mode the percent formatter already had, where one readout path was missed and leaked float tails.
+
+```
+composables/useRankedDistribution.ts   rows: ranking, shares, 0.1% folding, aggregate
+components/RankedDistributionList.vue  view: lanes, track, gradient, scroll, popovers, a11y
+lib/utils/percent.ts (@/lib/utils)     readout: precision follows the value (P8)
+panels/<X>DistributionPanel.vue        only: the query + the panel's own copy
+```
+
+The extraction is worth it as soon as the second dimension exists — it is not speculative
+structure, it is the removal of a guaranteed divergence.
+
 ## Card height budget
 
 A card's height = its own chrome + whatever the body needs, and the grid row then follows the

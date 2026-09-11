@@ -16,14 +16,16 @@
 | CSRF Protection                   | ✅ Complete | 0.10.2         |
 | API Key Management                | ✅ Complete | 0.16.0         |
 | Device Management                 | ✅ Complete | 0.18.3         |
-| Dashboard (框架 + 面板迭代)       | ✅ Complete | 0.34.0         |
+| Dashboard (框架 + 面板迭代)       | ✅ Complete | 0.35.0         |
 | Leaderboard                       | ⏳ Pending  | 1.0.0          |
 | Settings                          | ⏳ Pending  | 1.0.0          |
 | i18n (zh/en)                      | ⏳ Pending  | 1.0.0          |
 | E2E Test Coverage                 | ⏳ Pending  | 1.0.0          |
 | Production Deploy                 | ⏳ Pending  | 1.0.0          |
 
-## Dashboard 面板迭代（v0.28 – v0.34）
+## Dashboard 面板迭代（v0.28 – v0.35）
+
+- [x] **v0.35.0 (2026-09-10)** Project distribution 上线 + 两处 bug 修复 — 抽出共享的排名分布实现（`useRankedDistribution` / `RankedDistributionList` / `@/lib/utils` `formatPercent`），Language 与 Project 两面板只保留各自 query 与文案；修 `distribution` 查询键漏窗口参数（切 Period 时分布面板不重取，屏幕留旧窗口数据）；修 TOD 段缝用取整百分比导致偏离颜色边界。1254/1254。
 
 - [x] **v0.34.0 (2026-09-10)** Language distribution 收敛 — treemap 被否（大色块、小格不可读）→ 排名横条；**全部语言逐行呈现**（无行数上限），卡片用内部滚动 + 双端 mask 渐隐 + 页脚计数限高；唯一折叠为 <0.1% Others（hover 用项目 `Tooltip` 列出明细）；**全局渐变**（轨道 `container-type` + 条 `background-size:100cqw`，色标复用 TrendChart）；Others 与语言行完全一致（无 tint/alpha 差异）；行内原生 `title` 移除。1233/1233。
 - [x] **v0.33.0 (2026-09-10)** Language 面板高度上限 — Top-8 窗口 + 其余并入 Others（后被 v0.34.0 的全量列表取代）。1227/1227。
@@ -67,14 +69,14 @@
 ## Backlog
 
 - [ ] Auth: Token refresh + expiry handling
-- [ ] Dashboard: Project / Weekday / IDE distribution panels（后端已就绪，前端面板未实装）
+- [ ] Dashboard: Weekday / IDE / Devices distribution panels（后端已就绪；Project 已随 v0.35.0 上线，其余复用共享排名列表）
 - [ ] Leaderboard: Redis ZSet ranking display
 - [ ] Settings: Language switch (zh-CN / en-US)
 - [ ] CI: GitHub Actions (lint + test + build)
 
 ## Archived History
 
-v0.16.14 → v0.34.0 的完整时间线见 `docs/archives/2026-09-10-activeContext-archive.md`；
-v0.16.13 及更早见 `docs/archives/2026-08-16-activeContext-archive.md`。
+v0.16.14 → v0.34.0 的完整时间线见 `memory-bank/archives/2026-09-10-activeContext-archive.md`；
+v0.16.13 及更早见 `memory-bank/archives/2026-08-16-activeContext-archive.md`。
 
 归档于 2026-09-10（v0.34.0）。

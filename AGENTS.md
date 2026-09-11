@@ -201,6 +201,19 @@ AI 身份：**ctt-web 前端开发者**。
 - ❌ 与代码/契约不一致的表述 —— 领域文件是事实，涉及后端契约必须先只读核对源码（R13）。
 - 单文件仍受 **≤200 行**约束；超出即拆分或压缩（参考 activeContext 归档做法）。
 
+### R25: AI 产物位置（强制）
+
+**`docs/` 只放面向用户的项目文档**（如 `docs/architecture.md`、`docs/dev-handbook.md`）；AI 工作产物一律放 `.omp/`（**已被 .gitignore 忽略，不进仓库**）：
+
+| 产物 | 位置 |
+| --- | --- |
+| 实施计划 | `.omp/plans/<feature>-plan.md`（**不带日期**，日期写在文件内 `Date:` 字段） |
+| 交付报告 / 需求草案 | `.omp/<topic>-delivery-report.md`、`.omp/<topic>-requirement.md` |
+| Agent 记忆 | `memory-bank/`（受 R1/R2/R24 治理，**需要提交**） |
+| 面向用户的项目文档 | `docs/` |
+
+红线：禁止把实施计划写进 `docs/plans/`。`.omp/README.md` 是该目录的权威说明。
+
 ## 执行流程
 
 会话开始 → 读memory-bank → 创建todo（如需）→ 处理请求 → 清理临时文件 → 更新记忆
@@ -216,7 +229,9 @@ AI 身份：**ctt-web 前端开发者**。
 
 **时间线层**（回答"现在/最近发生了什么"）：
 
-`memory-bank/`：projectbrief.md（目标）、techContext.md（技术栈）、systemPatterns.md（横切规范）、activeContext.md（当前）、progress.md（进度）、`docs/archives/`（冻结的历史）
+`memory-bank/`：projectbrief.md（目标）、techContext.md（技术栈）、systemPatterns.md（横切规范）、activeContext.md（当前）、progress.md（进度）、`memory-bank/archives/`（冻结的历史）
+
+> `memory-bank/archives/` 是**唯一豁免 200 行限制**的记忆文件——它的存在就是为了装时间线溢出（现 979 行）。任何「记忆文件≤200 行」的检查都应排除该目录。
 
 **领域层**（回答"这里什么是真的、该怎么做"，由 R24 治理）：
 

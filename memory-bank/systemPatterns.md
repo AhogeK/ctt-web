@@ -38,10 +38,24 @@ export const fetchStats = (params: StatsParams) =>
 
 - Mutation composables return `{ mutation }` (e.g. `useRevokeApiKey`, `useRevokeDevice`) — call `mutation.mutate(...)`. Do NOT return the raw `useMutation(...)`; the wrapped shape is the project convention (v0.18.1 unified useRevokeDevice after drift was caught by a new test).
 
-## Time Formatting (v0.18.0)
+## Value Formatters
 
-- Shared utils in `src/lib/utils/time.ts` (barrel-exported): `formatRelativeTime` (null → "Never", past/future, 30d/12mo granularity, locale-date fallback) + `formatDateTime` (locale absolute). DeviceListView + ApiKeysView import these — do NOT inline per-view formatters.
-- No dayjs (R12); the hand-rolled formatter covers all cases.
+A formatter is **shared infrastructure, not a panel helper** — so it lives in `src/lib/utils/`
+and is imported through the barrel (`@/lib/utils`), never co-located with the components that
+happen to call it first.
+
+| Formatter                                        | Home                        |
+| ------------------------------------------------ | --------------------------- |
+| `formatRelativeTime`, `formatDateTime`, `formatDuration` | `src/lib/utils/time.ts`     |
+| `formatPercent`                                  | `src/lib/utils/percent.ts`  |
+
+- **Do NOT inline per-view formatters.** `formatDuration` was unified this way in v0.18.0
+  (`DeviceListView` + `ApiKeysView`); `formatPercent` was misplaced under
+  `features/dashboard/components/` when first written and moved to `lib/utils/` in v0.35.0 for the
+  same reason — same kind of thing as `formatDuration`, so it belongs in the same place.
+- A formatter's *rules* may still come from a domain (percent precision follows
+  `dashboard-visualization` P8); the *file* does not.
+- No dayjs (R12); the hand-rolled formatters cover all cases.
 - vue-tsc gotcha (v0.18.0): template inline arrow functions bound to a function-typed prop (e.g. `:success-description="(name) => ..."`) lose contextual typing when the component imports a helper that moves out of the SFC — annotate the param explicitly `(name: string)` to silence TS7006.
 
 ## Router Architecture
@@ -55,6 +69,79 @@ src/router/ index.ts (core) + guard.ts (auth + NProgress) + modules/ (auth|dashb
 - Lazy loading all views; `manualChunks`: vendor/feature-auth/feature-dashboard/feature-settings
 - Stale chunk auto-reload: `router.onError` + `?retried=1` query guard against reload loops
 - `isPathActive(path)` exact-match helper for sidebar active state (prefix bleed across /settings siblings)
+
+## Test File Naming
+
+Test files mirror the source file they exercise — `<source-name>.test.ts` in a sibling
+`__tests__/` directory:
+
+| Source           | Test                                                   |
+| ---------------- | ------------------------------------------------------ |
+| `Foo.vue`        | `Foo.test.ts` (PascalCase, matching the component)     |
+| `foo.ts` (helper)| `foo.test.ts` (the module's own kebab-case name)       |
+| `useFoo.ts`      | `useFoo.test.ts` (the composable's own camelCase name) |
+
+When one source needs more than one suite, split by **aspect**: `<Name>.<aspect>.test.ts`
+(`CreateApiKeyDialog.form.test.ts`, `RawKeyDialog.a11y.test.ts`,
+`RegisterForm.terms.test.ts`, `user.password.test.ts`). Name it after the source plus the
+aspect — never after a concept that has no file of its own (`TermsCheckbox.test.ts` named a
+component that did not exist; it was `RegisterForm.terms.test.ts`).
+
+A test file with no corresponding subject is a smell: either the subject moved (rename the file)
+or the test is a placeholder (delete it).
+
+A directory that holds both components and helper modules therefore shows **both cases** — e.g.
+`features/dashboard/components/__tests__/` has `TimeOfDayPanel.test.ts` next to
+`heatmap-window.test.ts`. That is the rule working, not drift: the case tells you what kind of
+subject the test covers. Repo-wide the split tracks file kinds (≈39 `.vue` → Pascal, ≈43 `.ts` →
+lowercase). Do not "unify" it by renaming — that breaks find-by-source-name for ~39 files.
+If a folder's mixed appearance is the real complaint, the fix is to relocate a misplaced file
+(see Value Formatters above), not to restyle the names.
+
+## Scrollable List a11y (and the two attributes linters call redundant)
+
+A scrollable list region carries **both** `role="list"` and `tabindex="0"`, and generic linters
+flag each as redundant. They are not:
+
+| Attribute      | Why it stays                                                                                      |
+| -------------- | ------------------------------------------------------------------------------------------------- |
+| `role="list"`  | Tailwind preflight sets `list-style: none`, which drops list semantics in Safari/VoiceOver — the explicit role is the documented fix |
+| `tabindex="0"` | The region scrolls and its rows are not focusable, so without it a keyboard user cannot reach the rows below the fold (WCAG 2.1.1; the standard scrollable-region pattern) |
+
+**Tooltip triggers must be reachable too.** reka-ui's `TooltipTrigger` opens on `focus` as well as
+hover, but `as-child` on a plain `<span>` yields an unfocusable element — so any pointer-only
+detail it reveals is keyboard-unreachable. Give those elements a tab stop **only when they have
+something to reveal** (a per-row predicate, not on every row — 33 dead tab stops is worse than
+none) plus a `:focus-visible` indicator (WCAG 2.4.7). Every other `TooltipTrigger` in this project
+wraps a real `<button>`; follow that.
+
+## Chart container a11y (do not "fix" role="img")
+
+Every chart panel puts `role="img"` + `aria-label` on its ECharts container. Generic linters flag
+this (`Web:S6819`, "use <img>/<svg> instead"), and the flag is wrong here:
+
+- it is **ECharts' own pattern** — `visual/aria.js` sets exactly these two attributes when the
+  `aria` option is enabled (verified in echarts 6.1.0, line 132), so a project writing them by hand
+  is reproducing the library's behaviour, and with a more informative label than the generated one;
+- an `<img>`/`<svg>` **cannot** replace a live canvas the library draws into;
+- `role="img"` requires the label — a bare `<div aria-label>` is ignored by many screen readers.
+
+Charts that expose per-value text elsewhere (the time-of-day legend) additionally keep that text in
+the DOM, so the data is readable without the label.
+
+## Tailwind scans comments (class-like tokens become real CSS)
+
+Tailwind v4 scans **raw source text**, comments included. Writing a utility name in a comment
+emits that utility into the production bundle.
+
+*Verified*: a comment mentioning the canonical form of a max-height produced a dead
+`.max-h-57{max-height:calc(var(--spacing) * 57)}` rule in `dist/assets/*.css`; rewording the
+comment (dropping the class-shaped token, keeping the value in `calc()` prose) removed it and
+changed the emitted CSS hash. Contained experiment, no other variable changed.
+
+**Practice**: when a comment must explain *why* a utility was declined, describe it in prose
+("the canonical spacing-scale form, step 57") rather than quoting the class. When auditing the
+built CSS, `rm -rf dist` first — the build does not always purge stale chunks.
 
 ## Forbidden Patterns
 

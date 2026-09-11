@@ -69,6 +69,17 @@ with what the panel renders.
    first block to `free/6`, which can push a hover readout onto the card header. Reserve the
    overlay's height as a margin on that block.
 
+## S4c. "Add another distribution dimension (projects, IDEs, …)"
+
+1. Check whether the dimension is time-axis or categorical first (`principles.md` P2) — categorical
+   panels print no Total, time-axis panels keep theirs as the conservation check.
+2. Reuse `useRankedDistribution` + `RankedDistributionList`; the panel supplies only its query and
+   its copy. Do not copy an existing panel.
+3. Size each value lane for the widest value that dimension can produce, not the common one, and
+   let long labels truncate with the full name on hover.
+4. Verify the window actually drives it: switching Period must issue a new request for the new
+   dimension's type (a missing window in the query key silently serves the first window fetched).
+
 ## S5. "Rows/segments are hard to distinguish"
 
 1. Add a structural separator (paper seam) rather than more colour difference — P3.

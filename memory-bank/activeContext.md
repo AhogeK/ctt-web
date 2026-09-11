@@ -2,8 +2,8 @@
 
 ## Current Status
 
-**Phase**: Dashboard 面板迭代（TOD 重设计 + Language distribution 完成）
-**Version**: 0.34.0 (2026-09-10)
+**Phase**: Dashboard 面板迭代（Project distribution 上线 + 分布缓存键修复）
+**Version**: 0.35.0 (2026-09-10)
 **Branch**: develop
 **Tests**: 1233/1233 unit; vue-tsc + lint 0 error 0 warning; build green
 
@@ -34,6 +34,71 @@
 - 随之加固：`space-around` 下首块上方只剩 free/6（居中时为 free/2），胶囊上方的 hover 信息条会
   更贴近卡片标题、短卡时压到标题 → 胶囊容器加 `mt-10`（32px 信息条 + 8px 间距）预留槽位。
   实测：宽卡信息条距顶 77px、窄卡 51px（标题底 35px），均不重叠。
+
+### Project Distribution 面板（v0.35.0）
+
+- 新增 Project distribution 卡片（`PROJECTS`，插件端 `projectDistribution` 对齐）。**形式与 Language 一致**：排名横条。否掉 donut（插件形式）——角度排序弱、长项目名在图例里被截断、且 `PieChart` 未注册会增包；否掉 treemap（此前语言面板已否：大值成色块、小格不可读，项目名更长更糟）。
+- **抽出共享实现**（第二个分类维度出现时才做，非投机抽象）：`composables/useRankedDistribution.ts`（行模型/归一/0.1% 折叠）+ `components/RankedDistributionList.vue`（轨道/渐变/滚动/浮窗/a11y）+ `@/lib/utils` `formatPercent`；两个面板只保留各自 query 与文案。目的：排名、折叠、渐变、精度**不可能只改一处**。
+- 列宽按「该列可能出现的最大值」定，不按常见值：百分比 `4.5rem`（容 `<0.000001%` = 69.5px）、时长 `6rem`（容 `10000h 59m 59s`）。实测 11px tabular-nums。长名截断后 hover 出全名（用 `scrollWidth > clientWidth` **实测**判定，不猜字符数）。
+- 实测（langtail，2621 两列）：Language 33 行可滚动、Project 9 行且 39 字符名被正确判定截断；条形 rank1 满轨 784px、所有条共用 1 条渐变、`backgroundSize: 783.5px 100%`（证明 cqw 解析到轨道宽）。
+
+### 正则回溯告警（v0.35.0）
+
+- `percent.ts` 的 `/0+$/` 被 `S8786` 判为超线性：**实测属实**——量词在每个起始位置重试，结尾非 0 时退化为二次（长度 ×10 → 耗时 ×100：1.1µs → 27µs → 2.3ms → 228ms → 22s）。
+- 反映到本处：读数是 `toFixed` 出来的几字符字符串，**从来不是热点**（实测 0.8µs vs 0.09µs）。
+- 仍然改掉：提取 `trimTrailingZeros()`（单次反向扫描 + 一次 slice），线性且更直白地表达「去掉尾零，以及尾零掏空后悬挂的小数点」。全仓库仅此一处同类正则。
+- 现有测试**已覆盖两条分支**（去掉跳零 → `'5.00'`/`'0.00040'` 失败；去掉悬挂点 → `'5.'` 失败），故未新增测试；另跑 15 例真实输出对照确认读数无变化。
+
+### SonarLint 反馈处理（v0.35.0）
+
+针对 6 条 IDE 告警逐条取证，区分「真问题」与「通用规则在本项目失效」：
+
+| 告警 | 判定 | 处理 |
+| --- | --- | --- |
+| `S3863` `@/lib/utils` 重复导入 ×2 | **真问题** | 合并导入；全仓库复扫发现 **`TimeOfDayPanel.vue` 同类真重复**（上一轮漏查）一并修 |
+| `S4624` 嵌套模板字符串 | **真问题** | 提出 `RAMP_OFFSETS` 模块常量 + 先算 `stopList` 再插值（顺带消除 computed 每次分配数组） |
+| `Web:S6822` `ul` 上 `role="list"` 冗余 | **误报** | Tailwind preflight 置 `list-style: none` → Safari/VoiceOver 丢失列表语义，显式 role 是官方修法。保留 + 源码注释说明 |
+| `Web:S6845` `tabIndex` 应在可交互元素 | **误报** | 滚动区域必须可聚焦（WCAG 2.1.1 / axe scrollable-region-focusable）。保留 + 说明 |
+| Tailwind `suggestCanonicalClasses` `max-h-[228px]` | **有意识地拒绝** | 228 是推导出的高度预算（320−92），不是 spacing 阶梯；canonical 形式编译为 `calc(var(--spacing)*57)`，主题化 spacing 会静默破坏上限。保留 px + 写明理由 |
+| `S3358` 嵌套三元（TOD 圆角） | **真问题** | 4 层嵌套三元 → 提为命名函数 `capsuleCorners(index, count)`；顺带把 `barWidth: 24` 提为 `BAR_WIDTH`、`CAPSULE_RADIUS = BAR_WIDTH/2`（半径必须恰为厚度一半，否则直边与弧线之间露缝）。补中间段用例（原测试只覆盖单段/两段，**中间分支未被断言**），红绿验证过 |
+| `Web:S6819` `role="img"` 应换成 `<img>` | **误报** | ECharts 6.1.0 自身的 `visual/aria.js:132` 就设 `role="img"` + `aria-label`——这是库的官方模式，5 个图表面板一致使用；内容是由库绘制的实时 canvas，无法用 `<img>` 替代。保留 + 源码注释说明依据 |
+| — | **新发现的真缺陷** | `TooltipTrigger as-child` 包 `<span>`（无 tabindex）→ 键盘用户无法聚焦，截断名/Others 明细完全不可达。修：`hasDetail(row)` 为真的行给 tabindex + `:focus-visible` 指示环，且与 popover 的 `v-if` 复用同一判定 |
+
+- 附带发现并证实：**Tailwind v4 会扫描注释**，注释里写出类名 token 会把该工具类打进产物（对照实验：改写注释 → 死规则消失、CSS 哈希变化）→ 记入 `systemPatterns.md`。
+
+### 格式化器归属纠正（v0.35.0）
+
+- `formatPercent` 原放在 `features/dashboard/components/percent-format.ts`（相对导入）—— 与同类 `formatDuration`（`lib/utils/time.ts`，barrel 导出）**不同处**，违反 `systemPatterns` 明文的「共享格式化器放 `lib/utils/`，禁止 per-view inline」。
+- 已迁至 **`src/lib/utils/percent.ts`** + barrel 导出，4 个消费者改 `@/lib/utils`；测试随之迁到 `lib/utils/__tests__/percent.test.ts`。
+- 规则已写入 `systemPatterns.md`「**Value Formatters**」（含归属表 + 「格式化器的**规则**可以来自领域，**文件**不行」）。
+- 附带澄清：`components/__tests__/` 里 Pascal/kebab 混排是**镜像源文件名**规则的正常结果（大小写携带「组件 vs 模块」信息），不应为「看起来统一」而重命名——已在 `systemPatterns.md` 写明。
+
+### 测试文件命名对齐（v0.35.0）
+
+- 约定「测试名 = 被测源文件名」：`.vue`→PascalCase；纯 `.ts`→沿用该模块自身命名（kebab/camel）。多套件按**方面**拆 `<Name>.<aspect>.test.ts`（既有 `CreateApiKeyDialog.form.test.ts` 先例）。**已写入 `systemPatterns.md`**。
+- 修正 2 个名不副实的文件：`TermsCheckbox.test.ts` → **`RegisterForm.terms.test.ts`**（原名指向不存在的组件 `TermsCheckbox.vue`，实际测 `RegisterForm` 的条款勾选 + `TermsDialog`，8 例有效）；`lib/api/__tests__/password.test.ts` → **`user.password.test.ts`**（测 `user.ts` 的 `setPassword`）。
+- 删除死重量：`src/__tests__/placeholder.test.ts`（7 行 `expect(true).toBe(true)` 恒真断言）+ 空目录 `src/components/charts/__tests__/`。单测 1254 → **1253**、文件 82 → **81**。
+
+### 测试与 lint 门禁（v0.35.0）
+
+- `expect(x.length).toBe(n)` → `expect(x).toHaveLength(n)`：修 3 处（Language 面板 1、TermsDialog 2），与项目主流写法（48 处 `toHaveLength`）对齐。
+- 项目 lint **此前没有**这条规则（只有 SonarLint 会拦），已在 `vite.config.ts` 启用 `vitest/prefer-to-have-length`。实测双向生效：`vp lint <file>` 报错 exit 1、`pnpm lint` 自动修正。
+- 教训：`pnpm lint` 带 `--fix`，新规则**不会报错只会静默改写**——验证规则是否真的启用必须用不带 `--fix` 的 `vp lint`。IDE 的 SonarLint 与项目 lint 是**两套不同规则集**，两者不可互相替代。
+
+### AI 产物位置（v0.35.0）
+
+- `.omp/README.md` 早已规定 AI 产物归 `.omp/`（gitignored），但 `AGENTS.md` 无此规则、`ai-workflow/references.md` 还把 `docs/plans/` 写成 plan 存放处 → 落地为 **R25**；plan 迁至 `.omp/plans/project-distribution-plan.md`（按约定不带日期）。
+- `docs/archives/` 同类问题：AI 记忆归档移入 **`memory-bank/archives/`**（持久记忆、留在仓库），并明确它是**唯一豁免 200 行限制**的记忆文件；10 处引用同步更新。
+
+### 分布缓存键缺失（BUG，v0.35.0 修）
+
+- `STATS_QUERY_KEYS.distribution` 的键**漏了 `start`/`end`**（queryFn 一直在读它们）→ 切 Period 时 `week-hour`/`hourly` 会重取，**分布面板不重取**，屏幕上留着首次那个窗口的数据。实测：切「Last 90 days」后 UI 仍显示全史（Java 50.49% / 7 行），而后端该窗口真值是 Kotlin 42.49% / 10 行。
+- 红绿验证：回退成旧键，新用例报 `expected ['stats','distribution','PROJECTS','auto','auto','all']` 与带窗口的键不等。
+
+### Time of Day 缝线对齐（BUG，v0.35.0 修）
+
+- 段缝位置用**取整后的百分比**累加，而 ECharts 段宽用**精确秒数** → 缝线必然偏离颜色边界。改为保留精确 `share` 供几何使用，读数才格式化（`formatPercent(share, 0)`）。
+- 红绿验证：回退为取整累加，1h/1h/1h/5h 的缝线位置报 `['13','26','39']`，正确值 `['12.5','25','37.5']`；真机（langtail 全史）缝线 25.2763/43.1679/57.9021 == 86460/147660/198060 ÷ 342060。
 
 ### Language Distribution 极小份额读数（v0.34.3）
 
@@ -80,13 +145,14 @@
 - **逐行渐隐不能用叠色**：遮罩颜色永远无法匹配带渐变的卡片（暗色下形成割裂带），改用 `mask-image`（无颜色）。
 - **模板类文件大改用整文件 `write`**：增量 hunk 编辑在同一文件上反复错位（陈旧锚点 + 边界回声）已两次损坏模板；多 hunk 编辑后必须整文件复核。
 - **dev server `504 Outdated Optimize Dep`**：依赖图变化后 `rm -rf node_modules/.vite` + 重启。
-- **测试账号固定**：`.sisyphus/get-token.sh` 持久化 `<prefix>` 账号并复用（`FRESH=1` 强制重注册），避免堆积一次性账号。
+- **测试账号固定**：`.sisyphus/get-token.sh` 持久化 `<prefix>` 账号并复用（`FRESH=1` 强制重注册）。**必须选已有 prefix**——新 prefix 会注册真实账号（无删号接口）并需要重新灌数据。
+- **浏览器会话**：`eval "$(SESSION=1 bash .sisyphus/get-token.sh <prefix>)"` 取 ACCESS+REFRESH，然后**裸串**写入 localStorage（JSON 引号会让 refresh 返回 AUTH_003）、**导航前**写入、**同一 profile 只留一个 tab**（旧 tab 的静默刷新会覆盖注入值）。详见 `domains/ai-workflow/practices.md`。
 - **服务归属**：只清理自己启动的进程，按实际监听者核对 PID 归属（PID 文件不足以证明），用户的服务不动。
 - **图表设计依据**：DESIGN.md 为权威 + 项目既有图表（HourlyPanel/TrendChart）做先例 + 插件端源码参照；不再加载 lieflat-charts（其署名话术对内部 UI 无意义）。
 
 ## Archived History
 
-- `docs/archives/2026-09-10-activeContext-archive.md` — v0.16.14 → v0.34.0 的完整时间线（含各轮反馈与决策细节）。
-- `docs/archives/2026-08-16-activeContext-archive.md` — v0.16.13 及更早（v0.8.x 起，含事故与教训）。
+- `memory-bank/archives/2026-09-10-activeContext-archive.md` — v0.16.14 → v0.34.0 的完整时间线（含各轮反馈与决策细节）。
+- `memory-bank/archives/2026-08-16-activeContext-archive.md` — v0.16.13 及更早（v0.8.x 起，含事故与教训）。
 
 归档于 2026-09-10（v0.34.0），以维持 AGENTS.md 的 200 行上限。

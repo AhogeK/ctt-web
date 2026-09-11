@@ -12,9 +12,14 @@ Lookup facts. No judgement here — decisions live in `principles.md` / `scenari
 | Coding trend (last 30 days)        | `TrendChart.vue`                 | `stats/heatmap` (30-day window)                    | No — fixed 30 days        |
 | Time of day distribution           | `TimeOfDayPanel.vue`             | `stats/distribution?type=TIME_OF_DAY`              | Yes                       |
 | Language distribution              | `LanguageDistributionPanel.vue`  | `stats/distribution?type=LANGUAGES`                | Yes                       |
+| Project distribution               | `ProjectDistributionPanel.vue`   | `stats/distribution?type=PROJECTS`                 | Yes                       |
 | Summary cards (6 fields)           | `SummaryCards.vue`               | `stats/summary`                                    | n/a — fixed windows       |
 
-Panels not yet built but available server-side: `PROJECTS`, `WEEKDAY`, `DEVICES`, `IDES`.
+Panels not yet built but available server-side: `WEEKDAY`, `DEVICES`, `IDES`.
+
+Both categorical panels render through one shared list (`RankedDistributionList.vue`) fed by
+`../composables/useRankedDistribution.ts`, so ranking, the 0.1% folding floor, the gradient and the
+percent precision have a single implementation.
 
 ## Colour values in use
 
@@ -66,8 +71,9 @@ Floors: panel card ≥830px (row ≥1684px), summary row ≥1430px.
 | Edge fade depth          | ~18px top / ~26px bottom                                       |
 | Row stagger (entrance)   | 45–55ms per row, `IntersectionObserver` threshold .25           |
 | Segment seam width       | 1.5–2px, card-surface colour                                   |
-| Language row grid        | `5.5rem` label / `1fr` track / `4.25rem` percent / `4.75rem` duration |
-| Percent readout decimals | `2`, or `min(6, ceil(-log10(v)) + 1)` below `0.01` (P8)         |
+| Distribution row grid    | `7rem` label / `1fr` track / `4.5rem` percent / `6rem` duration (each lane sized for its widest possible value) |
+| Percent readout decimals | `2` (`0` for the TOD legend), floored by `min(6, ceil(-log10(v)) + 1)` below `0.01`; below the floor it reads `<0.000001` (P8) |
+| Distribution list files  | `RankedDistributionList.vue` (view) + `composables/useRankedDistribution.ts` (rows) + `@/lib/utils` `formatPercent` (readout, in `lib/utils/percent.ts`) |
 
 ## Files worth knowing
 

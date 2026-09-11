@@ -66,6 +66,7 @@ sorted by duration descending.
 | API base             | `http://localhost:8080/ctt-server`                              |
 | Swagger              | `http://localhost:8080/ctt-server/swagger-ui`                   |
 | Mail capture         | `http://localhost:8025` (mailpit)                               |
-| Token helper         | `.sisyphus/get-token.sh <prefix>` — persists and reuses an account; `FRESH=1` re-registers |
+| Token helper         | `.sisyphus/get-token.sh <prefix>` prints the access token; `SESSION=1` also prints `REFRESH=` (needed to drive the app in a browser). Persists and reuses an account; `FRESH=1` re-registers. Pick an EXISTING prefix — see `ai-workflow` |
+| Device registration  | `POST /devices` requires `deviceId` as a UUID — a plain string returns `COMMON_001` |
 | hCaptcha (dev)       | dummy token `10000000-aaaa-bbbb-cccc-000000000001` always verifies |
 | CSRF                 | `XSRF-TOKEN` cookie → `X-XSRF-TOKEN` header (raw value, no masking) |

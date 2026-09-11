@@ -3,7 +3,7 @@
 Chronological record of ctt-web dashboard work (v0.16.14 → v0.34.0), moved out
 of `memory-bank/activeContext.md` to keep that file within the AGENTS.md
 200-line limit. Earlier history (v0.16.13 and below) lives in
-`docs/archives/2026-08-16-activeContext-archive.md`.
+`memory-bank/archives/2026-08-16-activeContext-archive.md`.
 
 ---
 

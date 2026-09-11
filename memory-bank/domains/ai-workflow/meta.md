@@ -25,7 +25,7 @@ evidence, resource ownership, read-only boundaries.
 | `AGENTS.md`                 | The binding rules (R1–R24). Agent-maintained.                 |
 | `memory-bank/*.md`          | Timeline layer: status, progress, cross-cutting patterns      |
 | `memory-bank/domains/`      | Domain layer: this knowledge graph                            |
-| `docs/archives/`            | Frozen history moved out of the timeline layer                |
+| `memory-bank/archives/`            | Frozen history moved out of the timeline layer                |
 | `.sisyphus/`                | Local dev helpers (token bootstrap, scratch verification)     |
 
 ## Terminology

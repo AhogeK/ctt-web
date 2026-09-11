@@ -6,26 +6,40 @@ Lookup facts about the working environment and project conventions. No judgement
 
 | Path                                          | Contents                                                    |
 | --------------------------------------------- | ----------------------------------------------------------- |
-| `AGENTS.md`                                   | Binding rules R1–R24 (agent-maintained)                      |
+| `AGENTS.md`                                   | Binding rules R1–R25 (agent-maintained)                      |
 | `memory-bank/projectbrief.md`                 | Goal and scope of the project                                |
 | `memory-bank/techContext.md`                  | Stack, versions, toolchain pins, API/auth basics             |
 | `memory-bank/systemPatterns.md`               | Cross-cutting conventions (components, state, errors, routing)|
 | `memory-bank/activeContext.md`                | Current status + recent rounds + cross-cutting lessons        |
 | `memory-bank/progress.md`                     | Milestone table + compressed version history                  |
 | `memory-bank/domains/`                        | Domain knowledge graph (see `domains/README.md`)              |
-| `docs/archives/`                              | Frozen timeline history (dated files)                         |
-| `docs/plans/`                                 | Written plans — created only when a change spans enough files to need one (R10 keeps routine planning in the todo list) |
+| `memory-bank/archives/`                       | Frozen timeline history (dated files); **the one memory artifact exempt from the 200-line limit** |
+| `docs/`                                       | **User-facing project docs only** — `architecture.md`, `dev-handbook.md`. Never AI artifacts (R25) |
+| `.omp/`                                       | AI working directory (**gitignored** — nothing here is committed)                             |
+| `.omp/plans/`                                 | Implementation plans: `<feature>-plan.md` (no date — recency is mtime)                         |
+| `.omp/*.md`                                   | Delivery reports (`<feature>-delivery-report.md`), requirement drafts (`<topic>-requirement.md`) |
 | `.sisyphus/`                                  | Local dev helpers (token bootstrap, verification scratch)      |
 
 ## Limits and formats
 
 | Rule                    | Value                                                      |
 | ----------------------- | ---------------------------------------------------------- |
-| Memory file size        | ≤200 lines each (AGENTS.md 约束 2)                          |
+| Memory file size        | ≤200 lines each — `memory-bank/archives/` exempt (AGENTS.md 约束 2) |
 | Commit subject          | ≤72 characters (commitlint `subject-max-length`)            |
 | Version location        | `package.json` → `version` (single source)                  |
 | Version bump semantics  | fix → PATCH, feature → MINOR, breaking → MAJOR               |
 | Todo threshold          | 3+ steps → todo list first (R10)                             |
+
+## Lint gates (two, and they are not identical)
+
+| Gate                  | Where            | Notes                                                                 |
+| --------------------- | ---------------- | --------------------------------------------------------------------- |
+| `pnpm lint`           | CLI / pre-commit | `vp lint . --fix` (oxlint + `plugins: [eslint, typescript, unicorn, oxc, vue, vitest]`); **auto-fixes**, so a violation never surfaces as an error |
+| `vp lint <path>`      | CLI, read-only   | Same rules without `--fix` — errors and exits 1. Use this to prove a rule is actually enabled |
+| SonarLint             | IDE (editor)     | A **different** rule set (SonarJS/SonarTS, e.g. `typescript:S5906`). It flags things the project lint does not, so an IDE squiggle is worth reading rather than assuming the CLI would have caught it |
+
+Both live in `vite.config.ts` (`lint.rules`); adding a rule is a one-line change but a config
+decision, so confirm before doing it.
 
 ## Commands used routinely
 

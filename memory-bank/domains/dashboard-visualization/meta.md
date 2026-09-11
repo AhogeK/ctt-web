@@ -31,9 +31,14 @@ states.
 ## Panel architecture (two shapes)
 
 1. **Pure renderer** — the panel receives data + filters as props and only draws.
-   `HeatmapChart`, `TrendChart`, `TimeOfDayPanel`, `LanguageDistributionPanel`.
-2. **Query owner** — the parent (`DashboardHome`) holds the query and drives `ChartSection`'s
-   loading/error/empty states.
+   `HeatmapChart`, `TrendChart`, `TimeOfDayPanel`.
+2. **Query owner** — the panel runs its own query and the parent still drives `ChartSection`'s
+   loading/error/empty states: `LanguageDistributionPanel`, `ProjectDistributionPanel`.
+
+The two categorical panels share the row model (`composables/useRankedDistribution.ts`) and the
+list view (`RankedDistributionList.vue`), differing only in their query and their copy — so a
+change to ranking, folding, the gradient or the readout precision cannot land in one and miss the
+other.
 
 A panel must never wrap itself in `ChartSection`: while its query pends the container ref stays
 null, so the chart never initialises (learned the hard way, v0.25.0). One shape per panel,
@@ -48,6 +53,7 @@ declared in its JSDoc.
 | Track             | A bar's background rail; also the container-query context for the shared gradient  |
 | Global gradient   | One ramp spanning the whole track width; each bar reveals its own slice of it      |
 | Aggregate row     | The `Others` row that absorbs sub-threshold entries                                |
+| Ranked list       | The shared ranking view for categorical dimensions (sub-0.1% folding, scrolling, popover) |
 | Time-axis panel   | A panel where x is real time (heatmap, trend) — bucket sums must be conserved      |
 | Categorical panel | A panel where each bucket is an independent category — sums may exceed real time   |
 
