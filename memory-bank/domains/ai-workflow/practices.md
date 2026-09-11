@@ -36,6 +36,12 @@ cherry-picked — stop and investigate before pushing.
 `env -u CI` matters: with `CI` set, Playwright switches to a preview build instead of the running
 dev server.
 
+**Run verification at the branch tip, never at a detached historical commit.** `node_modules` is
+shared while `pnpm-workspace.yaml` is per-commit, so a script run at an old commit meets a config
+that does not describe the installed tree — and pnpm answers by mutating that config (see S9).
+Per-commit checking needs a worktree **with its own install**; one that borrows the main
+`node_modules` cannot resolve `vite-plus` and reports phantom TS errors.
+
 ## Reading a rendered value instead of guessing it
 
 ```js

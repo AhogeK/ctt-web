@@ -46,6 +46,10 @@
 - [x] **v0.21.0 / v0.20.0 (2026-09-01)** Dashboard D2–D4 — URL 筛选状态（start/end/deviceId/ideName + 预设）、10 个插件对齐面板、SummaryCards 6 字段、GitHub 风格热力图。1172/1172。
 - [x] **v0.19.0 (2026-08-31)** Stats API 契约层 — stats schema（7 响应 Schema + DistributionType 枚举）、`lib/api/stats.ts`（timezoneOffset 自动）、useStats composables + 查询键工厂。1142/1142。
 
+## 工具链
+
+- [x] **v0.36.1 (2026-09-11)** 阻止 pnpm 隐式安装污染受控配置 — `pnpm-workspace.yaml` 设 `verifyDepsBeforeRun: warn`（v11 默认 `install` 会让 `pnpm run` 隐式安装，遇未决策的构建脚本时把非布尔占位符写入该受控文件；`warn` 只报告不写入，且不像 `error` 那样被版本号变更误触发）。1266/1266。
+
 ## 更早里程碑（v0.8 – v0.18）
 
 - [x] **v0.18.3 → v0.18.0 (2026-08-29/30)** Device Management N/O — `revokedAt` 撤销态、错误码映射（COMMON_002 / DEVICE_001）、共享时间工具、E2E 覆盖（9/9）。1128/1128。

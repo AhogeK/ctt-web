@@ -18,12 +18,13 @@
 | Icons         | @iconify/vue (migrated from lucide-vue-next v0.10.5) | ^5 |
 | i18n          | Vue I18n                               | ^11          |
 | Captcha       | @hcaptcha/vue3-hcaptcha                | ^1           |
-| Package Mgr   | pnpm (via corepack)                    | ^10          |
+| Package Mgr   | pnpm (standalone `~/Library/pnpm`)     | 11.18.0      |
 | Design System | DESIGN.md                              | Linear-style |
 
 ## Dev Toolchain (Vite+ Unified)
 
 - `vp` CLI (dev/build/test/lint/fmt), Playwright (E2E), vue-tsc (type check), simple-git-hooks + lint-staged (pre-commit)
+- **`pnpm-workspace.yaml` is pnpm 11's settings file** — not `.npmrc`, which pnpm 11 ignores for `verify-deps-before-run`. `allowBuilds` holds the build-script decisions (`msw`, `simple-git-hooks`, `vue-demi`); `verifyDepsBeforeRun: warn` stops `pnpm run`/`pnpm exec` from implicitly installing — the only path that could write a non-boolean placeholder into this tracked file — while still reporting genuine drift. `error` blocks the write too, but fails *every* script after a lone version bump (that alone flips the workspace-state hash), so it does not survive contact with a release step. Runtime state lives in `node_modules/.modules.yaml` (`pendingBuilds`, `allowBuilds`).
 - Snapshot (2026-09-07): + vue-echarts 8.3.0, eslint-plugin-vue 10.11.0; @playwright/test 1.63.0, lint-staged 17.5.0, vue-tsc 3.3.11, **typescript 6.0.3 pinned exact** — `vp update -L` auto-bumps TS to 7.x which breaks the Vue toolchain; re-pin after every `-L` run (`pnpm add -D typescript@6.0.3 --save-exact`)
 - **vitest must stay 4.1.11** (exact): vite-plus@0.3.0 hard-pins `vitest: 4.1.11` as a dependency; letting `-L` bump the direct devDep to 5.x creates a dual-instance peer conflict (`peers check` exit 1). Re-pin vitest + @vitest/coverage-v8 to 4.1.11 after every `-L` run. Playwright major bumps need `pnpm exec playwright install chromium` (new browser build).
 

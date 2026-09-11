@@ -53,6 +53,9 @@ decision, so confirm before doing it.
 | E2E one spec        | `env -u CI pnpm test:e2e e2e/<spec>.ts --project=chromium`       |
 | Dependency update   | `vp update -L` then re-pin TS and vitest (see `techContext.md`)  |
 
+Scripts must not implicitly install dependencies while verifying — the guard and its rationale live
+in `techContext.md` (pnpm workspace settings); the regression symptom is S9.
+
 ## Git facts
 
 | Item                | Value                                                          |

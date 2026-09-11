@@ -2,8 +2,8 @@
 
 ## Current Status
 
-**Phase**: Dashboard 面板迭代（Coding trend 可选月份 + 面板状态与路由隔离）
-**Version**: 0.36.0 (2026-09-11)
+**Phase**: Dashboard 面板迭代（Coding trend 可选月份 + 面板状态与路由隔离）+ 工具链加固
+**Version**: 0.36.1 (2026-09-11)
 **Branch**: develop
 **Tests**: 1266/1266 unit; vue-tsc + lint 0 error 0 warning; build green; e2e layout 4/4
 
@@ -142,22 +142,11 @@ fights back」与 `ai-workflow/practices.md` 的「When an edit tool corrupts a 
 - 段缝位置用**取整后的百分比**累加，而 ECharts 段宽用**精确秒数** → 缝线必然偏离颜色边界。改为保留精确 `share` 供几何使用，读数才格式化（`formatPercent(share, 0)`）。
 - 红绿验证：回退为取整累加，1h/1h/1h/5h 的缝线位置报 `['13','26','39']`，正确值 `['12.5','25','37.5']`；真机（langtail 全史）缝线 25.2763/43.1679/57.9021 == 86460/147660/198060 ÷ 342060。
 
-### Language Distribution 极小份额读数（v0.34.3）
+### Language Distribution 高度与读数（v0.34.2 / v0.34.3）
 
-- 「Others」浮窗里小于 0.005% 的语言两位小数一律印成 `0%` → `formatPercent` 改为低于 0.01 时
-  精度跟随数值：`min(6, ceil(-log10(v)) + 1)` 位小数（`0.0033 → 0.0033%`、`0.000004 → 0.000004%`）。
-  上限 6 位对应「1 秒 / 约 6 年」，即永远不会把真实值舍回 `0`（新增原则 **P8**）。
-- 随之加宽百分比列 3.5rem → **4.25rem**：上限输出 `0.000000%` 宽 62.5px，原 56px 列会溢出 6.5px
-  落入列间隙（侥幸不碰轨道）；4.25rem = 68px 留 5.5px 余量。
-- 红绿验证：回退为固定两位时新测试报 `Others0% 12s`（正是用户所述 bug）；修复后 `0.0033%`。
-- 真机（拦截响应注入 1 秒级语言）：行读数 `0.000012%` 未溢出轨道，浮窗三条均为 `0.000004%`；
-  真实账号 30 语言读数仍为两位小数（37.24% / 24.21% … Others 0.07%），卡片仍 321px，无回归。
-
-### Language Distribution 高度收紧（v0.34.2）
-
-- 两列布局下卡片 397px 偏高 → 列表视口 `19rem`(304px) → `228px`，卡片落 **321px**（用户口径「最高 320px 差不多」）。
-- 高度预算公式（实测推导）：卡片 = 32 padding + 18 标题 + 16 标题间距 + (视口 + 8 间距 + 18 页脚)；即固定 chrome **92px**。
-- 实测：2621 两列 → Language/TOD 同排均 321px（TOD 靠 flex-1 撑满）；1600 单列 → Language 321px、TOD 241px（各自单独成行，无拉伸）；两模式均 9 行可见且可滚动。
+- 两轮收敛：列表视口 `19rem`→`228px`（卡片 321px，chrome 92px）、百分比列 3.5rem→**4.5rem**（容 `0.000000%`）、
+  精度规则 **P8**（有效值不印成 `0`，`min(6, ceil(-log10 v)+1)` 位小数）。推导与实测值已入
+  `dashboard-visualization/{practices,references}.md`，此处不再重复。
 
 ### Language Distribution（排名横条 + 全局渐变）
 
@@ -179,6 +168,17 @@ fights back」与 `ai-workflow/practices.md` 的「When an edit tool corrupts a 
 
 - **typescript 6.0.3 精确钉定**（TS7 移除 programmatic API，vue-tsc/compiler-sfc 崩）；**vitest + @vitest/coverage-v8 4.1.11 精确钉定**（vite-plus@0.3.0 硬钉）。每次 `vp update -L` 后都要重新钉定。
 - 本轮升级：vue-router 5.3.1、zod 4.5.4、playwright 1.63.0（需 `playwright install chromium`）等。
+- **`pnpm-workspace.yaml` 是 pnpm 11 的配置文件**（`.npmrc` 对 `verify-deps-before-run` 已失效）。
+
+### pnpm 隐式安装污染受控文件（BUG，v0.36.1 修）
+
+- 现象：提交周期中 `pnpm-workspace.yaml` 无故出现改动，内容是 `<包名>: set this to true or false`。
+- 根因（pnpm 11.18 源码 + 复现）：`verifyDepsBeforeRun` 默认 `install` —— `pnpm run`/`exec` 在依赖不同步时**隐式安装**，
+  安装遇未决策的构建脚本时 `handleIgnoredBuilds()` 把非布尔占位符写进这个**受版本控制**的文件并抛错；源码里只有
+  `case "install"` 调用安装。在**分离的历史提交**处跑脚本必然触发（node_modules 共享、配置按提交走）。
+- 修法：`verifyDepsBeforeRun: warn`（报告漂移，但不隐式安装、不写入）。对照取证：默认 `install` 会**写入占位符**，
+  非 `install` 的任一取值都不会。**不选 `error`**：只改版本号就会翻转 workspace 状态哈希，`error` 会让例行发布后的
+  脚本全部失败——这种误报守卫终会被关掉。场景与规避入 `ai-workflow` S9。
 
 ## Lessons（跨轮次教训）
 

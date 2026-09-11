@@ -80,3 +80,29 @@ Precedent flow (used for `activeContext.md` 549 → 63 lines):
   at a process that was not ours).
 - Temporary profiles/tokens/payloads: delete. Persistent helpers (test account, token script):
   keep and reuse.
+
+## S9. A tracked file shows as modified, with no edit by you
+
+Symptom: `git status` lists a file you never opened — typically `pnpm-workspace.yaml` carrying
+`<package>: set this to true or false` — and a later `git checkout` refuses to run because that
+file has local changes.
+
+That literal is **pnpm's placeholder**, not anyone's edit. `handleIgnoredBuilds()` writes it when an
+install meets a dependency whose build script has no entry in `allowBuilds`. pnpm 11 reaches that
+path from any `pnpm run`/`exec`, because `verifyDepsBeforeRun` defaults to `install` and implicitly
+installs whenever `node_modules` is out of sync — and running a script at a **detached historical
+commit** guarantees that mismatch, since `node_modules` is shared but the workspace config is
+per-commit.
+
+Do not "resolve" it by committing the file. Restore it and remove the cause:
+
+1. `git checkout -- <file>`. The checkout you were attempting is safe to retry afterwards.
+2. Confirm the guard is present: `verifyDepsBeforeRun: warn` in `pnpm-workspace.yaml` turns this into
+   a warning instead of a write. `error` also stops the write, but it fails *every* script after a
+   lone version bump (that alone flips the workspace-state hash) — a guard that cries wolf on a
+   routine release step is one someone turns off.
+3. For a genuinely new undecided build script, `pnpm approve-builds` and commit that decision — that
+   one *is* a real config change, not noise.
+4. Never run package-manager scripts at a historical commit; verify the tip. Per-commit verification
+   needs a worktree **with its own install** — one that borrows the main `node_modules` reports
+   phantom `TS2307: Cannot find module 'vite-plus'`.
