@@ -124,10 +124,23 @@ describe('staleTime by endpoint', () => {
 describe('distribution type keys', () => {
   it('isolates by distribution type', () => {
     useStatsDistribution('DEVICES', { deviceId: 'dev-1' })
-    expect(toValue(queryConfig?.queryKey)).toEqual(['stats', 'distribution', 'DEVICES', 'dev-1'])
+    expect(toValue(queryConfig?.queryKey)).toEqual(['stats', 'distribution', 'DEVICES', 'auto', 'auto', 'dev-1'])
 
     useStatsDistribution('IDES', {})
-    expect(toValue(queryConfig?.queryKey)).toEqual(['stats', 'distribution', 'IDES', 'all'])
+    expect(toValue(queryConfig?.queryKey)).toEqual(['stats', 'distribution', 'IDES', 'auto', 'auto', 'all'])
+  })
+
+  it('isolates by date window so a later window never reuses an earlier one', () => {
+    // The queryFn reads start/end: without them in the key the first window
+    // fetched answers every subsequent one (full-history figures persisted on
+    // screen after switching Period to "Last 90 days").
+    useStatsDistribution('PROJECTS', { start: '2026-08-12', end: '2026-09-10' })
+    const windowed = toValue(queryConfig?.queryKey)
+    useStatsDistribution('PROJECTS', {})
+    const allTime = toValue(queryConfig?.queryKey)
+
+    expect(windowed).toEqual(['stats', 'distribution', 'PROJECTS', '2026-08-12', '2026-09-10', 'all'])
+    expect(allTime).not.toEqual(windowed)
   })
 })
 
