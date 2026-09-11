@@ -1,3 +1,12 @@
+/**
+ * RegisterForm's terms-acceptance surface — the checkbox, its Terms of Service
+ * link, and the dialog it opens, plus the submit gate that depends on it.
+ *
+ * Split out of `RegisterForm.test.ts` (which covers hCaptcha) rather than merged
+ * into it: the two are independent concerns with their own mocking needs. Named
+ * after the component it exercises, with the aspect as a suffix, so the file is
+ * findable from the source it tests.
+ */
 import { beforeEach, describe, expect, it, vi } from 'vite-plus/test'
 import { mount } from '@vue/test-utils'
 import { ref, type Component } from 'vue'

@@ -1,3 +1,11 @@
+/**
+ * `setPassword` API — request shape (base64-encoded body), wrapper parsing, and
+ * error propagation.
+ *
+ * Split out of `user.test.ts` (the module it lives in) so the password flow's
+ * status-code matrix stays readable; the aspect suffix keeps it findable from
+ * the source.
+ */
 import { describe, it, expect, vi, beforeEach } from 'vite-plus/test'
 import { setPassword } from '@/lib/api/user'
 import { apiFetch } from '@/lib/api/instance'

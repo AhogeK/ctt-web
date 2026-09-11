@@ -35,6 +35,9 @@ export default defineConfig({
       'typescript/no-require-imports': 'error',
       'typescript/no-unnecessary-type-constraint': 'error',
       'typescript/no-unsafe-function-type': 'error',
+      // Length assertions read better and fail with a clearer diff as
+      // `expect(x).toHaveLength(n)` than `expect(x.length).toBe(n)`.
+      'vitest/prefer-to-have-length': 'error',
     },
     overrides: [
       {
