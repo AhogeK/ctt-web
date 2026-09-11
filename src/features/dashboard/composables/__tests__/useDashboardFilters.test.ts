@@ -161,29 +161,53 @@ describe('useDashboardFilters', () => {
     expect(preset.value).toBe('custom')
   })
 
-  it('setHeatmapYear writes the year param and null clears it', () => {
-    const { setHeatmapYear } = useDashboardFilters()
+  it('setHeatmapYear holds the year locally and never touches the URL', () => {
+    const { heatmapYear, setHeatmapYear } = useDashboardFilters()
 
     setHeatmapYear(2025)
-    expect(mockReplace).toHaveBeenLastCalledWith({ query: { year: '2025' } })
+    expect(heatmapYear.value).toBe(2025)
 
     setHeatmapYear(null)
-    expect(mockReplace).toHaveBeenLastCalledWith({ query: {} })
+    expect(heatmapYear.value).toBeNull()
+
+    // The regression guard for the whole point of local state: a panel-scoped
+    // change must NOT become a route update, because that re-renders
+    // RouterView and the entire layout chain around a single card.
+    expect(mockReplace).not.toHaveBeenCalled()
   })
 
-  it('heatmapYear reads the URL param and surfaces null when unset', () => {
-    const filters = useDashboardFilters()
-    expect(filters.heatmapYear.value).toBeNull()
+  it('setTrendMonth holds the month locally and never touches the URL', () => {
+    const { trendMonth, setTrendMonth } = useDashboardFilters()
 
-    Object.assign(routeQuery, { year: '2024' })
-    expect(filters.heatmapYear.value).toBe(2024)
+    setTrendMonth('2026-08')
+    expect(trendMonth.value).toBe('2026-08')
+
+    setTrendMonth(null)
+    expect(trendMonth.value).toBeNull()
+
+    expect(mockReplace).not.toHaveBeenCalled()
   })
 
-  it('setHeatmapYear preserves unrelated query params', () => {
-    Object.assign(routeQuery, { deviceId: 'dev-1' })
-    const { setHeatmapYear } = useDashboardFilters()
+  it('keeps panel windows independent of the filter-bar range', () => {
+    const { trendMonth, heatmapYear, setTrendMonth, setHeatmapYear, setDateRange } = useDashboardFilters()
 
+    setTrendMonth('2026-08')
     setHeatmapYear(2025)
-    expect(mockReplace).toHaveBeenLastCalledWith({ query: { deviceId: 'dev-1', year: '2025' } })
+    setDateRange('2026-01-01', '2026-03-31')
+
+    // Range changes go to the URL (page-level); the panel windows do not, and
+    // are not disturbed by it.
+    expect(mockReplace).toHaveBeenLastCalledWith({ query: { start: '2026-01-01', end: '2026-03-31' } })
+    expect(trendMonth.value).toBe('2026-08')
+    expect(heatmapYear.value).toBe(2025)
+  })
+
+  it('defaults both panel windows to their rolling views', () => {
+    const { heatmapYear, trendMonth } = useDashboardFilters()
+
+    // null = "no panel window chosen": the heatmap shows 12 months, the trend
+    // 30 days.
+    expect(heatmapYear.value).toBeNull()
+    expect(trendMonth.value).toBeNull()
   })
 })

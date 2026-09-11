@@ -1,4 +1,4 @@
-import { computed } from 'vue'
+import { computed, ref } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 
 /** Date range presets offered by the dashboard filter bar. */
@@ -89,16 +89,22 @@ export function useDashboardFilters() {
   /** Exact IDE-name filter, or undefined for all IDEs. */
   const ideName = computed(() => queryString(route.query.ideName))
   /**
-   * Heatmap panel year selection (yyyy as string), or undefined for the
-   * default rolling 12-month view. Panel-scoped: it re-keys only the
-   * heatmap query and never touches the filter-bar range.
+   * Panel-scoped selections (`heatmapYear`, `trendMonth`) are **local state**,
+   * deliberately not part of the URL.
+   *
+   * Putting them in the query makes every change a route update, and vue-router
+   * replaces its route object wholesale: `RouterView` re-renders, which drags
+   * the whole layout chain (`AppLayout` → `SidebarProvider` → `SidebarInset` →
+   * `ErrorBoundary` → page) with it. Measured: picking a month re-rendered the
+   * app shell, sidebar included, for a change that concerns one card.
+   *
+   * Held locally, a change re-renders only the page that reads it, and the
+   * panel's own subtree. The filter-bar range stays in the URL because it *is*
+   * page-level state — every panel follows it, so a route update there is the
+   * correct scope.
    */
-  const heatmapYear = computed(() => {
-    const raw = queryString(route.query.year)
-    if (raw === undefined) return null
-    const year = Number(raw)
-    return Number.isInteger(year) && year >= 2000 && year <= 9999 ? year : null
-  })
+  const heatmapYear = ref<number | null>(null)
+  const trendMonth = ref<string | null>(null)
   /** Preset the current range maps to ('custom' when it matches none). */
   const preset = computed(() => inferPreset(start.value, end.value))
 
@@ -154,7 +160,16 @@ export function useDashboardFilters() {
    * is heatmap-panel context, so start/end stay untouched.
    */
   function setHeatmapYear(year: number | null): void {
-    updateQuery({ year: year === null ? undefined : String(year) })
+    heatmapYear.value = year
+  }
+
+  /**
+   * Select the trend panel month (`yyyy-MM`) or clear it (null → the rolling
+   * 30-day default). Panel-scoped, exactly like `setHeatmapYear`: the
+   * filter-bar range is deliberately left alone.
+   */
+  function setTrendMonth(month: string | null): void {
+    trendMonth.value = month
   }
 
   /**
@@ -173,6 +188,7 @@ export function useDashboardFilters() {
     deviceId: deviceIdOrNull,
     ideName: ideNameOrNull,
     heatmapYear,
+    trendMonth,
     originFilter,
     preset,
     setDateRange,
@@ -180,5 +196,6 @@ export function useDashboardFilters() {
     setDevice,
     setIde,
     setHeatmapYear,
+    setTrendMonth,
   }
 }

@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import { computed } from 'vue'
 import {
   Sidebar,
   SidebarContent,
@@ -33,12 +34,23 @@ const route = useRoute()
 const { state, isMobile, setOpenMobile } = useSidebar()
 
 /**
+ * The current path, read through a computed so the sidebar only re-renders when
+ * the PATH changes.
+ *
+ * vue-router replaces its `currentRoute` ref wholesale, so reading `route.path`
+ * directly in the template made every query-only change (a panel picking its
+ * own window) re-render the sidebar and the rest of the app shell. A computed
+ * compares by value, so an unchanged path no longer propagates.
+ */
+const activePath = computed(() => route.path)
+
+/**
  * Whether the given menu path matches the current route exactly.
  * Exact match (not prefix): all sidebar targets are leaf pages, so a prefix
  * rule would wrongly highlight Profile when API Keys is active (/settings/*).
  */
 function isPathActive(path: string): boolean {
-  return route.path === path
+  return activePath.value === path
 }
 
 /**
