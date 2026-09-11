@@ -106,6 +106,28 @@ describe('TimeOfDayPanel', () => {
     expect(series.every((s) => 'stack' in s && s.stack === 'tod')).toBe(true)
   })
 
+  it('rounds only the two outer ends, leaving inner ones square', async () => {
+    // Three survivors exercise the branch the other cases miss: the middle
+    // segment must stay square, or the capsule reads as beads on a string.
+    timeOfDayFor([
+      ['NIGHT', 3600],
+      ['MORNING', 3600],
+      ['DAYTIME', 3600],
+    ])
+    mount(TimeOfDayPanel, { props: { deviceId: null, ideName: null } })
+    const option = mockChart.setOption.mock.calls[0]![0]
+    if (typeof option !== 'object' || option === null || !('series' in option)) {
+      throw new TypeError('setOption payload missing series')
+    }
+    const { series } = option
+    if (!Array.isArray(series)) throw new TypeError('series not an array')
+    expect(series).toMatchObject([
+      { itemStyle: { borderRadius: [12, 0, 0, 12] } }, // Night — left end of the strip
+      { itemStyle: { borderRadius: [0, 0, 0, 0] } }, // Morning — interior, square both sides
+      { itemStyle: { borderRadius: [0, 12, 12, 0] } }, // Daytime — right end of the strip
+    ])
+  })
+
   it('keeps a lone segment fully rounded', async () => {
     timeOfDayFor([['NIGHT', 7200]])
     mount(TimeOfDayPanel, { props: { deviceId: null, ideName: null } })
@@ -130,6 +152,24 @@ describe('TimeOfDayPanel', () => {
     const wrapper = mount(TimeOfDayPanel, { props: { deviceId: null, ideName: null } })
     expect(wrapper.text()).toContain('100%')
     expect(wrapper.text()).toContain('Night') // display label
+  })
+
+  it('places segment seams on the exact share boundaries, not rounded ones', () => {
+    // 1h / 1h / 1h / 5h → shares 12.5 / 12.5 / 12.5 / 62.5. Those round to 13,
+    // but ECharts sizes the segments from the SECONDS, so rounded cumulative
+    // positions would drift off the colour boundary the seam exists to draw.
+    timeOfDayFor([
+      ['NIGHT', 3600],
+      ['MORNING', 3600],
+      ['DAYTIME', 3600],
+      ['EVENING', 5 * 3600],
+    ])
+    const wrapper = mount(TimeOfDayPanel, { props: { deviceId: null, ideName: null } })
+    const seams = wrapper
+      .findAll('[data-testid="tod-seam"]')
+      .map((s) => (s.attributes('style') ?? '').match(/left:\s*([\d.]+)%/)?.[1])
+    expect(seams).toEqual(['12.5', '25', '37.5'])
+    wrapper.unmount()
   })
 
   it('exposes an a11y label with the total and bucket percentages', () => {

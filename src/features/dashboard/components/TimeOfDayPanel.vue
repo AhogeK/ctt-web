@@ -23,7 +23,7 @@ import { computed, onBeforeUnmount, onMounted, ref, watch } from 'vue'
 import { init, type EChartsType } from 'echarts/core'
 import { Moon, Sun, Sunrise, Sunset, type LucideIcon } from '@lucide/vue'
 import { useStatsDistribution } from '@/composables/useStats'
-import { formatDuration } from '@/lib/utils'
+import { formatDuration, formatPercent } from '@/lib/utils'
 import { useThemeStore } from '@/stores/theme'
 import '@/components/charts/echarts-setup'
 
@@ -92,7 +92,13 @@ const BUCKET_COLORS: Record<BucketKey, { light: string; dark: string }> = {
 interface BucketView {
   name: BucketKey
   seconds: number
-  percent: number
+  /**
+   * EXACT share of the total, never rounded. Geometry (segment seams, chip
+   * anchor) reads this: ECharts sizes each segment from `seconds`, so a rounded
+   * share would place the seam up to a percent away from the colour boundary it
+   * is meant to draw.
+   */
+  share: number
 }
 
 const totalSeconds = computed(() => distribution.data.value?.entries.reduce((acc, e) => acc + e.seconds, 0) ?? 0)
@@ -103,14 +109,14 @@ const buckets = computed<BucketView[]>(() => {
   const total = totalSeconds.value
   return BUCKET_ORDER.map((name) => {
     const seconds = byName.get(name) ?? 0
-    return { name, seconds, percent: total > 0 ? Math.round((seconds / total) * 100) : 0 }
+    return { name, seconds, share: total > 0 ? (seconds / total) * 100 : 0 }
   })
 })
 
 const totalLabel = computed(() => formatDuration(totalSeconds.value))
 
 const ariaLabel = computed(() => {
-  const parts = buckets.value.map((b) => `${BUCKET_LABEL[b.name]} ${b.percent}%`).join(', ')
+  const parts = buckets.value.map((b) => `${BUCKET_LABEL[b.name]} ${formatPercent(b.share, 0)}%`).join(', ')
   return `Time of day: ${parts}. Total ${totalLabel.value}`
 })
 
@@ -120,6 +126,31 @@ let resizeObserver: ResizeObserver | null = null
 
 /** Strip height in px — a single capsule row, legend lives in HTML below. */
 const STRIP_HEIGHT = 40
+/**
+ * Capsule thickness and the radius that closes its ends. Defined together and
+ * derived from one another: a radius that is not exactly half the thickness
+ * shows a seam where the straight edge meets the curve.
+ */
+const BAR_WIDTH = 24
+const CAPSULE_RADIUS = BAR_WIDTH / 2
+
+/**
+ * Corner radius for a segment of the capsule, in ECharts' order
+ * (top-left, top-right, bottom-right, bottom-left).
+ *
+ * `CAPSULE_RADIUS` closes an end into a true semicircle. Only the two OUTER
+ * ends of the strip are rounded; an end that touches a neighbour stays square,
+ * otherwise the stack reads as a row of beads instead of one capsule.
+ *
+ * @param index - position of the segment among the visible ones
+ * @param count - number of visible segments
+ */
+function capsuleCorners(index: number, count: number): [number, number, number, number] {
+  if (count === 1) return [CAPSULE_RADIUS, CAPSULE_RADIUS, CAPSULE_RADIUS, CAPSULE_RADIUS]
+  if (index === 0) return [CAPSULE_RADIUS, 0, 0, CAPSULE_RADIUS]
+  if (index === count - 1) return [0, CAPSULE_RADIUS, CAPSULE_RADIUS, 0]
+  return [0, 0, 0, 0]
+}
 
 /**
  * Visible segments only: zero-width buckets would still paint their edge
@@ -132,17 +163,10 @@ const segments = computed(() => {
     ...b,
     color: dark ? BUCKET_COLORS[b.name].dark : BUCKET_COLORS[b.name].light,
   }))
-  const visible = colored.filter((b) => b.seconds > 0 && b.percent > 0)
+  const visible = colored.filter((b) => b.seconds > 0)
   return visible.map((seg, i) => ({
     ...seg,
-    borderRadius:
-      visible.length === 1
-        ? [12, 12, 12, 12]
-        : i === 0
-          ? [12, 0, 0, 12]
-          : i === visible.length - 1
-            ? [0, 12, 12, 0]
-            : 0,
+    borderRadius: capsuleCorners(i, visible.length),
   }))
 })
 
@@ -155,7 +179,7 @@ const seams = computed(() => {
   const out: { name: BucketKey; left: string }[] = []
   let acc = 0
   for (const seg of visible) {
-    acc += seg.percent
+    acc += seg.share
     if (seg !== visible[visible.length - 1]) out.push({ name: seg.name, left: `${acc}%` })
   }
   return out
@@ -173,8 +197,8 @@ const segmentCenters = computed(() => {
   const out = new Map<BucketKey, number>()
   let acc = 0
   for (const seg of segments.value) {
-    out.set(seg.name, acc + seg.percent / 2)
-    acc += seg.percent
+    out.set(seg.name, acc + seg.share / 2)
+    acc += seg.share
   }
   return out
 })
@@ -213,9 +237,9 @@ function buildOption(): Record<string, unknown> {
       type: 'bar',
       name: seg.name,
       stack: 'tod',
-      barWidth: 24,
+      barWidth: BAR_WIDTH,
       animationDelay: i * 90,
-      data: [{ name: seg.name, value: seg.seconds, percent: seg.percent }],
+      data: [{ name: seg.name, value: seg.seconds }],
       itemStyle: { color: seg.color, borderRadius: seg.borderRadius },
       label: { show: false },
       cursor: 'pointer',
@@ -279,6 +303,12 @@ watch([buckets, () => theme.isDark], render)
          the chip always has somewhere to appear: without it, a short card puts
          the strip at the top and the chip would land on the card header. -->
     <div class="relative mt-10">
+      <!-- `role="img"` + `aria-label` on the chart container is ECharts' own ARIA
+           pattern (its `visual/aria.js` sets exactly these two attributes when the
+           `aria` option is enabled), and it is what every chart panel here uses.
+           An `<img>`/`<svg>` cannot replace it: the content is a live canvas the
+           library draws into, and the label carries the data the canvas cannot
+           express. The legend below repeats every bucket as real text. -->
       <div ref="container" class="w-full" :style="{ height: `${STRIP_HEIGHT}px` }" role="img" :aria-label="ariaLabel" />
       <div class="pointer-events-none absolute inset-0" aria-hidden="true">
         <span
@@ -286,6 +316,7 @@ watch([buckets, () => theme.isDark], render)
           :key="seg.name"
           class="absolute top-0 h-full w-0.5 -translate-x-1/2"
           :style="{ left: seg.left, background: theme.isDark ? '#191a1b' : '#ffffff' }"
+          data-testid="tod-seam"
         ></span>
       </div>
 
@@ -309,7 +340,9 @@ watch([buckets, () => theme.isDark], render)
           />
           <span class="text-xs font-semibold text-popover-foreground">{{ BUCKET_LABEL[activeSeg] }}</span>
           <span class="text-[10px] tabular-nums text-muted-foreground">{{ BUCKET_RANGE[activeSeg] }}</span>
-          <span class="text-xs font-semibold tabular-nums text-popover-foreground">{{ activeView.percent }}%</span>
+          <span class="text-xs font-semibold tabular-nums text-popover-foreground"
+            >{{ formatPercent(activeView.share, 0) }}%</span
+          >
           <span class="text-[11px] tabular-nums text-muted-foreground">{{ formatDuration(activeView.seconds) }}</span>
         </div>
       </Transition>
@@ -348,7 +381,7 @@ watch([buckets, () => theme.isDark], render)
             <span class="ml-1 text-[10px] tabular-nums text-muted-foreground/60">{{ BUCKET_RANGE[bucket.name] }}</span>
           </span>
           <span class="text-sm font-semibold tabular-nums text-foreground">
-            {{ bucket.percent }}%
+            {{ formatPercent(bucket.share, 0) }}%
             <span class="ml-1.5 text-[11px] font-normal tabular-nums text-muted-foreground">
               <template v-if="bucket.seconds > 0">{{ formatDuration(bucket.seconds) }}</template>
               <template v-else>—</template>
