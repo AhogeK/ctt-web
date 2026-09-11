@@ -2,6 +2,16 @@ allowBuilds:
   msw: true
   simple-git-hooks: true
   vue-demi: true
+# pnpm 11 defaults this to `install`: every `pnpm run`/`pnpm exec` then performs
+# an implicit install whenever node_modules is out of sync. If that install meets
+# a dependency whose build script has no decision, pnpm writes a NON-BOOLEAN
+# placeholder for it into *this* tracked file, dirtying the tree and blocking
+# later checkouts. `warn` reports the drift and never writes.
+#
+# Not `error`: a lone version bump already flips the workspace-state hash, so
+# `error` would fail every script after a routine release step — a guard that
+# cries wolf like that is a guard someone turns off.
+verifyDepsBeforeRun: warn
 minimumReleaseAgeExclude:
   - '@playwright/test@1.62.0'
   - '@vue/devtools-core@8.2.0'
