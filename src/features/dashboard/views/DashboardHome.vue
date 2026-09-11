@@ -142,8 +142,41 @@ const projects = useStatsDistribution(
          1684px each 2-col card would drop under 830px (share minus gap), so
          the grid collapses to one column; at ≥1684px every card is exactly
          half width — heatmap included (its cell renderer clamps to the
-         available width). -->
+         available width).
+
+         Order is deliberate, in row pairs: the two categorical shares lead
+         (language, project), then the two calendar/time-series reads (heatmap,
+         30-day trend), then the three rhythm views. The e2e layout spec pins
+         these pairs, so reordering means updating it too. -->
     <div class="grid grid-cols-1 gap-6 @[1684px]/page:grid-cols-2">
+      <ChartSection
+        title="Language distribution"
+        :loading="languages.isPending.value"
+        :error="languages.isError.value"
+        :empty="!!languages.data.value && languages.data.value.entries.length === 0"
+        @retry="() => languages.refetch()"
+      >
+        <LanguageDistributionPanel
+          :start="start ?? undefined"
+          :end="end ?? undefined"
+          :device-id="deviceIdOrNull"
+          :ide-name="ideNameOrNull"
+        />
+      </ChartSection>
+      <ChartSection
+        title="Project distribution"
+        :loading="projects.isPending.value"
+        :error="projects.isError.value"
+        :empty="!!projects.data.value && projects.data.value.entries.length === 0"
+        @retry="() => projects.refetch()"
+      >
+        <ProjectDistributionPanel
+          :start="start ?? undefined"
+          :end="end ?? undefined"
+          :device-id="deviceIdOrNull"
+          :ide-name="ideNameOrNull"
+        />
+      </ChartSection>
       <ChartSection
         title="Coding heatmap"
         :loading="heatmap.isPending.value"
@@ -161,7 +194,16 @@ const projects = useStatsDistribution(
           :window-label="heatmapYear === null ? undefined : String(heatmapYear)"
         />
       </ChartSection>
-
+      <ChartSection
+        title="Coding trend (last 30 days)"
+        :loading="heatmap30.isPending.value"
+        :error="heatmap30.isError.value"
+        :empty="!!heatmap30.data.value && heatmap30.data.value.points.length === 0"
+        @retry="() => heatmap30.refetch()"
+      >
+        <!-- Chart body: 30-day smooth line + gradient area (filter-independent) -->
+        <TrendChart :points="heatmap30.data.value?.points ?? []" />
+      </ChartSection>
       <ChartSection
         title="Weekly coding activity by hour"
         :loading="weekHour.isPending.value"
@@ -176,7 +218,6 @@ const projects = useStatsDistribution(
           :ide-name="ideNameOrNull"
         />
       </ChartSection>
-
       <ChartSection
         title="Average hourly coding duration"
         :loading="hourly.isPending.value"
@@ -191,18 +232,6 @@ const projects = useStatsDistribution(
           :ide-name="ideNameOrNull"
         />
       </ChartSection>
-
-      <ChartSection
-        title="Coding trend (last 30 days)"
-        :loading="heatmap30.isPending.value"
-        :error="heatmap30.isError.value"
-        :empty="!!heatmap30.data.value && heatmap30.data.value.points.length === 0"
-        @retry="() => heatmap30.refetch()"
-      >
-        <!-- Chart body: 30-day smooth line + gradient area (filter-independent) -->
-        <TrendChart :points="heatmap30.data.value?.points ?? []" />
-      </ChartSection>
-
       <ChartSection
         title="Time of day distribution"
         :loading="timeOfDay.isPending.value"
@@ -211,36 +240,6 @@ const projects = useStatsDistribution(
         @retry="() => timeOfDay.refetch()"
       >
         <TimeOfDayPanel :device-id="deviceIdOrNull" :ide-name="ideNameOrNull" />
-      </ChartSection>
-
-      <ChartSection
-        title="Language distribution"
-        :loading="languages.isPending.value"
-        :error="languages.isError.value"
-        :empty="!!languages.data.value && languages.data.value.entries.length === 0"
-        @retry="() => languages.refetch()"
-      >
-        <LanguageDistributionPanel
-          :start="start ?? undefined"
-          :end="end ?? undefined"
-          :device-id="deviceIdOrNull"
-          :ide-name="ideNameOrNull"
-        />
-      </ChartSection>
-
-      <ChartSection
-        title="Project distribution"
-        :loading="projects.isPending.value"
-        :error="projects.isError.value"
-        :empty="!!projects.data.value && projects.data.value.entries.length === 0"
-        @retry="() => projects.refetch()"
-      >
-        <ProjectDistributionPanel
-          :start="start ?? undefined"
-          :end="end ?? undefined"
-          :device-id="deviceIdOrNull"
-          :ide-name="ideNameOrNull"
-        />
       </ChartSection>
     </div>
   </div>
