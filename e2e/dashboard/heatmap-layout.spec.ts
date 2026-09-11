@@ -20,7 +20,7 @@ const TITLES = [
   'Language distribution',
   'Project distribution',
   'Coding heatmap',
-  'Coding trend (last 30 days)',
+  'Coding trend',
   'Weekly coding activity by hour',
   'Average hourly coding duration',
   'Time of day distribution',
@@ -66,7 +66,7 @@ test('panels pair two-across once a card keeps ≥830px', async ({ page }) => {
   // Row 1 — the two categorical shares.
   expect(Math.abs(c['Language distribution'].y - c['Project distribution'].y)).toBeLessThan(4)
   // Row 2 — the calendar and the trend.
-  expect(Math.abs(c['Coding heatmap'].y - c['Coding trend (last 30 days)'].y)).toBeLessThan(4)
+  expect(Math.abs(c['Coding heatmap'].y - c['Coding trend'].y)).toBeLessThan(4)
   // Row 3 — the two rhythm views.
   expect(Math.abs(c['Weekly coding activity by hour'].y - c['Average hourly coding duration'].y)).toBeLessThan(4)
   // The odd seventh card owns the last row on its own.
