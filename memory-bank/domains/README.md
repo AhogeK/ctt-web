@@ -17,7 +17,7 @@ duplicate it — link instead.
 
 | Domain                                             | Scope                                                                                 | Entry point                                        |
 | -------------------------------------------------- | ------------------------------------------------------------------------------------- | -------------------------------------------------- |
-| [`dashboard-visualization`](./dashboard-visualization/meta.md) | Chart panels under `/dashboard`: chart-type choice, colour ramps, layout thresholds, hover/scroll interaction, ECharts specifics | `dashboard-visualization/meta.md`                   |
+| [`dashboard-visualization`](./dashboard-visualization/meta.md) | Chart panels under `/dashboard`: chart-type choice, colour ramps, layout thresholds, hover/scroll interaction, ECharts specifics (see its `rendering.md`) | `dashboard-visualization/meta.md`                   |
 | [`backend-contract`](./backend-contract/meta.md)   | Consuming ctt-server APIs: contract-first workflow, Zod/API-layer patterns, distribution semantics, raising backend requests | `backend-contract/meta.md`                          |
 | [`ai-workflow`](./ai-workflow/meta.md)             | How the agent itself works in this repo: memory upkeep, versioning, atomic commits, verification, resource ownership | `ai-workflow/meta.md`                               |
 

@@ -80,6 +80,27 @@ with what the panel renders.
 4. Verify the window actually drives it: switching Period must issue a new request for the new
    dimension's type (a missing window in the query key silently serves the first window fetched).
 
+## S4d. "This panel should show a different time window"
+
+1. Decide who owns the axis. If the window is panel context (a year, a month), it is
+   **panel-scoped**: a LOCAL ref in `useDashboardFilters` + an `#actions` control; the filter-bar
+   Period keeps driving only the other panels. Do **not** put it in the URL — a route write makes
+   `RouterView` and the entire layout chain re-render for a change that concerns one card
+   (`feedback-on-a-panel-change` below).
+2. Bound the options by data, not by the calendar: ask the backend for the windows that have
+   activity (`heatmap-years`, `heatmap-months`) and disable the rest. A window whose panel is
+   empty is a dead end the picker should never offer.
+3. Ask for the option list and the rendered data to come from **one server-side source** with the
+   same timezone rule — otherwise the picker offers/omits the wrong window (the year/month lists
+   disagreeing is the symptom).
+4. Reuse the endpoint already in hand: a month window is just `/heatmap?start&end`, so a new
+   picker rarely needs a new data path.
+5. Prove the isolation, don't assume it: hook every component's `render` and count re-renders
+   while changing the value. The target is the panel's own subtree; `RouterView`, `AppLayout`,
+   the sidebar and the rest of the shell must stay at zero. Canvas/`toDataURL` fingerprints tell
+   you which *charts* repainted, and a `MutationObserver` on `<main>` tells you whether anything
+   actually changed in the DOM.
+
 ## S5. "Rows/segments are hard to distinguish"
 
 1. Add a structural separator (paper seam) rather than more colour difference — P3.

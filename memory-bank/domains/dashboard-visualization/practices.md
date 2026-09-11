@@ -17,12 +17,10 @@ bar:    background-size: 100cqw 100%;
 ```
 
 The bar paints a **track-wide** gradient and its own width clips it. Stops: reuse the trend
-chart's indigo ramp (`references.md`). Offsets `0 / 48% / 100%` mirror that chart.
+chart's indigo ramp (`references.md`), offsets `0 / 48% / 100%`.
 
-**Do not**:
-- give the aggregate row its own colour or opacity — same treatment as every other row (P1);
-- hand a per-row gradient (each bar sweeping on its own) — that is a decoration, not a scale;
-- build a hard-stop "ladder" — that reads as segments, not a gradient.
+**Do not**: tint or dim the aggregate row (P1); hand a per-row gradient (decoration, not a scale);
+build a hard-stop "ladder" (reads as segments).
 
 ## Vertical distribution inside a card
 
@@ -44,14 +42,11 @@ parent (ChartSection data area): flex flex-1 flex-col justify-center
 `justify-around` has space to distribute.
 
 **Trap — reserve room for absolutely-positioned overlays.** `space-around` gives the first block
-only `free/6` above it (with three children), where centring used to give it `free/2`. Any overlay
-anchored *above* a block (`bottom-full` hover readout) therefore moves much closer to the card
-header, and on a short card it lands on top of the title. Reserve the overlay's exact height as a
-margin on that block (`mt-10` = 32px overlay + 8px gap); the margin is part of the flex item's
-outer box, so the overlay always has somewhere to appear and the layout never shifts.
-
-*Measured after the fix*: wide card (397px) → 66 / 68 / 68 / 26 px distribution with the readout
-77px from the card top; short card (241px) → readout 51px, header bottom 35px, no overlap.
+only `free/6` above it (centring gave `free/2`), so an overlay anchored *above* it (`bottom-full`
+hover readout) moves closer to the header and can land on the title. Reserve the overlay's exact
+height as a margin (`mt-10` = 32px + 8px gap): the margin is part of the flex item's outer box, so
+the overlay always has room and the layout never shifts. Measured: readout 77px from the top on a
+397px card, 51px on a 241px card (header ends at 35px).
 
 ## One implementation for the categorical panels
 
@@ -97,14 +92,14 @@ edge fades:      mask-image, applied per edge only
 ```
 
 - **Fades must be `mask-image`, never a coloured overlay** — an overlay colour can never match a
-  card that itself carries a gradient (in dark mode it bands visibly). A mask has no colour.
-- Apply each edge's mask **only when that edge actually hides content** (track `atTop` /
-  `moreBelow` on scroll); a short list must get no mask at all.
-- Reveal the scrollbar thumb on hover/`:focus-visible`/while scrolling (idle timer ~900ms) — a
-  standing grey bar reads as browser chrome.
-- Give the scroll region `tabindex="0"` plus a `:focus-visible` inset ring, otherwise the content
-  is unreachable by keyboard (WCAG 2.1.1).
-- Report the row count in the footer; add "scroll for more" only while there is more.
+  gradient card (it bands in dark mode); a mask has no colour.
+- Apply each edge's mask **only when that edge hides content** (track `atTop` / `moreBelow`); a
+  short list gets none.
+- Reveal the scrollbar thumb on hover/`:focus-visible`/scrolling (idle ~900ms) — a standing grey bar
+  reads as browser chrome.
+- Give the region `tabindex="0"` + a `:focus-visible` inset ring, else it is keyboard-unreachable
+  (WCAG 2.1.1).
+- Report the row count in the footer; "scroll for more" only while there is more.
 
 **Two attributes here are deliberate though linters call them redundant.** `role="list"`:
 preflight sets `list-style: none`, dropping list semantics in Safari/VoiceOver (`Web:S6822` misses
@@ -133,10 +128,9 @@ indicator (WCAG 2.4.7). Every other `TooltipTrigger` here wraps a real `<button>
   `0.0033 → 0.0033%`, `0.000004 → 0.000004%`. Zero itself still prints `0`. The cap of 6 stays
   non-zero down to one second in ~6 years of tracked time, so the readout can never round a real
   value back to `0` — which is the whole point of the rule (P8).
-- **Size the value lane for the longest output, not the common one.** Max output is
-  `0.000000%` = 9 chars = 62.5px at 11px `tabular-nums`; a 3.5rem (56px) lane let it spill 6.5px
-  into the 10px column gap — survivable only by luck. Use 4.25rem (68px) so the worst case stays
-  inside its own column. Right-aligned + `tabular-nums` keeps the `%` column aligned regardless.
+- **Size the value lane for the longest output, not the common one**: the worst case is
+  `0.000000%` = 62.5px at 11px `tabular-nums`, so a 3.5rem lane spilled 6.5px into the column gap
+  (survivable only by luck). Lane widths are tabulated in `references.md`.
 - Every readout path uses the **same** formatter. Missing one (e.g. the bar-end label) leaks
   float tails like `41.66666666666667%` straight into the render — screenshot it, don't assume.
 - Give each value its own fixed, right-aligned, `tabular-nums` column so numbers stack down the
@@ -157,44 +151,3 @@ summary row:  @container/sc          grid: @[1430px]/sc:grid-cols-6
 - Tailwind v4 gotcha: an arbitrary breakpoint like `min-[2400px]` can sort *before* `lg` in the
   emitted CSS, so a same-specificity `lg:` rule overrides it. Prefer real container queries here;
   if an arbitrary breakpoint is unavoidable, verify the computed value, not the class name.
-
-## ECharts specifics (traps hit in this project)
-
-| Trap                                              | Correct approach                                                                     |
-| ------------------------------------------------- | ------------------------------------------------------------------------------------ |
-| Stacked bars have **no** inter-segment gap         | Draw seams as an HTML overlay at cumulative-percent positions; `borderWidth`/`itemGap` do not work |
-| Tooltip shows `undefined` for the series name      | ECharts reads `params.name` from `data.name` or `series.name` — set one               |
-| Tooltip duration empty                             | The datum carries seconds under `value`; read `params.value`, not a custom field      |
-| Chart never renders / blank card                   | The container ref was null at init — the panel wrapped itself in `ChartSection`       |
-| Chart type is "unknown" at runtime                 | Register it in `components/charts/echarts-setup.ts` (tree-shaken registry)            |
-| Labels overlap in dense layouts                    | Drop the label (never shrink below the minimum size) and move detail into hover       |
-
-## Entrance animation
-
-- Reveal on scroll into view (`IntersectionObserver`, threshold ~.25), stagger rows ~45–55ms.
-- Honour reduced motion: `motion-reduce:transition-none` on width/opacity transitions.
-
-## Theme verification (non-negotiable for charts)
-
-Headless dark-mode screenshots **must** use CDP media emulation:
-
-```js
-await page.emulateMediaFeatures([{ name: 'prefers-color-scheme', value: 'dark' }])
-```
-
-Injecting the theme into `localStorage` does not work — the app calls `setTheme('auto')` on mount
-and overwrites it. Verify colours by sampling rendered pixels or computed styles, never by
-reading the source values back.
-
-## Chart container a11y (do not "fix" role="img")
-
-Every chart panel puts `role="img"` + `aria-label` on its ECharts container. Generic linters flag
-this (`Web:S6819`, "use <img>/<svg>") and are wrong here:
-
-- it is **ECharts' own pattern** — `visual/aria.js` sets exactly these two when the `aria` option
-  is enabled (echarts 6.1.0:132), so writing them by hand reproduces the library with a better label;
-- an `<img>`/`<svg>` cannot replace a live canvas the library draws into;
-- `role="img"` *requires* the label — a bare `<div aria-label>` is ignored by many screen readers.
-
-Charts that also expose their values as DOM text (the time-of-day legend) are readable either way;
-that is the pattern to prefer when the data is small enough to show.

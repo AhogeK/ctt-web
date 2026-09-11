@@ -6,16 +6,20 @@ Lookup facts. No judgement here — decisions live in `principles.md` / `scenari
 
 | Panel (card title)                 | Component                        | Data source (see backend-contract)                 | Window follows filter bar |
 | ---------------------------------- | -------------------------------- | -------------------------------------------------- | ------------------------- |
-| Coding heatmap                     | `HeatmapChart.vue`               | `stats/heatmap` + `stats/heatmap-years`            | No — owned by `?year=`    |
+| Coding heatmap                     | `HeatmapChart.vue`               | `stats/heatmap` + `stats/heatmap-years`            | No — year picker          |
 | Weekly coding activity by hour     | `WeekHourPanel.vue`              | `stats/week-hour`                                  | Yes                       |
 | Average hourly coding duration     | `HourlyPanel.vue`                | `stats/hourly`                                     | Yes                       |
-| Coding trend (last 30 days)        | `TrendChart.vue`                 | `stats/heatmap` (30-day window)                    | No — fixed 30 days        |
+| Coding trend                       | `TrendChart.vue`                 | `stats/heatmap` (panel window)                     | No — month picker, else 30 days |
 | Time of day distribution           | `TimeOfDayPanel.vue`             | `stats/distribution?type=TIME_OF_DAY`              | Yes                       |
 | Language distribution              | `LanguageDistributionPanel.vue`  | `stats/distribution?type=LANGUAGES`                | Yes                       |
 | Project distribution               | `ProjectDistributionPanel.vue`   | `stats/distribution?type=PROJECTS`                 | Yes                       |
 | Summary cards (6 fields)           | `SummaryCards.vue`               | `stats/summary`                                    | n/a — fixed windows       |
 
 Panels not yet built but available server-side: `WEEKDAY`, `DEVICES`, `IDES`.
+
+Panel-scoped window controls (independent of the filter bar, and **not** URL params):
+`HeatmapYearSelect` (heatmap) and `TrendMonthSelect` (trend). Both bound their options to what the
+backend reports as populated (`heatmap-years` / `heatmap-months`).
 
 Both categorical panels render through one shared list (`RankedDistributionList.vue`) fed by
 `../composables/useRankedDistribution.ts`, so ranking, the 0.1% folding floor, the gradient and the

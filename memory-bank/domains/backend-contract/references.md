@@ -10,7 +10,8 @@ Lookup facts. No judgement here.
 | -------------------------- | ------------------------------------------------------------- | ------------------------------------------ | -------------- |
 | `GET /stats/summary`       | `timeRange` (`TODAY|WEEK|MONTH|YEAR|ALL`), `timezoneOffset`, origin filter | 6 fields at once: today / dailyAverage / thisWeek / thisMonth / thisYear / total | n/a (fixed windows) |
 | `GET /stats/heatmap`       | `start`, `end`, `timezoneOffset`, origin filter                | dense per-day points incl. zero days       | required (defaults to this year) |
-| `GET /stats/heatmap-years` | —                                                             | `Integer[]` descending, years with real data | n/a            |
+| `GET /stats/heatmap-years` | `timezoneOffset`                                              | `Integer[]` descending, years with real data | n/a            |
+| `GET /stats/heatmap-months`| `timezoneOffset`                                              | `String[]` (`yyyy-MM`) descending, months with real data | n/a  |
 | `GET /stats/week-hour`     | `start`, `end`, `timezoneOffset`, origin filter                | sparse points + weekday counts             | optional       |
 | `GET /stats/hourly`        | `start`, `end`, `timezoneOffset`, origin filter                | per-hour averages + active-day count       | optional       |
 | `GET /stats/distribution`  | `type`, `timezoneOffset`, `start`, `end`, origin filter        | `{ type, entries: [{ name, seconds }] }`   | optional (v0.66.0+) |
@@ -57,6 +58,11 @@ sorted by duration descending.
 - **Categorical** (`LANGUAGES`, `PROJECTS`, `DEVICES`, `IDES`): raw accumulation; bucket sum
   **≥** real activity because same-second concurrency counts once per category.
 - Window params: inclusive `start`/`end`, omitted = full history, `end < start` → 400 `COMMON_003`.
+- **Option lists are timezone-resolved and must agree with what they label** (v0.67.0):
+  `heatmap-years` and `heatmap-months` both take `timezoneOffset`, are derived from ONE server-side
+  source, and define "has data" as *at least one non-zero day after day-splitting* — the same rule
+  the heatmap renders with. So a listed window always has something to draw, a listed month always
+  belongs to a listed year, and the picker can disable the rest without a second source of truth.
 - `timezoneOffset` = minutes east of UTC; boundaries are computed in that zone.
 
 ## Local test infrastructure

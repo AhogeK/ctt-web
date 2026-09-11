@@ -16,14 +16,16 @@
 | CSRF Protection                   | ✅ Complete | 0.10.2         |
 | API Key Management                | ✅ Complete | 0.16.0         |
 | Device Management                 | ✅ Complete | 0.18.3         |
-| Dashboard (框架 + 面板迭代)       | ✅ Complete | 0.35.0         |
+| Dashboard (框架 + 面板迭代)       | ✅ Complete | 0.36.0         |
 | Leaderboard                       | ⏳ Pending  | 1.0.0          |
 | Settings                          | ⏳ Pending  | 1.0.0          |
 | i18n (zh/en)                      | ⏳ Pending  | 1.0.0          |
 | E2E Test Coverage                 | ⏳ Pending  | 1.0.0          |
 | Production Deploy                 | ⏳ Pending  | 1.0.0          |
 
-## Dashboard 面板迭代（v0.28 – v0.35）
+## Dashboard 面板迭代（v0.28 – v0.36）
+
+- [x] **v0.36.0 (2026-09-11)** Coding trend 可选月份 — 默认保持 last 30 days，新增面板级窗口（本地状态、不进 URL，与热力图选年同级，筛选栏 Period 不影响；避免选月触发全外壳重渲染）；新增 `TrendMonthSelect`（Last 30 days / 年份行 / 12 格月份网格，无数据的月置灰）；消费后端 v0.67.0 新端点 `heatmap-months`（`heatmap-years` 同版本加 `timezoneOffset`，两者同源保证年月自洽）；新增 `ui/popover` 原语（无新依赖）；修 ChartSection 占位态高度塌陷（骨架替代图表 + loading 隐藏 actions 导致切年份卡片 379→188→379）。1266/1266。
 
 - [x] **v0.35.0 (2026-09-10)** Project distribution 上线 + 两处 bug 修复 — 抽出共享的排名分布实现（`useRankedDistribution` / `RankedDistributionList` / `@/lib/utils` `formatPercent`），Language 与 Project 两面板只保留各自 query 与文案；修 `distribution` 查询键漏窗口参数（切 Period 时分布面板不重取，屏幕留旧窗口数据）；修 TOD 段缝用取整百分比导致偏离颜色边界。1254/1254。
 

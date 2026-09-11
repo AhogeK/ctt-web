@@ -2,10 +2,10 @@
 
 ## Current Status
 
-**Phase**: Dashboard 面板迭代（Project distribution 上线 + 分布缓存键修复）
-**Version**: 0.35.0 (2026-09-10)
+**Phase**: Dashboard 面板迭代（Coding trend 可选月份 + 面板状态与路由隔离）
+**Version**: 0.36.0 (2026-09-11)
 **Branch**: develop
-**Tests**: 1233/1233 unit; vue-tsc + lint 0 error 0 warning; build green
+**Tests**: 1266/1266 unit; vue-tsc + lint 0 error 0 warning; build green; e2e layout 4/4
 
 > 本文件只记「现在与最近」。**跨轮次可复用的判断在 [`domains/`](./domains/README.md)**（R24）：
 > `dashboard-visualization`（图表/配色/布局/交互）、`backend-contract`（接口契约与统计语义）、
@@ -13,27 +13,17 @@
 
 ## Dashboard 面板（v0.28 – v0.34）
 
-### 布局：容器查询阈值（组件宽语义，非视口）
-
-- 面板网格 `@container/page` + `@[1684px]/page:grid-cols-2`；SummaryCards `@container/sc` + `@[1430px]/sc:grid-cols-6`（否则 md 3 列 / base 2 列）。阈值来自用户口径：卡片 ≥830px 才两列，Summary 行 ≥1430px 才一行六张。
-- 实测：1600/1920/2048/2621 → 面板 1/1/2/2 列、Summary 3/6/6/6 列。**1920 屏面板为单列**（卡 796 < 830）。
-- 面板全部平权、无 span 特例；ChartSection 内容区 flex-1 + 居中，空态卡与邻居等高。
-- e2e `heatmap-layout.spec.ts` 锁定阈值契约（collapse@1920 / pair@2100 / summary@2100 / @1600）。
-
-### Time of Day（4 桶胶囊）
-
-- 后端 v0.65.0 契约：Night 00-06 / Morning 06-12 / Daytime 12-18 / Evening 18-24（本地时区，跨桶切分）。**桶总和 == summary.total**（时间轴守恒，保留 Total 页脚做交叉校验）。
-- 色阶（终值）：亮 `#1e2260 / #3f4ab0 / #939ff0 / #5e6ad2`，暗 `#333b9a / #4d59c9 / #bcc5ff / #8b95ea`；相邻可辨性由 2px 段缝承担，明度预算给"段 vs 卡底"。
-- 交互：固定信息条锚定段中心（非跟随鼠标），图例用 Lucide 日相图标（Moon/Sunrise/Sun/Sunset）。
-- 已删除刻度标尺（时钟刻度与占比位置天然错位；占比刻度零信息量）。
-
-### Time of Day 垂直分布（v0.34.1）
-
-- 卡片被同行更高的邻居拉伸时，TOD 的三块（胶囊/图例/Total）原本挤在垂直中间 → 面板根改为
-  `flex flex-1 flex-col justify-around`，填满后按 space-around 分布（实测宽卡 66/68/68/26）。
-- 随之加固：`space-around` 下首块上方只剩 free/6（居中时为 free/2），胶囊上方的 hover 信息条会
-  更贴近卡片标题、短卡时压到标题 → 胶囊容器加 `mt-10`（32px 信息条 + 8px 间距）预留槽位。
-  实测：宽卡信息条距顶 77px、窄卡 51px（标题底 35px），均不重叠。
+> **v0.28 – v0.34 的细节**已入 `progress.md`（版本流水）与领域文件（可复用判断），此处只留当前仍生效的结论：
+>
+> - **布局**：面板网格 `@container/page` + `@[1684px]/page:grid-cols-2`（卡 ≥830px 才两列）；
+>   SummaryCards `@container/sc` + `@[1430px]/sc:grid-cols-6`。实测 1600/1920/2048/2621 →
+>   面板 1/1/2/2 列。**容器查询的声明必须在祖先层**（cannot self-query）。e2e 锁定该契约。
+> - **Time of Day**：4 桶胶囊（后端 v0.65.0，本地时区，**桶和 == summary.total**）；固定信息条锚定
+>   段中心；虚拟标尺已删（时钟刻度与占比天然错位）。色阶、缝线宽度见 `dashboard-visualization/references.md`。
+> - **Language distribution**：全部语言逐行、卡片只限高（内部滚动 + `mask-image` 双端渐隐 + 页脚计数）；
+>   <0.1% 折叠为 Others（hover 列明细）；条长按**最长语言**归一；**一条全局渐变**（轨道 `container-type` +
+>   条 `background-size:100cqw`）；Others 与普通行完全一致（颜色不承载数据）。
+> - **分类分布不展示 Total**（桶和 ≥ 真实活动时长）；**时间轴分布守恒**。详见 `backend-contract` P2。
 
 ### Project Distribution 面板（v0.35.0）
 
@@ -41,6 +31,51 @@
 - **抽出共享实现**（第二个分类维度出现时才做，非投机抽象）：`composables/useRankedDistribution.ts`（行模型/归一/0.1% 折叠）+ `components/RankedDistributionList.vue`（轨道/渐变/滚动/浮窗/a11y）+ `@/lib/utils` `formatPercent`；两个面板只保留各自 query 与文案。目的：排名、折叠、渐变、精度**不可能只改一处**。
 - 列宽按「该列可能出现的最大值」定，不按常见值：百分比 `4.5rem`（容 `<0.000001%` = 69.5px）、时长 `6rem`（容 `10000h 59m 59s`）。实测 11px tabular-nums。长名截断后 hover 出全名（用 `scrollWidth > clientWidth` **实测**判定，不猜字符数）。
 - 实测（langtail，2621 两列）：Language 33 行可滚动、Project 9 行且 39 字符名被正确判定截断；条形 rank1 满轨 784px、所有条共用 1 条渐变、`backgroundSize: 783.5px 100%`（证明 cqw 解析到轨道宽）。
+
+### Coding trend 可选月份（v0.36.0）
+
+- 趋势面板从「固定 last 30 days」改为「**默认 last 30 days + 可选自然月**」，与热力图选年同一层级（面板级窗口，筛选栏 Period 不动它）。状态为 **`useDashboardFilters` 内的本地 ref，不进 URL**（见下方「面板状态与路由隔离」）。
+- 选择器 `TrendMonthSelect`：popover，内含 `Last 30 days`（默认/重置）+ 年份行（‹ ›，仅在有数据的年份间移动）+ **12 格月份网格**。用网格而非下拉：年份是单一步进，月份某年最多 12 项，铺开可见且选项数不随历史增长；无数据的月**置灰不隐藏**（隐藏会让网格在不同年份间跳动）。
+- 契约：新增 `GET /stats/heatmap-months?timezoneOffset=` → 有数据的 `yyyy-MM` 降序（后端 v0.67.0）；`heatmap-years` 同版本加上 `timezoneOffset`。两者由后端**同一来源**导出，故年月自洽、且列出的窗口必有内容可画。
+- 新 UI 原语：`src/components/ui/popover/`（reka-ui 原语 + 项目样式，**无新增依赖**）。
+- 真机验证（langtail，2621 两列）：默认 `Last 30 days` → 请求 `start=2026-08-13&end=2026-09-11`；选 Aug 2026 → 请求 `start=2026-08-01&end=2026-08-31` 且 URL **不变**；切 Period 到 Last 90 days 后 `trendMonth` 保留且**趋势不重新请求**；重置回到 30 天；禁用月与后端列表一致（2026 仅 8/9 月可选）；暗色选中态 = 品牌靛蓝 `#5e6ad2`、禁用态 opacity 0.35。
+- 实施中自查出一处同类缺陷：生成脚本给 months hook 误用了 `heatmapYears` 的缓存键（与本轮修的分布键同型），已改为独立键 `['stats','heatmap-months']`。
+
+### 卡片高度塌陷（BUG，v0.36.0 修）
+
+用户报告「热力图切年份卡片高度动一下，仅第一次」。**属实**：rAF 逐帧量到卡片 **379 → 188 → 379**。
+
+两层根因（都在 `ChartSection`，既有缺陷）：
+1. **loading 用固定高骨架替换图表** —— 骨架 120px vs 图表 241px；
+2. **`#actions` 在 loading 时被 `v-if` 隐藏** —— header 少了年份选择器（h-7=28px），且用户刚点的控件消失。
+
+**仅第一次**：只有未缓存的年份才真取数（60s staleTime 内重复点击命中缓存，无 loading）。
+
+修法：`dataArea` 用 **ResizeObserver** 测高 → 占位态带 `minHeight`（首屏无值则不设，不臆造）；`#actions` 全程挂载。
+复测：**272 帧只有一个高度值 379**，选择器全程可见。
+
+**为何之前没被发现**：两列布局下 grid stretch 让同排邻居撑住行高，掩盖了塌陷；单列才显形。**布局类修复必须在两种宽度都验。**
+
+### 面板状态与路由隔离（v0.36.0）
+
+用户报告「选月份导致全页重新渲染」，**属实**。第一轮我用截图像素对比得出「只有趋势卡片变化」——**测量无效**（无交互时基线同样在变，截图受滚动偏移/合成噪声影响）。换两种可靠判据后取证到位：
+
+- **各图表 canvas 的 `toDataURL()` 指纹**（先测噪声基线：静止时全等）
+- **包装每个组件实例的 `render` 函数计数**
+
+选一次月份的真实代价：
+```
+RouterView ×2  AppLayout  ErrorBoundary  SidebarInset
+SidebarProvider  SidebarMenuItem ×4  TooltipProvider  DashboardHome ×2
+```
+
+**两层根因**：① 面板状态存在 `router.replace` 里 → vue-router 的 `currentRoute` 是整体替换的 shallowRef，任何 query 变化都让 `RouterView` 重渲染，整条布局链跟着走；② `AppSidebar` 在模板里直接读 `route.path`，于是**侧栏也被无关的 query 变化拖着重渲染**。对照实验：热力图选年是**同一个病**（预先存在，非本轮引入）。
+
+**修法**：
+- 面板窗口（`heatmapYear`/`trendMonth`）改为**本地 ref，不读也不写 URL**。规则：**每个面板都跟随的页面级状态（日期范围、来源筛选）才进 URL；单卡片自己的窗口不进**。
+- `AppSidebar` 改走 `computed(() => route.path)`（computed 按值比较，path 未变即不再传播）。
+
+**复测**：`history` 写入 0 次；外壳组件重渲染**全部归零**（`shellStillRerendering: {}`）；仅 `DashboardHome ×2` + 其子树（`ChartSection ×3`、picker）；趋势 canvas 正常重绘（91470 → 92218 字节）。回归守卫已入测试：`setHeatmapYear`/`setTrendMonth` 断言 `mockReplace` **未被调用**。
 
 ### Dashboard 卡片顺序（v0.35.1）
 
@@ -73,45 +108,29 @@ fights back」与 `ai-workflow/practices.md` 的「When an edit tool corrupts a 
 
 ### SonarLint 反馈处理（v0.35.0）
 
-两轮共 12 条 IDE 告警，逐条取证后**真问题照修、误报写明依据并保留**。可复用的结论已沉淀，此处只留索引：
+两轮共 12 条 IDE 告警：**真问题照修、误报写明依据并保留**。可复用结论已沉淀到领域文件，此处只留判断法：
 
-| 告警 | 判定 | 结论去向 |
-| --- | --- | --- |
-| `S3863` 重复导入 ×3（含我上轮漏查的 `TimeOfDayPanel`） | 真问题 | 已修；`components/ui/` 的 value+type 分离是惯用写法，**不动** |
-| `S4624` 嵌套模板字符串（TOD 圆角，4 层） | 真问题 | 提为 `capsuleCorners()`，`CAPSULE_RADIUS = BAR_WIDTH/2` 同源；补中间段用例 |
-| `S8786` 正则超线性（`/0+$/`） | 真问题 | 实测确认二次退化，但输入仅几字符 → 提出 `trimTrailingZeros()`（表意 > 性能） |
-| `S3358` 另一处嵌套三元 | — | 全仓库复扫无同类 |
-| `Web:S6822` `role="list"` 冗余 | **误报** | → `dashboard-visualization/practices.md` 滚动列表节 |
-| `Web:S6845` 非交互元素不该有 tabIndex | **误报** | 同上 |
-| `Web:S6819` `role="img"` 应换 `<img>` | **误报** | → 同文件「Chart container a11y」节 |
-| Tailwind `suggestCanonicalClasses` | **有意识拒绝** | 228px 是推导的高度预算而非 spacing 阶梯；canonical 形式编译为 `calc(var(--spacing)*57)`，主题化会静默破坏上限 |
-| — | **新发现的真缺陷** | `TooltipTrigger as-child` 包 `<span>` → 键盘不可达（截断名/Others 明细）；修法见 practices 滚动列表节 |
+- 真问题：重复导入 ×3、嵌套模板字符串（4 层→`capsuleCorners()`）、超线性正则 `/0+$/`（实测二次退化，改线性扫描）、
+  `TooltipTrigger as-child` 包 `<span>` 导致**键盘不可达**（新发现的真缺陷）。
+- 误报（保留 + 源码注释说明）：`Web:S6822` `role="list"` 冗余、`Web:S6845` 滚动区不该有 tabIndex、
+  `Web:S6819` `role="img"` 应换 `<img>`。
+- 有意识拒绝：Tailwind `suggestCanonicalClasses` 建议 `max-h-[228px]`→`max-h-57`——228 是**推导的高度预算**而非
+  spacing 阶梯，canonical 形式编译为 `calc(var(--spacing)*57)`，主题化会静默破坏上限。
+- **共同根因**：通用规则不知道本项目约定（preflight 去掉列表语义、ECharts 自设 role、推导值不是 spacing 阶梯）。
+  **遇到告警先取证，不要照改。**
 
-误报的共同根因：**通用规则不知道本项目的约定**（preflight 去掉列表语义、ECharts 自设 role、推导值不是 spacing 阶梯）。遇到时先取证，不要照改。
+### v0.35.0 的其余收敛（细节见领域文件）
 
-### 格式化器归属纠正（v0.35.0）
-
-- `formatPercent` 原放在 `features/dashboard/components/percent-format.ts`（相对导入）—— 与同类 `formatDuration`（`lib/utils/time.ts`，barrel 导出）**不同处**，违反 `systemPatterns` 明文的「共享格式化器放 `lib/utils/`，禁止 per-view inline」。
-- 已迁至 **`src/lib/utils/percent.ts`** + barrel 导出，4 个消费者改 `@/lib/utils`；测试随之迁到 `lib/utils/__tests__/percent.test.ts`。
-- 规则已写入 `systemPatterns.md`「**Value Formatters**」（含归属表 + 「格式化器的**规则**可以来自领域，**文件**不行」）。
-- 附带澄清：`components/__tests__/` 里 Pascal/kebab 混排是**镜像源文件名**规则的正常结果（大小写携带「组件 vs 模块」信息），不应为「看起来统一」而重命名——已在 `systemPatterns.md` 写明。
-
-### 测试文件命名对齐（v0.35.0）
-
-- 约定「测试名 = 被测源文件名」：`.vue`→PascalCase；纯 `.ts`→沿用该模块自身命名（kebab/camel）。多套件按**方面**拆 `<Name>.<aspect>.test.ts`（既有 `CreateApiKeyDialog.form.test.ts` 先例）。**已写入 `systemPatterns.md`**。
-- 修正 2 个名不副实的文件：`TermsCheckbox.test.ts` → **`RegisterForm.terms.test.ts`**（原名指向不存在的组件 `TermsCheckbox.vue`，实际测 `RegisterForm` 的条款勾选 + `TermsDialog`，8 例有效）；`lib/api/__tests__/password.test.ts` → **`user.password.test.ts`**（测 `user.ts` 的 `setPassword`）。
-- 删除死重量：`src/__tests__/placeholder.test.ts`（7 行 `expect(true).toBe(true)` 恒真断言）+ 空目录 `src/components/charts/__tests__/`。单测 1254 → **1253**、文件 82 → **81**。
-
-### 测试与 lint 门禁（v0.35.0）
-
-- `expect(x.length).toBe(n)` → `expect(x).toHaveLength(n)`：修 3 处（Language 面板 1、TermsDialog 2），与项目主流写法（48 处 `toHaveLength`）对齐。
-- 项目 lint **此前没有**这条规则（只有 SonarLint 会拦），已在 `vite.config.ts` 启用 `vitest/prefer-to-have-length`。实测双向生效：`vp lint <file>` 报错 exit 1、`pnpm lint` 自动修正。
-- 教训：`pnpm lint` 带 `--fix`，新规则**不会报错只会静默改写**——验证规则是否真的启用必须用不带 `--fix` 的 `vp lint`。IDE 的 SonarLint 与项目 lint 是**两套不同规则集**，两者不可互相替代。
-
-### AI 产物位置（v0.35.0）
-
-- `.omp/README.md` 早已规定 AI 产物归 `.omp/`（gitignored），但 `AGENTS.md` 无此规则、`ai-workflow/references.md` 还把 `docs/plans/` 写成 plan 存放处 → 落地为 **R25**；plan 迁至 `.omp/plans/project-distribution-plan.md`（按约定不带日期）。
-- `docs/archives/` 同类问题：AI 记忆归档移入 **`memory-bank/archives/`**（持久记忆、留在仓库），并明确它是**唯一豁免 200 行限制**的记忆文件；10 处引用同步更新。
+- **格式化器归属**：`formatPercent` 从 `features/dashboard/components/` 迁到 **`lib/utils/percent.ts`** + barrel
+  导出（与 `formatDuration` 同类同处），规则入 `systemPatterns.md`「Value Formatters」。
+- **测试命名**：修 2 个名不副实的文件（`TermsCheckbox.test.ts`→`RegisterForm.terms.test.ts`、
+  `password.test.ts`→`user.password.test.ts`），删恒真空壳 `placeholder.test.ts` + 空目录；约定入
+  `systemPatterns.md`「Test File Naming」（Pascal=组件、小写=模块，**不要为"看起来统一"重命名**）。
+- **lint 门禁**：修 3 处 `expect(x.length).toBe(n)` → `toHaveLength(n)`，并在 `vite.config.ts` 启用
+  `vitest/prefer-to-have-length`。**`pnpm lint` 带 `--fix`，新规则只会静默改写不报错**——验证规则是否启用
+  必须用不带 `--fix` 的 `vp lint <file>`。IDE 的 SonarLint 与项目 lint 是**两套规则集**。
+- **AI 产物位置（R25）**：计划归 `.omp/plans/`（gitignored、不带日期）；记忆归档移入 `memory-bank/archives/`
+  （唯一豁免 200 行的记忆文件）。`docs/` 只放面向用户文档。
 
 ### 分布缓存键缺失（BUG，v0.35.0 修）
 
