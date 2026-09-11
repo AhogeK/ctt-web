@@ -64,17 +64,17 @@ function mountPanel() {
 
 /** Row widgets in render order. */
 function rowWrappers(wrapper: VueWrapper) {
-  return wrapper.findAll('[data-testid="language-row"]')
+  return wrapper.findAll('[data-testid="distribution-row"]')
 }
 
 /** The label column's text for each row, in render order. */
 function rowLabels(wrapper: VueWrapper): string[] {
-  return wrapper.findAll('[data-testid="language-label"]').map((el) => el.text())
+  return wrapper.findAll('[data-testid="distribution-label"]').map((el) => el.text())
 }
 
 /** Bar width percent recorded on each row's capsule. */
 function barWidths(wrapper: VueWrapper): number[] {
-  return wrapper.findAll('[data-testid="language-bar"]').map((b) => {
+  return wrapper.findAll('[data-testid="distribution-bar"]').map((b) => {
     const style = b.attributes('style') ?? ''
     const m = style.match(/width:\s*([\d.]+)%/)
     return m ? Number(m[1]) : 0
@@ -150,7 +150,7 @@ describe('LanguageDistributionPanel', () => {
     const wrapper = mountPanel()
     await wrapper.vm.$nextTick()
     const names = rowLabels(wrapper)
-    expect(names.length).toBe(20)
+    expect(names).toHaveLength(20)
     expect(names).toContain('Lang19')
     expect(names).not.toContain('Others') // nothing needed folding
     wrapper.unmount()
@@ -186,6 +186,26 @@ describe('LanguageDistributionPanel', () => {
     wrapper.unmount()
   })
 
+  it('gives a keyboard tab stop only to rows that actually have detail', async () => {
+    const total = 100 * 3600
+    feed.entries = [
+      { name: 'TypeScript', seconds: Math.round(total * 0.6) },
+      { name: 'Java', seconds: Math.round(total * 0.3) },
+      { name: 'tiny', seconds: Math.round(total * 0.0004) }, // folded → Others has detail
+    ]
+    const wrapper = mountPanel()
+    await wrapper.vm.$nextTick()
+
+    const bodies = wrapper.findAll('[data-testid="distribution-row-body"]')
+    // A plain row reveals nothing: a tab stop there would be a dead stop.
+    expect(bodies[0]!.attributes('tabindex')).toBeUndefined()
+    expect(bodies[1]!.attributes('tabindex')).toBeUndefined()
+    // The aggregate row carries the folded breakdown, which is otherwise
+    // pointer-only — it must be reachable by keyboard (Radix opens on focus).
+    expect(bodies[bodies.length - 1]!.attributes('tabindex')).toBe('0')
+    wrapper.unmount()
+  })
+
   it('paints every language from the same shared gradient (colour carries no rank)', async () => {
     feed.entries = [
       { name: 'TypeScript', seconds: 40 * 3600 },
@@ -195,7 +215,7 @@ describe('LanguageDistributionPanel', () => {
     const wrapper = mountPanel()
     await wrapper.vm.$nextTick()
     const ramps = wrapper
-      .findAll('[data-testid="language-bar"]')
+      .findAll('[data-testid="distribution-bar"]')
       .map((b) => (b.attributes('style') ?? '').match(/background-image:\s*([^;"]+)/)?.[1])
     // Length encodes the amount and the label names the language; the ramp is
     // ONE shared scale, so every row paints identical stops and its own slice
@@ -216,7 +236,7 @@ describe('LanguageDistributionPanel', () => {
     ]
     const wrapper = mountPanel()
     await wrapper.vm.$nextTick()
-    const bars = wrapper.findAll('[data-testid="language-bar"]')
+    const bars = wrapper.findAll('[data-testid="distribution-bar"]')
     // The aggregate is painted exactly like every language row: same ramp, same
     // opacity. Length says how much and the label says what it is, so no colour
     // or alpha difference may imply otherwise.
@@ -256,7 +276,11 @@ describe('LanguageDistributionPanel', () => {
     const wrapper = mountPanel()
     await wrapper.vm.$nextTick()
     // Scrollable content must be reachable without a pointer (WCAG 2.1.1).
-    expect(wrapper.find('[role="list"]').attributes('tabindex')).toBe('0')
+    // `role="list"` rides along deliberately: Tailwind's preflight applies
+    // `list-style: none`, which drops list semantics in Safari/VoiceOver.
+    const list = wrapper.find('[role="list"]')
+    expect(list.attributes('tabindex')).toBe('0')
+    expect(list.attributes('aria-label')).toBeTruthy()
     wrapper.unmount()
   })
 
