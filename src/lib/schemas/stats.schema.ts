@@ -136,11 +136,25 @@ export const AchievementSchema = z.object({
 })
 
 /**
- * Calendar years with valid coding sessions, newest first (backend derives
- * from session start years, not the materialized table). Feed for the
- * heatmap year dropdown.
+ * Calendar years that contain at least one day with coding time, newest first.
+ * Feed for the heatmap year selector.
+ *
+ * The year is resolved in the CLIENT's timezone (the request carries
+ * timezoneOffset), so this list and the rendered heatmap agree on which year a
+ * session belongs to — a session just after local midnight on Dec 31 is the
+ * next year's, and a UTC-derived list would have offered the wrong one.
  */
 export const HeatmapYearsResponseSchema = z.array(z.number().int())
+
+/**
+ * Months (`yyyy-MM`) that contain at least one day with coding time, newest
+ * first. Feed for the trend panel's month picker.
+ *
+ * Same timezone rule as the year list, and the two are derived from one source
+ * server-side, so they cannot disagree: every listed month belongs to a listed
+ * year, and every listed month's heatmap has something to draw.
+ */
+export const HeatmapMonthsResponseSchema = z.array(z.string().regex(/^\d{4}-(0[1-9]|1[0-2])$/))
 
 // Type exports (z.infer — never hand-write interfaces)
 export type StatsSummaryResponse = z.infer<typeof StatsSummaryResponseSchema>
@@ -154,5 +168,6 @@ export type DistributionResponse = z.infer<typeof DistributionResponseSchema>
 export type HourlyStatPoint = z.infer<typeof HourlyStatPointSchema>
 export type HourlyDistributionResponse = z.infer<typeof HourlyDistributionResponseSchema>
 export type HeatmapYearsResponse = z.infer<typeof HeatmapYearsResponseSchema>
+export type HeatmapMonthsResponse = z.infer<typeof HeatmapMonthsResponseSchema>
 export type WeekHourStatPoint = z.infer<typeof WeekHourStatPointSchema>
 export type WeekHourResponse = z.infer<typeof WeekHourResponseSchema>
