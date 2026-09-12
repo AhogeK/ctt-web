@@ -48,6 +48,7 @@
 
 ## 工具链
 
+- [x] **依赖更新 (2026-09-12)** `vp update -L` — @lucide/vue 1.45.0、zod 4.6.2、@types/node 26.5.1、lint-staged 17.5.1、eslint-plugin-oxlint 1.82.0、**vite-plus + vite 0.3.1**。`-L` 同时把 typescript 升到 7.0.2、vitest 升到 5.0.0，**均已回退**（TS7 被 @typescript-eslint 的 peer `>=4.8.4 <6.1.0` 拒绝且移除 vue-tsc 依赖的 programmatic API；vite-plus 0.3.1 仍硬钉 vitest 4.1.11）。五项门禁全绿，未改版本号（用户指令）。
 - [x] **v0.36.1 (2026-09-11)** 阻止 pnpm 隐式安装污染受控配置 — `pnpm-workspace.yaml` 设 `verifyDepsBeforeRun: warn`（v11 默认 `install` 会让 `pnpm run` 隐式安装，遇未决策的构建脚本时把非布尔占位符写入该受控文件；`warn` 只报告不写入，且不像 `error` 那样被版本号变更误触发）。1266/1266。
 
 ## 更早里程碑（v0.8 – v0.18）

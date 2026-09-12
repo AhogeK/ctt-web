@@ -25,8 +25,10 @@
 
 - `vp` CLI (dev/build/test/lint/fmt), Playwright (E2E), vue-tsc (type check), simple-git-hooks + lint-staged (pre-commit)
 - **`pnpm-workspace.yaml` is pnpm 11's settings file** — not `.npmrc`, which pnpm 11 ignores for `verify-deps-before-run`. `allowBuilds` holds the build-script decisions (`msw`, `simple-git-hooks`, `vue-demi`); `verifyDepsBeforeRun: warn` stops `pnpm run`/`pnpm exec` from implicitly installing — the only path that could write a non-boolean placeholder into this tracked file — while still reporting genuine drift. `error` blocks the write too, but fails *every* script after a lone version bump (that alone flips the workspace-state hash), so it does not survive contact with a release step. Runtime state lives in `node_modules/.modules.yaml` (`pendingBuilds`, `allowBuilds`).
-- Snapshot (2026-09-07): + vue-echarts 8.3.0, eslint-plugin-vue 10.11.0; @playwright/test 1.63.0, lint-staged 17.5.0, vue-tsc 3.3.11, **typescript 6.0.3 pinned exact** — `vp update -L` auto-bumps TS to 7.x which breaks the Vue toolchain; re-pin after every `-L` run (`pnpm add -D typescript@6.0.3 --save-exact`)
-- **vitest must stay 4.1.11** (exact): vite-plus@0.3.0 hard-pins `vitest: 4.1.11` as a dependency; letting `-L` bump the direct devDep to 5.x creates a dual-instance peer conflict (`peers check` exit 1). Re-pin vitest + @vitest/coverage-v8 to 4.1.11 after every `-L` run. Playwright major bumps need `pnpm exec playwright install chromium` (new browser build).
+- Snapshot (2026-09-12): @lucide/vue 1.45.0, zod 4.6.2, @types/node 26.5.1, eslint-plugin-oxlint 1.82.0, lint-staged 17.5.1, **vite-plus + vite 0.3.1**, vue-tsc 3.3.11, @playwright/test 1.63.0. Two pins are re-applied after every `vp update -L`:
+  - **typescript 6.0.3 exact** — `-L` bumps it to 7.x. Two independent blockers: `@typescript-eslint/*` declares peer `>=4.8.4 <6.1.0` (so `peers check` fails outright), and TS 7 drops the programmatic API (`findConfigFile`, `sys`) that vue-tsc and `@vue/compiler-sfc` call. Note `vue-tsc`'s own peer is merely `>=5.0.0`, so its declaration alone would *not* catch this — check `peers check`, not the vue-tsc range. Re-pin: `pnpm add -D typescript@6.0.3 --save-exact`.
+  - **vitest + @vitest/coverage-v8 4.1.11 exact** — vite-plus 0.3.1 still hard-pins `vitest: 4.1.11`, so `-L` taking the direct devDep to 5.0.0 creates a dual-instance peer conflict (`peers check` exit 1). Re-pin both to 4.1.11.
+  - Playwright major bumps need `pnpm exec playwright install chromium`.
 
 ## API Authentication
 
