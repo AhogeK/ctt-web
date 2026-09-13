@@ -36,6 +36,10 @@ export const RouteNames = {
 
   // Leaderboard
   LEADERBOARD: 'leaderboard',
+
+  // Achievements
+  ACHIEVEMENTS: 'achievements',
+  ACHIEVEMENTS_CABINET: 'achievements-cabinet',
 } as const
 
 /**
