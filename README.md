@@ -3,7 +3,7 @@
 [![License](https://img.shields.io/badge/license-MIT-green.svg)](LICENSE)
 [![Vue](https://img.shields.io/badge/Vue-3.5-42b883.svg)](https://vuejs.org/)
 [![Vite](https://img.shields.io/badge/Vite-8-646cff.svg)](https://vitejs.dev/)
-[![pnpm](https://img.shields.io/badge/pnpm-10.x-f69220.svg)](https://pnpm.io/)
+[![pnpm](https://img.shields.io/badge/pnpm-11.x-f69220.svg)](https://pnpm.io/)
 
 Web dashboard frontend for [CTT Server](https://github.com/AhogeK/ctt-server) — the cloud sync backend of
 the [Code Time Tracker](https://github.com/AhogeK/code-time-tracker) JetBrains plugin.
@@ -27,7 +27,7 @@ visualization.
 | Captcha        | hCaptcha (bot protection via @hcaptcha/vue3-hcaptcha)       |
 | Icons          | Iconify Vue                                                 |
 | i18n           | Vue I18n v11                                                |
-| Package Manger | pnpm v10 (via corepack)                                     |
+| Package Manger | pnpm v11 (standalone install)                                     |
 | Lint           | Oxlint v1 (primary) + ESLint                                |
 | Format         | Oxfmt (100% Prettier compatible)                            |
 | Git Hooks      | simple-git-hooks + lint-staged                              |
@@ -64,7 +64,7 @@ visualization.
 | User Profile            | `GET /api/v1/users/me` — displayName/email resolution; AppHeader dropdown shows user identity; avatar hash seeded from displayName; Account section integration                                                                                                                                                                                                                                                                                                                                                                                                                         |
 | Email Change            | Email change flow with verification; Account section displays email/verification status/display name/registration time; EmailVerificationBanner for unverified users; integrated with Set Password for OAuth users                                                                                                                                                                                                                                                                                                                                                                      |
 | API Key Management      | API Keys list view at `/settings/api-keys` with GitHub PAT-style table, status badges, scope chips, relative time; create flow with one-time raw key display (copy-gated close, hard-to-dismiss dialog); revoke flow with AlertDialog confirmation, idempotent DELETE + BOLA-safe AUTH_010 handling; permanent delete for REVOKED and EXPIRED keys (row removed entirely; ACTIVE keys require revoke first — 409 AUTH_023 guard); error mapping (key-limit banner, rate-limit countdown, generic BOLA message), first-load skeleton anti-flicker, table a11y, header shortcut, responsive mobile card view (<768px) |
-| Stats Dashboard         | `/dashboard` with All-time default and date-range presets + device/IDE origin filters (mutually exclusive, URL-state `?start&end&deviceId&ideName` shareable/refresh-preserving); 6-field summary cards (Today/Daily avg/week/month/year/Total); plugin-parity panel set (heatmap, 30-day trend, language/project/weekday/IDE distributions, time-of-day capsule, hourly stats) with per-panel loading/error/empty states; GitHub-style heatmap year selector (`?year=`, "Last 12 months" default, years from backend v0.61.0 `heatmap-years`); coding trend chart live (smooth line + indigo gradient area, filter-independent like the plugin panel; defaults to the plugin's Last 30 Days and accepts a calendar-month window via the card's own picker — `?trendMonth=yyyy-MM`, options limited to months that actually have data via backend v0.67.0 `heatmap-months`); weekly activity by hour live (7×24 heatmap, filter-range driven via backend v0.63.0 `week-hour`, dynamic color scale + calculable scroll bar); average hourly duration live (24 bars, indigo gradient, active-day note, filter-range driven via backend v0.64.0 `hourly` start/end); time of day distribution live (4-bucket capsule strip Night/Morning/Daytime/Evening, indigo daylight ramp, fixed clock order — via `distribution?type=TIME_OF_DAY`, full-history until backend ships window params); language distribution live (ranked horizontal bars, indigo luminance ramp decaying with rank, % · duration end labels, 0.1% Others folding — via `distribution?type=LANGUAGES`); project distribution live (same ranked-bar treatment via a shared `RankedDistributionList` — ranking, folding floor, gradient and percent precision have one implementation across both categorical panels — via `distribution?type=PROJECTS`); single panel grid driven by container queries — cards pair two-across only when each keeps ≥830px (row ≥1684px), otherwise full-width rows (heatmap included — cell renderer clamps to available width; no placeholder cards, streak stats live in the heatmap footer); summary cards go 6-across only at ≥1430px row width, else 3-across; summary cards durations capped at hours with seconds precision; route-level Suspense skeleton + chunk-failure toast (no blank view); filter changes re-key every stats query (backend v0.60.0 `ideName` + `ide-filters`) |
+| Stats Dashboard         | `/dashboard` with All-time default and date-range presets + device/IDE origin filters (mutually exclusive, URL-state `?start&end&deviceId&ideName` shareable/refresh-preserving); 6-field summary cards (Today/Daily avg/week/month/year/Total); plugin-parity panel set (heatmap, 30-day trend, language/project/weekday/IDE distributions, time-of-day capsule, hourly stats) with per-panel loading/error/empty states; GitHub-style heatmap year selector (`?year=`, "Last 12 months" default, years from backend v0.61.0 `heatmap-years`); coding trend chart live (smooth line + indigo gradient area, filter-independent like the plugin panel; defaults to the plugin's Last 30 Days and accepts a calendar-month window via the card's own picker — `?trendMonth=yyyy-MM`, options limited to months that actually have data via backend v0.67.0 `heatmap-months`); weekly activity by hour live (7×24 heatmap, filter-range driven via backend v0.63.0 `week-hour`, dynamic color scale + calculable scroll bar); average hourly duration live (24 bars, indigo gradient, active-day note, filter-range driven via backend v0.64.0 `hourly` start/end); time of day distribution live (4-bucket capsule strip Night/Morning/Daytime/Evening, indigo daylight ramp, fixed clock order — via `distribution?type=TIME_OF_DAY`, full-history until backend ships window params); language distribution live (ranked horizontal bars, indigo luminance ramp decaying with rank, % · duration end labels, 0.1% Others folding — via `distribution?type=LANGUAGES`); project distribution live (same ranked-bar treatment via a shared `RankedDistributionList` — ranking, folding floor, gradient and percent precision have one implementation across both categorical panels — via `distribution?type=PROJECTS`); recent sessions live (local-day grouped session log — newest first, `HH:mm` + project + language + duration per row, 40-char names truncate with the full name on hover, no day total because parallel sessions overlap in real time; grouped list region extracted to a shared `ScrollFadeList` with the distribution list; endpoint `/stats/recent` takes no date window so this panel follows the origin filters only, not the period — via `limit=20`); single panel grid driven by container queries — cards pair two-across only when each keeps ≥830px (row ≥1684px), otherwise full-width rows (heatmap included — cell renderer clamps to available width; no placeholder cards, streak stats live in the heatmap footer); summary cards go 6-across only at ≥1430px row width, else 3-across; summary cards durations capped at hours with seconds precision; route-level Suspense skeleton + chunk-failure toast (no blank view); filter changes re-key every stats query (backend v0.60.0 `ideName` + `ide-filters`) |
 
 ## 🗺 Project Structure
 
@@ -102,7 +102,8 @@ src/
 ### Prerequisites
 
 - **Node.js** `^20.19.0 || >=22.12.0`
-- **pnpm** `>=10` — install via `corepack enable && corepack prepare pnpm@latest --activate`
+- **pnpm** `>=10` (v11 in use) — install standalone via `npm i -g pnpm` or
+  `corepack enable && corepack prepare pnpm@latest --activate`
 
 ### Install
 
@@ -156,7 +157,7 @@ pnpm test:e2e
 pnpm test:e2e --project=chromium
 
 # Specific file
-pnpm test:e2e tests/example.spec.ts
+pnpm test:e2e e2e/example.spec.ts
 
 # Debug mode
 pnpm test:e2e --debug
