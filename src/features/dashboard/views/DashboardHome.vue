@@ -19,6 +19,7 @@ import {
   useStatsHeatmapMonths,
   useStatsHeatmapYears,
   useStatsHourly,
+  useStatsRecent,
   useStatsWeekHour,
 } from '@/composables/useStats'
 import { formatDate, useDashboardFilters } from '../composables/useDashboardFilters'
@@ -34,6 +35,7 @@ import TimeOfDayPanel from '../components/TimeOfDayPanel.vue'
 import LanguageDistributionPanel from '../components/LanguageDistributionPanel.vue'
 import ProjectDistributionPanel from '../components/ProjectDistributionPanel.vue'
 import WeekHourPanel from '../components/WeekHourPanel.vue'
+import RecentSessionsPanel from '../components/RecentSessionsPanel.vue'
 
 const {
   start,
@@ -53,6 +55,15 @@ const {
 } = useDashboardFilters()
 const heatmapYears = useStatsHeatmapYears()
 const heatmapMonths = useStatsHeatmapMonths()
+
+// Recent sessions: the endpoint has no date window, so only the origin filters
+// reach it (see RecentSessionsPanel's docblock for why that is the right call).
+const recent = useStatsRecent(
+  computed(() => ({
+    deviceId: deviceIdOrNull.value ?? undefined,
+    ideName: ideNameOrNull.value ?? undefined,
+  })),
+)
 // The heatmap panel's time axis is owned EXCLUSIVELY by the year selector:
 // "Last 12 months" is a fixed rolling window, and picking a year shows that
 // calendar year. The filter-bar Period (start/end) drives every other panel but
@@ -155,8 +166,9 @@ const projects = useStatsDistribution(
 
          Order is deliberate, in row pairs: the two categorical shares lead
          (language, project), then the two calendar/time-series reads (heatmap,
-         trend), then the three rhythm views. The e2e layout spec pins these
-         pairs, so reordering means updating it too. -->
+         trend), then the two rhythm views (week-hour, hourly), then the
+         time-of-day split beside the session log. All four rows are pairs, and
+         the e2e layout spec pins them, so reordering means updating it too. -->
     <div class="grid grid-cols-1 gap-6 @[1684px]/page:grid-cols-2">
       <ChartSection
         title="Language distribution"
@@ -257,6 +269,17 @@ const projects = useStatsDistribution(
         @retry="() => timeOfDay.refetch()"
       >
         <TimeOfDayPanel :device-id="deviceIdOrNull" :ide-name="ideNameOrNull" />
+      </ChartSection>
+      <!-- The endpoint has no date window, so this panel intentionally ignores
+           the filter bar's period and follows only the origin filters. -->
+      <ChartSection
+        title="Recent sessions"
+        :loading="recent.isPending.value"
+        :error="recent.isError.value"
+        :empty="!!recent.data.value && recent.data.value.length === 0"
+        @retry="() => recent.refetch()"
+      >
+        <RecentSessionsPanel :device-id="deviceIdOrNull" :ide-name="ideNameOrNull" />
       </ChartSection>
     </div>
   </div>
