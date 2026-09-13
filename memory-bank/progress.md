@@ -17,11 +17,16 @@
 | API Key Management                | ✅ Complete | 0.16.0         |
 | Device Management                 | ✅ Complete | 0.18.3         |
 | Dashboard (框架 + 面板迭代)       | ✅ Complete | 0.37.0         |
+| Achievements (奖杯系统)           | ✅ Complete | 0.38.0         |
 | Leaderboard                       | ⏳ Pending  | 1.0.0          |
 | Settings                          | ⏳ Pending  | 1.0.0          |
 | i18n (zh/en)                      | ⏳ Pending  | 1.0.0          |
 | E2E Test Coverage                 | ⏳ Pending  | 1.0.0          |
 | Production Deploy                 | ⏳ Pending  | 1.0.0          |
+
+## Achievements 奖杯系统
+
+- [x] **v0.38.0 (2026-09-13)** Achievements 独立页面 — 后端 15 徽章实为 **7 家族 × 2–3 阶**且 progress 为家族级（实测同家族共享同一值），故按「一家族一奖杯 + 阶级阶梯」渲染（非 15 张卡）；内联 SVG 奖杯（每家族一个路径集，阶级只换填充，无图片资源）、纯函数 `trophy-model.ts`（分组/进度/排序）、进度按**当前阶→下一阶的跨度**度量、未知 code 仍以单阶奖杯渲染（新增成就无需前端改动）；配色不引第二套色，用既有靛蓝阶亮度递进（DESIGN.md 禁装饰性用靛蓝）。新增领域 `domains/achievements/`。1307/1307。
 
 ## Dashboard 面板迭代（v0.28 – v0.37）
 

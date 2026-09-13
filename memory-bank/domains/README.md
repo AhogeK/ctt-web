@@ -20,6 +20,7 @@ duplicate it — link instead.
 | [`dashboard-visualization`](./dashboard-visualization/meta.md) | Chart panels under `/dashboard`: chart-type choice, colour ramps, layout thresholds, hover/scroll interaction, ECharts specifics (see its `rendering.md`) | `dashboard-visualization/meta.md`                   |
 | [`backend-contract`](./backend-contract/meta.md)   | Consuming ctt-server APIs: contract-first workflow, Zod/API-layer patterns, distribution semantics, raising backend requests | `backend-contract/meta.md`                          |
 | [`ai-workflow`](./ai-workflow/meta.md)             | How the agent itself works in this repo: memory upkeep, versioning, atomic commits, verification, resource ownership | `ai-workflow/meta.md`                               |
+| [`achievements`](./achievements/meta.md)           | The trophy cabinet at `/achievements`: badge → trophy-family grouping, tier ladders, rank paint, progress semantics | `achievements/meta.md`                              |
 
 ## File set inside every domain (AGENTS.md R24 — build it filled, never as a stub)
 

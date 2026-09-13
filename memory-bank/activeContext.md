@@ -2,14 +2,14 @@
 
 ## Current Status
 
-**Phase**: Dashboard 面板迭代（Recent sessions 上线 + 面板状态与路由隔离）+ 工具链加固
-**Version**: 0.37.0 (2026-09-12)
+**Phase**: Achievements 奖杯系统（家族/阶级模型 + 独立页面）+ Dashboard 面板迭代
+**Version**: 0.38.0 (2026-09-13)
 **Branch**: develop
-**Tests**: 1284/1284 unit; vue-tsc + lint 0 error 0 warning; build green; e2e layout 4/4
+**Tests**: 1307/1307 unit; vue-tsc + lint 0 error 0 warning; build green; e2e layout 4/4
 
 > 本文件只记「现在与最近」。**跨轮次可复用的判断在 [`domains/`](./domains/README.md)**（R24）：
 > `dashboard-visualization`（图表/配色/布局/交互）、`backend-contract`（接口契约与统计语义）、
-> `ai-workflow`（记忆/版本/提交/验证/资源）。
+> `achievements`（奖杯家族/阶级/进度语义）、`ai-workflow`（记忆/版本/提交/验证/资源）。
 
 ## Dashboard 面板（v0.28 – v0.34）
 
@@ -99,36 +99,15 @@ fights back」与 `ai-workflow/practices.md` 的「When an edit tool corrupts a 
 
 结果：`systemPatterns.md` 164 行、`dashboard-visualization/practices.md` 200 行，均在限内。
 
-### 正则回溯告警（v0.35.0）
+### v0.35.0 的其余收敛（可复用结论已入领域文件）
 
-- `percent.ts` 的 `/0+$/` 被 `S8786` 判为超线性：**实测属实**——量词在每个起始位置重试，结尾非 0 时退化为二次（长度 ×10 → 耗时 ×100：1.1µs → 27µs → 2.3ms → 228ms → 22s）。
-- 反映到本处：读数是 `toFixed` 出来的几字符字符串，**从来不是热点**（实测 0.8µs vs 0.09µs）。
-- 仍然改掉：提取 `trimTrailingZeros()`（单次反向扫描 + 一次 slice），线性且更直白地表达「去掉尾零，以及尾零掏空后悬挂的小数点」。全仓库仅此一处同类正则。
-- 现有测试**已覆盖两条分支**（去掉跳零 → `'5.00'`/`'0.00040'` 失败；去掉悬挂点 → `'5.'` 失败），故未新增测试；另跑 15 例真实输出对照确认读数无变化。
-
-### SonarLint 反馈处理（v0.35.0）
-
-两轮共 12 条 IDE 告警：**真问题照修、误报写明依据并保留**。可复用结论已沉淀到领域文件，此处只留判断法：
-
-- 真问题：重复导入 ×3、嵌套模板字符串（4 层→`capsuleCorners()`）、超线性正则 `/0+$/`（实测二次退化，改线性扫描）、
-  `TooltipTrigger as-child` 包 `<span>` 导致**键盘不可达**（新发现的真缺陷）。
-- 误报（保留 + 源码注释说明）：`Web:S6822` `role="list"` 冗余、`Web:S6845` 滚动区不该有 tabIndex、
-  `Web:S6819` `role="img"` 应换 `<img>`。
-- 有意识拒绝：Tailwind `suggestCanonicalClasses` 建议 `max-h-[228px]`→`max-h-57`——228 是**推导的高度预算**而非
-  spacing 阶梯，canonical 形式编译为 `calc(var(--spacing)*57)`，主题化会静默破坏上限。
-- **共同根因**：通用规则不知道本项目约定（preflight 去掉列表语义、ECharts 自设 role、推导值不是 spacing 阶梯）。
-  **遇到告警先取证，不要照改。**
-
-### v0.35.0 的其余收敛（细节见领域文件）
-
-- **格式化器归属**：`formatPercent` 从 `features/dashboard/components/` 迁到 **`lib/utils/percent.ts`** + barrel
-  导出（与 `formatDuration` 同类同处），规则入 `systemPatterns.md`「Value Formatters」。
-- **测试命名**：修 2 个名不副实的文件（`TermsCheckbox.test.ts`→`RegisterForm.terms.test.ts`、
-  `password.test.ts`→`user.password.test.ts`），删恒真空壳 `placeholder.test.ts` + 空目录；约定入
-  `systemPatterns.md`「Test File Naming」（Pascal=组件、小写=模块，**不要为"看起来统一"重命名**）。
-- **lint 门禁**：修 3 处 `expect(x.length).toBe(n)` → `toHaveLength(n)`，并在 `vite.config.ts` 启用
-  `vitest/prefer-to-have-length`。**`pnpm lint` 带 `--fix`，新规则只会静默改写不报错**——验证规则是否启用
-  必须用不带 `--fix` 的 `vp lint <file>`。IDE 的 SonarLint 与项目 lint 是**两套规则集**。
+- **超线性正则**：`percent.ts` 的 `/0+$/` 被 `S8786` 判为二次退化，**实测属实**（长度 ×10 → 耗时 ×100，最坏 22s）；
+  虽读数从来不是热点，仍改为线性扫描 `trimTrailingZeros()`。全仓库仅此一处同类正则。
+- **SonarLint 判断法**：12 条告警中真问题照修、误报写明依据保留（`role="list"`/`tabIndex`/`role="img"` 三条是通用规则
+  不懂本项目约定）。**遇到告警先取证，不要照改。**
+- **格式化器归属**：`formatPercent` 归 `lib/utils/percent.ts`（与 `formatDuration` 同类同处），规则入 `systemPatterns.md`。
+- **测试命名**：Pascal=组件、小写=模块；**不要为"看起来统一"重命名**（约定入 `systemPatterns.md`）。
+- **lint 门禁**：`pnpm lint` 带 `--fix`，新规则只会静默改写不报错——验证规则是否启用必须用不带 `--fix` 的 `vp lint <file>`。IDE 的 SonarLint 与项目 lint 是**两套规则集**。
 - **AI 产物位置（R25）**：计划归 `.omp/plans/`（gitignored、不带日期）；记忆归档移入 `memory-bank/archives/`
   （唯一豁免 200 行的记忆文件）。`docs/` 只放面向用户文档。
 
@@ -139,29 +118,25 @@ fights back」与 `ai-workflow/practices.md` 的「When an edit tool corrupts a 
 
 ### Time of Day 缝线对齐（BUG，v0.35.0 修）
 
-- 段缝位置用**取整后的百分比**累加，而 ECharts 段宽用**精确秒数** → 缝线必然偏离颜色边界。改为保留精确
-  `share` 供几何使用，读数才格式化（`formatPercent(share, 0)`）。红绿验证：取整累加时缝线报 `13/26/39`，
-  正确值 `12.5/25/37.5`。
+- 段缝位置曾用**取整百分比**累加，而 ECharts 段宽用**精确秒数** → 缝线必然偏离颜色边界。改为保留精确 `share`
+  供几何使用，读数才格式化。红绿验证：取整累加时缝线报 `13/26/39`，正确值 `12.5/25/37.5`。
 
 ### Language Distribution 高度与读数（v0.34.2 / v0.34.3）
 
-- 列表视口 `228px`（卡片 321px，chrome 92px）、百分比列 `4.5rem`、精度规则 **P8**（有效值不印成 `0`）——
-  推导与实测值在 `dashboard-visualization/{practices,references}.md`。
+- 列表视口 `228px`（卡片 321px，chrome 92px）、百分比列 `4.5rem`、精度规则 **P8**（有效值不印成 `0`）——推导与
+  实测值在 `dashboard-visualization/{practices,references}.md`。
 
 ### Recent sessions 面板（v0.37.0）
 
-- 接上 `D1` 建好但**无任何 UI 引用**的 `/stats/recent` 契约层，成为第 8 张面板。协议、设计取舍（本地日分组、
-  不显示日合计、并列时间次级排序、为何不跟随 Period）与实测值已入 `dashboard-visualization/references.md`
-  及面板 docblock，此处不重复。
-- **插件端无此视图**（其 `RecentActivityDataProvider` 是 30 天活动图）→ 非 parity，按数据独立设计。
-- 抽出共享滚动外壳 **`ScrollFadeList.vue`**（第二个列表需要它时抽，非投机）；分布列表回归 18/18 通过，证明提取未改行为。
-- **实测自查出的自身缺陷**：日标题原设 `sticky top-0`，量到文本落在滚动区 2–20px，正处顶部 18px 渐隐带内
-  ——刚钉住就被淡化；改为正常滚动（教训入 `practices.md`）。真机（2621 两列）：20 行 / 3 组、卡片 321px 与
-  Time of day 同行配对；窄宽下 40 字符项目名截断（`241 > 130`）且 `title` 保留全名。
-- **代码审查（两轴）后修正**：日分组测试原为**同义反复**（断言由被测函数自身推导，UTC 环境永不失败）→ 固定
-  `TZ=Asia/Shanghai` 并断言字面量，已用「改回 UTC 切片」验证会红；并列排序补 `sessionId` 成**全序**；
-  `startTime` 不可解析时会产出 `Invalid Date NaN` 分组 → 过滤；复用 `DEFAULT_RECENT_LIMIT` 与
-  `formatDateTime`（不再内联格式化）；补 `scroll for more` 提示。
+- 接上 `D1` 建好但**无 UI 引用**的 `/stats/recent` 契约层（触发条件：端点**不接受日期参数**，故不跟随 Period、
+  只跟随来源筛选）。设计取舍与实测值在 `dashboard-visualization/references.md` 与面板 docblock。
+- **插件端无此视图**（其 `RecentActivityDataProvider` 是 30 天活动图）→ 非 parity，按数据独立设计；抽出共享滚动
+  外壳 **`ScrollFadeList.vue`**（第二个列表需要它时抽），分布列表回归 18/18 证明提取未改行为。
+- **自查出的自身缺陷**：日标题原设 `sticky top-0`，文本落在滚动区 2–20px 正处顶部渐隐带内 → 刚钉住就被淡化，
+  改为正常滚动（教训入 `dashboard-visualization/practices.md`）。
+- **两轴审查后修正**：日分组测试原为**同义反复**（断言由被测函数自身推导，UTC 环境永不失败）→ 固定
+  `TZ=Asia/Shanghai` 并断言字面量，已用「改回 UTC 切片」验证会红；排序补 `sessionId` 成**全序**；不可解析
+  `startTime` 会产出 `Invalid Date NaN` 分组 → 过滤；复用 `DEFAULT_RECENT_LIMIT` / `formatDateTime`。
 
 ### 后端契约（只读核对，跨仓库只提需求）
 
@@ -177,9 +152,22 @@ fights back」与 `ai-workflow/practices.md` 的「When an edit tool corrupts a 
 
 ### pnpm 隐式安装污染受控文件（BUG，v0.36.1 修）
 
-- 现象：`pnpm-workspace.yaml` 无故出现 `<包名>: set this to true or false` 改动，阻塞后续 checkout。
-- 根因：`verifyDepsBeforeRun` 默认 `install` → `pnpm run`/`exec` 在依赖不同步时隐式安装；安装遇未决策的构建脚本
-  时把非布尔占位符写进这个**受版本控制**的文件。修法 `warn`（只报告、不写入）。完整机制与取证见 `ai-workflow` S9。
+- `pnpm-workspace.yaml` 出现 `<包名>: set this to true or false` 占位符：`verifyDepsBeforeRun` 默认 `install`
+  会在依赖不同步时隐式安装并写入。修法 `warn`。完整机制与取证见 `ai-workflow` S9。
+
+### Achievements 奖杯系统（v0.38.0）
+
+- **新建领域** `memory-bank/domains/achievements/` 五件套（自有路由 / 模型 / 后端缺口）。
+- **决定性事实**：后端 15 徽章实为 **7 家族 × 2–3 阶**，且 **progress 是家族级**（实测三条 `STREAK_*` 全返
+  `7`、三条 `TOTAL_*` 全返 `460860`）→ 一家族一奖杯 + 阶梯，而非 15 张卡（会重复同一数字 5 次）。
+- **配色冲突**：`DESIGN.md` 禁装饰性用靛蓝且调色板近无彩，奖杯天然想要金银铜 → 不引第二套色，改用**既有靛蓝阶
+  的亮度递进**（`#3d49ad`→`#8290f0`→`#b9c1ff`，与趋势图/分布条同源），锁定态去掉填充。
+- **排序**：原按 `next.target - progress` 会把「差 1 月」与「差 1 天」当同类，实测让刚起步的月度奖杯排在 80%
+  进度者之前 → 改无量纲比例（与进度条同源），完成态垫底。
+- **自查并修的两处自身缺陷**：① 无徽章时页头渲染 `0 / 0 · 0%` → 隐藏；② 路由未包 `AppLayout`，页面**无侧边栏
+  与导航**但截图正常（教训入 `achievements` S7）；③ 新增图标使 `AppSidebar.test` 穷举 mock 失效 → 11 测试全挂。
+- 真机（langtail）：7 奖杯 / 15 阶 / 8 earned / 53%，与后端 unlocked 一致；四档绘制与明暗模式实测通过。
+- 测试 +21 → **1307/1307**；type-check / lint / build / e2e 全绿。详见 `domains/achievements/`。
 
 ## Lessons（跨轮次教训）
 

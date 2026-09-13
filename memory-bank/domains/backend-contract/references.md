@@ -15,9 +15,19 @@ Lookup facts. No judgement here.
 | `GET /stats/week-hour`     | `start`, `end`, `timezoneOffset`, origin filter                | sparse points + weekday counts             | optional       |
 | `GET /stats/hourly`        | `start`, `end`, `timezoneOffset`, origin filter                | per-hour averages + active-day count       | optional       |
 | `GET /stats/distribution`  | `type`, `timezoneOffset`, `start`, `end`, origin filter        | `{ type, entries: [{ name, seconds }] }`   | optional (v0.66.0+) |
+| `GET /stats/recent`        | `limit` (1–100, default 20), origin filter                     | sessions by start time desc                | **none** — no date params |
+| `GET /stats/achievements`  | `timezoneOffset`                                               | 15 badges (7 families × 2–3 tiers)          | n/a — see `achievements` domain |
 
 `type` values: `LANGUAGES`, `PROJECTS`, `TIME_OF_DAY`, `WEEKDAY`, `DEVICES`, `IDES` — entries are
 sorted by duration descending.
+
+Two of these carry traps worth knowing before wiring a panel:
+
+- **`/stats/recent` takes no `start`/`end`.** A panel for it cannot follow the filter bar's period;
+  it follows the origin filters only. See `dashboard-visualization/references.md`.
+- **`/stats/achievements` reports progress per family, not per badge** — all three `STREAK_*` entries
+  return the same `progress`. It also omits the family (`type`) the enum knows, so the frontend
+  matches on `code`. Full detail: [`achievements`](../achievements/references.md).
 
 ### Auth / account
 

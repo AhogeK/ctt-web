@@ -61,7 +61,7 @@ happen to call it first.
 ## Router Architecture
 
 ```
-src/router/ index.ts (core) + guard.ts (auth + NProgress) + modules/ (auth|dashboard|devices|leaderboard|settings)
+src/router/ index.ts (core) + guard.ts (auth + NProgress) + modules/ (achievements|auth|dashboard|devices|leaderboard|settings|oauth)
 ```
 
 - Route meta: `{ title, requiresAuth?, roles?, layout?, hideInMenu? }`; layouts via `meta.layout` (auth/app)
