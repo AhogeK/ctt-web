@@ -20,8 +20,9 @@
  *   length and label do — so the aggregate row is painted identically; any
  *   tint or alpha difference would re-import "colour means something".
  * - **A bounded viewport, never bounded data.** The list scrolls; the card
- *   caps its own height. Edge fades are `mask-image` (colourless) because a
- *   card-coloured overlay can never match a card that carries a gradient.
+ *   caps its own height. The region itself (mask-fade edges, overlay scrollbar,
+ *   keyboard tab stop) lives in `ScrollFadeList`, shared with the recent-sessions
+ *   log — its rationale is documented there, once.
  * - **Truncated names stay readable.** A label the column cuts off raises the
  *   full name on hover; the aggregate row raises its folded breakdown instead.
  */
@@ -30,6 +31,7 @@ import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/comp
 import { formatDuration, formatPercent } from '@/lib/utils'
 import { useThemeStore } from '@/stores/theme'
 import type { RankedRow } from '../composables/useRankedDistribution'
+import ScrollFadeList from './ScrollFadeList.vue'
 
 const props = withDefaults(
   defineProps<{
@@ -75,35 +77,26 @@ const barRamp = computed(() => {
   return `linear-gradient(90deg, ${stopList})`
 })
 
-// ── Scroll affordance: the list is scrollable, so say so when it is ──
-const listEl = ref<HTMLElement | null>(null)
+// ── Scroll affordance ──
+// The scrolling region, its edge fades, its overlay scrollbar and its keyboard
+// tab stop all live in ScrollFadeList. This component keeps only what is
+// distribution-specific: measuring which label column is cut off.
+const list = ref<InstanceType<typeof ScrollFadeList> | null>(null)
+/** True while the region has content below the fold — the footer hint's source. */
 const moreBelow = ref(false)
-const atTop = ref(true)
-const revealed = ref(false)
-/** True briefly while the list is being scrolled — reveals the thumb. */
-const scrolling = ref(false)
 /** Names the label column currently cuts off (measured, not guessed). */
 const truncated = ref<ReadonlySet<string>>(new Set())
-let observer: IntersectionObserver | null = null
-let sizeObserver: ResizeObserver | null = null
-let scrollIdleTimer: ReturnType<typeof setTimeout> | null = null
-
-function syncOverflow(): void {
-  const el = listEl.value
-  if (el === null) return
-  atTop.value = el.scrollTop <= 2
-  moreBelow.value = el.scrollHeight - el.scrollTop - el.clientHeight > 4
-}
+/** Flips true once the list first scrolls into view, so bars animate in. */
+const revealed = ref(false)
+let revealObserver: IntersectionObserver | null = null
 
 /**
  * Measures which labels the column actually cuts off. Measured rather than
  * inferred from character count: the font is proportional, so a length rule
- * would both hide readable names and expose cut ones. Runs on the existing
- * resize observer, so it costs one pass, not one observer per row.
+ * would both hide readable names and expose cut ones. Runs once per refresh —
+ * mount, region resize, or a row-set change — not per row.
  */
-function syncTruncation(): void {
-  const root = listEl.value
-  if (root === null) return
+function measureTruncation(root: HTMLElement): void {
   const next = new Set<string>()
   for (const el of root.querySelectorAll<HTMLElement>('[data-testid="distribution-label"]')) {
     if (el.scrollWidth > el.clientWidth + TRUNCATION_SLACK_PX) next.add(el.textContent?.trim() ?? '')
@@ -111,62 +104,41 @@ function syncTruncation(): void {
   truncated.value = next
 }
 
+// New data means new names and new scroll height — let the shell re-measure both
+// the fades and the truncation set.
+watch(
+  () => props.rows,
+  () => {
+    nextTick(() => list.value?.refresh())
+  },
+)
+
 /**
- * Overlay-scrollbar behaviour: the thumb stays hidden at rest and only shows
- * while the list is actually being scrolled (or hovered/focused) — a standing
- * grey bar on a card reads as chrome, not content.
+ * Bars animate in the first time the panel is actually seen. Deferred so a panel
+ * mounted below the fold does not spend its animation before anyone looks at it.
  */
-function onScroll(): void {
-  syncOverflow()
-  scrolling.value = true
-  if (scrollIdleTimer !== null) clearTimeout(scrollIdleTimer)
-  scrollIdleTimer = setTimeout(() => {
-    scrolling.value = false
-    scrollIdleTimer = null
-  }, 900)
-}
-
 onMounted(() => {
-  const el = listEl.value
-  if (el === null) return
-  nextTick(() => {
-    syncOverflow()
-    syncTruncation()
-  })
-  el.addEventListener('scroll', onScroll, { passive: true })
-  if (typeof ResizeObserver !== 'undefined') {
-    sizeObserver = new ResizeObserver(() => {
-      syncOverflow()
-      syncTruncation()
-    })
-    sizeObserver.observe(el)
-  }
-
-  if (typeof IntersectionObserver === 'undefined') {
+  const el = list.value?.$el as HTMLElement | undefined
+  if (el === undefined || typeof IntersectionObserver === 'undefined') {
     revealed.value = true
     return
   }
-  observer = new IntersectionObserver(
+  revealObserver = new IntersectionObserver(
     (entries) => {
       if (entries[0]?.isIntersecting) {
         revealed.value = true
-        observer?.disconnect()
-        observer = null
+        revealObserver?.disconnect()
+        revealObserver = null
       }
     },
     { threshold: 0.25 },
   )
-  observer.observe(el)
+  revealObserver.observe(el)
 })
 
 onBeforeUnmount(() => {
-  listEl.value?.removeEventListener('scroll', onScroll)
-  if (scrollIdleTimer !== null) clearTimeout(scrollIdleTimer)
-  scrollIdleTimer = null
-  sizeObserver?.disconnect()
-  sizeObserver = null
-  observer?.disconnect()
-  observer = null
+  revealObserver?.disconnect()
+  revealObserver = null
 })
 
 /**
@@ -180,24 +152,11 @@ function hasDetail(row: RankedRow): boolean {
   return row.folded.length > 0 || truncated.value.has(row.name)
 }
 
-// New data means new names and new scroll height — refresh both affordances.
-watch(
-  () => props.rows,
-  () => {
-    nextTick(() => {
-      syncOverflow()
-      syncTruncation()
-    })
-  },
-)
-
 /** The folded languages with their shares, capped so the popover stays bounded. */
 function foldedBreakdown(row: RankedRow): { shown: { name: string; percent: number }[]; rest: number } {
   const all = row.folded
   return { shown: all.slice(0, FOLDED_SHOWN), rest: Math.max(0, all.length - FOLDED_SHOWN) }
 }
-
-defineExpose({ syncOverflow, syncTruncation })
 </script>
 
 <template>
@@ -207,13 +166,9 @@ defineExpose({ syncOverflow, syncTruncation })
          18 footer), so a 228px viewport lands it at ~320px — the agreed ceiling
          for the two-column layout. -->
     <div class="relative">
-      <!-- `role="list"` and `tabindex` are both deliberate here, and both are
-           flagged by generic linters as redundant — they are not:
-           - Tailwind's preflight sets `list-style: none`, which strips list
-             semantics in Safari/VoiceOver, so the role is the documented fix;
-           - the region scrolls, and its rows are not focusable, so without the
-             tab stop a keyboard user cannot reach the rows below the fold
-             (WCAG 2.1.1; this is the standard scrollable-region pattern).
+      <!-- The region's scroll / fade / a11y behaviour lives in ScrollFadeList
+           (shared with the recent-sessions log). Its role+tabindex rationale and
+           the edge-fade-as-mask rule are documented there.
 
            The max-height stays an arbitrary px value on purpose: 228 is a
            derived budget (320px card ceiling − 92px chrome), not a spacing step.
@@ -221,13 +176,12 @@ defineExpose({ syncOverflow, syncTruncation })
            `calc(var(--spacing) * 57)`, which would silently move the card off
            that ceiling if the spacing scale were ever themed. Utility class and
            the comment above then agree on 228. -->
-      <ul
-        ref="listEl"
-        class="dist-scroll max-h-57 overflow-y-auto"
-        :class="{ 'is-scrolling': scrolling, 'fade-top': !atTop, 'fade-bottom': moreBelow }"
-        role="list"
-        :aria-label="a11yLabel"
-        tabindex="0"
+      <ScrollFadeList
+        ref="list"
+        class="max-h-57"
+        :a11y-label="a11yLabel"
+        :measure="measureTruncation"
+        @overflow="(s) => (moreBelow = s.moreBelow)"
       >
         <li v-for="(row, i) in rows" :key="row.name" class="mb-2" data-testid="distribution-row">
           <TooltipProvider :delay-duration="200">
@@ -316,7 +270,7 @@ defineExpose({ syncOverflow, syncTruncation })
             </Tooltip>
           </TooltipProvider>
         </li>
-      </ul>
+      </ScrollFadeList>
     </div>
 
     <p class="text-right text-[11px] tracking-wide text-muted-foreground">
@@ -327,62 +281,6 @@ defineExpose({ syncOverflow, syncTruncation })
 </template>
 
 <style scoped>
-/**
- * Scroll lane — same recipe as TermsDialog (thin, transparent track, rounded
- * thumb) tuned for a panel: the thumb rests at reduced opacity and firms up on
- * hover, and the lane is reserved up front so the readout column never shifts
- * when the list starts overflowing.
- */
-.dist-scroll {
-  scrollbar-width: thin;
-  /* Hidden at rest — the mask fade and footer hint carry the affordance. */
-  scrollbar-color: transparent transparent;
-  scrollbar-gutter: stable;
-  padding-right: 0.5rem;
-  outline: none;
-}
-
-/* Content-space fade: the viewport masks its own children, so there is no
-   painted colour to mismatch the card's gradient. Only the edges that actually
-   hide content get a mask, so a short list that fits entirely is never touched. */
-.dist-scroll.fade-top.fade-bottom {
-  mask-image: linear-gradient(to bottom, transparent 0, #000 1.125rem, #000 calc(100% - 1.625rem), transparent 100%);
-}
-
-.dist-scroll.fade-top:not(.fade-bottom) {
-  mask-image: linear-gradient(to bottom, transparent 0, #000 1.125rem, #000 100%);
-}
-
-.dist-scroll.fade-bottom:not(.fade-top) {
-  mask-image: linear-gradient(to bottom, #000 0, #000 calc(100% - 1.625rem), transparent 100%);
-}
-
-/* Reveal on interaction: hover, keyboard focus, or while scrolling. */
-.dist-scroll:hover,
-.dist-scroll:focus-visible,
-.dist-scroll.is-scrolling {
-  scrollbar-color: color-mix(in oklab, var(--muted-foreground) 60%, transparent) transparent;
-}
-
-.dist-scroll:focus-visible {
-  /* Region-level focus indicator: an inset ring marks the scrollable area
-     without adding chrome around the whole card. */
-  box-shadow: inset 0 0 0 2px color-mix(in oklab, var(--ring) 45%, transparent);
-}
-
-.dist-scroll::-webkit-scrollbar {
-  width: 6px;
-}
-
-.dist-scroll::-webkit-scrollbar-track {
-  background: transparent;
-}
-
-.dist-scroll::-webkit-scrollbar-thumb {
-  background-color: transparent;
-  border-radius: 9999px;
-}
-
 /* Keyboard-reachable rows need a visible focus indicator (WCAG 2.4.7). Only the
    rows that have detail to reveal carry a tab stop, so this never competes with
    the scroll region's own ring for attention. */
@@ -390,12 +288,6 @@ defineExpose({ syncOverflow, syncTruncation })
   outline: none;
   box-shadow: 0 0 0 2px color-mix(in oklab, var(--ring) 55%, transparent);
   border-radius: 0.25rem;
-}
-
-.dist-scroll:hover::-webkit-scrollbar-thumb,
-.dist-scroll:focus-visible::-webkit-scrollbar-thumb,
-.dist-scroll.is-scrolling::-webkit-scrollbar-thumb {
-  background-color: color-mix(in oklab, var(--muted-foreground) 60%, transparent);
 }
 
 /**
