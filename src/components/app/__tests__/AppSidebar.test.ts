@@ -60,6 +60,7 @@ vi.mock('@lucide/vue', () => ({
   Monitor: { name: 'Monitor', template: '<span data-icon="monitor" />' },
   User: { name: 'User', template: '<span data-icon="user" />' },
   KeyRound: { name: 'KeyRound', template: '<span data-icon="key-round" />' },
+  Trophy: { name: 'Trophy', template: '<span data-icon="trophy" />' },
 }))
 
 const createTestRouter = () => {
