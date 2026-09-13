@@ -24,6 +24,7 @@ const TITLES = [
   'Weekly coding activity by hour',
   'Average hourly coding duration',
   'Time of day distribution',
+  'Recent sessions',
 ] as const
 
 async function gotoDashboard(page: import('@playwright/test').Page, width: number) {
@@ -69,8 +70,10 @@ test('panels pair two-across once a card keeps ≥830px', async ({ page }) => {
   expect(Math.abs(c['Coding heatmap'].y - c['Coding trend'].y)).toBeLessThan(4)
   // Row 3 — the two rhythm views.
   expect(Math.abs(c['Weekly coding activity by hour'].y - c['Average hourly coding duration'].y)).toBeLessThan(4)
-  // The odd seventh card owns the last row on its own.
-  expect(c['Time of day distribution'].y).toBeGreaterThan(c['Average hourly coding duration'].y)
+  // Row 4 — the time-of-day split and the session log. With eight panels every
+  // row is a pair; this pairing is the assertion that catches a panel being
+  // appended out of order.
+  expect(Math.abs(c['Time of day distribution'].y - c['Recent sessions'].y)).toBeLessThan(4)
 })
 
 test('summary cards go 6-across only when the row keeps ≥1430px', async ({ page }) => {
