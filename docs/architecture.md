@@ -22,6 +22,7 @@
 ```text
 src/
 ├── features/           # Feature modules
+│   ├── achievements/   # Achievements trophy cabinet (AchievementsView)
 │   ├── auth/           # Authentication (LoginView, RegisterView)
 │   ├── dashboard/      # Dashboard analytics (DashboardHome)
 │   ├── devices/        # Device management (DeviceListView)
@@ -45,6 +46,7 @@ src/
 │   ├── index.ts        # Main router setup + auto-import
 │   ├── guard.ts        # Navigation guards (auth, NProgress)
 │   └── modules/        # Feature route slices
+│       ├── achievements.ts # /achievements
 │       ├── auth.ts     # /auth/login, /auth/register
 │       ├── dashboard.ts # /dashboard
 │       ├── devices.ts  # /devices
