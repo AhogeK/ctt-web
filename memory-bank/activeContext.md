@@ -2,10 +2,10 @@
 
 ## Current Status
 
-**Phase**: Dashboard 面板迭代（Coding trend 可选月份 + 面板状态与路由隔离）+ 工具链加固
-**Version**: 0.36.1 (2026-09-11)
+**Phase**: Dashboard 面板迭代（Recent sessions 上线 + 面板状态与路由隔离）+ 工具链加固
+**Version**: 0.37.0 (2026-09-12)
 **Branch**: develop
-**Tests**: 1266/1266 unit; vue-tsc + lint 0 error 0 warning; build green; e2e layout 4/4
+**Tests**: 1284/1284 unit; vue-tsc + lint 0 error 0 warning; build green; e2e layout 4/4
 
 > 本文件只记「现在与最近」。**跨轮次可复用的判断在 [`domains/`](./domains/README.md)**（R24）：
 > `dashboard-visualization`（图表/配色/布局/交互）、`backend-contract`（接口契约与统计语义）、
@@ -139,24 +139,29 @@ fights back」与 `ai-workflow/practices.md` 的「When an edit tool corrupts a 
 
 ### Time of Day 缝线对齐（BUG，v0.35.0 修）
 
-- 段缝位置用**取整后的百分比**累加，而 ECharts 段宽用**精确秒数** → 缝线必然偏离颜色边界。改为保留精确 `share` 供几何使用，读数才格式化（`formatPercent(share, 0)`）。
-- 红绿验证：回退为取整累加，1h/1h/1h/5h 的缝线位置报 `['13','26','39']`，正确值 `['12.5','25','37.5']`；真机（langtail 全史）缝线 25.2763/43.1679/57.9021 == 86460/147660/198060 ÷ 342060。
+- 段缝位置用**取整后的百分比**累加，而 ECharts 段宽用**精确秒数** → 缝线必然偏离颜色边界。改为保留精确
+  `share` 供几何使用，读数才格式化（`formatPercent(share, 0)`）。红绿验证：取整累加时缝线报 `13/26/39`，
+  正确值 `12.5/25/37.5`。
 
 ### Language Distribution 高度与读数（v0.34.2 / v0.34.3）
 
-- 两轮收敛：列表视口 `19rem`→`228px`（卡片 321px，chrome 92px）、百分比列 3.5rem→**4.5rem**（容 `0.000000%`）、
-  精度规则 **P8**（有效值不印成 `0`，`min(6, ceil(-log10 v)+1)` 位小数）。推导与实测值已入
-  `dashboard-visualization/{practices,references}.md`，此处不再重复。
+- 列表视口 `228px`（卡片 321px，chrome 92px）、百分比列 `4.5rem`、精度规则 **P8**（有效值不印成 `0`）——
+  推导与实测值在 `dashboard-visualization/{practices,references}.md`。
 
-### Language Distribution（排名横条 + 全局渐变）
+### Recent sessions 面板（v0.37.0）
 
-- **全部语言逐行呈现，不截断**；卡片只约束高度（`max-h-[19rem]` 内部滚动 + 双端 mask 渐隐 + 页脚计数）。
-- 唯一折叠：<0.1% 进 Others（插件口径），hover 用项目 `Tooltip` 组件列明细（cap 8 + `+N more`）。
-- 条长按**最长语言**归一（rank 1 铺满轨道）；轨道 25/50/75 刻度为测量家具。
-- **全局渐变**：轨道 `container-type: inline-size` + 条 `background-size: 100cqw` —— 每行只截取同一条渐变的自己那一段。色标复用 TrendChart（亮 `#3d49ad/#8290f0/#8a97f2`，暗 `#4f58c0/#8290f0/#b9c1ff`，offset 0/48/100）。
-- **Others 与语言行完全一致**（同渐变同透明度）——颜色不承载数据，长度与标签承载；任何 tint/alpha 差异都会重新暗示"颜色有含义"。
-- 百分比 `formatPercent`：2 位小数 + 尾零剥离（41.67% / 0.21% / 5%），三处读数统一。
-- 分类分布（LANGUAGES/PROJECTS/…）**不展示 Total**：桶总和 ≥ 真实活动时长（并行会话合法叠加），无业务含义。
+- 接上 `D1` 建好但**无任何 UI 引用**的 `/stats/recent` 契约层，成为第 8 张面板。协议、设计取舍（本地日分组、
+  不显示日合计、并列时间次级排序、为何不跟随 Period）与实测值已入 `dashboard-visualization/references.md`
+  及面板 docblock，此处不重复。
+- **插件端无此视图**（其 `RecentActivityDataProvider` 是 30 天活动图）→ 非 parity，按数据独立设计。
+- 抽出共享滚动外壳 **`ScrollFadeList.vue`**（第二个列表需要它时抽，非投机）；分布列表回归 18/18 通过，证明提取未改行为。
+- **实测自查出的自身缺陷**：日标题原设 `sticky top-0`，量到文本落在滚动区 2–20px，正处顶部 18px 渐隐带内
+  ——刚钉住就被淡化；改为正常滚动（教训入 `practices.md`）。真机（2621 两列）：20 行 / 3 组、卡片 321px 与
+  Time of day 同行配对；窄宽下 40 字符项目名截断（`241 > 130`）且 `title` 保留全名。
+- **代码审查（两轴）后修正**：日分组测试原为**同义反复**（断言由被测函数自身推导，UTC 环境永不失败）→ 固定
+  `TZ=Asia/Shanghai` 并断言字面量，已用「改回 UTC 切片」验证会红；并列排序补 `sessionId` 成**全序**；
+  `startTime` 不可解析时会产出 `Invalid Date NaN` 分组 → 过滤；复用 `DEFAULT_RECENT_LIMIT` 与
+  `formatDateTime`（不再内联格式化）；补 `scroll for more` 提示。
 
 ### 后端契约（只读核对，跨仓库只提需求）
 
@@ -172,13 +177,9 @@ fights back」与 `ai-workflow/practices.md` 的「When an edit tool corrupts a 
 
 ### pnpm 隐式安装污染受控文件（BUG，v0.36.1 修）
 
-- 现象：提交周期中 `pnpm-workspace.yaml` 无故出现改动，内容是 `<包名>: set this to true or false`。
-- 根因（pnpm 11.18 源码 + 复现）：`verifyDepsBeforeRun` 默认 `install` —— `pnpm run`/`exec` 在依赖不同步时**隐式安装**，
-  安装遇未决策的构建脚本时 `handleIgnoredBuilds()` 把非布尔占位符写进这个**受版本控制**的文件并抛错；源码里只有
-  `case "install"` 调用安装。在**分离的历史提交**处跑脚本必然触发（node_modules 共享、配置按提交走）。
-- 修法：`verifyDepsBeforeRun: warn`（报告漂移，但不隐式安装、不写入）。对照取证：默认 `install` 会**写入占位符**，
-  非 `install` 的任一取值都不会。**不选 `error`**：只改版本号就会翻转 workspace 状态哈希，`error` 会让例行发布后的
-  脚本全部失败——这种误报守卫终会被关掉。场景与规避入 `ai-workflow` S9。
+- 现象：`pnpm-workspace.yaml` 无故出现 `<包名>: set this to true or false` 改动，阻塞后续 checkout。
+- 根因：`verifyDepsBeforeRun` 默认 `install` → `pnpm run`/`exec` 在依赖不同步时隐式安装；安装遇未决策的构建脚本
+  时把非布尔占位符写进这个**受版本控制**的文件。修法 `warn`（只报告、不写入）。完整机制与取证见 `ai-workflow` S9。
 
 ## Lessons（跨轮次教训）
 
@@ -187,14 +188,13 @@ fights back」与 `ai-workflow/practices.md` 的「When an edit tool corrupts a 
 - **逐行渐隐不能用叠色**：遮罩颜色永远无法匹配带渐变的卡片（暗色下形成割裂带），改用 `mask-image`（无颜色）。
 - **模板类文件大改用整文件 `write`**：增量 hunk 编辑在同一文件上反复错位（陈旧锚点 + 边界回声）已两次损坏模板；多 hunk 编辑后必须整文件复核。
 - **dev server `504 Outdated Optimize Dep`**：依赖图变化后 `rm -rf node_modules/.vite` + 重启。
-- **测试账号固定**：`.sisyphus/get-token.sh` 持久化 `<prefix>` 账号并复用（`FRESH=1` 强制重注册）。**必须选已有 prefix**——新 prefix 会注册真实账号（无删号接口）并需要重新灌数据。
-- **浏览器会话**：`eval "$(SESSION=1 bash .sisyphus/get-token.sh <prefix>)"` 取 ACCESS+REFRESH，然后**裸串**写入 localStorage（JSON 引号会让 refresh 返回 AUTH_003）、**导航前**写入、**同一 profile 只留一个 tab**（旧 tab 的静默刷新会覆盖注入值）。详见 `domains/ai-workflow/practices.md`。
-- **服务归属**：只清理自己启动的进程，按实际监听者核对 PID 归属（PID 文件不足以证明），用户的服务不动。
-- **图表设计依据**：DESIGN.md 为权威 + 项目既有图表（HourlyPanel/TrendChart）做先例 + 插件端源码参照；不再加载 lieflat-charts（其署名话术对内部 UI 无意义）。
+- **测试账号固定**：复用 `.sisyphus/get-token.sh` 的**已有** prefix（`FRESH=1` 强制重注册）；新 prefix 会注册真实账号（无删号接口）并需重新灌数据。
+- **浏览器会话**：`eval "$(SESSION=1 …)"` 取 ACCESS+REFRESH，**裸串**写 localStorage（JSON 引号 → refresh 返 AUTH_003）、**导航前**写、**同 profile 只留一个 tab**。详见 `ai-workflow/practices.md`。
+- **服务归属**：只清理自己启动的进程，按实际监听者核对归属（PID 文件不足以证明）；用户的服务与浏览器不动。
+- **图表设计依据**：DESIGN.md 权威 + 项目既有图表做先例 + 插件端源码参照；不加载 lieflat-charts。
 
 ## Archived History
 
-- `memory-bank/archives/2026-09-10-activeContext-archive.md` — v0.16.14 → v0.34.0 的完整时间线（含各轮反馈与决策细节）。
-- `memory-bank/archives/2026-08-16-activeContext-archive.md` — v0.16.13 及更早（v0.8.x 起，含事故与教训）。
-
-归档于 2026-09-10（v0.34.0），以维持 AGENTS.md 的 200 行上限。
+- `memory-bank/archives/2026-09-10-activeContext-archive.md` — v0.16.14 → v0.34.0 完整时间线。
+- `memory-bank/archives/2026-08-16-activeContext-archive.md` — v0.16.13 及更早（v0.8.x 起）。
+- 归档于 2026-09-10（v0.34.0），以维持 AGENTS.md 的 200 行上限；新溢出继续按此方式迁移。

@@ -112,6 +112,19 @@ folded breakdown) becomes keyboard-unreachable. Give those elements a tab stop *
 have something to reveal** (a per-row predicate — 33 dead stops beat none), plus a `:focus-visible`
 indicator (WCAG 2.4.7). Every other `TooltipTrigger` here wraps a real `<button>`; follow that.
 
+**A sticky heading inside the region fights the top fade.** Measured on the recent-sessions log: a
+day heading pinned at `top: 0` had its text at **2–20px** from the region's top edge — inside the
+fade's 18px ramp — so the label it existed to show was exactly the thing dissolved. Options are to
+raise the heading clear of the fade or let it scroll normally; this panel scrolls it. Check this
+before adding `sticky` to any row in these lists.
+
+**Extract the region at the second consumer.** `ScrollFadeList` owns the viewport, its fades, its
+overlay scrollbar and its tab stop; a consumer passes `a11yLabel` plus a `measure(root)` callback
+for whatever it must re-measure (the distribution list measures which label column is cut off).
+The trigger was the second *list* needing it — the distribution list and the recent-sessions log —
+and the shell is exactly the code whose two copies would drift (a11y attributes, fade recipe,
+scrollbar CSS). Resist extracting the row itself: rows genuinely differ per panel.
+
 ## Numeric readouts
 
 - Two decimals with trailing zeros trimmed for shares (`41.67%` / `0.21%` / `5%`) — integer

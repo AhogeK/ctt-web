@@ -13,9 +13,11 @@ Lookup facts. No judgement here — decisions live in `principles.md` / `scenari
 | Time of day distribution           | `TimeOfDayPanel.vue`             | `stats/distribution?type=TIME_OF_DAY`              | Yes                       |
 | Language distribution              | `LanguageDistributionPanel.vue`  | `stats/distribution?type=LANGUAGES`                | Yes                       |
 | Project distribution               | `ProjectDistributionPanel.vue`   | `stats/distribution?type=PROJECTS`                 | Yes                       |
+| Recent sessions                    | `RecentSessionsPanel.vue`        | `stats/recent` (`limit=20`)                        | **No — endpoint has no date window**; origin filters yes |
 | Summary cards (6 fields)           | `SummaryCards.vue`               | `stats/summary`                                    | n/a — fixed windows       |
 
-Panels not yet built but available server-side: `WEEKDAY`, `DEVICES`, `IDES`.
+Panels not yet built but available server-side: `WEEKDAY`, `DEVICES`, `IDES`. The `achievements`
+endpoint also has a contract layer (`useStatsAchievements`) with no panel yet.
 
 Panel-scoped window controls (independent of the filter bar, and **not** URL params):
 `HeatmapYearSelect` (heatmap) and `TrendMonthSelect` (trend). Both bound their options to what the
@@ -23,7 +25,8 @@ backend reports as populated (`heatmap-years` / `heatmap-months`).
 
 Both categorical panels render through one shared list (`RankedDistributionList.vue`) fed by
 `../composables/useRankedDistribution.ts`, so ranking, the 0.1% folding floor, the gradient and the
-percent precision have a single implementation.
+percent precision have a single implementation. The scrollable *region* under every list panel is
+`ScrollFadeList.vue`; `session-groups.ts` holds the recent-sessions grouping/ordering rules.
 
 ## Colour values in use
 

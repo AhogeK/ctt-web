@@ -16,14 +16,16 @@
 | CSRF Protection                   | ✅ Complete | 0.10.2         |
 | API Key Management                | ✅ Complete | 0.16.0         |
 | Device Management                 | ✅ Complete | 0.18.3         |
-| Dashboard (框架 + 面板迭代)       | ✅ Complete | 0.36.0         |
+| Dashboard (框架 + 面板迭代)       | ✅ Complete | 0.37.0         |
 | Leaderboard                       | ⏳ Pending  | 1.0.0          |
 | Settings                          | ⏳ Pending  | 1.0.0          |
 | i18n (zh/en)                      | ⏳ Pending  | 1.0.0          |
 | E2E Test Coverage                 | ⏳ Pending  | 1.0.0          |
 | Production Deploy                 | ⏳ Pending  | 1.0.0          |
 
-## Dashboard 面板迭代（v0.28 – v0.36）
+## Dashboard 面板迭代（v0.28 – v0.37）
+
+- [x] **v0.37.0 (2026-09-12)** Recent sessions 面板 — 接上 v0.19.0 建好但无 UI 引用的 `/stats/recent` 契约层，成为第 8 张面板（与 Time of day 配对）。**本地日分组**的会话日志（`startTime` 是 UTC，切 ISO 串会归错天）；不显示日时长合计（并行会话叠加会超出真实墙钟）；并列时间加客户端确定性次级排序；不跟随筛选栏 Period（端点无日期参数）。抽出共享滚动外壳 `ScrollFadeList.vue`（分布列表回归 18/18 证明提取未改行为）。1284/1284。
 
 - [x] **v0.36.0 (2026-09-11)** Coding trend 可选月份 — 默认保持 last 30 days，新增面板级窗口（本地状态、不进 URL，与热力图选年同级，筛选栏 Period 不影响；避免选月触发全外壳重渲染）；新增 `TrendMonthSelect`（Last 30 days / 年份行 / 12 格月份网格，无数据的月置灰）；消费后端 v0.67.0 新端点 `heatmap-months`（`heatmap-years` 同版本加 `timezoneOffset`，两者同源保证年月自洽）；新增 `ui/popover` 原语（无新依赖）；修 ChartSection 占位态高度塌陷（骨架替代图表 + loading 隐藏 actions 导致切年份卡片 379→188→379）。1266/1266。
 
