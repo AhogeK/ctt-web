@@ -167,6 +167,23 @@ pnpm test:e2e --debug
 pnpm build && pnpm test:e2e
 ```
 
+**Coverage.** Each feature folder under `e2e/` mocks its own endpoints with `page.route()` and
+drives the real router, so a spec exercises the page the way a user reaches it. Fixtures declare
+the **wire** shape locally (never imported from `src/`), which is what lets them reproduce the
+server's omitted-key cases — a LIFETIME badge with no `windowStart`, a deleted leaderboard account
+with no `displayName`.
+
+Two assertions are worth knowing about before editing them, because they are the only place the
+claim can be checked: the trophy artwork's fit inside its completion ring is measured from the
+rendered geometry (jsdom reports every `getBBox()` as zero, so the unit tests cannot), and the
+leaderboard's period selector is asserted against the requests actually put on the wire — an
+unsupported dimension/period pair is a `400 COMMON_003` rather than a fallback, so the selector
+must never be able to build one.
+
+> The `webkit` and `firefox` projects need `pnpm exec playwright install` for those engines;
+> without them `pnpm test:e2e` fails at launch. `--project=chromium` runs the whole suite against
+> the engine CI uses.
+
 ## 🔍 Lint & Format
 
 ```sh
