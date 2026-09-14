@@ -251,19 +251,18 @@ export function medalFitTransform(art: TrophyArt): string {
   const scale = budget / Math.max(distance, 0.001)
   const [dx, dy] = center
   const s = Number(scale.toFixed(4))
-  /*
-   * Move the artwork's own centre onto the grid centre. `center` is the offset of the
-   * artwork's bounding-box centre FROM the grid centre, so its absolute centre is
-   * `CENTER + offset`, and mapping that to `CENTER` under a scale about the origin is
-   * `translate(CENTER - s*(CENTER + offset)) scale(s)`, i.e.
-   * `translate(CENTER*(1-s) - s*offset) scale(s)`.
-   *
-   * The `CENTER*(1-s)` term is what a first version of this got wrong: writing
-   * `translate(CENTER - s*offset)` scaled the offset but not the grid centre, leaving
-   * every artwork offset by `CENTER*(1-s)` — up to ~4.9 units at s=0.6, which is
-   * nearly half the artwork. Measured on the real page as a centre of (21.6, 21.6)
-   * rather than (12, 12).
-   */
+  // Move the artwork's own centre onto the grid centre. `center` is the offset of the
+  // artwork's bounding-box centre FROM the grid centre, so its absolute centre is
+  // `CENTER + offset`, and mapping that to `CENTER` under a scale about the origin is
+  // `translate(CENTER - s*(CENTER + offset)) scale(s)`, i.e.
+  // `translate(CENTER*(1-s) - s*offset) scale(s)`.
+
+  // The `CENTER*(1-s)` term is what a first version of this got wrong: writing
+  // `translate(CENTER - s*offset)` scaled the offset but not the grid centre, leaving
+  // every artwork offset by `CENTER*(1-s)` — up to ~4.9 units at s=0.6, which is
+  // nearly half the artwork. Measured on the real page as a centre of (21.6, 21.6)
+  // rather than (12, 12).
+
   const tx = Number((TROPHY_CENTER * (1 - s) - s * dx).toFixed(4))
   const ty = Number((TROPHY_CENTER * (1 - s) - s * dy).toFixed(4))
   return `translate(${tx} ${ty}) scale(${s})`
@@ -373,13 +372,12 @@ function present(type: string, badges: Achievement[]): FamilyPresentation {
   const known = FAMILY_PRESENTATION[type]
   if (known !== undefined) return known
 
-  /*
-   * An unknown family. The server's family name is the only honest label for the
-   * trophy, but the badge already carries copy the server wrote for it — use that
-   * as the blurb so a new family is still readable rather than a bare enum name.
-   * Single-tier families use their own displayName as the label, which is more
-   * informative than the enum.
-   */
+  // An unknown family. The server's family name is the only honest label for the
+  // trophy, but the badge already carries copy the server wrote for it — use that
+  // as the blurb so a new family is still readable rather than a bare enum name.
+  // Single-tier families use their own displayName as the label, which is more
+  // informative than the enum.
+
   const first = badges[0]!
   return {
     label: badges.length === 1 ? first.displayName : type,

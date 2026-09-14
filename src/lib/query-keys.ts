@@ -3,6 +3,7 @@
  * Provides type-safe, centralized query key management
  * Prevents string literal duplication and enables easy refactoring
  */
+import type { LeaderboardDimension, LeaderboardPeriod } from './schemas/leaderboard.schema'
 
 /**
  * User-related query keys
@@ -37,11 +38,13 @@ export const deviceKeys = {
  */
 export const leaderboardKeys = {
   all: ['leaderboard'] as const,
-  /*
-   * One ranking per (dimension, period, page) — all three change the payload, so all
-   * three belong in the key. The previous bare `global()` would have served one
-   * dimension's page from cache for every other dimension.
-   */
-  page: (dimension: string, period: string, offset: number) =>
+  // One ranking per (dimension, period, page) — all three change the payload, so all
+  // three belong in the key. The previous bare `global()` would have served one
+  // dimension's page from cache for every other dimension.
+
+  // Typed by the domain enums rather than `string`: these two values are the whole point
+  // of the key, so a typo or a renamed member should be a type error rather than a
+  // silently distinct cache entry.
+  page: (dimension: LeaderboardDimension, period: LeaderboardPeriod, offset: number) =>
     [...leaderboardKeys.all, dimension, period, offset] as const,
 }

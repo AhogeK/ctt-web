@@ -26,6 +26,7 @@ import { Skeleton } from '@/components/ui/skeleton'
 import { DIMENSION_LABELS, PERIOD_LABELS, formatScore, periodsFor, useLeaderboard } from '../composables/useLeaderboard'
 import {
   LEADERBOARD_PAGE_SIZE,
+  defaultPeriodFor,
   type LeaderboardDimension,
   type LeaderboardPeriod,
 } from '@/lib/schemas/leaderboard.schema'
@@ -44,8 +45,9 @@ const offset = ref(0)
  * that does not have them.
  */
 watch(dimension, () => {
-  const legal = periodsFor(dimension.value)
-  period.value = legal[0]!
+  // `defaultPeriodFor` rather than indexing the legal list here: the reset and the
+  // composable's fallback must agree on which period wins, so there is one definition.
+  period.value = defaultPeriodFor(dimension.value)
   offset.value = 0
 })
 watch(period, () => {
