@@ -17,23 +17,62 @@
  * period ends. In one undifferentiated grid the two read as the same kind of goal,
  * which is exactly the confusion the split removes.
  */
-import { computed } from 'vue'
-import { AlertCircle, RefreshCw, Trophy as TrophyIcon } from '@lucide/vue'
+import { computed, watch } from 'vue'
+import { useNow } from '@vueuse/core'
+import { AlertCircle, CalendarClock, RefreshCw, Trophy as TrophyIcon } from '@lucide/vue'
 import { Button } from '@/components/ui/button'
 import { Skeleton } from '@/components/ui/skeleton'
 import { useStatsAchievements } from '@/composables/useStats'
 import TrophyCard from '../components/TrophyCard.vue'
-import { buildTrophies, byNextWin, splitByWindow, trophyTotals } from '../composables/trophy-model'
+import {
+  buildTrophies,
+  byNextWin,
+  formatDaysLeft,
+  groupByWindow,
+  isClosing,
+  splitByWindow,
+  trophyTotals,
+} from '../composables/trophy-model'
 
 const { data, isPending, isError, refetch } = useStatsAchievements()
+
+/**
+ * A clock that ticks once a minute, so a page left open across midnight stops
+ * claiming yesterday's remaining days. Minute granularity is enough: the countdown
+ * is expressed in whole days, and only the local *date* changes its value.
+ */
+const now = useNow({ interval: 60_000 })
+
+/**
+ * The clock and the data must move together.
+ *
+ * Measured: `windowEnd` is inclusive and a passed window clamps to 0 days, which
+ * renders as "Ends today". So a page left open past a window boundary would show a
+ * live "Ends today" beside a date range the window has already left — two
+ * contradictory statements in one header, and nothing self-corrects it:
+ * `refetchOnWindowFocus` is false app-wide and this query sets no interval, so
+ * `staleTime` alone never triggers a request.
+ *
+ * Watching the local *date* (not the minute) refetches exactly when the server's
+ * answer can change — window boundaries are local dates. Re-fetching on a minute
+ * tick would poll 1440× more often for the same result.
+ */
+watch(
+  () => now.value.toDateString(),
+  () => refetch(),
+)
 
 const split = computed(() => splitByWindow(buildTrophies(data.value ?? [])))
 
 /** Lifetime trophies, closest to its next rung first. */
 const lifetimeTrophies = computed(() => byNextWin(split.value.lifetime))
 
-/** Resetting trophies, closest to its next rung first. */
-const activeTrophies = computed(() => byNextWin(split.value.active))
+/**
+ * Resetting trophies grouped by window. Each group carries the one deadline its
+ * members share, so the range and countdown are stated once per window rather than
+ * repeated on every card in it.
+ */
+const windowGroups = computed(() => groupByWindow(split.value.active, now.value))
 
 const totals = computed(() => trophyTotals([...split.value.lifetime, ...split.value.active]))
 
@@ -113,15 +152,72 @@ const isEmpty = computed(() => !isPending.value && !isError.value && totals.valu
       </section>
 
       <!-- Current period: starts over when the period ends, so it is separated
-           from the permanent record above rather than mixed into it. -->
-      <section v-if="activeTrophies.length > 0" class="flex flex-col gap-3" data-testid="section-active">
-        <div class="flex flex-wrap items-baseline justify-between gap-x-3 gap-y-1">
+           from the permanent record above rather than mixed into it. Each window
+           is its own sub-section because the deadline — what makes the group a
+           group — belongs to the window, not to any one trophy in it. -->
+      <section v-if="windowGroups.length > 0" class="flex flex-col gap-5" data-testid="section-active">
+        <div class="flex flex-col gap-1">
           <h2 class="text-[15px] font-semibold text-foreground">Current period</h2>
-          <p class="text-[11px] text-muted-foreground">Resets when the period ends — progress starts over</p>
+          <p class="text-[11px] text-muted-foreground">Resets when each period ends — progress starts over</p>
         </div>
 
-        <div class="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-3">
-          <TrophyCard v-for="trophy in activeTrophies" :key="trophy.key" :trophy="trophy" />
+        <div
+          v-for="group in windowGroups"
+          :key="group.window"
+          class="flex flex-col gap-3"
+          :data-window-group="group.window"
+          role="group"
+          :aria-label="group.label"
+        >
+          <div class="flex flex-wrap items-center gap-x-2.5 gap-y-1">
+            <CalendarClock class="h-3.5 w-3.5 shrink-0 text-muted-foreground" aria-hidden="true" />
+            <!--
+              A label, not a heading.
+              The cards below title themselves with an h3 (TrophyCard) in BOTH
+              sections, so making this a heading would either collide with them at
+              h3 or force the shared card to h4 — which would then skip a level
+              under the Lifetime section, where no group heading exists.
+              `role="group"` + `aria-label` conveys the grouping (screen readers
+              announce "This week, group") without disturbing h1 → h2 → h3.
+            -->
+            <span class="text-[13px] font-semibold text-foreground">{{ group.label }}</span>
+            <!-- The concrete dates being measured. Stated on the group because
+                 every trophy inside resets at the same instant. -->
+            <span v-if="group.range" class="text-[11px] tabular-nums text-muted-foreground" data-testid="window-range">
+              {{ group.range }}
+            </span>
+            <!-- The deadline. Over the closing stretch — today and tomorrow — a target
+                 is still reachable but no longer comfortably so, so the countdown is
+                 emphasised. Two constraints shape how:
+                 1. No new colour. DESIGN.md has no "urgent" hue — its status colours
+                    (green/emerald) mean success — and P3 records what a bespoke
+                    urgency colour cost last time (a mode-dependent ramp that failed
+                    contrast in light mode).
+                 2. Weight does nothing here. The page specifies `font-family: Inter`
+                    but never loads it (no `@font-face`, no font file), so every
+                    `font-*` utility computes to the fallback's single 400 face —
+                    measured: `font-semibold` on the h1/h2 also reports 400. An
+                    emphasis that only raises weight would be invisible.
+                 So the emphasis is the foreground token *plus* a hairline underline
+                 (decoration, rendered by the text engine, mode-independent), which
+                 survives greyscale and is not colour-dependent. -->
+            <span
+              v-if="formatDaysLeft(group.daysLeft)"
+              class="text-[11px] tabular-nums"
+              :class="
+                isClosing(group.daysLeft)
+                  ? 'text-foreground underline decoration-dotted underline-offset-2'
+                  : 'text-muted-foreground'
+              "
+              data-testid="window-countdown"
+            >
+              {{ formatDaysLeft(group.daysLeft) }}
+            </span>
+          </div>
+
+          <div class="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-3">
+            <TrophyCard v-for="trophy in group.trophies" :key="trophy.key" :trophy="trophy" />
+          </div>
         </div>
       </section>
     </template>
