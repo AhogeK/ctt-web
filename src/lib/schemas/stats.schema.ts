@@ -115,10 +115,24 @@ export const WeekHourResponseSchema = z.object({
   weekdayCounts: z.record(z.string(), z.number().int().nonnegative()),
 })
 
+/**
+ * Measurement window a badge's progress is computed over (ctt-server v0.71.0).
+ *
+ * `LIFETIME` badges never reset; every other value resets at the start of the
+ * next local period, and the response carries the concrete range in
+ * `windowStart`/`windowEnd`.
+ */
+export const AchievementWindowSchema = z.enum(['LIFETIME', 'DAY', 'WEEK', 'MONTH', 'YEAR'])
+export type AchievementWindow = z.infer<typeof AchievementWindowSchema>
+
 /** A coding achievement badge with unlock state and progress. */
 export const AchievementSchema = z.object({
   // Stable achievement code (e.g. STREAK_7)
   code: z.string(),
+  // Family this badge belongs to (e.g. STREAK) — groups a badge into its ladder
+  type: z.string(),
+  // 1-based position within the family AND window, ascending by target
+  tier: z.number().int().positive(),
   // Human-readable badge name
   displayName: z.string(),
   // What the badge rewards
@@ -131,8 +145,16 @@ export const AchievementSchema = z.object({
   progress: z.number().int().nonnegative(),
   // Threshold the badge unlocks at
   target: z.number().int().nonnegative(),
-  // Unit of progress and target (e.g. "days")
+  // Unit of progress and target (e.g. "days", "seconds", "percent")
   unit: z.string(),
+  // Windowed achievements (v0.71.0). The server omits these for LIFETIME badges
+  // (Jackson non_null), so they default to null exactly like `unlockedAt` —
+  // treating them as required would reject a legitimate response.
+  window: AchievementWindowSchema.default('LIFETIME'),
+  // First local date of the current window; null for LIFETIME
+  windowStart: z.string().nullable().default(null),
+  // Last local date of the current window; null for LIFETIME
+  windowEnd: z.string().nullable().default(null),
 })
 
 /**

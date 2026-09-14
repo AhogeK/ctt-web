@@ -2,45 +2,37 @@
  * Achievement trophy model — turns the flat badge list the API returns into the
  * tier ladders the UI renders.
  *
- * ## Why this exists
+ * ## Why grouping is needed
  *
- * `GET /stats/achievements` returns 15 badges, but they are **7 families of 2–3
- * tiers**, and progress is measured once per family. Measured against a real
- * account, all three STREAK badges reported `progress = 7`; all three TOTAL
- * badges reported `460860`. Rendering 15 cards would therefore print the same
- * number five times and imply 15 independent goals. One trophy per family, each
- * carrying a ladder of tiers, is the honest shape.
+ * The API returns one entry per threshold (67 of them as of ctt-server v0.71.0),
+ * but progress is measured once per **(family, window)**. Rendering 67 cards
+ * would print a family's single measured value many times over and imply dozens
+ * of independent goals. One trophy per (family, window), each carrying a ladder
+ * of tiers, is the honest shape.
  *
- * ## The seam, and how it degrades
+ * ## Grouping is data-driven, not hardcoded
  *
- * The server's `AchievementResponse` does not carry the family even though its
- * enum knows it (`Achievement.type()`). Recovering the family from `code` is not
- * reliable — the codes are irregular (`TOTAL_10_HOURS` carries a unit,
- * `DAILY_BURST` carries no number, and the stems do not match the enum's type
- * names). So:
+ * Until v0.70.0 the client had to recognise families itself, because the response
+ * did not carry one — and the codes are not parseable (`DAILY_BURST` is tier 3 of
+ * `MAX_DAILY_SECONDS`, while `DAILY_BURST_4` is tier 1; `PERFECT_MONTH` is tier 5
+ * of its family while `PERFECT_MONTH_50` is tier 1). The server now sends `type`
+ * and `tier`, so grouping and ordering are pure data operations and adding a
+ * badge server-side needs **no change here**.
  *
- * - Families are declared here as **data**, not inferred from strings.
- * - A code that no declaration claims still renders, as a **single-tier trophy
- *   of its own**, using the server's own `displayName` / `description`.
- *
- * That degradation is the point: a badge added server-side appears to users
- * immediately, without a frontend change. It joins a shared ladder once a
- * declaration here lists its **exact code** — matching is by code, not by prefix,
- * because the codes are irregular enough that a prefix rule would misgroup them.
- * Until then it renders standalone rather than being dropped.
- *
- * Once the API exposes `type` (and ideally `tier`), the declarations below lose
- * their matching role and this module becomes a pure lookup — the call sites do
- * not change.
+ * The key must be `(type, window)`, not `type` alone: `TOTAL_SECONDS` has five
+ * independent ladders — a LIFETIME one with 8 tiers and DAY/WEEK/MONTH/YEAR ones
+ * with 2–3 each. Grouping by `type` alone would merge the 3 daily tiers into the
+ * lifetime ladder and number them 9/10/11.
  */
 
-import type { Achievement } from '@/lib/schemas/stats.schema'
+import type { Achievement, AchievementWindow } from '@/lib/schemas/stats.schema'
 
 /** Built-in artwork, one per family. Unknown families fall back to `generic`. */
 export type TrophyArt =
   | 'streak'
   | 'volume'
   | 'polyglot'
+  | 'activeDays'
   | 'earlyBird'
   | 'nightOwl'
   | 'burst'
@@ -48,83 +40,58 @@ export type TrophyArt =
   | 'generic'
 
 /**
- * A family declaration.
+ * Presentation metadata for a family.
  *
- * `codes` lists the ladder in ascending order. `label` and `blurb` are the
- * trophy's own copy — the per-tier strings the server sends describe the tier
- * ("7-Day Streak"), not the family, so they cannot label the artwork.
+ * Only what the server cannot express: a readable title, a one-line description
+ * of what the ladder rewards, and which artwork to draw. Grouping, ordering and
+ * thresholds all come from the response — deliberately not duplicated here, so a
+ * server-side rebalance or a new badge needs no change in this file.
  */
-export interface TrophyFamily {
-  /** Stable key, also the analytics/vue-key identity. */
-  key: string
-  /** Trophy title shown under the artwork. */
+interface FamilyPresentation {
   label: string
-  /** One line describing what the whole ladder rewards. */
   blurb: string
-  /** Artwork to draw. */
   art: TrophyArt
-  /** Codes in ascending tier order, lowest threshold first. */
-  codes: string[]
+}
+
+const FAMILY_PRESENTATION: Record<string, FamilyPresentation> = {
+  STREAK: { label: 'Streak', blurb: 'Code on consecutive days', art: 'streak' },
+  TOTAL_SECONDS: { label: 'Total time', blurb: 'Accumulate coding time', art: 'volume' },
+  LANGUAGE_COUNT: { label: 'Polyglot', blurb: 'Code in different languages', art: 'polyglot' },
+  ACTIVE_DAYS: { label: 'Active days', blurb: 'Code on enough days', art: 'activeDays' },
+  EARLY_BIRD_DAYS: { label: 'Early bird', blurb: 'Start coding in the morning', art: 'earlyBird' },
+  NIGHT_OWL_DAYS: { label: 'Night owl', blurb: 'Code late into the night', art: 'nightOwl' },
+  MAX_DAILY_SECONDS: { label: 'Marathon', blurb: 'Code a full day in one sitting', art: 'burst' },
+  PERFECT_MONTH: { label: 'Perfect month', blurb: 'Code on nearly every day of a month', art: 'perfectMonth' },
 }
 
 /**
- * The seven families the server currently ships.
+ * Display order within every band — not just the lifetime one.
  *
- * Order here is display order. Thresholds are **not** duplicated — each tier
- * reads `target` from its own server payload, so a rebalanced threshold needs no
- * frontend change.
+ * The rank it feeds runs in `buildTrophies` for every window band, and both
+ * sections are then re-sorted independently by closeness, so this order decides
+ * the tie-break among same-label ladders (all five `TOTAL_SECONDS` cards read
+ * "Total time").
+ *
+ * Derived from `FAMILY_PRESENTATION`'s own key order rather than restated as a
+ * second literal: two lists of the same eight families had to be edited together
+ * or silently disagree, and `Object.keys` preserves insertion order for string
+ * keys. Unknown families sort after the known ones, alphabetically.
  */
-export const TROPHY_FAMILIES: TrophyFamily[] = [
-  {
-    key: 'streak',
-    label: 'Streak',
-    blurb: 'Code on consecutive days',
-    art: 'streak',
-    codes: ['STREAK_3', 'STREAK_7', 'STREAK_30'],
-  },
-  {
-    key: 'volume',
-    label: 'Total time',
-    blurb: 'Accumulate coding time',
-    art: 'volume',
-    codes: ['TOTAL_10_HOURS', 'TOTAL_100_HOURS', 'TOTAL_500_HOURS'],
-  },
-  {
-    key: 'polyglot',
-    label: 'Polyglot',
-    blurb: 'Code in different languages',
-    art: 'polyglot',
-    codes: ['LANGUAGES_3', 'LANGUAGES_5', 'LANGUAGES_10'],
-  },
-  {
-    key: 'earlyBird',
-    label: 'Early bird',
-    blurb: 'Start coding in the morning',
-    art: 'earlyBird',
-    codes: ['EARLY_BIRD_10', 'EARLY_BIRD_30'],
-  },
-  {
-    key: 'nightOwl',
-    label: 'Night owl',
-    blurb: 'Code late into the night',
-    art: 'nightOwl',
-    codes: ['NIGHT_OWL_10', 'NIGHT_OWL_30'],
-  },
-  {
-    key: 'burst',
-    label: 'Marathon',
-    blurb: 'Code a full day in one sitting',
-    art: 'burst',
-    codes: ['DAILY_BURST'],
-  },
-  {
-    key: 'perfectMonth',
-    label: 'Perfect month',
-    blurb: 'Code on every day of a month',
-    art: 'perfectMonth',
-    codes: ['PERFECT_MONTH'],
-  },
-]
+const FAMILY_ORDER = Object.keys(FAMILY_PRESENTATION)
+
+/**
+ * Window display order: **lifetime first**, then the rolling periods shortest
+ * first. Lifetime leads because it is the section that carries a user's lasting
+ * record; the resetting ones are the current-period goals beneath it (see the
+ * `window` labels, which read "This week" / "Today").
+ */
+const WINDOW_PRESENTATION: Record<AchievementWindow, { label: string; order: number }> = {
+  LIFETIME: { label: 'All time', order: 0 },
+  DAY: { label: 'Today', order: 1 },
+  WEEK: { label: 'This week', order: 2 },
+  MONTH: { label: 'This month', order: 3 },
+  YEAR: { label: 'This year', order: 4 },
+}
 
 /** One rung of a ladder, carrying the server's own thresholds and state. */
 export interface TrophyTier {
@@ -137,7 +104,7 @@ export interface TrophyTier {
    * This tier's threshold.
    *
    * The family's *measured* value is separate (`Trophy.progress`) — the server
-   * reports one progress number for the whole family, not one per rung.
+   * reports one progress number per (family, window), not one per rung.
    */
   target: number
   unit: string
@@ -145,7 +112,21 @@ export interface TrophyTier {
 
 /** A trophy: one artwork plus its ladder, resolved for display. */
 export interface Trophy {
+  /** Unique key: `${type}:${window}`, stable across renders. */
   key: string
+  /** Server family name (`TOTAL_SECONDS`). */
+  type: string
+  /** Measurement window — what this trophy's progress resets with. */
+  window: AchievementWindow
+  /**
+   * Readable window noun ("This week") for a resetting trophy, else null.
+   *
+   * Rendered on the card because the window is the only thing separating ladders
+   * that share a family: the API returns `TOTAL_SECONDS` five times (lifetime,
+   * day, week, month, year) and they all present as "Total time". Without the
+   * noun, five cards read as duplicates of one another.
+   */
+  windowLabel: string | null
   label: string
   blurb: string
   art: TrophyArt
@@ -159,6 +140,12 @@ export interface Trophy {
   progress: number
   /** Unit the progress is expressed in. */
   unit: string
+  /** True when the whole ladder is earned. */
+  maxed: boolean
+  /** True when this ladder resets at the end of its window. */
+  resets: boolean
+  /** 0–1 completion of this trophy across its own ladder. */
+  completion: number
   /**
    * The tier currently earned, or `null` when none is. The *next* tier is
    * `tiers[earned]` — progress toward it is what the card's bar shows, because a
@@ -168,10 +155,6 @@ export interface Trophy {
   currentTier: TrophyTier | null
   /** The next tier still to earn, or `null` when the ladder is complete. */
   nextTier: TrophyTier | null
-  /** True when every tier is earned. */
-  maxed: boolean
-  /** 0–1 completion of this trophy across its own ladder. */
-  completion: number
 }
 
 function toTier(badge: Achievement): TrophyTier {
@@ -185,99 +168,115 @@ function toTier(badge: Achievement): TrophyTier {
   }
 }
 
-/**
- * Family-scoped measured value.
- *
- * The server repeats one number across a family's rungs (measured: all three
- * STREAK badges reported `7`), so any rung carries it — the highest is used so
- * this stays correct if the server ever reports per-rung values.
- */
-function familyProgress(badges: Achievement[]): number {
-  return badges.reduce((max, badge) => Math.max(max, badge.progress), 0)
+/** Group key: a family's ladder is per window, so both take part. */
+function groupKey(badge: Achievement): string {
+  return `${badge.type}:${badge.window}`
 }
 
-/**
- * Build one trophy from a family declaration plus the badges it received.
- *
- * A family whose codes are entirely absent from the response is skipped: showing
- * an empty ladder would invent a goal the server does not track.
- */
-function buildTrophy(family: TrophyFamily, byCode: Map<string, Achievement>): Trophy | null {
-  const found = family.codes
-    .map((code) => byCode.get(code))
-    .filter((badge): badge is Achievement => badge !== undefined)
+/** Presentation for a family, with a readable fallback for one we do not know. */
+function present(type: string, badges: Achievement[]): FamilyPresentation {
+  const known = FAMILY_PRESENTATION[type]
+  if (known !== undefined) return known
 
-  if (found.length === 0) return null
-
-  return finishTrophy(
-    { key: family.key, label: family.label, blurb: family.blurb, art: family.art },
-    found.map(toTier),
-    familyProgress(found),
-  )
+  /*
+   * An unknown family. The server's family name is the only honest label for the
+   * trophy, but the badge already carries copy the server wrote for it — use that
+   * as the blurb so a new family is still readable rather than a bare enum name.
+   * Single-tier families use their own displayName as the label, which is more
+   * informative than the enum.
+   */
+  const first = badges[0]!
+  return {
+    label: badges.length === 1 ? first.displayName : type,
+    blurb: first.description,
+    art: 'generic',
+  }
 }
 
-/** Shared tail for declared families and for the unknown-code fallback. */
-function finishTrophy(
-  identity: { key: string; label: string; blurb: string; art: TrophyArt },
-  tiers: TrophyTier[],
-  progress: number,
-): Trophy {
+/** Build one trophy from the badges sharing a (family, window). */
+function buildTrophy(badges: Achievement[]): Trophy {
+  const first = badges[0]!
+  const type = first.type
+  const window = first.window
+
+  // Ascending by tier, which the server defines by ascending target. Ties broken
+  // by code so the order is total and cannot shuffle between renders.
+  const tiers = [...badges]
+    .sort((a, b) => (a.tier !== b.tier ? a.tier - b.tier : a.code.localeCompare(b.code)))
+    .map(toTier)
+
   const earned = tiers.filter((tier) => tier.unlocked).length
+  const presentation = present(type, badges)
+  // Progress is family-and-window scoped, so the server repeats one value across
+  // the ladder; the max absorbs any per-tier disagreement without inventing one.
+  const progress = badges.reduce((max, badge) => Math.max(max, badge.progress), 0)
+  const resets = window !== 'LIFETIME'
 
   return {
-    key: identity.key,
-    label: identity.label,
-    blurb: identity.blurb,
-    art: identity.art,
+    key: groupKey(first),
+    type,
+    window,
+    // The window noun is the only thing distinguishing five `TOTAL_SECONDS`
+    // ladders that would otherwise all read "Total time".
+    windowLabel: resets ? WINDOW_PRESENTATION[window].label : null,
+    label: presentation.label,
+    blurb: presentation.blurb,
+    art: presentation.art,
     tiers,
     earned,
     total: tiers.length,
     progress,
-    unit: tiers[0]!.unit,
+    unit: first.unit,
+    maxed: earned === tiers.length,
+    resets,
+    completion: earned / tiers.length,
     currentTier: tiers[earned - 1] ?? null,
     nextTier: tiers[earned] ?? null,
-    maxed: earned === tiers.length,
-    completion: earned / tiers.length,
   }
 }
 
 /**
- * Group the flat badge list into trophies.
+ * Group the flat badge list into trophies, lifetime first.
  *
- * Declared families come first, in declaration order. Any code no declaration
- * claims is appended as its own single-tier trophy, so a newly shipped badge is
- * visible immediately and never dropped. Two passes over 15 items, so no index
- * is needed.
+ * Every badge is claimed by exactly one trophy — grouping is a partition, so
+ * nothing can be dropped and no code list has to be maintained. A family the
+ * presentation map does not know still produces a trophy, labelled with the
+ * server's own badge name and drawn with generic artwork. (A *window* the model
+ * does not know cannot occur: `AchievementWindowSchema` is a closed enum, so zod
+ * rejects it before the model sees it.)
+ *
+ * The returned order is lifetime first, then the rolling periods shortest-first,
+ * and within each band the declared family order then name. The view renders that
+ * as two sections (`splitByWindow`) rather than one list, so this ordering is what
+ * fixes the position *within* each section.
  */
 export function buildTrophies(badges: Achievement[]): Trophy[] {
-  const byCode = new Map(badges.map((badge) => [badge.code, badge]))
-  const claimed = new Set<string>()
-  const trophies: Trophy[] = []
-
-  for (const family of TROPHY_FAMILIES) {
-    const trophy = buildTrophy(family, byCode)
-    if (trophy === null) continue
-    trophies.push(trophy)
-    for (const code of family.codes) claimed.add(code)
+  const groups = new Map<string, Achievement[]>()
+  for (const badge of badges) {
+    const key = groupKey(badge)
+    const bucket = groups.get(key)
+    if (bucket === undefined) groups.set(key, [badge])
+    else bucket.push(badge)
   }
 
-  // Iterate the deduped map, not the raw array: two entries sharing an unclaimed
-  // code would otherwise produce two trophies with the same `key` — duplicate Vue
-  // keys and a doubled card.
-  for (const [code, badge] of byCode) {
-    if (claimed.has(code)) continue
-    // Unknown to this build: still shown, as a one-rung ladder. Its own copy is
-    // the only label the server gave us, so use it.
-    trophies.push(
-      finishTrophy(
-        { key: code, label: badge.displayName, blurb: badge.description, art: 'generic' },
-        [toTier(badge)],
-        badge.progress,
-      ),
-    )
-  }
+  return [...groups.values()].map(buildTrophy).sort((a, b) => {
+    const order = WINDOW_PRESENTATION[a.window].order - WINDOW_PRESENTATION[b.window].order
+    if (order !== 0) return order
+    const familyA = FAMILY_ORDER.indexOf(a.type)
+    const familyB = FAMILY_ORDER.indexOf(b.type)
+    const rankA = familyA === -1 ? 99 : familyA
+    const rankB = familyB === -1 ? 99 : familyB
+    if (rankA !== rankB) return rankA - rankB
+    return a.label.localeCompare(b.label)
+  })
+}
 
-  return trophies
+/** Trophies that never reset, and those that do — the two page sections. */
+export function splitByWindow(trophies: Trophy[]): { lifetime: Trophy[]; active: Trophy[] } {
+  return {
+    lifetime: trophies.filter((trophy) => !trophy.resets),
+    active: trophies.filter((trophy) => trophy.resets),
+  }
 }
 
 /**

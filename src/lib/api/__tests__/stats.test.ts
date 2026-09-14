@@ -186,6 +186,8 @@ describe('getStatsAchievements', () => {
       statsEnvelope([
         {
           code: 'STREAK_7',
+          type: 'STREAK',
+          tier: 2,
           displayName: '7-Day Streak',
           description: 'Code on 7 consecutive days',
           unlocked: false,
@@ -193,6 +195,7 @@ describe('getStatsAchievements', () => {
           progress: 3,
           target: 7,
           unit: 'days',
+          window: 'LIFETIME',
         },
       ]),
     )
@@ -202,6 +205,87 @@ describe('getStatsAchievements', () => {
     expect(result).toHaveLength(1)
     expect(result[0]!.unlocked).toBe(false)
     expect(result[0]!.unlockedAt).toBeNull()
+  })
+
+  it('accepts a windowed badge carrying its concrete local range', async () => {
+    mockApiFetch.mockResolvedValue(
+      statsEnvelope([
+        {
+          code: 'WEEKLY_ACTIVE_5',
+          type: 'ACTIVE_DAYS',
+          tier: 2,
+          displayName: 'Five Active Days',
+          description: 'Code on 5 days this week',
+          unlocked: true,
+          unlockedAt: '2026-09-11T02:00:00Z',
+          progress: 5,
+          target: 5,
+          unit: 'days',
+          window: 'WEEK',
+          windowStart: '2026-09-07',
+          windowEnd: '2026-09-13',
+        },
+      ]),
+    )
+
+    const result = await getStatsAchievements()
+
+    expect(result[0]!.window).toBe('WEEK')
+    expect(result[0]!.windowStart).toBe('2026-09-07')
+    expect(result[0]!.windowEnd).toBe('2026-09-13')
+  })
+
+  it('defaults the window fields the server omits for lifetime badges', async () => {
+    // Jackson omits nulls, so a LIFETIME badge arrives without windowStart /
+    // windowEnd at all. Rejecting that shape would reject a valid response.
+    mockApiFetch.mockResolvedValue(
+      statsEnvelope([
+        {
+          code: 'STREAK_3',
+          type: 'STREAK',
+          tier: 1,
+          displayName: '3-Day Streak',
+          description: 'Code on 3 consecutive days',
+          unlocked: true,
+          unlockedAt: '2026-09-01T00:00:00Z',
+          progress: 3,
+          target: 3,
+          unit: 'days',
+          window: 'LIFETIME',
+        },
+      ]),
+    )
+
+    const result = await getStatsAchievements()
+
+    expect(result[0]!.windowStart).toBeNull()
+    expect(result[0]!.windowEnd).toBeNull()
+  })
+
+  it('defaults the window enum itself when the server omits it', async () => {
+    // Pre-v0.71.0 payloads (and any badge that means "never resets") have no
+    // `window`; the default must be LIFETIME, not a parse error.
+    mockApiFetch.mockResolvedValue(
+      statsEnvelope([
+        {
+          code: 'LEGACY_1',
+          type: 'STREAK',
+          tier: 1,
+          displayName: 'Legacy',
+          description: '',
+          unlocked: false,
+          unlockedAt: null,
+          progress: 0,
+          target: 1,
+          unit: 'days',
+        },
+      ]),
+    )
+
+    const result = await getStatsAchievements()
+
+    expect(result[0]!.window).toBe('LIFETIME')
+    expect(result[0]!.windowStart).toBeNull()
   })
 })
 

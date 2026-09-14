@@ -103,6 +103,13 @@ const shape = computed(() => props.art)
       <path d="M15 4c2 0 2.5 1 2.5 2v2c0 1.2.6 2 2.5 2-1.9 0-2.5.8-2.5 2v2c0 1-.5 2-2.5 2" />
     </template>
 
+    <!-- Active days: a calendar with marked days — the days you showed up. -->
+    <template v-else-if="shape === 'activeDays'">
+      <rect x="3.5" y="5" width="17" height="15.5" rx="2" />
+      <path d="M3.5 9.5h17M8 3.5V6M16 3.5V6" />
+      <path d="M7.5 13h1.5M11.25 13h1.5M15 13h1.5M7.5 16.75h1.5M11.25 16.75h1.5" />
+    </template>
+
     <!-- Early bird: sun over a horizon. -->
     <template v-else-if="shape === 'earlyBird'">
       <circle cx="12" cy="13" r="3.6" />
