@@ -128,6 +128,24 @@ When auditing built CSS, `rm -rf dist` first — the build does not always purge
 - All mocks use `RestApiResponse<T>` envelope matching `RestApiResponseSchema`; canonical fixtures in `e2e/fixtures/auth.ts`; contract reference in `e2e/mocks/handlers/auth.ts`
 - `e2e/tsconfig.json`: `"dom"` lib (page.evaluate), `nodenext` resolution (explicit `.js` imports)
 
+### Conventions learned from adding page specs
+
+- **Fixtures declare the wire shape locally; never import from `src/`.** `e2e/tsconfig.json` only
+  includes `./e2e/**`, and the schema's *parsed* type is not the wire shape: `.default(null)` makes
+  `windowStart`/`currentUserRank` required in the output while the server omits the keys entirely.
+  A fixture typed as the parsed type cannot express the omitted-key case it exists to reproduce.
+- **One navigation per test.** The auth harness seeds the session in memory, so `page.reload()` and
+  a fresh `page.goto()` both re-run the boot sequence and bounce to `/auth/login`. Client-side
+  `<RouterLink>` navigation works, but a route whose data the guard does not re-check is simplest —
+  every existing spec logs in once inside its setup helper and never navigates again.
+- **TanStack caches per query key**, so returning to a page already fetched renders from cache and
+  issues **no** request. Assert the rendered result, or pick an offset that is genuinely uncached;
+  a `lastQuery`-style wire assertion will otherwise read the previous request and mislead.
+- **`expect.poll` over recorded requests must not assume the last request is the one just
+  triggered** — filter the recorded list by the value under test instead.
+- Assert collections, not per-item conditionals: `playwright/no-conditional-expect` is right that an
+  `expect` inside `if` can skip silently. Build the filtered list, then assert on it (`toEqual([])`).
+
 ## API Key View Pattern (v0.11.0)
 
 - Four-state query view: skeleton → error (Retry) → empty (CTA) → GitHub PAT-style table

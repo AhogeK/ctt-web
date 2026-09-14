@@ -21,8 +21,12 @@
 | Leaderboard                       | ✅ Complete | 0.41.0         |
 | Settings                          | ⏳ Pending  | 1.0.0          |
 | i18n (zh/en)                      | ⏳ Pending  | 1.0.0          |
-| E2E Test Coverage                 | ⏳ Pending  | 1.0.0          |
+| E2E Test Coverage                 | 🚧 Partial  | 1.0.0          |
 | Production Deploy                 | ⏳ Pending  | 1.0.0          |
+
+## E2E Coverage
+
+- [x] **v0.42.2 (2026-09-14)** 成就页与排行榜页的 E2E — 此前两页**零 E2E 覆盖**（`e2e/auth/protected-routes.spec.ts` 只断言未登录跳转）。新增 `e2e/achievements/`（8 用例）与 `e2e/leaderboard/`（13 用例）：真实路由 + 真实 query + 真实 DOM。两条断言**只有真机能验**：① 奖杯图形是否落在完成圈内并从 `getBoundingClientRect` 反算（jsdom 的 `getBBox()` 全为 0，单测无能为力）；② 排行榜的 `dimension`/`period` 组合是否只发服务端接受的（非法对是 **400 `COMMON_003`**，故对**线上请求**断言而非渲染结果）。两者均已**注入缺陷验证可证伪**（改行号排名 / 恢复漏项公式 → 对应用例失败）。过程中确立 4 条 E2E 约定并写入 `systemPatterns.md`：fixture 声明 **wire 形状**而非 schema 解析类型（`.default(null)` 让输出类型要求键存在，而服务端是**省略键**）、每用例仅一次导航（内存态会话下 `reload`/新 `goto` 会退回登录页）、TanStack 按 key 缓存故回访**不发请求**、断言集合而非逐项 `if`（`no-conditional-expect`）。chromium 75/75。
 
 ## Leaderboard
 

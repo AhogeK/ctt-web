@@ -5,7 +5,7 @@
 **Phase**: Achievements 奖杯系统（v0.71.0 契约 / 周期截止 / 外圈几何）+ Leaderboard 契约修复 + Dashboard 面板迭代
 **Version**: 0.42.0 (2026-09-14)
 **Branch**: develop
-**Tests**: 1400/1400 unit; vue-tsc + lint 0 error 0 warning; build green; e2e layout 4/4
+**Tests**: 1400/1400 unit; vue-tsc + lint 0 error 0 warning; build green; e2e 75/75 chromium（achievements 8 + leaderboard 13 为新增）
 
 > 本文件只记「现在与最近」。**跨轮次可复用的判断在 [`domains/`](./domains/README.md)**（R24）：
 > `dashboard-visualization`（图表/配色/布局/交互）、`backend-contract`（接口契约与统计语义）、
@@ -168,6 +168,7 @@ fights back」与 `ai-workflow/practices.md` 的「When an edit tool corrupts a 
 - **v0.40.0** 「Current period」按窗口分子区，每区日期区间 + 倒计时；截止期属**窗口**而非奖杯，故只在分组头渲染一次。
 - **v0.41.0** 外圈未包住图形（九个全溢出、六个偏心）→ 图形按自身中心缩放并映射到格心，统一入圈且居中。
 - **v0.41.0** Leaderboard 契约修复（该页原调用不存在的端点，永远只能报错）→ 按实测契约重建 + 路由补 `AppLayout`。
+- **v0.42.2** 成就页 / 排行榜页 E2E（此前两页零覆盖）→ 8 + 13 用例，两条断言只有真机能验（环几何、非法组合不外发），均已注入缺陷验证可证伪。
 - **v0.42.0** 周期成就历史（`totalUnlocks` / `periodStreak`）→ 卡片显示「得过几次 + 🔥连击」。
   我给后端的需求报告**判断错了**（以为数解锁行即可，实则那些行只在访问页面时写入）—— 详见 `references.md` 与 `practices.md`。
 - 各轮的可复用判断已入领域文件（P6、practices、trophy-geometry.md）；流水见 `progress.md`。
