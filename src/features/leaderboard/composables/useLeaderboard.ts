@@ -21,23 +21,25 @@ import {
 /**
  * Fetch one page of a ranking.
  *
- * The period is never taken on faith: if the caller's period is not legal for the
- * requested dimension (a state the selectors should already prevent), it falls back
- * to that dimension's default rather than sending a request the server answers with
- * HTTP 400 `COMMON_003`. That keeps the illegal pair unreachable by construction
- * instead of turning it into an error the user has to decode.
+ * The page size is fixed at `LEADERBOARD_PAGE_SIZE` rather than taken as a parameter:
+ * the view's "is there another page" logic compares the returned row count against that
+ * same constant, so a caller-supplied size would silently break paging.
+ *
+ * The period is never taken on faith either: if the caller's period is not legal for the
+ * requested dimension (a state the selectors should already prevent), it falls back to
+ * that dimension's default rather than sending a request the server answers with HTTP
+ * 400 `COMMON_003`. That keeps the illegal pair unreachable by construction instead of
+ * turning it into an error the user has to decode.
  *
  * @param dimension - reactive ranking dimension
  * @param period - reactive period; coerced to a legal one for `dimension`
  * @param offset - reactive row offset for pagination
- * @param limit - page size (server allows 1–100)
  * @returns TanStack Query result for the current page
  */
 export function useLeaderboard(
   dimension: Ref<LeaderboardDimension>,
   period: Ref<LeaderboardPeriod>,
   offset: Ref<number>,
-  limit: number = LEADERBOARD_PAGE_SIZE,
 ) {
   const effectivePeriod = computed<LeaderboardPeriod>(() => {
     const legal = DIMENSION_PERIODS[dimension.value]
@@ -50,7 +52,7 @@ export function useLeaderboard(
       getLeaderboard({
         dimension: dimension.value,
         period: effectivePeriod.value,
-        limit,
+        limit: LEADERBOARD_PAGE_SIZE,
         offset: offset.value,
       }),
     // Server-computed rankings; short staleness so switching tabs is cheap but a

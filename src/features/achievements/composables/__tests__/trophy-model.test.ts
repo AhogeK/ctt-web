@@ -474,8 +474,7 @@ describe('medalFitTransform', () => {
     // artworks — the worst (the calendars) by 2.58 units.
     for (const art of TROPHY_ART_IDS) {
       const { tx, ty, s } = parse(medalFitTransform(art))
-      const { distance, center } = TROPHY_ART_GEOMETRY[art]
-      void center
+      const { distance } = TROPHY_ART_GEOMETRY[art]
       // The artwork is scaled by `s` about its own centre, which the previous test
       // pins onto the grid centre — so its farthest painted point is `s * distance`.
       expect(s * distance).toBeLessThanOrEqual(TROPHY_RING_INNER)
@@ -505,13 +504,12 @@ describe('medalFitTransform', () => {
   })
 
   it('records a plausible distance for every artwork', () => {
-    /*
-     * A sanity floor on the measured data. The bound cannot be the half-diagonal (12):
-     * `streak` is drawn high in the grid, so its farthest painted point measures 11.35
-     * — legitimate, and a good reason not to guess a threshold. What is not legitimate
-     * is a distance so small the scale becomes meaningless, or zero, which the clamp
-     * would silently absorb.
-     */
+    // A sanity floor on the measured data. The bound cannot be the half-diagonal (12):
+    // `streak` is drawn high in the grid, so its farthest painted point measures 11.35
+    // — legitimate, and a good reason not to guess a threshold. What is not legitimate
+    // is a distance so small the scale becomes meaningless, or zero, which the clamp
+    // would silently absorb.
+
     for (const art of TROPHY_ART_IDS) {
       expect(TROPHY_ART_GEOMETRY[art].distance).toBeGreaterThan(TROPHY_CENTER / 2)
       expect(TROPHY_ART_GEOMETRY[art].distance).toBeLessThan(2 * TROPHY_CENTER)
@@ -532,12 +530,11 @@ describe('period history', () => {
   })
 
   it('reads the base rung even when no rung is unlocked this period', () => {
-    /*
-     * The common case on real data: the server reports `unlocked: false` with a
-     * non-zero history whenever the current period has not been reached yet (measured:
-     * a day ladder at `unlocked=n` with `totalUnlocks=13`). Anchoring to the current rung
-     * would have nothing to read, which is why the base rung is used.
-     */
+    // The common case on real data: the server reports `unlocked: false` with a
+    // non-zero history whenever the current period has not been reached yet (measured:
+    // a day ladder at `unlocked=n` with `totalUnlocks=13`). Anchoring to the current rung
+    // would have nothing to read, which is why the base rung is used.
+
     const trophies = buildTrophies([
       windowed('DAY', {
         code: 'D1',
@@ -600,8 +597,9 @@ describe('periodUnit', () => {
   })
 
   it('uses the plural everywhere else, including zero', () => {
-    // Zero never renders (the card hides the line), but the helper must still be sane
-    // rather than returning the singular.
+    // Zero renders like any other count (the card shows the row for every resetting
+    // trophy), so the helper must still read naturally rather than returning the
+    // singular.
     expect(periodUnit('MONTH', 0)).toBe('months')
     expect(periodUnit('MONTH', 2)).toBe('months')
     expect(periodUnit('DAY', 13)).toBe('days')

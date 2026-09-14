@@ -182,12 +182,11 @@ describe('LeaderboardView', () => {
   })
 
   it('lets the reader return after paging one page past the end', async () => {
-    /*
-     * A ranking whose size is an exact multiple of the page size offers one page too
-     * many (a full page is the only end signal the API gives). That extra page is
-     * empty, and the pager lives in the non-empty branch — so without this control the
-     * reader is stranded with no way back.
-     */
+    // A ranking whose size is an exact multiple of the page size offers one page too
+    // many (a full page is the only end signal the API gives). That extra page is
+    // empty, and the pager lives in the non-empty branch — so without this control the
+    // reader is stranded with no way back.
+
     data.value = page({ entries: fullPage() })
     const wrapper = mountView()
 

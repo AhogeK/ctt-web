@@ -175,7 +175,7 @@ const streakAriaLabel = computed(() => {
 
       <!--
         History for every resetting trophy, zeros included. The rule is uniform on
-        purpose: a ladder with no history reads "🔥0 · 0 years reached" rather than
+        purpose: a ladder with no history reads "0 · 0 years reached" rather than
         silently dropping the line, so the presence of the row never itself carries
         meaning — every periodic card states the same two facts in the same place.
       -->

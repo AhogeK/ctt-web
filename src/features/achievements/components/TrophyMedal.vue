@@ -16,7 +16,14 @@
  * importing a second palette.
  */
 import { computed } from 'vue'
-import { TROPHY_RING_RADIUS, TROPHY_RING_STROKE, medalFitTransform, type TrophyArt } from '../composables/trophy-model'
+import {
+  TROPHY_CENTER,
+  TROPHY_RING_RADIUS,
+  TROPHY_RING_STROKE,
+  TROPHY_VIEWBOX,
+  medalFitTransform,
+  type TrophyArt,
+} from '../composables/trophy-model'
 
 const props = defineProps<{
   /** Which family's shape to draw. */
@@ -68,9 +75,15 @@ const fillOpacity = computed(() => FILL_OPACITY[props.grade])
 const shape = computed(() => props.art)
 
 /**
- * The ring's geometry, shared with the model so the artwork's fit and the ring it
- * fits inside cannot drift apart (the unit tests assert the one contains the other).
+ * The grid and ring geometry, taken from the model rather than restated as literals.
+ *
+ * The fit transform is computed from these same values, and the unit tests assert the
+ * artwork lands inside `TROPHY_RING_INNER` measured against `TROPHY_CENTER` — so if the
+ * template hard-coded `viewBox="0 0 24 24"` and `cx="12"`, changing the grid in the
+ * model would leave the ring drawn at the old centre with every test still green.
  */
+const viewBox = `0 0 ${TROPHY_VIEWBOX} ${TROPHY_VIEWBOX}`
+const gridCentre = TROPHY_CENTER
 const ringRadius = TROPHY_RING_RADIUS
 const ringStroke = TROPHY_RING_STROKE
 
@@ -90,7 +103,7 @@ const fit = computed(() => medalFitTransform(props.art))
   <svg
     :width="size ?? 40"
     :height="size ?? 40"
-    viewBox="0 0 24 24"
+    :viewBox="viewBox"
     fill="none"
     :stroke-width="grade === 0 ? 1.25 : 1.5"
     stroke-linecap="round"
@@ -104,8 +117,8 @@ const fit = computed(() => medalFitTransform(props.art))
          artwork's scale cannot resize the ring it is being fitted into. -->
     <circle
       v-if="maxed"
-      cx="12"
-      cy="12"
+      :cx="gridCentre"
+      :cy="gridCentre"
       :r="ringRadius"
       :stroke="BRAND"
       :stroke-width="ringStroke"
