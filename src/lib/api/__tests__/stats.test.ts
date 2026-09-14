@@ -195,6 +195,8 @@ describe('getStatsAchievements', () => {
           progress: 3,
           target: 7,
           unit: 'days',
+          totalUnlocks: 1,
+          periodStreak: 0,
           window: 'LIFETIME',
         },
       ]),
@@ -221,6 +223,8 @@ describe('getStatsAchievements', () => {
           progress: 5,
           target: 5,
           unit: 'days',
+          totalUnlocks: 1,
+          periodStreak: 0,
           window: 'WEEK',
           windowStart: '2026-09-07',
           windowEnd: '2026-09-13',
@@ -251,6 +255,8 @@ describe('getStatsAchievements', () => {
           progress: 3,
           target: 3,
           unit: 'days',
+          totalUnlocks: 1,
+          periodStreak: 0,
           window: 'LIFETIME',
         },
       ]),
@@ -278,6 +284,8 @@ describe('getStatsAchievements', () => {
           progress: 0,
           target: 1,
           unit: 'days',
+          totalUnlocks: 1,
+          periodStreak: 0,
         },
       ]),
     )
@@ -286,6 +294,61 @@ describe('getStatsAchievements', () => {
 
     expect(result[0]!.window).toBe('LIFETIME')
     expect(result[0]!.windowStart).toBeNull()
+  })
+
+  it('parses the period history fields (v0.72.0)', async () => {
+    mockApiFetch.mockResolvedValue(
+      statsEnvelope([
+        {
+          code: 'DAILY_TOTAL_1H',
+          type: 'TOTAL_SECONDS',
+          tier: 1,
+          displayName: 'Productive Hour',
+          description: 'Code for an hour today',
+          unlocked: false,
+          unlockedAt: null,
+          progress: 0,
+          target: 3600,
+          unit: 'seconds',
+          window: 'DAY',
+          windowStart: '2026-09-14',
+          windowEnd: '2026-09-14',
+          totalUnlocks: 13,
+          periodStreak: 3,
+        },
+      ]),
+    )
+
+    const result = await getStatsAchievements()
+
+    // Real shape: history is non-zero while this period is unreached.
+    expect(result[0]!.totalUnlocks).toBe(13)
+    expect(result[0]!.periodStreak).toBe(3)
+    expect(result[0]!.unlocked).toBe(false)
+  })
+
+  it('rejects a badge missing the history fields, which the server always sends', async () => {
+    // They are primitive ints server-side, so an absent key means the contract changed.
+    // Defaulting to 0 would silently render "never earned" for every badge.
+    mockApiFetch.mockResolvedValue(
+      statsEnvelope([
+        {
+          code: 'STREAK_7',
+          type: 'STREAK',
+          tier: 2,
+          displayName: '7-Day Streak',
+          description: '',
+          unlocked: true,
+          unlockedAt: '2026-09-01T00:00:00Z',
+          progress: 7,
+          target: 7,
+          unit: 'days',
+          window: 'LIFETIME',
+        },
+      ]),
+    )
+
+    await expect(getStatsAchievements()).rejects.toThrow('Invalid input')
   })
 })
 

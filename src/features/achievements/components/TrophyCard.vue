@@ -11,7 +11,7 @@ import { computed } from 'vue'
 import { formatDateTime, formatDuration } from '@/lib/utils'
 import TrophyMedal from './TrophyMedal.vue'
 import type { Trophy } from '../composables/trophy-model'
-import { tierProgress } from '../composables/trophy-model'
+import { periodUnit, tierProgress } from '../composables/trophy-model'
 
 const props = defineProps<{
   /** The trophy to draw: its ladder, measured value and unit. */
@@ -70,6 +70,30 @@ const tierLabel = computed(() => {
 const unlockedTitle = computed(() => {
   const at = props.trophy.currentTier?.unlockedAt
   return at === null || at === undefined ? undefined : formatDateTime(at)
+})
+
+/**
+ * The history line: how many periods this ladder has been reached in, and the current
+ * run of consecutive ones.
+ *
+ * The count needs its unit spelled out — "13" alone is unreadable, and which noun is
+ * right depends on the window ("13 days reached" for a daily ladder, "13 weeks" for a
+ * weekly one). The unit comes from the trophy's own window rather than the badge's
+ * `unit` field, which says how the *progress* is measured (seconds, or `percent`), not
+ * how often it has been reached.
+ */
+const reachedLabel = computed(() => {
+  const unit = periodUnit(props.trophy.window, props.trophy.periodsReached)
+  return `${props.trophy.periodsReached} ${unit} reached`
+})
+
+/**
+ * Spoken form of the streak. The flame is decorative — a screen reader would otherwise
+ * announce "fire three", and the number alone ("3") says nothing about what is counted.
+ */
+const streakAriaLabel = computed(() => {
+  const unit = periodUnit(props.trophy.window, props.trophy.periodStreak)
+  return `Reached ${props.trophy.periodStreak} ${unit} in a row`
 })
 </script>
 
@@ -148,6 +172,30 @@ const unlockedTitle = computed(() => {
       <span v-else class="text-[11px] text-muted-foreground" :title="unlockedTitle" data-testid="trophy-complete"
         >Complete</span
       >
+
+      <!--
+        History for every resetting trophy, zeros included. The rule is uniform on
+        purpose: a ladder with no history reads "🔥0 · 0 years reached" rather than
+        silently dropping the line, so the presence of the row never itself carries
+        meaning — every periodic card states the same two facts in the same place.
+      -->
+      <div
+        v-if="trophy.resets"
+        class="flex flex-wrap items-center gap-x-2 gap-y-1 text-[11px] text-muted-foreground"
+        data-testid="trophy-history"
+      >
+        <!--
+          The flame is decorative and the count carries the meaning: without the
+          aria-label a screen reader announces "fire" and then a bare number, with
+          nothing saying what is being counted.
+        -->
+        <span class="inline-flex items-center gap-1" :aria-label="streakAriaLabel" data-testid="trophy-streak">
+          <span aria-hidden="true">🔥</span>
+          <span class="tabular-nums">{{ trophy.periodStreak }}</span>
+        </span>
+        <span aria-hidden="true">·</span>
+        <span data-testid="trophy-reached">{{ reachedLabel }}</span>
+      </div>
     </div>
   </article>
 </template>

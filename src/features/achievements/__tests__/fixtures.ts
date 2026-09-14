@@ -27,6 +27,10 @@ export function achievement(over: Partial<Achievement> & { code: string }): Achi
     window: 'LIFETIME',
     windowStart: null,
     windowEnd: null,
+    // History (v0.72.0). Default: never reached, no streak — the state of a badge that
+    // exists but has not been earned in any period. Tests that care set them explicitly.
+    totalUnlocks: 0,
+    periodStreak: 0,
     ...over,
   }
 }

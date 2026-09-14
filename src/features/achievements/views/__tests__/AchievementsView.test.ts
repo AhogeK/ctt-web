@@ -94,6 +94,8 @@ function serverPayload(): Achievement[] {
     windowed('DAY', {
       windowStart: '2026-09-14',
       windowEnd: '2026-09-14',
+      // Real shape: history is non-zero while this period is not yet reached.
+      totalUnlocks: 4,
       code: 'DAILY_TOTAL_1H',
       type: 'TOTAL_SECONDS',
       tier: 1,
@@ -313,6 +315,82 @@ describe('AchievementsView', () => {
     nowValue.value = new Date(2026, 8, 15)
     await wrapper.vm.$nextTick()
     expect(refetchSpy).toHaveBeenCalledTimes(1)
+  })
+
+  it('shows a resetting trophy its period history, with the window noun', () => {
+    // "13" alone is unreadable, and the right noun depends on the window — a daily
+    // ladder counts days, a weekly one weeks. It is not the badge's `unit` field, which
+    // measures progress inside a period (seconds, or percent) rather than periods.
+    data = serverPayload()
+    const wrapper = mountView()
+
+    const history = wrapper.get('[data-trophy="TOTAL_SECONDS:DAY"] [data-testid="trophy-history"]')
+    // Streak and reached-count are separate elements now, so the line no longer reads
+    // as one sentence.
+    expect(history.get('[data-testid="trophy-reached"]').text()).toBe('4 days reached')
+  })
+
+  it('shows the period streak with a flame, zero included', () => {
+    // Zero is shown rather than hidden, by request: a broken run must read as 0 so the
+    // line does not silently lose half of itself.
+    data = [windowed('WEEK', { code: 'W1', type: 'ACTIVE_DAYS', tier: 1, target: 5, totalUnlocks: 9, periodStreak: 0 })]
+    const zero = mountView().get('[data-testid="trophy-streak"]')
+    expect(zero.text()).toContain('🔥')
+    expect(zero.text()).toContain('0')
+    // The flame is decorative; the count is announced with its unit.
+    expect(zero.attributes('aria-label')).toBe('Reached 0 weeks in a row')
+
+    data = [windowed('WEEK', { code: 'W1', type: 'ACTIVE_DAYS', tier: 1, target: 5, totalUnlocks: 9, periodStreak: 4 })]
+    const run = mountView().get('[data-testid="trophy-streak"]')
+    expect(run.text()).toContain('4')
+    expect(run.attributes('aria-label')).toBe('Reached 4 weeks in a row')
+  })
+
+  it('spells the streak unit from the window, singular included', () => {
+    data = [
+      windowed('MONTH', { code: 'M1', type: 'ACTIVE_DAYS', tier: 1, target: 10, totalUnlocks: 1, periodStreak: 1 }),
+    ]
+    const wrapper = mountView()
+    // Singular matters: the reached count rendered "1 months" live before this was fixed.
+    expect(wrapper.get('[data-testid="trophy-streak"]').attributes('aria-label')).toBe('Reached 1 month in a row')
+    expect(wrapper.get('[data-testid="trophy-reached"]').text()).toBe('1 month reached')
+  })
+
+  it('hides the history for a lifetime trophy', () => {
+    // A lifetime badge has a single period, so its counts are always 0/1 and say
+    // nothing; the card would be adding noise to every lifetime trophy.
+    data = serverPayload()
+    const wrapper = mountView()
+
+    const lifetime = wrapper.get('[data-testid="section-lifetime"]')
+    expect(lifetime.findAll('[data-testid="trophy-history"]')).toHaveLength(0)
+  })
+
+  it('states zero for a resetting ladder with no history at all', () => {
+    // Zeros are shown, not hidden, so the row's presence never itself carries meaning:
+    // every periodic card states the same two facts in the same place.
+    data = [windowed('DAY', { code: 'D1', type: 'TOTAL_SECONDS', tier: 1, target: 3_600, unit: 'seconds' })]
+    const wrapper = mountView()
+    expect(wrapper.get('[data-testid="trophy-streak"]').text()).toContain('0')
+    expect(wrapper.get('[data-testid="trophy-reached"]').text()).toBe('0 days reached')
+  })
+
+  it('shows a broken run as zero on an established ladder', () => {
+    // A run that ended reads 0 rather than the line losing half of itself.
+    data = [
+      windowed('DAY', {
+        code: 'D1',
+        type: 'TOTAL_SECONDS',
+        tier: 1,
+        target: 3_600,
+        unit: 'seconds',
+        totalUnlocks: 13,
+        periodStreak: 0,
+      }),
+    ]
+    const wrapper = mountView()
+    expect(wrapper.get('[data-testid="trophy-streak"]').text()).toContain('0')
+    expect(wrapper.get('[data-testid="trophy-reached"]').text()).toBe('13 days reached')
   })
 
   it('does not repeat the window range on the cards inside the group', () => {

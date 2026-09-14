@@ -93,6 +93,42 @@ const WINDOW_PRESENTATION: Record<AchievementWindow, { label: string; order: num
   YEAR: { label: 'This year', order: 4 },
 }
 
+/**
+ * Noun for one period of each window, singular and plural, for counting how many have
+ * been reached.
+ *
+ * Distinct from the badge's own `unit`, which measures *progress* within a period
+ * (seconds, days, `percent`) — this counts the periods themselves. A daily ladder
+ * reached on 13 days and a weekly one reached in 3 weeks are the same kind of number
+ * with different nouns, so the noun has to come from the window.
+ *
+ * Both forms are carried because a single-period count is ordinary on a young account —
+ * measured: a monthly ladder at exactly 1 — and "1 months reached" is the kind of thing
+ * that makes a page look unfinished.
+ *
+ * `LIFETIME` is present for exhaustiveness only; a lifetime badge has one period, so it
+ * is never counted and the card does not render it.
+ */
+export const PERIOD_UNIT: Record<AchievementWindow, { one: string; many: string }> = {
+  LIFETIME: { one: 'lifetime', many: 'lifetimes' },
+  DAY: { one: 'day', many: 'days' },
+  WEEK: { one: 'week', many: 'weeks' },
+  MONTH: { one: 'month', many: 'months' },
+  YEAR: { one: 'year', many: 'years' },
+}
+
+/**
+ * Noun for a count of periods, singular or plural.
+ *
+ * @param window - the trophy's measurement window
+ * @param count - how many periods
+ * @returns The matching noun ("day" / "days")
+ */
+export function periodUnit(window: AchievementWindow, count: number): string {
+  const forms = PERIOD_UNIT[window]
+  return count === 1 ? forms.one : forms.many
+}
+
 /** One rung of a ladder, carrying the server's own thresholds and state. */
 export interface TrophyTier {
   code: string
@@ -108,6 +144,14 @@ export interface TrophyTier {
    */
   target: number
   unit: string
+  /**
+   * Periods this specific rung has been reached in (server, v0.72.0). Per-rung, not per
+   * ladder: measured, a day ladder reads 13 / 12 / 11 from its base rung up, because a
+   * higher threshold is reached in fewer periods.
+   */
+  periodsReached: number
+  /** Consecutive periods ending now in which this rung was reached. */
+  periodStreak: number
 }
 
 /**
@@ -277,6 +321,33 @@ export interface Trophy {
   currentTier: TrophyTier | null
   /** The next tier still to earn, or `null` when the ladder is complete. */
   nextTier: TrophyTier | null
+  /**
+   * How many periods this ladder has ever been reached in, counting a period once if
+   * any rung of it was hit.
+   *
+   * Taken from the **lowest rung** (`tiers[0]`, the smallest target). Two reasons it is
+   * not a free choice:
+   *
+   * - It is monotone by construction. A higher threshold cannot be met more often than
+   *   a lower one, so the base rung's count is the largest and means "periods in which
+   *   this ladder was engaged at all". Measured on the real payload: a day ladder reads
+   *   13 / 12 / 11 down its rungs, a week ladder 3 / 2 / 0.
+   * - It is defined when the ladder is *not* currently unlocked, which is the common
+   *   case — the server reports `unlocked: false` with `totalUnlocks: 13` whenever the
+   *   current period has not been reached yet. Anchoring to the current rung would have
+   *   nothing to read then, and anchoring to "the best rung ever" would invent a
+   *   concept the API does not have.
+   *
+   * The server computes this from session history rather than counting unlock rows,
+   * because those rows are only written when the page is opened.
+   */
+  periodsReached: number
+  /**
+   * Consecutive periods ending with the current one in which this ladder was reached,
+   * from the same base rung. `0` when the current period has not been reached — the
+   * server's choice, so `periodStreak > 0` never contradicts `unlocked`.
+   */
+  periodStreak: number
 }
 
 function toTier(badge: Achievement): TrophyTier {
@@ -287,6 +358,8 @@ function toTier(badge: Achievement): TrophyTier {
     unlockedAt: badge.unlockedAt,
     target: badge.target,
     unit: badge.unit,
+    periodsReached: badge.totalUnlocks,
+    periodStreak: badge.periodStreak,
   }
 }
 
@@ -327,6 +400,10 @@ function buildTrophy(badges: Achievement[]): Trophy {
     .sort((a, b) => (a.tier !== b.tier ? a.tier - b.tier : a.code.localeCompare(b.code)))
     .map(toTier)
 
+  // The ladder's base rung (`tiers` is ascending, so this is the lowest target). Its
+  // history counts are what the trophy reports; see `Trophy.periodsReached`.
+  const base = tiers[0]!
+
   const earned = tiers.filter((tier) => tier.unlocked).length
   const presentation = present(type, badges)
   // Progress is family-and-window scoped, so the server repeats one value across
@@ -356,6 +433,9 @@ function buildTrophy(badges: Achievement[]): Trophy {
     completion: earned / tiers.length,
     currentTier: tiers[earned - 1] ?? null,
     nextTier: tiers[earned] ?? null,
+    // Read off the lowest rung — see the field docs for why that rung and not another.
+    periodsReached: base.periodsReached,
+    periodStreak: base.periodStreak,
   }
 }
 
