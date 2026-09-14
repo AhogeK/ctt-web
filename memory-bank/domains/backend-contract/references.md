@@ -25,9 +25,14 @@ Two of these carry traps worth knowing before wiring a panel:
 
 - **`/stats/recent` takes no `start`/`end`.** A panel for it cannot follow the filter bar's period;
   it follows the origin filters only. See `dashboard-visualization/references.md`.
-- **`/stats/achievements` reports progress per family, not per badge** — all three `STREAK_*` entries
-  return the same `progress`. It also omits the family (`type`) the enum knows, so the frontend
-  matches on `code`. Full detail: [`achievements`](../achievements/references.md).
+- **`/stats/achievements` reports progress per (family, window), not per badge** — every `STREAK_*`
+  entry returns the same `progress`. Since v0.71.0 it *does* send `type` and `tier`, so grouping is
+  data-driven; full detail in [`achievements`](../achievements/references.md).
+- **`/leaderboard` requires `dimension`**, and the legal `period` values depend on it: `TOTAL` takes
+  all four, `STREAK`/`NIGHT_OWL`/`EARLY_BIRD` only `ALL`, `GROWTH` only `WEEK`. An unsupported pair is
+  HTTP 400 `COMMON_003` — not a quiet fallback. `displayName` and `currentUserRank` arrive as
+  **absent keys** (not nulls) for a deleted account and an unranked caller, and `rank` is the
+  server's own with ties shared, so it must never be derived from the row index.
 
 ### Auth / account
 

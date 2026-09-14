@@ -92,7 +92,7 @@
 
 - [ ] Auth: Token refresh + expiry handling
 - [ ] Dashboard: Weekday / IDE / Devices distribution panels（后端已就绪；Project 已随 v0.35.0 上线，其余复用共享排名列表）
-- [ ] Leaderboard: Redis ZSet ranking display
+- [x] Leaderboard: Redis ZSet ranking display (v0.41.0 — contract rebuilt against `GET /leaderboard`)
 - [ ] Settings: Language switch (zh-CN / en-US)
 - [ ] CI: GitHub Actions (lint + test + build)
 

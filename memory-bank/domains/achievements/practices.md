@@ -21,8 +21,9 @@ still looking correct in a screenshot — the page and its data were fine, which
 invisible until the DOM was inspected for links. `src/router/modules/*.ts` are auto-globbed by
 `router/index.ts`, so no index edit is needed, but the shape must match `dashboard.ts` / `devices.ts`.
 
-`/leaderboard` is registered the other way and has the same missing-shell defect — out of scope for
-the achievements work, but worth fixing when that page is next touched.
+`/leaderboard` had the same defect and was fixed alongside the contract rebuild (v0.41.0). Note
+that nesting restored the *shell*, not a nav entry: `AppSidebar` still lists no `/leaderboard`, so
+the page remains reachable by URL or in-app link only.
 
 ## Grouping, in one pass
 
@@ -130,22 +131,18 @@ enforces the fit, and the traps in measuring SVG are in
 
 ## A lazily-evaluated write log is not an event history
 
-`user_achievements` looks like a log of earned achievements, and it is not: rows are
-written only when `evaluate` runs, and `evaluate` has a single caller — `GET
-/achievements`. A push calls `evictCache` and nothing else. So the table records *the
-periods in which the user opened the page*, and counting its rows as "times achieved"
-would report how often someone looked.
+The transferable rule, and the reason `totalUnlocks` is computed rather than counted
+(the call-chain evidence is in `references.md`):
 
-Reading the schema was not enough to see this; tracing the **write path** was. Two greps
-settle it: how many callers `insertIfAbsent` has (one), and how many callers *that* has
-(one), and whether any other component references the service (a cache eviction only).
+**Before trusting a stored row as event history, ask what triggers the write.** If the
+trigger is a *read* — a page visit, a poll, a cache miss — then the table is a log of who
+looked, not of what happened, and any count derived from it measures the wrong thing.
+`user_achievements` is exactly this shape: it looks like a trophy log and is really the
+set of periods in which the user opened the achievements page.
 
-The same trap exists in reverse for any "derived" count: before trusting a stored row as
-history, ask what triggers the write. If the trigger is a read, the data is a read log.
-
-The server's fix is worth copying when this comes up again: recompute from the source of
-truth (sessions) and take the **union** with stored rows — correct even where the log is
-sparse, and monotone, since a deleted session cannot retract an award.
+The general fix, worth reusing: recompute from the source of truth and take the **union**
+with the stored rows. That is correct even where the log is sparse, and monotone — a
+deleted session cannot retract an award that was already given.
 
 ## Reading the grade back in a test
 
