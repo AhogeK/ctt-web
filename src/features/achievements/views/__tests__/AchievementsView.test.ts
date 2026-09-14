@@ -1,6 +1,6 @@
-import { describe, expect, it, vi, beforeEach } from 'vite-plus/test'
+import { describe, expect, it, vi, afterEach, beforeEach } from 'vite-plus/test'
 import { mount } from '@vue/test-utils'
-import { computed } from 'vue'
+import { computed, ref } from 'vue'
 import AchievementsView from '../AchievementsView.vue'
 import type { Achievement } from '@/lib/schemas/stats.schema'
 import { achievement, windowed } from '../../__tests__/fixtures'
@@ -10,6 +10,8 @@ let data: Achievement[] = []
 let pending = false
 let failed = false
 const refetchSpy = vi.fn<() => void>()
+/** Every wrapper mounted by a test, so each can be unmounted after it. */
+const wrappers: ReturnType<typeof mount>[] = []
 
 vi.mock('@/composables/useStats', () => ({
   useStatsAchievements: () => ({
@@ -19,6 +21,20 @@ vi.mock('@/composables/useStats', () => ({
     refetch: refetchSpy,
   }),
 }))
+
+/**
+ * The countdown reads a ticking clock (`useNow`). Pinning it keeps the assertions
+ * exact — otherwise they would have to allow for whatever day the suite runs on,
+ * and a conditional assertion can silently pass without testing either branch.
+ *
+ * A `ref`, not a plain variable: the view watches the clock's *date* to refetch at a
+ * window boundary, so a non-reactive clock would silently disable that path.
+ */
+const nowValue = ref(new Date(2026, 8, 14))
+vi.mock('@vueuse/core', async (importOriginal) => {
+  const actual = await importOriginal<typeof import('@vueuse/core')>()
+  return { ...actual, useNow: () => computed(() => nowValue.value) }
+})
 
 /**
  * Mirrors the server: one progress value per (family, window), repeated across
@@ -76,6 +92,8 @@ function serverPayload(): Achievement[] {
       unit: 'seconds',
     }),
     windowed('DAY', {
+      windowStart: '2026-09-14',
+      windowEnd: '2026-09-14',
       code: 'DAILY_TOTAL_1H',
       type: 'TOTAL_SECONDS',
       tier: 1,
@@ -84,6 +102,8 @@ function serverPayload(): Achievement[] {
       unit: 'seconds',
     }),
     windowed('DAY', {
+      windowStart: '2026-09-14',
+      windowEnd: '2026-09-14',
       code: 'DAILY_TOTAL_2H',
       type: 'TOTAL_SECONDS',
       tier: 2,
@@ -95,7 +115,9 @@ function serverPayload(): Achievement[] {
 }
 
 function mountView() {
-  return mount(AchievementsView)
+  const wrapper = mount(AchievementsView)
+  wrappers.push(wrapper)
+  return wrapper
 }
 
 beforeEach(() => {
@@ -103,6 +125,20 @@ beforeEach(() => {
   pending = false
   failed = false
   refetchSpy.mockClear()
+  nowValue.value = new Date(2026, 8, 14)
+})
+
+/*
+ * Unmount every wrapper after each test.
+ *
+ * The view watches the clock's date to refetch at a window boundary, so a wrapper
+ * left mounted keeps a live watcher. `refetchSpy` is module-scoped, so those
+ * orphaned watchers fire on a later test's clock change and inflate its call count
+ * (observed: 11 calls where 1 was expected).
+ */
+afterEach(() => {
+  for (const wrapper of wrappers) wrapper.unmount()
+  wrappers.length = 0
 })
 
 describe('AchievementsView', () => {
@@ -156,6 +192,145 @@ describe('AchievementsView', () => {
     expect(wrapper.get('[data-trophy="TOTAL_SECONDS:DAY"] [data-testid="trophy-window"]').text()).toBe('Today')
     // A lifetime trophy has no window to name.
     expect(wrapper.find('[data-trophy="TOTAL_SECONDS:LIFETIME"] [data-testid="trophy-window"]').exists()).toBe(false)
+  })
+
+  it('groups the resetting ladders into one sub-section per window', () => {
+    data = serverPayload()
+    const wrapper = mountView()
+
+    // A window is a deadline, so it is a grouping of its own rather than one grid
+    // holding trophies that expire at four different moments.
+    const groups = wrapper.findAll('[data-window-group]')
+    expect(groups.map((g) => g.attributes('data-window-group'))).toEqual(['DAY'])
+    expect(groups[0]!.findAll('[data-testid="trophy-card"]')).toHaveLength(1)
+  })
+
+  it('states each window date range and countdown once, on the group', () => {
+    data = serverPayload()
+    const wrapper = mountView()
+
+    const group = wrapper.get('[data-window-group="DAY"]')
+    // A DAY window begins and ends on the same date, so the range collapses.
+    expect(group.get('[data-testid="window-range"]').text()).toBe('Sep 14')
+    // The clock is pinned, so the countdown is exact rather than pattern-matched:
+    // the window's last day is the pinned date.
+    expect(group.get('[data-testid="window-countdown"]').text()).toBe('Ends today')
+  })
+
+  it('emphasises the countdown on its last day', () => {
+    // The window ending today is the one with something left to act on; a fortnight
+    // out is information, not a deadline. Emphasis is a token swap (muted →
+    // foreground), not a colour: the palette has no "urgent" hue.
+    // The clock is pinned to 2026-09-14, which is also this window's last day.
+    data = [
+      windowed('DAY', {
+        windowStart: '2026-09-14',
+        windowEnd: '2026-09-14',
+        code: 'D1',
+        type: 'TOTAL_SECONDS',
+        target: 3_600,
+        unit: 'seconds',
+      }),
+    ]
+    const wrapper = mountView()
+
+    const countdown = wrapper.get('[data-testid="window-countdown"]')
+    expect(countdown.text()).toBe('Ends today')
+    expect(countdown.classes()).toContain('text-foreground')
+    // Not colour alone: the underline is what makes it legible in greyscale.
+    expect(countdown.classes()).toContain('underline')
+  })
+
+  it('emphasises the closing stretch of a window', () => {
+    // Same pinned clock (2026-09-14), a window ending tomorrow: live, and inside
+    // the closing stretch — a target is still reachable but not comfortably so.
+    data = [
+      windowed('DAY', {
+        windowStart: '2026-09-14',
+        windowEnd: '2026-09-15',
+        code: 'D1',
+        type: 'TOTAL_SECONDS',
+        target: 3_600,
+        unit: 'seconds',
+      }),
+    ]
+    const wrapper = mountView()
+
+    const countdown = wrapper.get('[data-testid="window-countdown"]')
+    expect(countdown.text()).toBe('1 day left')
+    expect(countdown.classes()).toContain('text-foreground')
+  })
+
+  it('leaves a distant deadline unemphasised', () => {
+    // A year-long window is never closing in on anything; it must not borrow the
+    // closing-stretch styling.
+    data = [
+      windowed('YEAR', {
+        windowStart: '2026-01-01',
+        windowEnd: '2026-12-31',
+        code: 'Y1',
+        type: 'TOTAL_SECONDS',
+        target: 1_800_000,
+        unit: 'seconds',
+      }),
+    ]
+    const wrapper = mountView()
+
+    const countdown = wrapper.get('[data-testid="window-countdown"]')
+    // 2026-09-14 → 2026-12-31 is 108 days.
+    expect(countdown.text()).toBe('108 days left')
+    expect(countdown.classes()).toContain('text-muted-foreground')
+  })
+
+  it('counts down from the pinned clock, so the deadline is not guessed', () => {
+    data = serverPayload()
+    const wrapper = mountView()
+
+    // A DAY window whose end equals the pinned date: 0 days left, i.e. today.
+    const group = wrapper.get('[data-window-group="DAY"]')
+    expect(group.get('[data-testid="window-countdown"]').text()).toBe('Ends today')
+  })
+
+  it('refetches when the local date rolls over, so the countdown cannot outlive its data', async () => {
+    /*
+     * The countdown runs on a live clock while the window dates come from a query
+     * that never refreshes on its own (`refetchOnWindowFocus: false`, no interval).
+     * A past window clamps to 0 days, which renders "Ends today" — so without this
+     * refetch a page left open past a boundary would state "Ends today" beside a
+     * range it has already left, and never correct itself.
+     */
+    data = serverPayload()
+    const wrapper = mountView()
+    expect(refetchSpy).not.toHaveBeenCalled()
+
+    // Same day, a minute later: the clock ticks but the local date has not moved,
+    // so there is nothing new to ask the server for.
+    nowValue.value = new Date(2026, 8, 14, 23, 59)
+    await wrapper.vm.$nextTick()
+    expect(refetchSpy).not.toHaveBeenCalled()
+
+    // Midnight: the windows this page is showing have now changed.
+    nowValue.value = new Date(2026, 8, 15)
+    await wrapper.vm.$nextTick()
+    expect(refetchSpy).toHaveBeenCalledTimes(1)
+  })
+
+  it('does not repeat the window range on the cards inside the group', () => {
+    data = serverPayload()
+    const wrapper = mountView()
+
+    // One deadline per window, not once per trophy: the group header owns it.
+    expect(wrapper.findAll('[data-testid="window-range"]')).toHaveLength(wrapper.findAll('[data-window-group]').length)
+  })
+
+  it('says a lifetime trophy never resets, rather than dating it', () => {
+    data = serverPayload()
+    const wrapper = mountView()
+
+    const lifetime = wrapper.get('[data-testid="section-lifetime"]')
+    expect(lifetime.findAll('[data-testid="window-range"]')).toHaveLength(0)
+    expect(lifetime.findAll('[data-testid="window-countdown"]')).toHaveLength(0)
+    expect(lifetime.text()).toContain('Never resets')
   })
 
   it('shows a completed ladder as complete rather than a full progress bar', () => {

@@ -127,6 +127,13 @@ export interface Trophy {
    * noun, five cards read as duplicates of one another.
    */
   windowLabel: string | null
+  /**
+   * The concrete local range the server is measuring, or null for a lifetime
+   * trophy. Read by `groupByWindow` to label each window's section ("Sep 14 – Sep
+   * 20") and to count down to the reset.
+   */
+  windowStart: string | null
+  windowEnd: string | null
   label: string
   blurb: string
   art: TrophyArt
@@ -219,6 +226,8 @@ function buildTrophy(badges: Achievement[]): Trophy {
     // The window noun is the only thing distinguishing five `TOTAL_SECONDS`
     // ladders that would otherwise all read "Total time".
     windowLabel: resets ? WINDOW_PRESENTATION[window].label : null,
+    windowStart: first.windowStart,
+    windowEnd: first.windowEnd,
     label: presentation.label,
     blurb: presentation.blurb,
     art: presentation.art,
@@ -277,6 +286,166 @@ export function splitByWindow(trophies: Trophy[]): { lifetime: Trophy[]; active:
     lifetime: trophies.filter((trophy) => !trophy.resets),
     active: trophies.filter((trophy) => trophy.resets),
   }
+}
+
+/** One window's resetting trophies, with the deadline they all share. */
+export interface WindowGroup {
+  window: AchievementWindow
+  /** Readable noun ("This week"). */
+  label: string
+  /** The concrete dates being measured ("Sep 14 – Sep 20"), or null when absent. */
+  range: string | null
+  /**
+   * Days left in the window, inclusive of today; null when the server reported no
+   * end date. 0 means it ends today.
+   */
+  daysLeft: number | null
+  /** This window's trophies, closest to its next rung first. */
+  trophies: Trophy[]
+}
+
+/**
+ * Group resetting trophies by window, shortest period first (Today, This week, This
+ * month, This year).
+ *
+ * **Not** ordered by deadline urgency, deliberately. The two disagree on some days —
+ * on 2026-08-31 (a Monday that is also month-end) the order here is DAY, WEEK, MONTH
+ * while deadline order is DAY, MONTH, WEEK. Period order is the stable
+ * frame-of-reference one: a page whose sections reshuffled as deadlines swapped
+ * would be harder to read than one that always reads shortest-period-first, and the
+ * countdown on each header states the urgency anyway.
+ *
+ * The **window** owns the deadline, not the trophy: every tier in a group resets at
+ * the same instant, so the range and the countdown belong on the group header
+ * rather than repeated identically on each of its cards.
+ *
+ * `now` is injected so the caller can supply a reactive clock; passing a fixed date
+ * with no timer would leave a page open across midnight showing yesterday's
+ * countdown.
+ */
+export function groupByWindow(trophies: Trophy[], now: Date = new Date()): WindowGroup[] {
+  const groups = new Map<AchievementWindow, Trophy[]>()
+  for (const trophy of trophies) {
+    const bucket = groups.get(trophy.window)
+    if (bucket === undefined) groups.set(trophy.window, [trophy])
+    else bucket.push(trophy)
+  }
+
+  return [...groups.entries()]
+    .sort(([a], [b]) => WINDOW_PRESENTATION[a].order - WINDOW_PRESENTATION[b].order)
+    .map(([window, items]) => {
+      // The window's dates belong to the window, not the trophy, so every member
+      // carries the same pair. On a disagreement the *earliest* start and *latest*
+      // end are used rather than whichever badge happened to arrive first, so the
+      // result cannot depend on the response's ordering.
+      const starts = items.map((t) => t.windowStart).filter((s): s is string => s !== null)
+      const ends = items.map((t) => t.windowEnd).filter((s): s is string => s !== null)
+      const start = starts.length === 0 ? null : starts.reduce((a, b) => (a < b ? a : b))
+      const end = ends.length === 0 ? null : ends.reduce((a, b) => (a > b ? a : b))
+      // The span is resolved once, above, and the countdown derived from that
+      // resolved end rather than from one arbitrary member's own field.
+      const daysLeft = daysLeftUntil(end, now)
+      return {
+        window,
+        label: WINDOW_PRESENTATION[window].label,
+        range: formatWindowRange(start, end),
+        daysLeft,
+        trophies: byNextWin(items),
+      }
+    })
+}
+
+const MONTH_ABBR = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec']
+
+/**
+ * Split a `yyyy-MM-dd` string into parts, or null when it is not a real date.
+ *
+ * The validity check is a **round-trip through `Date`**, not a range test on the
+ * numbers: `d <= 31` accepts `2026-02-31` and would print "Feb 31". Constructing
+ * the date and reading the parts back catches that, plus leap years, because
+ * `Date` normalises an impossible day into the next month (`2026-02-31` becomes
+ * March 3) and the comparison then fails.
+ */
+function parseLocalDate(iso: string | null): { y: number; m: number; d: number } | null {
+  if (iso === null) return null
+  const match = /^(\d{4})-(\d{2})-(\d{2})$/.exec(iso)
+  if (match === null) return null
+  const [, ys, ms, ds] = match
+  const y = Number(ys)
+  const m = Number(ms)
+  const d = Number(ds)
+
+  const date = new Date(y, m - 1, d)
+  if (date.getFullYear() !== y || date.getMonth() !== m - 1 || date.getDate() !== d) return null
+  return { y, m, d }
+}
+
+/**
+ * Render the dates a window covers ("Sep 14 – Sep 20").
+ *
+ * Fixed month abbreviations rather than `toLocaleDateString`: the label is
+ * asserted in tests, so the host locale must not move it.
+ *
+ * Collapses to one day when start and end coincide (the DAY window ends the day it
+ * begins), and keeps both years only when the range crosses one — which an ISO week
+ * at a year boundary does (`Dec 29, 2025 – Jan 4, 2026`).
+ */
+export function formatWindowRange(start: string | null, end: string | null): string | null {
+  const from = parseLocalDate(start)
+  const to = parseLocalDate(end)
+  if (from === null || to === null) return null
+
+  const sameYear = from.y === to.y
+  const suffix = (part: { y: number }) => (sameYear ? '' : `, ${part.y}`)
+  const left = `${MONTH_ABBR[from.m - 1]} ${from.d}${suffix(from)}`
+  if (sameYear && from.m === to.m && from.d === to.d) return left
+  return `${left} – ${MONTH_ABBR[to.m - 1]} ${to.d}${suffix(to)}`
+}
+
+/**
+ * Days left until an inclusive local end date; null when there is none.
+ *
+ * Both sides are built as **local** dates: a UTC parse would shift the result by a
+ * day for anyone east or west of Greenwich, which is every user this endpoint
+ * already localises for via `timezoneOffset`.
+ *
+ * Clamped at 0 — a window that has passed is over, not "-3 days left".
+ */
+function daysLeftUntil(endIso: string | null, now: Date = new Date()): number | null {
+  const end = parseLocalDate(endIso)
+  if (end === null) return null
+  const endAt = new Date(end.y, end.m - 1, end.d)
+  const todayAt = new Date(now.getFullYear(), now.getMonth(), now.getDate())
+  return Math.max(0, Math.round((endAt.getTime() - todayAt.getTime()) / 86_400_000))
+}
+
+/**
+ * Whether a window is in its closing stretch — the last day or the one before it.
+ *
+ * Exported from the model so the rule has one definition and a test, rather than
+ * living as a magic `<= 1` in the template. Two days is the boundary on purpose:
+ * with a target still reachable but no longer comfortably so, the countdown stops
+ * being neutral information. Beyond that it is not yet the reader's problem.
+ */
+export function isClosing(daysLeft: number | null): boolean {
+  return daysLeft !== null && daysLeft <= 1
+}
+
+/**
+ * Copy for how long a window has left.
+ *
+ * States the fact and stops: **no urgency colour**. `DESIGN.md` keeps the palette
+ * almost achromatic with indigo as the only chromatic colour, and P3 already
+ * records what happens when a second signal is invented — the last attempt used a
+ * mode-dependent ramp and failed contrast in light mode. The countdown is
+ * informative, not alarming (and a maxed periodic trophy still shows it, because
+ * that is what explains why it will drop to zero when the period rolls).
+ */
+export function formatDaysLeft(daysLeft: number | null): string | null {
+  if (daysLeft === null) return null
+  if (daysLeft === 0) return 'Ends today'
+  if (daysLeft === 1) return '1 day left'
+  return `${daysLeft} days left`
 }
 
 /**

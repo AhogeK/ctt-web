@@ -1,7 +1,17 @@
 import { describe, expect, it } from 'vite-plus/test'
 import type { Achievement } from '@/lib/schemas/stats.schema'
 import { achievement as badge, windowed } from '../../__tests__/fixtures'
-import { buildTrophies, byNextWin, splitByWindow, tierProgress, trophyTotals } from '../trophy-model'
+import {
+  buildTrophies,
+  byNextWin,
+  formatDaysLeft,
+  formatWindowRange,
+  groupByWindow,
+  isClosing,
+  splitByWindow,
+  tierProgress,
+  trophyTotals,
+} from '../trophy-model'
 
 /**
  * A slice of the real ctt-server v0.71.0 payload: STREAK's 3-tier lifetime
@@ -176,6 +186,176 @@ describe('splitByWindow', () => {
     const { lifetime, active } = splitByWindow(buildTrophies(payload()))
     expect(lifetime.map((t) => t.key)).toEqual(['STREAK:LIFETIME', 'TOTAL_SECONDS:LIFETIME'])
     expect(active.map((t) => t.key)).toEqual(['TOTAL_SECONDS:DAY'])
+  })
+})
+
+describe('groupByWindow', () => {
+  it('groups resetting ladders by window, shortest period first', () => {
+    const groups = groupByWindow(
+      buildTrophies([
+        windowed('YEAR', { code: 'Y', type: 'TOTAL_SECONDS', target: 1_800_000, unit: 'seconds' }),
+        windowed('DAY', { code: 'D', type: 'TOTAL_SECONDS', target: 3_600, unit: 'seconds' }),
+        windowed('WEEK', { code: 'W', type: 'TOTAL_SECONDS', target: 36_000, unit: 'seconds' }),
+      ]),
+    )
+    expect(groups.map((g) => g.window)).toEqual(['DAY', 'WEEK', 'YEAR'])
+    expect(groups.map((g) => g.label)).toEqual(['Today', 'This week', 'This year'])
+  })
+
+  it('collects same-window ladders under one group, since they share a deadline', () => {
+    const groups = groupByWindow(
+      buildTrophies([
+        windowed('WEEK', { code: 'W1', type: 'ACTIVE_DAYS', tier: 1, target: 5 }),
+        windowed('WEEK', { code: 'W2', type: 'TOTAL_SECONDS', tier: 1, target: 36_000, unit: 'seconds' }),
+      ]),
+    )
+    expect(groups).toHaveLength(1)
+    expect(groups[0]!.trophies.map((t) => t.type).sort()).toEqual(['ACTIVE_DAYS', 'TOTAL_SECONDS'])
+  })
+
+  it('carries the range and countdown once per window, not per trophy', () => {
+    const groups = groupByWindow(
+      buildTrophies([
+        windowed('WEEK', {
+          code: 'W1',
+          type: 'ACTIVE_DAYS',
+          tier: 1,
+          target: 5,
+          windowStart: '2026-09-14',
+          windowEnd: '2026-09-20',
+        }),
+        windowed('WEEK', {
+          code: 'W2',
+          type: 'TOTAL_SECONDS',
+          tier: 1,
+          target: 36_000,
+          unit: 'seconds',
+          windowStart: '2026-09-14',
+          windowEnd: '2026-09-20',
+        }),
+      ]),
+      // Local construction so the countdown assertion holds in any timezone.
+      new Date(2026, 8, 18),
+    )
+    expect(groups).toHaveLength(1)
+    expect(groups[0]!.range).toBe('Sep 14 – Sep 20')
+    expect(groups[0]!.daysLeft).toBe(2)
+  })
+
+  it('orders each group by closeness, like every other section', () => {
+    const groups = groupByWindow(
+      buildTrophies([
+        windowed('WEEK', { code: 'FAR', type: 'ACTIVE_DAYS', tier: 1, target: 7, progress: 1 }),
+        windowed('WEEK', { code: 'NEAR', type: 'TOTAL_SECONDS', tier: 1, target: 10, progress: 9, unit: 'seconds' }),
+      ]),
+    )
+    expect(groups[0]!.trophies[0]!.type).toBe('TOTAL_SECONDS')
+  })
+
+  it('does not depend on which badge arrives first when members disagree', () => {
+    // The server repeats one date pair per window, so this cannot happen today —
+    // but the group header reads one span for all its members, so it must not be
+    // decided by response ordering. The widest span wins.
+    const narrow = windowed('WEEK', {
+      code: 'N',
+      type: 'ACTIVE_DAYS',
+      windowStart: '2026-09-16',
+      windowEnd: '2026-09-18',
+    })
+    const wide = windowed('WEEK', {
+      code: 'W',
+      type: 'TOTAL_SECONDS',
+      windowStart: '2026-09-14',
+      windowEnd: '2026-09-20',
+      unit: 'seconds',
+    })
+
+    const forward = groupByWindow(buildTrophies([narrow, wide]), new Date(2026, 8, 14))
+    const reversed = groupByWindow(buildTrophies([wide, narrow]), new Date(2026, 8, 14))
+
+    expect(forward[0]!.range).toBe('Sep 14 – Sep 20')
+    expect(reversed[0]!.range).toBe('Sep 14 – Sep 20')
+    // Both ends, so the countdown agrees too.
+    expect(forward[0]!.daysLeft).toBe(6)
+    expect(reversed[0]!.daysLeft).toBe(6)
+  })
+
+  it('reports no countdown when the server sent no end date', () => {
+    const groups = groupByWindow(buildTrophies([badge({ code: 'W', type: 'ACTIVE_DAYS', window: 'WEEK' })]))
+    expect(groups[0]!.daysLeft).toBeNull()
+    expect(groups[0]!.range).toBeNull()
+  })
+})
+
+describe('formatWindowRange', () => {
+  it('collapses a single-day window, which the DAY ladder always is', () => {
+    // Verified against the live endpoint: DAY reports the same date for both ends.
+    expect(formatWindowRange('2026-09-14', '2026-09-14')).toBe('Sep 14')
+  })
+
+  it('renders a span within one year without repeating it', () => {
+    expect(formatWindowRange('2026-09-14', '2026-09-20')).toBe('Sep 14 – Sep 20')
+    expect(formatWindowRange('2026-09-01', '2026-09-30')).toBe('Sep 1 – Sep 30')
+  })
+
+  it('keeps both years when the range crosses one', () => {
+    // An ISO week at a year boundary does this: the week containing 2025-12-29
+    // ends on 2026-01-04 and is still one window.
+    expect(formatWindowRange('2025-12-29', '2026-01-04')).toBe('Dec 29, 2025 – Jan 4, 2026')
+  })
+
+  it('is null when either end is missing or malformed', () => {
+    expect(formatWindowRange(null, '2026-09-20')).toBeNull()
+    expect(formatWindowRange('2026-09-14', null)).toBeNull()
+    expect(formatWindowRange('nonsense', '2026-09-20')).toBeNull()
+    expect(formatWindowRange('2026-13-01', '2026-13-02')).toBeNull()
+  })
+
+  it('rejects a date that looks well-formed but does not exist', () => {
+    // A range check on the numbers (m <= 12, d <= 31) accepts all of these and
+    // prints "Feb 31". Only a round-trip through the calendar catches them.
+    expect(formatWindowRange('2026-02-31', '2026-02-31')).toBeNull()
+    expect(formatWindowRange('2026-04-31', '2026-04-31')).toBeNull()
+    expect(formatWindowRange('2026-09-00', '2026-09-10')).toBeNull()
+    expect(formatWindowRange('2026-00-10', '2026-01-10')).toBeNull()
+    // 2026 is not a leap year, so this date does not exist either.
+    expect(formatWindowRange('2026-02-29', '2026-02-29')).toBeNull()
+  })
+
+  it('accepts a real leap day', () => {
+    expect(formatWindowRange('2028-02-29', '2028-02-29')).toBe('Feb 29')
+  })
+})
+
+describe('isClosing', () => {
+  it('covers the last day and the one before it, and nothing further out', () => {
+    // The rule lives here rather than as a `<= 1` in the template so its boundary
+    // is pinned: two days is where a target stops being comfortably reachable.
+    expect(isClosing(0)).toBe(true)
+    expect(isClosing(1)).toBe(true)
+    expect(isClosing(2)).toBe(false)
+    expect(isClosing(30)).toBe(false)
+  })
+
+  it('is false when there is no deadline to close in on', () => {
+    // A lifetime trophy reports null and must never take the closing styling.
+    expect(isClosing(null)).toBe(false)
+  })
+})
+
+describe('formatDaysLeft', () => {
+  it('names the last day rather than counting zero', () => {
+    // "0 days left" reads as expired; the window is still live today.
+    expect(formatDaysLeft(0)).toBe('Ends today')
+  })
+
+  it('keeps the singular for one day', () => {
+    expect(formatDaysLeft(1)).toBe('1 day left')
+    expect(formatDaysLeft(2)).toBe('2 days left')
+  })
+
+  it('is null when there is no deadline to state', () => {
+    expect(formatDaysLeft(null)).toBeNull()
   })
 })
 
