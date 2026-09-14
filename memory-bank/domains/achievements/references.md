@@ -109,6 +109,50 @@ why v0.71.0 had to add `type` and `tier` rather than have the client infer them:
 
 Header on this data: `19 / 67 tiers · 28%`, page renders **14 trophies** (7 lifetime + 7 period).
 
+## Period history: `totalUnlocks` / `periodStreak` (v0.72.0)
+
+Two fields answering "how many periods has this ladder been reached in" and "how many
+in a row, ending now".
+
+| Field | Type | LIFETIME value |
+| --- | --- | --- |
+| `totalUnlocks` | `int` | `unlocked ? 1 : 0` |
+| `periodStreak` | `int` | always `0` |
+
+Both are **per rung**, not per ladder: measured, a day ladder reads `13 / 12 / 11` from
+its base rung up (`DAILY_TOTAL_1H` / `_2H` / `_4H`), a week ladder `3 / 2 / 0`. The card
+shows its **base rung** (`tiers[0]`) — monotone by construction, and the only rung that
+still has a value when the current period is unreached, which is the ordinary state
+(measured: `unlocked: false` with `totalUnlocks: 13`).
+
+Both are primitive `int` and **always present**, unlike `windowStart`/`windowEnd`. The
+schema therefore omits `.default(0)`: a missing key means the contract changed, and
+defaulting would silently render "never earned" for every badge.
+
+### Why they are computed from sessions, not counted from unlock rows
+
+The obvious implementation — count `user_achievements` rows per code — measures **how
+often the user opened the achievements page**, not how often they achieved anything:
+
+- `insertIfAbsent` has exactly **one** caller (`AchievementService`), reached from
+  `evaluate`, which has exactly **one** caller: `getAchievements`, i.e. `GET /achievements`.
+- `SyncPushService` calls only `evictCache` after a push — it invalidates, it does not
+  evaluate.
+- There is no scheduled job or listener that evaluates.
+
+So rows exist only for periods in which the page happened to be opened. The server
+recomputes each historical period from `coding_sessions` and takes the **union** with
+the stored rows, which also keeps the count monotone: deleting a session cannot lower a
+count that was already awarded.
+
+### `periodStreak` is 0 whenever the current period is unmet
+
+`consecutivePeriods` walks back from *today* and stops at the first unmet period, so an
+open-but-unmet period yields `0` by construction — the server's stated reason is that a
+run "beside a window that is still open" would contradict the `unlocked` flag on the
+same card. Expect `0` on any account that has not hit the target this period; it is not
+a bug.
+
 ## The contract gap — CLOSED in v0.71.0
 
 This section used to describe a workaround: `AchievementResponse` did not project the family, so

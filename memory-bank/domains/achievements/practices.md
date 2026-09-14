@@ -128,6 +128,25 @@ inside it — measured per artwork, not assumed. The measurements, the transform
 enforces the fit, and the traps in measuring SVG are in
 [`trophy-geometry.md`](./trophy-geometry.md).
 
+## A lazily-evaluated write log is not an event history
+
+`user_achievements` looks like a log of earned achievements, and it is not: rows are
+written only when `evaluate` runs, and `evaluate` has a single caller — `GET
+/achievements`. A push calls `evictCache` and nothing else. So the table records *the
+periods in which the user opened the page*, and counting its rows as "times achieved"
+would report how often someone looked.
+
+Reading the schema was not enough to see this; tracing the **write path** was. Two greps
+settle it: how many callers `insertIfAbsent` has (one), and how many callers *that* has
+(one), and whether any other component references the service (a cache eviction only).
+
+The same trap exists in reverse for any "derived" count: before trusting a stored row as
+history, ask what triggers the write. If the trigger is a read, the data is a read log.
+
+The server's fix is worth copying when this comes up again: recompute from the source of
+truth (sessions) and take the **union** with stored rows — correct even where the log is
+sparse, and monotone, since a deleted session cannot retract an award.
+
 ## Reading the grade back in a test
 
 Computed paint is on the SVG element's inline `style`, so jsdom can assert it without a layout

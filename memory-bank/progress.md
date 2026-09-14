@@ -17,7 +17,7 @@
 | API Key Management                | ✅ Complete | 0.16.0         |
 | Device Management                 | ✅ Complete | 0.18.3         |
 | Dashboard (框架 + 面板迭代)       | ✅ Complete | 0.37.0         |
-| Achievements (奖杯系统)           | ✅ Complete | 0.41.0         |
+| Achievements (奖杯系统)           | ✅ Complete | 0.42.0         |
 | Leaderboard                       | ✅ Complete | 0.41.0         |
 | Settings                          | ⏳ Pending  | 1.0.0          |
 | i18n (zh/en)                      | ⏳ Pending  | 1.0.0          |
@@ -30,6 +30,7 @@
 
 ## Achievements 奖杯系统
 
+- [x] **v0.42.0 (2026-09-14)** 周期成就历史（后端 v0.72.0）— 卡片新增两行事实：`totalUnlocks`（得过几次）与 `periodStreak`（连击，🔥）。**关键：这些字段由后端从 sessions 回算，不是数解锁行** —— 我先前给后端的需求报告判断「表里的行即达成历史」是**错的**：`insertIfAbsent` 仅 1 处调用 → `evaluate` 仅 1 处调用 → `getAchievements`（即 `GET /achievements`），push 只 `evictCache` 不评估，无定时任务。故表里的行 = 「用户访问过成就页的那些周期」，照我方案做会系统性偏低；后端改为回算 ∪ 表行（并集保证单调）后驳回正确。前端：字段为 **per-rung**（实测 day 阶梯 13/12/11），取**最低阶**作为阶梯对外值（构造上单调、且本期未达成时仍有值）。🔥 按用户要求**零也显示**（全零阶梯读 `🔥0 · 0 years reached`），终身卡不显示（字段对其无意义）。过程中我的两个真实缺陷均由**真机**发现：`1 months reached` 单复数、以及「三个零说同一件事」。测试 **1400/1400**。
 - [x] **v0.41.0 (2026-09-14)** 奖杯外圈几何修正 — 用户报告「圈不一定包住图标、图标可能不在圈正中」经实测**属实且可量化**：完成阶梯后绘制的 `r=11`（内沿 10.5，已是 24 网格极限）**九个图形全部溢出**（+0.82 ~ **+2.58** 单位，日历类最远 13.08），且**六个偏心**（最多 2 单位）。修法：`<g>` 变换把每个图形按**自身包围盒中心**缩放并映射到格心（`translate(CENTER*(1-s) - s*offset) scale(s)`），统一进入圈内（最远 9.9 / 内沿 10.5）并精确居中。**注意我的第一版公式漏了 `CENTER*(1-s)` 项**，致每个奖杯整体位移 ≈4.7 单位 —— 审查看不出来，真机量渲染才暴露（圆心实测 21.6 而非 12）。几何知识入新文件 `achievements/trophy-geometry.md`（R24 单文件 ≤200 行）。真机：8 家族中心均 (12,12)，像素间隙 2.34–4.59px（修复前圈内沿 17.5px、图形达 21.8px）。新增 6 项几何测试（可证伪）→ **1384/1384**。
 - [x] **v0.40.0 (2026-09-14)** 周期成就的截止呈现 — 「Current period」按窗口分子区（Today / This week / This month / This year），每区显示日期区间与倒计时；**截止期属于窗口而非奖杯**，故区间与倒计时只渲染在分组头一次（放卡片会重复 2–3 次并暗示每卡各有到期时间）。倒计时注入时钟（`useNow({ interval: 60_000 })`，`@vueuse/core` 已是依赖），否则页面跨午夜会一直显示昨天。紧迫感**只用既有 token 不引颜色**（收尾期 muted→foreground 且字重转 medium，明暗均已实测，非色彩信号可过灰度）——`DESIGN.md` 无紧急色，其状态色语义是成功，且 P3 已记录自造紧迫配色的代价。0 天写作 `Ends today`（「0 days left」在仍有效的当天读作已过期）。测试 **1350/1350**。
 - [x] **v0.39.0 (2026-09-14)** 对接后端 v0.71.0 成就扩展 — 后端由 15 阶增至 **67 阶 / 14 阶梯**，新增响应字段 `type` / `tier` / `window` / `windowStart` / `windowEnd`（**向后兼容**，但 `PERFECT_MONTH` 的 `unit` 由 `month` 改 `percent`）。前端**删掉自维护的 code→家族映射表**（净删约 130 行）改为数据驱动，分组键取 `(type, window)`（`TOTAL_SECONDS` 五条阶梯各自 `tier` 从 1 起，按 `type` 分组会把日阶并成终身阶第 9–11 阶），阶序取服务端 `tier`（code 不可解析：`DAILY_BURST` 是第 3 阶而 `DAILY_BURST_4` 第 1 阶）。窗口字段对 LIFETIME 是**键缺失**（Jackson non_null）故 `.nullable().default(null)`。页面分「Lifetime / Current period」两区，卡片显示窗口名以区分五个同名「Total time」阶梯。双审查后修 7 处，含两项自测未覆盖的真实缺陷（同名卡不可区分、`activeDays` 图形从未绘制）。真机 14 卡 / 19 of 67 / 28%。1323/1323。
