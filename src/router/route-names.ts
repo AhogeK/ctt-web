@@ -36,6 +36,7 @@ export const RouteNames = {
 
   // Leaderboard
   LEADERBOARD: 'leaderboard',
+  LEADERBOARD_GLOBAL: 'leaderboard-global',
 
   // Achievements
   ACHIEVEMENTS: 'achievements',
