@@ -1,13 +1,18 @@
 # achievements — principles
 
-## P1. A trophy is a family, not a badge
+## P1. A trophy is a (family, window) ladder, not a badge
 
-The API returns 15 badges. They are **7 families of 2–3 tiers**, and the measured value is
-**per family** — verified against a real account: all three `STREAK_*` badges reported
-`progress = 7`, all three `TOTAL_*` badges reported `460860`.
+The API returns **67 badges** (v0.71.0) across **14 ladders** — 7 lifetime families of 5–9 tiers
+plus 7 windowed ladders of 2–3. The measured value is **per (family, window)** — verified against
+a real account: every `STREAK_*` badge reported `progress = 7`, every `TOTAL_*` badge `460860`.
 
-So one card per badge would print the same number five times and imply 15 independent goals.
-Render **one trophy per family**, carrying its ladder. A badge is a rung; a trophy is the object.
+So one card per badge would print the same number many times over and imply dozens of independent
+goals. Render **one trophy per (family, window)**, carrying its ladder. A badge is a rung; a trophy
+is the object.
+
+The grouping key is **(family, window), never family alone** — `TOTAL_SECONDS` has five independent
+ladders whose `tier` each restart at 1, so grouping by `type` folds the 3 daily rungs into the
+lifetime ladder as tiers 9–11.
 
 ## P2. Progress is measured between rungs, never against the current rung alone
 
@@ -45,55 +50,49 @@ stop considered. Any future grade change gets the same treatment before it ships
 
 ## P4. An unrecognised badge renders; it is never dropped
 
-The server can ship a badge this build has no declaration for. Showing nothing would make a real
-unlock invisible; showing it wrongly under another family would be worse. It becomes **its own
-single-tier trophy**, labelled with the server's own `displayName`.
+Grouping is a **partition** — every badge lands in exactly one trophy — so nothing can be lost.
+A family this build has no entry for still produces a trophy, labelled with the server's own badge
+name (single-tier) or its `type` (multi-tier) and drawn with `generic` artwork.
 
-This is what makes "new achievements slot in seamlessly" true without a frontend release: a new
-badge on an existing ladder appears at once (as its own trophy) and joins the shared ladder the
-moment a declaration claims its code. See `scenarios.md` S2.
+This is what makes "new achievements slot in seamlessly" true: since v0.71.0 the server ships
+`type` and `tier`, so a new badge joins its ladder **with no frontend edit at all** — only its
+label/artwork, if the family is new to this build, come from a declaration. See `scenarios.md` S1/S2.
 
 ## P5. The server owns thresholds; the frontend owns only identity and presentation
 
-Tier thresholds are read from each badge's own `target`, never copied into the declarations. A
-rebalance on the server therefore flows through with no frontend change. The declarations hold
-**only** what the server cannot express: family grouping, trophy label, blurb, and artwork.
+Tier thresholds are read from each badge's own `target`, never copied into the code. A rebalance on
+the server therefore flows through with no frontend change. Since v0.71.0 the same holds for
+**grouping and ordering** — `type` and `tier` arrive in the response — so the declarations hold
+**only** what the server cannot express: trophy label, blurb and artwork.
 
-## P6. A trophy system with only lifetime goals has a terminal state
+## P6. Period windows: resetting goals now exist, and must be visibly separate
 
-All seven backend families are **lifetime-cumulative** — verified: `AchievementType` is
-`STREAK / TOTAL_SECONDS / LANGUAGE_COUNT / EARLY_BIRD_DAYS / NIGHT_OWL_DAYS / MAX_DAILY_SECONDS /
-PERFECT_MONTH`, none of which resets. The only calendar word in the source is `PERFECT_MONTH`'s
-description, and no period/reset concept exists server-side.
+**Resolved in v0.71.0.** This principle used to record a measured terminal state — a normal active
+account reached 12 of 15 tiers with nothing left, and the page then reported a number that could
+never change, because all seven families were lifetime-cumulative with no reset concept server-side.
 
-Consequence, measured: a normal active account reaches **12 of 15 tiers** with nothing left to earn
-and no reason to return. The page then reports a number that can never change.
+The backend closed it by adding **windowed ladders**: `window` is now
+`LIFETIME | DAY | WEEK | MONTH | YEAR`, 16 of the 67 badges reset, and the response carries the
+concrete range (`windowStart` / `windowEnd`, null for LIFETIME). The set is no longer exhaustible.
 
-Presentation cannot fix this — no rendering of a fixed, exhausted set stays interesting. The
-achievement set needs **resetting goals** alongside lifetime ones:
+Design rules that survive, plus what was learned implementing them:
 
-| Horizon | Example | Resets |
-| --- | --- | --- |
-| Daily | Code 2h today / start before 09:00 | every local day |
-| Weekly | 5 active days this week | every ISO week |
-| Monthly | 20 active days this month / 40h this month | every calendar month |
-| Yearly | 200 active days in 2026 / 1,000h in 2026 | every calendar year |
-| Milestone (lifetime) | existing 15 | never |
+- A resetting trophy's `target` is still a plain threshold; only its **window** differs. Confirmed:
+  the model needed one extra notion (the window), not a new rendering path.
+- **A reset must be visible.** A trophy that silently drops to 0 on the 1st reads as data loss, so
+  the card names its window (`This week`) and the page groups the resetting ladders into their own
+  section, titled and captioned "Resets when the period ends". Lifetime leads the page; the
+  expiring goals sit below it. In one undifferentiated grid the two read as the same kind of goal.
+- **The window is what distinguishes same-family ladders.** Five `TOTAL_SECONDS` ladders are all
+  labelled "Total time"; without the window noun five cards look like duplicates.
+- **Keep a lifetime ladder of each family beside its periodic ones** — asked for, and honoured: every
+  windowed family except `ACTIVE_DAYS` also has a LIFETIME ladder, so rolling a period never erases
+  long-term progress. `ACTIVE_DAYS` is the deliberate exception (periodic-only).
 
-Design rules if they arrive:
+Windows are computed **server-side** in the requested timezone (`timezoneOffset`), with ISO weeks —
+across a year boundary a week keeps one identity (2025-12-29 and 2026-01-04 are both `2026-W01`).
 
-- A resetting trophy's `target` is still a plain threshold; only its **window** differs. So the
-  model needs one extra notion — the window a trophy's progress is measured over — not a new
-  rendering path.
-- Window labels must be **local** (`August 2026`, not `2026-08`), matching every other panel, which
-  localises through `timezoneOffset`.
-- Reset must be visible: a trophy that silently drops to 0 on the 1st reads as data loss unless the
-  card says which window it is measuring.
-- Keep a lifetime tier of each family beside its periodic ones, so long-term progress is never lost
-  when a period rolls over.
-
-See `references.md` for the backend requirement text and the materialized-daily basis that already
-exists to compute these.
+See `references.md` for the full ladder table.
 
 ## P7. Ordering compares fractions, never raw distances
 

@@ -2,35 +2,39 @@
 
 ## S1. Adding an achievement to an existing family
 
-Server ships `STREAK_365` (type `STREAK`, target 365).
+Server ships a new rung, e.g. `STREAK_365` (`type: STREAK`, `tier: 8`, `window: LIFETIME`,
+`target: 365`).
 
-Until a declaration claims it, it renders as its own single-tier trophy labelled "365-Day Streak" —
-visible, never lost. To fold it into the ladder, append the code to `TROPHY_FAMILIES`'
-`streak.codes` array. That is the **only** edit: threshold comes from the payload, artwork from the
-family.
+**No frontend change at all.** Since v0.71.0 the response carries `type` and `tier`, so the rung
+joins its ladder on the next fetch — labelled and ordered from the payload. Nothing to append, no
+code list to keep in sync, and no risk of an out-of-order declaration inverting the rung strip.
 
-Order in `codes` is ascending threshold — a code placed out of order silently mis-renders the rung
-strip and inverts the tier count.
+If the tier's **thresholds** shift, still nothing here: `target` is read per badge (P5).
 
 ## S2. Adding a whole new family
 
-Needs one declaration (key, label, blurb, art, codes) and, if the shape is new, one path set in
-`TrophyMedal.vue` plus a `TrophyArt` member. Until then the artwork falls back to `generic` — a
-badge outline — so the trophy still renders legibly.
+Needs one entry in `FAMILY_PRESENTATION` (`trophy-model.ts`): label, blurb, art. If the **shape** is
+new, also one path set in `TrophyMedal.vue` plus a member on `TrophyArt`.
 
-## S3. The API starts sending `type` (and ideally `tier`)
+**Until then the family still renders** — it produces a trophy labelled with the server's own badge
+name (single-tier) or its `type` (multi-tier), drawn with the `generic` medallion. Nothing is lost;
+the only cost is that the copy is the server's identifier rather than curated text.
 
-Then the declarations stop doing *matching* work and become pure presentation metadata (label,
-blurb, artwork). Group by the server's `type` instead of by a code list; drop `codes`. Call sites do
-not change — `buildTrophies(badges)` keeps its signature.
+## S3. Adding a new *window* (e.g. a quarterly ladder)
 
-Prefer this: it removes the last piece of duplicated knowledge and makes S1 a no-op.
+Unlike §S1 and §S2 this one **is a frontend change**, because `AchievementWindowSchema` mirrors the
+backend's closed `AchievementWindow` enum (the repo models backend enums as `z.enum` — see
+`ApiKeyScopeEnum`). An unknown window fails schema validation and takes the whole page down with it.
+
+Steps: add the member to `AchievementWindowSchema` in `stats.schema.ts`, then to
+`WINDOW_PRESENTATION` in `trophy-model.ts` (label + display order). Ask the backend to ship it only
+once this lands — there is no graceful degradation here by design (P4 covers families, not windows).
 
 ## S4. A tier's threshold is rebalanced
 
-Change nothing here. `target` is read per badge from the response (P5); the bar, the "N / M unit"
-line and the ordering all recompute. Only re-check that the `codes` array ordering still matches the
-new ascending thresholds.
+Change nothing. `target` comes from the response, so the ladder, the bar and the "N / M unit" line
+all recompute. Since v0.71.0 the **order** also comes from the server (`tier`), so there is no local
+list that could disagree with the new thresholds.
 
 ## S5. A progress value looks wrong (reads 100% immediately, or 0% when nearly there)
 
@@ -49,15 +53,28 @@ row when `progress >= target`), so a value can exceed a rung's target while that
 `unlocked: false` in the same response. That is expected and self-corrects on the next fetch —
 do **not** infer unlock state from progress to "fix" it.
 
-## S7. The page shows no sidebar / no navigation
+## S7. A periodic trophy shows 0 the day after it was complete
+
+Expected — that is the window rolling over, not data loss. The server records each period
+separately (`(user_id, achievement_code, period_key)`), so last period's rows survive as history and
+only `unlocked` for the *current* window is reported.
+
+Two consequences to respect:
+
+- **Never cache a windowed trophy's progress across a period boundary.** A response fetched at
+  23:59 is stale at 00:01 for the DAY ladder.
+- The UI must make the reset legible (P6): the card names its window, and the page separates
+  resetting ladders from lifetime ones. A silent drop to 0 reads as a bug.
+
+## S8. The page shows no sidebar / no navigation
 
 The route is not wrapped in `AppLayout`. Every app page's route record must be a parent with
 `component: AppLayout` and the view as a `path: ''` child — see `practices.md`. A route registered
 as a bare single record renders the view in isolation with no shell (this happened; the page looked
 right and had no navigation).
 
-## S8. Deciding whether something belongs to this domain
+## S9. Deciding whether something belongs to this domain
 
 If it is about *how trophies are grouped, graded, drawn or ordered* → here. If it is about *where
-the numbers come from* (streak maths, session windows, time zones) → `backend-contract`. If it is
-about *the indigo values themselves* → `DESIGN.md`.
+the numbers come from* (streak maths, session windows, time zones, period keys) → `backend-contract`.
+If it is about *the indigo values themselves* → `DESIGN.md`.

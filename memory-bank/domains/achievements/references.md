@@ -14,48 +14,68 @@ Factual lookup. No judgement here — see `principles.md` / `scenarios.md`.
 
 ## `AchievementResponse` fields
 
+13 components (v0.71.0). Jackson omits nulls, so the real payload shows **11 keys** for a LIFETIME
+badge and 13 for a windowed one — `windowStart`/`windowEnd` are absent rather than null.
+
 | Field | Type | Notes |
 | --- | --- | --- |
 | `code` | string | Stable id, e.g. `STREAK_7`. Irregular — see below. |
+| `type` | string | Family, e.g. `STREAK` / `TOTAL_SECONDS`. **Added v0.71.0.** |
+| `tier` | number | 1-based ordinal within the family **and window**, ascending by target. **Added v0.71.0.** |
 | `displayName` | string | Names the **tier** ("7-Day Streak"), not the family. |
 | `description` | string | What the tier rewards. |
 | `unlocked` | boolean | Server-set; written on first read where `progress >= target`. |
-| `unlockedAt` | string \| null | DB timestamp (`CURRENT_TIMESTAMP`), null while locked. |
-| `progress` | number | **Family-scoped** — repeated across a family's tiers. |
+| `unlockedAt` | string \| null | Real achievement instant, back-derived (v0.71.0). Absent while locked. |
+| `progress` | number | **Family-and-window scoped** — repeated across that ladder's tiers. Monotonic for LIFETIME (v0.71.0), resets for windowed. |
 | `target` | number | This tier's threshold. |
-| `unit` | string | `days` / `seconds` / `languages` / `month`. |
+| `unit` | string | `days` / `seconds` / `languages` / `percent`. |
+| `window` | string | `LIFETIME` / `DAY` / `WEEK` / `MONTH` / `YEAR`. **Added v0.71.0.** Defaults to `LIFETIME`. |
+| `windowStart` | string \| null | First local date of the current window; **key absent** for LIFETIME. |
+| `windowEnd` | string \| null | Last local date; **key absent** for LIFETIME. |
 
-**Not present**: the family (`type`) and a tier ordinal. See the gap below.
+`unit` changed for `PERFECT_MONTH` in v0.71.0: `month` → **`percent`** (0–100, the best month's
+coverage). Its `progress` changed from binary `0/1` to that percentage.
 
-## The 7 families and their ladders
+## The 14 ladders (v0.71.0)
 
-| Family key | Tiers | Codes (ascending) | Unit |
-| --- | --- | --- | --- |
-| `streak` | 3 | `STREAK_3` → `STREAK_7` → `STREAK_30` | days |
-| `volume` | 3 | `TOTAL_10_HOURS` → `TOTAL_100_HOURS` → `TOTAL_500_HOURS` | seconds |
-| `polyglot` | 3 | `LANGUAGES_3` → `LANGUAGES_5` → `LANGUAGES_10` | languages |
-| `earlyBird` | 2 | `EARLY_BIRD_10` → `EARLY_BIRD_30` | days |
-| `nightOwl` | 2 | `NIGHT_OWL_10` → `NIGHT_OWL_30` | days |
-| `burst` | 1 | `DAILY_BURST` (8 h in one day) | seconds |
-| `perfectMonth` | 1 | `PERFECT_MONTH` (every day of a month) | month |
+67 badges. `tier` restarts at 1 for each `(family, window)` pair, which is why the grouping key
+must include the window. Measured from the live endpoint, 2026-09-13.
 
-`3+3+3+2+2+1+1 = 15` — matches the server enum exactly. Backend source of truth:
-`ctt-server/.../stats/achievement/enums/Achievement.java` (and `AchievementType.java` for the
-family names).
+| Family | Window | Tiers | Targets | Unit |
+| --- | --- | --- | --- | --- |
+| `STREAK` | LIFETIME | 8 | 3, 7, 14, 30, 60, 100, 180, 365 | days |
+| `TOTAL_SECONDS` | LIFETIME | 8 | 36000 … 9000000 | seconds |
+| `LANGUAGE_COUNT` | LIFETIME | 9 | 2, 3, 5, 8, 10, 15, 25, 40, 60 | languages |
+| `EARLY_BIRD_DAYS` | LIFETIME | 8 | 5, 10, 20, 30, 50, 75, 150, 300 | days |
+| `NIGHT_OWL_DAYS` | LIFETIME | 8 | 5, 10, 20, 30, 50, 75, 150, 300 | days |
+| `MAX_DAILY_SECONDS` | LIFETIME | 5 | 14400, 21600, 28800, 36000, 43200 | seconds |
+| `PERFECT_MONTH` | LIFETIME | 5 | 50, 70, 90, 95, 100 | percent |
+| `TOTAL_SECONDS` | DAY | 3 | 3600, 7200, 14400 | seconds |
+| `ACTIVE_DAYS` | WEEK | 3 | 3, 5, 7 | days |
+| `TOTAL_SECONDS` | WEEK | 2 | 36000, 90000 | seconds |
+| `ACTIVE_DAYS` | MONTH | 2 | 10, 20 | days |
+| `TOTAL_SECONDS` | MONTH | 2 | 144000, 288000 | seconds |
+| `ACTIVE_DAYS` | YEAR | 2 | 100, 200 | days |
+| `TOTAL_SECONDS` | YEAR | 2 | 1800000, 3600000 | seconds |
+
+`ACTIVE_DAYS` is the one family with **no LIFETIME ladder** — periodic only. Backend source of
+truth: `ctt-server/.../stats/achievement/enums/Achievement.java` and `AchievementWindow.java`.
 
 ### Why the codes cannot be parsed
 
-They are irregular, so a regex or suffix-strip is not a safe way to recover the family:
+They are irregular, so a regex or suffix-strip is not a safe way to recover family or order. This is
+why v0.71.0 had to add `type` and `tier` rather than have the client infer them:
 
 - `STREAK_3`, `LANGUAGES_3` → `<stem>_<n>`
 - `TOTAL_10_HOURS` → `<stem>_<n>_<UNIT>`
 - `DAILY_BURST`, `PERFECT_MONTH` → **no number**
 - stems differ from the enum's type names: `LANGUAGES_*` vs `LANGUAGE_COUNT`,
   `DAILY_BURST` vs `MAX_DAILY_SECONDS`
+- **the number is not even the tier.** `DAILY_BURST` is tier **3** while `DAILY_BURST_4` is tier
+  **1**; `PERFECT_MONTH` is tier **5** while `PERFECT_MONTH_50` is tier **1**. The 15 original codes
+  were kept byte-for-byte for backward compatibility, so new rungs sort around them.
 
 ## Measured sample (test account `langtail`, 2026-09-13)
-
-Real values that the rendering was built against — useful as a fixture shape.
 
 | Code | progress / target | unlocked |
 | --- | --- | --- |
@@ -70,58 +90,30 @@ Real values that the rendering was built against — useful as a fixture shape.
 | `NIGHT_OWL_10` | 8 / 10 | — |
 | `NIGHT_OWL_30` | 8 / 30 | — |
 | `DAILY_BURST` | 86400 / 28800 | ✅ |
-| `PERFECT_MONTH` | 0 / 1 | — |
+| `PERFECT_MONTH_*` | 32 / 50, 70, 90, 95, 100 | — |
 
-Header on this data: `8 / 15 tiers · 53%`, page renders 7 trophies.
+Header on this data: `19 / 67 tiers · 28%`, page renders **14 trophies** (7 lifetime + 7 period).
 
-## The contract gap (frontend workaround in place)
+## The contract gap — CLOSED in v0.71.0
 
-The server's `Achievement` enum exposes `type()` but `AchievementResponse` **does not project it**.
-Requested addition — both are projections of data the enum already holds, not new logic:
+This section used to describe a workaround: `AchievementResponse` did not project the family, so
+the frontend carried a hardcoded `code → family` table (`TROPHY_FAMILIES`) and matched on `code`.
 
-| Field | Source | Effect |
-| --- | --- | --- |
-| `type` | `Achievement.type()` | Removes the code list from `TROPHY_FAMILIES`; a new badge joins its ladder with no frontend change |
-| `tier` | ordinal within the family | Ladder order becomes authoritative server-side |
+The backend has since projected it, plus the two other fields the requirement asked for:
 
-Until then the frontend matches on `code` (`trophy-model.ts`) and degrades gracefully (P4).
-
-## Backend requirement: periodic (resetting) achievements
-
-**Status**: not requested yet — drafted here so it can be handed over verbatim.
-
-**Current state.** All seven `AchievementType` values are lifetime-cumulative. Nothing resets, so an
-active account exhausts the set: 15 tiers total, and a real account already sits at 12. Past that
-point the feature shows a frozen number.
-
-**Requested behaviour.** Add goals whose measurement window rolls. Illustrative, not prescriptive:
-
-| Window | Examples |
+| Field | Effect |
 | --- | --- |
-| Day | code 2h today; start before 09:00 today |
-| Week | 5 active days this week |
-| Month | 20 active days this month; 40h this month |
-| Year | 200 active days in 2026; 1,000h in 2026 |
+| `type` | Grouping is now data-driven; the hardcoded table was **deleted** (`trophy-model.ts` lost ~130 lines) |
+| `tier` | Ladder order is authoritative server-side — no more sorting by code |
+| `window` | Tells the client whether progress resets, and distinguishes the five `TOTAL_SECONDS` ladders |
+| `windowStart` / `windowEnd` | The concrete local range; used for the window label ("This week") |
 
-**Contract additions this needs** (the first two are the ones already wanted above):
+`FAMILY_PRESENTATION` in `trophy-model.ts` now holds **only** label / blurb / artwork.
 
-| Field | Why |
-| --- | --- |
-| `type` | group a badge into its family/ladder without a frontend code list |
-| `tier` | ladder order authoritative server-side |
-| `window` | `LIFETIME \| DAY \| WEEK \| MONTH \| YEAR` — tells the client whether progress resets |
-| `windowStart` / `windowEnd` | the concrete local range being measured, so the card can label it (`August 2026`) instead of guessing |
-
-**Why the backend should own the window, not the client.** The ranges are calendar-correct only in
-the user's zone (already handled: the endpoint takes `timezoneOffset`), and `daily_stats` is already
-materialised — so these are projections over data that exists, not new aggregation.
-
-**Client-side cost when it lands.** One extra concept (a trophy's window) plus a label; the ladder,
-grading, ordering and progress maths are unchanged, because a resetting tier still has a plain
-threshold. No new rendering path.
-
-**Guardrail to keep.** Keep each family's lifetime tier beside the periodic ones, so rolling a period
-never erases long-term progress.
+Two behaviours to remember when parsing: the window keys are **absent** (not null) for LIFETIME
+badges because Jackson omits nulls — modelled `.nullable().default(null)`, same as `unlockedAt` —
+and the schema deliberately keeps `type`/`tier` **required** (a pre-v0.71.0 server would fail to
+parse, which is correct: they are needed for grouping).
 
 ## Files
 

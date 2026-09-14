@@ -2,10 +2,10 @@
 
 ## Current Status
 
-**Phase**: Achievements 奖杯系统（家族/阶级模型 + 独立页面）+ Dashboard 面板迭代
-**Version**: 0.38.0 (2026-09-13)
+**Phase**: Achievements 奖杯系统对接后端 v0.71.0（67 阶 / (家族,窗口) 分组 / 周期成就）+ Dashboard 面板迭代
+**Version**: 0.39.0 (2026-09-14)
 **Branch**: develop
-**Tests**: 1307/1307 unit; vue-tsc + lint 0 error 0 warning; build green; e2e layout 4/4
+**Tests**: 1323/1323 unit; vue-tsc + lint 0 error 0 warning; build green; e2e layout 4/4
 
 > 本文件只记「现在与最近」。**跨轮次可复用的判断在 [`domains/`](./domains/README.md)**（R24）：
 > `dashboard-visualization`（图表/配色/布局/交互）、`backend-contract`（接口契约与统计语义）、
@@ -155,19 +155,28 @@ fights back」与 `ai-workflow/practices.md` 的「When an edit tool corrupts a 
 - `pnpm-workspace.yaml` 出现 `<包名>: set this to true or false` 占位符：`verifyDepsBeforeRun` 默认 `install`
   会在依赖不同步时隐式安装并写入。修法 `warn`。完整机制与取证见 `ai-workflow` S9。
 
-### Achievements 奖杯系统（v0.38.0）
+### Achievements 对接后端 v0.71.0（v0.39.0）
 
-- **新建领域** `memory-bank/domains/achievements/` 五件套（自有路由 / 模型 / 后端缺口）。
-- **决定性事实**：后端 15 徽章实为 **7 家族 × 2–3 阶**，且 **progress 是家族级**（实测三条 `STREAK_*` 全返
-  `7`、三条 `TOTAL_*` 全返 `460860`）→ 一家族一奖杯 + 阶梯，而非 15 张卡（会重复同一数字 5 次）。
-- **配色冲突**：`DESIGN.md` 禁装饰性用靛蓝且调色板近无彩，奖杯天然想要金银铜 → 不引第二套色，改用**既有靛蓝阶
-  的亮度递进**（`#3d49ad`→`#8290f0`→`#b9c1ff`，与趋势图/分布条同源），锁定态去掉填充。
-- **排序**：原按 `next.target - progress` 会把「差 1 月」与「差 1 天」当同类，实测让刚起步的月度奖杯排在 80%
-  进度者之前 → 改无量纲比例（与进度条同源），完成态垫底。
-- **自查并修的两处自身缺陷**：① 无徽章时页头渲染 `0 / 0 · 0%` → 隐藏；② 路由未包 `AppLayout`，页面**无侧边栏
-  与导航**但截图正常（教训入 `achievements` S7）；③ 新增图标使 `AppSidebar.test` 穷举 mock 失效 → 11 测试全挂。
-- 真机（langtail）：7 奖杯 / 15 阶 / 8 earned / 53%，与后端 unlocked 一致；四档绘制与明暗模式实测通过。
-- 测试 +21 → **1307/1307**；type-check / lint / build / e2e 全绿。详见 `domains/achievements/`。
+- **后端交付 67 阶 / 14 阶梯**（原 15 阶 / 7 家族），新增响应字段 `type` / `tier` / `window` /
+  `windowStart` / `windowEnd` → **前端自维护的 code→家族表整体删除**（净删约 130 行）。
+- **分组键必须是 `(type, window)`**：`TOTAL_SECONDS` 是五条独立阶梯且 `tier` 各自从 1 起，按 `type` 分组会把
+  3 个日阶并入终身阶梯成为第 9–11 阶。`ACTIVE_DAYS` 无终身阶梯，仅周期出现。
+- **阶序取服务端 `tier`，绝不按 code 排序**：实测 `DAILY_BURST` 是第 3 阶而 `DAILY_BURST_4` 是第 1 阶，
+  `PERFECT_MONTH` 第 5 阶而 `PERFECT_MONTH_50` 第 1 阶（15 个原 code 逐字节保留以兼容）。
+- **窗口字段对 LIFETIME 是「键缺失」而非 null**（Jackson `non_null`）→ `.nullable().default(null)`，
+  与既有 `unlockedAt` 同处理；否则合法响应会被判为解析失败。
+- **新增家族窗口的静默风险**：`AchievementWindowSchema` 是闭合 `z.enum`（镜像后端 Java 枚举，与本仓其他
+  枚举建模一致）→ 后端一旦新增窗口种类，前端会**整页解析失败**。这是刻意的严格性，已记入 `practices` S3。
+- **信息架构**：页面分「Lifetime（永不重置）」与「Current period（按日/周/月/年重置）」两区。五个
+  `TOTAL_SECONDS` 阶梯同名「Total time」，故卡片必须显示窗口名（Today / This week…）才可区分。
+- **`PERFECT_MONTH` 的 `unit` 由 `month` 改 `percent`**（progress 20→32 之类），卡片补 `32%` 渲染
+  （原先会打印 `32 percent`）。
+- **双审查（AGENTS §9，>50 行强制）**：逻辑审查独立复核 67→14 划分与阶序（全绿）；风格审查提 4 项阻断。
+  逐条**自行取证**后修复 7 处，其中两项是审查发现而自测未覆盖的真实缺陷：
+  ① 5 张同名卡无法区分（→ 渲染窗口名）；② `activeDays` 联合成员从未绘制（→ 补日历图形，ACTIVE_DAYS
+  三阶梯原降级为通用徽章）。另修：stale docblock、`format:check` 失败、header 断言**交换 earned/total
+  仍通过**、阈值测试实为 fixture 回声（不可证伪）、闭枚举背后的死回退分支。
+- 真机（langtail，真实 67 阶）：**14 卡 = 7 终身 + 7 周期**，页头 `19 / 67 · 28%`，窗口名齐全，明暗双模无溢出。
 
 ## Lessons（跨轮次教训）
 

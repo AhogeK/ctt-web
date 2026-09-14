@@ -26,11 +26,19 @@ the achievements work, but worth fixing when that page is next touched.
 
 ## Grouping, in one pass
 
-`buildTrophies(badges)` maps the response by code, walks the declarations claiming their codes,
-then appends whatever is left as single-tier trophies. Two passes over 15 items; no index to keep
-in sync.
+`buildTrophies(badges)` buckets the response by `` `${type}:${window}` ``, builds one trophy per
+bucket, then sorts. Since v0.71.0 the key and the order both come from the payload, so there is no
+declaration to walk and no code list to keep in sync — the hardcoded `TROPHY_FAMILIES` table was
+deleted (~130 lines).
 
-`progress` is taken as the **max across the family's badges** rather than from the first. Under
+Two things the key must do:
+
+- **Include the window.** `TOTAL_SECONDS` is five independent ladders whose `tier` each restart at 1;
+  keying on `type` alone folds the 3 daily rungs into the lifetime ladder as tiers 9–11.
+- **Sort tiers by the server's `tier`**, never by `code`. The codes are not ordered: `DAILY_BURST` is
+  tier 3 while `DAILY_BURST_4` is tier 1. Ties break on `code` so the order is total.
+
+`progress` is taken as the **max across the bucket's badges** rather than from the first. Under
 today's server that is the same number (verified), and it stays correct if the server ever starts
 reporting per-tier values.
 
@@ -67,9 +75,13 @@ Verified live for all four states: locked = no fill + `1.25px`; mid = `rgb(130, 
 ## Units in copy
 
 `TOTAL_SECONDS` reports raw seconds (`460860`), which is unreadable. Route `seconds` through
-`formatDuration` (shared in `@/lib/utils`) and print other units verbatim — `39 languages`,
-`7 days / 30 days`. Do **not** hand-roll a formatter per card (systemPatterns: no inline per-view
-formatters).
+`formatDuration` (shared in `@/lib/utils`); `percent` prints as `32%` (not `32 percent`, which reads
+as prose); other units print verbatim — `39 languages`, `7 days / 30 days`. Do **not** hand-roll a
+formatter per card (systemPatterns: no inline per-view formatters).
+
+`formatPercent` in `@/lib/utils/percent.ts` is **not** the right helper here: it is built for
+adaptive precision on tiny *shares* (flooring to `0`, emitting a `<0.000001` sentinel, no `%` sign),
+whereas this is an integer 0–100 measurement.
 
 ## Testing the view
 
@@ -85,6 +97,11 @@ Two traps found while doing it:
 ## Assert the arithmetic against the server, not the UI
 
 The page's header total is the cheapest cross-check there is: `earned / total` tiers must equal the
-count of `unlocked: true` in the raw endpoint response. Measured live: page `8 / 15 · 53%`, backend
-8 unlocked — a mismatch there means the grouping or the unlock counting drifted, before any visual
-question is worth asking.
+count of `unlocked: true` in the raw endpoint response, and the card count must equal the number of
+distinct `(type, window)` pairs. Measured live: page `19 / 67 · 28%`, backend 19 unlocked, 14 cards
+from 67 badges — a mismatch there means the grouping or the unlock counting drifted, before any
+visual question is worth asking.
+
+Write the header assertion as an **ordered pair** (`toMatch(/7\s*\/\s*11/)`), not two
+`toContain`s: the loose form passes with `earned` and `total` swapped, and `toContain('7')` is
+satisfied by the percentage alone.
