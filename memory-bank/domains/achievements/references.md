@@ -61,6 +61,21 @@ must include the window. Measured from the live endpoint, 2026-09-13.
 `ACTIVE_DAYS` is the one family with **no LIFETIME ladder** — periodic only. Backend source of
 truth: `ctt-server/.../stats/achievement/enums/Achievement.java` and `AchievementWindow.java`.
 
+### Window date shapes (measured)
+
+`windowStart` / `windowEnd` are local `yyyy-MM-dd` strings. Each window's actual span:
+
+| Window | Measured | Note |
+| --- | --- | --- |
+| `DAY` | `2026-09-14` → `2026-09-14` | **Start equals end** — a day window is one date, so the range must collapse to `Sep 14`, not print a range |
+| `WEEK` | `2026-09-14` → `2026-09-20` | ISO week (Mon–Sun) |
+| `MONTH` | `2026-09-01` → `2026-09-30` | real month length, so February is 28/29 |
+| `YEAR` | `2026-01-01` → `2026-12-31` | |
+
+`windowEnd` is inclusive and is what the countdown counts to; a window ending today reads **0 days
+left** (`Ends today`), not 1. Both dates must be parsed as **local** dates — a UTC parse shifts the
+countdown by a day for every user the endpoint already localises for.
+
 ### Why the codes cannot be parsed
 
 They are irregular, so a regex or suffix-strip is not a safe way to recover family or order. This is

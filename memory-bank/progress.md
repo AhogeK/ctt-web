@@ -17,7 +17,7 @@
 | API Key Management                | ✅ Complete | 0.16.0         |
 | Device Management                 | ✅ Complete | 0.18.3         |
 | Dashboard (框架 + 面板迭代)       | ✅ Complete | 0.37.0         |
-| Achievements (奖杯系统)           | ✅ Complete | 0.39.0         |
+| Achievements (奖杯系统)           | ✅ Complete | 0.40.0         |
 | Leaderboard                       | ⏳ Pending  | 1.0.0          |
 | Settings                          | ⏳ Pending  | 1.0.0          |
 | i18n (zh/en)                      | ⏳ Pending  | 1.0.0          |
@@ -26,6 +26,7 @@
 
 ## Achievements 奖杯系统
 
+- [x] **v0.40.0 (2026-09-14)** 周期成就的截止呈现 — 「Current period」按窗口分子区（Today / This week / This month / This year），每区显示日期区间与倒计时；**截止期属于窗口而非奖杯**，故区间与倒计时只渲染在分组头一次（放卡片会重复 2–3 次并暗示每卡各有到期时间）。倒计时注入时钟（`useNow({ interval: 60_000 })`，`@vueuse/core` 已是依赖），否则页面跨午夜会一直显示昨天。紧迫感**只用既有 token 不引颜色**（收尾期 muted→foreground 且字重转 medium，明暗均已实测，非色彩信号可过灰度）——`DESIGN.md` 无紧急色，其状态色语义是成功，且 P3 已记录自造紧迫配色的代价。0 天写作 `Ends today`（「0 days left」在仍有效的当天读作已过期）。测试 **1350/1350**。
 - [x] **v0.39.0 (2026-09-14)** 对接后端 v0.71.0 成就扩展 — 后端由 15 阶增至 **67 阶 / 14 阶梯**，新增响应字段 `type` / `tier` / `window` / `windowStart` / `windowEnd`（**向后兼容**，但 `PERFECT_MONTH` 的 `unit` 由 `month` 改 `percent`）。前端**删掉自维护的 code→家族映射表**（净删约 130 行）改为数据驱动，分组键取 `(type, window)`（`TOTAL_SECONDS` 五条阶梯各自 `tier` 从 1 起，按 `type` 分组会把日阶并成终身阶第 9–11 阶），阶序取服务端 `tier`（code 不可解析：`DAILY_BURST` 是第 3 阶而 `DAILY_BURST_4` 第 1 阶）。窗口字段对 LIFETIME 是**键缺失**（Jackson non_null）故 `.nullable().default(null)`。页面分「Lifetime / Current period」两区，卡片显示窗口名以区分五个同名「Total time」阶梯。双审查后修 7 处，含两项自测未覆盖的真实缺陷（同名卡不可区分、`activeDays` 图形从未绘制）。真机 14 卡 / 19 of 67 / 28%。1323/1323。
 - [x] **v0.38.0 (2026-09-13)** Achievements 独立页面 — 后端 15 徽章实为 **7 家族 × 2–3 阶**且 progress 为家族级（实测同家族共享同一值），故按「一家族一奖杯 + 阶级阶梯」渲染（非 15 张卡）；内联 SVG 奖杯（每家族一个路径集，阶级只换填充，无图片资源）、纯函数 `trophy-model.ts`（分组/进度/排序）、进度按**当前阶→下一阶的跨度**度量、未知 code 仍以单阶奖杯渲染（新增成就无需前端改动）；配色不引第二套色，用既有靛蓝阶亮度递进（DESIGN.md 禁装饰性用靛蓝）。新增领域 `domains/achievements/`。1307/1307。
 

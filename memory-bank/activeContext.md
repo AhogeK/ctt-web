@@ -3,9 +3,9 @@
 ## Current Status
 
 **Phase**: Achievements 奖杯系统对接后端 v0.71.0（67 阶 / (家族,窗口) 分组 / 周期成就）+ Dashboard 面板迭代
-**Version**: 0.39.0 (2026-09-14)
+**Version**: 0.40.0 (2026-09-14)
 **Branch**: develop
-**Tests**: 1323/1323 unit; vue-tsc + lint 0 error 0 warning; build green; e2e layout 4/4
+**Tests**: 1350/1350 unit; vue-tsc + lint 0 error 0 warning; build green; e2e layout 4/4
 
 > 本文件只记「现在与最近」。**跨轮次可复用的判断在 [`domains/`](./domains/README.md)**（R24）：
 > `dashboard-visualization`（图表/配色/布局/交互）、`backend-contract`（接口契约与统计语义）、
@@ -155,28 +155,31 @@ fights back」与 `ai-workflow/practices.md` 的「When an edit tool corrupts a 
 - `pnpm-workspace.yaml` 出现 `<包名>: set this to true or false` 占位符：`verifyDepsBeforeRun` 默认 `install`
   会在依赖不同步时隐式安装并写入。修法 `warn`。完整机制与取证见 `ai-workflow` S9。
 
+### Achievements 周期成就的截止呈现（v0.40.0）
+
+- **截止期属于「窗口」而非「奖杯」**：同一窗口内所有阶级同时重置，故日期区间与倒计时**只渲染在窗口分组头**
+  一次，不放在卡片上（放卡片会让同一事实重复 2–3 次，且暗示每张卡各有到期时间）。
+- **「Current period」因此按窗口分子区**（Today / This week / This month / This year），不再是单一网格——
+  一个网格里装着四个不同到期时刻，正是终身/周期分区所消除的同一类错误，只是低一层。
+- **紧迫感只换 token，不引颜色**：`DESIGN.md` 无「紧急」色，其状态色（绿/翠）语义是*成功*；P3 已记录上次
+  自造紧迫配色的代价（明暗依赖的梯度，亮模式下 2.70:1 不达标）。故仅「收尾期」（`isClosing`：今天与明天）用既有 token 强调
+  （muted→foreground + 字重 medium，两个信号且均非新颜色）（两 token 皆模式感知，实测明 `#62666d`/暗 `#8a8f98` → 明 `#08090a`/暗 `#f7f8f8`）。
+- **措辞承担紧迫**：0 天写作 `Ends today` 而非「0 days left」——后者在窗口仍有效的当天读起来像已过期。
+- **倒计时需要时钟**：`groupByWindow(trophies, now)` 注入时钟，视图传 `useNow({ interval: 60_000 })`
+  （`@vueuse/core` 已是依赖，无需自写定时器，R12）。若用默认 `new Date()` 只在 computed 求值时取一次，
+  页面跨午夜会一直显示昨天的天数。注入同时让倒计时可测（固定日期 → 精确断言）。
+- 真机（langtail，真实 67 阶）：4 个窗口分组（DAY `Sep 14` / 本周 `Sep 14 – Sep 20` / 本月 `Sep 1 – Sep 30` /
+  今年 `Jan 1 – Dec 31`），倒计时 `Ends today` / `6` / `16` / `108 days left`，终身区 0 处区间；375/768/1600/2621px
+  均无溢出。测试 **1350/1350**。
+
 ### Achievements 对接后端 v0.71.0（v0.39.0）
 
-- **后端交付 67 阶 / 14 阶梯**（原 15 阶 / 7 家族），新增响应字段 `type` / `tier` / `window` /
-  `windowStart` / `windowEnd` → **前端自维护的 code→家族表整体删除**（净删约 130 行）。
-- **分组键必须是 `(type, window)`**：`TOTAL_SECONDS` 是五条独立阶梯且 `tier` 各自从 1 起，按 `type` 分组会把
-  3 个日阶并入终身阶梯成为第 9–11 阶。`ACTIVE_DAYS` 无终身阶梯，仅周期出现。
-- **阶序取服务端 `tier`，绝不按 code 排序**：实测 `DAILY_BURST` 是第 3 阶而 `DAILY_BURST_4` 是第 1 阶，
-  `PERFECT_MONTH` 第 5 阶而 `PERFECT_MONTH_50` 第 1 阶（15 个原 code 逐字节保留以兼容）。
-- **窗口字段对 LIFETIME 是「键缺失」而非 null**（Jackson `non_null`）→ `.nullable().default(null)`，
-  与既有 `unlockedAt` 同处理；否则合法响应会被判为解析失败。
-- **新增家族窗口的静默风险**：`AchievementWindowSchema` 是闭合 `z.enum`（镜像后端 Java 枚举，与本仓其他
-  枚举建模一致）→ 后端一旦新增窗口种类，前端会**整页解析失败**。这是刻意的严格性，已记入 `practices` S3。
-- **信息架构**：页面分「Lifetime（永不重置）」与「Current period（按日/周/月/年重置）」两区。五个
-  `TOTAL_SECONDS` 阶梯同名「Total time」，故卡片必须显示窗口名（Today / This week…）才可区分。
-- **`PERFECT_MONTH` 的 `unit` 由 `month` 改 `percent`**（progress 20→32 之类），卡片补 `32%` 渲染
-  （原先会打印 `32 percent`）。
-- **双审查（AGENTS §9，>50 行强制）**：逻辑审查独立复核 67→14 划分与阶序（全绿）；风格审查提 4 项阻断。
-  逐条**自行取证**后修复 7 处，其中两项是审查发现而自测未覆盖的真实缺陷：
-  ① 5 张同名卡无法区分（→ 渲染窗口名）；② `activeDays` 联合成员从未绘制（→ 补日历图形，ACTIVE_DAYS
-  三阶梯原降级为通用徽章）。另修：stale docblock、`format:check` 失败、header 断言**交换 earned/total
-  仍通过**、阈值测试实为 fixture 回声（不可证伪）、闭枚举背后的死回退分支。
-- 真机（langtail，真实 67 阶）：**14 卡 = 7 终身 + 7 周期**，页头 `19 / 67 · 28%`，窗口名齐全，明暗双模无溢出。
+> 六条可复用判断（`(type,window)` 分组键、阶序取服务端 `tier`、LIFETIME 窗口键缺失、
+> 闭合窗口枚举的严格性、§9 双审查的 7 处修复）已入领域文件，此处不重复。流水见 `progress.md`。
+
+- 后端 67 阶 / 14 阶梯，新增 `type`/`tier`/`window`/`windowStart`/`windowEnd` → 前端 code→家族表删除。
+- 窗口字段对 LIFETIME 是**键缺失**（Jackson `non_null`）；`AchievementsView` 分 Lifetime / Current period 两区。
+- 真机 14 卡 / `19 / 67 · 28%`。
 
 ## Lessons（跨轮次教训）
 

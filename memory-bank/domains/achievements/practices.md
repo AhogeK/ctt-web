@@ -59,6 +59,68 @@ otherwise               → min(2, max(1, ceil(earned / total * 3)))
 The `min(2, …)` matters: without it a 1-rung trophy that is earned would grade 3 and claim the
 maxed treatment it has not got through a ladder for.
 
+## The countdown needs a clock, not `new Date()`
+
+`groupByWindow(trophies, now)` takes its clock as an argument, and the view passes
+`useNow({ interval: 60_000 })` from `@vueuse/core` (already a dependency — no timer to hand-roll,
+R12). A bare `now: Date = new Date()` default would be evaluated **once** per computed run, so a page
+left open across midnight would keep claiming yesterday's "N days left" indefinitely.
+
+Minute granularity is deliberate: the countdown is expressed in whole days, so only the local *date*
+changes its value, and a per-second tick would re-render four groups for nothing.
+
+Injecting the clock is also what makes the countdown testable — pass a fixed date and the assertion
+is exact (`new Date(2026, 8, 18)` → 2 days). Construct dates **locally** in tests (`new Date(y, m-1, d)`),
+never `new Date('2026-09-18')`, or the result shifts by a day outside UTC.
+
+## Validating a server date: range-checking the numbers is not enough
+
+`m <= 12 && d <= 31` accepts `2026-02-31` and `2026-04-31`, and the range then renders **"Feb 31"** —
+a date that does not exist, displayed to the user as fact (this shipped into a draft of v0.40.0 and
+was caught by probing the parser, not by reading it).
+
+Correct check: anchor with `/^(\d{4})-(\d{2})-(\d{2})$/` (which also rejects unpadded `2026-9-4`),
+construct `new Date(y, m-1, d)`, then compare `getFullYear`/`getMonth`/`getDate` **back** against the
+parsed numbers. `Date` normalises an impossible day into the next month (`2026-02-31` → March 3), so
+the round-trip fails — and leap years fall out for free (`2028-02-29` passes, `2026-02-29` does not).
+Years 0–99 are rejected rather than mis-rendered, because `new Date(26, …)` means 1926.
+
+## A live clock beside frozen data will contradict itself
+
+The countdown ticks (`useNow`) while the window dates come from a query that refreshes only on
+mount: `refetchOnWindowFocus` is false app-wide (`src/lib/query.ts`) and this query sets no
+`refetchInterval`, so `staleTime` alone never re-requests. A passed window clamps to 0 days, which
+renders "Ends today" — so a page left open past a boundary shows a live "Ends today" beside a range
+it has already left, and never self-corrects.
+
+Rule: **anything that renders against a clock must trigger the refetch that can change it.** Here that
+is `watch(() => now.value.toDateString(), () => refetch())` — keyed on the local *date*, since window
+boundaries are local dates, so it fires once a day instead of 1440 times.
+
+Testing that watch has a trap: `refetchSpy` is module-scoped, so wrappers left mounted from earlier
+tests keep live watchers and fire on a later test's clock change (observed: 11 calls where 1 was
+expected). Unmount every wrapper in `afterEach`.
+
+## `font-*` utilities render nothing in this app (project-wide, pre-existing)
+
+`src/assets/base.css` sets `font-family: Inter, …` but no `@font-face`, font file or fontsource
+package exists, so Inter never loads and every `font-normal`/`font-medium`/`font-semibold` computes
+to the **fallback's 400 weight**. Measured live: the page's `h1` and `h2` (both `font-semibold`) and a
+control button report `fontWeight: 400`.
+
+Consequences when building emphasis or hierarchy:
+
+- Do **not** rely on weight to distinguish anything — it is a no-op. Typography here is effectively
+  size + colour + decoration only.
+- Non-colour emphasis needs another mechanism: `underline` / `decoration-dotted` render from the text
+  engine and are mode-independent.
+- This is not caused by the achievements work (dashboard code uses `font-semibold` the same way), so
+  it is out of scope to fix here — but do not build on top of it.
+
+Verification note: probing weights by injecting `<span class="font-bold">` gives a false negative,
+because Tailwind only emits utilities it finds in source. Measure a real element that already carries
+the class, or read the mounted DOM.
+
 ## Reading the grade back in a test
 
 Computed paint is on the SVG element's inline `style`, so jsdom can assert it without a layout

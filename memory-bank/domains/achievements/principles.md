@@ -81,7 +81,7 @@ Design rules that survive, plus what was learned implementing them:
   the model needed one extra notion (the window), not a new rendering path.
 - **A reset must be visible.** A trophy that silently drops to 0 on the 1st reads as data loss, so
   the card names its window (`This week`) and the page groups the resetting ladders into their own
-  section, titled and captioned "Resets when the period ends". Lifetime leads the page; the
+  section, titled "Current period" and captioned "Resets when each period ends". Lifetime leads
   expiring goals sit below it. In one undifferentiated grid the two read as the same kind of goal.
 - **The window is what distinguishes same-family ladders.** Five `TOTAL_SECONDS` ladders are all
   labelled "Total time"; without the window noun five cards look like duplicates.
@@ -91,6 +91,35 @@ Design rules that survive, plus what was learned implementing them:
 
 Windows are computed **server-side** in the requested timezone (`timezoneOffset`), with ISO weeks —
 across a year boundary a week keeps one identity (2025-12-29 and 2026-01-04 are both `2026-W01`).
+
+### The deadline belongs to the window, not the trophy
+
+Every tier in a window resets at the same instant, so the range and the countdown are rendered
+**once on the window's group header**, never per card. Putting them on cards duplicates one fact
+two-to-three times per group and implies each card has its own expiry.
+
+Consequence: the page's "Current period" section is **one sub-section per window** (Today / This
+week / This month / This year), not a single grid. A grid holding four different expiry moments is
+the same category error the lifetime/period split removes, one level down.
+
+### Urgency is stated in words, and emphasis is a token swap, never a new colour
+
+A countdown is a fact, not an alarm. `DESIGN.md` has no "urgent" hue — its status colours (green
+`#27a644`, emerald `#10b981`) mean *success*, and P3 records what a bespoke urgency colour cost last
+time (a mode-dependent ramp that failed contrast in light mode at 2.70:1). So the closing stretch —
+`isClosing(daysLeft)` = today and tomorrow — is emphasised with **existing tokens only**:
+`text-muted-foreground` → `text-foreground` **plus** a dotted underline. Two signals and neither is new
+colour, so it survives greyscale. Both tokens are mode-aware and invert correctly between
+modes because both tokens are mode-aware (measured: `#62666d` light / `#8a8f98` dark for muted,
+`#08090a` / `#f7f8f8` for foreground).
+
+The wording carries the urgency instead: `Ends today` for 0 days, not "0 days left" — the latter
+reads as expired when the window is still live for the rest of the day.
+
+**Weight is not available as a signal**: the page declares `font-family: Inter` but never loads it
+(no `@font-face`, no font file, no fontsource package), so every `font-*` utility computes to the
+fallback's single 400 face — measured, `font-semibold` on the h1 and h2 also reports 400. An emphasis
+that only raises weight would be invisible. Underline/decoration is the reliable non-colour cue.
 
 See `references.md` for the full ladder table.
 
