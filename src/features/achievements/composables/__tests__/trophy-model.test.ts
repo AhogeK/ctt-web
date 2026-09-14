@@ -6,8 +6,13 @@ import {
   byNextWin,
   formatDaysLeft,
   formatWindowRange,
+  TROPHY_ART_GEOMETRY,
+  TROPHY_ART_IDS,
+  TROPHY_CENTER,
+  TROPHY_RING_INNER,
   groupByWindow,
   isClosing,
+  medalFitTransform,
   splitByWindow,
   tierProgress,
   trophyTotals,
@@ -429,5 +434,86 @@ describe('byNextWin', () => {
       badge({ code: 'N1', type: 'NIGHT_OWL_DAYS', tier: 1, target: 10, progress: 9 }),
     ])
     expect(byNextWin(trophies)[0]!.type).toBe('PERFECT_MONTH')
+  })
+})
+
+describe('medalFitTransform', () => {
+  /**
+   * Parse the transform back into its matrix, so the geometric claim is checked
+   * numerically. jsdom has no layout engine — every `getBBox()` returns zero — so a
+   * DOM-level assertion could not catch a wrong transform; the algebra is the only
+   * honest way to test this in unit tests, and the live measurements it encodes were
+   * taken from a real browser.
+   */
+  function parse(transform: string) {
+    const t = transform.match(/translate\(([-\d.]+) ([-\d.]+)\)/)
+    const k = transform.match(/scale\(([-\d.]+)\)/)
+    if (!t || !k) throw new Error(`unparseable transform: ${transform}`)
+    return { tx: Number(t[1]), ty: Number(t[2]), s: Number(k[1]) }
+  }
+
+  it('puts every artwork’s centre exactly on the grid centre', () => {
+    // The measured `center` is an offset from the grid centre, so the artwork's
+    // absolute centre is CENTER + offset and must land back on CENTER. A first
+    // version omitted the CENTER*(1-s) term and left every medal ~4 units off; this
+    // is the assertion that catches that class of error.
+    for (const art of TROPHY_ART_IDS) {
+      const { tx, ty, s } = parse(medalFitTransform(art))
+      const [dx, dy] = TROPHY_ART_GEOMETRY[art].center
+      const centreX = tx + s * (TROPHY_CENTER + dx)
+      const centreY = ty + s * (TROPHY_CENTER + dy)
+      expect(centreX).toBeCloseTo(TROPHY_CENTER, 3)
+      expect(centreY).toBeCloseTo(TROPHY_CENTER, 3)
+    }
+  })
+
+  it('fits every artwork inside the ring', () => {
+    // The whole point: the ring is at the largest radius the 24-grid allows, so the
+    // artwork must come in to meet it. Before this the ring cut through all nine
+    // artworks — the worst (the calendars) by 2.58 units.
+    for (const art of TROPHY_ART_IDS) {
+      const { tx, ty, s } = parse(medalFitTransform(art))
+      const { distance, center } = TROPHY_ART_GEOMETRY[art]
+      void center
+      // The artwork is scaled by `s` about its own centre, which the previous test
+      // pins onto the grid centre — so its farthest painted point is `s * distance`.
+      expect(s * distance).toBeLessThanOrEqual(TROPHY_RING_INNER)
+      expect(tx).toBeGreaterThan(-TROPHY_CENTER)
+      expect(ty).toBeGreaterThan(-TROPHY_CENTER)
+    }
+  })
+
+  it('leaves clear space rather than touching the ring', () => {
+    // Touching is not "inside" in any useful sense: the stroke needs room.
+    for (const art of TROPHY_ART_IDS) {
+      const { s } = parse(medalFitTransform(art))
+      expect(s * TROPHY_ART_GEOMETRY[art].distance).toBeLessThan(TROPHY_RING_INNER)
+    }
+  })
+
+  it('scales each artwork so they all end up the same size', () => {
+    // An artwork smaller than the budget is scaled *up*, so the medals read as one set
+    // rather than as whatever size each path happened to be drawn at.
+    const reaches = TROPHY_ART_IDS.map((art) => parse(medalFitTransform(art)).s * TROPHY_ART_GEOMETRY[art].distance)
+    for (const reach of reaches) expect(reach).toBeCloseTo(reaches[0]!, 2)
+  })
+
+  it('has geometry for every artwork, and none for a non-existent one', () => {
+    // Keeps the measured table and the union from drifting apart.
+    expect(Object.keys(TROPHY_ART_GEOMETRY).sort()).toEqual([...TROPHY_ART_IDS].sort())
+  })
+
+  it('records a plausible distance for every artwork', () => {
+    /*
+     * A sanity floor on the measured data. The bound cannot be the half-diagonal (12):
+     * `streak` is drawn high in the grid, so its farthest painted point measures 11.35
+     * — legitimate, and a good reason not to guess a threshold. What is not legitimate
+     * is a distance so small the scale becomes meaningless, or zero, which the clamp
+     * would silently absorb.
+     */
+    for (const art of TROPHY_ART_IDS) {
+      expect(TROPHY_ART_GEOMETRY[art].distance).toBeGreaterThan(TROPHY_CENTER / 2)
+      expect(TROPHY_ART_GEOMETRY[art].distance).toBeLessThan(2 * TROPHY_CENTER)
+    }
   })
 })
