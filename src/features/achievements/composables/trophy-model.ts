@@ -110,6 +110,121 @@ export interface TrophyTier {
   unit: string
 }
 
+/**
+ * `TrophyArt` values that carry per-artwork geometry. Kept as a plain list so the
+ * geometry table and the type cannot drift apart without a test noticing.
+ */
+export const TROPHY_ART_IDS = [
+  'streak',
+  'volume',
+  'polyglot',
+  'activeDays',
+  'earlyBird',
+  'nightOwl',
+  'burst',
+  'perfectMonth',
+  'generic',
+] as const satisfies readonly TrophyArt[]
+
+/** The 24×24 grid every artwork is drawn on. */
+export const TROPHY_VIEWBOX = 24
+/** Centre of that grid — the point the ring is drawn around. */
+export const TROPHY_CENTER = TROPHY_VIEWBOX / 2
+/**
+ * Radius and stroke of the ring a completed ladder earns.
+ *
+ * The ring is what constrains the artwork: it is already at the largest radius the
+ * 24-grid allows (12 − 11.5 leaves half a unit of margin), so the artwork has to fit
+ * *inside* it rather than the ring growing to fit the artwork.
+ */
+export const TROPHY_RING_RADIUS = 11
+export const TROPHY_RING_STROKE = 1
+
+/** Unit of clear space between the ring's inner edge and the artwork. */
+const RING_GAP = 0.6
+
+/**
+ * Radius the ring's own paint reaches, i.e. its inner edge.
+ *
+ * Anything this far from the centre or further touches the ring.
+ */
+export const TROPHY_RING_INNER = TROPHY_RING_RADIUS - TROPHY_RING_STROKE / 2
+
+/**
+ * Measured painted extent of each artwork, per side, in viewBox units.
+ *
+ * Taken with the browser's own `getBBox()` plus half the stroke (SVG bounding boxes
+ * exclude stroke), at the earned stroke width of 1.5. These are measurements, not
+ * estimates — the previous version of this file assumed every artwork filled the
+ * grid symmetrically, which was true for none of them: `polyglot` is 2 units high of
+ * centre, `streak` 1.68, and the calendar shapes reach 13.08 from the centre while
+ * the ring's inner edge is only 10.5 away. The result was a ring that cut through
+ * every maxed trophy.
+ *
+ * `distance` is the farthest painted point from the grid centre, which is what has
+ * to fit inside the ring. It is the maximum over the bounding box's corners — a
+ * slight over-estimate for a concave shape, which errs toward a safer scale.
+ */
+export const TROPHY_ART_GEOMETRY: Record<TrophyArt, { distance: number; center: [number, number] }> = {
+  // 0.03, −1.68 — the flame sits high and its tail is short.
+  streak: { distance: 11.35, center: [0.03, -1.68] },
+  volume: { distance: 11.32, center: [0, 0] },
+  // 2 units above centre: the braces are wide and squat.
+  polyglot: { distance: 12.37, center: [0, -2] },
+  activeDays: { distance: 13.08, center: [0, 0] },
+  earlyBird: { distance: 12.77, center: [0, -1] },
+  // Off-centre in both axes, not just one.
+  nightOwl: { distance: 13.04, center: [-0.24, 0.24] },
+  burst: { distance: 12.85, center: [-0.25, 0] },
+  perfectMonth: { distance: 13.08, center: [0, 0] },
+  generic: { distance: 12.27, center: [0, 1] },
+}
+
+/**
+ * The `<g>` transform that fits an artwork inside the ring, centred.
+ *
+ * Pure so it can be reasoned about and tested without a renderer — the geometric
+ * claim ("the artwork ends up inside the ring, centred") is asserted numerically in
+ * the unit tests, since jsdom has no layout engine and reports every `getBBox()` as
+ * zero.
+ *
+ * The transform is `translate(centre) scale(k) translate(-artCentre)`: scale about
+ * the ARTWORK's own centre to sit the ring's centre, so a shape drawn off-centre is
+ * pulled onto the axis rather than scaled about a point it does not have.
+ *
+ * The scale can shrink or enlarge: an artwork smaller than the ring's budget is
+ * scaled *up* to use the space, so every medal fills the same circle whatever the
+ * underlying path sizes happen to be.
+ *
+ * @param art - which artwork's measured geometry to use
+ * @returns An SVG transform string
+ */
+export function medalFitTransform(art: TrophyArt): string {
+  const { distance, center } = TROPHY_ART_GEOMETRY[art]
+  // Budget: just inside the ring, with a hairline of clear space so a stroke never
+  // grazes it. Clamped so a degenerate measurement cannot produce a 0 or negative scale.
+  const budget = Math.max(0.5, TROPHY_RING_INNER - RING_GAP)
+  const scale = budget / Math.max(distance, 0.001)
+  const [dx, dy] = center
+  const s = Number(scale.toFixed(4))
+  /*
+   * Move the artwork's own centre onto the grid centre. `center` is the offset of the
+   * artwork's bounding-box centre FROM the grid centre, so its absolute centre is
+   * `CENTER + offset`, and mapping that to `CENTER` under a scale about the origin is
+   * `translate(CENTER - s*(CENTER + offset)) scale(s)`, i.e.
+   * `translate(CENTER*(1-s) - s*offset) scale(s)`.
+   *
+   * The `CENTER*(1-s)` term is what a first version of this got wrong: writing
+   * `translate(CENTER - s*offset)` scaled the offset but not the grid centre, leaving
+   * every artwork offset by `CENTER*(1-s)` — up to ~4.9 units at s=0.6, which is
+   * nearly half the artwork. Measured on the real page as a centre of (21.6, 21.6)
+   * rather than (12, 12).
+   */
+  const tx = Number((TROPHY_CENTER * (1 - s) - s * dx).toFixed(4))
+  const ty = Number((TROPHY_CENTER * (1 - s) - s * dy).toFixed(4))
+  return `translate(${tx} ${ty}) scale(${s})`
+}
+
 /** A trophy: one artwork plus its ladder, resolved for display. */
 export interface Trophy {
   /** Unique key: `${type}:${window}`, stable across renders. */
