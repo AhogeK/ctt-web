@@ -2,13 +2,20 @@
 /**
  * AchievementsView — the trophy cabinet at `/achievements`.
  *
- * A dedicated page rather than a dashboard panel: seven trophies with ladders do
- * not fit the 320px panel ceiling, and the dashboard already carries eight.
+ * A dedicated page rather than a dashboard panel: trophy families with ladders do
+ * not fit the 320px panel ceiling, and the dashboard already carries eight panels.
  *
- * The page renders **one card per trophy family**, not one per badge. The API
- * returns 15 badges, but they are 7 families of 2–3 tiers and the measured value
- * is per family (all three STREAK badges report the same progress), so 15 cards
- * would repeat the same number five times. `trophy-model` owns that shaping.
+ * The page renders **one card per (family, window)**, not one per badge. The API
+ * returns 67 badges (ctt-server v0.71.0) across 14 ladders, and the measured value
+ * is per (family, window) — all three STREAK badges report the same progress — so
+ * 67 cards would repeat one number many times over. `trophy-model` owns that
+ * shaping.
+ *
+ * The grid is split into a **lifetime** section and a **current period** one, by
+ * `splitByWindow`. A lifetime trophy measures a record that can never be lost; a
+ * resetting one measures the current day/week/month/year and starts over when that
+ * period ends. In one undifferentiated grid the two read as the same kind of goal,
+ * which is exactly the confusion the split removes.
  */
 import { computed } from 'vue'
 import { AlertCircle, RefreshCw, Trophy as TrophyIcon } from '@lucide/vue'
@@ -16,19 +23,26 @@ import { Button } from '@/components/ui/button'
 import { Skeleton } from '@/components/ui/skeleton'
 import { useStatsAchievements } from '@/composables/useStats'
 import TrophyCard from '../components/TrophyCard.vue'
-import { buildTrophies, byNextWin, trophyTotals } from '../composables/trophy-model'
+import { buildTrophies, byNextWin, splitByWindow, trophyTotals } from '../composables/trophy-model'
 
 const { data, isPending, isError, refetch } = useStatsAchievements()
 
-const trophies = computed(() => byNextWin(buildTrophies(data.value ?? [])))
-const totals = computed(() => trophyTotals(trophies.value))
+const split = computed(() => splitByWindow(buildTrophies(data.value ?? [])))
+
+/** Lifetime trophies, closest to its next rung first. */
+const lifetimeTrophies = computed(() => byNextWin(split.value.lifetime))
+
+/** Resetting trophies, closest to its next rung first. */
+const activeTrophies = computed(() => byNextWin(split.value.active))
+
+const totals = computed(() => trophyTotals([...split.value.lifetime, ...split.value.active]))
 
 /** Share of every tier earned, for the header ring. */
 const overall = computed(() =>
   totals.value.total === 0 ? 0 : Math.round((totals.value.earned / totals.value.total) * 100),
 )
 
-const isEmpty = computed(() => !isPending.value && !isError.value && trophies.value.length === 0)
+const isEmpty = computed(() => !isPending.value && !isError.value && totals.value.total === 0)
 </script>
 
 <template>
@@ -85,8 +99,31 @@ const isEmpty = computed(() => !isPending.value && !isError.value && trophies.va
       </p>
     </div>
 
-    <div v-else class="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-3">
-      <TrophyCard v-for="trophy in trophies" :key="trophy.key" :trophy="trophy" />
-    </div>
+    <template v-else>
+      <!-- Lifetime: the all-time record. These never reset. -->
+      <section v-if="lifetimeTrophies.length > 0" class="flex flex-col gap-3" data-testid="section-lifetime">
+        <div class="flex flex-wrap items-baseline justify-between gap-x-3 gap-y-1">
+          <h2 class="text-[15px] font-semibold text-foreground">Lifetime</h2>
+          <p class="text-[11px] text-muted-foreground">Never resets — your all-time record</p>
+        </div>
+
+        <div class="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-3">
+          <TrophyCard v-for="trophy in lifetimeTrophies" :key="trophy.key" :trophy="trophy" />
+        </div>
+      </section>
+
+      <!-- Current period: starts over when the period ends, so it is separated
+           from the permanent record above rather than mixed into it. -->
+      <section v-if="activeTrophies.length > 0" class="flex flex-col gap-3" data-testid="section-active">
+        <div class="flex flex-wrap items-baseline justify-between gap-x-3 gap-y-1">
+          <h2 class="text-[15px] font-semibold text-foreground">Current period</h2>
+          <p class="text-[11px] text-muted-foreground">Resets when the period ends — progress starts over</p>
+        </div>
+
+        <div class="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-3">
+          <TrophyCard v-for="trophy in activeTrophies" :key="trophy.key" :trophy="trophy" />
+        </div>
+      </section>
+    </template>
   </div>
 </template>

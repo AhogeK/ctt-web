@@ -38,12 +38,19 @@ const progress = computed(() => tierProgress(props.trophy))
 /**
  * Renders one measurement in its unit.
  *
- * Two families measure in raw seconds (`TOTAL_SECONDS` arrives as `460860`), which
- * is unreadable, so those go through the shared duration formatter; every other
- * unit prints as-is.
+ * Three cases, because the server's `unit` is not always a noun:
+ * - `seconds` arrives as raw values (`460860`) and is unreadable, so it goes
+ *   through the shared duration formatter.
+ * - `percent` describes a 0–100 completion (`PERFECT_MONTH`), where "32 percent"
+ *   reads as copy rather than a measurement — "%" is the symbol.
+ * - anything else (`days`, `languages`) is already a countable noun, so it
+ *   prints as-is. A unit this build has not seen still renders, rather than
+ *   being dropped.
  */
 function formatValue(value: number, unit: string): string {
-  return unit === 'seconds' ? formatDuration(value) : `${value} ${unit}`
+  if (unit === 'seconds') return formatDuration(value)
+  if (unit === 'percent') return `${value}%`
+  return `${value} ${unit}`
 }
 
 const progressLabel = computed(() => {
@@ -72,14 +79,27 @@ const unlockedTitle = computed(() => {
     :class="{ 'opacity-70': grade === 0 }"
     data-testid="trophy-card"
     :data-trophy="trophy.key"
+    :data-window="trophy.window"
   >
     <header class="flex items-start gap-3">
       <TrophyMedal :art="trophy.art" :grade="grade" :maxed="trophy.maxed" :size="40" />
 
       <div class="min-w-0 flex-1">
-        <h3 class="truncate text-[13px] font-semibold text-foreground" :title="trophy.label">
-          {{ trophy.label }}
-        </h3>
+        <div class="flex items-center gap-1.5">
+          <h3 class="truncate text-[13px] font-semibold text-foreground" :title="trophy.label">
+            {{ trophy.label }}
+          </h3>
+          <!-- The window noun. Five `TOTAL_SECONDS` ladders share one family name,
+               so without it five cards read as duplicates of "Total time". A
+               resetting trophy says which period it is measuring. -->
+          <span
+            v-if="trophy.windowLabel"
+            class="shrink-0 rounded-sm bg-muted px-1 py-px text-[10px] font-medium text-muted-foreground"
+            data-testid="trophy-window"
+          >
+            {{ trophy.windowLabel }}
+          </span>
+        </div>
         <p class="truncate text-[11px] text-muted-foreground" :title="trophy.blurb">{{ trophy.blurb }}</p>
       </div>
 
