@@ -40,6 +40,13 @@ SVG artwork set, progress-to-next-tier, card and page composition, the `/achieve
 | **Grade** | The visual rank of a trophy's artwork (0 locked, 1–3 earned). Derived, not from the API. |
 | **Maxed** | Every tier of the trophy earned. |
 
+## Files beyond the five
+
+`trophy-geometry.md` — the measured per-artwork extents and the transform that fits each
+one inside the completion ring, plus how to measure SVG geometry correctly. Split out of
+`practices.md` when that file outgrew the 200-line limit (same pattern as
+`dashboard-visualization/rendering.md`).
+
 ## Where to start
 
 - Changing how trophies group or order → `principles.md`, then `trophy-model.ts`.

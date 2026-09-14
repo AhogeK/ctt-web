@@ -121,6 +121,13 @@ Verification note: probing weights by injecting `<span class="font-bold">` gives
 because Tailwind only emits utilities it finds in source. Measure a real element that already carries
 the class, or read the mounted DOM.
 
+## Artwork geometry
+
+The medal's ring is at the largest radius the 24-grid allows, so the artwork has to fit
+inside it — measured per artwork, not assumed. The measurements, the transform that
+enforces the fit, and the traps in measuring SVG are in
+[`trophy-geometry.md`](./trophy-geometry.md).
+
 ## Reading the grade back in a test
 
 Computed paint is on the SVG element's inline `style`, so jsdom can assert it without a layout

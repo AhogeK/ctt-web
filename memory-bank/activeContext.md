@@ -2,10 +2,10 @@
 
 ## Current Status
 
-**Phase**: Achievements 奖杯系统对接后端 v0.71.0（67 阶 / (家族,窗口) 分组 / 周期成就）+ Dashboard 面板迭代
-**Version**: 0.40.0 (2026-09-14)
+**Phase**: Achievements 奖杯系统（v0.71.0 契约 / 周期截止 / 外圈几何）+ Leaderboard 契约修复 + Dashboard 面板迭代
+**Version**: 0.41.0 (2026-09-14)
 **Branch**: develop
-**Tests**: 1350/1350 unit; vue-tsc + lint 0 error 0 warning; build green; e2e layout 4/4
+**Tests**: 1384/1384 unit; vue-tsc + lint 0 error 0 warning; build green; e2e layout 4/4
 
 > 本文件只记「现在与最近」。**跨轮次可复用的判断在 [`domains/`](./domains/README.md)**（R24）：
 > `dashboard-visualization`（图表/配色/布局/交互）、`backend-contract`（接口契约与统计语义）、
@@ -155,31 +155,20 @@ fights back」与 `ai-workflow/practices.md` 的「When an edit tool corrupts a 
 - `pnpm-workspace.yaml` 出现 `<包名>: set this to true or false` 占位符：`verifyDepsBeforeRun` 默认 `install`
   会在依赖不同步时隐式安装并写入。修法 `warn`。完整机制与取证见 `ai-workflow` S9。
 
-### Achievements 周期成就的截止呈现（v0.40.0）
+### 奖杯外圈几何修正（v0.41.0）
 
-- **截止期属于「窗口」而非「奖杯」**：同一窗口内所有阶级同时重置，故日期区间与倒计时**只渲染在窗口分组头**
-  一次，不放在卡片上（放卡片会让同一事实重复 2–3 次，且暗示每张卡各有到期时间）。
-- **「Current period」因此按窗口分子区**（Today / This week / This month / This year），不再是单一网格——
-  一个网格里装着四个不同到期时刻，正是终身/周期分区所消除的同一类错误，只是低一层。
-- **紧迫感只换 token，不引颜色**：`DESIGN.md` 无「紧急」色，其状态色（绿/翠）语义是*成功*；P3 已记录上次
-  自造紧迫配色的代价（明暗依赖的梯度，亮模式下 2.70:1 不达标）。故仅「收尾期」（`isClosing`：今天与明天）用既有 token 强调
-  （muted→foreground + 字重 medium，两个信号且均非新颜色）（两 token 皆模式感知，实测明 `#62666d`/暗 `#8a8f98` → 明 `#08090a`/暗 `#f7f8f8`）。
-- **措辞承担紧迫**：0 天写作 `Ends today` 而非「0 days left」——后者在窗口仍有效的当天读起来像已过期。
-- **倒计时需要时钟**：`groupByWindow(trophies, now)` 注入时钟，视图传 `useNow({ interval: 60_000 })`
-  （`@vueuse/core` 已是依赖，无需自写定时器，R12）。若用默认 `new Date()` 只在 computed 求值时取一次，
-  页面跨午夜会一直显示昨天的天数。注入同时让倒计时可测（固定日期 → 精确断言）。
-- 真机（langtail，真实 67 阶）：4 个窗口分组（DAY `Sep 14` / 本周 `Sep 14 – Sep 20` / 本月 `Sep 1 – Sep 30` /
-  今年 `Jan 1 – Dec 31`），倒计时 `Ends today` / `6` / `16` / `108 days left`，终身区 0 处区间；375/768/1600/2621px
-  均无溢出。测试 **1350/1350**。
+- **用户报告属实**：外圈已是 24 网格极限（内沿 10.5），而**九个图形全部溢出**（最多 +2.58）、**六个偏心**
+  （最多 2 单位）。修法：图形按自身包围盒中心缩放并映射到格心，统一入圈且居中。
+- **我的第一版公式错了**：漏 `CENTER*(1-s)` 项 → 每个奖杯整体位移 ≈4.7 单位。审查看不出来，**真机量渲染**才暴露。
+- 细节与「几何必须真机测」的教训入 `achievements/trophy-geometry.md`。1384/1384。
 
-### Achievements 对接后端 v0.71.0（v0.39.0）
+### Achievements 三轮迭代（v0.39.0 → v0.41.0）
 
-> 六条可复用判断（`(type,window)` 分组键、阶序取服务端 `tier`、LIFETIME 窗口键缺失、
-> 闭合窗口枚举的严格性、§9 双审查的 7 处修复）已入领域文件，此处不重复。流水见 `progress.md`。
-
-- 后端 67 阶 / 14 阶梯，新增 `type`/`tier`/`window`/`windowStart`/`windowEnd` → 前端 code→家族表删除。
-- 窗口字段对 LIFETIME 是**键缺失**（Jackson `non_null`）；`AchievementsView` 分 Lifetime / Current period 两区。
-- 真机 14 卡 / `19 / 67 · 28%`。
+- **v0.39.0** 后端 67 阶 / 14 阶梯（原 15 / 7）→ 前端 code→家族表删除，改数据驱动。真机 14 卡 / `19 / 67 · 28%`。
+- **v0.40.0** 「Current period」按窗口分子区，每区日期区间 + 倒计时；截止期属**窗口**而非奖杯，故只在分组头渲染一次。
+- **v0.41.0** 外圈未包住图形（九个全溢出、六个偏心）→ 图形按自身中心缩放并映射到格心，统一入圈且居中。
+- **v0.41.0** Leaderboard 契约修复（该页原调用不存在的端点，永远只能报错）→ 按实测契约重建 + 路由补 `AppLayout`。
+- 各轮的可复用判断已入领域文件（P6、practices、trophy-geometry.md）；流水见 `progress.md`。
 
 ## Lessons（跨轮次教训）
 

@@ -17,15 +17,20 @@
 | API Key Management                | ✅ Complete | 0.16.0         |
 | Device Management                 | ✅ Complete | 0.18.3         |
 | Dashboard (框架 + 面板迭代)       | ✅ Complete | 0.37.0         |
-| Achievements (奖杯系统)           | ✅ Complete | 0.40.0         |
-| Leaderboard                       | ⏳ Pending  | 1.0.0          |
+| Achievements (奖杯系统)           | ✅ Complete | 0.41.0         |
+| Leaderboard                       | ✅ Complete | 0.41.0         |
 | Settings                          | ⏳ Pending  | 1.0.0          |
 | i18n (zh/en)                      | ⏳ Pending  | 1.0.0          |
 | E2E Test Coverage                 | ⏳ Pending  | 1.0.0          |
 | Production Deploy                 | ⏳ Pending  | 1.0.0          |
 
+## Leaderboard
+
+- [x] **v0.41.0 (2026-09-14)** 契约修复 — 该页**从未能工作**：契约层写的是一个**不存在的 API**（三个端点在真机上 `/global`、`/me` 均返 **HTTP 500**，而真实的单一端点 `GET /api/v1/leaderboard?dimension=…` 返 200），字段（`totalMinutes`/`totalUsers`/`updatedAt`/`avatarUrl`）后端从不返回，且没有 `dimension` 概念。按实测契约重建：五种维度 + 可选周期 + `limit`/`offset` 分页 + 自己的排名（在同一响应内，非第二个端点）。三个必须容忍的服务端行为：`displayName` 与 `currentUserRank` 对「账号已删」/「未上榜」是**键缺失而非 null**（写成 required-but-nullable 会让**整页解析失败**，实测第 2 页落入错误态）；非法维度×周期组合返 **400 `COMMON_003`**，故合法组合编码为数据（STREAK/NIGHT_OWL/EARLY_BIRD 仅 ALL，GROWTH 仅 WEEK），选择器据此生成，实测全程**零非法请求**。`rank` 原样显示（并列同名，实测 1,2,3,3,5,5…）、分数按维度格式化（秒 / 连击天数 / 带符号增长）、空页是状态非错误。路由补上 `AppLayout`（原先扁平注册导致**无侧边栏与导航**）。
+
 ## Achievements 奖杯系统
 
+- [x] **v0.41.0 (2026-09-14)** 奖杯外圈几何修正 — 用户报告「圈不一定包住图标、图标可能不在圈正中」经实测**属实且可量化**：完成阶梯后绘制的 `r=11`（内沿 10.5，已是 24 网格极限）**九个图形全部溢出**（+0.82 ~ **+2.58** 单位，日历类最远 13.08），且**六个偏心**（最多 2 单位）。修法：`<g>` 变换把每个图形按**自身包围盒中心**缩放并映射到格心（`translate(CENTER*(1-s) - s*offset) scale(s)`），统一进入圈内（最远 9.9 / 内沿 10.5）并精确居中。**注意我的第一版公式漏了 `CENTER*(1-s)` 项**，致每个奖杯整体位移 ≈4.7 单位 —— 审查看不出来，真机量渲染才暴露（圆心实测 21.6 而非 12）。几何知识入新文件 `achievements/trophy-geometry.md`（R24 单文件 ≤200 行）。真机：8 家族中心均 (12,12)，像素间隙 2.34–4.59px（修复前圈内沿 17.5px、图形达 21.8px）。新增 6 项几何测试（可证伪）→ **1384/1384**。
 - [x] **v0.40.0 (2026-09-14)** 周期成就的截止呈现 — 「Current period」按窗口分子区（Today / This week / This month / This year），每区显示日期区间与倒计时；**截止期属于窗口而非奖杯**，故区间与倒计时只渲染在分组头一次（放卡片会重复 2–3 次并暗示每卡各有到期时间）。倒计时注入时钟（`useNow({ interval: 60_000 })`，`@vueuse/core` 已是依赖），否则页面跨午夜会一直显示昨天。紧迫感**只用既有 token 不引颜色**（收尾期 muted→foreground 且字重转 medium，明暗均已实测，非色彩信号可过灰度）——`DESIGN.md` 无紧急色，其状态色语义是成功，且 P3 已记录自造紧迫配色的代价。0 天写作 `Ends today`（「0 days left」在仍有效的当天读作已过期）。测试 **1350/1350**。
 - [x] **v0.39.0 (2026-09-14)** 对接后端 v0.71.0 成就扩展 — 后端由 15 阶增至 **67 阶 / 14 阶梯**，新增响应字段 `type` / `tier` / `window` / `windowStart` / `windowEnd`（**向后兼容**，但 `PERFECT_MONTH` 的 `unit` 由 `month` 改 `percent`）。前端**删掉自维护的 code→家族映射表**（净删约 130 行）改为数据驱动，分组键取 `(type, window)`（`TOTAL_SECONDS` 五条阶梯各自 `tier` 从 1 起，按 `type` 分组会把日阶并成终身阶第 9–11 阶），阶序取服务端 `tier`（code 不可解析：`DAILY_BURST` 是第 3 阶而 `DAILY_BURST_4` 第 1 阶）。窗口字段对 LIFETIME 是**键缺失**（Jackson non_null）故 `.nullable().default(null)`。页面分「Lifetime / Current period」两区，卡片显示窗口名以区分五个同名「Total time」阶梯。双审查后修 7 处，含两项自测未覆盖的真实缺陷（同名卡不可区分、`activeDays` 图形从未绘制）。真机 14 卡 / 19 of 67 / 28%。1323/1323。
 - [x] **v0.38.0 (2026-09-13)** Achievements 独立页面 — 后端 15 徽章实为 **7 家族 × 2–3 阶**且 progress 为家族级（实测同家族共享同一值），故按「一家族一奖杯 + 阶级阶梯」渲染（非 15 张卡）；内联 SVG 奖杯（每家族一个路径集，阶级只换填充，无图片资源）、纯函数 `trophy-model.ts`（分组/进度/排序）、进度按**当前阶→下一阶的跨度**度量、未知 code 仍以单阶奖杯渲染（新增成就无需前端改动）；配色不引第二套色，用既有靛蓝阶亮度递进（DESIGN.md 禁装饰性用靛蓝）。新增领域 `domains/achievements/`。1307/1307。
