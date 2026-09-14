@@ -37,6 +37,11 @@ export const deviceKeys = {
  */
 export const leaderboardKeys = {
   all: ['leaderboard'] as const,
-  global: () => [...leaderboardKeys.all, 'global'] as const,
-  team: (teamId: string) => [...leaderboardKeys.all, 'team', teamId] as const,
+  /*
+   * One ranking per (dimension, period, page) — all three change the payload, so all
+   * three belong in the key. The previous bare `global()` would have served one
+   * dimension's page from cache for every other dimension.
+   */
+  page: (dimension: string, period: string, offset: number) =>
+    [...leaderboardKeys.all, dimension, period, offset] as const,
 }
