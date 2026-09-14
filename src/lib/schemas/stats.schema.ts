@@ -155,6 +155,22 @@ export const AchievementSchema = z.object({
   windowStart: z.string().nullable().default(null),
   // Last local date of the current window; null for LIFETIME
   windowEnd: z.string().nullable().default(null),
+  /*
+   * History (ctt-server v0.72.0). How many periods this badge has ever been earned in
+   * / how many consecutive periods up to now it has been earned in.
+   *
+   * **Computed server-side from the session history, not counted from unlock rows.**
+   * That distinction matters: unlock rows are only written when a user *opens the
+   * achievements page* (`evaluate` has a single caller — the GET), so counting rows
+   * would measure how often someone looked rather than how often they achieved. See
+   * `references.md`.
+   *
+   * No `.default(0)`: the server sends them as primitive ints on every badge, so a
+   * missing key means the contract changed and should fail loudly rather than read as
+   * "never earned".
+   */
+  totalUnlocks: z.number().int().nonnegative(),
+  periodStreak: z.number().int().nonnegative(),
 })
 
 /**

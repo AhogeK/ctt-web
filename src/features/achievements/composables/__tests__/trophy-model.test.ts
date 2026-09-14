@@ -12,6 +12,7 @@ import {
   TROPHY_RING_INNER,
   groupByWindow,
   isClosing,
+  periodUnit,
   medalFitTransform,
   splitByWindow,
   tierProgress,
@@ -515,5 +516,100 @@ describe('medalFitTransform', () => {
       expect(TROPHY_ART_GEOMETRY[art].distance).toBeGreaterThan(TROPHY_CENTER / 2)
       expect(TROPHY_ART_GEOMETRY[art].distance).toBeLessThan(2 * TROPHY_CENTER)
     }
+  })
+})
+
+describe('period history', () => {
+  it('reports the ladder history from its base rung', () => {
+    // Per-rung on the wire; the ladder reports its lowest rung, which is the largest
+    // count by construction (a higher threshold cannot be met more often).
+    const trophies = buildTrophies([
+      windowed('WEEK', { code: 'W1', type: 'ACTIVE_DAYS', tier: 1, target: 3, totalUnlocks: 9, periodStreak: 2 }),
+      windowed('WEEK', { code: 'W2', type: 'ACTIVE_DAYS', tier: 2, target: 5, totalUnlocks: 4, periodStreak: 1 }),
+    ])
+    expect(trophies[0]!.periodsReached).toBe(9)
+    expect(trophies[0]!.periodStreak).toBe(2)
+  })
+
+  it('reads the base rung even when no rung is unlocked this period', () => {
+    /*
+     * The common case on real data: the server reports `unlocked: false` with a
+     * non-zero history whenever the current period has not been reached yet (measured:
+     * a day ladder at `unlocked=n` with `totalUnlocks=13`). Anchoring to the current rung
+     * would have nothing to read, which is why the base rung is used.
+     */
+    const trophies = buildTrophies([
+      windowed('DAY', {
+        code: 'D1',
+        type: 'TOTAL_SECONDS',
+        tier: 1,
+        target: 3_600,
+        unit: 'seconds',
+        unlocked: false,
+        totalUnlocks: 13,
+        periodStreak: 0,
+      }),
+    ])
+    expect(trophies[0]!.earned).toBe(0)
+    expect(trophies[0]!.periodsReached).toBe(13)
+  })
+
+  it('is monotone down a real ladder, so the base rung is the right pick', () => {
+    // The server's own numbers: 13 / 12 / 11 for a day ladder, 3 / 2 / 0 for a week one.
+    const trophies = buildTrophies([
+      windowed('DAY', { code: 'D1', type: 'TOTAL_SECONDS', tier: 1, target: 3_600, unit: 'seconds', totalUnlocks: 13 }),
+      windowed('DAY', { code: 'D2', type: 'TOTAL_SECONDS', tier: 2, target: 7_200, unit: 'seconds', totalUnlocks: 12 }),
+      windowed('DAY', {
+        code: 'D3',
+        type: 'TOTAL_SECONDS',
+        tier: 3,
+        target: 14_400,
+        unit: 'seconds',
+        totalUnlocks: 11,
+      }),
+    ])
+    const rungs = trophies[0]!.tiers.map((t) => t.periodsReached)
+    expect(rungs).toEqual([13, 12, 11])
+    // Every higher rung is reached no more often than the one below it.
+    for (let i = 1; i < rungs.length; i++) expect(rungs[i]!).toBeLessThanOrEqual(rungs[i - 1]!)
+  })
+
+  it('carries each rung its own history, not the whole ladder’s', () => {
+    // So a future feature can show "this rung: 4 of 9 periods" without re-deriving it.
+    const trophies = buildTrophies([
+      windowed('WEEK', { code: 'W1', type: 'ACTIVE_DAYS', tier: 1, target: 3, totalUnlocks: 9 }),
+      windowed('WEEK', { code: 'W2', type: 'ACTIVE_DAYS', tier: 2, target: 5, totalUnlocks: 4 }),
+    ])
+    expect(trophies[0]!.tiers.map((t) => t.periodsReached)).toEqual([9, 4])
+  })
+
+  it('does not invent a history for a badge that has none', () => {
+    const trophies = buildTrophies([windowed('YEAR', { code: 'Y1', type: 'ACTIVE_DAYS', tier: 1, target: 100 })])
+    expect(trophies[0]!.periodsReached).toBe(0)
+    expect(trophies[0]!.periodStreak).toBe(0)
+  })
+})
+
+describe('periodUnit', () => {
+  it('uses the singular for a count of one', () => {
+    // Caught live: a monthly ladder at exactly 1 rendered "1 months reached".
+    expect(periodUnit('MONTH', 1)).toBe('month')
+    expect(periodUnit('DAY', 1)).toBe('day')
+    expect(periodUnit('WEEK', 1)).toBe('week')
+    expect(periodUnit('YEAR', 1)).toBe('year')
+  })
+
+  it('uses the plural everywhere else, including zero', () => {
+    // Zero never renders (the card hides the line), but the helper must still be sane
+    // rather than returning the singular.
+    expect(periodUnit('MONTH', 0)).toBe('months')
+    expect(periodUnit('MONTH', 2)).toBe('months')
+    expect(periodUnit('DAY', 13)).toBe('days')
+  })
+
+  it('names the noun by window, not by the badge unit', () => {
+    // TOTAL_SECONDS ladders measure progress in seconds but are counted in periods.
+    expect(periodUnit('WEEK', 3)).toBe('weeks')
+    expect(periodUnit('YEAR', 5)).toBe('years')
   })
 })
