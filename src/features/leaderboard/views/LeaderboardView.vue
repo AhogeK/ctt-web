@@ -23,7 +23,8 @@ import { AlertCircle, ArrowLeft, ArrowRight, RefreshCw, Trophy as TrophyIcon } f
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { Skeleton } from '@/components/ui/skeleton'
-import { DIMENSION_LABELS, PERIOD_LABELS, formatScore, periodsFor, useLeaderboard } from '../composables/useLeaderboard'
+import { formatScore } from '@/lib/utils'
+import { DIMENSION_LABELS, PERIOD_LABELS, periodsFor, useLeaderboard } from '../composables/useLeaderboard'
 import {
   LEADERBOARD_PAGE_SIZE,
   defaultPeriodFor,
