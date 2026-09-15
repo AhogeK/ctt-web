@@ -180,9 +180,11 @@ leaderboard's period selector is asserted against the requests actually put on t
 unsupported dimension/period pair is a `400 COMMON_003` rather than a fallback, so the selector
 must never be able to build one.
 
-> The `webkit` and `firefox` projects need `pnpm exec playwright install` for those engines;
-> without them `pnpm test:e2e` fails at launch. `--project=chromium` runs the whole suite against
-> the engine CI uses.
+The suite runs on **chromium only** — the engine `playwright install` provisions and the one CI
+runs. The scaffold's `firefox`/`webkit` projects were removed because no assertion was ever
+written against them and `pnpm test:e2e` therefore failed at launch for everyone; a project that
+is never run is a failing step, not coverage. Re-enable one only after installing its engine and
+running its suite.
 
 ## 🔍 Lint & Format
 
