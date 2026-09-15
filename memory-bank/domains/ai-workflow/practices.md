@@ -36,33 +36,18 @@ cherry-picked — stop and investigate before pushing.
 `env -u CI` matters: with `CI` set, Playwright switches to a preview build instead of the running
 dev server.
 
+**Check whose server is on 5173 before believing a failed run.** `reuseExistingServer: !CI` drives
+whatever holds the port, so another project's dev server there makes **every** spec fail at the first
+`page.goto` with `ERR_HTTP_RESPONSE_CODE_FAILURE` — which reads like a regression in our code. Look at
+the listener's `cwd` (`lsof -a -p <pid> -d cwd -Fn`); a different repository answers `/auth/login`
+with 404 because it has no such route. **Never stop a server you did not start**, even when it is what
+broke the run: start your own elsewhere, or use `CI=1` for the preview server on 4173.
+
 **Run verification at the branch tip, never at a detached historical commit.** `node_modules` is
 shared while `pnpm-workspace.yaml` is per-commit, so a script run at an old commit meets a config
 that does not describe the installed tree — and pnpm answers by mutating that config (see S9).
 Per-commit checking needs a worktree **with its own install**; one that borrows the main
 `node_modules` cannot resolve `vite-plus` and reports phantom TS errors.
-
-## Before believing an E2E run, check *whose* server is on 5173
-
-`playwright.config.ts` uses `reuseExistingServer: !CI` on port 5173, so it will happily drive whatever
-is listening there. Another project's dev server on that port makes **every** spec fail at the first
-`page.goto` with `ERR_HTTP_RESPONSE_CODE_FAILURE` — a symptom that reads exactly like a regression in
-our code.
-
-Diagnose by listener, not by assumption:
-
-```bash
-lsof -nP -iTCP:5173 -sTCP:LISTEN
-lsof -a -p <pid> -d cwd -Fn          # whose project is it actually serving?
-curl -s -o /dev/null -w '%{http_code}\n' http://localhost:5173/auth/login
-```
-
-Cost of not checking: a full-suite failure diagnosed as a code defect, when the port held a different
-repository's app (its `/auth/login` returns 404 — that repository has no such route).
-
-**Never stop it.** A server you did not start is not yours to tear down, even if it is the reason your
-run failed — say so and work around it (start your own on another port, or use `CI=1`, which switches
-to the preview server on 4173).
 
 ## Reading a rendered value instead of guessing it
 
