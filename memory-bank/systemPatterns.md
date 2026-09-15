@@ -48,6 +48,7 @@ happen to call it first.
 | ------------------------------------------------ | --------------------------- |
 | `formatRelativeTime`, `formatDateTime`, `formatDuration` | `src/lib/utils/time.ts`     |
 | `formatPercent`                                  | `src/lib/utils/percent.ts`  |
+| `formatScore`                                    | `src/lib/utils/score.ts`    |
 
 - **Do NOT inline per-view formatters.** `formatDuration` was unified this way in v0.18.0
   (`DeviceListView` + `ApiKeysView`); `formatPercent` was misplaced under
@@ -55,6 +56,16 @@ happen to call it first.
   same reason — same kind of thing as `formatDuration`, so it belongs in the same place.
 - A formatter's *rules* may still come from a domain (percent precision follows
   `dashboard-visualization` P8); the *file* does not.
+- **Single-consumer is not a reason to leave a formatter in place** — `formatPercent` moved
+  into `lib/utils/` while all four of its callers were dashboard panels, and `formatScore`
+  (v0.42.3) while its only caller was the leaderboard view. Nor is a domain type in the
+  signature: `formatScore(score, dimension)` takes `LeaderboardDimension`, which is a
+  **type-only** import and therefore erased — it adds no runtime dependency on the schema.
+  Both of these were argued as reasons NOT to move a formatter, and both are wrong; do not
+  reach for them again.
+- Corollary: a formatter must not live in a *query* composable. `formatScore` sat inside
+  `useLeaderboard` next to `useQuery`, which is co-location with the thing that happened to
+  call it first — the exact pattern this rule names.
 - No dayjs (R12); the hand-rolled formatters cover all cases.
 - vue-tsc gotcha (v0.18.0): template inline arrow functions bound to a function-typed prop (e.g. `:success-description="(name) => ..."`) lose contextual typing when the component imports a helper that moves out of the SFC — annotate the param explicitly `(name: string)` to silence TS7006.
 
