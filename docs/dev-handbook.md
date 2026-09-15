@@ -671,25 +671,33 @@ export default {
 
 ### 5.1 E2E 测试基础设施
 
-| 工具       | 版本 | 用途                                            |
-| ---------- | ---- | ----------------------------------------------- |
-| Playwright | 1.x  | 端到端测试运行器（Chromium / Firefox / WebKit） |
+| 工具       | 版本 | 用途                              |
+| ---------- | ---- | --------------------------------- |
+| Playwright | 1.x  | 端到端测试运行器（仅 Chromium）    |
 
 **关键配置**（`playwright.config.ts`）：
 
-- `projects: [chromium, firefox, webkit]`：多浏览器矩阵
-- `webServer`: 自动启动 dev server
+- `projects: [chromium]`：**只跑 Chromium**。脚手架默认带 firefox/webkit 但从未有人为其写断言，而 `playwright install` 只装 chromium，导致 `pnpm test:e2e` 对任何人都启动即失败。**未运行的项目不是覆盖率，是一个失败步骤**——要启用某引擎，先装该引擎并跑通它的用例。
+- `webServer`: 自动启动 dev server（CI 用 `pnpm preview` + 4173，本地用 `pnpm dev` + 5173）
 
 ### 5.2 文件组织
 
 ```text
 e2e/
+├── achievements/            # 成就页 spec + 本地 fixture/helper
+│   ├── fixtures.ts          # wire 形状的响应常量（不从 src/ 导入）
+│   ├── helpers.ts           # setup + 断言助手
+│   └── page.spec.ts
+├── api-keys/                # API Key 各流程（list/create/revoke/delete/errors/a11y/rawkey）
 ├── auth/                    # auth flow specs
 │   ├── login.spec.ts
 │   ├── logout.spec.ts
 │   ├── protected-routes.spec.ts
 │   └── guest-guard.spec.ts
-├── fixtures/                # 共享测试数据
+├── dashboard/               # 布局契约（heatmap-layout.spec.ts）
+├── devices/                 # 设备管理与撤销
+├── leaderboard/             # 排行榜 spec + 本地 fixture/helper
+├── fixtures/                # 共享测试数据（跨 feature）
 │   └── auth.ts              # 规范化的 credentials + response shapes
 ├── mocks/                   # API contract reference
 │   └── handlers/
@@ -698,6 +706,11 @@ e2e/
 │   └── auth-helpers.ts      # mockAuthApis, loginViaForm, clickLogout, readAuthStore
 └── vue.spec.ts              # 旧的基础 smoke test
 ```
+
+**两种 fixture 并存，用途不同**：跨 feature 共用的放 `e2e/fixtures/`；单个 feature 的放该 feature 目录下，
+并**声明 wire 形状而非 schema 解析类型**——`src/` 的 schema 用 `.default(null)` 把
+`windowStart`/`currentUserRank` 变成「必填」，而服务端是**整个键省略**，用解析类型就无法表达
+fixture 存在要复现的那种情形。
 
 ### 5.3 编写新的 E2E 测试
 
