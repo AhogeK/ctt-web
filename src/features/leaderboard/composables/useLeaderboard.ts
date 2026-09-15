@@ -8,7 +8,6 @@
 import { computed, type Ref } from 'vue'
 import { useQuery } from '@tanstack/vue-query'
 import { getLeaderboard } from '@/lib/api/leaderboard'
-import { formatDuration } from '@/lib/utils'
 import { leaderboardKeys } from '@/lib/query-keys'
 import {
   DIMENSION_PERIODS,
@@ -88,29 +87,4 @@ export const PERIOD_LABELS: Record<LeaderboardPeriod, string> = {
   WEEK: 'This week',
   MONTH: 'This month',
   YEAR: 'This year',
-}
-
-/**
- * Render a score in the unit its dimension actually uses.
- *
- * The server sends one `score` number whose meaning depends on the dimension, so a
- * single formatter would lie: `TOTAL`/`NIGHT_OWL`/`EARLY_BIRD` are seconds,
- * `STREAK` is a count of days, and `GROWTH` is a **signed** net delta that can be
- * negative. Hence three branches, not one duration call.
- *
- * @param score - raw server score
- * @param dimension - which dimension it came from
- * @returns Display string for that unit
- */
-export function formatScore(score: number, dimension: LeaderboardDimension): string {
-  switch (dimension) {
-    case 'STREAK':
-      return `${score} ${score === 1 ? 'day' : 'days'}`
-    case 'GROWTH':
-      // Signed on purpose: a negative delta is the meaningful case ("you slipped"),
-      // so it must not be printed as a bare magnitude.
-      return `${score > 0 ? '+' : ''}${formatDuration(Math.abs(score))}${score < 0 ? ' down' : ''}`
-    default:
-      return formatDuration(score)
-  }
 }
