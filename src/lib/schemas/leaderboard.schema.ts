@@ -3,14 +3,26 @@ import { z } from 'zod'
 /**
  * Leaderboard contracts — `GET /api/v1/leaderboard` (ctt-server).
  *
- * Verified against the live endpoint and the server's `LeaderboardDimension` /
- * `LeaderboardPeriod` enums. The previous version of this file described an API
- * that does not exist (three endpoints, `totalMinutes`, `totalUsers`, `updatedAt`,
- * `avatarUrl`), which is why the page could only ever render its error state.
+ * Written against the live endpoint and the server's `LeaderboardDimension` /
+ * `LeaderboardPeriod` enums, then re-checked against **ctt-server v0.73.0**, which
+ * widened the contract (commit `0111900`): a sixth dimension, broader period support,
+ * and a `totalParticipants` field. Authoritative source, per the R24 回源 rule:
+ * `leaderboard/enums/LeaderboardDimension.supports()` and `dto/LeaderboardResponse.java`.
+ *
+ * (An earlier version of this file described an API that does not exist at all —
+ * three endpoints, `totalMinutes`, `totalUsers`, `updatedAt`, `avatarUrl` — which is
+ * why the page could only ever render its error state.)
  */
 
 /** What the ranking measures. Each is a separate server-side ranking. */
-export const LeaderboardDimensionSchema = z.enum(['TOTAL', 'STREAK', 'NIGHT_OWL', 'EARLY_BIRD', 'GROWTH'])
+export const LeaderboardDimensionSchema = z.enum([
+  'TOTAL',
+  'STREAK',
+  'NIGHT_OWL',
+  'EARLY_BIRD',
+  'GROWTH',
+  'ACTIVE_DAYS',
+])
 export type LeaderboardDimension = z.infer<typeof LeaderboardDimensionSchema>
 
 /** Time window the ranking covers. */
@@ -29,9 +41,13 @@ export type LeaderboardPeriod = z.infer<typeof LeaderboardPeriodSchema>
 export const DIMENSION_PERIODS: Record<LeaderboardDimension, readonly LeaderboardPeriod[]> = {
   TOTAL: ['ALL', 'WEEK', 'MONTH', 'YEAR'],
   STREAK: ['ALL'],
-  NIGHT_OWL: ['ALL'],
-  EARLY_BIRD: ['ALL'],
-  GROWTH: ['WEEK'],
+  NIGHT_OWL: ['ALL', 'WEEK', 'MONTH', 'YEAR'],
+  EARLY_BIRD: ['ALL', 'WEEK', 'MONTH', 'YEAR'],
+  // Any non-ALL window: GROWTH compares a period against the one before it, which an
+  // unbounded history cannot do. `supports()` reads `period != ALL`, and WEEK is the
+  // server's default — so it must stay first for `defaultPeriodFor` to agree.
+  GROWTH: ['WEEK', 'MONTH', 'YEAR'],
+  ACTIVE_DAYS: ['ALL', 'WEEK', 'MONTH', 'YEAR'],
 }
 
 /**
@@ -56,10 +72,11 @@ export const LeaderboardEntrySchema = z.object({
   // `.default(null)`; here the result is identical either way.
 
   displayName: z.string().nullable().default(null),
-  // Unit depends on the dimension: seconds for TOTAL / NIGHT_OWL / EARLY_BIRD,
-  // whole days for STREAK, and a **signed** week-over-week delta for GROWTH (it
-  // can be negative). Callers must pick a formatter from the dimension, not from
-  // this number.
+  // Unit depends on the dimension: seconds for TOTAL / NIGHT_OWL / EARLY_BIRD, a
+  // **count of days** for STREAK (a run length) and ACTIVE_DAYS (distinct days with
+  // time — not a duration; `activeDaysIn` counts entries in `secondsByDay`), and a
+  // **signed** period-over-period delta for GROWTH (it can be negative). Callers must
+  // pick a formatter from the dimension, not from this number.
 
   score: z.number().int(),
   // The server's own 1-based rank. Kept verbatim and never derived from the row
@@ -85,6 +102,16 @@ export const LeaderboardResponseSchema = z.object({
   // parse the page instead of rendering "no rank yet".
 
   currentUserRank: z.number().int().positive().nullable().default(null),
+  // How many users are ranked for this dimension and period — the whole board, not
+  // this page. Declared **required with no default**, unlike the two fields above:
+  // the server sends a `long` primitive, which cannot be null, and `non_null`
+  // inclusion only suppresses nulls — so the key is always present and its absence
+  // means a contract mismatch worth failing on rather than papering over.
+  //
+  // It is what makes "is there another page" exact. Before v0.73.0 the only end
+  // signal was a short page, so a board whose size was an exact multiple of the page
+  // size offered one page too many.
+  totalParticipants: z.number().int().nonnegative(),
 })
 
 export type LeaderboardResponse = z.infer<typeof LeaderboardResponseSchema>

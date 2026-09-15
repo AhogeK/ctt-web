@@ -8,8 +8,8 @@ import {
 
 /** A real entry as the server sends it (taken from the live endpoint). */
 const entry = {
-  userId: '7999f4a0-c971-42b3-a688-0d79a97b1f1d',
-  displayName: 'AutoTest',
+  userId: 'ada11111-2222-4333-8444-555566660001',
+  displayName: 'Ada Lovelace',
   score: 39600,
   rank: 21,
 }
@@ -43,24 +43,37 @@ describe('LeaderboardEntrySchema', () => {
 
 describe('LeaderboardResponseSchema', () => {
   it('parses a real page', () => {
-    const page = { entries: [entry], currentUserRank: 11 }
+    const page = { entries: [entry], currentUserRank: 11, totalParticipants: 1240 }
     expect(LeaderboardResponseSchema.parse(page)).toEqual(page)
   })
 
   it('accepts a page whose currentUserRank key is absent', () => {
     // Measured: an unranked caller gets `data` with only `entries` — the key is
     // omitted, not null. GROWTH on the test account is exactly this.
-    const unranked = { entries: [] }
+    const unranked = { entries: [], totalParticipants: 0 }
     expect(LeaderboardResponseSchema.parse(unranked).currentUserRank).toBeNull()
   })
 
   it('accepts an explicit null currentUserRank', () => {
-    expect(LeaderboardResponseSchema.parse({ entries: [], currentUserRank: null }).currentUserRank).toBeNull()
+    expect(
+      LeaderboardResponseSchema.parse({ entries: [], currentUserRank: null, totalParticipants: 0 }).currentUserRank,
+    ).toBeNull()
   })
 
   it('accepts an empty page, which a legal period with no activity produces', () => {
     // TOTAL:WEEK legitimately returns 0 entries — a normal state, not an error.
-    expect(LeaderboardResponseSchema.parse({ entries: [], currentUserRank: 3 }).entries).toEqual([])
+    expect(LeaderboardResponseSchema.parse({ entries: [], currentUserRank: 3, totalParticipants: 0 }).entries).toEqual(
+      [],
+    )
+  })
+
+  it('requires totalParticipants, because the server always sends it', () => {
+    // A Java `long` is a primitive: it cannot be null, and `non_null` inclusion only
+    // suppresses nulls — so the key is always there. Declaring it required is a
+    // deliberate choice: its absence means a contract mismatch, and `paging` reads it
+    // to decide whether another page exists, where a silent 0 would disable paging.
+    const withoutTotal = { entries: [], currentUserRank: null }
+    expect(LeaderboardResponseSchema.safeParse(withoutTotal).success).toBe(false)
   })
 
   it('keeps tied ranks verbatim rather than renumbering', () => {
@@ -73,6 +86,7 @@ describe('LeaderboardResponseSchema', () => {
         { ...entry, userId: '33333333-3333-4333-8333-333333333333', rank: 5 },
       ],
       currentUserRank: null,
+      totalParticipants: 3,
     }
     expect(LeaderboardResponseSchema.parse(tied).entries.map((e) => e.rank)).toEqual([3, 3, 5])
   })
@@ -83,15 +97,25 @@ describe('DIMENSION_PERIODS', () => {
     // The server rejects unsupported pairs with HTTP 400 COMMON_003 (measured:
     // "Dimension STREAK does not support period WEEK"), so these lists are a
     // contract, not a preference.
+    // ctt-server v0.73.0 widened this: only STREAK is all-time-only, GROWTH takes any
+    // bounded window, and ACTIVE_DAYS joined as a sixth dimension.
     expect(DIMENSION_PERIODS.TOTAL).toEqual(['ALL', 'WEEK', 'MONTH', 'YEAR'])
     expect(DIMENSION_PERIODS.STREAK).toEqual(['ALL'])
-    expect(DIMENSION_PERIODS.NIGHT_OWL).toEqual(['ALL'])
-    expect(DIMENSION_PERIODS.EARLY_BIRD).toEqual(['ALL'])
-    expect(DIMENSION_PERIODS.GROWTH).toEqual(['WEEK'])
+    expect(DIMENSION_PERIODS.NIGHT_OWL).toEqual(['ALL', 'WEEK', 'MONTH', 'YEAR'])
+    expect(DIMENSION_PERIODS.EARLY_BIRD).toEqual(['ALL', 'WEEK', 'MONTH', 'YEAR'])
+    expect(DIMENSION_PERIODS.GROWTH).toEqual(['WEEK', 'MONTH', 'YEAR'])
+    expect(DIMENSION_PERIODS.ACTIVE_DAYS).toEqual(['ALL', 'WEEK', 'MONTH', 'YEAR'])
   })
 
   it('covers every dimension', () => {
-    expect(Object.keys(DIMENSION_PERIODS).sort()).toEqual(['EARLY_BIRD', 'GROWTH', 'NIGHT_OWL', 'STREAK', 'TOTAL'])
+    expect(Object.keys(DIMENSION_PERIODS).sort()).toEqual([
+      'ACTIVE_DAYS',
+      'EARLY_BIRD',
+      'GROWTH',
+      'NIGHT_OWL',
+      'STREAK',
+      'TOTAL',
+    ])
   })
 
   it('has a default that is always itself legal', () => {

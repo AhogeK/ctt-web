@@ -62,9 +62,10 @@ test.describe('Leaderboard page', () => {
     // Each dimension is locked to a single period where the server only allows one.
     for (const [dimension, allowed] of [
       ['STREAK', ['ALL']],
-      ['NIGHT_OWL', ['ALL']],
-      ['EARLY_BIRD', ['ALL']],
-      ['GROWTH', ['WEEK']],
+      ['NIGHT_OWL', ['ALL', 'WEEK', 'MONTH', 'YEAR']],
+      ['EARLY_BIRD', ['ALL', 'WEEK', 'MONTH', 'YEAR']],
+      ['GROWTH', ['WEEK', 'MONTH', 'YEAR']],
+      ['ACTIVE_DAYS', ['ALL', 'WEEK', 'MONTH', 'YEAR']],
       ['TOTAL', ['ALL', 'WEEK', 'MONTH', 'YEAR']],
     ] as const) {
       setup.setPayload(TEST_LEADERBOARD_PAGE)
@@ -108,9 +109,19 @@ test.describe('Leaderboard page', () => {
     setup.setPayload({
       entries: [{ userId: 'ada11111-2222-4333-8444-555566660001', displayName: 'Ada Lovelace', score: 33, rank: 1 }],
       currentUserRank: 17,
+      totalParticipants: 1,
     })
     await page.getByTestId('dimension-STREAK').click()
     await expect(page.getByTestId('leaderboard-entry').first()).toContainText('33 days')
+
+    // ACTIVE_DAYS is a day count too — a score of 12 must not read as "12s".
+    setup.setPayload({
+      entries: [{ userId: 'ada11111-2222-4333-8444-555566660001', displayName: 'Ada Lovelace', score: 12, rank: 1 }],
+      currentUserRank: 17,
+      totalParticipants: 1,
+    })
+    await page.getByTestId('dimension-ACTIVE_DAYS').click()
+    await expect(page.getByTestId('leaderboard-entry').first()).toContainText('12 days')
   })
 
   test('shows the caller rank from the same response, and nothing when unranked', async ({ page }) => {
@@ -157,20 +168,23 @@ test.describe('Leaderboard page', () => {
     await expect(page.getByText('Failed to load leaderboard')).toBeHidden()
   })
 
-  test('pages through the board and stops when a page comes back short', async ({ page }) => {
+  test('pages through the board and stops at its real end', async ({ page }) => {
     /*
      * Paging is asserted through the rendered range rather than the wire, because
      * TanStack caches per (dimension, period, offset): returning to a page already
-     * fetched renders from cache and issues no request at all. The one wire
-     * assertion left is the offset that *is* new — the first step past the initial
-     * page — which is also where the ranking must not reset.
+     * fetched renders from cache and issues no request. The wire assertions left are
+     * the offsets that *are* new.
+     *
+     * The board is 60 rows with a 20-row page — an exact multiple, which is precisely
+     * the shape that used to offer a fourth page that does not exist.
      */
-    const setup = await setupLeaderboardPage(page, fullLeaderboardPage())
+    const setup = await setupLeaderboardPage(page, fullLeaderboardPage(60))
     await expectLeaderboardRendered(page)
 
     await expect(page.getByTestId('page-range')).toContainText('1–20')
     // First page: nothing to go back to.
     await expect(page.getByTestId('prev-page')).toBeDisabled()
+    await expect(page.getByTestId('next-page')).toBeEnabled()
 
     await page.getByTestId('next-page').click()
     await expect.poll(() => lastQuery(setup.requests()).get('offset')).toBe('20')
@@ -180,46 +194,43 @@ test.describe('Leaderboard page', () => {
     await expect(page.getByTestId('page-range')).toContainText('21–40')
     await expect(page.getByTestId('prev-page')).toBeEnabled()
 
-    // Back to the cached first page, which is full — so Next is offered again.
-    await page.getByTestId('prev-page').click()
-    await expect(page.getByTestId('page-range')).toContainText('1–20')
-    await expect(page.getByTestId('next-page')).toBeEnabled()
-
-    // Serve a short page for the next uncached offset (40).
-    setup.setPayload({ entries: [TEST_LEADERBOARD_PAGE.entries[0]!], currentUserRank: 11 })
-
-    // Step to the cached offset 20, then on to the fresh offset 40. Two clicks,
-    // because the first one is answered from cache and cannot be observed on the wire.
     await page.getByTestId('next-page').click()
-    await expect(page.getByTestId('page-range')).toContainText('21–40')
-    await page.getByTestId('next-page').click()
-
     await expect.poll(() => lastQuery(setup.requests()).get('offset')).toBe('40')
-    await expect(page.getByTestId('page-range')).toContainText('41–41')
-    // A short page is the only end signal the contract offers.
+    await expect(page.getByTestId('page-range')).toContainText('41–60')
+
+    /*
+     * The last page is full, and that must no longer imply another one. Under the old
+     * full-page inference this offered a fourth page; the board's own size says 60 of
+     * 60 are shown.
+     */
     await expect(page.getByTestId('next-page')).toBeDisabled()
+
+    // Back to offset 20 — already fetched, so it comes from cache and issues nothing.
+    await page.getByTestId('prev-page').click()
+    await expect(page.getByTestId('page-range')).toContainText('21–40')
   })
 
-  test('offers a way back from the extra page a full board offers', async ({ page }) => {
+  test('lets the reader back when the board shrinks under them', async ({ page }) => {
     /*
-     * With no total in the response, a full page is the only signal that more may
-     * follow — so a board whose size is an exact multiple of the page size offers
-     * one page too many. That page is empty, and the pager lives in the
-     * non-empty branch, so the empty state has to carry its own way back.
+     * The exact total means a page past the end is normally unreachable, but the board
+     * can still shrink between requests — a score decays, an account is deleted — and
+     * leave the reader on an offset that no longer exists. That empty page renders in
+     * the non-empty branch's place, so it carries its own way back.
      */
-    const setup = await setupLeaderboardPage(page, fullLeaderboardPage())
+    const setup = await setupLeaderboardPage(page, fullLeaderboardPage(60))
     await expectLeaderboardRendered(page)
 
     await page.getByTestId('next-page').click()
     await expect.poll(() => lastQuery(setup.requests()).get('offset')).toBe('20')
 
-    setup.setPayload(TEST_LEADERBOARD_EMPTY)
+    // The board collapsed to 20 rows while the reader sits at offset 20.
+    setup.setPayload({ entries: [], currentUserRank: 11, totalParticipants: 20 })
     await page.getByTestId('next-page').click()
     await expect.poll(() => lastQuery(setup.requests()).get('offset')).toBe('40')
 
     await expect(page.getByText('Nothing more to show')).toBeVisible()
-    // Not the "no one is ranked" copy: there are ranked people, the reader just
-    // went past them.
+    // Not the "no one is ranked" copy: there are ranked people, the reader just went
+    // past them.
     await expect(page.getByText('No one is ranked yet')).toBeHidden()
 
     const back = page.getByTestId('prev-page-empty')
@@ -233,11 +244,22 @@ test.describe('Leaderboard page', () => {
     await setupLeaderboardPage(page)
     await expectLeaderboardRendered(page)
 
-    // TOTAL is the only dimension with a real choice.
     await expect(page.getByTestId('period-WEEK')).toBeVisible()
     await expect(page.getByTestId('period-YEAR')).toBeVisible()
 
+    // NIGHT_OWL ranks over every window (v0.73.0 widened it), so it keeps a choice.
     await page.getByTestId('dimension-NIGHT_OWL').click()
+    await expect(page.getByTestId('period-WEEK')).toBeVisible()
+    await expect(page.getByTestId('period-fixed')).toBeHidden()
+
+    // GROWTH has windows but never ALL — an unbounded history is meaningless for a
+    // period-over-period delta, and the pair would be a 400.
+    await page.getByTestId('dimension-GROWTH').click()
+    await expect(page.getByTestId('period-ALL')).toBeHidden()
+    await expect(page.getByTestId('period-WEEK')).toBeVisible()
+
+    // STREAK is the single-period dimension: stated, not offered.
+    await page.getByTestId('dimension-STREAK').click()
     await expect(page.getByTestId('period-WEEK')).toBeHidden()
     await expect(page.getByTestId('period-fixed')).toHaveText('All time')
   })
