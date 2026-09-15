@@ -11,10 +11,10 @@ import { formatDuration } from './time'
  * import is erased, so this adds no runtime dependency on the schema.
  *
  * The server sends one `score` number whose meaning depends on the dimension, so a
- * single formatter would lie: `TOTAL`/`NIGHT_OWL`/`EARLY_BIRD` are seconds, `STREAK` is
- * a count of days, and `GROWTH` is a **signed** net delta. `GROWTH` is literally
- * `thisWeek - lastWeek` in seconds (`LeaderboardService.computeScore`), so it is
- * negative whenever the reader slipped — hence three branches, not one duration call.
+ * single formatter would lie: `TOTAL`/`NIGHT_OWL`/`EARLY_BIRD` are seconds, `STREAK`
+ * and `ACTIVE_DAYS` are counts of days, and `GROWTH` is a **signed** net delta that can
+ * be negative (`LeaderboardService.computeScore`: this period unless `ALL`, minus the
+ * one before it) — hence three branches, not one duration call.
  *
  * @param score - raw server score
  * @param dimension - which dimension it came from
@@ -22,7 +22,11 @@ import { formatDuration } from './time'
  */
 export function formatScore(score: number, dimension: LeaderboardDimension): string {
   switch (dimension) {
+    // Both are day counts, not durations: STREAK is a run length, ACTIVE_DAYS the
+    // number of distinct days carrying time. `formatDuration` would print "2h" for a
+    // score of 2 — the same string a duration would produce, for a different fact.
     case 'STREAK':
+    case 'ACTIVE_DAYS':
       return `${score} ${score === 1 ? 'day' : 'days'}`
     case 'GROWTH':
       // Signed on purpose: a negative delta is the meaningful case ("you slipped"),

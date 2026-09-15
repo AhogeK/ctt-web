@@ -32,17 +32,21 @@ vi.mock('@/features/leaderboard/composables/useLeaderboard', async (importOrigin
 
 /** A page shaped like the server's: tied ranks, one deleted account. */
 function page(over: Partial<LeaderboardResponse> = {}): LeaderboardResponse {
+  const entries = over.entries ?? [
+    { userId: '11111111-1111-4111-8111-111111111111', displayName: 'Ada', score: 7200, rank: 1 },
+    { userId: '22222222-2222-4222-8222-222222222222', displayName: null, score: 3600, rank: 2 },
+  ]
   return {
-    entries: [
-      { userId: '11111111-1111-4111-8111-111111111111', displayName: 'Ada', score: 7200, rank: 1 },
-      { userId: '22222222-2222-4222-8222-222222222222', displayName: null, score: 3600, rank: 2 },
-    ],
     currentUserRank: 7,
     ...over,
+    entries,
+    // "This page is the whole board" unless a test says otherwise: what decides
+    // whether another page exists is the board's total, not how full the page is.
+    totalParticipants: over.totalParticipants ?? entries.length,
   }
 }
 
-/** A full page — what the server returns whenever more rows may follow. */
+/** A full page. A board holding exactly this many is exhausted at page 1. */
 function fullPage(): LeaderboardResponse['entries'] {
   return Array.from({ length: 20 }, (_, i) => ({
     userId: `${String(i + 1).padStart(8, '0')}-1111-4111-8111-111111111111`,
@@ -108,9 +112,9 @@ describe('LeaderboardView', () => {
     expect(wrapper.find('[data-testid="period-YEAR"]').exists()).toBe(true)
     expect(wrapper.find('[data-testid="period-fixed"]').exists()).toBe(false)
 
-    // Switching to a single-period dimension must withdraw the others, otherwise the
-    // user could request a pair the server rejects with HTTP 400.
-    await wrapper.get('[data-testid="dimension-NIGHT_OWL"]').trigger('click')
+    // STREAK is the single-period dimension: its periods must be withdrawn, otherwise
+    // the user could request a pair the server rejects with HTTP 400.
+    await wrapper.get('[data-testid="dimension-STREAK"]').trigger('click')
     expect(wrapper.find('[data-testid="period-WEEK"]').exists()).toBe(false)
     expect(wrapper.find('[data-testid="period-MONTH"]').exists()).toBe(false)
     expect(wrapper.get('[data-testid="period-fixed"]').text()).toBe('All time')
@@ -125,11 +129,26 @@ describe('LeaderboardView', () => {
     expect(wrapper.get('[data-testid="period-fixed"]').text()).toBe('All time')
   })
 
-  it('shows GROWTH locked to the week, which is its only legal period', async () => {
+  it('offers GROWTH its windows but never ALL, which it cannot rank', async () => {
+    // GROWTH compares a period against the one before it, so an unbounded history is
+    // meaningless for it — and an illegal pair is a 400, not a fallback.
     const wrapper = mountView()
     await wrapper.get('[data-testid="dimension-GROWTH"]').trigger('click')
 
-    expect(wrapper.get('[data-testid="period-fixed"]').text()).toBe('This week')
+    expect(wrapper.find('[data-testid="period-ALL"]').exists()).toBe(false)
+    expect(wrapper.find('[data-testid="period-WEEK"]').exists()).toBe(true)
+    expect(wrapper.find('[data-testid="period-MONTH"]').exists()).toBe(true)
+    expect(wrapper.find('[data-testid="period-YEAR"]').exists()).toBe(true)
+    // A real choice, so it is not stated as a fixed period.
+    expect(wrapper.find('[data-testid="period-fixed"]').exists()).toBe(false)
+  })
+
+  it('ranks ACTIVE_DAYS over every period, like the other measurements', async () => {
+    const wrapper = mountView()
+    await wrapper.get('[data-testid="dimension-ACTIVE_DAYS"]').trigger('click')
+
+    expect(wrapper.find('[data-testid="period-ALL"]').exists()).toBe(true)
+    expect(wrapper.find('[data-testid="period-WEEK"]').exists()).toBe(true)
   })
 
   it('treats an empty page as a state, not an error', () => {
@@ -165,9 +184,8 @@ describe('LeaderboardView', () => {
   })
 
   it('disables Previous on the first page and enables it after paging', async () => {
-    // A full page, because "Next" is only offered while the last response came back
-    // full — the response carries no total, so that is the only end signal available.
-    data.value = page({ entries: fullPage() })
+    // A full page out of a larger board, so there is somewhere to page to.
+    data.value = page({ entries: fullPage(), totalParticipants: 60 })
     const wrapper = mountView()
 
     // The Button primitive declares no `disabled` prop — it is a reka-ui
@@ -181,20 +199,18 @@ describe('LeaderboardView', () => {
     expect(wrapper.get('[data-testid="page-range"]').text()).toContain('21–40')
   })
 
-  it('lets the reader return after paging one page past the end', async () => {
-    // A ranking whose size is an exact multiple of the page size offers one page too
-    // many (a full page is the only end signal the API gives). That extra page is
-    // empty, and the pager lives in the non-empty branch — so without this control the
-    // reader is stranded with no way back.
+  it('lets the reader return when the board shrinks under them', async () => {
+    // Rare, but reachable: the total is exact, so the board can only strand the reader
+    // by shrinking between requests (a score decays, an account is deleted) and leaving
+    // them on an offset that no longer exists. The empty page then has no pager — it is
+    // rendered in the non-empty branch — so it must carry its own way back.
 
-    data.value = page({ entries: fullPage() })
+    data.value = page({ entries: fullPage(), totalParticipants: 60 })
     const wrapper = mountView()
 
-    // Click while the page is still full — that is what enables Next. Swapping the
-    // data first would disable the very control under test.
     await wrapper.get('[data-testid="next-page"]').trigger('click')
-    // The server's answer for the new offset on an exhausted board: an empty page.
-    data.value = page({ entries: [] })
+    // The board collapsed to 20 rows while the reader sits at offset 20.
+    data.value = page({ entries: [], totalParticipants: 20 })
     await wrapper.vm.$nextTick()
 
     expect(wrapper.text()).toContain('Nothing more to show')
@@ -203,7 +219,7 @@ describe('LeaderboardView', () => {
 
     const back = wrapper.get('[data-testid="prev-page-empty"]')
     await back.trigger('click')
-    data.value = page({ entries: fullPage() })
+    data.value = page({ entries: fullPage(), totalParticipants: 60 })
     await wrapper.vm.$nextTick()
     expect(wrapper.get('[data-testid="page-range"]').text()).toContain('1–20')
   })
@@ -218,12 +234,18 @@ describe('LeaderboardView', () => {
     expect(wrapper.find('[data-testid="prev-page-empty"]').exists()).toBe(false)
   })
 
-  it('offers Next only while the last page came back full', () => {
-    // Two rows means the end; a 20-row page means there may be more.
+  it('offers Next only while rows remain, so a full last page offers none', () => {
+    // Two rows out of two: the end.
     data.value = page()
     expect(mountView().get('[data-testid="next-page"]').attributes('disabled')).toBeDefined()
 
-    data.value = page({ entries: fullPage() })
+    // Twenty rows out of twenty — **still the end**. Under the old full-page inference
+    // this offered one page too many, which is exactly what the exact total fixes.
+    data.value = page({ entries: fullPage(), totalParticipants: 20 })
+    expect(mountView().get('[data-testid="next-page"]').attributes('disabled')).toBeDefined()
+
+    // Twenty rows out of more: there is somewhere to go.
+    data.value = page({ entries: fullPage(), totalParticipants: 21 })
     expect(mountView().get('[data-testid="next-page"]').attributes('disabled')).toBeUndefined()
   })
 })

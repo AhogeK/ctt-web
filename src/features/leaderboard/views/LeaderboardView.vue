@@ -9,11 +9,10 @@
  * page asked three endpoints that do not exist and read fields the server never
  * sends, so it could only ever render its error state.
  *
- * Dimensions are not interchangeable: `STREAK`, `NIGHT_OWL` and `EARLY_BIRD` are
- * only ranked over all time, and `GROWTH` only week-over-week. The period selector
- * is therefore built from `periodsFor(dimension)` rather than offering the full
- * cross-product, which would let the user request a pair the server rejects with
- * HTTP 400 (`COMMON_003`).
+ * Dimensions are not interchangeable: `STREAK` is only ranked over all time, and
+ * `GROWTH` only over a bounded window. The period selector is therefore built from
+ * `periodsFor(dimension)` rather than offering the full cross-product, which would let
+ * the user request a pair the server rejects with HTTP 400 (`COMMON_003`).
  *
  * The caller's own rank travels **inside** the same response, so this page is one
  * query — not the previous arrangement of a second request to a `/me` endpoint.
@@ -61,16 +60,14 @@ const entries = computed(() => data.value?.entries ?? [])
 const currentUserRank = computed(() => data.value?.currentUserRank ?? null)
 
 /**
- * Whether there is another page. The response carries no total, so a full page is
- * the only evidence available — a short page means the end.
+ * Whether there is another page — exact, from the board's own size.
  *
- * The cost of that inference: when the ranking's size is an exact multiple of the
- * page size, the last page is itself full, so one more page is offered than exists.
- * The resulting empty page is therefore a *supported* destination, not an edge case
- * to ignore — the empty state names it ("Nothing more to show") and carries a way
- * back, because the pager itself is not rendered there.
+ * This used to be inferred (`a full page means maybe more`), because the response
+ * carried no total: when the ranking's size was an exact multiple of the page size,
+ * the last page was itself full, so one page too many was offered. `totalParticipants`
+ * arrived in ctt-server v0.73.0 and removes the guess.
  */
-const mayHaveNextPage = computed(() => entries.value.length === LEADERBOARD_PAGE_SIZE)
+const mayHaveNextPage = computed(() => offset.value + entries.value.length < (data.value?.totalParticipants ?? 0))
 const isFirstPage = computed(() => offset.value === 0)
 
 function nextPage() {
@@ -188,10 +185,11 @@ const isEmpty = computed(() => !isPending.value && !isError.value && entries.val
       <p class="font-medium">{{ isFirstPage ? 'No one is ranked yet' : 'Nothing more to show' }}</p>
       <!--
         Two different situations, and saying "no one is ranked" for both would be
-        false: either this ranking genuinely has no data, or the reader paged past the
-        end of it. The second case is reachable because the response carries no total
-        — a board whose size is an exact multiple of the page size offers one page too
-        many (a full page is the only end signal available).
+        false: either this ranking genuinely has no data, or the reader is past the end
+        of it. The second case is now rare rather than routine — "next" is offered from
+        the board's exact size (`totalParticipants`) — but it remains reachable, because
+        the board can shrink between requests (a score decays, an account is deleted)
+        and leave the reader on an offset that no longer exists.
       -->
       <p class="max-w-sm text-sm text-muted-foreground">
         <template v-if="isFirstPage">
@@ -244,8 +242,7 @@ const isEmpty = computed(() => !isPending.value && !isError.value && entries.val
         </li>
       </ol>
 
-      <!-- Paging. The server returns no total, so "next" is offered while the last
-           response came back full. -->
+      <!-- Paging. "Next" is offered while rows remain, using the board's own count. -->
       <div class="flex items-center justify-between gap-3">
         <Button variant="outline" size="sm" :disabled="isFirstPage" data-testid="prev-page" @click="prevPage">
           <ArrowLeft class="h-4 w-4" />

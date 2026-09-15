@@ -80,6 +80,7 @@ export const DIMENSION_LABELS: Record<LeaderboardDimension, string> = {
   NIGHT_OWL: 'Night owl',
   EARLY_BIRD: 'Early bird',
   GROWTH: 'Growth',
+  ACTIVE_DAYS: 'Active days',
 }
 
 export const PERIOD_LABELS: Record<LeaderboardPeriod, string> = {

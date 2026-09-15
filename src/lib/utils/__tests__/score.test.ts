@@ -11,10 +11,17 @@ describe('formatScore', () => {
     expect(formatScore(7200, 'EARLY_BIRD')).toBe('2h')
   })
 
-  it('counts days for STREAK, singular at one', () => {
+  it('counts days for STREAK and ACTIVE_DAYS, singular at one', () => {
     expect(formatScore(33, 'STREAK')).toBe('33 days')
     expect(formatScore(1, 'STREAK')).toBe('1 day')
     expect(formatScore(0, 'STREAK')).toBe('0 days')
+
+    // ACTIVE_DAYS counts distinct days carrying time — the number is a count, not a
+    // duration, so `formatDuration` would turn a score of 2 into "2s": a different
+    // fact, and one that a reader would take at face value.
+    expect(formatScore(12, 'ACTIVE_DAYS')).toBe('12 days')
+    expect(formatScore(1, 'ACTIVE_DAYS')).toBe('1 day')
+    expect(formatScore(0, 'ACTIVE_DAYS')).toBe('0 days')
   })
 
   it('marks the sign of a GROWTH delta, because direction is the fact', () => {
