@@ -39,24 +39,24 @@ export default defineConfig({
     headless: !!process.env.CI,
   },
 
-  /* Configure projects for major browsers */
+  /*
+   * Chromium only, deliberately.
+   *
+   * The scaffold shipped chromium/firefox/webkit, but `pnpm test:e2e` could never pass
+   * anywhere: `playwright install` is invoked for chromium alone (see
+   * `.github/workflows/ci.yml`), so the other two projects failed at launch for an
+   * uninstalled engine — and no assertion had ever been written or fixed against them.
+   * A project that is never run is not coverage, it is a failing step.
+   *
+   * Chromium is the engine the suite is written against and the one CI installs. If
+   * cross-engine verification is ever wanted, install that engine AND run its suite
+   * before enabling it here — an uninstalled project silently takes the whole run down.
+   */
   projects: [
     {
       name: 'chromium',
       use: {
         ...devices['Desktop Chrome'],
-      },
-    },
-    {
-      name: 'firefox',
-      use: {
-        ...devices['Desktop Firefox'],
-      },
-    },
-    {
-      name: 'webkit',
-      use: {
-        ...devices['Desktop Safari'],
       },
     },
 
