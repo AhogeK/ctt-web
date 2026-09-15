@@ -53,3 +53,14 @@ one inside the completion ring, plus how to measure SVG geometry correctly. Spli
 - Adding or replacing artwork → `practices.md` (the SVG set's shared language).
 - Asking the backend for more → `references.md`, then a requirement text (cross-repo changes are
   read-only here, R3).
+
+## Verification baseline
+
+| | |
+| --- | --- |
+| Checked against source | `../ctt-server` **v0.71.0 – v0.72.0** · last content change 2026-09-14 |
+| Coverage | The `/api/v1/stats/achievements` contract (badge fields, `totalUnlocks`/`periodStreak`, window dates) read from the DTO and service at those versions |
+| Known drift | None found. v0.73.0's diff touched **only** `leaderboard/` — verified: `git -C ../ctt-server diff --name-only 3928259 HEAD` hits no `achievement` path — so these facts are probably unchanged, but they were **not re-read** at v0.73.0 |
+
+Treat the version-pinned numbers here (67 badges / 14 ladders at v0.71.0) as "true as of that
+revision": re-check the specific file before relying on them.

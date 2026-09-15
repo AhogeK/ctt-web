@@ -80,3 +80,14 @@ declared in its JSDoc.
 `practices.md` and `rendering.md` are the one domain whose reference material outgrew a single
 file; they split by "what the panel is made of" vs "how it reaches the screen", and both stay
 within the 200-line limit.
+
+## Verification baseline
+
+| | |
+| --- | --- |
+| Checked against source | This repo's `src/` **and rendered output** · last content change 2026-09-13 |
+| Coverage | Panel inventory and layout thresholds measured at the real widths; colour values and contrast read from the tokens and sampled from the render; ECharts traps reproduced |
+| Known drift | None known. This domain's source is our own code, so it drifts only when we change it — and a change to it is a change to this domain |
+
+Its facts are **rendered** facts, not declared ones: where this file and a stylesheet disagree, the
+render wins (R24 回源). Re-measure rather than re-read.

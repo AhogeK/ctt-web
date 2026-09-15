@@ -164,3 +164,33 @@ summary row:  @container/sc          grid: @[1430px]/sc:grid-cols-6
 - Tailwind v4 gotcha: an arbitrary breakpoint like `min-[2400px]` can sort *before* `lg` in the
   emitted CSS, so a same-specificity `lg:` rule overrides it. Prefer real container queries here;
   if an arbitrary breakpoint is unavoidable, verify the computed value, not the class name.
+
+## Panel order is the template (v0.35.1)
+
+Panels are grouped by row, and the grouping **is** the DOM order in `DashboardHome.vue` — one grid,
+no span special cases, so reordering means reordering the template:
+
+| Row | Panels |
+| --- | ------ |
+| 1 | Language / Project distribution (the two categorical shares) |
+| 2 | Coding heatmap / Coding trend (calendar + trend) |
+| 3 | Weekly by hour / Average hourly |
+| 4 | Time of day (the seventh card, alone) |
+
+`e2e/dashboard/heatmap-layout.spec.ts` pins this: `TITLES` must be in **render order** (the
+y-monotonicity assertion depends on it), and the two-column case asserts rows 1–3 pair up with
+time-of-day last. Reordering the template without updating that list fails the suite — the point.
+
+## Truncation is measured, never predicted
+
+Detect a truncated name by comparing `scrollWidth > clientWidth` on the element, not by counting
+characters against an assumed column width — character counts depend on font, rendered size and
+actual glyphs. *Evidence*: the measured test reports a 39-character project name as truncated while
+shorter ones pass; the character heuristic was a guess.
+
+## Segment geometry uses the exact share; the readout is formatted
+
+Time-of-day seam positions were once accumulated from **rounded** percentages while ECharts sized
+segments from **exact seconds**, so the seams never sat on the colour boundaries they mark. Keep the
+precise `share` for geometry, format only for display. Red/green: rounded accumulation reads
+`13/26/39`, exact values `12.5/25/37.5`.

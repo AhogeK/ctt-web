@@ -28,11 +28,19 @@ Two of these carry traps worth knowing before wiring a panel:
 - **`/stats/achievements` reports progress per (family, window), not per badge** — every `STREAK_*`
   entry returns the same `progress`. Since v0.71.0 it *does* send `type` and `tier`, so grouping is
   data-driven; full detail in [`achievements`](../achievements/references.md).
-- **`/leaderboard` requires `dimension`**, and the legal `period` values depend on it: `TOTAL` takes
-  all four, `STREAK`/`NIGHT_OWL`/`EARLY_BIRD` only `ALL`, `GROWTH` only `WEEK`. An unsupported pair is
-  HTTP 400 `COMMON_003` — not a quiet fallback. `displayName` and `currentUserRank` arrive as
-  **absent keys** (not nulls) for a deleted account and an unranked caller, and `rank` is the
-  server's own with ties shared, so it must never be derived from the row index.
+- **`/leaderboard` requires `dimension`**, and the legal `period` values depend on it — **since
+  v0.73.0** (`LeaderboardDimension.supports()`): six dimensions, of which only `STREAK` is `ALL`-only
+  and only `GROWTH` excludes `ALL` (a period-over-period delta cannot rank an unbounded history);
+  `TOTAL`/`NIGHT_OWL`/`EARLY_BIRD`/`ACTIVE_DAYS` take every period. An unsupported pair is HTTP 400
+  `COMMON_003` — not a quiet fallback.
+- `/leaderboard` **scores**: seconds for `TOTAL`/`NIGHT_OWL`/`EARLY_BIRD`, a **count of days** for
+  `STREAK` (run length) and `ACTIVE_DAYS` (distinct days with time — `activeDaysIn` counts entries in
+  `secondsByDay`, so it is not a duration), and a **signed** delta for `GROWTH`.
+- `/leaderboard` **response**: `entries`, `currentUserRank`, `totalParticipants` (v0.73.0; a `long`
+  primitive, so the key is always present — it is what makes "is there another page" exact).
+  `displayName` and `currentUserRank` arrive as **absent keys** (not nulls) for a deleted account and
+  an unranked caller, and `rank` is the server's own with ties shared, so it must never be derived
+  from the row index.
 
 ### Auth / account
 

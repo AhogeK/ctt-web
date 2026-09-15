@@ -84,3 +84,24 @@ printing `0%`. Applies to any unit that can sit orders of magnitude below its di
 *Evidence*: shares in the "Others" popover printed as `0%` at two decimals; the user's report was
 "hiding data behind a 0%". See `practices.md` → Numeric readouts for the formula and the lane
 sizing it forces.
+
+## P9. Only page-level state goes in the URL
+
+State that **every** panel on the page follows — the date range, the source filter — belongs in the
+URL: it is the page's context, it should survive a reload, and it should be shareable.
+
+A window that belongs to **one card** does not. The heatmap's year and the trend's month live in
+local refs inside `useDashboardFilters`, never in the query string.
+
+**Why it is an invariant and not a preference**: vue-router's `currentRoute` is a wholesale
+`shallowRef`, so *any* query change re-renders `RouterView` and the entire shell beneath it. Measured
+on a month selection: the sidebar, `SidebarProvider`, `TooltipProvider` and every `SidebarMenuItem`
+re-rendered for a change that touched one card. Keeping per-panel windows out of the URL is what makes
+those re-renders impossible rather than merely infrequent.
+
+*Corollary*: a shell component that reads route state must read it through `computed(() => route.path)`
+so an unrelated query change cannot propagate into it.
+
+*Measurement*: component-instance render counts plus per-canvas `toDataURL()` fingerprints — not
+screenshots, whose noise made the first attempt inconclusive. Regression guard: the filter store's
+`setHeatmapYear`/`setTrendMonth` assert `router.replace` is never called.

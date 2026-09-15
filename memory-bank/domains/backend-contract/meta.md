@@ -50,3 +50,27 @@ source of truth to be read, never edited. Capability gaps are raised as a requir
 - Adding an endpoint or fixing a payload → `scenarios.md` S1/S2, then `practices.md`
 - Deciding what a statistic *means* → `principles.md` P2
 - Looking up a path, error code or test address → `references.md`
+
+## Verification baseline
+
+| | |
+| --- | --- |
+| Checked against source | `../ctt-server` **v0.72.0 – v0.73.0** · last content change 2026-09-14 |
+| Coverage | Endpoint map, error codes and payload shapes read from controllers and DTOs; the leaderboard contract was repaired against live responses |
+| Known drift | Leaderboard drifted at v0.73.0 and was **repaired the same day** (`/leaderboard` page, v0.43.0). Nothing open. |
+
+### Leaderboard drift — found, then repaired (2026-09-15)
+
+The first calibration run caught it: `LeaderboardDimension`/`LeaderboardResponse` moved at v0.73.0
+(commit `0111900`, "widen dimension coverage") while our schema still encoded the previous matrix —
+which we had recorded **correctly** at the time, so this was genuine drift rather than a transcription
+error (`0111900^`'s `supports()` matches what we encoded, line for line).
+
+All three items are now fixed in the page (v0.43.0): `ACTIVE_DAYS` added as a sixth dimension; the
+period sets widened to what `supports()` allows; `totalParticipants` added to the schema and used for
+the next-page decision, which removed the "a full page means maybe more" heuristic and the extra page
+it offered on an exact-multiple board.
+
+**Coverage blind spot worth knowing.** The E2E case "never sends a dimension/period pair the server
+rejects" walks *our* dimension list, so it proves we send nothing illegal. It cannot detect a
+dimension the server **added** — that failure mode is invisible to it by construction.

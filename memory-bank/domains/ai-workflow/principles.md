@@ -55,6 +55,19 @@ A knowledge file is either **true now** or factually wrong — there is no "draf
 - No duplication:横切 conventions stay in `systemPatterns.md`, domain judgement in the domain file.
   Two copies drift; the answer is a link, not a second copy.
 
+**The file has no draft state; a claim may be marked.** The two are different granularities, and
+R24's `待确认` red line does not reopen the door this principle closes:
+
+- The *file* is always written in its final form — no half-filled sections.
+- A single *claim* whose authority has not been consulted is written **with** the marker plus what
+  would settle it (`待确认 — 需读 ctt-server X 的 Y`), because recording "we looked, we could not
+  confirm, this is what would confirm it" is itself the final form of that fact.
+- A marked claim is **not usable as a premise**: no code change is justified by it. It is a lead to
+  check, not a fact to build on.
+
+What stays forbidden is the third thing: guessing, and writing the guess in the assertive voice
+without the marker. An unmarked claim asserts its authority; a marked one declares the gap.
+
 ## P6. One fact, one owner
 
 Every piece of state has exactly one owner. URL state owns filters, TanStack Query owns server

@@ -45,3 +45,14 @@ evidence, resource ownership, read-only boundaries.
 - Deciding how to record knowledge → `principles.md` P5–P7
 - Committing / versioning → `practices.md`, then R6/R6.5 in `AGENTS.md`
 - Looking up a remembered detail → `references.md`
+
+## Verification baseline
+
+| | |
+| --- | --- |
+| Checked against source | This repo's own rules, scripts and tooling · last content change 2026-09-15 |
+| Coverage | Commit/branch procedure against `AGENTS.md` R6/R6.5 and the actual git history; verification recipes run; the `.sisyphus/` helper scripts and test-account registry read directly |
+| Known drift | None known — this domain describes our own process, and R24's maintenance applies to it like any other |
+
+This is the one domain whose "source" is not a product artifact but the working process itself, so
+its baseline moves whenever the rules in `AGENTS.md` move.

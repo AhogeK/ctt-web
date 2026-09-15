@@ -28,9 +28,17 @@
 
 - [x] **v0.42.2 (2026-09-14)** 成就页与排行榜页的 E2E — 此前两页**零 E2E 覆盖**（`e2e/auth/protected-routes.spec.ts` 只断言未登录跳转）。新增 `e2e/achievements/`（8 用例）与 `e2e/leaderboard/`（13 用例）：真实路由 + 真实 query + 真实 DOM。两条断言**只有真机能验**：① 奖杯图形是否落在完成圈内并从 `getBoundingClientRect` 反算（jsdom 的 `getBBox()` 全为 0，单测无能为力）；② 排行榜的 `dimension`/`period` 组合是否只发服务端接受的（非法对是 **400 `COMMON_003`**，故对**线上请求**断言而非渲染结果）。两者均已**注入缺陷验证可证伪**（改行号排名 / 恢复漏项公式 → 对应用例失败）。过程中确立 4 条 E2E 约定并写入 `systemPatterns.md`：fixture 声明 **wire 形状**而非 schema 解析类型（`.default(null)` 让输出类型要求键存在，而服务端是**省略键**）、每用例仅一次导航（内存态会话下 `reload`/新 `goto` 会退回登录页）、TanStack 按 key 缓存故回访**不发请求**、断言集合而非逐项 `if`（`no-conditional-expect`）。chromium 75/75。
 
+## 知识库治理（2026-09-15）
+
+- [x] **R24 补齐四项缺口 + 首次校准** — 领域树此前只记录「什么是真的」，不说**如何保持为真、每条事实从哪来、能信到什么程度**。补齐：**回源**（本仓库行为→代码/配置；界面呈现→**真实渲染**；后端契约→`../ctt-server` 源码 + 记录时版本；产品意图→用户表述；历史→git log）、**维护机制**（增量 + 校准，校准触发为后端 `appVersion` 变化）、**元数据与核对基线**、**渐进式披露**。约定对齐 `../ctt-server` 的同类实现（commit `72ddbd5`），两仓库不分裂成两套。规程入 `domains/README.md`，规则本身只留可裁决的约束。
+- [x] **首次校准即发现真实漂移** — 后端 v0.73.0（`0111900`）改了 leaderboard 契约：新增 `ACTIVE_DAYS` 维度、`NIGHT_OWL`/`EARLY_BIRD` 放宽到全部周期、`GROWTH` 放宽到任意非 `ALL`、响应新增 `totalParticipants`；我们仍是旧契约（我们记录时**是对的**，是后端改了）。已记入 `backend-contract/meta.md`；修复需改 Zod schema（R7），**未擅动，待决策**。
+- [x] **解掉一处规则互斥** — R5「记忆与业务代码同 commit」与 R6.5「AI 相关内容单独提交」互斥，且与实际历史不符 → R5 只约束**时机**（不滞后，R2），commit 边界归 R6.5。另写明 `ai-workflow` P5（文件无草稿态）与「待确认」标记（单条事实可标）的分工。
+
 ## Leaderboard
 
 - [x] **v0.41.0 (2026-09-14)** 契约修复 — 该页**从未能工作**：契约层写的是一个**不存在的 API**（三个端点在真机上 `/global`、`/me` 均返 **HTTP 500**，而真实的单一端点 `GET /api/v1/leaderboard?dimension=…` 返 200），字段（`totalMinutes`/`totalUsers`/`updatedAt`/`avatarUrl`）后端从不返回，且没有 `dimension` 概念。按实测契约重建：五种维度 + 可选周期 + `limit`/`offset` 分页 + 自己的排名（在同一响应内，非第二个端点）。三个必须容忍的服务端行为：`displayName` 与 `currentUserRank` 对「账号已删」/「未上榜」是**键缺失而非 null**（写成 required-but-nullable 会让**整页解析失败**，实测第 2 页落入错误态）；非法维度×周期组合返 **400 `COMMON_003`**，故合法组合编码为数据（STREAK/NIGHT_OWL/EARLY_BIRD 仅 ALL，GROWTH 仅 WEEK），选择器据此生成，实测全程**零非法请求**。`rank` 原样显示（并列同名，实测 1,2,3,3,5,5…）、分数按维度格式化（秒 / 连击天数 / 带符号增长）、空页是状态非错误。路由补上 `AppLayout`（原先扁平注册导致**无侧边栏与导航**）。
+
+- [x] **v0.43.0 (2026-09-15)** 按 ctt-server v0.73.0 重建排行榜契约 — 知识库首次校准发现的漂移，**当日修完**。三处：① 新增第六维度 `ACTIVE_DAYS`（有记录的天数）；② 周期组合放宽到 `supports()` 的真实范围（只有 `STREAK` 限 `ALL`、只有 `GROWTH` 排除 `ALL`，此前把 NIGHT_OWL/EARLY_BIRD 限死 `ALL`、GROWTH 限死 `WEEK`，**少给用户合法选项**）；③ 响应新增 `totalParticipants`，分页判定由「整页即可能还有」的启发式改为精确计数——**整页倍数时多给一页**的旧缺陷随之消失。三处断言均注入缺陷验证可证伪（`ACTIVE_DAYS` 掉出天数分支 / 退回旧启发式 → 对应用例失败）。1405/1405 unit + e2e 13/13。
 
 ## Achievements 奖杯系统
 
@@ -98,7 +106,7 @@
 - [ ] Dashboard: Weekday / IDE / Devices distribution panels（后端已就绪；Project 已随 v0.35.0 上线，其余复用共享排名列表）
 - [x] Leaderboard: Redis ZSet ranking display (v0.41.0 — contract rebuilt against `GET /leaderboard`)
 - [ ] Settings: Language switch (zh-CN / en-US)
-- [ ] CI: GitHub Actions (lint + test + build)
+- [x] CI: GitHub Actions — workflow 早已存在，但触发条件写的是从未存在的 `main` 分支，**因此一次也没跑过**；v0.42.3 修正为 `develop`/`master` 并显式 `--project=chromium`。本机已用 CI 的命令验证（`pnpm test:e2e` 75/75），**GitHub 上的首次真实执行仍待观察**。
 
 ## Archived History
 
