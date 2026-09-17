@@ -7,6 +7,7 @@ import {
   TEST_LEADERBOARD_WITH_DELETED,
   fullLeaderboardPage,
   TEST_LANGUAGES,
+  TEST_LANGUAGES_WITH_EMPTY,
 } from './fixtures.js'
 
 /**
@@ -216,10 +217,11 @@ test.describe('Leaderboard page', () => {
 
   test('lets the reader back when the board shrinks under them', async ({ page }) => {
     /*
-     * The exact total means a page past the end is normally unreachable, but the board
-     * can still shrink between requests — a score decays, an account is deleted — and
-     * leave the reader on an offset that no longer exists. That empty page renders in
-     * the non-empty branch's place, so it carries its own way back.
+     * The exact total means a page past the end is normally unreachable, but a board
+     * shrinks for real: deleting sessions removes a member outright (v0.76.1 — before
+     * that a stale score kept them listed), so `totalParticipants` can fall between two
+     * requests and leave the reader on an offset that no longer exists. That empty page
+     * renders in place of the non-empty branch, so it carries its own way back.
      */
     const setup = await setupLeaderboardPage(page, fullLeaderboardPage(60))
     await expectLeaderboardRendered(page)
@@ -310,42 +312,35 @@ test.describe('Leaderboard page', () => {
     await expect(page.getByText('Programming languages')).toBeVisible()
     await expect(page.getByText('Prose & docs')).toBeVisible()
 
-    /*
-     * Both levels of ordering are the selector's own work, and both matter now that the
-     * catalogue is the entire vocabulary: the group order is by likelihood of use (so
-     * `Programming` precedes `Prose` even though the list arrives sorted by name), and
-     * within a group the boards with members come before the empty ones.
-     */
+    // Group order is the selector's own work — by likelihood of use, so `Programming` precedes
+    // `Prose` even though the catalogue arrives sorted by name.
     const group = page.locator('[data-slot="select-group"]').filter({ hasText: 'Programming languages' })
-    // Web-first, so it retries: an `allTextContents()` snapshot can be taken before the
-    // teleported menu has finished rendering.
-    await expect(group.locator('[data-testid^="language-option-"]')).toHaveText(['Java', 'Kotlin', 'ABAP', 'Zig'])
+    await expect(group.locator('[data-testid^="language-option-"]')).toHaveText(['Java', 'Kotlin'])
 
-    // The boundary is drawn, not inferred — with 842 entries, "here the empty ones start"
-    // is information the reader cannot get from the names.
-    await expect(group.locator('[data-slot="select-separator"]')).toHaveCount(1)
+    // The default request returns only boards that have members, so `hasMembers` is uniformly
+    // true and there is no second partition to divide.
+    await expect(page.locator('[data-slot="select-separator"]')).toHaveCount(0)
   })
 
-  test('lets an empty board be opened, which is the point of listing them', async ({ page }) => {
+  test('orders an includeEmpty catalogue with the boards that have members first', async ({ page }) => {
     /*
-     * The catalogue is the whole vocabulary, so most boards have nobody. They are offered
-     * because the API ranks them: an empty board answers 200 and means "nobody yet", which
-     * is a different fact from "this is not a language" — and one only the full list can
-     * express.
+     * The default returns only boards with members, where the flag distinguishes nothing;
+     * `includeEmpty=true` returns the vocabulary (813 of 842 without members) and that is the
+     * shape the flag exists for. The client does not request that mode, but the endpoint
+     * documents it and the selector orders by the flag — so the ordering is asserted against
+     * the shape that exercises it rather than left assumed from a uniform response.
      */
-    const setup = await setupLeaderboardPage(page, TEST_LEADERBOARD_PAGE, TEST_LANGUAGES)
+    await setupLeaderboardPage(page, TEST_LEADERBOARD_PAGE, TEST_LANGUAGES_WITH_EMPTY)
     await expectLeaderboardRendered(page)
-
     await page.getByTestId('dimension-LANGUAGE').click()
-    await expect.poll(() => lastQuery(setup.requests()).get('language')).toBe('Java')
-
-    setup.setPayload({ entries: [], totalParticipants: 0 })
     await page.getByTestId('language-select').click()
-    await page.getByTestId('language-option-Zig').click()
 
-    await expect.poll(() => lastQuery(setup.requests()).get('language')).toBe('Zig')
-    await expect(page.getByText('No one is ranked yet')).toBeVisible()
-    await expect(page.getByText('Failed to load leaderboard')).toBeHidden()
+    const group = page.locator('[data-slot="select-group"]').filter({ hasText: 'Programming languages' })
+    await expect(group.locator('[data-testid^="language-option-"]')).toHaveText(['Java', 'Kotlin', 'ABAP', 'Zig'])
+
+    // The boundary is drawn, not inferred: among hundreds of empty boards, "where the empty
+    // ones start" is not something the names can tell a reader.
+    await expect(group.locator('[data-slot="select-separator"]')).toHaveCount(1)
   })
 
   test('switches boards without leaving the dimension', async ({ page }) => {
