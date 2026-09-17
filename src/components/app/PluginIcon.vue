@@ -1,5 +1,5 @@
 <script setup lang="ts">
- /**
+/**
  * PluginIcon - Code Time Tracker plugin icon
  *
  * Inline SVG from JetBrains plugin (code-time-tracker/src/main/resources/META-INF/pluginIcon.svg)
