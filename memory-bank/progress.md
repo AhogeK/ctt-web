@@ -46,6 +46,11 @@
 
 - [x] **v0.44.1 跟进 ctt-server v0.76.1 (2026-09-17)** 目录默认回到「只有成员分的榜」 — v0.76.0 的全量默认作废，全量需 `?includeEmpty=true`。**前端零改动**（我们从未请求该参数，选择器照常分组渲染 29 条、无分隔线）。修正的是**测试失真**：fixture 含默认响应不会返回的无成员条目；「打开空榜」用例断言的路径已不可达（默认不列出空榜），改为独立的「`includeEmpty` 形态排序」用例。另记录：删除会话现在真会移除榜上成员，`totalParticipants` 可下降（分页已按精确总数处理）。
 
+## 账号与设置
+
+- [x] **v0.45.0 E2E 夹具修复 (2026-09-17)** settings E2E 的两处**测试基础设施**缺陷：① `mockAuthApis` 未 mock `/auth/oauth/accounts`，该请求打到真服务端返 401 → 全局处理器 `clearAuth()` → **会话被清空、store 归默认**，表现为「删除对话框分支选错」这一假象；② refresh mock 漏 `userId`（`LoginResponseSchema` 要求 UUID），使任何整页重载都解析失败并清空会话。修复后 settings/api-keys/devices/auth 共 **57 passed / 0 failed**。`e2e/settings/delete-account.spec.ts` 改为**只读** store（分支由应用自身启动拉取决定）。另记录：`dashboard`/`leaderboard` 存在**既有 flaky**（A/B 对照 2 vs 4 failed，用例名每次不同），与本次无关。
+- [x] **v0.45.0 (2026-09-17)** 账号删除（Danger zone）— 新增 `DangerZone.vue` + `DeleteAccountDialog.vue`：有密码验密码、无密码打字确认邮箱（邮箱未知则禁用按钮，不用空串兜底）；成功后本地清态并跳登录，**绝不调用登出接口**（账号已不存在，那会 401）。三处连带修复：① `clearAuth()` 补清 TanStack 缓存（既有缺陷：登出后同标签页换账号会读到上个账号数据）；② 危险区提为独立组件并由 `ProfileView` 置于页面最后（放在 `AccountSection` 内时排在 `Connected Accounts` 之前，与「最后一块」的意图矛盾）；③ 对话框空输入不再泄漏裸 Zod 报错。测试失真两处已改：`USER_014` 不是 `USER_013`；mock 状态码改为真实的 401（400 会跳过唯一可能踢人下线的路径）。1431/1431 unit、93/93 e2e 全绿。
+
 ## Achievements 奖杯系统
 
 - [x] **v0.42.0 (2026-09-14)** 周期成就历史（后端 v0.72.0）— 卡片新增两行事实：`totalUnlocks`（得过几次）与 `periodStreak`（连击，🔥）。**关键：这些字段由后端从 sessions 回算，不是数解锁行** —— 我先前给后端的需求报告判断「表里的行即达成历史」是**错的**：`insertIfAbsent` 仅 1 处调用 → `evaluate` 仅 1 处调用 → `getAchievements`（即 `GET /achievements`），push 只 `evictCache` 不评估，无定时任务。故表里的行 = 「用户访问过成就页的那些周期」，照我方案做会系统性偏低；后端改为回算 ∪ 表行（并集保证单调）后驳回正确。前端：字段为 **per-rung**（实测 day 阶梯 13/12/11），取**最低阶**作为阶梯对外值（构造上单调、且本期未达成时仍有值）。🔥 按用户要求**零也显示**（全零阶梯读 `🔥0 · 0 years reached`），终身卡不显示（字段对其无意义）。过程中我的两个真实缺陷均由**真机**发现：`1 months reached` 单复数、以及「三个零说同一件事」。测试 **1400/1400**。

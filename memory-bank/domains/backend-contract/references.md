@@ -69,6 +69,7 @@ Two of these carry traps worth knowing before wiring a panel:
 | `POST /auth/login`, `/auth/register`              | hCaptcha token required (dev: official test keys)             |
 | `GET /users/me`                                   | displayName, email, emailVerified, hasPassword, timestamps    |
 | `POST /users/me/password/set`                     | OAuth users only; `USER_015` if already set                   |
+| `DELETE /users/me`                                | Body `{password?}` (**base64**). `USER_013` if a password is set and none sent; `USER_014` if it does not match; refuses an API-key session |
 | `GET /devices`, `POST /devices`, `DELETE /devices/{id}` | device registry; `revokedAt` marks revocation             |
 | `POST /sync/push`, `POST /sync/pull`              | body: `{ deviceId, sessions[] }`; device must exist first     |
 
@@ -92,7 +93,9 @@ Two of these carry traps worth knowing before wiring a panel:
 | `AUTH_023`       | 409  | Active key must be revoked before deletion                  |
 | `AUTH_024`       | 409  | Maximum active API keys reached                             |
 | `USER_014`       | 401  | Business check (wrong current password) — no logout         |
+| `USER_013`       | 403  | A password is required and none was supplied                |
 | `USER_015`       | 409  | Password already set                                        |
+| `AUTH_025`       | 403  | Endpoint refused a session opened with an API key rather than the web app |
 | `RATE_LIMIT_001` | 429  | Rate limited; `Retry-After` header when available           |
 
 ## Distribution semantics (backend ruling, ctt-server v0.66.0)

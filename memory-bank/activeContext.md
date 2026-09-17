@@ -2,10 +2,10 @@
 
 ## Current Status
 
-**Phase**: Achievements 奖杯系统（v0.71.0 契约 / 周期截止 / 外圈几何）+ Leaderboard 契约修复 + Dashboard 面板迭代
-**Version**: 0.44.0 (2026-09-17)
+**Phase**: 账号删除（Danger zone / 确认对话框 / 本地清态）+ Achievements + Leaderboard + Dashboard
+**Version**: 0.45.0 (2026-09-17)
 **Branch**: develop
-**Tests**: 1400/1400 unit; vue-tsc + lint 0 error 0 warning; build green; e2e 75/75 chromium（achievements 8 + leaderboard 13 为新增）
+**Tests**: 1431/1431 unit; vue-tsc + lint 0 error 0 warning; build green; e2e 93/93 chromium（settings/delete-account 8 为新增）
 
 > 本文件只记「现在与最近」。**跨轮次可复用的判断在 [`domains/`](./domains/README.md)**（R24）：
 > `dashboard-visualization`（图表/配色/布局/交互）、`backend-contract`（接口契约与统计语义）、
@@ -13,6 +13,27 @@
 
 > **v0.28 – v0.37 的逐版本细节**已归档 → [`archives/2026-09-15-dashboard-era-archive.md`](./archives/2026-09-15-dashboard-era-archive.md)。
 > 其中的耐久判断已回迁 [`domains/dashboard-visualization/`](./domains/dashboard-visualization/meta.md)（不该留在时间线层）。
+
+### E2E 会话被真实 401 清空（根因，2026-09-17）
+
+settings/profile 的 E2E 曾长期表现为「分支选错、`hasPassword` 永远是 false」。逐边界取证后定位：
+
+**`GET /api/v1/auth/oauth/accounts` 未被 mock → 打到真服务端 → 401 → 全局 `handle401Error` → `clearAuth()` → token 从 localStorage 删除、store 归默认。** 因果链：`initializeAuth()` 返回 false → `main.ts` 不调用 `fetchUserProfile()` → `hasPassword` 停在默认 false → 对话框渲染邮箱分支。**不是产品缺陷，是测试夹具不完整。**
+
+同一个 mock 缺口还掩盖了第二处：`e2e/utils/auth-helpers.ts` 的 refresh 响应**漏了 `userId`**，而 `LoginResponseSchema` 要求它是 UUID —— 任何整页重载都会因解析失败清空会话。
+
+两处均修（`userId` + oauth mock 移入共享 `mockAuthApis`）。相关 spec 改为**只读** auth store：分支必须来自应用自身的启动拉取，而不是测试写进去的值。
+
+**方法论教训**：`initializeAuth` 的 `catch {}` 把原因吞掉了，只有逐边界插桩（refresh 响应 → profile 响应 → console → 非 2xx URL）才看得到 401。另外 `e2e/dashboard` + `e2e/leaderboard` 有**既有 flaky**（A/B 对照：有该 mock 时 2 failed / 25 passed，无 mock 时 4 failed / 23 passed，且失败用例名每次不同）——与本次改动无关。
+
+### 账号删除 v0.45.0 —— Danger zone（2026-09-17）
+
+- **契约核实（`../ctt-server`，只读）**：`DELETE /api/v1/users/me`，body `{password?}`（base64）。`AccountDeletionService` 有密码未给 → **403** `USER_013`；密码不符 → **401** `USER_014`；非 Web 会话 → `AUTH_025`。**401 不触发登出**（资源级 401 已被 `handle401Error` 豁免，E2E 用真实 401 mock 实测确认）。
+- **两个分支**：有密码 → 验密码；无密码 → **打字确认邮箱**（后端无从验证，这是误触防护而非认证）。邮箱未知时**禁用删除按钮** —— 用空串兜底会让"空输入"匹配上。
+- **`clearAuth()` 补 `queryClient.clear()`**：此前全仓库无人清理 TanStack 缓存，登出后同标签页换账号会在 30s `staleTime` 内读到上个账号数据（既有缺陷，非本次引入）。
+- **危险区必须是页面最后一块** → 提为独立组件 `DangerZone.vue`，由 `ProfileView` 决定位置。块放在 `AccountSection` 内时不可能排到兄弟组件 `Connected Accounts` 之后（我的首个实现就错在这里，E2E 的位置断言也因此**通过了却没抓到**，已改为"必须在 Connected Accounts 之后"）。
+- **测试失真两处**（都是测试的错，不是代码的错）：① 把 `USER_013` 当"密码错误"（实为"未给密码"）；② mock 用 400 而真实是 401，**跳过了唯一可能把人踢出登录的路径**。
+- **真机实测抓出类型检查/lint/单测都漏掉的 4 个缺陷**：裸 Zod 内部报错泄漏给用户（`expected string, received undefined`）、`email: string | null` 传进要求 `string` 的 prop、`useQueryClient` 打断 27 个既有测试、em dash 与组件"空值占位符 `—`"语义冲突。
 
 ### 知识库治理：维护 / 溯源 / 渐进式披露（2026-09-15）
 
