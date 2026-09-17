@@ -6,6 +6,7 @@ import { fetchCurrentUser, type UserProfile } from '@/lib/api/user'
 import { TERMS_EXPIRED_EVENT } from '@/lib/api/instance'
 import type { LoginRequest, LoginResponse, AuthResponse } from '@/lib/schemas/auth.schema'
 import { getOrCreateDeviceId } from '@/lib/utils/device'
+import { queryClient } from '@/lib/query'
 import router from '@/router'
 import { RouteNames } from '@/router/route-names'
 
@@ -178,6 +179,11 @@ export const useAuthStore = defineStore('auth', () => {
     hasPassword.value = false
     createdAt.value = null
     lastLoginAt.value = null
+    // Cached server data belongs to the session that fetched it, and the next sign-in on this
+    // tab may be somebody else: without this, a different account is served the previous one's
+    // panels until the entries go stale. Every teardown path runs through here — sign-out, a
+    // terminal auth error, and account deletion — so this is the one place that has to remember.
+    queryClient.clear()
   }
 
   /**
