@@ -92,16 +92,30 @@ export interface LanguageFixture {
 }
 
 /**
- * A catalogue exercising both levels of ordering.
+ * The catalogue as the default request returns it (v0.76.1): **only boards with members**, so
+ * every entry carries `hasMembers: true`.
  *
- * Deliberately **neither** in category order **nor** partitioned: the catalogue arrives
- * sorted by name (842 entries), and both the grouping and the members-first split are the
- * selector's own work — a fixture that arrived pre-arranged would not show whether they
- * happen. Names are chosen so each partition is unambiguous: within `PROGRAMMING`, `Java`
- * and `Kotlin` have members while `ABAP` and `Zig` do not, so a name-sorted list and a
- * partitioned one cannot be confused.
+ * Deliberately not in category order — the catalogue arrives sorted by name, and grouping is
+ * the selector's own work, so a pre-arranged fixture would not show whether it happens.
  */
 export const TEST_LANGUAGES: LanguageFixture[] = [
+  { name: 'CSS', type: 'MARKUP', hasMembers: true },
+  { name: 'Java', type: 'PROGRAMMING', hasMembers: true },
+  { name: 'Kotlin', type: 'PROGRAMMING', hasMembers: true },
+  { name: 'Markdown', type: 'PROSE', hasMembers: true },
+]
+
+/**
+ * The catalogue as `includeEmpty=true` returns it: the whole vocabulary, where `hasMembers`
+ * finally distinguishes anything (813 of 842 lack members).
+ *
+ * The client does not request this mode today — the default is the short list — but the
+ * endpoint documents it and the selector orders by the flag, so the ordering is covered
+ * against the shape that exercises it rather than assumed. Names are chosen so a name-sorted
+ * list and a partitioned one cannot be confused: within `PROGRAMMING`, `Java` and `Kotlin`
+ * have members while `ABAP` and `Zig` do not.
+ */
+export const TEST_LANGUAGES_WITH_EMPTY: LanguageFixture[] = [
   { name: 'ABAP', type: 'PROGRAMMING', hasMembers: false },
   { name: 'CSS', type: 'MARKUP', hasMembers: true },
   { name: 'CSV', type: 'DATA', hasMembers: false },
