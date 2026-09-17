@@ -48,7 +48,8 @@
 
 ## 账号与设置
 
-- [x] **v0.45.0 E2E 夹具修复 (2026-09-17)** settings E2E 的两处**测试基础设施**缺陷：① `mockAuthApis` 未 mock `/auth/oauth/accounts`，该请求打到真服务端返 401 → 全局处理器 `clearAuth()` → **会话被清空、store 归默认**，表现为「删除对话框分支选错」这一假象；② refresh mock 漏 `userId`（`LoginResponseSchema` 要求 UUID），使任何整页重载都解析失败并清空会话。修复后 settings/api-keys/devices/auth 共 **57 passed / 0 failed**。`e2e/settings/delete-account.spec.ts` 改为**只读** store（分支由应用自身启动拉取决定）。另记录：`dashboard`/`leaderboard` 存在**既有 flaky**（A/B 对照 2 vs 4 failed，用例名每次不同），与本次无关。
+- [x] **v0.45.1 (2026-09-17)** 终结 E2E 会话被"附带请求"摧毁 —— 曾被当作 `dashboard`/`leaderboard` 的既有 flaky，实为**同一个根因**：任何未被 mock 的请求打到真服务端返 **401** → 全局处理器 `clearAuth()` → 会话消失 → 守卫把标签页踢回登录页 → 失败落在离断言很远处（典型是等一个永不出现的登录输入框 `fill` 超时）。**失败用例名轮换**正是因为"哪个页面先发出未 mock 的调用"是随机的。修法：`mockAuthApis` **最先注册**一条兜底路由（特定路由仍优先），附带请求返 200 而非结束会话；`leaderboard` helper 改为**仅在无会话时登录**（会话活着时 `goto('/auth/login')` 会被守卫弹回，登录表单永不出现 —— 这个假设此前被"已死的会话"掩盖着）。结果：**93/93 全绿**，套件 1.4m → 59.5s。
+- [x] **v0.45.0 E2E 夹具修复 (2026-09-17)** settings E2E 的两处**测试基础设施**缺陷：① `mockAuthApis` 未 mock `/auth/oauth/accounts`，该请求打到真服务端返 401 → 全局处理器 `clearAuth()` → **会话被清空、store 归默认**，表现为「删除对话框分支选错」这一假象；② refresh mock 漏 `userId`（`LoginResponseSchema` 要求 UUID），使任何整页重载都解析失败并清空会话。修复后 settings/api-keys/devices/auth 共 **57 passed / 0 failed**。`e2e/settings/delete-account.spec.ts` 改为**只读** store（分支由应用自身启动拉取决定）。另记录：`dashboard`/`leaderboard` 曾表现为 **flaky**，**已定位并修复**（见下条）。
 - [x] **v0.45.0 (2026-09-17)** 账号删除（Danger zone）— 新增 `DangerZone.vue` + `DeleteAccountDialog.vue`：有密码验密码、无密码打字确认邮箱（邮箱未知则禁用按钮，不用空串兜底）；成功后本地清态并跳登录，**绝不调用登出接口**（账号已不存在，那会 401）。三处连带修复：① `clearAuth()` 补清 TanStack 缓存（既有缺陷：登出后同标签页换账号会读到上个账号数据）；② 危险区提为独立组件并由 `ProfileView` 置于页面最后（放在 `AccountSection` 内时排在 `Connected Accounts` 之前，与「最后一块」的意图矛盾）；③ 对话框空输入不再泄漏裸 Zod 报错。测试失真两处已改：`USER_014` 不是 `USER_013`；mock 状态码改为真实的 401（400 会跳过唯一可能踢人下线的路径）。1431/1431 unit、93/93 e2e 全绿。
 
 ## Achievements 奖杯系统

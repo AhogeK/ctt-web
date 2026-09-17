@@ -24,6 +24,8 @@ settings/profile 的 E2E 曾长期表现为「分支选错、`hasPassword` 永�
 
 两处均修（`userId` + oauth mock 移入共享 `mockAuthApis`）。相关 spec 改为**只读** auth store：分支必须来自应用自身的启动拉取，而不是测试写进去的值。
 
+**已修复**：`mockAuthApis` 增加**最先注册**的兜底路由（未 mock 的 `/api/v1/**` 返 200），`leaderboard` helper 改为仅在无会话时登录。**93/93 e2e 全绿**。
+
 **方法论教训**：`initializeAuth` 的 `catch {}` 把原因吞掉了，只有逐边界插桩（refresh 响应 → profile 响应 → console → 非 2xx URL）才看得到 401。另外 `e2e/dashboard` + `e2e/leaderboard` 有**既有 flaky**（A/B 对照：有该 mock 时 2 failed / 25 passed，无 mock 时 4 failed / 23 passed，且失败用例名每次不同）——与本次改动无关。
 
 ### 账号删除 v0.45.0 —— Danger zone（2026-09-17）
