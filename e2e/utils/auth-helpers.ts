@@ -74,6 +74,24 @@ export const okEnvelope = (data: unknown) => ({
  * (Playwright uses the last registered handler for a given URL).
  */
 export async function mockAuthApis(page: Page): Promise<void> {
+  /*
+   * Catch-all, registered FIRST so every specific route below wins over it — Playwright matches in
+   * reverse registration order, and specs register their own routes after calling this.
+   *
+   * Without it, any request a page makes that no spec cared to mock reaches the real server, comes
+   * back 401, and the global handler answers by calling clearAuth(). The session is destroyed and
+   * the page ends up on the login form — a failure several steps away from anything the spec
+   * asserted, and one that never names its cause. A fixture whose session can be ended by an
+   * incidental request is a trap, not a convenience.
+   */
+  await page.route('**/api/v1/**', async (route) => {
+    await route.fulfill({
+      status: 200,
+      contentType: 'application/json',
+      body: JSON.stringify(okEnvelope(null)),
+    })
+  })
+
   // Public config — disables captcha so the form submits without hCaptcha
   await page.route('**/api/v1/config/public', async (route) => {
     await route.fulfill({
