@@ -23,6 +23,7 @@ import {
 import { cn } from '@/lib/utils'
 import type { OAuthAccountBinding } from '@/lib/schemas/oauth-account.schema'
 import AccountSection from '@/features/settings/components/AccountSection.vue'
+import DangerZone from '../components/DangerZone.vue'
 import EmailChangeDialog from '@/features/settings/components/EmailChangeDialog.vue'
 import EmailVerificationBanner from '@/features/settings/components/EmailVerificationBanner.vue'
 import { useEmailChange } from '@/features/settings/composables/useEmailChange'
@@ -317,6 +318,9 @@ onMounted(() => {
         </Dialog>
       </div>
     </div>
+
+    <!-- Account deletion: deliberately the last block on the page. -->
+    <DangerZone />
 
     <EmailChangeDialog :open="isDialogOpen" :current-email="currentEmail" @update:open="isDialogOpen = $event" />
   </div>
