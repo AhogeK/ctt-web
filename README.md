@@ -34,7 +34,7 @@ visualization.
 | Unit Test      | Vitest 4 + Testing Library Vue                              |
 | E2E Test       | Playwright                                                  |
 | Mock           | Playwright `page.route()` (E2E API mocking)                 |
-| Type Check     | vue-tsc (standalone CI step)                                |
+| Type Check     | vue-tsc (standalone script)                                 |
 
 ## ✅ Implemented Features
 
@@ -163,7 +163,7 @@ pnpm test:e2e e2e/example.spec.ts
 # Debug mode
 pnpm test:e2e --debug
 
-# CI — must build first
+# Against a production build
 pnpm build && pnpm test:e2e
 ```
 
@@ -180,8 +180,7 @@ leaderboard's period selector is asserted against the requests actually put on t
 unsupported dimension/period pair is a `400 COMMON_003` rather than a fallback, so the selector
 must never be able to build one.
 
-The suite runs on **chromium only** — the engine `playwright install` provisions and the one CI
-runs. The scaffold's `firefox`/`webkit` projects were removed because no assertion was ever
+The suite runs on **chromium only** — the engine `playwright install` provisions. The scaffold's `firefox`/`webkit` projects were removed because no assertion was ever
 written against them and `pnpm test:e2e` therefore failed at launch for everyone; a project that
 is never run is a failing step, not coverage. Re-enable one only after installing its engine and
 running its suite.
