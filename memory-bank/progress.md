@@ -118,7 +118,7 @@
 - [ ] Dashboard: Weekday / IDE / Devices distribution panels（后端已就绪；Project 已随 v0.35.0 上线，其余复用共享排名列表）
 - [x] Leaderboard: Redis ZSet ranking display (v0.41.0 — contract rebuilt against `GET /leaderboard`)
 - [ ] Settings: Language switch (zh-CN / en-US)
-- [x] CI: GitHub Actions — workflow 早已存在，但触发条件写的是从未存在的 `main` 分支，**因此一次也没跑过**；v0.42.3 修正为 `develop`/`master` 并显式 `--project=chromium`。本机已用 CI 的命令验证（`pnpm test:e2e` 75/75），**GitHub 上的首次真实执行仍待观察**。
+- [x] CI: GitHub Actions — workflow 早已存在，但触发条件写的是从未存在的 `main` 分支，**因此一次也没跑过**；v0.42.3 修正为 `develop`/`master` 并显式 `--project=chromium`。本机已用 CI 的命令验证（`pnpm test:e2e` 75/75）。**v0.45.2 已移除该 workflow**：三个 job 都止步于 `pnpm install --frozen-lockfile`、6 秒内失败 —— 是死在校验安装而非测试，lockfile 与 workspace 配置已漂移（即本地那条 WARN 的同源问题）。从未观察到它通过，故其红灯无法据以行动。`.nvmrc` 保留（本地 Node 版本约定，与 runner 无关）。
 
 ## Archived History
 
