@@ -36,6 +36,11 @@ cherry-picked — stop and investigate before pushing.
 `env -u CI` matters: with `CI` set, Playwright switches to a preview build instead of the running
 dev server.
 
+**The suite is headless, including locally — `--headed` is the opt-in.** The old default was headed,
+which opened a browser per spec and stole focus for the whole run. To watch one:
+`env -u CI pnpm test:e2e e2e/<path>.spec.ts --project=chromium --headed`. Headless launches
+`chromium_headless_shell` — a binary that cannot open a window, and how to tell the two apart.
+
 **Check whose server is on 5173 before believing a failed run.** `reuseExistingServer: !CI` drives
 whatever holds the port, so another project's dev server there makes **every** spec fail at the first
 `page.goto` with `ERR_HTTP_RESPONSE_CODE_FAILURE` — which reads like a regression in our code. Look at
@@ -107,6 +112,9 @@ Traps — each one cost a full debugging round:
   for the lifetime of the call, not the page — it never took effect and silently fell back to
   whatever token the profile already had (which produced verification against the *wrong account*
   without any error).
+- **A saved token pair is good for one run.** The refresh token rotates and reuse is detected
+  (`AUTH_009`), so reusing a pair gets `403 /auth/refresh` and a bounce to `/auth/login` — which looks
+  exactly like "my change broke the page". Fetch a fresh pair per run.
 - **One live tab per Chrome profile.** A second tab with the app open keeps its own silent-refresh
   timer running and rewrites the shared `localStorage`, so the token you injected rotates back to
   the other account mid-check. Kill the old instance, or use a fresh profile per verification.

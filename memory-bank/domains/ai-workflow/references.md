@@ -26,6 +26,7 @@ Lookup facts about the working environment and project conventions. No judgement
 | ----------------------- | ---------------------------------------------------------- |
 | Memory file size        | ≤200 lines each — `memory-bank/archives/` exempt (AGENTS.md 约束 2) |
 | Commit subject          | ≤72 characters (commitlint `subject-max-length`)            |
+| Commit body lines       | Must not **begin** with `word: ` — commitlint reads it as a footer (`footer-leading-blank`). Reflow causes it; reword rather than re-wrap |
 | Version location        | `package.json` → `version` (single source)                  |
 | Version bump semantics  | fix → PATCH, feature → MINOR, breaking → MAJOR               |
 | Todo threshold          | 3+ steps → todo list first (R10)                             |

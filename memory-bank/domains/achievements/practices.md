@@ -21,9 +21,10 @@ still looking correct in a screenshot — the page and its data were fine, which
 invisible until the DOM was inspected for links. `src/router/modules/*.ts` are auto-globbed by
 `router/index.ts`, so no index edit is needed, but the shape must match `dashboard.ts` / `devices.ts`.
 
-`/leaderboard` had the same defect and was fixed alongside the contract rebuild (v0.41.0). Note
-that nesting restored the *shell*, not a nav entry: `AppSidebar` still lists no `/leaderboard`, so
-the page remains reachable by URL or in-app link only.
+`/leaderboard` had the same defect and was fixed alongside the contract rebuild (v0.41.0), which
+restored the *shell* only. Its nav entry came later (v0.44.0) and deliberately so: while the page
+could do nothing but render its error state, an entry pointing at it would have been worse than
+none — `AppSidebar` therefore lists `/leaderboard` only once there is something to reach.
 
 ## Grouping, in one pass
 

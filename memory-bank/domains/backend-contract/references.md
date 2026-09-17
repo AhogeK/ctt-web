@@ -36,6 +36,25 @@ Two of these carry traps worth knowing before wiring a panel:
 - `/leaderboard` **scores**: seconds for `TOTAL`/`NIGHT_OWL`/`EARLY_BIRD`, a **count of days** for
   `STREAK` (run length) and `ACTIVE_DAYS` (distinct days with time — `activeDaysIn` counts entries in
   `secondsByDay`, so it is not a duration), and a **signed** delta for `GROWTH`.
+- **`/leaderboard/languages`** returns the **whole vocabulary** as of v0.76.0 (before that, only the
+  boards that had members — which under-reported: `Python`/`Go`/`Rust`/`Shell` answered 200 yet were
+  absent). Shape `{ languages: [{ name, type, hasMembers }] }`: ~842 entries, name-sorted, each with
+  GitHub Linguist's category and whether anybody is ranked on it. `hasMembers` is one set lookup
+  rather than a count per board, so it is cheap but **lazy** — a board flips to `true` when somebody is
+  first scored on it, which happens on sync push, and the count therefore grows as people push. An
+  empty board is still queryable (200, `totalParticipants: 0`): empty and non-existent are different
+  facts, and only the full list can express the first.
+- **The former `Other` listing defect is fixed.** It used to be possible to receive
+  `{"name":"Other","type":"OTHER"}` — repeated once per IDE internal, since `LanguageVocabulary.OTHER`
+  is `recognized = true` while the old listing filtered on `recognized` alone — and querying it was a
+  400. The list is now built from the canonical vocabulary, which is never `OTHER`, and
+  `canonical ∩ nonLanguages = ∅` (verified: 842 entries, none `OTHER`; every listed name answers 200).
+  There is nothing left to filter client-side.
+- **`LANGUAGE` is the one partitioned dimension.** Exactly one of `language` present and
+  `dimension=LANGUAGE` is legal; the other three combinations are HTTP 400 `COMMON_003` — including
+  a language on a non-partitioned dimension, which the server refuses rather than ignores ("is not
+  per-language; omit language"), because ignoring it would answer a different question. Its score is
+  a single language's merged time in **seconds**, like the other time dimensions.
 - `/leaderboard` **response**: `entries`, `currentUserRank`, `totalParticipants` (v0.73.0; a `long`
   primitive, so the key is always present — it is what makes "is there another page" exact).
   `displayName` and `currentUserRank` arrive as **absent keys** (not nulls) for a deleted account and

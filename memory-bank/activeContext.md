@@ -3,7 +3,7 @@
 ## Current Status
 
 **Phase**: Achievements 奖杯系统（v0.71.0 契约 / 周期截止 / 外圈几何）+ Leaderboard 契约修复 + Dashboard 面板迭代
-**Version**: 0.43.0 (2026-09-15)
+**Version**: 0.44.0 (2026-09-17)
 **Branch**: develop
 **Tests**: 1400/1400 unit; vue-tsc + lint 0 error 0 warning; build green; e2e 75/75 chromium（achievements 8 + leaderboard 13 为新增）
 
@@ -54,6 +54,30 @@
 - **v0.42.0** 周期成就历史（`totalUnlocks` / `periodStreak`）→ 卡片显示「得过几次 + 🔥连击」。
   我给后端的需求报告**判断错了**（以为数解锁行即可，实则那些行只在访问页面时写入）—— 详见 `references.md` 与 `practices.md`。
 - 各轮的可复用判断已入领域文件（P6、practices、trophy-geometry.md）；流水见 `progress.md`。
+
+## Leaderboard（v0.75.0 契约）
+
+- **2026-09-16** 接入第七维度 `LANGUAGE`（分区）与 `GET /leaderboard/languages`。三处设计决定：
+  ① `language` 只在 `LANGUAGE` 下发送——服务端对另三种组合都回 400，且**刻意不静默忽略**多余参数；
+  ② 请求类型做成**判别联合**，让这两种错误在编译期不可构造（与 `DIMENSION_PERIODS` 同一手法）；
+  ③ `LANGUAGE` 标签页**仅在目录非空时出现**——目录惰性填充，空目录是真实状态，此时该维度的任何选择都是 400。
+- **发现并上报一个后端缺陷（潜伏，非当前可见）**：`/languages` 可列出 `{"name":"Other","type":"OTHER"}`
+  且重复，而查询它必 400。成因是 `LanguageVocabulary.OTHER` 的 `recognized = true`，而目录只按
+  `recognized` 过滤，写入点又直接采用客户端原始语言值（`nonLanguages` 76 项）。当前数据 24 榜无 `OTHER`，
+  但只要有用户带这类数据就会触发。前端在 `selectableLanguageBoards` 过滤掉；**修复应在后端的过滤条件**。
+- **分页与状态**：`totalParticipants` 使「是否还有下一页」精确；名次卡在未上榜时**明说**而非留空
+  （留空无法区分「不在榜上」与「没加载出来」），并给出「第 N 名 / 共 M 人」——小榜的分母信息量最大。
+- **请求取消**：端点限流 60/分钟，切维度时在途请求必须中航取消。已把 TanStack 的 `signal` 接到
+  `apiFetch`，并用 E2E 断言 `requestfailed` 带 `ERR_ABORTED`（去掉 signal 该用例即失败）。
+- **2026-09-17 适配 v0.76.0**：语言目录从「有成员分的榜」改为**词表全集（842 条，含 `hasMembers`）**。
+  证据驱动：改前 `Python`/`Go`/`Rust`/`Shell` 查榜返 200 却不在目录里（旧实现只覆盖功能上线后推过数据的用户）。
+  前端据此**删除 `selectableLanguageBoards`** —— 词表 `canonical ∩ nonLanguages = ∅`，列表里每条都可查询，
+  该过滤器已成永不触发的死代码。选择器改为**两级排序**：分类内 `hasMembers` 优先 + 分隔线，
+  否则 842 项里那 29 个有榜的会被淹没。真机实测：可滚动（27100px 内容 / 262px 视口）、
+  分界线正确、空榜可打开（`totalParticipants: 0`，文案「No one is ranked yet」）。
+- **侧边栏入口已加**（NAVIGATION 组，`ListOrdered` 图标）。此前记录的「无入口是正确状态」已随之作废：
+  那时页面只能渲染错误态，给入口比不给更糟；契约重建后补上。
+- **E2E 默认无头**（原 `!!process.env.CI` 让本地跑测试时开窗口抢焦点）。调试用 `--headed`。
 
 ## Lessons（跨轮次教训）
 
