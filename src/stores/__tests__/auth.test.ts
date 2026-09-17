@@ -6,6 +6,7 @@ import * as authApi from '@/lib/api/auth'
 import * as userApi from '@/lib/api/user'
 import type { LoginResponse } from '@/lib/schemas/auth.schema'
 import type { UserProfile } from '@/lib/schemas/user.schema'
+import { queryClient } from '@/lib/query'
 
 /**
  * Mock the auth APIs to avoid actual HTTP requests during tests.
@@ -166,6 +167,18 @@ describe('Auth Store', () => {
       expect(store.accessToken).toBeNull()
       expect(store.refreshToken).toBeNull()
       expect(store.userId).toBeNull()
+    })
+
+    it('clears the query cache, so a later sign-in on this tab starts from nothing', () => {
+      // Cached server data belongs to the session that fetched it, and the next account to sign in
+      // on this tab is not necessarily the same one. Without this, the new reader is served the
+      // previous account's panels until the entries go stale — a leak, not a stale render.
+      const clearSpy = vi.spyOn(queryClient, 'clear')
+
+      store.clearAuth()
+
+      expect(clearSpy).toHaveBeenCalledTimes(1)
+      clearSpy.mockRestore()
     })
 
     it('resets hasPassword to false', () => {
