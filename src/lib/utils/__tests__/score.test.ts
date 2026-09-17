@@ -9,6 +9,9 @@ describe('formatScore', () => {
     expect(formatScore(45, 'TOTAL')).toBe('45s')
     expect(formatScore(7200, 'NIGHT_OWL')).toBe('2h')
     expect(formatScore(7200, 'EARLY_BIRD')).toBe('2h')
+    // A board partitioned by language changes which sessions count, not the unit: a single
+    // language's merged time is seconds like every other time dimension.
+    expect(formatScore(7200, 'LANGUAGE')).toBe('2h')
   })
 
   it('counts days for STREAK and ACTIVE_DAYS, singular at one', () => {

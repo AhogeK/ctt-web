@@ -1,12 +1,14 @@
 import { expect, type Page } from '@playwright/test'
 import { mockAuthApis, loginViaForm, okEnvelope } from '../utils/auth-helpers.js'
-import { TEST_LEADERBOARD_PAGE, type LeaderboardFixture } from './fixtures.js'
+import { TEST_LEADERBOARD_PAGE, type LanguageFixture, type LeaderboardFixture } from './fixtures.js'
 
 export interface LeaderboardPageSetup {
   /** Every leaderboard request URL the page issued, in order. */
   requests: () => string[]
-  /** Replace the payload the next GET returns. */
+  /** Replace the payload the next ranking GET returns. */
   setPayload: (payload: LeaderboardFixture) => void
+  /** Replace the catalogue the next languages GET returns. */
+  setLanguages: (languages: LanguageFixture[]) => void
 }
 
 /**
@@ -24,13 +26,29 @@ export interface LeaderboardPageSetup {
 export async function setupLeaderboardPage(
   page: Page,
   initial: LeaderboardFixture = TEST_LEADERBOARD_PAGE,
+  initialLanguages: LanguageFixture[] = [],
 ): Promise<LeaderboardPageSetup> {
   await mockAuthApis(page)
 
   let payload = initial
+  let languages = initialLanguages
   const requests: string[] = []
 
-  await page.route('**/api/v1/leaderboard*', async (route) => {
+  /*
+   * Two routes, registered most-specific-last: Playwright matches in reverse registration
+   * order. The ranking route requires a query string so it cannot swallow the catalogue
+   * request — the two endpoints differ only by a path segment, and a glob that matched both
+   * would answer `/languages` with a ranking page.
+   */
+  await page.route('**/api/v1/leaderboard/languages', async (route) => {
+    await route.fulfill({
+      status: 200,
+      contentType: 'application/json',
+      body: JSON.stringify(okEnvelope({ languages })),
+    })
+  })
+
+  await page.route('**/api/v1/leaderboard?*', async (route) => {
     requests.push(route.request().url())
     await route.fulfill({
       status: 200,
@@ -46,6 +64,9 @@ export async function setupLeaderboardPage(
     requests: () => [...requests],
     setPayload: (next: LeaderboardFixture) => {
       payload = next
+    },
+    setLanguages: (next: LanguageFixture[]) => {
+      languages = next
     },
   }
 }

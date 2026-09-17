@@ -15,7 +15,7 @@ import {
   useSidebar,
 } from '@/components/ui/sidebar'
 import { RouterLink, useRoute } from 'vue-router'
-import { LayoutDashboard, Monitor, User, KeyRound, Trophy } from '@lucide/vue'
+import { LayoutDashboard, Monitor, User, KeyRound, Trophy, ListOrdered } from '@lucide/vue'
 import PluginIcon from './PluginIcon.vue'
 
 /**
@@ -147,6 +147,20 @@ function handleNavigate() {
                 <RouterLink to="/achievements">
                   <Trophy />
                   <span>Achievements</span>
+                </RouterLink>
+              </SidebarMenuButton>
+            </SidebarMenuItem>
+            <SidebarMenuItem>
+              <SidebarMenuButton
+                as-child
+                tooltip="Leaderboard"
+                class="h-9 text-[15px] [&>svg]:size-[18px] [&>svg]:mr-0.5"
+                @click="handleNavigate"
+                :is-active="isPathActive('/leaderboard')"
+              >
+                <RouterLink to="/leaderboard">
+                  <ListOrdered />
+                  <span>Leaderboard</span>
                 </RouterLink>
               </SidebarMenuButton>
             </SidebarMenuItem>

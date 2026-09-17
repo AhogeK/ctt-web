@@ -14,6 +14,14 @@
  * `periodsFor(dimension)` rather than offering the full cross-product, which would let
  * the user request a pair the server rejects with HTTP 400 (`COMMON_003`).
  *
+ * `LANGUAGE` is the one dimension partitioned by language: it needs a board name, and
+ * every other dimension rejects being given one (both are `COMMON_003`). The dimension is
+ * therefore offered only once the catalogue is non-empty, and selecting it selects a board —
+ * see the watcher below.
+ *
+ * One response shape drives all of it. Only the score's unit varies (seconds, days, a
+ * signed delta), and that is `formatScore`'s job.
+ *
  * The caller's own rank travels **inside** the same response, so this page is one
  * query — not the previous arrangement of a second request to a `/me` endpoint.
  */
@@ -23,7 +31,15 @@ import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { Skeleton } from '@/components/ui/skeleton'
 import { formatScore } from '@/lib/utils'
-import { DIMENSION_LABELS, PERIOD_LABELS, periodsFor, useLeaderboard } from '../composables/useLeaderboard'
+import LanguageSelect from '../components/LanguageSelect.vue'
+import {
+  DIMENSION_LABELS,
+  PERIOD_LABELS,
+  periodsFor,
+  requiresLanguage,
+  useLeaderboard,
+  useLeaderboardLanguages,
+} from '../composables/useLeaderboard'
 import {
   LEADERBOARD_PAGE_SIZE,
   defaultPeriodFor,
@@ -31,11 +47,36 @@ import {
   type LeaderboardPeriod,
 } from '@/lib/schemas/leaderboard.schema'
 
-const dimensions = Object.keys(DIMENSION_LABELS) as LeaderboardDimension[]
-
 const dimension = ref<LeaderboardDimension>('TOTAL')
 const period = ref<LeaderboardPeriod>('ALL')
 const offset = ref(0)
+
+/**
+ * The language board, for the dimension that is partitioned by one.
+ *
+ * Kept in `LANGUAGE`'s own frame of reference: it is *not* the language of the app or of
+ * any other panel, and it stays selected when the reader leaves the dimension so returning
+ * to it lands where they left off.
+ */
+const language = ref<string | null>(null)
+
+const { boards: languageBoards, grouped: languageGroups } = useLeaderboardLanguages()
+
+/**
+ * The dimensions on offer.
+ *
+ * `LANGUAGE` appears only once the catalogue has a board: the selector would otherwise
+ * offer a tab whose every selection is a 400 (`COMMON_003` — the dimension cannot be ranked
+ * without a language, and there is none to give it). The catalogue is populated lazily as
+ * people are scored, so on a fresh deployment the tab is legitimately absent rather than
+ * broken. A failed catalogue request leaves it absent too — the rest of the page works, and
+ * a supplementary selector is not worth an error state of its own.
+ */
+const dimensions = computed<LeaderboardDimension[]>(() =>
+  (Object.keys(DIMENSION_LABELS) as LeaderboardDimension[]).filter(
+    (candidate) => !requiresLanguage(candidate) || languageBoards.value.length > 0,
+  ),
+)
 
 /**
  * Keep the period legal for the active dimension, and reset paging on any change.
@@ -54,10 +95,50 @@ watch(period, () => {
   offset.value = 0
 })
 
-const { data, isPending, isError, refetch, effectivePeriod } = useLeaderboard(dimension, period, offset)
+/**
+ * Keep a board selected whenever the active dimension needs one.
+ *
+ * Runs for every dimension but only acts on the partitioned one. A board that left the
+ * catalogue is replaced rather than kept: the catalogue is sticky, so this should not
+ * happen, and if it does the alternative is a request the server rejects.
+ */
+watch(
+  [dimension, languageGroups],
+  () => {
+    if (!requiresLanguage(dimension.value)) return
+    // Ordered by the list the reader is about to see, not by the catalogue: defaulting to the
+    // catalogue's first entry would preselect a board that the grouped menu shows third, which
+    // reads as an arbitrary choice.
+    // The order the menu presents, so the preselected board is the one the reader sees
+    // first rather than whichever name happens to sort earliest.
+    const offered = languageGroups.value.flatMap((group) => [
+      ...group.withMembers.map((board) => board.name),
+      ...group.withoutMembers.map((board) => board.name),
+    ])
+    if (language.value !== null && offered.includes(language.value)) return
+    language.value = offered[0] ?? null
+  },
+  { immediate: true },
+)
+
+// A different board is a different ranking, so the page offset does not carry over.
+watch(language, () => {
+  offset.value = 0
+})
+
+const { data, isPending, isError, refetch, effectivePeriod } = useLeaderboard(dimension, period, language, offset)
 
 const entries = computed(() => data.value?.entries ?? [])
 const currentUserRank = computed(() => data.value?.currentUserRank ?? null)
+
+/**
+ * The board's size, shown beside the caller's own rank.
+ *
+ * Rendered even when it is `1`: the denominator is how a reader tells a small board from a
+ * large one, and a rank of #1 means something different at 1 of 1 than at 1 of 340. Hiding
+ * it for small boards would remove exactly the case where it carries the most information.
+ */
+const totalParticipants = computed(() => data.value?.totalParticipants ?? 0)
 
 /**
  * Whether there is another page — exact, from the board's own size.
@@ -104,12 +185,23 @@ const isEmpty = computed(() => !isPending.value && !isError.value && entries.val
         </p>
       </div>
 
-      <!-- The caller's own rank, when they have one. Null is the ordinary "not yet
-           ranked" state, so it renders nothing rather than an error. -->
-      <div v-if="currentUserRank !== null" class="flex items-center gap-3" data-testid="own-rank">
-        <TrophyIcon class="h-5 w-5 text-muted-foreground" aria-hidden="true" />
+      <!-- The caller's own rank. Null means this board has no activity for them, which is
+           ordinary rather than a failure — so it is stated. Rendering nothing left the reader
+           unable to tell "you are not on this board" from "this did not load". -->
+      <div class="flex items-center gap-3" data-testid="own-rank">
+        <TrophyIcon
+          class="h-5 w-5 text-muted-foreground"
+          :class="currentUserRank === null ? 'opacity-40' : ''"
+          aria-hidden="true"
+        />
         <div class="flex flex-col">
-          <span class="text-[15px] font-semibold tabular-nums text-foreground">#{{ currentUserRank }}</span>
+          <span
+            class="text-[15px] font-semibold tabular-nums"
+            :class="currentUserRank === null ? 'text-muted-foreground' : 'text-foreground'"
+            data-testid="own-rank-value"
+          >
+            {{ currentUserRank === null ? 'Not ranked' : `#${currentUserRank} of ${totalParticipants}` }}
+          </span>
           <span class="text-[11px] text-muted-foreground">your rank</span>
         </div>
       </div>
@@ -153,6 +245,15 @@ const isEmpty = computed(() => !isPending.value && !isError.value && entries.val
       <!-- The one legal period is stated, so it needs no pressed state. -->
       <Badge v-else variant="outline" data-testid="period-fixed">{{ PERIOD_LABELS[periodsFor(dimension)[0]!] }}</Badge>
     </div>
+
+    <!-- Which board, for the dimension that is partitioned by language. Guarded on a
+         selected board as well as on the dimension: the watcher above fills it in, and a
+         select with nothing to show would be a frame of empty furniture. -->
+    <LanguageSelect
+      v-if="requiresLanguage(dimension) && language !== null"
+      v-model:language="language"
+      :groups="languageGroups"
+    />
 
     <div
       v-if="isError"

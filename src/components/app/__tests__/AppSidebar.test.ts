@@ -61,6 +61,7 @@ vi.mock('@lucide/vue', () => ({
   User: { name: 'User', template: '<span data-icon="user" />' },
   KeyRound: { name: 'KeyRound', template: '<span data-icon="key-round" />' },
   Trophy: { name: 'Trophy', template: '<span data-icon="trophy" />' },
+  ListOrdered: { name: 'ListOrdered', template: '<span data-icon="list-ordered" />' },
 }))
 
 const createTestRouter = () => {
@@ -69,6 +70,8 @@ const createTestRouter = () => {
     routes: [
       { path: '/dashboard', name: 'dashboard', component: { template: '<div>Dashboard</div>' } },
       { path: '/devices', name: 'devices', component: { template: '<div>Devices</div>' } },
+      { path: '/achievements', name: 'achievements', component: { template: '<div>Achievements</div>' } },
+      { path: '/leaderboard', name: 'leaderboard', component: { template: '<div>Leaderboard</div>' } },
       { path: '/settings/profile', name: 'settings-profile', component: { template: '<div>Settings</div>' } },
       { path: '/settings/api-keys', name: 'settings-api-keys', component: { template: '<div>API Keys</div>' } },
     ],
@@ -120,6 +123,11 @@ describe('AppSidebar', () => {
       const devicesLink = wrapper.find('a[href="/devices"]')
       expect(devicesLink.exists()).toBe(true)
       expect(devicesLink.text()).toContain('Devices')
+
+      // Listed so the page is reachable without knowing its URL.
+      const leaderboardLink = wrapper.find('a[href="/leaderboard"]')
+      expect(leaderboardLink.exists()).toBe(true)
+      expect(leaderboardLink.text()).toContain('Leaderboard')
 
       const settingsLink = wrapper.find('a[href="/settings/profile"]')
       expect(settingsLink.exists()).toBe(true)

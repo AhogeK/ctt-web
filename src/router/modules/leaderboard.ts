@@ -8,9 +8,10 @@ import { RouteNames } from '../route-names'
 // page and its data look fine (the same bug shipped once for `/achievements`; see the
 // achievements domain memory).
 
-// Note this restores the *shell*, not a nav entry: `AppSidebar` still has no
-// `/leaderboard` item, so the page is reachable by URL or in-app link only. Adding one
-// is a product decision, not part of this fix.
+// `AppSidebar` carries a `/leaderboard` item, so the page is reachable in-app rather than by
+// URL alone. It was deliberately absent while the feature was unbuilt — an entry pointing at a
+// page that could only render its error state would be worse than none — and added once the
+// contract was rebuilt against a real endpoint.
 
 const leaderboardRoutes: RouteRecordRaw[] = [
   {

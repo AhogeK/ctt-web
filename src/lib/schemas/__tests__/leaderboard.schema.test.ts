@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vite-plus/test'
 import {
   DIMENSION_PERIODS,
+  LanguageBoardsResponseSchema,
   LeaderboardEntrySchema,
   LeaderboardResponseSchema,
   defaultPeriodFor,
@@ -105,6 +106,9 @@ describe('DIMENSION_PERIODS', () => {
     expect(DIMENSION_PERIODS.EARLY_BIRD).toEqual(['ALL', 'WEEK', 'MONTH', 'YEAR'])
     expect(DIMENSION_PERIODS.GROWTH).toEqual(['WEEK', 'MONTH', 'YEAR'])
     expect(DIMENSION_PERIODS.ACTIVE_DAYS).toEqual(['ALL', 'WEEK', 'MONTH', 'YEAR'])
+    // The partitioned dimension ranks over every window; the language is a separate
+    // parameter, not a period.
+    expect(DIMENSION_PERIODS.LANGUAGE).toEqual(['ALL', 'WEEK', 'MONTH', 'YEAR'])
   })
 
   it('covers every dimension', () => {
@@ -112,6 +116,7 @@ describe('DIMENSION_PERIODS', () => {
       'ACTIVE_DAYS',
       'EARLY_BIRD',
       'GROWTH',
+      'LANGUAGE',
       'NIGHT_OWL',
       'STREAK',
       'TOTAL',
@@ -130,5 +135,50 @@ describe('DIMENSION_PERIODS', () => {
     // first request should be what the server would have chosen anyway.
     expect(defaultPeriodFor('GROWTH')).toBe('WEEK')
     expect(defaultPeriodFor('TOTAL')).toBe('ALL')
+  })
+})
+
+describe('LanguageBoardsResponseSchema', () => {
+  it('parses a catalogue entry as the endpoint sends it', () => {
+    const payload = {
+      languages: [
+        { name: 'Java', type: 'PROGRAMMING', hasMembers: true },
+        { name: 'Markdown', type: 'PROSE', hasMembers: false },
+      ],
+    }
+    expect(LanguageBoardsResponseSchema.parse(payload)).toEqual(payload)
+  })
+
+  it('accepts an empty catalogue, which a fresh deployment produces', () => {
+    // Boards are written when a user is first scored on one, so a deployment where nobody
+    // has pushed since the dimension arrived legitimately has none. This is a state, not a
+    // failure — the selector simply has nothing to offer.
+    expect(LanguageBoardsResponseSchema.parse({ languages: [] }).languages).toEqual([])
+  })
+
+  it('accepts the OTHER category, which the server enum still carries', () => {
+    // It cannot appear in this response since v0.76.0 — the catalogue is built from the
+    // canonical vocabulary, no canonical entry is typed `OTHER`, and the two sets are
+    // disjoint (verified live: 842 entries, none `OTHER`). It stays accepted because the
+    // enum mirrors the server's own `LanguageType`; a future entry typed `OTHER` is new
+    // information rather than a parse failure that blanks the selector.
+    const parsed = LanguageBoardsResponseSchema.parse({
+      languages: [{ name: 'Other', type: 'OTHER', hasMembers: false }],
+    })
+    expect(parsed.languages[0]!.type).toBe('OTHER')
+  })
+
+  it('requires hasMembers, which is what makes 800 empty boards navigable', () => {
+    // A boolean primitive: always present. Declared required so a regression is loud rather
+    // than silently flattening the ordering the selector depends on.
+    const without = { languages: [{ name: 'Java', type: 'PROGRAMMING' }] }
+    expect(LanguageBoardsResponseSchema.safeParse(without).success).toBe(false)
+  })
+
+  it('rejects an unknown category rather than passing it through', () => {
+    // The categories are a closed set from GitHub Linguist. A new one is a contract change
+    // worth surfacing, unlike `OTHER` which the contract already includes.
+    const bad = { languages: [{ name: 'Java', type: 'CONFIG', hasMembers: false }] }
+    expect(LanguageBoardsResponseSchema.safeParse(bad).success).toBe(false)
   })
 })
