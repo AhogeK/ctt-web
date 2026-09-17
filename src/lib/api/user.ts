@@ -1,6 +1,6 @@
 import { apiFetch } from './instance'
 import { RestApiResponseSchema } from '@/lib/schemas/api.schema'
-import { UserProfileSchema, type UserProfile } from '@/lib/schemas/user.schema'
+import { DeleteAccountRequestSchema, UserProfileSchema, type UserProfile } from '@/lib/schemas/user.schema'
 import { encodeBase64 } from '@/lib/utils'
 
 export type { UserProfile } from '@/lib/schemas/user.schema'
@@ -70,5 +70,26 @@ export async function changePassword(data: { currentPassword: string; newPasswor
     },
   })
 
+  RestApiResponseSchema.parse(response)
+}
+
+/**
+ * Deletes the authenticated user's own account.
+ *
+ * Endpoint: `DELETE /api/v1/users/me`
+ * Authentication: a **web session** only — an API key is rejected with 403 `AUTH_025`, so that a
+ * key leaked from the device it was issued for cannot destroy the account.
+ *
+ * @param password - the account's current password, or `null` for an account that has none
+ *   (OAuth-only). A password is still *sent* as a base64 body rather than omitted, because the
+ *   body itself is mandatory; `{}` is the payload the server expects for the passwordless case.
+ * @returns nothing — the response carries an empty payload
+ */
+export async function deleteAccount(password: string | null): Promise<void> {
+  const body = DeleteAccountRequestSchema.parse(password === null ? {} : { password: encodeBase64(password) })
+  const response = await apiFetch<unknown>('/api/v1/users/me', {
+    method: 'DELETE',
+    body,
+  })
   RestApiResponseSchema.parse(response)
 }

@@ -115,6 +115,11 @@ export function mapApiErrorCode(code: string): string {
     USER_011: 'Invalid email change request. Please try again.',
     USER_013: 'Password verification required. Please provide your current password.',
     USER_014: 'Incorrect password. Please try again.',
+
+    // Account deletion is web-session only: a credential sitting on disk in the plugin must not
+    // be able to destroy the account it was issued for. Unreachable from this client (it always
+    // sends a session), so the wording states the requirement rather than guessing a cause.
+    AUTH_025: 'This action requires a signed-in web session.',
     USER_015: 'You already have a password set. Please use the change password option instead.',
 
     // COMMON_002 = 404 Resource not found (ctt-server ErrorCode.java official

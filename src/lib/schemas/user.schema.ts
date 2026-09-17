@@ -33,3 +33,23 @@ export const UserProfileSchema = z.object({
 })
 
 export type UserProfile = z.infer<typeof UserProfileSchema>
+
+/**
+ * Request body for {@link deleteAccount} — `DELETE /api/v1/users/me`.
+ *
+ * The body is **required**: the controller declares `@Valid @RequestBody`, so omitting it fails
+ * deserialisation before any password logic runs. `{}` is therefore the correct payload for an
+ * account that has no password, not an empty request.
+ *
+ * `password` uses the same **base64** form as every other password this client sends (login,
+ * register, reset, email change, set/change): the encoding is a transport convention, not a
+ * security measure — real transport security is TLS — and the server treats the value as opaque,
+ * so the two ends only have to agree on it. It stays optional because an OAuth-only account has
+ * no password to compare: the server skips the check entirely when its stored hash is absent.
+ */
+export const DeleteAccountRequestSchema = z.object({
+  // Server bound is `@Size(max=100)`; a base64 password of the maximum accepted length fits.
+  password: z.string().max(100).optional(),
+})
+
+export type DeleteAccountRequest = z.infer<typeof DeleteAccountRequestSchema>
