@@ -36,7 +36,20 @@ export default defineConfig({
     trace: 'on-first-retry',
     video: 'retain-on-failure',
     screenshot: 'only-on-failure',
-    headless: !!process.env.CI,
+
+    /*
+     * Headless everywhere, local runs included.
+     *
+     * This used to be `!!process.env.CI`, i.e. **headed locally** — and a headed run takes the
+     * machine over: every spec opens a visible browser that steals focus, so the computer is
+     * unusable until the suite finishes. Watching a run is a debugging need, not the normal
+     * path, and Playwright already ships the switch for it:
+     *
+     *     pnpm test:e2e --headed            # one spec, watched
+     *
+     * Kept explicit rather than deleted, so the default does not get quietly reversed again.
+     */
+    headless: true,
   },
 
   /*
