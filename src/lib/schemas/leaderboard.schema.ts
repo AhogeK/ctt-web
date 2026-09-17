@@ -22,6 +22,7 @@ export const LeaderboardDimensionSchema = z.enum([
   'EARLY_BIRD',
   'GROWTH',
   'ACTIVE_DAYS',
+  'LANGUAGE',
 ])
 export type LeaderboardDimension = z.infer<typeof LeaderboardDimensionSchema>
 
@@ -48,6 +49,9 @@ export const DIMENSION_PERIODS: Record<LeaderboardDimension, readonly Leaderboar
   // server's default — so it must stay first for `defaultPeriodFor` to agree.
   GROWTH: ['WEEK', 'MONTH', 'YEAR'],
   ACTIVE_DAYS: ['ALL', 'WEEK', 'MONTH', 'YEAR'],
+  // One language's merged time (seconds). Partitioned: the dimension alone does not
+  // identify a board, which is why the request type below is a discriminated union.
+  LANGUAGE: ['ALL', 'WEEK', 'MONTH', 'YEAR'],
 }
 
 /**
@@ -123,3 +127,64 @@ export type LeaderboardResponse = z.infer<typeof LeaderboardResponseSchema>
  * page always sends this one value.
  */
 export const LEADERBOARD_PAGE_SIZE = 20
+
+/**
+ * Category of a canonical language — GitHub Linguist's classification, not ours.
+ *
+ * `OTHER` mirrors the server's own `LanguageType`, which carries it for the IDE internals
+ * the vocabulary knows are not languages (`textmate`, `archive`, …). It cannot appear in
+ * *this* response: since v0.76.0 the catalogue is built from the canonical vocabulary, no
+ * canonical entry is typed `OTHER`, and the two sets are disjoint — verified live (842
+ * entries, none `OTHER`) and against the resource. It stays in the enum because the enum
+ * describes the server's type space; a future entry typed `OTHER` is new information
+ * rather than a parse failure.
+ */
+export const LanguageTypeSchema = z.enum(['PROGRAMMING', 'MARKUP', 'DATA', 'PROSE', 'OTHER'])
+export type LanguageType = z.infer<typeof LanguageTypeSchema>
+
+/** One language that has a board. */
+export const LanguageBoardSchema = z.object({
+  // The canonical name, and the value to send back as `language` — verbatim. The server
+  // normalises when matching (`java` and `Java` both resolve), but the catalogue's own
+  // spelling is what the contract documents, so nothing here re-cases it.
+  name: z.string().min(1),
+  type: LanguageTypeSchema,
+  // Whether anybody is currently ranked on this board, from the server's index set — one
+  // lookup, not a count per board. Declared **required**: the server sends a boolean
+  // primitive, and the catalogue is the full vocabulary, so most entries are `false` and
+  // the flag is the only thing separating a board worth opening from 800 empty ones.
+  //
+  // Rankability does not depend on it: an empty board is queryable and returns 200.
+  hasMembers: z.boolean(),
+})
+export type LanguageBoard = z.infer<typeof LanguageBoardSchema>
+
+/** Response of `GET /leaderboard/languages`. */
+export const LanguageBoardsResponseSchema = z.object({
+  // Global, and since v0.76.0 the **whole vocabulary** (~842), not the boards that happen
+  // to have members — which boards exist is a property of the vocabulary, not of who has
+  // pushed. The response is therefore dominated by empty boards, and `hasMembers` is what
+  // makes it navigable. Ordering by name, so callers group and partition themselves.
+  languages: z.array(LanguageBoardSchema),
+})
+export type LanguageBoardsResponse = z.infer<typeof LanguageBoardsResponseSchema>
+
+/**
+ * A leaderboard request.
+ *
+ * A **discriminated union** rather than an optional `language` field, because the server
+ * accepts neither combination such a field would allow: `LANGUAGE` without a language is
+ * a 400 ("Dimension LANGUAGE requires a language"), and a language on any other dimension
+ * is a 400 too ("is not per-language; omit language") — deliberately, since ignoring it
+ * would answer a different question than the one asked. Both are measured against v0.75.0.
+ * Pairing them in the type makes each mistake a compile error rather than a round trip,
+ * which is how `DIMENSION_PERIODS` already handles the period matrix.
+ */
+export type LeaderboardRequest = {
+  period: LeaderboardPeriod
+  limit?: number
+  offset?: number
+} & (
+  | { dimension: Exclude<LeaderboardDimension, 'LANGUAGE'> }
+  | { dimension: Extract<LeaderboardDimension, 'LANGUAGE'>; language: string }
+)

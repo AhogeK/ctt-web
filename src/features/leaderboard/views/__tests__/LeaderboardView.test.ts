@@ -1,8 +1,10 @@
 import { describe, expect, it, vi, beforeEach } from 'vite-plus/test'
 import { mount } from '@vue/test-utils'
 import { computed, ref } from 'vue'
+import LanguageSelect from '../../components/LanguageSelect.vue'
+import type { LanguageBoardGroup } from '../../composables/useLeaderboard'
 import LeaderboardView from '../LeaderboardView.vue'
-import type { LeaderboardResponse } from '@/lib/schemas/leaderboard.schema'
+import type { LanguageBoard, LeaderboardResponse } from '@/lib/schemas/leaderboard.schema'
 
 /**
  * What the query returns, per test.
@@ -16,6 +18,14 @@ let pending = false
 let failed = false
 const refetchSpy = vi.fn<() => void>()
 
+/**
+ * The language catalogue, per test.
+ *
+ * Empty by default: the `LANGUAGE` dimension is only offered once a board exists, and the
+ * unit under test for that rule is the view's own filtering, not the fixture.
+ */
+const languageBoards = ref<LanguageBoard[]>([])
+
 vi.mock('@/features/leaderboard/composables/useLeaderboard', async (importOriginal) => {
   const actual = await importOriginal<typeof import('@/features/leaderboard/composables/useLeaderboard')>()
   return {
@@ -26,6 +36,12 @@ vi.mock('@/features/leaderboard/composables/useLeaderboard', async (importOrigin
       isError: computed(() => failed),
       refetch: refetchSpy,
       effectivePeriod: ref('ALL'),
+    }),
+    // `groupLanguageBoards` comes from `actual`, deliberately: a mock that reimplemented
+    // the grouping would keep these tests green while the real ordering broke.
+    useLeaderboardLanguages: () => ({
+      boards: computed(() => languageBoards.value),
+      grouped: computed(() => actual.groupLanguageBoards(languageBoards.value)),
     }),
   }
 })
@@ -62,6 +78,7 @@ function mountView() {
 
 beforeEach(() => {
   data.value = undefined
+  languageBoards.value = []
   pending = false
   failed = false
   refetchSpy.mockClear()
@@ -79,21 +96,33 @@ describe('LeaderboardView', () => {
   })
 
   it('shows the caller rank from the same response, not a second request', () => {
-    data.value = page()
+    data.value = page({ totalParticipants: 340 })
     const wrapper = mountView()
 
-    // The previous implementation fetched /leaderboard/me, which does not exist.
-    expect(wrapper.get('[data-testid="own-rank"]').text()).toContain('#7')
+    // The previous implementation fetched /leaderboard/me, which does not exist. The board's
+    // size travels with it: #7 reads differently at 7 of 20 than at 7 of 340.
+    expect(wrapper.get('[data-testid="own-rank-value"]').text()).toBe('#7 of 340')
   })
 
-  it('renders no rank chip when the caller is unranked', () => {
-    // currentUserRank is null (key absent) for a user who has never pushed — a
-    // normal state that must not look like a failure.
+  it('states that the caller is unranked rather than hiding the slot', () => {
+    // currentUserRank is null (key absent) for a caller with no activity on this board — a
+    // normal state. Rendering nothing left "not on this board" indistinguishable from
+    // "the rank did not load".
     data.value = page({ currentUserRank: null })
     const wrapper = mountView()
 
-    expect(wrapper.find('[data-testid="own-rank"]').exists()).toBe(false)
+    expect(wrapper.get('[data-testid="own-rank-value"]').text()).toBe('Not ranked')
+    // The rows others occupy are unaffected.
     expect(wrapper.findAll('[data-testid="leaderboard-entry"]')).toHaveLength(2)
+  })
+
+  it('gives the board size even when the caller is the only member', () => {
+    // #1 of 1 is not the same fact as #1 of 340, and hiding the denominator for small boards
+    // would remove the case where it carries the most information.
+    data.value = page({ currentUserRank: 1, totalParticipants: 1 })
+    const wrapper = mountView()
+
+    expect(wrapper.get('[data-testid="own-rank-value"]').text()).toBe('#1 of 1')
   })
 
   it('names a deleted account instead of printing an empty row', () => {
@@ -149,6 +178,55 @@ describe('LeaderboardView', () => {
 
     expect(wrapper.find('[data-testid="period-ALL"]').exists()).toBe(true)
     expect(wrapper.find('[data-testid="period-WEEK"]').exists()).toBe(true)
+  })
+
+  it('offers the LANGUAGE dimension only once a board exists', async () => {
+    // An empty catalogue is a real state: boards are populated lazily as people are scored.
+    // Offering the tab anyway would offer a dimension whose every selection is a 400
+    // (`COMMON_003` — it cannot be ranked without a language, and there is none to give).
+    const wrapper = mountView()
+    expect(wrapper.find('[data-testid="dimension-LANGUAGE"]').exists()).toBe(false)
+
+    languageBoards.value = [{ name: 'Java', type: 'PROGRAMMING', hasMembers: true }]
+    await wrapper.vm.$nextTick()
+    expect(wrapper.find('[data-testid="dimension-LANGUAGE"]').exists()).toBe(true)
+  })
+
+  it('selects a board when the language dimension is chosen', async () => {
+    // The server rejects `LANGUAGE` with no language, so a selection has to exist before a
+    // request can be built.
+    languageBoards.value = [
+      { name: 'Markdown', type: 'PROSE', hasMembers: true },
+      { name: 'Java', type: 'PROGRAMMING', hasMembers: true },
+    ]
+    const wrapper = mountView()
+    await wrapper.get('[data-testid="dimension-LANGUAGE"]').trigger('click')
+    await wrapper.vm.$nextTick()
+
+    // The first board in category order, which is PROGRAMMING before PROSE.
+    expect(wrapper.get('[data-testid="language-select"]').text()).toContain('Java')
+  })
+
+  it('offers every language, with the ones that have members first', async () => {
+    // The catalogue is the whole vocabulary: an unranked board is still offered, because it
+    // is a real board that answers "nobody yet" — but it must not push a board with members
+    // down the list.
+    languageBoards.value = [
+      { name: 'ABAP', type: 'PROGRAMMING', hasMembers: false },
+      { name: 'Java', type: 'PROGRAMMING', hasMembers: true },
+      { name: '4D', type: 'PROGRAMMING', hasMembers: false },
+      { name: 'Kotlin', type: 'PROGRAMMING', hasMembers: true },
+    ]
+    const wrapper = mountView()
+    await wrapper.get('[data-testid="dimension-LANGUAGE"]').trigger('click')
+    await wrapper.vm.$nextTick()
+
+    // Asserted on what the view hands the picker, not on rendered options: `SelectContent`
+    // teleports to `body` and only renders once opened. The rendered menu is covered
+    // end-to-end instead. Cast because `props()` is untyped for an SFC.
+    const groups = wrapper.findComponent(LanguageSelect).props('groups') as LanguageBoardGroup[]
+    expect(groups[0]!.withMembers.map((board) => board.name)).toEqual(['Java', 'Kotlin'])
+    expect(groups[0]!.withoutMembers.map((board) => board.name)).toEqual(['ABAP', '4D'])
   })
 
   it('treats an empty page as a state, not an error', () => {

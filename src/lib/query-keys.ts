@@ -38,13 +38,19 @@ export const deviceKeys = {
  */
 export const leaderboardKeys = {
   all: ['leaderboard'] as const,
-  // One ranking per (dimension, period, page) — all three change the payload, so all
-  // three belong in the key. The previous bare `global()` would have served one
-  // dimension's page from cache for every other dimension.
+  // Which boards exist. Global, so it takes no parameters — but it is still a query of its
+  // own, because the selector must not wait on a ranking request to render.
+  languages: () => [...leaderboardKeys.all, 'languages'] as const,
 
-  // Typed by the domain enums rather than `string`: these two values are the whole point
-  // of the key, so a typo or a renamed member should be a type error rather than a
-  // silently distinct cache entry.
-  page: (dimension: LeaderboardDimension, period: LeaderboardPeriod, offset: number) =>
-    [...leaderboardKeys.all, dimension, period, offset] as const,
+  // One ranking per (dimension, period, language, page): all four change the payload, so
+  // all four belong in the key. The previous bare `global()` would have served one
+  // dimension's page from cache for every other dimension, and omitting the language
+  // would serve the Java page for Kotlin.
+
+  // Typed by the domain enums rather than `string`: these values are the whole point of
+  // the key, so a typo or a renamed member should be a type error rather than a silently
+  // distinct cache entry. `language` is `null` for the dimensions that are not
+  // partitioned — written explicitly rather than omitted so the key's shape does not vary.
+  page: (dimension: LeaderboardDimension, period: LeaderboardPeriod, language: string | null, offset: number) =>
+    [...leaderboardKeys.all, dimension, period, language, offset] as const,
 }

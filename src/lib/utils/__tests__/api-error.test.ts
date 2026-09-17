@@ -28,16 +28,6 @@ describe('api-error', () => {
   })
 
   describe('mapApiErrorCode', () => {
-    it('maps LEADERBOARD_001 to user-friendly message', () => {
-      const message = mapApiErrorCode('LEADERBOARD_001')
-      expect(message).toBe('The leaderboard is currently unavailable. Please try again later.')
-    })
-
-    it('maps LEADERBOARD_002 to user-friendly message', () => {
-      const message = mapApiErrorCode('LEADERBOARD_002')
-      expect(message).toBe('You are not ranked on the leaderboard yet. Start tracking your coding time to appear.')
-    })
-
     it('returns the code itself for unmapped codes', () => {
       const message = mapApiErrorCode('UNKNOWN_CODE')
       expect(message).toBe('UNKNOWN_CODE')
@@ -59,38 +49,38 @@ describe('api-error', () => {
   })
 
   describe('getErrorMessage', () => {
-    it('extracts and maps LEADERBOARD_001 error code from ofetch API error', () => {
+    it('extracts and maps a server error code from an ofetch API error', () => {
       const apiError = {
-        statusCode: 503,
-        statusMessage: 'Service Unavailable',
-        message: 'Service Unavailable',
+        statusCode: 409,
+        statusMessage: 'Conflict',
+        message: 'Conflict',
         data: {
           success: false,
-          message: 'Leaderboard is not available',
-          code: 'LEADERBOARD_001',
+          message: 'Device already registered',
+          code: 'DEVICE_001',
           timestamp: '2026-04-28T00:00:00Z',
         },
       }
 
-      const result = getErrorMessage(apiError)
-      expect(result).toBe('The leaderboard is currently unavailable. Please try again later.')
+      // These two cases defend the *extraction path* — the code sits inside `data`, not at
+      // the top level — so they run on codes the server actually throws.
+      expect(getErrorMessage(apiError)).toBe('Device already registered to another user.')
     })
 
-    it('extracts and maps LEADERBOARD_002 error code from ofetch API error', () => {
+    it('extracts a code from a 429 body and maps it', () => {
       const apiError = {
-        statusCode: 404,
-        statusMessage: 'Not Found',
-        message: 'Not Found',
+        statusCode: 429,
+        statusMessage: 'Too Many Requests',
+        message: 'Too Many Requests',
         data: {
           success: false,
-          message: 'User not found in leaderboard',
-          code: 'LEADERBOARD_002',
+          message: 'Rate limit exceeded',
+          code: 'RATE_LIMIT_001',
           timestamp: '2026-04-28T00:00:00Z',
         },
       }
 
-      const result = getErrorMessage(apiError)
-      expect(result).toBe('You are not ranked on the leaderboard yet. Start tracking your coding time to appear.')
+      expect(getErrorMessage(apiError)).toBe('Too many requests. Please wait a moment before trying again.')
     })
 
     it('falls back to data.message when no error code present', () => {

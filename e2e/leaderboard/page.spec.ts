@@ -1,10 +1,12 @@
 import { test, expect } from '@playwright/test'
 import { setupLeaderboardPage, expectLeaderboardRendered, lastQuery } from './helpers.js'
+import { okEnvelope } from '../utils/auth-helpers.js'
 import {
   TEST_LEADERBOARD_EMPTY,
   TEST_LEADERBOARD_PAGE,
   TEST_LEADERBOARD_WITH_DELETED,
   fullLeaderboardPage,
+  TEST_LANGUAGES,
 } from './fixtures.js'
 
 /**
@@ -124,7 +126,7 @@ test.describe('Leaderboard page', () => {
     await expect(page.getByTestId('leaderboard-entry').first()).toContainText('12 days')
   })
 
-  test('shows the caller rank from the same response, and nothing when unranked', async ({ page }) => {
+  test('shows the caller rank from the same response, and states an absent one', async ({ page }) => {
     const setup = await setupLeaderboardPage(page)
     await expectLeaderboardRendered(page)
 
@@ -135,7 +137,9 @@ test.describe('Leaderboard page', () => {
     setup.setPayload(TEST_LEADERBOARD_WITH_DELETED)
     await page.getByTestId('dimension-STREAK').click()
     await expect(page.getByTestId('leaderboard-entry').first()).toBeVisible()
-    await expect(page.getByTestId('own-rank')).toBeHidden()
+    // The key is absent, which reads as "not on this board" — stated, not hidden, and not an
+    // error. (The copy itself is asserted in its own case below.)
+    await expect(page.getByTestId('own-rank-value')).toHaveText('Not ranked')
     await expect(page.getByText('Failed to load leaderboard')).toBeHidden()
   })
 
@@ -238,6 +242,196 @@ test.describe('Leaderboard page', () => {
     await back.click()
     // offset 20 was already fetched, so it comes from cache — assert the render.
     await expect(page.getByTestId('page-range')).toContainText('21–40')
+  })
+
+  test('offers the language dimension only when a board exists', async ({ page }) => {
+    /*
+     * Boards are written the first time somebody is scored on one, so an empty catalogue is
+     * a real state rather than an error. The tab must be absent then: every selection it
+     * could offer is HTTP 400 — the dimension cannot be ranked without a language, and the
+     * catalogue is what supplies them.
+     */
+    await setupLeaderboardPage(page)
+    await expectLeaderboardRendered(page)
+    await expect(page.getByTestId('dimension-LANGUAGE')).toBeHidden()
+
+    await page.unroute('**/api/v1/leaderboard/languages')
+    await setupLeaderboardPage(page, TEST_LEADERBOARD_PAGE, TEST_LANGUAGES)
+    await expectLeaderboardRendered(page)
+    await expect(page.getByTestId('dimension-LANGUAGE')).toBeVisible()
+  })
+
+  test('selects a board and sends it, never the dimension alone', async ({ page }) => {
+    const setup = await setupLeaderboardPage(page, TEST_LEADERBOARD_PAGE, TEST_LANGUAGES)
+    await expectLeaderboardRendered(page)
+
+    await page.getByTestId('dimension-LANGUAGE').click()
+
+    // The dimension without a language is a 400, so selecting it has to select a board too.
+    await expect.poll(() => lastQuery(setup.requests()).get('dimension')).toBe('LANGUAGE')
+    // The first board in **category** order, not catalogue order: `Java` precedes
+    // `Markdown` even though the catalogue lists Markdown first.
+    expect(lastQuery(setup.requests()).get('language')).toBe('Java')
+  })
+
+  test('sends the language only for the dimension that is partitioned by one', async ({ page }) => {
+    /*
+     * The server rejects a language on any other dimension rather than ignoring it, because
+     * ignoring it would answer a different question than the one asked. So the parameter must
+     * appear and disappear with the dimension — asserted per request, not just on the last one.
+     */
+    const setup = await setupLeaderboardPage(page, TEST_LEADERBOARD_PAGE, TEST_LANGUAGES)
+    await expectLeaderboardRendered(page)
+
+    await page.getByTestId('dimension-LANGUAGE').click()
+    await expect.poll(() => setup.requests().some((u) => new URL(u).searchParams.get('language') !== null)).toBe(true)
+
+    await page.getByTestId('dimension-TOTAL').click()
+    await expect
+      .poll(() => setup.requests().some((u) => new URL(u).searchParams.get('dimension') === 'TOTAL'))
+      .toBe(true)
+
+    const wrong = setup
+      .requests()
+      .map((u) => new URL(u).searchParams)
+      .filter((q) => q.get('dimension') !== 'LANGUAGE' && q.get('language') !== null)
+    expect(wrong.map((q) => q.toString())).toEqual([])
+  })
+
+  test('opens the board picker grouped by category', async ({ page }) => {
+    // Rendered here rather than in a unit test: `SelectContent` teleports out of the
+    // component, so only a real browser shows whether the groups and their options exist.
+    await setupLeaderboardPage(page, TEST_LEADERBOARD_PAGE, TEST_LANGUAGES)
+    await expectLeaderboardRendered(page)
+
+    await page.getByTestId('dimension-LANGUAGE').click()
+    await page.getByTestId('language-select').click()
+
+    await expect(page.getByText('Programming languages')).toBeVisible()
+    await expect(page.getByText('Prose & docs')).toBeVisible()
+
+    /*
+     * Both levels of ordering are the selector's own work, and both matter now that the
+     * catalogue is the entire vocabulary: the group order is by likelihood of use (so
+     * `Programming` precedes `Prose` even though the list arrives sorted by name), and
+     * within a group the boards with members come before the empty ones.
+     */
+    const group = page.locator('[data-slot="select-group"]').filter({ hasText: 'Programming languages' })
+    // Web-first, so it retries: an `allTextContents()` snapshot can be taken before the
+    // teleported menu has finished rendering.
+    await expect(group.locator('[data-testid^="language-option-"]')).toHaveText(['Java', 'Kotlin', 'ABAP', 'Zig'])
+
+    // The boundary is drawn, not inferred — with 842 entries, "here the empty ones start"
+    // is information the reader cannot get from the names.
+    await expect(group.locator('[data-slot="select-separator"]')).toHaveCount(1)
+  })
+
+  test('lets an empty board be opened, which is the point of listing them', async ({ page }) => {
+    /*
+     * The catalogue is the whole vocabulary, so most boards have nobody. They are offered
+     * because the API ranks them: an empty board answers 200 and means "nobody yet", which
+     * is a different fact from "this is not a language" — and one only the full list can
+     * express.
+     */
+    const setup = await setupLeaderboardPage(page, TEST_LEADERBOARD_PAGE, TEST_LANGUAGES)
+    await expectLeaderboardRendered(page)
+
+    await page.getByTestId('dimension-LANGUAGE').click()
+    await expect.poll(() => lastQuery(setup.requests()).get('language')).toBe('Java')
+
+    setup.setPayload({ entries: [], totalParticipants: 0 })
+    await page.getByTestId('language-select').click()
+    await page.getByTestId('language-option-Zig').click()
+
+    await expect.poll(() => lastQuery(setup.requests()).get('language')).toBe('Zig')
+    await expect(page.getByText('No one is ranked yet')).toBeVisible()
+    await expect(page.getByText('Failed to load leaderboard')).toBeHidden()
+  })
+
+  test('switches boards without leaving the dimension', async ({ page }) => {
+    const setup = await setupLeaderboardPage(page, TEST_LEADERBOARD_PAGE, TEST_LANGUAGES)
+    await expectLeaderboardRendered(page)
+    await page.getByTestId('dimension-LANGUAGE').click()
+    await expect.poll(() => lastQuery(setup.requests()).get('language')).toBe('Java')
+
+    await page.getByTestId('language-select').click()
+    await page.getByTestId('language-option-Kotlin').click()
+
+    await expect.poll(() => lastQuery(setup.requests()).get('language')).toBe('Kotlin')
+    expect(lastQuery(setup.requests()).get('dimension')).toBe('LANGUAGE')
+  })
+
+  test('treats an empty language board as a state, not an error', async ({ page }) => {
+    // A listed board can be empty for the current period: the catalogue is sticky so the
+    // selector does not move when a period rolls over.
+    const setup = await setupLeaderboardPage(page, TEST_LEADERBOARD_PAGE, TEST_LANGUAGES)
+    await expectLeaderboardRendered(page)
+    await page.getByTestId('dimension-LANGUAGE').click()
+    await expect.poll(() => lastQuery(setup.requests()).get('language')).toBe('Java')
+
+    setup.setPayload({ entries: [], totalParticipants: 0 })
+    await page.getByTestId('period-WEEK').click()
+
+    await expect(page.getByText('No one is ranked yet')).toBeVisible()
+    await expect(page.getByText('Failed to load leaderboard')).toBeHidden()
+  })
+
+  test('abandons the request for a board the reader has left', async ({ page }) => {
+    /*
+     * The endpoint is rate limited to 60 requests/minute, and an abandoned request still
+     * spends the budget — so switching dimensions must cancel the one in flight rather than
+     * let it finish unread. TanStack aborts a query once nothing observes it, but only if the
+     * fetch consumes the signal; that wiring is what this covers.
+     *
+     * The delay is registered as a second handler, so it takes precedence over the setup's
+     * (Playwright matches the most recently registered first) — which also means this test
+     * records those requests itself rather than through the setup.
+     */
+    await setupLeaderboardPage(page)
+    await expectLeaderboardRendered(page)
+
+    const seen: string[] = []
+    const aborted: string[] = []
+    page.on('requestfailed', (request) => {
+      if (request.url().includes('/leaderboard?')) aborted.push(request.failure()?.errorText ?? '')
+    })
+
+    // Hold the response open so the request is still in flight when the reader moves on.
+    await page.route('**/api/v1/leaderboard?*', async (route) => {
+      seen.push(route.request().url())
+      await new Promise((resolve) => setTimeout(resolve, 3000))
+      await route.fulfill({
+        status: 200,
+        contentType: 'application/json',
+        body: JSON.stringify(okEnvelope(TEST_LEADERBOARD_PAGE)),
+      })
+    })
+
+    await page.getByTestId('dimension-STREAK').click()
+    await expect.poll(() => seen.some((u) => new URL(u).searchParams.get('dimension') === 'STREAK')).toBe(true)
+
+    // Leaving the board while its request is still open.
+    await page.getByTestId('dimension-TOTAL').click()
+
+    await expect.poll(() => aborted.length).toBeGreaterThan(0)
+    expect(aborted.every((text) => text.includes('ABORTED'))).toBe(true)
+  })
+
+  test('states an unranked caller instead of leaving the slot empty', async ({ page }) => {
+    // `currentUserRank` is null when the board holds no activity for the caller. Rendering
+    // nothing left that indistinguishable from a rank that failed to load.
+    await setupLeaderboardPage(page, { ...TEST_LEADERBOARD_PAGE, currentUserRank: undefined })
+    await expectLeaderboardRendered(page)
+
+    await expect(page.getByTestId('own-rank-value')).toHaveText('Not ranked')
+  })
+
+  test('shows the board size beside the caller rank', async ({ page }) => {
+    await setupLeaderboardPage(page, { ...TEST_LEADERBOARD_PAGE, currentUserRank: 7, totalParticipants: 340 })
+    await expectLeaderboardRendered(page)
+
+    // The denominator is how a reader tells a small board from a large one.
+    await expect(page.getByTestId('own-rank-value')).toHaveText('#7 of 340')
   })
 
   test('restricts the period selector to the active dimension', async ({ page }) => {

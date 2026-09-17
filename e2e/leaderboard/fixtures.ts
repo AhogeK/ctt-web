@@ -82,3 +82,31 @@ export function fullLeaderboardPage(total = 60): LeaderboardFixture {
     totalParticipants: total,
   }
 }
+
+/** One entry of the language catalogue, as `GET /leaderboard/languages` sends it. */
+export interface LanguageFixture {
+  name: string
+  type: 'PROGRAMMING' | 'MARKUP' | 'DATA' | 'PROSE' | 'OTHER'
+  /** Whether anybody is ranked on this board. */
+  hasMembers: boolean
+}
+
+/**
+ * A catalogue exercising both levels of ordering.
+ *
+ * Deliberately **neither** in category order **nor** partitioned: the catalogue arrives
+ * sorted by name (842 entries), and both the grouping and the members-first split are the
+ * selector's own work — a fixture that arrived pre-arranged would not show whether they
+ * happen. Names are chosen so each partition is unambiguous: within `PROGRAMMING`, `Java`
+ * and `Kotlin` have members while `ABAP` and `Zig` do not, so a name-sorted list and a
+ * partitioned one cannot be confused.
+ */
+export const TEST_LANGUAGES: LanguageFixture[] = [
+  { name: 'ABAP', type: 'PROGRAMMING', hasMembers: false },
+  { name: 'CSS', type: 'MARKUP', hasMembers: true },
+  { name: 'CSV', type: 'DATA', hasMembers: false },
+  { name: 'Java', type: 'PROGRAMMING', hasMembers: true },
+  { name: 'Kotlin', type: 'PROGRAMMING', hasMembers: true },
+  { name: 'Markdown', type: 'PROSE', hasMembers: true },
+  { name: 'Zig', type: 'PROGRAMMING', hasMembers: false },
+]

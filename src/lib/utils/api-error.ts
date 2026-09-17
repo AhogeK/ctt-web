@@ -134,8 +134,17 @@ export function mapApiErrorCode(code: string): string {
     rate_limit_exceeded: 'Too many requests. Please wait a moment before trying again.',
 
     // Leaderboard errors (LEADERBOARD_XXX from ctt-server)
+    //
+    // Both are registered in the server's ErrorCode enum but **never thrown** — verified
+    // across its sources, which reference neither outside the declaration — so neither
+    // reaches a user today. They are kept because an unmapped code falls through to the raw
+    // code string, which is worse than a stale sentence if that ever changes.
+    //
+    // LEADERBOARD_002's wording is deliberately a statement rather than a prompt: the server
+    // models "not ranked" as a **null `currentUserRank`**, not as this error, and a message
+    // telling the reader to start tracking would invent a cause it cannot know.
     LEADERBOARD_001: 'The leaderboard is currently unavailable. Please try again later.',
-    LEADERBOARD_002: 'You are not ranked on the leaderboard yet. Start tracking your coding time to appear.',
+    LEADERBOARD_002: 'You are not on this leaderboard.',
 
     // Generic
     internal_error: 'An unexpected error occurred. Please try again later.',
