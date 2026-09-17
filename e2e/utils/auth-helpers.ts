@@ -99,12 +99,32 @@ export async function mockAuthApis(page: Page): Promise<void> {
       contentType: 'application/json',
       body: JSON.stringify(
         okEnvelope({
+          // `userId` is not optional: `LoginResponseSchema` types it as a UUID, so a body without
+          // it fails to parse. `initializeAuth` swallows that failure and calls `clearAuth()`,
+          // which deletes the tokens from localStorage — so a refresh response missing this field
+          // silently leaves every reloaded page with no session at all, and only a spec that
+          // reads the auth store can tell.
+          userId: TEST_USER.id,
           accessToken: 'mock-access-token-refreshed',
           refreshToken: 'mock-refresh-token-refreshed',
           expiresIn: TEST_TOKENS.expiresIn,
           termsExpired: false,
         }),
       ),
+    })
+  })
+
+  // Connected OAuth accounts — read by the settings profile view to render its GitHub row.
+  //
+  // Mocked here rather than per-spec because leaving it out is not a harmless gap: the request
+  // reaches the real server, comes back 401, and the global 401 handler answers that by calling
+  // `clearAuth()`. The session is then gone and the auth store sits at its defaults for the rest of
+  // the test, which shows up as unrelated failures far from the cause.
+  await page.route('**/api/v1/auth/oauth/accounts', async (route) => {
+    await route.fulfill({
+      status: 200,
+      contentType: 'application/json',
+      body: JSON.stringify(okEnvelope({ accounts: [] })),
     })
   })
 
