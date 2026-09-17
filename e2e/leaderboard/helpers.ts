@@ -57,7 +57,21 @@ export async function setupLeaderboardPage(
     })
   })
 
-  await loginViaForm(page)
+  /*
+   * Sign in only when this tab does not already hold a session.
+   *
+   * A second call re-registers the routes for a new payload, and that is a legitimate thing to do —
+   * but `loginViaForm` starts by navigating to /auth/login, and with a live session the guard
+   * bounces that straight back to the dashboard. The login form the helper waits on then never
+   * appears, and the failure lands on a `fill` timeout that says nothing about the cause.
+   */
+  const alreadySignedIn = await page
+    .evaluate(() => Boolean(localStorage.getItem('ctt_access_token')))
+    .catch(() => false) // about:blank has no storage; first call, so sign in
+  if (!alreadySignedIn) {
+    await loginViaForm(page)
+  }
+
   await page.goto('/leaderboard')
 
   return {
