@@ -126,7 +126,12 @@ watch(language, () => {
   offset.value = 0
 })
 
-const { data, isPending, isError, refetch, effectivePeriod } = useLeaderboard(dimension, period, language, offset)
+const { data, isPending, isError, isPlaceholderData, refetch, effectivePeriod } = useLeaderboard(
+  dimension,
+  period,
+  language,
+  offset,
+)
 
 const entries = computed(() => data.value?.entries ?? [])
 const currentUserRank = computed(() => data.value?.currentUserRank ?? null)
@@ -312,7 +317,12 @@ const isEmpty = computed(() => !isPending.value && !isError.value && entries.val
       <!-- `role="list"` because Tailwind's preflight sets `list-style: none`, which
            removes list semantics in Safari/VoiceOver (the fix recorded in the
            dashboard-visualization domain and used by ScrollFadeList). -->
-      <ol class="flex flex-col gap-2" role="list">
+      <ol
+        class="flex flex-col gap-2 transition-opacity duration-150"
+        :class="{ 'opacity-50': isPlaceholderData }"
+        :aria-busy="isPlaceholderData"
+        role="list"
+      >
         <li
           v-for="entry in entries"
           :key="entry.userId"
