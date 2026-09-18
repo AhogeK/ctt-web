@@ -50,7 +50,7 @@ evidence, resource ownership, read-only boundaries.
 
 | | |
 | --- | --- |
-| Checked against source | This repo's own rules, scripts and tooling · last content change 2026-09-15 |
+| Checked against source | This repo's own rules, scripts and tooling · last content change **2026-09-19** (added P10, S10, browser-teardown rule) |
 | Coverage | Commit/branch procedure against `AGENTS.md` R6/R6.5 and the actual git history; verification recipes run; the `.sisyphus/` helper scripts and test-account registry read directly |
 | Known drift | None known — this domain describes our own process, and R24's maintenance applies to it like any other |
 

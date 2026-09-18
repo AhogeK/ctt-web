@@ -110,6 +110,16 @@ renaming or removing a domain, update the table below in the same change.
 - Keep `README.md` (this table) in sync with the directory tree.
 - Every file stays **≤200 lines** (AGENTS.md). Over that → split or compress, never truncate judgement.
 
+## Domain inventory
+
+| Domain | Answers |
+| --- | --- |
+| `dashboard-visualization` | What the authenticated dashboard looks like, and how it is measured |
+| `backend-contract` | How to consume `../ctt-server` — endpoints, DTOs, error codes |
+| `achievements` | The achievements/trophy model, rungs, history fields |
+| `ai-workflow` | How the agent works in this repo — commits, verification, knowledge upkeep |
+| `landing-page` | The public marketing surface: measured visual baseline, component archetypes, responsive rules |
+
 ## Domain inventory conventions
 
 - Domain name: `kebab-case`, names a **capability or knowledge area**, not a document kind.

@@ -95,3 +95,22 @@ obviously wrong — a requirement text goes to the user instead. Resources are o
 Temporary artifacts (probe scripts, seeded accounts, verification servers) are removed when the
 task ends; persistent accounts and helpers are reused rather than recreated. A dirty workspace
 makes the next verification unreliable.
+
+## P10. Research precedes design; evidence precedes the ruling
+
+A decision that sets a **tone, a rule, or a contract** (visual direction, spacing/type law, API
+shape) is not made from memory or taste — it is made from evidence, gathered *before* the plan is
+declared settled. The user's standing instruction: settle the research first, so the work is not
+re-done after implementation starts.
+
+- **Sample size gates a claim.** One reference is an anecdote; a pattern needs **≥3 independent
+  samples**. A single site's choices justified three wrong generalizations in one round (h1 weight,
+  negative tracking, "no motion needed").
+- **Similarity is not quality.** A competitor doing X evidences the *status quo*, not X's merit —
+  the worst-designed site in a sample was also the closest analogue. Grade evidence by its own
+  authority, never by domain proximity.
+- **Mark the gap, never fill it with a guess.** A claim nobody verified is written with
+  `待确认` plus what would settle it (P5). "It is probably implemented as X" is exactly the
+  sentence that must not be written in the assertive voice.
+- **Scope is part of the claim.** A gap in a *document* is not a gap in the *code*. State which
+  artefact was measured; a finding about `DESIGN.md` says nothing about `src/`.

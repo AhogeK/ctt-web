@@ -36,17 +36,15 @@ cherry-picked — stop and investigate before pushing.
 `env -u CI` matters: with `CI` set, Playwright switches to a preview build instead of the running
 dev server.
 
-**The suite is headless, including locally — `--headed` is the opt-in.** The old default was headed,
-which opened a browser per spec and stole focus for the whole run. To watch one:
-`env -u CI pnpm test:e2e e2e/<path>.spec.ts --project=chromium --headed`. Headless launches
-`chromium_headless_shell` — a binary that cannot open a window, and how to tell the two apart.
+**The suite is headless, including locally — `--headed` is the opt-in** (`--headed` launches a real
+Chromium; the default is `chromium_headless_shell`, a binary that cannot open a window). The old
+default was headed, which opened a browser per spec and stole focus for the whole run.
 
 **Check whose server is on 5173 before believing a failed run.** `reuseExistingServer: !CI` drives
 whatever holds the port, so another project's dev server there makes **every** spec fail at the first
-`page.goto` with `ERR_HTTP_RESPONSE_CODE_FAILURE` — which reads like a regression in our code. Look at
-the listener's `cwd` (`lsof -a -p <pid> -d cwd -Fn`); a different repository answers `/auth/login`
-with 404 because it has no such route. **Never stop a server you did not start**, even when it is what
-broke the run: start your own elsewhere, or use `CI=1` for the preview server on 4173.
+`page.goto` with `ERR_HTTP_RESPONSE_CODE_FAILURE` — which reads like a regression in our code. Check
+the listener's `cwd` (`lsof -a -p <pid> -d cwd -Fn`). **Never stop a server you did not start**:
+start your own elsewhere, or use `CI=1` for the preview server on 4173.
 
 **Run verification at the branch tip, never at a detached historical commit.** `node_modules` is
 shared while `pnpm-workspace.yaml` is per-commit, so a script run at an old commit meets a config
@@ -126,9 +124,8 @@ Traps — each one cost a full debugging round:
 
 ## Test accounts: reuse a prefix, never invent one
 
-`.sisyphus/.test-account-<prefix>` is the account registry. **Pick an existing prefix**;
-a new prefix registers a real server-side account that then needs its own data seeding, and there
-is no delete-account endpoint — an unused account can only be cleaned up by hand.
+`.sisyphus/.test-account-<prefix>` is the account registry. **Pick an existing prefix** — a new one
+registers a real server account that needs seeding, and there is no delete-account endpoint.
 
 | Prefix     | Contents                                                        |
 | ---------- | --------------------------------------------------------------- |
@@ -197,4 +194,7 @@ assertion had already been rewritten.
 - Long-running process → background it with its own log file; record the PID for teardown.
 - Teardown: match the process command line against the resource you started, then stop it. Never
   kill by port alone.
-- Persistent helper accounts/files survive between rounds; scratch payloads and profiles do not.
+- **Close every browser tab you opened — `app.relay` tabs live in the user's real browser.** A
+  relay tab cannot be closed for them; after releasing it, **ask the user to confirm**, never
+  assume it is gone. Then remove scratch profiles (`/tmp/*-profile`) and confirm with
+  `pgrep -f 'user-data-dir=/tmp/'` that no stray instance is alive.

@@ -115,3 +115,23 @@ Do not "resolve" it by committing the file. Restore it and remove the cause:
 4. Never run package-manager scripts at a historical commit; verify the tip. Per-commit verification
    needs a worktree **with its own install** — one that borrows the main `node_modules` reports
    phantom `TS2307: Cannot find module 'vite-plus'`.
+
+## S10. Before designing anything with an external reference
+
+Trigger: a task needs a visual/interaction/layout decision that the repo does not already answer.
+
+1. **Decide what kind of evidence you need** — and label it: peer status quo, *design authority*
+   (a reference whose craft is itself respected), or research (conversion/accessibility studies).
+   These have different force; do not let one masquerade as another.
+2. **Take ≥3 samples, same probe.** Measure the same fields on every site, or the comparison is
+   not a comparison. Record hit counts, not impressions — "8px grid: 44/50/26 hits" is a finding.
+3. **Read the layers in order of authority**: rendered pixels and computed styles → the
+   stylesheets' own token tables → the JS bundles → **the open-source component source**. A
+   screenshot shows the result; only source shows the mechanism.
+4. **Cross-validate.** If CSS says "no animation elements" and JS says "no IntersectionObserver",
+   that agreement is the finding. If they disagree, you have not understood one of them.
+5. **Check the reference's stack against ours.** reka-ui / Tailwind 4 / VueUse already implement
+   most Radix-era patterns — adopt the *pattern*, never a new dependency (R12).
+6. **Write it down before building** — measured baseline in the domain file, plan approved by the
+   user, then code. `.plans/` is a working artefact and is gitignored: anything that must survive
+   belongs in the domain layer.

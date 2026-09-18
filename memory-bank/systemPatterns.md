@@ -191,3 +191,10 @@ RawKeyDialog is hard to dismiss (raw key unrecoverable): overlay/Escape/X blocke
 The conservation-vs-accumulation ruling (time-axis must equal `summary.total`; categorical
 necessarily exceeds it) lives in one place only:
 **[`domains/backend-contract/principles.md`](./domains/backend-contract/principles.md) P2**.
+
+## Interaction And Motion Conventions
+
+- **Hover is gated on capability**: hover styles live inside `@media (hover: hover)`; on touch devices a hover state otherwise sticks after a tap (`ThemeToggle.vue` is the known instance).
+- **Motion carries its counterpart**: `motion-reduce:transition-none` / `duration-0` / `animate-none`.
+- **Theme-dependent first paint needs a mounted guard** — the server cannot know the client's theme, so such an element jumps on hydration.
+- **State as attribute**: reka-ui emits `data-state` / `data-side` / `data-orientation` — style against `data-[state=open]:` rather than a class combination. Design values live in [`domains/landing-page/practices.md`](./domains/landing-page/practices.md).
