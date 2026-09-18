@@ -9,7 +9,7 @@
  * dimension partitioned by language; for the rest the language is `null` and never travels.
  */
 import { computed, type Ref } from 'vue'
-import { useQuery } from '@tanstack/vue-query'
+import { keepPreviousData, useQuery } from '@tanstack/vue-query'
 import { getLeaderboard, getLeaderboardLanguages } from '@/lib/api/leaderboard'
 import { leaderboardKeys } from '@/lib/query-keys'
 import {
@@ -111,6 +111,12 @@ export function useLeaderboard(
       return getLeaderboard(current, { signal })
     },
     enabled: computed(() => request.value !== null),
+    // Switch boards without destroying the visible one. Without this, every key the reader has
+    // not visited yet has no cache, so `isPending` is true for a moment and the list is replaced
+    // by skeletons and back — measured: the list vanished at 3ms and returned at 33ms.
+    // `isPlaceholderData` then says the shown rows belong to the *previous* board, which is what
+    // the view dims on; keeping stale rows on screen with no signal would be worse than a flicker.
+    placeholderData: keepPreviousData,
     // Server-computed rankings; short staleness so switching tabs is cheap but a revisit
     // still refreshes.
     staleTime: 1000 * 30,

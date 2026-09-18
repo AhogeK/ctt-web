@@ -464,4 +464,41 @@ test.describe('Leaderboard page', () => {
     )
     expect(overflowing).toEqual([])
   })
+
+  test('keeps the visible board on screen while another one loads', async ({ page }) => {
+    /*
+     * Regression: choosing a board the reader has not visited yet used to tear the list down and
+     * stand skeletons in its place — measured, the rows were gone at 3ms with twenty skeletons
+     * where they had been, and the new rows arrived at 33ms. Holding the previous page on screen
+     * while the next one loads is what removes that flash, and nothing else here would notice it
+     * being removed again.
+     *
+     * The response is held open deliberately: without it the new rows can land inside a single
+     * frame and the test would pass whichever way the component behaved.
+     */
+    await setupLeaderboardPage(page)
+    await expectLeaderboardRendered(page)
+
+    const held = Promise.withResolvers<void>()
+    await page.route('**/api/v1/leaderboard?*', async (route) => {
+      await held.promise
+      await route.fulfill({
+        status: 200,
+        contentType: 'application/json',
+        body: JSON.stringify(okEnvelope(TEST_LEADERBOARD_PAGE)),
+      })
+    })
+
+    await page.getByTestId('dimension-GROWTH').click()
+
+    // The previous board is still on screen, marked as not-yet-current rather than removed.
+    await expect(page.getByTestId('leaderboard-entry').first()).toBeVisible()
+    await expect(page.locator('ol[aria-busy="true"]')).toBeVisible()
+    // No skeleton took its place.
+    await expect(page.locator('.animate-pulse')).toHaveCount(0)
+
+    held.resolve()
+    // And the mark lifts once the new board is the one being shown.
+    await expect(page.locator('ol[aria-busy="true"]')).toHaveCount(0)
+  })
 })
