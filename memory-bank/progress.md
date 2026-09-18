@@ -34,6 +34,8 @@
 - [x] **首次校准即发现真实漂移** — 后端 v0.73.0（`0111900`）改了 leaderboard 契约：新增 `ACTIVE_DAYS` 维度、`NIGHT_OWL`/`EARLY_BIRD` 放宽到全部周期、`GROWTH` 放宽到任意非 `ALL`、响应新增 `totalParticipants`；我们仍是旧契约（我们记录时**是对的**，是后端改了）。已记入 `backend-contract/meta.md`；修复需改 Zod schema（R7），**未擅动，待决策**。
 - [x] **解掉一处规则互斥** — R5「记忆与业务代码同 commit」与 R6.5「AI 相关内容单独提交」互斥，且与实际历史不符 → R5 只约束**时机**（不滞后，R2），commit 边界归 R6.5。另写明 `ai-workflow` P5（文件无草稿态）与「待确认」标记（单条事实可标）的分工。
 
+- [x] **v0.45.3 (2026-09-18)** 排行榜两处修正。① **切榜时列表被骨架顶掉**（用户报告"闪烁一下"）：切到未访问过的维度 → 查询键无缓存 → `isPending` 为真 → 模板把可见列表整个换成骨架。**真机实测**：`rows:1` → `skel:20 rows:0 @3ms` → `rows:1 @33ms`。修法 `placeholderData: keepPreviousData` + 在 `isPlaceholderData` 期间**变暗并置 `aria-busy`**（变暗不是装饰：否则读者会在新标签下读到上一个榜的名次，比闪烁更糟）。回归用例**刻意挂起响应**，否则新数据可能在一帧内到达、断言无论怎么写都通过；**已验证可失败**（撤掉 `placeholderData` 即变红）。② **GROWTH 正负记法不对称**：正 `+1h 30m`（字形）、负 `1h 30m down`（词语）—— 同一轴上两种记法，且 `+` 违反了该文件自定原则"方向由词承载"。改为双向用符号 `+1h 30m` / `−1h 30m`（U+2212，与 `+` 等宽，适配 `tabular-nums`），零值仍不带符号（`+0s` 会读成增长）。**符号紧贴数字不加空格**是对的：符号是数字的一部分，而 `1h` 与 `30m` 之间的空格是词元分隔，二者职责不同。
+
 ## Leaderboard
 
 - [x] **v0.41.0 (2026-09-14)** 契约修复 — 该页**从未能工作**：契约层写的是一个**不存在的 API**（三个端点在真机上 `/global`、`/me` 均返 **HTTP 500**，而真实的单一端点 `GET /api/v1/leaderboard?dimension=…` 返 200），字段（`totalMinutes`/`totalUsers`/`updatedAt`/`avatarUrl`）后端从不返回，且没有 `dimension` 概念。按实测契约重建：五种维度 + 可选周期 + `limit`/`offset` 分页 + 自己的排名（在同一响应内，非第二个端点）。三个必须容忍的服务端行为：`displayName` 与 `currentUserRank` 对「账号已删」/「未上榜」是**键缺失而非 null**（写成 required-but-nullable 会让**整页解析失败**，实测第 2 页落入错误态）；非法维度×周期组合返 **400 `COMMON_003`**，故合法组合编码为数据（STREAK/NIGHT_OWL/EARLY_BIRD 仅 ALL，GROWTH 仅 WEEK），选择器据此生成，实测全程**零非法请求**。`rank` 原样显示（并列同名，实测 1,2,3,3,5,5…）、分数按维度格式化（秒 / 连击天数 / 带符号增长）、空页是状态非错误。路由补上 `AppLayout`（原先扁平注册导致**无侧边栏与导航**）。
