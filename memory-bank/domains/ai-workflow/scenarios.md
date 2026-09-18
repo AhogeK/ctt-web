@@ -75,6 +75,15 @@ Precedent flow (used for `activeContext.md` 549 → 63 lines):
 
 - Long-running services: start them backgrounded with the log written to its own file; never let a
   command hang waiting for output.
+- **A backgrounded command must also be detached from the caller's stdout, or the job never ends.**
+  `cmd > log 2>&1 &` still leaves the framework waiting: the grandchild (`pnpm` → `vp` → `vue-tsc`)
+  inherits the pipe and holds it open after the direct child exits, so the job is never observed to
+  settle and a wait on it blocks forever. Write it as
+  `nohup cmd > log 2>&1 < /dev/null &` — the call returns immediately — and then **poll the log**
+  for completion. This one cost hours: it presented as "the machine is dying" (even `uptime` seemed
+  to take two minutes) while the same command, detached, finished in about a second.
+- **`timeout` kills only its direct child.** A grandchild that survives keeps the pipe open, so the
+  command still never returns. Detach as above instead of reaching for a shorter timeout.
 - On finish: stop **only what you started**. Verify ownership by checking the actual listener
   process and its command line — a remembered PID file is not proof (a stale pid file once pointed
   at a process that was not ours).

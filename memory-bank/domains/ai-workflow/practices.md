@@ -73,7 +73,8 @@ change the result. Sample the render.
 
 ## When an edit tool corrupts a file
 
-Symptom: the file stops parsing, duplicate blocks appear, or a boundary line is echoed twice.
+Symptom: the file stops parsing, duplicate blocks appear, or a boundary line is echoed twice. The
+usual origin is **shell/Python string replacement**, which reports success while writing valid-looking nonsense (a `[, EMAIL]` sparse array; `{…}` rewritten as `[…]`); prefer the editor's own edit tool, which echoes what it wrote.
 
 1. Stop patching. Re-read the whole file.
 2. If the structure is damaged beyond a single hunk, **rewrite the file in one `write`** with the

@@ -55,9 +55,20 @@ source of truth to be read, never edited. Capability gaps are raised as a requir
 
 | | |
 | --- | --- |
-| Checked against source | `../ctt-server` **v0.72.0 – v0.73.0** · last content change 2026-09-14 |
-| Coverage | Endpoint map, error codes and payload shapes read from controllers and DTOs; the leaderboard contract was repaired against live responses |
-| Known drift | Leaderboard drifted at v0.73.0 and was **repaired the same day** (`/leaderboard` page, v0.43.0). Nothing open. |
+| Checked against source | Whole domain: `../ctt-server` **v0.72.0 – v0.73.0** · last full read 2026-09-14. Leaderboard contracts only: **re-read at v0.77.0 on 2026-09-18** |
+| Coverage | Endpoint map, error codes and payload shapes read from controllers and DTOs at v0.72.0–v0.73.0; the leaderboard contract was repaired against live responses at v0.73.0. On 2026-09-18 the leaderboard's seven dimensions, four periods, `LeaderboardResponse` (`totalParticipants`, `currentUserRank`), `LanguageBoardDto.hasMembers` and `LanguageBoardsResponse.languages` were compared against v0.77.0 — all match, no drift |
+| Known drift | **Two versions have been followed since the full read** — v0.75.0 (LANGUAGE dimension) and v0.76.1 (catalogue default), both recorded in `progress.md` and reflected in the code. **Everything outside the leaderboard has not been re-read since v0.73.0**: treat those entries as accurate to that version rather than to the running server. |
+
+### Leaderboard re-checked at v0.77.0 (2026-09-18) — no drift
+
+The backend's `leaderboard/` package showed a fresh mtime on every file, so the contract was
+re-compared rather than assumed. The mtimes were the v0.75.0/v0.76.1 work this project had already
+followed, not new movement: the seven `LeaderboardDimension` constants, the four periods,
+`LeaderboardResponse`'s `totalParticipants` and `currentUserRank`, `LanguageBoardDto.hasMembers`
+and `LanguageBoardsResponse.languages` all still match the schema in `src/lib/schemas/leaderboard.schema.ts`.
+
+**Scope limit:** that is the leaderboard only. The rest of this domain was last read at v0.73.0 and
+has not been verified since — see the baseline table above.
 
 ### Leaderboard drift — found, then repaired (2026-09-15)
 
