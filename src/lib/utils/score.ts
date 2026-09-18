@@ -32,16 +32,19 @@ export function formatScore(score: number, dimension: LeaderboardDimension): str
     case 'ACTIVE_DAYS':
       return `${score} ${score === 1 ? 'day' : 'days'}`
 
-    // Signed on purpose: a negative delta is the meaningful case ("you slipped"), so it must
-    // not be printed as a bare magnitude. `down` carries the direction and the duration
-    // carries the magnitude, reading as "2h down".
+    // Signed in both directions, and neither mark for zero: a zero delta has no direction, so
+    // `+0s` would claim an increase that did not happen. `down` carries the magnitude in words
+    // while `+` carried it in a glyph, which asked the reader to compare two different notations
+    // for one axis — a word against a symbol — so both directions now use the same one.
     //
-    // An arrow (`↓ 2h`) was considered and rejected: the text is locale-translatable like the
-    // rest of the readout, whereas a glyph would have to be translated as furniture, and at
-    // this size the arrow's baseline sits differently per font. Either way the direction is
-    // carried by the words, never by colour.
-    case 'GROWTH':
-      return `${score > 0 ? '+' : ''}${formatDuration(Math.abs(score))}${score < 0 ? ' down' : ''}`
+    // A minus sign (U+2212) rather than a hyphen: it is the character that pairs with `+` at the
+    // same width, which is what a column of tabular figures wants. Like the `+`, it needs no
+    // translation — which is the reason the arrow was rejected, and it does not apply here.
+    case 'GROWTH': {
+      const magnitude = formatDuration(Math.abs(score))
+      if (score === 0) return magnitude
+      return `${score > 0 ? '+' : '−'}${magnitude}`
+    }
 
     // Merged seconds, one branch per source. LANGUAGE is a single language's merged time,
     // in seconds like the rest — the unit does not change because the board is partitioned.

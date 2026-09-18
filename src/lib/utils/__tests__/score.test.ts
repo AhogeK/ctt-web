@@ -30,8 +30,12 @@ describe('formatScore', () => {
   it('marks the sign of a GROWTH delta, because direction is the fact', () => {
     // GROWTH is `thisWeek - lastWeek` in seconds: a negative score means the reader
     // slipped. Printing the bare magnitude would report a decline as an improvement.
+    //
+    // Both directions use a sign so the pair reads as one axis — a word on one side and a glyph
+    // on the other made the reader compare two notations. U+2212, not a hyphen: it is the
+    // character that pairs with `+` at the same width in a column of tabular figures.
     expect(formatScore(5400, 'GROWTH')).toBe('+1h 30m')
-    expect(formatScore(-5400, 'GROWTH')).toBe('1h 30m down')
+    expect(formatScore(-5400, 'GROWTH')).toBe('−1h 30m')
     // Neither mark: `+0s` would read as an increase, which is the ambiguity the sign
     // exists to remove in the first place.
     expect(formatScore(0, 'GROWTH')).toBe('0s')
