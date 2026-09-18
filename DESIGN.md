@@ -350,6 +350,11 @@ The color system is almost entirely achromatic — dark backgrounds with white/g
 - Pill tags have 10px horizontal padding for touch accessibility
 - Icon buttons at 50% radius ensure circular, easy-to-tap targets
 - Search trigger is prominently placed with generous hit area
+- **Minimum target: 44×44 CSS px for anything clickable** — icon buttons, nav links, table row
+  actions, toggle switches. Basis: Apple HIG (44pt), Material (48dp); WCAG 2.5.8's 24px is the
+  absolute floor, not the goal. Qualitative guidance above does not override this number.
+- Hover-driven styles must be wrapped in `@media (hover: hover)` so a touch device cannot retain a
+  hover state after a tap (cross-cutting rule: `memory-bank/systemPatterns.md`).
 
 ### Collapsing Strategy
 
