@@ -57,3 +57,7 @@ src/__tests__/*.js
 
 # Skills lock cache (regenerable)
 skills-lock.fast-update-cache.json
+
+# Obsidian's per-vault configuration, written the moment a reader opens a note here. It is
+# editor state, not content: committing it would put a plugin bundle under lint and review.
+.plans/.obsidian/
