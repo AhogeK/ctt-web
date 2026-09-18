@@ -88,3 +88,22 @@ Launch pattern used throughout this project:
 | [`dashboard-visualization`](../dashboard-visualization/meta.md) | Charting, colour, layout, panel interaction |
 | [`backend-contract`](../backend-contract/meta.md)         | ctt-server consumption and semantics        |
 | [`ai-workflow`](./meta.md)                                | This domain — how the agent works here      |
+
+## Which files are AI content
+
+Decides the cherry-pick set for `master` (R6.5). Getting this wrong is how a document ends up on a
+branch it was deliberately kept off.
+
+| Path | AI content? | Evidence |
+| --- | --- | --- |
+| `memory-bank/**` | **Yes** | Agent memory, governed by R24 |
+| `AGENTS.md` | **Yes** | Agent rules, AI-maintained |
+| `.plans/**` | **Yes** | Working plans — develop only, by the user's instruction |
+| `DESIGN.md` | **Yes** | Design-system spec maintained by the agent. **Has never existed on `master`** — `git log master -- DESIGN.md` is empty, while develop carries it from `c2f5711`/`37a23ec`. Do not "fix" this. |
+| `src/**`, `e2e/**` | No | Shipped code |
+| `package.json` | No | Version/dependency manifest |
+| `README.md`, `docs/**` | No | User-facing project documentation |
+
+Consequence: a change to `DESIGN.md` rides in an AI commit and **is not cherry-picked**. A patch
+that only adds lines to `DESIGN.md` cannot be cherry-picked onto `master` at all — the file is
+absent there, so the patch conflicts on its context (observed 2026-09-19).

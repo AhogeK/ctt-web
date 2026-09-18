@@ -56,6 +56,9 @@
 - **累计更新**：不用刻意提交每次中途更新，可只提交最后的版本描述跳过中途
 - **分支顺序**：优先完成 develop 全部提交再考虑 master
 - **AI独立**：AI相关内容（memory-bank等）单独提交，不与代码混在一起
+- **AI 内容清单（禁止 cherry-pick 进 master）**：`memory-bank/` · `AGENTS.md` · `.plans/` · **`DESIGN.md`**
+  非 AI（应进 master）：`src/` · `e2e/` · `package.json` · `README.md` · `docs/`
+  ⚠️ **`DESIGN.md` 从未出现在 master 上，这是刻意为之** —— 不得以"它是设计规范所以 master 的代码也该看"为理由把它推进 master（2026-09-19 的一次错误分类即为此）
 - **提交拆分**：原子性一致可合并，不过分拆分刷提交，不过于宽泛堆积大量文件
 - **master合并**：非AI内容单独cherry-pick进master，严禁整条分支合并（导致AI污染），严禁错误cherry-pick旧develop导致污染
 
