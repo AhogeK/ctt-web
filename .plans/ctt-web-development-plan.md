@@ -882,6 +882,11 @@ Web 端设备管理只做**展示与吊销**，不做设备注册入口——设
 - `src/lib/utils/time.ts` — 公共相对 / 绝对时间格式化（v0.18.0）
 
 ### 第五阶段：排行榜 ✅ 已完成（规划 v1，2026-08-31；契约基准已随 ctt-server 推进）
+
+> ⚠️ **本节下方的 L1–L5 实现说明是 v1 原稿**（写于 2026-08-31，基于 `useInfiniteQuery` 的**累加**模型）。
+> **实际交付与它有多处偏差**：分页改为**显式 offset（每页 20 行，切页替换而非累加）**、
+> composable 名为 `useLeaderboard`（非 `useLeaderboardInfinite`）、维度由 5 个增至 **7 个**、
+> L4 虚拟滚动**判定不适用**。**以本节末尾的交付清单与风险表为准**，原稿仅作历史留存。
 > **后端契约基准（ctt-server S2+S3 已交付）：** 单端点 `GET /api/v1/leaderboard?dimension=&period=&limit=&offset=`，JWT 认证（60 req/min）。响应 = `entries[]`（userId / displayName / score 秒 / rank）+ `currentUserRank`（未上榜为 null）。**竞赛排名**：并列分数共享同一 rank（下一名跳号）。**维度×周期合法组合后端强校验**（非法 → 400 COMMON_003）：TOTAL×\{ALL, WEEK, MONTH, YEAR\} ｜ STREAK / NIGHT_OWL / EARLY_BIRD×ALL ｜ GROWTH×WEEK。分页 limit ≤100（默认 50）、offset 从 0。score 均为秒（TOTAL 合并重叠时长 / STREAK 最长连续天数 / NIGHT_OWL UTC 22:00–05:00 窗口 / EARLY_BIRD UTC 06:00–09:00 窗口 / GROWTH 本周−上周净增长秒）。push 后即时重算，无长缓存需求。
 > **基于后端实情的计划修正：**
 > - “Tab 切换本周/本月/总榜” — 原稿以周期为一级维度；实际排行有 **5 个维度 × 周期合法矩阵**，改为**维度 Tab（一级）+ 周期选择器（二级，仅 TOTAL 显示）**：STREAK / NIGHT_OWL / EARLY_BIRD 固定 ALL，GROWTH 固定 WEEK，UI 隐藏周期控件并标注固定值，从源头杜绝 400
@@ -918,10 +923,15 @@ Web 端设备管理只做**展示与吊销**，不做设备注册入口——设
 1. 自己的行高亮正确（含并列 rank 场景）
 2. rank 在首页内直接滚动定位；rank 在第 N 页按需拉取后定位；未上榜不显示按钮
 
-#### L4：虚拟滚动 ⬜ 未做
-**目标：** 长榜单流畅渲染。
-- `@tanstack/vue-virtual`：已加载行数 \>100（≥2 页）时开启虚拟化，固定行高；虚拟列表下高亮 / 滚动定位 / 分页加载均正常工作
-**验收标准：** 超长榜单滚动流畅；跳转到我的排名在虚拟模式下正确定位
+#### L4：虚拟滚动 — 不适用（方案已变更）
+**原目标：** 长榜单流畅渲染（`@tanstack/vue-virtual`，已加载行数 >100 即 ≥2 页时开启虚拟化）。
+
+**判定为不适用**，理由三条：
+1. **触发条件不可达**：本项目在 L3 采用的是**显式 offset 分页**（每页 `LEADERBOARD_PAGE_SIZE = 20`，切页是替换而非累加），"已加载 >100 行"的前提**在构造上永远为假**。
+2. **依赖会变成冗余**：为一段不可达分支引入 `@tanstack/vue-virtual`，直接撞 R12 红线「禁止冗余依赖」。（注意这不是"规则禁止加依赖"—— R12 是授权制；不加是因为**这个依赖在此架构下没有服务对象**。）
+3. **诉求已由结构解决**：一页 20 行（20 个 `<li>`）的渲染量不构成瓶颈，长榜单的流畅性来自分页模型本身。
+
+**复活条件：** 若将来改为**累积式无限滚动**（连续下滚、行数随滚动增长），本项应立即重新评估 —— 那时它才有真实服务对象。
 
 #### L5：测试覆盖 ✅ 已完成
 **目标：** 对齐项目测试模式（Vitest + @vue/test-utils + Playwright `page.route()`）。
@@ -932,17 +942,17 @@ Web 端设备管理只做**展示与吊销**，不做设备注册入口——设
 #### 排行榜交付清单
 | 子任务 | 核心产出 | 状态 |
 |---|---|---|
-| L1：API 契约层 | `lib/schemas/leaderboard.schema.ts`（含维度×周期合法矩阵） • `lib/api/leaderboard.ts` • `useLeaderboardInfinite`（offset 分页 + staleTime 60s） | 待开始 |
-| L2：LeaderboardView 框架 | 维度 Tab（5 个）+ 周期选择器（仅 TOTAL）+ URL SearchParams 同步 | 待开始 |
-| L3：我的排名 | 行高亮（userId 匹配）+ 跳转到我的排名（按需分页拉取 + 竞赛排名并列兼容） | 待开始 |
-| L4：虚拟滚动 | `@tanstack/vue-virtual`（\>100 行开启，固定行高） | 待开始 |
-| L5：测试覆盖 | Unit + Component + E2E（对齐项目测试模式） | 待开始 |
+| L1：API 契约层 | `lib/schemas/leaderboard.schema.ts`（含维度×周期合法矩阵） • `lib/api/leaderboard.ts` • **`useLeaderboard`**（显式 offset 分页，**非** `useInfiniteQuery`；staleTime 30s） | ✅ 已完成（实现有偏差） |
+| L2：LeaderboardView 框架 | 维度 Tab **7 个**（规划为 5，后增 ACTIVE_DAYS 与 LANGUAGE）+ 周期选择器覆盖所有会重置的维度 + URL SearchParams 同步 + 语言分区选择器 | ✅ 已完成（超出规划） |
+| L3：我的排名 | 行高亮（**按 `userId`**，兼容并列同 rank）+ 「Find me」跳转（**一次切到目标页偏移**，非逐页累加） | ✅ 已完成 |
+| L4：虚拟滚动 | `@tanstack/vue-virtual`（>100 行开启） | **不适用**（方案已变更，前提不存在） |
+| L5：测试覆盖 | Unit + Component + E2E（`e2e/leaderboard/` 27 用例） | ✅ 已完成 |
 #### 风险与开放问题
 | 项 | 风险 | 缓解措施 |
 |---|---|---|
-| 维度×周期矩阵 | 后端强校验非法组合（400 COMMON_003），原稿“本周/本月/总榜”单维 Tab 无法覆盖 5 维度 | 前端矩阵常量守卫 + UI 隐藏非法组合（L1/L2），后端校验仅作兜底 |
-| 分页上限 100/页 | 后端单页最多 100 条，无全量接口 | useInfiniteQuery offset 累加分页 + 虚拟滚动；跳转排名按需补拉目标页 |
-| 竞赛排名并列 | 同 rank 多行，rank 无法唯一定位行 | 跳转按 userId 精确匹配（L3）；高亮同样按 userId 而非 rank |
+| 维度×周期矩阵 | 后端强校验非法组合（400 `COMMON_003`）；原稿「本周/本月/总榜」单维 Tab 覆盖不了 7 个维度 | ✅ **已落实**：前端矩阵常量守卫 + UI 只显示该维度的合法周期，后端校验仅作兜底 |
+| 分页上限 100/页 | 后端单页最多 100 条，无全量接口；前端每页取 **20** 条（`LEADERBOARD_PAGE_SIZE`），且**切页替换而非累加** | ✅ **已落实（按实际模型）**：显式 offset 分页（上一页/下一页）；「跳转到我的排名」一次切到目标页偏移，不逐页补拉 —— 因行数不累加，虚拟滚动不适用（见 L4） |
+| 竞赛排名并列 | 同 `rank` 多行，`rank` 无法唯一定位到行 | ✅ **已落实**：跳转与高亮**均按 `userId`** 精确匹配（L3 已交付，含并列场景的测试） |
 
 ### 第六阶段：个人设置 ⬜ 未开始
 - [ ] 暗色/亮色主题切换（持久化，`useThemeStore` 已就绪）
@@ -1189,6 +1199,272 @@ Web 端设备管理只做**展示与吊销**，不做设备注册入口——设
 - ctt-server v0.36.0 – v0.40.1 — 后端 API Key 模块交付记录
 
 ---
+## 🏠 第八阶段：产品首页（落地页）
+
+### 定位与边界
+
+现状：`/` 直接 `redirect: { name: LOGIN }`（`src/router/modules/auth.ts:9`）—— **未登录访客被推进登录页**，没有任何"这是什么"的门面。本阶段补上门面。
+
+**为什么算架构级**：它改变**应用入口**，并触及路由结构 + 守卫 + 新增一个公开层（第三个 Layout）。
+
+**本阶段明确不交付**：
+- 任何认证流程改动（登录/注册/守卫对**受保护路由**的行为一字不动）
+- 真实定价数据（业务未定；本阶段只交付**承载结构**）
+- i18n（首页文案随项目现状保持英文硬编码，与其余模块一致）
+- 后端改动（本阶段零接口依赖；定价将来若需服务端，另立需求）
+
+### 三项已定决策
+
+| 决策 | 取值 | 理由 |
+|---|---|---|
+| **入口策略** | `/` **始终**呈现首页；已登录时顶栏 CTA 由「免费开始」换成「打开控制台 →」 | 这页同时承担**产品门面 / 作品集 / 开源入口**三重身份，不该因为"自己登录着"就打不开。代价是登录用户多点一次，可接受 |
+| **定价区** | **结构就位 + 数据驱动**；免费档如实呈现，付费档标注"设计中" | 付费方案尚未设计，**绝不编造数字**（那是替用户决定业务）。将来改数据即可，无需重做页面 |
+| **视觉方向** | **继承产品自身语言**（以暗色为基调） | `DESIGN.md` 原文把 `#08090a` 定义为 *"the canvas for hero sections and marketing pages"* —— 营销画布是这套系统**本来就预留的**，不是折中 |
+| **✅ 已决：首次呈现用深色，且明暗双模式并存** | **默认深色**；亮色作为可选模式（ctt 已有 auto/dark/light 三档，无需新建） | **拍板依据（三路同向）**：**(a) ctt 自身** —— `DESIGN.md` 暗色提及 27 处、亮色仅一节；源码 **358 个 `dark:` 变体**，实态即 dark-first；**(b) 同类先例** —— Linear `服务端 HTML 直接输出 <html data-theme="dark">`、Supabase / Raycast 亦然（**开发工具类默认深色**）；**(c) 观感证据** —— 设计水准高的三站全是深色（亮度 9 / 18 / 8），而唯一的浅色同类 WakaTime 被判定设计最弱 ✗（同类性≠质量 ✗）。**采纳 Self-hosted 结论的边界**：转化研究说浅色利于阅读 ✓ —— 故正文与 CTA 区必须保证**对比度**，而非推翻深色基调 ✓ |
+### 视觉基准（全部取自 `DESIGN.md`，**新增令牌 = 0** 为硬指标）
+
+| 用途 | 取值 |
+|---|---|
+| 画布（hero 与营销） | `#08090a` —— 设计系统明确指定给营销页 |
+| 面板 / 抬升面 | `#0f1011` / `#191a1b` / `#28282c` |
+| 唯一强调色 | `#5e6ad2`（CTA 底）/ `#7170ff`（链接、活态）/ `#828fff`（hover） |
+| 文字阶梯 | `#f7f8f8` / `#d0d6e0` / `#8a8f98` / `#62666d` |
+| 分隔 | `rgba(255,255,255,0.05–0.08)` 发丝线 |
+
+**两条纪律**：① **靠明度分层，不靠颜色分层** —— 全系统只有一个彩色，首页引入第二种即品牌散架；② 任何新值都必须能从 `DESIGN.md` 推导 —— 需要新灰阶就**回去问系统**，不就地发明。
+
+### 入口与路由（架构影响）
+
+```mermaid
+flowchart LR
+ accTitle: 入口策略变更
+ accDescr: 现状是根路径重定向到登录页；改后根路径始终呈现首页，已登录时替换 CTA。受保护路由的守卫行为不变。
+
+ before["现状 / → redirect LOGIN"]
+ after["改后 / → 首页（公开）"]
+ cta{"已登录?"}
+ act_a["CTA: 免费开始"]
+ act_b["CTA: 打开控制台"]
+ guard["guard: 未登录 → LOGIN?redirect="]
+
+ before --> after
+ after --> cta
+ cta -->|否| act_a
+ cta -->|是| act_b
+ after -.->|"受保护路由不变"| guard
+
+ classDef old fill:#ffe4e6,stroke:#e11d48,color:#881337
+ classDef new fill:#dcfce7,stroke:#16a34a,color:#14532d
+ classDef keep fill:#f1f5f9,stroke:#64748b,color:#334155
+ class before old
+ class after,act_a,act_b new
+ class guard,cta keep
+```
+
+---
+### P1：入口与路由骨架
+
+**目标：** `/` 从「重定向到登录」变为「公开首页」，且**受保护路由的守卫行为完全不变**。
+
+- [ ] 新增 `src/layouts/MarketingLayout.vue`：公开层外壳（顶栏 + 内容 + 页脚），**不引入** AppLayout 的侧边栏与用户菜单
+- [ ] 新增路由 `RouteNames.LANDING`，`/` 指向 `features/landing/views/LandingView.vue`（懒加载，与既有 feature 一致）
+- [ ] 移除 `src/router/modules/auth.ts` 的 `redirect: { name: ROUTE names.LOGIN }`；`/auth/*` 子路由不动
+- [ ] 守卫：`/` 加入**公开白名单**（`requiresAuth: false`），并确认 guest-guard **不**把已登录用户从 `/` 弹走
+- [ ] **核实死代码**：`src/views/HomeView.vue`、`src/views/AboutView.vue` 是否被任何路由/组件引用；无用则**删除**（发现即修，不留悬空文件）
+- [ ] 顶栏 CTA 随登录态切换文案与目标（未登录 → `/auth/register`；已登录 → `/dashboard`）
+
+**验收标准：**
+1. 未登录访问 `/` 呈现首页；访问 `/dashboard` 仍跳 `/auth/login?redirect=/dashboard`（**既有 E2E `protected-routes.spec.ts` 必须继续全绿**）
+2. 已登录访问 `/` 仍呈现首页（**不被 guest-guard 弹出**），CTA 指向 `/dashboard`
+3. `/` 的 chunk 独立（懒加载），不把首页代码并进应用主包
+
+---
+### P2：视觉基元与版面节奏
+
+**目标：** 把"继承产品语言"落成可复用的基元，使后续区块**不需要各自发明样式**。
+
+- [ ] 区块容器与纵向节奏：统一的 section 包裹（最大宽度、左右留白、上下间距阶梯）
+- [ ] 标题层级：与 `DESIGN.md` 阶梯对齐（不新造字号）。**参照实测（5 站）**：H1 **64px 出现 4/5**（Supabase 46px 例外）；**字重 500–600** 为主（不是 800 —— 那是 Plausible 一家 ✗）；**行高贴紧 1.0–1.1**（不是 1.5 ✗）；**负字距只有 Linear 用**（`-1.408px`）✓ 属其特色，**非普遍规律** ✗
+- [ ] **令牌体系（读其 CSS 本体得出 —— 这是设计系统真身）**
+  - **Raycast = 三层令牌结构（最值得照搬）** ✓✓：基础层 `grey-50=#e6e6e6` → 语义层 `color-bg=var(--grey-900)` → 组件层 `navbar-*`/`chat-*`
+  - **Spacing/Rounding 用编号制** ✓✓：`spacing-none=0` / `spacing-0-5=4px` / `spacing-1=8px`；`rounding-xs=4px` / `rounding-sm=6px` → **数字即倍数，不自造语义名**
+  - **Supabase 用 Tailwind v4 `@theme` + oklch 色彩空间** ✓：`color-emerald-50=oklch(97.9% .021 166.113)`；并有**语义化图表令牌** `chart-1=var(--color-brand-800)`（直接对应 ctt 的图表色板需求）
+  - **Linear 有 12 栅格与页面内边距体系** ✓：`grid-columns=12` / `grid-gap=32px` / `offset=var(--page-padding-right)`
+  - **字体选择（开发工具类）** ✓：Raycast = 正文 `Inter` + 代码 `JetBrains Mono`/`Geist Mono` → ctt 作为开发者工具**需要等宽字体令牌**
+- [ ] **组件内部实现（读其 CSS 状态选择器与 JS 键盘逻辑得出）**
+  - **状态用属性表达** ✓✓：Supabase 有 **153 条 `[data-state=]` 条件规则**；`[data-side]`/`[data-align]`/`[data-orientation]` 为组件定位与朝向状态
+  - **`@media (hover: hover)`（本计划此前完全遗漏）** ✓✓✓：Supabase **20 处**、Raycast **7 处** → **触摸设备不得触发悬停态**
+  - **`:focus-visible` 与 `:focus` 分开治理** ✓：Supabase 72 / 126 处
+  - **`inert` 作焦点陷阱** ✓：Linear JS 中确认存在（优于手写 aria-hidden）
+  - **键盘逻辑必备** ✓：三站 JS 均含 `Escape` / `ArrowUp` / `ArrowDown` / `keydown` / `tabindex`
+  - **`data-platform` 差异化** ✓：Raycast 12 处（macOS/Windows 分支）→ ctt 有插件端跨平台，同需
+  - **营销页与应用分离** ✓：Cal.com 落地页仅 **24KB JS** vs Supabase **958KB** → ctt 落地页应独立轻量
+- [ ] **主题落地实现（读其实例 HTML 得出 —— 决定性）**
+  - **`next-themes` 是本领域的既成标准** ✓✓：Linear 与 Supabase 使用**同一份最小化脚本**
+  - **零闪烁做法** ✓✓✓：`<html data-theme="dark">` **直接由服务端输出**（Linear 实证）——默认主题在 JS 运行前即已生效
+  - **三层优先级** ✓：`localStorage` > `prefers-color-scheme`（`system` 为第三档，Supabase 实证）
+  - **`style.colorScheme` 必须同步** ✓✓：脚本显式设置它，使**原生滚动条与表单控件**随主题变化
+  - **单主题也是合法选择** ✓：Raycast（深）与 Plausible（浅）均无主题脚本
+- [ ] **移动端范围（用户 2026-09-19 澄清：移动端在范围内，技术上必须完整响应式）**
+  - **口径** ✓：**落地页必须完整响应式**；既有页面（统计 / 排行 / 设置）本阶段**一律不触碰** ✗（用户尚未自测移动端，留到最后统一验证）
+  - **断点照 `DESIGN.md` §8** ✓（已存在，不另立）：`<600` Mobile Small（单列紧凑）· `600–640` Mobile · `640–768` Tablet（进入两列）· `768–1024` Desktop Small（完整卡片网格）· `1024–1280` Desktop（完整导航）· `>1280` Large Desktop
+    → 与 Tailwind 默认的映射：`600→sm 之前` · `640→sm` · `768→md` · `1024→lg` · `1280→xl` ✓ **不引入自造断点**
+  - **`@media (hover: hover)`（确证缺口，移动端专属）** ✓✓：`src/` 全量扫描 **0 处**；对照 Supabase 20 / Raycast 7；仓库内已有受害实例 `ThemeToggle.vue:83` → **触摸设备上悬停态会粘连**
+  - **触摸目标数值化（`DESIGN.md` 缺口）** ✓：其 `Touch Targets` 节为**定性描述** ✗（"comfortable"/"adequate" 无数值；文中 4 处 "44" 均为色值 ✗）→ **补规则**：**可点区域最小 44×44 CSS px**（依据：Apple HIG 44pt · Material 48dp · WCAG 2.5.8 下限 24px）—— **这是新增规范，需你确认后写入 `DESIGN.md`**
+  - **`motion-reduce:` 变体**（`prefers-reduced-motion` 的 Tailwind 写法）✓✓：Supabase 手风琴实证 `motion-reduce:transition-none` / `motion-reduce:duration-0` / `motion-reduce:animate-none`；ctt 现有 3 处 `prefers-reduced-motion` 但**非变体形式** → 统一改为变体
+  - **移动端导航** ✓：`{ open, setOpen }` 状态 hook + Sheet（Dialog 语义：焦点陷阱 + 滚动锁定 + Esc 关闭）；粘性导航的 `top-[Npx]` 偏移量**须取实际 header 高度**（Supabase 用 `top-[65px]` 对应其 header ✓，**不可硬抄数值** ✗）
+  - **栅格** ✓：Linear 实证 `grid-columns=12` / `grid-gap=32px` → 宽屏 12 栅格；断点收敛为单列（<640）/ 两列（640–1024）/ 多列（>1024）
+
+- [ ] **组件交互规格（读 Supabase 开源组件源码得出 —— `apps/www` + `apps/ui-library` + `packages/ui`）**
+  1. **粘性导航** ✓（`apps/www/components/SolutionsStickyNav.tsx` 实证）：`sticky z-30` + **`top-[65px]`**（吸在主 header 之下，不是 top-0）+ **`bg-background/90` + `backdrop-blur-xs`**（半透明毛玻璃）+ `border-b`；外层 `pointer-events-none`、内层 `pointer-events-auto`（绝对定位包裹层不得挡点击）
+  2. **下拉菜单** ✓：状态由 hook 承载（`useState` + `onOpenChange`），菜单项数据与状态分离（`useDropdownMenu.tsx` 实为菜单项数据源，非状态机）；交互态用 `data-state`；键盘 `Escape` / `ArrowUp` / `ArrowDown`
+  3. **移动端菜单** ✓（`use-mobile-menu.ts` 仅 35 行）：**状态抽成 `{ open, setOpen }` hook**，渲染交给 `Sheet`（Dialog 语义：焦点陷阱 + 滚动锁定 + `aria-modal`）
+  4. **FAQ 手风琴** ✓✓（**已核实**：`packages/ui/src/components/shadcn/ui/accordion.tsx`，89 行，基于 `radix-ui` 原语）
+     - **状态驱动**：一切走 `data-state` —— 触发图标用 **`[&[data-state=open]>svg]:rotate-180`** 属性选择器旋转 180°（不需要额外 JS）
+     - **开合动画**：内容用 **`data-[state=closed]:animate-accordion-up` / `data-[state=open]:animate-accordion-down`** keyframe 工具类 + `overflow-hidden`
+       —— ⚠️ **纠正**：此前我写"由 `--radix-accordion-content-height` 变量驱动" ✗ **不准确**：该变量是 Radix 内部实现细节，**组件层用的是 keyframe 工具类**
+     - **时长 200ms**：`duration-200`（`transition-transform`）→ **与本计划「过渡 ≤0.2s」基线精确吻合** ✓（交叉印证）
+     - **无障碍**：**`motion-reduce:` 变体全量覆盖** —— `motion-reduce:transition-none` + `motion-reduce:duration-0` + `motion-reduce:animate-none`
+       → **这就是 `prefers-reduced-motion` 的 Tailwind 写法，ctt 可直接照用** ✓✓
+  5. **定价卡片** ✓（`apps/www/components/Pricing`）：结构为主，代码无特殊机制 —— **不构成独立规格**（如实标注）
+  6. **主题切换** ✓（`theme-switcher-dropdown.tsx` + `use-mounted.ts`）：`useTheme` + **`mounted` 卫兵**（`useState(false)` → `useEffect` 置真，**服务端不知客户端主题，未挂载前不渲染，避免闪烁**）+ `resolvedTheme`（system 解析为实际值）+ `aria-label`。
+     **对 ctt 的增量**：ctt 已有三档主题与 `.dark` 同步 ✓，**但未使用 mounted 卫兵** → 落地页若首屏渲染主题图标，需补该卫兵，否则图标会在水合时跳变
+- [ ] **ctt 现状回源（2026-09-19 实测，`src/` 全量扫描）**
+  - 已具备能力 ✓：`@vueuse/core`（含 `useColorMode` = next-themes 的 Vue 等价物）· `reka-ui`（Radix 的 Vue 版，**原生输出 `data-state` 系属性**）· `tailwindcss 4`（`@theme` 令牌）· `tailwind-merge`
+  - **主题实现已达标，无需改动** ✓✓（`src/stores/theme.ts` 57 行 + `ThemeToggle.vue` 94 行 + 单测）：
+    三档模式 `'light' | 'dark' | 'auto'` ✓（**与 Supabase 的 light/dark/system 同构**）· 基于 VueUse `useDark`（含 `matchMedia('(prefers-color-scheme: dark)')` 系统探测与 localStorage 同步）· DOM 以 `.dark` class 驱动 Tailwind `dark:` 前缀 ✓
+  - **确证缺口仅一项** ✗：`@media (hover: hover)` **0 处**（对照 Supabase 20 / Raycast 7）
+    仓库内已有受影响实例：`ThemeToggle.vue:83` 的 `.theme-toggle:hover` → **触摸设备上悬停态会粘连**
+  - **`data-state` 仅 6 处**（Supabase 153 条规则）：reka-ui **原生输出** `data-state`/`data-side`/`data-orientation` → 属**未用满**而非缺失；落地页若用 reka-ui 组件，状态样式应写 `data-[state=open]:` 形式
+  - **首次呈现 = 深色（据此拍板）** ✓✓：`DESIGN.md` 暗色提及 27 处、亮色仅一节；源码 **358 个 `dark:` 变体** → 代码库实态即 dark-first；且同类开发工具（Linear / Supabase / Raycast）**服务端 HTML 默认深色**（Linear 实证 `<html data-theme="dark">`）
+
+- [ ] **UI 逻辑指纹（读其 JS bundle 得出，CSS/JS 双向印证）** ✓✓
+  - **明暗双模式是三站标配** ✓✓✓：三站 JS 均含 **`prefers-color-scheme` + `matchMedia`** → 结论**不是"选暗或选浅"，而是"两者都支持、只定首次呈现"** —— **此结论取代原待决项"暗色 vs 混合"** ✓
+  - **默认呈现倾向** ✓：Linear / Supabase / Raycast（开发工具）**默认深色**；WakaTime / Cal.com 默认浅色 → ctt 属开发工具类，**默认深色有同类先例** ✓
+  - **滚动动效再次被否证** ✓✓：**只有 Supabase 含 `IntersectionObserver`**（与其 `animatedEls: 19` 精确对应 ✓）；Linear / Raycast 均无 → **CSS 与 JS 双向交叉验证**：不做滚动动画是默认
+  - **无障碍** ✓：三站均含 `prefers-reduced-motion` 检测惯例 → ctt 的动效必须全量覆盖
+- [ ] **视觉基线（实测三站代码得出，可直接照用）** —— 来源：Linear / Supabase / Raycast 的**计算样式与样式表**（非截图）
+  - **容器宽度 = `1200px`** ✓✓ 三站一致（Linear 22 次 / Supabase 26 次 / Raycast 11 次命中）；窄正文列另设 ~730–750px
+  - **间距基准 = 8px 网格** ✓✓（`rowGap` 命中：8px 分别 44 / 50 / 26 次）；最小间隔用 4px，区块间距用 40px
+  - **圆角 = 8px 主级** ✓✓（三站最高频：22 / 67 / 89 次）+ 胶囊 `9999px`/`50%` 仅用于徽章与头像
+  - **交互过渡 = 0.15–0.2s** ✓（Linear 0.16s / Supabase 0.15s / Raycast 0.2s）；且**绝大多数元素 `transitionDuration: 0s`**（1142 / 1145 / 1092 个）→ 再次印证"默认不动效"
+  - **大标题负字距随字号缩放** ✓✓ Linear 实测 `h1 -1.408px @64px`、`h2 -0.88px @40px` → **恰好都是字号 × −0.022em**（64×0.022=1.408 ✓ 40×0.022=0.88 ✓）；这是**可推导的规则**，不是抄一个数
+  - **字重 500–600 为上限** ✓✓ 三站 h1 分别 510 / 500 / 600，**均未超 600**
+  - **响应式断点用框架默认** ✓✓ Linear 为 640 / 768 / 1024 / 1280（= Tailwind 默认）→ **不自造断点**
+  - **令牌按语义分类编号** ✓ Raycast 的命名结构最规范：`color-*`(27) / `spacing-*`(17) / `rounding-*`(9) / `font-*`(7) / `container-*`(4) → 组织方式可借
+  - **粘性定位慎用** ✓ 三站 `position: sticky` 计数为 0 / 1 / 0
+
+- [ ] 表面与分隔：卡片面取自 `#0f1011`/`#191a1b`，分隔用发丝线 `rgba(255,255,255,0.05–0.08)`
+- [ ] 主/次按钮：直接复用 `components/ui/button`（`default` = 品牌靛蓝，`outline` = 次按钮），**不新建按钮样式**
+- [ ] 动效：**默认不做滚动动画** —— 实测 5 站中 3 站 `animatedEls = 0`（Linear / WakaTime / Cal.com），唯一较多的是 Supabase（19）✓，属**风格选择**而非必要条件 ✗。仅保留既有 hover/焦点过渡；若最终加入任何动效，**必须全量覆盖 `prefers-reduced-motion`**（先例见排行榜跳转闪烁）
+- [ ] **令牌审计**：逐一列出首页用到的每个值，确认全部来自 `DESIGN.md`；若有例外，必须在本计划里写明来源
+
+**验收标准：**
+1. 首页**未新增任何设计令牌**（`DESIGN.md` 是唯一来源）；若新增，计划里有出处说明
+2. 亮/暗两种模式下都成立 —— 首页虽是暗色优先，但**不假设用户一定在暗色**（`DESIGN.md` 有 Light Mode 中性色一节）
+3. `prefers-reduced-motion: reduce` 下无位移/缩放动效
+
+---
+### P3：Hero 与「真实产品」价值演示
+
+**目标：** 首屏 3 秒内说清"这是什么、我能用"，并且**用产品自己作证**而非抽象插画。
+
+- [ ] **评估定位手法**：Plausible 的 H1 是「Easy to use and privacy-friendly **Google Analytics alternative**」—— 直接**点名它替代谁**。ctt 是否采用对比式定位**属于产品/市场决策**，故本项仅列为**待决项**，不擅自定文案
+- [ ] Hero：一句话定位（平实陈述，**不用营销腔**）+ 副文案 + 主 CTA「免费开始」+ 次 CTA「看源码 · 自部署」（另评估「安装 JetBrains 插件」作为并列低摩擦入口 —— 开发者工具最常见的低摩擦动作就是安装类动作）+ 视觉主体
+- [ ] **视觉主体用真实组件渲染**（热力图 / 7 维度榜单 / 奖杯柜），喂**代表性样例数据**，而不是截图或插画
+  - 参照证据（2026-09-18 实测 Plausible 首页 —— 与 ctt 同构：开源 + 自托管免费 + 云版付费）：首页视觉 **58 个 inline SVG / 10 个 img / 0 个 canvas**，**hero 内确有 >400×200 的大视觉**。即：同类产品的产品展示走的是**矢量/组件**而非位图 ✓
+- [ ] 价值演示区：2–3 个"你的一天会变成这样"的片段，每个一句话说明 + 一个真实组件
+  - **收紧到首屏之后立刻**：研究结论是 *"Stack Proof Early — do not wait until the bottom; add proof right under the main header"*。ctt 没有客户 logo 可用 ✗，**可用的证明就是产品本身**（真实组件渲染）+ 仓库 —— 因此这一段必须紧跟 hero，**不能被能力清单挤到后面** ✓
+- [ ] **每个视觉都配一行说明/收益点** —— 不让截图自己说话（外部研究的一致结论：开发者工具页最常见失手就是丢一张图不作解释）
+- [ ] 样例数据集中定义（单一来源），且**明确标注为示例**，不冒充真实用户数据
+
+**验收标准：**
+1. 首屏无需滚动即可看到：产品是什么 + 一个真实 UI 证据 + 主 CTA
+2. 首屏 LCP 元素为文本或内联 SVG，**不为图片**（无外部图片依赖）
+3. 组件在移动端不溢出；表格/榜单在窄屏改为堆叠而非横向滚动
+
+---
+### P4：能力清单 · 怎么工作 · 开源
+
+**目标：** 用**具体事实**建立可信度，并正面回答"我的数据去哪了"。
+
+- [ ] 能力清单：7 维度 × 合法周期 = **24 榜** / 67 徽章 **14 阶梯** / 多设备同步 / 设备与 API Key 管理
+  - **形状照抄参照物的做法**：Plausible 每条价值点都是「一句功能 + 一个**具体后果**」——「No training necessary」「Loads fast and won't affect your **Core Web Vitals**」「代码公开可审计」「**数据不出欧洲**」。ctt 对应写法示例："单文件同步、无中间层" / "数据存在**你自己的**服务端" / "JetBrains 插件采集，**不占用你的编辑器进程**"（示例只示范句式，最终文案在实施时定）
+- [ ] 「怎么工作」三步：插件采集 → 同步到你的服务端 → Web 看板（三步横向，窄屏纵向）
+- [ ] 数据归属声明：可自部署 / 数据在你自己那里
+- [ ] 开源区：仓库入口 + 最小部署命令（可复制）
+
+**验收标准：**
+1. 清单里每一条都能在代码或后端契约里对应上（不写产品做不到的事）
+2. 三步图在窄屏可读（不压缩成不可读的横排）
+
+---
+### P5：定价（数据驱动，不含真实数字）
+
+**目标：** 交付**承载结构**，使业务定档后只改数据、不改页面。
+
+- [ ] 定义档位类型与清单常量（单一数据源）：`id` / 名称 / 价格（可为"设计中"）/ 功能点 / CTA 文案与目标 / 是否推荐
+- [ ] `PricingTable` 渲染该清单，支持「免费」与「设计中」两种状态；**任何价格数字都必须来自数据**，模板里零硬编码
+- [ ] 明确写入注释：**真实档位与价格待业务确定**，此处仅为结构
+- [ ] 在计划中记录一条**对未来内容的约束**：定价最终**必须逐档写明**（免费/开源档、个人档、团队档），**不得以「联系销售」代替公开价格** —— 外部研究的一致结论是，对技术型买家隐藏价格会直接损害信任
+  - **三段式形状**（外部研究给同类开源工具的通行结构，供业务定档时参考）：
+    1. **自托管社区版（免费）** —— 源码自由下载自运行，用户的真实成本是服务器
+    2. **云托管免费档** —— 由官方托管，带**严格限额**（数据量 / 请求数 / 席位数），*"serve as a sales funnel"*（研究者原话：它本身就是转化入口）
+    3. **付费云 / 企业档** —— SSO、RBAC、审计日志、更高配额、优先支持、团队管理
+- [ ] 若将来需要服务端下发档位，单列需求（本阶段不建接口）
+
+**验收标准：**
+1. 改常量即改渲染 —— 单测以此断言（改数据后渲染跟随）
+2. 页面中不存在硬编码价格数字（可被搜索验证）
+3. 「设计中」状态有明确视觉表达，不误导为"已可购买"
+
+---
+### P6：测试 · 真机验证 · 文档
+
+**目标：** 首页作为公开入口，必须有与其它模块同级的测试与验证基线。
+
+- [ ] 单测：布局/路由骨架（CTA 随登录态切换）、定价数据驱动、各区块渲染不抛错
+- [ ] E2E（`e2e/landing/`）：未登录访问 `/` 呈现首页且**不被重定向**；已登录访问 `/` 呈现首页且 CTA 指向 `/dashboard`
+- [ ] **真机视觉验证**：独立 Chrome 打开 `/`，截图确认首屏、滚动各段、亮/暗两种模式、窄屏断点（不靠文本推断）
+- [ ] 更新 `README.md` 与 `docs/architecture.md`（入口策略变更属于架构事实）
+- [ ] 更新 `memory-bank/`（路由结构与入口策略变化进 `systemPatterns.md`）
+
+**验收标准：**
+1. `type-check` / `lint` / `build` 全绿；单测与 E2E 计入全量基线且无回归
+2. 真机截图覆盖：首屏、价值演示、能力、怎么工作、定价、开源、页脚
+3. `docs/architecture.md` 与 `README.md` 已反映新入口
+
+---
+### 交付清单
+
+| 子任务 | 核心产出 | 状态 |
+|---|---|---|
+| P1：入口与路由骨架 | `MarketingLayout` + `/` 公开路由 + 守卫白名单 + CTA 随登录态 + 死代码核实 | 待开始 |
+| P2：视觉基元与节奏 | 区块容器 / 标题阶梯 / 表面与分隔 / 复用按钮 / 动效（含 reduced-motion）/ 令牌审计 | 待开始 |
+| P3：Hero 与价值演示 | Hero + 真实组件渲染的样例展示 + 样例数据单一来源 | 待开始 |
+| P4：能力 · 怎么工作 · 开源 | 数字化能力清单 + 三步流程 + 数据归属声明 + 仓库与部署命令 | 待开始 |
+| P5：定价（数据驱动） | 档位类型 + 清单常量 + `PricingTable`（免费 / 设计中两态，零硬编码） | 待开始 |
+| P6：测试 · 真机 · 文档 | 单测 + E2E（`e2e/landing/`）+ 真机截图 + README/architecture/memory-bank | 待开始 |
+
+### 风险与开放问题
+
+| 项 | 风险 | 缓解措施 |
+|---|---|---|
+| 入口变更影响既有 E2E | `protected-routes` / `guest-guard` 依赖当前跳转行为 | P1 明确要求既有 E2E 继续全绿；先跑旧用例再改，改后立即复跑 |
+| 「继承产品语言」容易走样 | 实施时随手加新灰阶/新彩色 | P2 的**令牌审计**列为交付物；新增令牌必须在计划里写出处 |
+| 真实组件作视觉主体 | 组件带查询逻辑，直接嵌入首页会发请求 | P3 明确用**样例数据**驱动，组件需能在"无查询"下渲染（若做不到，抽取展示子组件，不复制实现） |
+| 定价结构先于业务 | 结构可能与最终档位不匹配 | 数据驱动 + 零硬编码：改清单即可，不动模板；「设计中」状态如实呈现 |
+| **视觉与文案脱节** | 丢一堆截图不加解释 —— 开发者工具落地页最常见的失手 | P3 把"每个视觉配一行说明"列为**交付物**（不是可选） |
+| 首页拖慢首屏 | 视觉密集 + 组件较多 | P3 要求 LCP 元素非图片；`/` 独立 chunk；P6 真机确认 |
+
+**整体验收标准：**
+- [ ] 未登录访问 `/` 呈现首页；受保护路由守卫行为**未变**（既有 E2E 全绿）
+- [ ] 已登录访问 `/` 仍呈现首页，CTA 指向 `/dashboard`
+- [ ] 首页**未新增设计令牌**（或新增有出处）
+- [ ] 定价区数据驱动、零硬编码数字
+- [ ] 单测 + E2E + 真机截图三处证据齐备
+- [ ] README / `docs/architecture.md` / `memory-bank` 已同步
+
 ## 📌 进度同步（2026-09-18 · v0.45.3）
 > 上一次页面同步停在 v0.15.2（2026-09-13 编辑），此后仓库推进到 **v0.45.3**。本节补齐这段缺口，并把仍未完成的事项列为新目标。
 > 事实来源：`memory-bank/progress.md` 与 `memory-bank/domains/`（均为仓库内可复核记录），后端契约均对照 `ctt-server` 源码核实。
