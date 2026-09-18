@@ -3,9 +3,9 @@
 ## Current Status
 
 **Phase**: 账号删除（Danger zone / 确认对话框 / 本地清态）+ Achievements + Leaderboard + Dashboard
-**Version**: 0.45.3 (2026-09-18)
+**Version**: 0.46.0 (2026-09-18)
 **Branch**: develop
-**Tests**: 1431/1431 unit; vue-tsc + lint 0 error 0 warning; build green; e2e **94/94** chromium（settings/delete-account 8 + leaderboard 切榜回归 1 为新增）
+**Tests**: 1431/1431 unit; vue-tsc + lint 0 error 0 warning; build green; e2e **97/97** chromium（settings/delete-account 8 + leaderboard 切榜回归 1 + 自身行/跳转 3 为新增）
 
 > 本文件只记「现在与最近」。**跨轮次可复用的判断在 [`domains/`](./domains/README.md)**（R24）：
 > `dashboard-visualization`（图表/配色/布局/交互）、`backend-contract`（接口契约与统计语义）、
