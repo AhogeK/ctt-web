@@ -85,9 +85,9 @@ within the 200-line limit.
 
 | | |
 | --- | --- |
-| Checked against source | This repo's `src/` **and rendered output** · last content change 2026-09-13 |
+| Checked against source | This repo's `src/` **and rendered output** · content last changed 2026-09-13 · **re-validated 2026-09-18** |
 | Coverage | Panel inventory and layout thresholds measured at the real widths; colour values and contrast read from the tokens and sampled from the render; ECharts traps reproduced |
-| Known drift | None known. This domain's source is our own code, so it drifts only when we change it — and a change to it is a change to this domain |
+| Known drift | None. This domain's source is our own code, so it drifts only when we change it. **Re-validated 2026-09-18 without re-measuring**, because nothing had changed to measure: `git log --since=2026-09-13 -- src/features/dashboard/` is empty, and the layout assertions that encode the thresholds still pass (93/93 e2e). The only commits touching `src/components/app/` in that window were the leaderboard's nav entry and a formatting fix, neither of which moves the sidebar's width — which is what the thresholds actually key on |
 
 Its facts are **rendered** facts, not declared ones: where this file and a stylesheet disagree, the
 render wins (R24 回源). Re-measure rather than re-read.
