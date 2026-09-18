@@ -25,11 +25,12 @@
  * The caller's own rank travels **inside** the same response, so this page is one
  * query — not the previous arrangement of a second request to a `/me` endpoint.
  */
-import { computed, ref, watch } from 'vue'
+import { computed, nextTick, ref, watch } from 'vue'
 import { AlertCircle, ArrowLeft, ArrowRight, RefreshCw, Trophy as TrophyIcon } from '@lucide/vue'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { Skeleton } from '@/components/ui/skeleton'
+import { useAuthStore } from '@/stores/auth'
 import { formatScore } from '@/lib/utils'
 import LanguageSelect from '../components/LanguageSelect.vue'
 import {
@@ -50,6 +51,15 @@ import {
 const dimension = ref<LeaderboardDimension>('TOTAL')
 const period = ref<LeaderboardPeriod>('ALL')
 const offset = ref(0)
+
+/**
+ * The signed-in account, for identifying which row is the reader's own.
+ *
+ * The store rather than the response: the endpoint identifies a row by `userId`, and the store is
+ * where the caller's own id lives — asking the server would mean a second request for something
+ * the client already holds.
+ */
+const authStore = useAuthStore()
 
 /**
  * The language board, for the dimension that is partitioned by one.
@@ -178,6 +188,80 @@ function rankDecoration(rank: number): string {
 }
 
 const isEmpty = computed(() => !isPending.value && !isError.value && entries.value.length === 0)
+
+/**
+ * The caller's own row, when it is on this page.
+ *
+ * Matched by `userId` rather than by `rank`: ties share a rank, so a rank would point at every
+ * row that happens to hold it — and the reader wants their own row, not the group. The same
+ * reason the row key is the id.
+ */
+const ownUserId = computed(() => authStore.userId)
+const ownRowIsHere = computed(() => entries.value.some((entry) => entry.userId === ownUserId.value))
+
+/**
+ * The page offset that contains the caller's rank, or `null` when they are not on this board.
+ *
+ * Expressed as a single offset rather than a walk through the pages in between: the model here is
+ * explicit Previous/Next paging, so the intervening pages would be fetched only to be discarded,
+ * and the reader would end up on a page number they never asked for. One offset, then a scroll.
+ */
+const offsetForOwnRank = computed<number | null>(() => {
+  if (currentUserRank.value === null) return null
+  return Math.floor((currentUserRank.value - 1) / LEADERBOARD_PAGE_SIZE) * LEADERBOARD_PAGE_SIZE
+})
+
+const listElement = ref<HTMLElement | null>(null)
+
+/**
+ * The row to emphasise after a jump, cleared on a timer.
+ *
+ * A jump that lands silently is indistinguishable from one that did nothing — the reader asked
+ * "where am I" and the answer has to be visible without hunting. Held as an id rather than a
+ * boolean so the emphasis cannot stick to a different row if the page changes underneath it.
+ */
+const highlightedUserId = ref<string | null>(null)
+const pendingJump = ref(false)
+
+/** Scroll the caller's row to the middle of the list and emphasise it briefly. */
+function scrollToOwnRow() {
+  const userId = ownUserId.value
+  if (userId === null) return
+  const row = listElement.value?.querySelector(`[data-user-id="${CSS.escape(userId)}"]`)
+  if (!(row instanceof HTMLElement)) return
+  row.scrollIntoView({ block: 'center', behavior: 'smooth' })
+  highlightedUserId.value = userId
+  globalThis.setTimeout(() => {
+    // Only clear if nothing newer has taken over: a second jump within the window must not be
+    // cancelled by the first one's timer.
+    if (highlightedUserId.value === userId) highlightedUserId.value = null
+  }, 1600)
+}
+
+/**
+ * Bring the caller's own row into view, moving to its page first when it is elsewhere.
+ *
+ * The button is only rendered while a rank exists, so the `null` branch is a type guard rather
+ * than a state the reader can reach.
+ */
+function jumpToOwnRank() {
+  const target = offsetForOwnRank.value
+  if (target === null) return
+  if (target === offset.value) {
+    scrollToOwnRow()
+    return
+  }
+  // The row cannot be scrolled to before it exists: wait for the page that holds it.
+  pendingJump.value = true
+  offset.value = target
+}
+
+watch(entries, () => {
+  if (!pendingJump.value) return
+  pendingJump.value = false
+  // The rows are committed by the time this runs, so the query can see them.
+  void nextTick(scrollToOwnRow)
+})
 </script>
 
 <template>
@@ -209,6 +293,21 @@ const isEmpty = computed(() => !isPending.value && !isError.value && entries.val
           </span>
           <span class="text-[11px] text-muted-foreground">your rank</span>
         </div>
+
+        <!-- Only while a rank exists. On a board the reader has not appeared on there is nowhere
+             to jump, and a disabled control would pose a question with no answer — the panel
+             beside it already states "Not ranked". -->
+        <Button
+          v-if="currentUserRank !== null"
+          variant="outline"
+          size="sm"
+          :disabled="isPlaceholderData"
+          data-testid="jump-to-my-rank"
+          @click="jumpToOwnRank"
+        >
+          <TrophyIcon class="h-4 w-4" aria-hidden="true" />
+          {{ ownRowIsHere ? 'Back to me' : 'Find me' }}
+        </Button>
       </div>
     </header>
 
@@ -318,6 +417,7 @@ const isEmpty = computed(() => !isPending.value && !isError.value && entries.val
            removes list semantics in Safari/VoiceOver (the fix recorded in the
            dashboard-visualization domain and used by ScrollFadeList). -->
       <ol
+        ref="listElement"
         class="flex flex-col gap-2 transition-opacity duration-150"
         :class="{ 'opacity-50': isPlaceholderData }"
         :aria-busy="isPlaceholderData"
@@ -327,6 +427,12 @@ const isEmpty = computed(() => !isPending.value && !isError.value && entries.val
           v-for="entry in entries"
           :key="entry.userId"
           class="flex items-center gap-4 rounded-lg border p-4 transition-colors hover:bg-muted/50"
+          :class="{
+            'border-primary bg-primary/12': entry.userId === ownUserId,
+            'leaderboard-row-flash': entry.userId === highlightedUserId,
+          }"
+          :data-user-id="entry.userId"
+          :aria-current="entry.userId === ownUserId ? 'true' : undefined"
           data-testid="leaderboard-entry"
         >
           <!-- Decorative: the badge beside it states the real rank on every row, so
@@ -371,3 +477,36 @@ const isEmpty = computed(() => !isPending.value && !isError.value && entries.val
     </template>
   </div>
 </template>
+
+<style scoped>
+/*
+ * The emphasis a jump lands on. Bounded and short: it answers "where am I" once and then gets out
+ * of the way — a row that keeps glowing becomes the thing the reader is trying to read past.
+ *
+ * The ring is drawn with `--primary` rather than a literal, so it follows the theme instead of
+ * pinning a colour that only works in one of the two modes. `box-shadow` rather than `border`:
+ * a border would change the row's box and shift every row below it at the exact moment the reader
+ * is trying to locate one.
+ */
+@keyframes leaderboard-row-flash {
+  0%,
+  100% {
+    box-shadow: 0 0 0 0 transparent;
+  }
+  25%,
+  75% {
+    box-shadow: 0 0 0 3px color-mix(in oklab, var(--primary) 45%, transparent);
+  }
+}
+
+.leaderboard-row-flash {
+  animation: leaderboard-row-flash 1.6s ease-in-out;
+}
+
+/* The scroll still happens — it is how the row arrives. Only the pulse is dropped. */
+@media (prefers-reduced-motion: reduce) {
+  .leaderboard-row-flash {
+    animation: none;
+  }
+}
+</style>

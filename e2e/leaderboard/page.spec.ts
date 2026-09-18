@@ -1,6 +1,9 @@
 import { test, expect } from '@playwright/test'
 import { setupLeaderboardPage, expectLeaderboardRendered, lastQuery } from './helpers.js'
 import { okEnvelope } from '../utils/auth-helpers.js'
+// The signed-in account's id: the own-row assertion needs the caller to actually be on the board,
+// and a highlight is only meaningful when the row it marks is really theirs.
+import { TEST_USER_ID } from '../fixtures/auth.js'
 import {
   TEST_LEADERBOARD_EMPTY,
   TEST_LEADERBOARD_PAGE,
@@ -500,5 +503,55 @@ test.describe('Leaderboard page', () => {
     held.resolve()
     // And the mark lifts once the new board is the one being shown.
     await expect(page.locator('ol[aria-busy="true"]')).toHaveCount(0)
+  })
+
+  test('marks the caller’s own row and not the stranger sharing its rank', async ({ page }) => {
+    // The caller's id is on the board, sharing rank 2 with somebody else. Ties share a rank, so a
+    // highlight keyed on the rank would mark both rows and leave the reader unable to tell which
+    // one is theirs — which is why the marker follows the id.
+    await setupLeaderboardPage(page, {
+      entries: [
+        { userId: 'ada11111-2222-4333-8444-555566660001', displayName: 'Ada Lovelace', score: 7200, rank: 1 },
+        { userId: TEST_USER_ID, displayName: 'Me', score: 3600, rank: 2 },
+        { userId: 'ada11111-2222-4333-8444-555566660003', displayName: 'Also tied', score: 3600, rank: 2 },
+      ],
+      currentUserRank: 2,
+      totalParticipants: 3,
+    })
+    await expectLeaderboardRendered(page)
+
+    const marked = page.locator('[data-testid="leaderboard-entry"][aria-current="true"]')
+
+    await expect(marked).toHaveCount(1)
+    await expect(marked).toContainText('Me')
+  })
+
+  test('offers no jump when the caller is not on the board', async ({ page }) => {
+    // `currentUserRank` omitted rather than nulled: the server leaves the key out entirely for a
+    // caller who has never pushed, and the fixture mirrors the wire.
+    await setupLeaderboardPage(page, {
+      entries: TEST_LEADERBOARD_PAGE.entries,
+      totalParticipants: TEST_LEADERBOARD_PAGE.totalParticipants,
+    })
+    await expectLeaderboardRendered(page)
+
+    // Nowhere to go, so nothing to press; the panel beside it already states "Not ranked".
+    await expect(page.getByTestId('jump-to-my-rank')).toHaveCount(0)
+  })
+
+  test('jumps to the page holding the caller’s rank instead of walking there', async ({ page }) => {
+    // Rank 45 on a 20-per-page board is offset 40. Asserted through the request, because the
+    // landing itself is a scroll the DOM cannot report: one request for the page that holds the
+    // row, not three fetched on the way and thrown away.
+    const harness = await setupLeaderboardPage(page, {
+      entries: TEST_LEADERBOARD_PAGE.entries,
+      currentUserRank: 45,
+      totalParticipants: 60,
+    })
+    await expectLeaderboardRendered(page)
+
+    await page.getByTestId('jump-to-my-rank').click()
+
+    await expect.poll(() => lastQuery(harness.requests()).get('offset')).toBe('40')
   })
 })
