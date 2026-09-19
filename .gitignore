@@ -58,3 +58,6 @@ src/__tests__/*.js
 
 # Skills lock cache (regenerable)
 skills-lock.fast-update-cache.json
+
+# AI plan workspace — never tracked on this branch (R6.5)
+.plans/
