@@ -112,5 +112,33 @@ re-done after implementation starts.
 - **Mark the gap, never fill it with a guess.** A claim nobody verified is written with
   `待确认` plus what would settle it (P5). "It is probably implemented as X" is exactly the
   sentence that must not be written in the assertive voice.
+- **A mixed sample cannot establish a "standard".** If the references disagree (two sites
+  use one pattern, one site uses another), saying "this is the standard" is false — the honest
+  verdict is "the field is split", and the decision then rests on the product's own logic.
+  Claiming a standard from a split sample happened here and was caught by the user.
+- **A fact the user supplies is not a design ruling.** When told "most sites label it Sign in",
+  applying that *everywhere* is not compliance — it is copying. Scoped facts arrive scoped (that one
+  was about a top-bar entry); the agent still owes the design decision for every other element, and
+  saying "you told me to" does not discharge it.
 - **Scope is part of the claim.** A gap in a *document* is not a gap in the *code*. State which
   artefact was measured; a finding about `DESIGN.md` says nothing about `src/`.
+
+## P11. Before acting: scan what already exists
+
+Three checks, in this order, before design or implementation. Each one exists because skipping it
+produced a real defect.
+
+1. **Gap scan — what do we already have?** Search our own plan, domain files and code for an
+   existing judgement on this exact question. *The failure it prevents*: the hero CTA was pointed at
+   registration while the plan already said the plugin install is the lowest-friction entry. The
+   answer existed and was not looked up.
+2. **Premise check — does the pattern's premise hold here?** A copied pattern carries unstated
+   conditions; verify them against *this* product. *The failure*: "hero → signup" assumes the signup
+   page carries the OAuth buttons. Ours does not, so the pattern inverts into a dead end.
+3. **Input classification — is this a rule or a datum?** A fact supplied by the user arrives scoped.
+   Apply it where it applies, and keep deciding everywhere else. *The failure*: "most sites label it
+   Sign in" (about a top-bar entry) was applied to the hero too, turning the page's most valuable
+   slot into a copy of the bar.
+
+**Single-source conclusions are the common root of all three.** One site, one document, one sentence
+is a lead, not a verdict (P10). Cross-check before acting.

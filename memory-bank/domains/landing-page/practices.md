@@ -47,3 +47,18 @@ design against** — re-derive only if a source changes.
   by a CSS variable — the wrong version was nearly written as fact.
 - **Screenshots are the weakest evidence.** Reading code, computed styles and source is what turned
   impressions into rules.
+
+## Shipped so far (P1 — entry and routing shell)
+
+| Fact | Where it lives |
+| --- | --- |
+| `/` is public and renders `LandingView` under `MarketingLayout` | `src/router/modules/landing.ts` |
+| Route names: `MARKETING_LAYOUT` (layout) + `LANDING` (view) | `src/router/route-names.ts` |
+| Top-bar CTA switches on auth state: register → dashboard | `src/layouts/MarketingLayout.vue` |
+| Top bar carries **one** account entry, signed out = `Sign in` → `/auth/login` (sign-in, not sign-up: no signup wall here, and the login page holds both GitHub OAuth and the "Create account" link) | `src/layouts/MarketingLayout.vue` + `e2e/landing/page.spec.ts` |
+| Hero copy makes no unverified product claims (`no telemetry` was removed: a time tracker syncs your data by design) | `src/features/landing/views/LandingView.vue` |
+| Own build chunk (`feature-landing`), not merged into the app bundle | `vite.config.ts` |
+| Guard semantics: public = `requiresAuth` absent/false; **`guestOnly` would bounce signed-in visitors off `/`** | `src/router/guard.ts` + the E2E case in `e2e/landing/page.spec.ts` |
+
+The hero copy shipped in P1 is a placeholder for the *layout*, not the final messaging — the capability
+walkthrough, open-source block and pricing structure are still open (see `meta.md`).

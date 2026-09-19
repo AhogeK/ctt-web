@@ -1,0 +1,164 @@
+version: 1
+generated: 2026-09-19
+purpose: >
+  AI 面向索引。先读本文件判断「该读哪个文件」，再只读命中项 ——
+  不要为了找答案而遍历目录树，也不要凭上下文记忆猜自己写过什么。
+how_to_use:
+  - '在 answers 里搜你的问题关键词 → 命中一行 → 只读那一行的 path'
+  - '读完按 source_of_truth 去回源核对：索引本身不是事实，只是定位'
+  - '索引里没有的，说明该知识尚未沉淀 → 检索补证后回写领域文件（R24）'
+maintenance:
+  - '本轮新增/删除/改名知识文件、或改变其职责 → 同轮更新本文件（R24 增量）'
+  - '每轮收尾校验：files/domains 的键是相对路径、值是 wc -l 语义的行数；与实际不符即索引漂移'
+  - '索引只做定位，不写结论 —— 结论属于被指向的文件（避免两处重复，P6）'
+files:
+  AGENTS.md: 318
+  memory-bank/activeContext.md: 155
+  memory-bank/progress.md: 135
+  memory-bank/systemPatterns.md: 200
+  memory-bank/techContext.md: 91
+  memory-bank/projectbrief.md: 30
+  memory-bank/domains/README.md: 128
+domains:
+  achievements:
+    memory-bank/domains/achievements/meta.md: 66
+    memory-bank/domains/achievements/practices.md: 193
+    memory-bank/domains/achievements/principles.md: 133
+    memory-bank/domains/achievements/references.md: 186
+    memory-bank/domains/achievements/scenarios.md: 80
+    memory-bank/domains/achievements/trophy-geometry.md: 52
+  ai-workflow:
+    memory-bank/domains/ai-workflow/meta.md: 58
+    memory-bank/domains/ai-workflow/practices.md: 200
+    memory-bank/domains/ai-workflow/principles.md: 144
+    memory-bank/domains/ai-workflow/references.md: 109
+    memory-bank/domains/ai-workflow/scenarios.md: 158
+  backend-contract:
+    memory-bank/domains/backend-contract/meta.md: 87
+    memory-bank/domains/backend-contract/practices.md: 92
+    memory-bank/domains/backend-contract/principles.md: 66
+    memory-bank/domains/backend-contract/references.md: 124
+    memory-bank/domains/backend-contract/scenarios.md: 75
+  dashboard-visualization:
+    memory-bank/domains/dashboard-visualization/meta.md: 93
+    memory-bank/domains/dashboard-visualization/practices.md: 196
+    memory-bank/domains/dashboard-visualization/principles.md: 107
+    memory-bank/domains/dashboard-visualization/references.md: 99
+    memory-bank/domains/dashboard-visualization/rendering.md: 75
+    memory-bank/domains/dashboard-visualization/scenarios.md: 128
+  landing-page:
+    memory-bank/domains/landing-page/meta.md: 55
+    memory-bank/domains/landing-page/practices.md: 63
+    memory-bank/domains/landing-page/principles.md: 54
+    memory-bank/domains/landing-page/references.md: 42
+    memory-bank/domains/landing-page/scenarios.md: 36
+entries:
+  - id: 'rules'
+    path: 'AGENTS.md'
+    answers:
+      - '这个项目有哪些硬规则'
+      - '提交/分支/版本怎么做'
+      - '什么必须停下来问用户'
+      - '哪些内容禁止进 master'
+    read_when: '会话开始 · 任何动手前'
+    source_of_truth: '用户明确表述的规则（AGENTS.md 是唯一权威）'
+
+  - id: 'state'
+    path: 'memory-bank/activeContext.md'
+    answers:
+      - '现在做到哪了'
+      - '最近一轮改了什么'
+      - '本轮遗留了什么'
+    read_when: '会话开始 · 判断当前状态'
+    source_of_truth: '本文件自身（时间线层，只记最近）'
+
+  - id: 'milestones'
+    path: 'memory-bank/progress.md'
+    answers:
+      - '哪些里程碑完成/未完成'
+      - 'E2E 覆盖到哪了'
+    read_when: '评估整体进度'
+    source_of_truth: 'git log + 本文件'
+
+  - id: 'crossCutting'
+    path: 'memory-bank/systemPatterns.md'
+    answers:
+      - '命名/组件/状态/错误处理的横切约定'
+      - 'hover/motion/theme 的横切规则'
+    read_when: '写任何代码前（约定类）'
+    source_of_truth: 'src/ 代码与配置'
+
+  - id: 'stack'
+    path: 'memory-bank/techContext.md'
+    answers:
+      - '技术栈与版本'
+      - '构建/测试命令'
+    read_when: '不确定工具链时'
+    source_of_truth: 'package.json / vite.config.ts'
+
+  - id: 'product'
+    path: 'memory-bank/projectbrief.md'
+    answers:
+      - '产品是什么'
+      - '商业模式（开源免费 + 托管服务）'
+      - '关联项目'
+    read_when: '判断产品意图时'
+    source_of_truth: '用户表述（禁止从实现反推）'
+
+  - id: 'domainMap'
+    path: 'memory-bank/domains/README.md'
+    answers:
+      - '领域怎么读（操作规程）'
+      - '漂移怎么处置'
+      - '已定的取舍'
+    read_when: '需要领域的读法/流程时'
+    source_of_truth: '本文件自身'
+
+  - id: 'domain.ai-workflow'
+    path: 'memory-bank/domains/ai-workflow/'
+    answers:
+      - '研究纪律与证据分级'
+      - '讨论≠指令的边界'
+      - '提交/验证/资源清理的做法'
+      - 'AI/非AI 文件清单'
+      - '动手前三问 / 收尾五问'
+    read_when: '任何一轮工作的流程判断'
+    source_of_truth: '见该领域 meta.md 的核对基线'
+
+  - id: 'domain.backend-contract'
+    path: 'memory-bank/domains/backend-contract/'
+    answers:
+      - '后端端点与错误码'
+      - '统计语义（分布/汇总）'
+      - '契约回源与版本基线'
+    read_when: '对接任何接口前'
+    source_of_truth: '../ctt-server 源码 + 记录时的 appVersion'
+
+  - id: 'domain.dashboard-visualization'
+    path: 'memory-bank/domains/dashboard-visualization/'
+    answers:
+      - '面板清单与布局阈值'
+      - '图表配色与对比度'
+      - '渲染回源怎么做'
+    read_when: '改任何图表/面板'
+    source_of_truth: '真实浏览器渲染（声明式 CSS 不是证据）'
+
+  - id: 'domain.achievements'
+    path: 'memory-bank/domains/achievements/'
+    answers:
+      - '奖杯家族/阶级/进度语义'
+      - '奖杯几何与适配变换'
+      - 'history 字段含义'
+    read_when: '改成就页'
+    source_of_truth: '../ctt-server 的 DTO/服务 + 实测几何'
+
+  - id: 'domain.landing-page'
+    path: 'memory-bank/domains/landing-page/'
+    answers:
+      - '首屏该卖什么（产品 vs 账户）'
+      - '落地页实测设计基线'
+      - '组件原型与响应式规则'
+      - '参照物的证据分级'
+    read_when: '改落地页视觉/交互'
+    source_of_truth: '实测计算样式与源码（截图是最弱证据）'
+

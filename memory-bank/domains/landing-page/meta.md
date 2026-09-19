@@ -24,8 +24,11 @@ and the reference research behind all of it.
 | `DESIGN.md` | Token/typography/spacing authority; this domain cites it, never overrides it |
 | `src/features/landing/**` (future) | The implementation, once the plan is approved |
 
-**Status: not yet built.** This domain currently records the *research*, not shipped code — say so
-plainly rather than implying an implementation exists.
+**Status: P1 shipped (2026-09-19) — the entry and routing shell only.** `/` is public
+(`route-names.ts` `LANDING`, `router/modules/landing.ts`, `layouts/MarketingLayout.vue`) and the top-bar
+CTA switches on `authStore.isAuthenticated`. The sections themselves (capability list, open-source block,
+pricing structure) are later stages of the plan and are deliberately absent rather than stubbed. The rest
+of this domain is still *research*, not shipped behaviour — keep that distinction when citing it.
 
 ## Terminology
 
@@ -47,6 +50,6 @@ plainly rather than implying an implementation exists.
 
 | | |
 | --- | --- |
-| Checked against source | External: 6 sites probed, 4 read down to CSS token tables and JS bundles, **Supabase's open-source component source** (2026-09-19). Internal: `DESIGN.md` §3/§8, `src/stores/theme.ts`, `src/components/app/ThemeToggle.vue`, `src/` full scan (367 files) |
+| Checked against source | External: 6 sites probed, 4 read down to CSS token tables and JS bundles, **Supabase's open-source component source** (2026-09-19). Internal: `DESIGN.md` §3/§8, `src/stores/theme.ts`, `src/components/app/ThemeToggle.vue`, `src/` full scan. **Re-checked 2026-09-19 after P1**: `router/route-names.ts`, `router/modules/landing.ts`, `layouts/MarketingLayout.vue`, `features/landing/views/LandingView.vue` |
 | Coverage | Container width, spacing/radius/font laws, breakpoints, motion policy, theme bootstrap, four component archetypes — each with hit counts or a source path |
 | Known drift | **No implementation exists yet**, so nothing here can have drifted from code. Re-measure when the page ships; the external values are snapshots of other people's sites and will age. |

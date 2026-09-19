@@ -135,3 +135,24 @@ Trigger: a task needs a visual/interaction/layout decision that the repo does no
 6. **Write it down before building** — measured baseline in the domain file, plan approved by the
    user, then code. `.plans/` is a working artefact and is gitignored: anything that must survive
    belongs in the domain layer.
+
+## S11. Closing a slice: the five questions
+
+Before reporting a slice as done, answer all five **with evidence**. An unanswered one is a finding,
+not a formality.
+
+| Question | Evidence that settles it |
+| --- | --- |
+| **What changed?** | The diff, scoped: which files, which contract |
+| **Why this way?** | The decision and the alternative rejected |
+| **Who is affected?** | Call sites, other pages, the E2E specs that assert the old behaviour |
+| **How was it verified?** | The commands run and their output — not "should work" |
+| **What is still unconfirmed?** | Listed explicitly, with what would settle it |
+
+The last one is the one that gets dropped, and it is the most valuable: **an unlisted unknown is a
+silent risk.** Writing it down is what makes the rest trustworthy.
+
+**Index upkeep (same round).** `memory-bank/index.yaml` is the AI-facing map. After touching any
+knowledge file: refresh its line count, add/remove entries for files that appeared or vanished, and
+re-check that each `answers` line still describes what the file answers. A stale index is worse than
+no index — it sends the next session to the wrong place.

@@ -2,10 +2,38 @@
 
 ## Current Status
 
-**Phase**: 账号删除（Danger zone / 确认对话框 / 本地清态）+ Achievements + Leaderboard + Dashboard
-**Version**: 0.46.0 (2026-09-18)
+**Phase**: 落地页 P1（公开入口与路由骨架）+ 账号删除 + Achievements + Leaderboard + Dashboard
+**Version**: 0.47.0 (2026-09-19)
 **Branch**: develop
-**Tests**: 1431/1431 unit; vue-tsc + lint 0 error 0 warning; build green; e2e **97/97** chromium（settings/delete-account 8 + leaderboard 切榜回归 1 + 自身行/跳转 3 为新增）
+**Tests**: 1437/1437 unit; vue-tsc + lint 0 error 0 warning; build green（`feature-landing` 独立 chunk ✓）; e2e 见下方条目
+
+### 落地页 P1：`/` 由「重定向登录」变为公开首页（2026-09-19）
+
+**动因**：`/` 原本是 `requiresAuth: true` 的 AppLayout 首页（`HomeView`），未登录访问即跳登录 —— 落地页计划的第一阶段要求它成为**公开入口**。
+
+**改动面**：
+- `RouteNames`：`HOME`/`HOME_INDEX` → **`MARKETING_LAYOUT` + `LANDING`**（镜像既有的 `AUTH_LAYOUT` 模式：布局级命名 + 视图级命名）
+- 新增 `src/router/modules/landing.ts`（`/` + `MarketingLayout` + 子路由 `LandingView`，`requiresAuth: false`）→ `router/index.ts` 的 `constantRoutes` 因此**空置并被删除**（不留悬空结构）
+- 新增 `MarketingLayout.vue`（顶栏 + 内容 + 页脚；**无侧边栏、无用户菜单**）+ `features/landing/views/LandingView.vue`
+- 顶栏 CTA 随 `authStore.isAuthenticated` 切换：未登录 → `/auth/register`；已登录 → `/dashboard`
+- **死代码清除**：`views/HomeView.vue`（仅被旧路由引用）、`views/AboutView.vue`（零引用）删除
+- `404View` 与 `OAuthErrorView` 的 `RouteNames.HOME` 改指 `LANDING`（改名必须迁全部调用点）
+- 分包：`vite.config.ts` 增加 `feature-landing` 分组
+
+**用户复查后的两处改动（2026-09-19）**：
+- **入口职责分离（最终）** ✓：**hero = 产品本身**（主按钮 `Install the plugin` → Marketplace 列表 ✓，次按钮 `View source` ✓）；**顶栏 = 账户**（唯一入口，未登录 `Sign in` → `/auth/login` ✓，已登录 `Open dashboard` → `/dashboard` ✓）。**两者都不指向注册页** ✗ —— 注册页没有 OAuth ✓，对 GitHub 人群是死路；新用户经登录页的 "Create account" 进入 ✓
+  - 插件列表地址**已核实** ✓：`plugins.jetbrains.com/api/searchPlugins?search=Code Time Tracker` → xmlId `com.ahogek.code-time-tracker` → `https://plugins.jetbrains.com/plugin/29379`（302 downloads ✓）。**核实前我在 view 里只写了占位判断，未编造 URL** ✓
+  - **我犯的两次设计错误（用户纠正）** ✗：① 先把 hero 指向**注册页** ✗（照搬"hero→signup"这个通用套路 —— 而该套路的前提是 **signup 页含 OAuth** ✓，ctt 的没有 ✗，前提不成立）；② 被纠正后又把 hero 也改成 **`Sign in`** ✗，让首屏主按钮**变成顶栏的复制品** ✗ —— 用户指出这是**盲目照搬我给的局部事实**（"绝大多数叫 Sign in" 是**顶栏**的事实 ✓，不是 hero 的结论 ✗）
+  - **正解** ✓：**营销首屏卖产品，工具导航管账户** ✓ —— ctt 的产品本体是**插件** ✓（web 面板是配套 ✓），所以首屏核心动作是"装插件" ✓✓
+
+- **删掉首屏 "no telemetry"** ✗ —— 该措辞是**我推的、未经核实** ✓，且对**时间追踪工具**自相矛盾 ✗（核心功能就是把统计同步到服务器 ✓）。换成可核实的事实：*"self-hostable if you would rather keep the data on your own server"* ✓
+- **记录一条产品缺口**（未实施 ✗）：**注册页没有 GitHub OAuth** ✓ —— GitHub-first 的开发者工具里这是真实摩擦 ✓。若要做，**必须先只读核对 `../ctt-server` 的 OAuth 语义**（R3/R13 ✓）："用 GitHub 注册"究竟是 login 时自动建号 ✗ 还是独立流程 ✓。**归用户排期** ✓，AI 不得自行改动注册流程 ✓
+
+**实施中的自纠**：P1 清单里「移除 `/auth` → LOGIN 的重定向」我**首轮漏做** ✗，复查时发现并补上 ✓（`auth.ts` 的 `redirect` 已删 ✓，并加了注释说明为何不加回：没人链接裸 `/auth`，静默转发反而隐藏了访客真正请求的 URL）。**教训**：清单式任务要**逐条对账**，不能凭印象认为已覆盖。
+
+**docs 同步（R25）**：`docs/architecture.md` 受影响并已更新 ✓ —— 目录树补 `landing/`、`MarketingLayout.vue`、`router/modules/landing.ts` ✓；删除「`HomeView.vue # Landing page`」（文件已删 ✓）✓；`auth.ts` 代码样例去掉 `redirect` 行 ✓；元字段表补 **`guestOnly`**（此前未记录却由 guard 实际使用 ✓）✓；Lazy Loading 样例补 `MarketingLayout` ✓。顺带发现文档里的 `stores/` 清单**陈旧**（`counter.ts` 早已不存在 ✓，真实存在的 `theme.ts`/`publicConfig.ts` 反而没写 ✓）→ 一并更正 ✓。
+
+**关键语义（勿踩）**：guard 只在 `requiresAuth` 为真时拦截 → **公开 = 不设该标志或显式 false**；而 **`guestOnly` 会把已登录用户弹去 dashboard** —— 故 `/` **绝不能**标 `guestOnly`（那会把已登录访客从根路径弹走）。已在 `landing.ts` 的 JSDoc 与 E2E 用例中钉住。
 
 > 本文件只记「现在与最近」。**跨轮次可复用的判断在 [`domains/`](./domains/README.md)**（R24）：
 > `dashboard-visualization`（图表/配色/布局/交互）、`backend-contract`（接口契约与统计语义）、

@@ -19,6 +19,7 @@
 | Dashboard (框架 + 面板迭代)       | ✅ Complete | 0.37.0         |
 | Achievements (奖杯系统)           | ✅ Complete | 0.42.0         |
 | Leaderboard                       | ✅ Complete | 0.41.0         |
+| Landing Page (P1 入口与路由骨架)  | 🚧 In Progress | 0.47.0      |
 | Settings                          | ⏳ Pending  | 1.0.0          |
 | i18n (zh/en)                      | ⏳ Pending  | 1.0.0          |
 | E2E Test Coverage                 | 🚧 Partial  | 1.0.0          |

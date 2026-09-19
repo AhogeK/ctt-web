@@ -39,3 +39,16 @@ The landing page introduces **no new colour, shadow or spacing token**. Where `D
 (for example a numeric touch-target rule), the addition is proposed to the user and written into
 `DESIGN.md` — not invented locally. Measured industry values may *confirm* `DESIGN.md`; they never
 override it.
+
+## L6. The hero sells the product; the bar manages the account
+
+Two different jobs, two different actions — never one repeated twice:
+
+- **Hero action = the product itself.** For this project that is the IDE plugin
+  (`plugins.jetbrains.com/plugin/29379`) — the thing the data comes from, one click from
+  running. A credential form is a heavier first step than "install".
+- **Top-bar entry = the account** ("I already have one"): `Sign in`, switching to
+  `Open dashboard` when signed in.
+- **Neither points at registration.** The usual "hero → signup" pattern assumes the signup page
+  carries the OAuth buttons; this one does not, so that route dead-ends a GitHub user. Signup is
+  reached from the login page's "Create account" link.
