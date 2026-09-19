@@ -33,12 +33,6 @@ test.describe('Landing page', () => {
     await expect(page.locator('a[href="/auth/register"]')).toHaveCount(0)
   })
 
-  test('exposes the repository from the top bar', async ({ page }) => {
-    await page.goto('/')
-
-    await expect(page.getByTestId('marketing-source-link')).toHaveAttribute('href', 'https://github.com/AhogeK/ctt-web')
-  })
-
   test('points an authenticated visitor at the dashboard', async ({ page }) => {
     await mockAuthApis(page)
     await loginViaForm(page)

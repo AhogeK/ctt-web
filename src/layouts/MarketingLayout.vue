@@ -18,13 +18,16 @@
  */
 import { computed } from 'vue'
 import { RouterLink } from 'vue-router'
+import { Icon } from '@iconify/vue'
 import { Button } from '@/components/ui/button'
 import ErrorBoundary from '@/components/app/ErrorBoundary.vue'
 import ThemeToggle from '@/components/app/ThemeToggle.vue'
 import { useAuthStore } from '@/stores/auth'
 import { RouteNames } from '@/router/route-names'
+import { ECOSYSTEM_REPOS } from '@/lib/site-links'
 
-const SOURCE_URL = 'https://github.com/AhogeK/ctt-web'
+/** The current year for the copyright line — evaluated once, not per render. */
+const currentYear = new Date().getFullYear()
 
 const authStore = useAuthStore()
 
@@ -51,15 +54,6 @@ const cta = computed(() =>
         </RouterLink>
 
         <nav class="flex items-center gap-1 sm:gap-2">
-          <a
-            :href="SOURCE_URL"
-            target="_blank"
-            rel="noopener noreferrer"
-            data-testid="marketing-source-link"
-            class="hidden rounded-md px-2 py-1.5 text-sm text-muted-foreground transition-colors hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring sm:inline-flex"
-          >
-            Source
-          </a>
           <ThemeToggle />
           <Button as-child size="sm">
             <RouterLink :to="cta.to" data-testid="marketing-cta">{{ cta.label }}</RouterLink>
@@ -75,18 +69,29 @@ const cta = computed(() =>
     </main>
 
     <footer class="border-t border-border/60">
-      <div
-        class="mx-auto flex w-full max-w-[1200px] flex-col gap-2 px-4 py-8 text-sm text-muted-foreground sm:flex-row sm:items-center sm:justify-between sm:px-6"
-      >
-        <p>Open source under the MIT license — deploy it yourself, or use the hosted sync service.</p>
-        <a
-          :href="SOURCE_URL"
-          target="_blank"
-          rel="noopener noreferrer"
-          class="transition-colors hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
-        >
-          github.com/AhogeK/ctt-web
-        </a>
+      <div class="mx-auto w-full max-w-[1200px] px-4 py-10 text-sm text-muted-foreground sm:px-6">
+        <!-- The ecosystem is more than one repository: listing them answers "what
+             is this made of", which a single link to this dashboard cannot. -->
+        <ul class="flex flex-col gap-3 sm:flex-row sm:flex-wrap sm:gap-x-8">
+          <li v-for="repo in ECOSYSTEM_REPOS" :key="repo.url">
+            <a
+              :href="repo.url"
+              target="_blank"
+              rel="noopener noreferrer"
+              class="group inline-flex items-center gap-2 transition-colors hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+            >
+              <Icon icon="mdi:github" class="size-4 shrink-0" />
+              <span class="font-medium text-foreground/90 group-hover:text-foreground">{{ repo.name }}</span>
+              <span class="hidden text-muted-foreground lg:inline">— {{ repo.role }}</span>
+            </a>
+          </li>
+        </ul>
+
+        <div class="mt-6 border-t border-border/60 pt-6 sm:flex sm:items-center sm:justify-between sm:gap-6">
+          <p>Open source under the MIT license — deploy it yourself, or use the hosted sync service.</p>
+          <!-- No "All rights reserved": MIT already grants those rights to everyone. -->
+          <p class="mt-2 shrink-0 sm:mt-0">© {{ currentYear }} AhogeK</p>
+        </div>
       </div>
     </footer>
   </div>
