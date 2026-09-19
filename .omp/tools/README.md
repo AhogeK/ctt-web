@@ -23,7 +23,8 @@ signal. Each check exists because a specific thing went wrong:
 
 ## `check-knowledge.sh` — the knowledge base must not silently rot
 
-Run it whenever a knowledge file changed, and in the round's closing check. It proves three things:
+Run it whenever a knowledge file changed — **and before committing one**, not after: it caught a
+memory file pushed to 203 lines *after* the commit that added it. It proves three things:
 
 1. **Index drift** — every line count in `memory-bank/index.yaml` matches the file (R26).
 2. **Size limit** — no file over 200 lines, `archives/` exempt (R24).

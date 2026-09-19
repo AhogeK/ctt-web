@@ -1,8 +1,4 @@
 **已提交**: v0.47.2 —— develop `e782010` ✓ / master `d73e493` ✓（均已推送 · clean · 代码面 0 差异 ✓）
-  5 个 develop 提交：`95b7442` feat(页脚生态清单/删顶栏图标) · `4bfcfee` chore(release) · `2ed1bd2` chore(agents 规则索引化) · `e0399ac` chore(tools .omp/tools) · `e782010` chore(memory)
-  非 AI 两个（`95b7442` / `4bfcfee`）**逐个** cherry-pick 进 master（`a508ee1` / `d73e493`）✓ 零冲突；AI 内容未进 master ✓（逐一核验 AGENTS.md / index.yaml / .omp/tools / domains/README 在 master 上**均不存在** ✓）
-  **钩子复核** ✓：对**提交后**的状态重跑门禁 —— type-check ✓ lint ✓ unit **1437/1437** ✓ build ✓ E2E **25/25** ✓
-  **R18 收尾** ✓：`sweep.sh` → `clean ✓`（无 scratch 浏览器/profile、无 E2E 产物、无临时文件）· `check-knowledge.sh` → 索引一致 · 全部 ≤200 行 · 无死链 ✓
 
 ### 落地页 P1：`/` 由「重定向登录」变为公开首页（2026-09-19，v0.47.0）
 
@@ -13,9 +9,6 @@
 ## Current Status
 
 **已提交**: v0.47.0 —— develop `7704628` ✓ / master `2e22f5f` ✓（两分支均已推送、clean、代码面 0 差异 ✓）
-  5 个 develop 提交：`55bec6e` feat(landing) · `32aff48` test(landing) · `ae4850b` docs · `65bc033` chore(release) 0.47.0 · `7704628` chore(memory)
-  其中 4 个非 AI 提交**逐个** cherry-pick 进 master（`0aa4cfb` / `edd67a0` / `9e1473a` / `2e22f5f`）✓ —— AI 内容（`memory-bank/` · `AGENTS.md` · `.plans/`）**未进 master** ✓（已核验 ✓）
-  **钩子复核** ✓：pre-commit 跑过 `vp fmt`/`vp lint --fix`，故对**提交后**的状态重跑门禁 —— type-check ✓ lint ✓ unit **1437/1437** ✓ build ✓（`feature-landing` 1.32 kB 独立 ✓）E2E **24/24** ✓
 
 **已提交**: v0.47.1 —— develop `7059fcb` ✓ / master `6ef9fa5` ✓（两分支均已推送、clean、代码面 0 差异 ✓）
   4 个 develop 提交：`b16a6cc` fix(router 父级重定向) · `5131f5d` feat(auth 登出提示) · `fa1ed27` chore(release) · `7059fcb` chore(memory)
