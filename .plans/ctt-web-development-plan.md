@@ -1217,11 +1217,11 @@ Web 端设备管理只做**展示与吊销**，不做设备注册入口——设
 
 | 决策 | 取值 | 理由 |
 |---|---|---|
-| **入口策略** | `/` **始终**呈现首页；已登录时顶栏 CTA 由「免费开始」换成「打开控制台 →」 | 这页同时承担**产品门面 / 作品集 / 开源入口**三重身份，不该因为"自己登录着"就打不开。代价是登录用户多点一次，可接受 |
+| **入口策略** | `/` **始终**呈现首页；**顶栏只有一个账户入口** —— 未登录为 `Sign in` → `/auth/login`，已登录变为 `Open dashboard` → `/dashboard` | 这页同时承担**产品门面 / 作品集 / 开源入口**三重身份，不该因为"自己登录着"就打不开。**为什么是登录页而不是注册页**：注册页没有 OAuth，而登录页同时提供 GitHub 登录与「Create account」——**一个入口覆盖新老两类访客**（详见 P1 完成记录的修正表） |
 | **开源入口** | 导航（含右上角）**常驻仓库地址**，主 CTA 与它并列；页脚再给一次 + 最小部署命令 | 开源是**产品事实**而非营销话术 ✓ —— 开发者会先看仓库再看宣传页；把入口藏起来反而损失信任 |
 | **定价区** | **结构就位 + 数据驱动**；先讲清**开源免费与自行部署**，再单独呈现**托管同步服务（订阅）**，档位标注"设计中" | **产品本身开源免费**，付费只在托管服务与配套系统；定价与商业企划**均未确定** ✗ —— **绝不编造数字**（那是替用户决定业务）。将来改数据即可，无需重做页面 |
 | **视觉方向** | **继承产品自身语言**（以暗色为基调） | `DESIGN.md` 原文把 `#08090a` 定义为 *"the canvas for hero sections and marketing pages"* —— 营销画布是这套系统**本来就预留的**，不是折中 |
-| **✅ 已决：首次呈现用深色，且明暗双模式并存** | **默认深色**；亮色作为可选模式（ctt 已有 auto/dark/light 三档，无需新建） | **拍板依据（三路同向）**：**(a) ctt 自身** —— `DESIGN.md` 暗色提及 27 处、亮色仅一节；源码 **358 个 `dark:` 变体**，实态即 dark-first；**(b) 同类先例** —— Linear `服务端 HTML 直接输出 <html data-theme="dark">`、Supabase / Raycast 亦然（**开发工具类默认深色**）；**(c) 观感证据** —— 设计水准高的三站全是深色（亮度 9 / 18 / 8），而唯一的浅色同类 WakaTime 被判定设计最弱 ✗（同类性≠质量 ✗）。**采纳 Self-hosted 结论的边界**：转化研究说浅色利于阅读 ✓ —— 故正文与 CTA 区必须保证**对比度**，而非推翻深色基调 ✓ |
+| **✅ 已决：首次呈现用深色，且明暗双模式并存** | **默认深色**；亮色作为可选模式（ctt 已有 auto/dark/light 三档，无需新建） | **拍板依据（三路同向）**：**(a) ctt 自身** —— `DESIGN.md` 暗色提及 27 处、亮色仅一节；源码 **358 个 `dark:` 变体**，实态即 dark-first；**(b) 同类先例** —— Linear `服务端 HTML 直接输出 <html data-theme="dark">`、Supabase / Raycast 亦然（**开发工具类默认深色**）；**(c) 观感证据** —— 设计水准高的三站全是深色（亮度 9 / 18 / 8），而唯一的浅色同类 WakaTime 被判定设计最弱 ✗（同类性≠质量 ✗）。**采纳自托管研究的边界**：转化研究说浅色利于阅读 ✓ —— 故正文与 CTA 区必须保证**对比度**，而非推翻深色基调 ✓ |
 ### 视觉基准（全部取自 `DESIGN.md`，**新增令牌 = 0** 为硬指标）
 
 | 用途 | 取值 |
@@ -1263,29 +1263,55 @@ flowchart LR
 ```
 
 ---
-### P1：入口与路由骨架
+### P1：入口与路由骨架 ✅ 已完成
 
-> **状态：已实施（2026-09-19，v0.47.0）** ✓ 验收 5/5：未登录 `/` 呈现首页 ✓ · `/dashboard` 仍跳登录 ✓（既有 E2E 全绿）· 已登录 `/` 不被弹走且 CTA 指向 `/dashboard` ✓ · `/` 独立 chunk ✓ · 死代码清除 ✓
->
-> **遗留（待用户排期，AI 不得自行实施）** ✗：**注册页没有 GitHub OAuth** —— 顶栏已用 `Log in` 入口缓解 ✓；根治需先只读核对 `../ctt-server` 的 OAuth 建号语义（R3/R13）。
-> 实施中补做：移除 `/auth` → LOGIN 的重定向 ✓（清单要求，首轮遗漏）· `docs/architecture.md` 同步 ✓
+> **交付于 2026-09-19 · v0.47.0** —— develop `46601e7`（含记录）· master `2e22f5f`（4 个非 AI 提交逐个 cherry-pick）✓ 两分支 clean 且已推送。
+> **验收 5/5 全达成** ✓ 证据见下方「完成记录」。
 
 **目标：** `/` 从「重定向到登录」变为「公开首页」，且**受保护路由的守卫行为完全不变**。
 
-- [ ] 新增 `src/layouts/MarketingLayout.vue`：公开层外壳（顶栏 + 内容 + 页脚），**不引入** AppLayout 的侧边栏与用户菜单
-- [ ] 新增路由 `RouteNames.LANDING`，`/` 指向 `features/landing/views/LandingView.vue`（懒加载，与既有 feature 一致）
-- [ ] 移除 `src/router/modules/auth.ts` 的 `redirect: { name: ROUTE names.LOGIN }`；`/auth/*` 子路由不动
-- [ ] 守卫：`/` 加入**公开白名单**（`requiresAuth: false`），并确认 guest-guard **不**把已登录用户从 `/` 弹走
-- [ ] **核实死代码**：`src/views/HomeView.vue`、`src/views/AboutView.vue` 是否被任何路由/组件引用；无用则**删除**（发现即修，不留悬空文件）
-- [ ] 顶栏 CTA 随登录态切换文案与目标（未登录 → `/auth/register`；已登录 → `/dashboard`）
+- [x] 新增 `src/layouts/MarketingLayout.vue`：公开层外壳（顶栏 + 内容 + 页脚），**不引入** AppLayout 的侧边栏与用户菜单 ✓
+- [x] 新增路由 `RouteNames.LANDING`，`/` 指向 `features/landing/views/LandingView.vue`（懒加载，与既有 feature 一致）✓
+      实施注记：同时新增 `RouteNames.MARKETING_LAYOUT`（镜像既有的 `AUTH_LAYOUT` 模式：**布局级命名 + 视图级命名**）；路由落在 `src/router/modules/landing.ts`（与既有 feature 模块一致），因此 `router/index.ts` 的 `constantRoutes` 空置并**随之删除**（不留悬空结构）
+- [x] 移除 `src/router/modules/auth.ts` 的 `redirect: { name: ROUTE names.LOGIN }`；`/auth/*` 子路由不动 ✓
+- [x] 守卫：`/` 加入**公开白名单**（`requiresAuth: false`），并确认 guest-guard **不**把已登录用户从 `/` 弹走 ✓
+      实施注记：守卫只在 `requiresAuth` 为真时拦截 → **公开即不设该标志或显式 `false`**；而 **`guestOnly` 会把已登录用户弹去 dashboard** —— 故 `/` **绝不能**标它。此语义已写进 `landing.ts` 的 JSDoc 与 E2E 用例
+- [x] **核实死代码**：`src/views/HomeView.vue`、`src/views/AboutView.vue` 是否被任何路由/组件引用；无用则**删除** ✓
+      核实结果：`HomeView` **仅**被旧路由引用 ✓；`AboutView` **零引用** ✓ → 两者均已删除
+- [x] 顶栏 CTA 随登录态切换文案与目标 ✓ —— **实际目标改为 `/auth/login` 而非 `/auth/register`**（见下方修正表）
 
-**验收标准：**
-1. 未登录访问 `/` 呈现首页；访问 `/dashboard` 仍跳 `/auth/login?redirect=/dashboard`（**既有 E2E `protected-routes.spec.ts` 必须继续全绿**）
-2. 已登录访问 `/` 仍呈现首页（**不被 guest-guard 弹出**），CTA 指向 `/dashboard`
-3. `/` 的 chunk 独立（懒加载），不把首页代码并进应用主包
+**验收标准（全部达成 ✓）：**
+1. ✓ 未登录访问 `/` 呈现首页；`/dashboard` 仍跳 `/auth/login?redirect=/dashboard` —— **既有 `protected-routes.spec.ts` 全绿**
+2. ✓ 已登录访问 `/` 仍呈现首页（不被 guest-guard 弹出），CTA 指向 `/dashboard` —— **由新增用例钉住**（`toHaveCount(1)` 断言入口唯一）
+3. ✓ `/` 的 chunk 独立 —— 构建产物 `feature-landing-*.js` **1.32 kB**，未并入 `vendor` / 主包
+
+**实施中的两处修正（原计划写错，已按产品事实更正）**
+
+| 原计划 | 实际交付 | 为什么 |
+|---|---|---|
+| 顶栏 CTA：未登录 → `/auth/register` | 未登录 → **`/auth/login`**，文案 **`Sign in`** | **注册页没有 GitHub OAuth**（已取证：`LoginView` + `LoginForm` 有 `getGitHubAuthorizeUrl('login')`，注册页零 OAuth 引用）→ 送去注册页会让**最主流的 GitHub 人群**撞上死路。登录页是枢纽：GitHub 登录与「Create account」都在那里，**一个入口覆盖两类人**。措辞取应用自身用词（`LoginForm.vue` 的按钮即 `Sign in`） |
+| hero 主按钮：`Get started` → 注册页 | **`Install the plugin`** → JetBrains Marketplace | 首屏该卖的是**产品本体**（插件采集数据，Web 是配套面板），而不是账户表单。地址**已核实**：Marketplace API `searchPlugins?search=Code Time Tracker` → xmlId `com.ahogek.code-time-tracker` → `plugins.jetbrains.com/plugin/29379`（302 downloads） |
+
+> **两条设计教训（已写进 `memory-bank/domains/ai-workflow/principles.md`）**：
+> ① **照搬通用套路前先验前提** —— "hero → 注册页"这个常见做法的前提是**注册页含 OAuth**，ctt 不满足，照搬即失效；
+> ② **用户给的局部事实不等于设计结论** —— "绝大多数叫 Sign in"说的是**顶栏**，把它推广到 hero 会让首屏最值钱的位置变成顶栏的复制品。
+
+**完成记录**
+
+- **交付物**：`src/router/modules/landing.ts` · `src/layouts/MarketingLayout.vue` · `src/features/landing/views/LandingView.vue` · `RouteNames` 增补 · `vite.config.ts` 分包分组 · 删除 `HomeView.vue` / `AboutView.vue` · `404View` 与 `OAuthErrorView` 的 `HOME` 引用改指 `LANDING`
+- **改名波及单测**：6 个 view 测试的 `RouteNames` mock + `guard.test.ts` + `App.test.ts` 一并更新（不更新则编译不过）
+- **实施中补做**：移除 `/auth` → LOGIN 的重定向（清单要求，**首轮遗漏**，复查时补上）
+- **文档同步**：`README.md`（landing 功能行 + 布局清单 + 目录树）· `docs/architecture.md`（目录树 · 路由样例去掉已删的 redirect · 元字段表补 **`guestOnly`**（此前未记录却由 guard 实际使用）· 修正陈旧的 `stores/` 清单：`counter.ts` 已不存在，`theme.ts`/`publicConfig.ts` 反而漏记）
+- **测试**：单测 **1437/1437** ✓ · E2E **24/24**（landing 4 + root 2 + auth 18，含 `protected-routes` 全部）✓ · `type-check` / `lint` / `build` 全绿 ✓
+- **验证方式**：pre-commit 钩子跑过 `vp fmt` / `vp lint --fix`，故对**提交后**的状态重跑全部门禁（不拿格式化前的结论充当证据）
+- **一处遗留（非本阶段范围）** ✗：**注册页没有 GitHub OAuth** —— 顶栏的 `Sign in` 入口已缓解；根治需先只读核对 `../ctt-server` 的 OAuth 建号语义（R3/R13），**归用户排期，AI 不得自行改动注册流程**
 
 ---
 ### P2：视觉基元与版面节奏
+
+> **前置已完成（2026-09-19）** ✓：本节的**全部实测依据**已归入领域文件
+> [`memory-bank/domains/landing-page/`](../../memory-bank/domains/landing-page/)（`principles.md` 证据分级 · `practices.md` 实测基线与组件原型 · `references.md` 参照物与源码路径），
+> 并由 `memory-bank/index.yaml` 索引。**P2 只负责把结论落成基元** —— 下面的清单是研究当时的原始记录，保留作依据，**不再重复维护** ✗。
 
 **目标：** 把"继承产品语言"落成可复用的基元，使后续区块**不需要各自发明样式**。
 
@@ -1376,7 +1402,11 @@ flowchart LR
 **目标：** 首屏 3 秒内说清"这是什么、我能用"，并且**用产品自己作证**而非抽象插画。
 
 - [ ] **评估定位手法**：Plausible 的 H1 是「Easy to use and privacy-friendly **Google Analytics alternative**」—— 直接**点名它替代谁**。ctt 是否采用对比式定位**属于产品/市场决策**，故本项仅列为**待决项**，不擅自定文案
-- [ ] Hero：一句话定位（平实陈述，**不用营销腔**）+ 副文案 + 主 CTA「免费开始」+ 次 CTA「看源码 · 自部署」（另评估「安装 JetBrains 插件」作为并列低摩擦入口 —— 开发者工具最常见的低摩擦动作就是安装类动作）+ 视觉主体
+- [ ] Hero：一句话定位（平实陈述，**不用营销腔**）+ 副文案 + 主 CTA + 次 CTA + 视觉主体
+  - **主 CTA 已定（P1 交付时拍板）** ✓：**`Install the plugin`** → JetBrains Marketplace `plugin/29379`（地址已核实）。原计划写的「免费开始 → 注册页」**已废弃** ✗ —— 首屏该卖产品本体，且注册页没有 OAuth
+  - **次 CTA** ✓：`View source` → 仓库（开源是产品事实，入口为一等公民）
+  - **账户入口不放 hero** ✗：归顶栏（`Sign in`）—— 营销首屏卖产品、工具导航管账户，职责分离
+  - 账号入口是否再入 hero：**当前判断为否** —— 顶栏已常驻，重复即浪费首屏最值钱的位置（此判断在 P3 实施时可复核）
 - [ ] **视觉主体用真实组件渲染**（热力图 / 7 维度榜单 / 奖杯柜），喂**代表性样例数据**，而不是截图或插画
   - 参照证据（2026-09-18 实测 Plausible 首页 —— 与 ctt 同构：开源 + 自托管免费 + 云版付费）：首页视觉 **58 个 inline SVG / 10 个 img / 0 个 canvas**，**hero 内确有 >400×200 的大视觉**。即：同类产品的产品展示走的是**矢量/组件**而非位图 ✓
 - [ ] 价值演示区：2–3 个"你的一天会变成这样"的片段，每个一句话说明 + 一个真实组件
@@ -1417,7 +1447,7 @@ flowchart LR
     - **`ctt-server` 与 `ctt-web` 完全开源、免费** —— 不是"免费档"，是**整套产品开源免费** ✓
     - **付费对象是「托管同步服务 + 整个配套系统」**（定价未定 ✗）；**商业企划尚未撰写** ✗
     - **页面要表达的是两条路**：**可免费自行部署** ✓ / **也可使用订阅**（托管同步服务）✓ —— 不是"免费档 vs 付费档"的漏斗叙事 ✗
-    - **导航须有开源地址入口**（如右上角 ✓），与主 CTA 并列
+    - **导航须有开源地址入口** ✓ —— **P1 已交付**（顶栏 `Source` 链接 + 页脚各一处）
   - **⚠️ 此前写入的三段式（自托管社区版 / 云托管免费档带限额 / 付费云与企业档）来自参照物的通行结构，本产品不采用** ✗ —— 保留在此仅作对照，**不得作为本产品的档位依据**（同类性≠质量：同行这么做不证明我们该这么做）
 
 - [ ] 若将来需要服务端下发档位，单列需求（本阶段不建接口）
@@ -1436,7 +1466,7 @@ flowchart LR
 - [ ] E2E（`e2e/landing/`）：未登录访问 `/` 呈现首页且**不被重定向**；已登录访问 `/` 呈现首页且 CTA 指向 `/dashboard`
 - [ ] **真机视觉验证**：独立 Chrome 打开 `/`，截图确认首屏、滚动各段、亮/暗两种模式、窄屏断点（不靠文本推断）
 - [ ] 更新 `README.md` 与 `docs/architecture.md`（入口策略变更属于架构事实）
-- [ ] 更新 `memory-bank/`（路由结构与入口策略变化进 `systemPatterns.md`）
+- [ ] 更新 `memory-bank/` —— **落点按 R24 分层分工**：路由结构与入口策略属**领域事实** → `domains/landing-page/`（P1 已建并写入 ✓）；`systemPatterns.md` **只收横切约定**（如 `@media (hover: hover)`、`motion-reduce:` 变体、状态用属性表达 ✓ 已入）
 
 **验收标准：**
 1. `type-check` / `lint` / `build` 全绿；单测与 E2E 计入全量基线且无回归
@@ -1448,8 +1478,8 @@ flowchart LR
 
 | 子任务 | 核心产出 | 状态 |
 |---|---|---|
-| P1：入口与路由骨架 | `MarketingLayout` + `/` 公开路由 + 守卫白名单 + CTA 随登录态 + 死代码核实 | 待开始 |
-| P2：视觉基元与节奏 | 区块容器 / 标题阶梯 / 表面与分隔 / 复用按钮 / 动效（含 reduced-motion）/ 令牌审计 | 待开始 |
+| P1：入口与路由骨架 | `MarketingLayout` + `/` 公开路由 + 守卫白名单 + CTA 随登录态 + 死代码核实 | ✅ 已完成 v0.47.0 |
+| P2：视觉基元与节奏 | 区块容器 / 标题阶梯 / 表面与分隔 / 复用按钮 / 动效（含 reduced-motion）/ 令牌审计 | 研究已完成 · 落地待开始 |
 | P3：Hero 与价值演示 | Hero + 真实组件渲染的样例展示 + 样例数据单一来源 | 待开始 |
 | P4：能力 · 怎么工作 · 开源 | 数字化能力清单 + 三步流程 + 数据归属声明 + 仓库与部署命令 | 待开始 |
 | P5：定价（数据驱动） | 档位类型 + 清单常量 + `PricingTable`（免费 / 设计中两态，零硬编码） | 待开始 |
@@ -1459,20 +1489,20 @@ flowchart LR
 
 | 项 | 风险 | 缓解措施 |
 |---|---|---|
-| 入口变更影响既有 E2E | `protected-routes` / `guest-guard` 依赖当前跳转行为 | P1 明确要求既有 E2E 继续全绿；先跑旧用例再改，改后立即复跑 |
+| 入口变更影响既有 E2E | `protected-routes` / `guest-guard` 依赖当前跳转行为 | **已实测** ✓：`protected-routes` / `guest-guard` / `login` / `logout` **全绿未改**；但 `e2e/vue.spec.ts` **必须重写** —— 它原本断言"未登录访问 `/` 跳登录、登录后看 Home"，与新契约**正好相反**（教训：*受影响的 E2E 未必是被点名的那几个，凡断言过旧行为的都要逐一核对*） |
 | 「继承产品语言」容易走样 | 实施时随手加新灰阶/新彩色 | P2 的**令牌审计**列为交付物；新增令牌必须在计划里写出处 |
 | 真实组件作视觉主体 | 组件带查询逻辑，直接嵌入首页会发请求 | P3 明确用**样例数据**驱动，组件需能在"无查询"下渲染（若做不到，抽取展示子组件，不复制实现） |
 | 定价结构先于业务 | 结构可能与最终档位不匹配 | 数据驱动 + 零硬编码：改清单即可，不动模板；「设计中」状态如实呈现 |
 | **视觉与文案脱节** | 丢一堆截图不加解释 —— 开发者工具落地页最常见的失手 | P3 把"每个视觉配一行说明"列为**交付物**（不是可选） |
 | 首页拖慢首屏 | 视觉密集 + 组件较多 | P3 要求 LCP 元素非图片；`/` 独立 chunk；P6 真机确认 |
 
-**整体验收标准：**
-- [ ] 未登录访问 `/` 呈现首页；受保护路由守卫行为**未变**（既有 E2E 全绿）
-- [ ] 已登录访问 `/` 仍呈现首页，CTA 指向 `/dashboard`
-- [ ] 首页**未新增设计令牌**（或新增有出处）
-- [ ] 定价区数据驱动、零硬编码数字
-- [ ] 单测 + E2E + 真机截图三处证据齐备
-- [ ] README / `docs/architecture.md` / `memory-bank` 已同步
+**整体验收标准（按阶段进度逐条勾选）：**
+- [x] 未登录访问 `/` 呈现首页；受保护路由守卫行为**未变**（既有 E2E 全绿）✓ **P1 达成**
+- [x] 已登录访问 `/` 仍呈现首页，CTA 指向 `/dashboard` ✓ **P1 达成**
+- [x] 首页**未新增设计令牌**（或新增有出处）✓ **P1 达成** —— 首屏只用既有语义类（`bg-background` / `text-foreground` / `text-primary` / `border-border` / `text-muted-foreground`），零新值 ✓
+- [ ] 定价区数据驱动、零硬编码数字 —— **P5 未开始**
+- [ ] 单测 + E2E + 真机截图三处证据齐备 —— **单测 1437/1437 ✓ · E2E 24/24 ✓ · 真机截图待 P6**（P1 阶段以构建产物与 E2E 断言为证，未出截图）
+- [x] README / `docs/architecture.md` / `memory-bank` 已同步 ✓ **P1 达成**
 
 ## 📌 进度同步（2026-09-18 · v0.45.3）
 > 上一次页面同步停在 v0.15.2（2026-09-13 编辑），此后仓库推进到 **v0.45.3**。本节补齐这段缺口，并把仍未完成的事项列为新目标。

@@ -7,6 +7,29 @@
   其中 4 个非 AI 提交**逐个** cherry-pick 进 master（`0aa4cfb` / `edd67a0` / `9e1473a` / `2e22f5f`）✓ —— AI 内容（`memory-bank/` · `AGENTS.md` · `.plans/`）**未进 master** ✓（已核验 ✓）
   **钩子复核** ✓：pre-commit 跑过 `vp fmt`/`vp lint --fix`，故对**提交后**的状态重跑门禁 —— type-check ✓ lint ✓ unit **1437/1437** ✓ build ✓（`feature-landing` 1.32 kB 独立 ✓）E2E **24/24** ✓
 
+### 登录后 Dashboard 空白（用户报告，2026-09-19 修复）
+
+**症状**（用户报告 + 截图）：登录后落在 `/dashboard`，侧边栏与顶栏正常，**主内容区全空** ✗；**刷新即恢复** ✓。
+
+**根因（取证得出，非推断）** ✓：登录页用 `router.push({ name: RouteNames.DASHBOARD })` 跳转 ✗ —— **按父级名**导航只解析出父级记录（`AppLayout`）✓，**空路径子路由 `path: ''` 不会被附带** ✗ → 内层 `<router-view>` 无匹配 → 内容区渲染为空 ✓。判别实验：空白状态下**点侧边栏 Dashboard 链接**（按 path 跳）→ **立刻恢复** ✓✓；`ErrorBoundary` 槽位实测为 `<!---->` ✓、**控制台零错误** ✓（静默失败 ✗）。
+
+**为什么此时才暴露** ✓：这条路**一直存在** ✗，但此前 `/` 是受保护路由 ✓ → 未登录必被守卫带上 `?redirect=/` ✓ → 登录后按**字符串路径**跳 ✓ 正常 ✓。**P1 把 `/` 变公开** ✓ 且新入口直连 `/auth/login`（**无 redirect 参数** ✗）→ 这条埋着的路成了主路径 ✗。
+
+**修复** ✓：给**所有**「父级 + 空路径子路由」加 `redirect` 指向默认子页 —— `dashboard`（本次触发）· `devices` · `achievements` · `leaderboard` · `settings` · 落地页外壳 ✓；`auth` **故意不加** ✓（用户明确要求移除其 redirect ✓）。
+
+**测试盲区（已补）** ✓✓：`protected-routes.spec.ts` 原来**只断言登录后的 URL** ✗ —— 这正是该 bug 能长期隐身的原因 ✓。新增用例断言**内容区非空** ✓（`getByRole('main').last()` ✓），**已验证可失败**（修复前连红两次 ✓ 修复后转绿 ✓）。
+
+**测试基建的两处发现** ✓：页面上存在**两个 `<main>`** ✗（`SidebarInset` 一个 + `AppLayout` 内容区一个 ✓）→ 无障碍上页面应只有一个 main ✓，属**既有问题**，已记未修 ✗；`e2e/auth/protected-routes.spec.ts` 的既有断言均只覆盖 URL ✓。
+
+### 登出落点与提示（用户提问 → 已定，2026-09-19）
+
+用户问「登出后该进首页还是登录页」。取证：现状是 `logout()` → `clearAuth()` → `push({name: LOGIN})` ✓，**且无任何提示** ✗。
+
+**结论（用户认可）** ✓：**落点维持 `/auth/login`** —— 登出是「结束会话」，自然终点是登录面 ✓；换账号零点击可达 ✓；而 `/` 的职责是向**尚未认识产品的人**介绍产品 ✓，给刚登出的人看营销页是错配 ✗。反方（回到 `/` 与"`/` 是所有未登录访客的门面"一脉相承 ✓）已向用户说明 ✓，属产品取向 ✓。
+
+**并补上缺失的反馈** ✓✓：`logout()` 现在发 `Signed out` toast —— 没有它，页面只是无声变化 ✗，用户无法区分「我主动退出」与「会话掉了」✗。**即使 `logoutAll` 失败也照样提示** ✓（fail-safe 的本义就是本地已退出 ✓，此时报服务端错误只是噪音 ✗）。
+**回归守卫** ✓：`e2e/auth/logout.spec.ts` 新增用例断言该提示可见 ✓（auth 套件 19 → 20 ✓）。
+
 **Phase**: 落地页 P1（公开入口与路由骨架）+ 账号删除 + Achievements + Leaderboard + Dashboard
 **Version**: 0.47.0 (2026-09-19)
 **Branch**: develop

@@ -40,34 +40,24 @@ export const fetchStats = (params: StatsParams) =>
 
 ## Value Formatters
 
-A formatter is **shared infrastructure, not a panel helper** — so it lives in `src/lib/utils/`
-and is imported through the barrel (`@/lib/utils`), never co-located with the components that
-happen to call it first.
+A formatter is **shared infrastructure, not a panel helper**: `src/lib/utils/`, imported through the
+barrel (`@/lib/utils`), never co-located with whoever called it first.
 
-| Formatter                                        | Home                        |
-| ------------------------------------------------ | --------------------------- |
-| `formatRelativeTime`, `formatDateTime`, `formatDuration` | `src/lib/utils/time.ts`     |
-| `formatPercent`                                  | `src/lib/utils/percent.ts`  |
-| `formatScore`                                    | `src/lib/utils/score.ts`    |
+| Formatter | Home |
+| --------- | ---- |
+| `formatRelativeTime`, `formatDateTime`, `formatDuration` | `src/lib/utils/time.ts` |
+| `formatPercent` | `src/lib/utils/percent.ts` |
+| `formatScore` | `src/lib/utils/score.ts` |
 
-- **Do NOT inline per-view formatters.** `formatDuration` was unified this way in v0.18.0
-  (`DeviceListView` + `ApiKeysView`); `formatPercent` was misplaced under
-  `features/dashboard/components/` when first written and moved to `lib/utils/` in v0.35.0 for the
-  same reason — same kind of thing as `formatDuration`, so it belongs in the same place.
-- A formatter's *rules* may still come from a domain (percent precision follows
-  `dashboard-visualization` P8); the *file* does not.
-- **Single-consumer is not a reason to leave a formatter in place** — `formatPercent` moved
-  into `lib/utils/` while all four of its callers were dashboard panels, and `formatScore`
-  (v0.42.3) while its only caller was the leaderboard view. Nor is a domain type in the
-  signature: `formatScore(score, dimension)` takes `LeaderboardDimension`, which is a
-  **type-only** import and therefore erased — it adds no runtime dependency on the schema.
-  Both of these were argued as reasons NOT to move a formatter, and both are wrong; do not
-  reach for them again.
-- Corollary: a formatter must not live in a *query* composable. `formatScore` sat inside
-  `useLeaderboard` next to `useQuery`, which is co-location with the thing that happened to
-  call it first — the exact pattern this rule names.
-- No dayjs (R12); the hand-rolled formatters cover all cases.
-- vue-tsc gotcha (v0.18.0): template inline arrow functions bound to a function-typed prop (e.g. `:success-description="(name) => ..."`) lose contextual typing when the component imports a helper that moves out of the SFC — annotate the param explicitly `(name: string)` to silence TS7006.
+Three arguments for keeping one in place, all **already rejected** — do not reach for them again:
+**single consumer** (`formatPercent` moved with four dashboard callers, `formatScore` with one);
+**a domain type in the signature** (`formatScore` takes `LeaderboardDimension` — a type-only, erased
+import, so it adds no runtime dependency); **it reads naturally next to its query** (`formatScore` sat
+inside `useLeaderboard` — co-location is the pattern this rule names). A formatter's *rules* may come
+from a domain (percent precision → `dashboard-visualization` P8); its *file* does not. No dayjs (R12).
+
+vue-tsc gotcha: a template inline arrow bound to a function-typed prop (`:success-description="(name) => …"`)
+loses contextual typing — annotate the param (`(name: string)`) to silence TS7006.
 
 ## Router Architecture
 
@@ -141,14 +131,12 @@ When auditing built CSS, `rm -rf dist` first — the build does not always purge
 
 ### Conventions learned from adding page specs
 
-- **Fixtures declare the wire shape locally; never import from `src/`.** `e2e/tsconfig.json` only
-  includes `./e2e/**`, and the schema's *parsed* type is not the wire shape: `.default(null)` makes
-  `windowStart`/`currentUserRank` required in the output while the server omits the keys entirely.
-  A fixture typed as the parsed type cannot express the omitted-key case it exists to reproduce.
-- **One navigation per test.** The auth harness seeds the session in memory, so `page.reload()` and
-  a fresh `page.goto()` both re-run the boot sequence and bounce to `/auth/login`. Client-side
-  `<RouterLink>` navigation works, but a route whose data the guard does not re-check is simplest —
-  every existing spec logs in once inside its setup helper and never navigates again.
+- **Fixtures declare the wire shape locally; never import from `src/`.** The schema's *parsed* type
+  is not the wire shape — `.default(null)` makes `windowStart`/`currentUserRank` required in the
+  output while the server omits the keys — so a fixture typed from `src/` cannot express the case it exists to reproduce.
+- **One navigation per test** for specs whose auth harness seeds the session in memory: a fresh
+  `page.goto()` re-runs the boot sequence and bounces to `/auth/login`. Specs that log in for real via
+  `loginViaForm` *do* navigate afterwards (verified: `protected-routes.spec.ts`).
 - **TanStack caches per query key**, so returning to a page already fetched renders from cache and
   issues **no** request. Assert the rendered result, or pick an offset that is genuinely uncached;
   a `lastQuery`-style wire assertion will otherwise read the previous request and mislead.
@@ -188,13 +176,25 @@ RawKeyDialog is hard to dismiss (raw key unrecoverable): overlay/Escape/X blocke
 
 ## Distribution Semantics
 
-The conservation-vs-accumulation ruling (time-axis must equal `summary.total`; categorical
-necessarily exceeds it) lives in one place only:
-**[`domains/backend-contract/principles.md`](./domains/backend-contract/principles.md) P2**.
+One owner: the conservation-vs-accumulation ruling →
+[`domains/backend-contract/principles.md`](./domains/backend-contract/principles.md) P2.
+
+## Session Ending
+
+`logout()` lands on the **login page**, not the landing page (sign-out ends a session; switching
+accounts is then zero clicks away). It always fires a **`Signed out` toast**, even when `logoutAll`
+failed — otherwise the page merely changes and a deliberate sign-out looks like a dropped session.
+
+## Router Convention: parent records redirect to their default child
+
+**A parent with an empty-path child must redirect to it.** Navigating to the parent **by name**
+resolves that record alone — the child is not appended — so the layout's inner `<router-view>`
+matches nothing and renders **blank (no error, correct URL)**. Every such parent carries a `redirect`
+to its default child. **Corollary: a URL assertion is not evidence the page rendered.**
 
 ## Interaction And Motion Conventions
 
-- **Hover is gated on capability**: hover styles live inside `@media (hover: hover)`; on touch devices a hover state otherwise sticks after a tap (`ThemeToggle.vue` is the known instance).
+- **Hover is gated on capability**: hover styles live in `@media (hover: hover)`; otherwise a touch device keeps the hover state after a tap.
 - **Motion carries its counterpart**: `motion-reduce:transition-none` / `duration-0` / `animate-none`.
-- **Theme-dependent first paint needs a mounted guard** — the server cannot know the client's theme, so such an element jumps on hydration.
-- **State as attribute**: reka-ui emits `data-state` / `data-side` / `data-orientation` — style against `data-[state=open]:` rather than a class combination. Design values live in [`domains/landing-page/practices.md`](./domains/landing-page/practices.md).
+- **Theme-dependent first paint needs a mounted guard** — the server cannot know the client's theme.
+- **State as attribute**: reka-ui emits `data-state`/`data-side`/`data-orientation` — style `data-[state=open]:` rather than a class combination. Design values: [`domains/landing-page/practices.md`](./domains/landing-page/practices.md).
