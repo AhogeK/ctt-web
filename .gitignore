@@ -53,7 +53,10 @@ src/__tests__/*.js
 .agents/
 .claude/
 .opencode/
-.omp/
+# AI tooling is versioned so it survives across sessions and machines;
+# everything else under .omp/ stays out of the repo.
+.omp/*
+!.omp/tools/
 
 # Skills lock cache (regenerable)
 skills-lock.fast-update-cache.json
