@@ -26,8 +26,7 @@ vi.mock('vue-router', () => ({
 
 vi.mock('@/router/route-names', () => ({
   RouteNames: {
-    HOME: 'home',
-    HOME_INDEX: 'home-index',
+    LANDING: 'landing',
     NOT_FOUND: 'not-found',
     AUTH_LAYOUT: 'auth-layout',
     LOGIN: 'login',
@@ -165,7 +164,7 @@ describe('OAuthErrorView', () => {
       await homeButton!.trigger('click')
 
       expect(mockReplace).toHaveBeenCalledTimes(1)
-      expect(mockReplace).toHaveBeenCalledWith({ name: 'home' })
+      expect(mockReplace).toHaveBeenCalledWith({ name: 'landing' })
     })
   })
 })

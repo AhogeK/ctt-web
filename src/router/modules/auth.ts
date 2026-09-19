@@ -6,7 +6,9 @@ const authRoutes: RouteRecordRaw[] = [
     path: '/auth',
     name: RouteNames.AUTH_LAYOUT,
     component: () => import('@/layouts/AuthLayout.vue'),
-    redirect: { name: RouteNames.LOGIN },
+    // No redirect to LOGIN: `/auth` on its own is not a destination anyone
+    // links to (every entry point names a child), and silently forwarding it
+    // hid which URL the visitor actually asked for.
     meta: { title: 'Authentication', hideInMenu: true },
     children: [
       {

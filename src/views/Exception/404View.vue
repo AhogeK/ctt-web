@@ -13,7 +13,7 @@ const router = useRouter()
  * Navigate to the home page using type-safe route name.
  */
 function handleGoHome() {
-  router.push({ name: RouteNames.HOME })
+  router.push({ name: RouteNames.LANDING })
 }
 
 /**

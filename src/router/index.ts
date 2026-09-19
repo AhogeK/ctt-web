@@ -11,22 +11,6 @@ Object.keys(routeModules).forEach((key) => {
   featureRoutes.push(...mod)
 })
 
-const constantRoutes: RouteRecordRaw[] = [
-  {
-    path: '/',
-    name: RouteNames.HOME,
-    component: () => import('@/layouts/AppLayout.vue'),
-    meta: { title: 'Home', requiresAuth: true },
-    children: [
-      {
-        path: '',
-        name: RouteNames.HOME_INDEX,
-        component: () => import('@/views/HomeView.vue'),
-      },
-    ],
-  },
-]
-
 // 404 catch-all must be LAST — placed after feature routes to avoid intercepting valid paths
 const fallbackRoutes: RouteRecordRaw[] = [
   {
@@ -39,7 +23,7 @@ const fallbackRoutes: RouteRecordRaw[] = [
 
 const router = createRouter({
   history: createWebHistory(import.meta.env.BASE_URL),
-  routes: [...constantRoutes, ...featureRoutes, ...fallbackRoutes],
+  routes: [...featureRoutes, ...fallbackRoutes],
   scrollBehavior(to, _from, savedPosition) {
     if (savedPosition) return savedPosition
     if (to.hash) return { el: to.hash, behavior: 'smooth' }
