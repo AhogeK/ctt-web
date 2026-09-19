@@ -1,3 +1,9 @@
+**已提交**: v0.47.2 —— develop `e782010` ✓ / master `d73e493` ✓（均已推送 · clean · 代码面 0 差异 ✓）
+  5 个 develop 提交：`95b7442` feat(页脚生态清单/删顶栏图标) · `4bfcfee` chore(release) · `2ed1bd2` chore(agents 规则索引化) · `e0399ac` chore(tools .omp/tools) · `e782010` chore(memory)
+  非 AI 两个（`95b7442` / `4bfcfee`）**逐个** cherry-pick 进 master（`a508ee1` / `d73e493`）✓ 零冲突；AI 内容未进 master ✓（逐一核验 AGENTS.md / index.yaml / .omp/tools / domains/README 在 master 上**均不存在** ✓）
+  **钩子复核** ✓：对**提交后**的状态重跑门禁 —— type-check ✓ lint ✓ unit **1437/1437** ✓ build ✓ E2E **25/25** ✓
+  **R18 收尾** ✓：`sweep.sh` → `clean ✓`（无 scratch 浏览器/profile、无 E2E 产物、无临时文件）· `check-knowledge.sh` → 索引一致 · 全部 ≤200 行 · 无死链 ✓
+
 ### 落地页 P1：`/` 由「重定向登录」变为公开首页（2026-09-19，v0.47.0）
 
 `RouteNames` 增 `MARKETING_LAYOUT` + `LANDING`（镜像 `AUTH_LAYOUT` 模式）· `/` 移入 `router/modules/landing.ts`（`constantRoutes` 随之删除）· 新增 `MarketingLayout` + `LandingView` · 死代码 `HomeView`/`AboutView` 删除 · 分包 `feature-landing` ✓。**关键语义**：守卫只在 `requiresAuth` 为真时拦；**`guestOnly` 会把已登录用户弹走** → `/` 绝不标它。完整交付记录见 [`.plans/ctt-web-development-plan.md`](../.plans/ctt-web-development-plan.md) §P1。
