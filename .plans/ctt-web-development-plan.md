@@ -1310,7 +1310,7 @@ flowchart LR
 ### P2：视觉基元与版面节奏
 
 > **前置已完成（2026-09-19）** ✓：本节的**全部实测依据**已归入领域文件
-> [`memory-bank/domains/landing-page/`](../../memory-bank/domains/landing-page/)（`principles.md` 证据分级 · `practices.md` 实测基线与组件原型 · `references.md` 参照物与源码路径），
+> [`memory-bank/domains/landing-page/`](../memory-bank/domains/landing-page/)（`principles.md` 证据分级 · `practices.md` 实测基线与组件原型 · `references.md` 参照物与源码路径），
 > 并由 `memory-bank/index.yaml` 索引。**P2 只负责把结论落成基元** —— 下面的清单是研究当时的原始记录，保留作依据，**不再重复维护** ✗。
 
 **目标：** 把"继承产品语言"落成可复用的基元，使后续区块**不需要各自发明样式**。
