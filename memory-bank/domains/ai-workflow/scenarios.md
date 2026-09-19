@@ -138,7 +138,11 @@ Trigger: a task needs a visual/interaction/layout decision that the repo does no
 
 ## S11. Closing a slice: the five questions
 
-**Step 0 — sweep, and show it.** Run `bash .omp/tools/sweep.sh` and put its output in the report;
+**Step 0 — reconcile, then sweep.** Bring the todo list level with reality (every finished step
+ticked, leftovers removed) and say so in the report — it is session state, so no script can check
+it and the report is the only place it can be verified.
+
+**Sweep, and show it.** Run `bash .omp/tools/sweep.sh` and put its output in the report;
 "clean ✓" is the only evidence of a clean round. It removes Playwright artifacts and scratch
 profiles/browsers, and flags untracked files. `bash .omp/tools/check-knowledge.sh` does the same for
 the knowledge base (index drift · size limits · dead links).
