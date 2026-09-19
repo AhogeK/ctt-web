@@ -7,6 +7,11 @@
   其中 4 个非 AI 提交**逐个** cherry-pick 进 master（`0aa4cfb` / `edd67a0` / `9e1473a` / `2e22f5f`）✓ —— AI 内容（`memory-bank/` · `AGENTS.md` · `.plans/`）**未进 master** ✓（已核验 ✓）
   **钩子复核** ✓：pre-commit 跑过 `vp fmt`/`vp lint --fix`，故对**提交后**的状态重跑门禁 —— type-check ✓ lint ✓ unit **1437/1437** ✓ build ✓（`feature-landing` 1.32 kB 独立 ✓）E2E **24/24** ✓
 
+**已提交**: v0.47.1 —— develop `7059fcb` ✓ / master `6ef9fa5` ✓（两分支均已推送、clean、代码面 0 差异 ✓）
+  4 个 develop 提交：`b16a6cc` fix(router 父级重定向) · `5131f5d` feat(auth 登出提示) · `fa1ed27` chore(release) · `7059fcb` chore(memory)
+  其中 3 个非 AI 提交**逐个** cherry-pick 进 master（`911412b` / `07ab46b` / `6ef9fa5`）✓ 零冲突 ✓；AI 内容未进 master ✓（已逐一核验：index.yaml / systemPatterns / AGENTS.md / .plans 在 master 上**均不存在** ✓）
+  **钩子复核** ✓：pre-commit 跑过 `vp fmt`/`vp lint --fix` → 对**提交后**的状态重跑门禁：type-check ✓ lint ✓ unit **1437/1437** ✓ build ✓ E2E **104/104** ✓
+
 ### 登录后 Dashboard 空白（用户报告，2026-09-19 修复）
 
 **症状**（用户报告 + 截图）：登录后落在 `/dashboard`，侧边栏与顶栏正常，**主内容区全空** ✗；**刷新即恢复** ✓。
