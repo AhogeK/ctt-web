@@ -103,6 +103,26 @@ renaming or removing a domain, update the table below in the same change.
 | `practices.md`   | Concrete how-to, parameters, code patterns, traps avoided    | You know what to do and need to do it correctly      |
 | `references.md`  | Facts: endpoints, colour values, file paths, data dictionary | You need to look something up, not decide            |
 
+## Where a fact comes from (回源 — R24)
+
+Different facts have different authorities; checking one against the wrong source is how a claim
+ends up confidently wrong.
+
+| Fact about | Confirm against |
+| --- | --- |
+| This repo's behaviour (components, state, routes, styles) | `src/` and its config |
+| **What the UI actually renders** (colour, geometry, interaction) | **A real browser render** — computed styles, measured geometry. Declared CSS is not evidence. |
+| Backend contract (endpoints, fields, error codes, semantics) | `../ctt-server` source (read-only, R13) + the `appVersion` at the time of recording |
+| User / product intent | The user's own words — never infer it backwards from what the code happens to do |
+| Why something is the way it is | `git log`, `memory-bank/archives/` |
+
+Two inferences are forbidden: ① "the code does X, therefore X is the correct business rule";
+② "an old document said X, so the code cannot have changed".
+
+**High-risk knowledge** (backend contract, Zod schemas, error codes, state transitions, accessibility
+and dark-mode constraints) is **confirmed by the user**; automation only detects the change and
+proposes the edit.
+
 ## Growing the map
 
 - Create a domain only when real reusable knowledge exists — an empty domain is a violation, not a placeholder.

@@ -27,6 +27,7 @@ evidence, resource ownership, read-only boundaries.
 | `memory-bank/domains/`      | Domain layer: this knowledge graph                            |
 | `memory-bank/archives/`            | Frozen history moved out of the timeline layer                |
 | `.sisyphus/`                | Local dev helpers (token bootstrap, scratch verification)     |
+| `.omp/tools/`               | Versioned AI tooling: resource sweep, knowledge check (R18)    |
 
 ## Terminology
 

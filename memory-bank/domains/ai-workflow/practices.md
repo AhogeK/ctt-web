@@ -36,9 +36,8 @@ cherry-picked — stop and investigate before pushing.
 `env -u CI` matters: with `CI` set, Playwright switches to a preview build instead of the running
 dev server.
 
-**The suite is headless, including locally — `--headed` is the opt-in** (`--headed` launches a real
-Chromium; the default is `chromium_headless_shell`, a binary that cannot open a window). The old
-default was headed, which opened a browser per spec and stole focus for the whole run.
+**The suite is headless, including locally — `--headed` is the opt-in** (the default is
+`chromium_headless_shell`, which cannot open a window; the old default opened one browser per spec).
 
 **Check whose server is on 5173 before believing a failed run.** `reuseExistingServer: !CI` drives
 whatever holds the port, so another project's dev server there makes **every** spec fail at the first
@@ -194,7 +193,8 @@ assertion had already been rewritten.
 - Long-running process → background it with its own log file; record the PID for teardown.
 - Teardown: match the process command line against the resource you started, then stop it. Never
   kill by port alone.
-- **Close every browser tab you opened — `app.relay` tabs live in the user's real browser.** A
-  relay tab cannot be closed for them; after releasing it, **ask the user to confirm**, never
-  assume it is gone. Then remove scratch profiles (`/tmp/*-profile`) and confirm with
-  `pgrep -f 'user-data-dir=/tmp/'` that no stray instance is alive.
+- **Close every browser tab you opened** — `app.relay` tabs live in the user's real browser and
+  cannot be closed for them: after releasing one, **ask the user to confirm**. Then run
+  `bash .omp/tools/sweep.sh`: it kills scratch-profile browsers **first**, deletes their profiles
+  **after**. **A profile count read right after an `rm` is a lie** (a live Chrome recreates the
+  directory) — that is how a stray window survived a round reporting "clean".

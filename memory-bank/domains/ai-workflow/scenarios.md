@@ -138,8 +138,12 @@ Trigger: a task needs a visual/interaction/layout decision that the repo does no
 
 ## S11. Closing a slice: the five questions
 
-Before reporting a slice as done, answer all five **with evidence**. An unanswered one is a finding,
-not a formality.
+**Step 0 — sweep, and show it.** Run `bash .omp/tools/sweep.sh` and put its output in the report;
+"clean ✓" is the only evidence of a clean round. It removes Playwright artifacts and scratch
+profiles/browsers, and flags untracked files. `bash .omp/tools/check-knowledge.sh` does the same for
+the knowledge base (index drift · size limits · dead links).
+
+After that, answer all five **with evidence**. An unanswered one is a finding, not a formality.
 
 | Question | Evidence that settles it |
 | --- | --- |
