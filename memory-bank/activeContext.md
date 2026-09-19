@@ -2,6 +2,11 @@
 
 ## Current Status
 
+**已提交**: v0.47.0 —— develop `7704628` ✓ / master `2e22f5f` ✓（两分支均已推送、clean、代码面 0 差异 ✓）
+  5 个 develop 提交：`55bec6e` feat(landing) · `32aff48` test(landing) · `ae4850b` docs · `65bc033` chore(release) 0.47.0 · `7704628` chore(memory)
+  其中 4 个非 AI 提交**逐个** cherry-pick 进 master（`0aa4cfb` / `edd67a0` / `9e1473a` / `2e22f5f`）✓ —— AI 内容（`memory-bank/` · `AGENTS.md` · `.plans/`）**未进 master** ✓（已核验 ✓）
+  **钩子复核** ✓：pre-commit 跑过 `vp fmt`/`vp lint --fix`，故对**提交后**的状态重跑门禁 —— type-check ✓ lint ✓ unit **1437/1437** ✓ build ✓（`feature-landing` 1.32 kB 独立 ✓）E2E **24/24** ✓
+
 **Phase**: 落地页 P1（公开入口与路由骨架）+ 账号删除 + Achievements + Leaderboard + Dashboard
 **Version**: 0.47.0 (2026-09-19)
 **Branch**: develop
