@@ -194,7 +194,7 @@ to its default child. **Corollary: a URL assertion is not evidence the page rend
 
 ## Interaction And Motion Conventions
 
-- **Hover is gated on capability**: hover styles live in `@media (hover: hover)`; otherwise a touch device keeps the hover state after a tap.
+- **Hover is gated on capability**: Tailwind's `hover:` variant already compiles into `@media (hover: hover)` (verified: 8 in the build for 0 in source) — the case that needs work is **hand-written** `:hover` (e.g. `ThemeToggle.vue`), which a tap otherwise leaves stuck.
 - **Motion carries its counterpart**: `motion-reduce:transition-none` / `duration-0` / `animate-none`.
 - **Theme-dependent first paint needs a mounted guard** — the server cannot know the client's theme.
 - **State as attribute**: reka-ui emits `data-state`/`data-side`/`data-orientation` — style `data-[state=open]:` rather than a class combination. Design values: [`domains/landing-page/practices.md`](./domains/landing-page/practices.md).

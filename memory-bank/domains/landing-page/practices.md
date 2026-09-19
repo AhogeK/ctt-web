@@ -32,7 +32,7 @@ design against** — re-derive only if a source changes.
 
 | Gap | Evidence | Fix |
 | --- | --- | --- |
-| `@media (hover: hover)` absent | `src/` scan: **0 hits** (vs 20 / 7) | Wrap hover styles; `ThemeToggle.vue:83` already affected |
+| Hover gating — **was mis-measured** | Earlier: "`@media (hover: hover)` 0 hits in `src/`" ⇒ recorded as a repo-wide gap. **Wrong**: Tailwind v4 compiles the `hover:` variant *into* `@media (hover: hover)` — the built CSS carries **8** occurrences for **0** in source. The measurement looked at source and concluded about output. | The real instance is the **hand-written** CSS: `ThemeToggle.vue`'s `.theme-toggle:hover` (and `:root:not(.dark) …`) sit **outside** any `@media (hover: hover)` — verified in the built CSS — so a tap can leave the hover style stuck. Wrap hand-written `:hover`; Tailwind variants need nothing. |
 | Touch targets not numeric | `DESIGN.md` §8 is qualitative; the four "44" are colour hexes | Propose **44×44 CSS px** minimum → into `DESIGN.md`, not a component |
 | `motion-reduce:` not used as variants | 3 `prefers-reduced-motion` occurrences, none as Tailwind variants | Convert to variant form |
 | No mounted guard on theme-aware first paint | `src/stores/theme.ts` has no `mounted` gate | Add it where the first screen renders theme-dependent UI (see the reference's `use-mounted.ts`) |
@@ -66,3 +66,14 @@ design against** — re-derive only if a source changes.
 
 The hero copy shipped in P1 is a placeholder for the *layout*, not the final messaging — the capability
 walkthrough, open-source block and pricing structure are still open (see `meta.md`).
+
+## AuthLayout 背景：审计发现（**仅记录，不实施** — 技能实验期间实测，非本轮任务）
+
+登录/注册页背景由 `src/layouts/AuthLayout.css`（独立 CSS，不在 `.vue` 里）提供，实测：
+
+- **10 处 `animation: … infinite`**：网格 `mesh-shift 20s`；光斑 `orb-drift-1..6` = **15/20/25/18/22/16 s**；假光标 **1.2s**
+- 六个光斑周期互质组合 → 最小公倍数 ≈ **39600 s ≈ 11 小时** → **永不重同步**，背景从不静止
+- 周期最短的 1.2s 元素最抢眼，与前景 3D 卡片争焦点
+- 手写 `:hover` 未包 `@media (hover: hover)`：本域相关文件含 `AuthLayout.css`（11 处）与 auth 各表单/视图；是否构成缺陷取决于该 hover 是否承载**必需信息**（纯装饰则无害）
+
+**处置**：这不是待办 —— 按项目节奏，既有页面的动效统一在后续阶段处理；届时用 `motion-spec` 技能生成方案，而非当作规则约束。
