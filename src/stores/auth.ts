@@ -1,6 +1,7 @@
 import { ref, computed, nextTick } from 'vue'
 import { defineStore } from 'pinia'
 import { useStorage } from '@vueuse/core'
+import { toast } from 'vue-sonner'
 import { login as loginApi, refresh as refreshApi, logoutAll } from '@/lib/api/auth'
 import { fetchCurrentUser, type UserProfile } from '@/lib/api/user'
 import { TERMS_EXPIRED_EVENT } from '@/lib/api/instance'
@@ -410,6 +411,11 @@ export const useAuthStore = defineStore('auth', () => {
       // User can always log out locally even if server is unreachable
     } finally {
       clearAuth()
+      // Confirm the outcome: without it the page simply changes and the user
+      // cannot tell a deliberate sign-out from a dropped session. Shown even
+      // when logoutAll failed — the fail-safe contract is that they ARE signed
+      // out locally, and reporting the server error here would only add noise.
+      toast.success('Signed out')
       void router.push({ name: RouteNames.LOGIN })
     }
   }
