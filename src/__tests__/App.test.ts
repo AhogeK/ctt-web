@@ -21,7 +21,7 @@ describe('App.vue', () => {
       routes: [
         {
           path: '/',
-          name: 'home',
+          name: 'landing',
           component: { template: '<div>Home</div>' },
         },
       ],

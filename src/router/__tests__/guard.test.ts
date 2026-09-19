@@ -26,9 +26,9 @@ describe('Router Guards', () => {
   const testRoutes: RouteRecordRaw[] = [
     {
       path: '/',
-      name: RouteNames.HOME,
+      name: RouteNames.LANDING,
       component: { template: '<div>Home</div>' },
-      meta: { title: 'Home' },
+      meta: { title: 'Landing' },
     },
     {
       path: '/dashboard',
@@ -99,7 +99,7 @@ describe('Router Guards', () => {
       await router.push('/')
       await router.isReady()
 
-      expect(document.title).toBe('Home - Code Time Tracker')
+      expect(document.title).toBe('Landing - Code Time Tracker')
     })
 
     it('does not modify title when route has no meta title', async () => {

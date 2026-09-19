@@ -58,7 +58,7 @@ vi.mock('@/stores/auth', () => ({
 
 vi.mock('@/router/route-names', () => ({
   RouteNames: {
-    HOME: 'home',
+    LANDING: 'landing',
     NOT_FOUND: 'not-found',
     AUTH_LAYOUT: 'auth-layout',
     LOGIN: 'login',

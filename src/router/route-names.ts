@@ -4,8 +4,8 @@
  */
 export const RouteNames = {
   // Root & Exception
-  HOME: 'home',
-  HOME_INDEX: 'home-index',
+  MARKETING_LAYOUT: 'marketing-layout',
+  LANDING: 'landing',
   NOT_FOUND: 'not-found',
 
   // Auth

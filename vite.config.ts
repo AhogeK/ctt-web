@@ -205,6 +205,10 @@ export default defineConfig({
               test: /src\/features\/settings/,
               name: 'feature-settings',
             },
+            {
+              test: /src\/features\/landing/,
+              name: 'feature-landing',
+            },
           ],
         },
       },

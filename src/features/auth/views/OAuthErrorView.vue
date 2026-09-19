@@ -33,7 +33,7 @@ function handleRetry() {
 }
 
 function handleGoHome() {
-  void router.replace({ name: RouteNames.HOME })
+  void router.replace({ name: RouteNames.LANDING })
 }
 </script>
 
