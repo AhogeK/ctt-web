@@ -26,11 +26,13 @@ src/
 │   ├── auth/           # Authentication (LoginView, RegisterView)
 │   ├── dashboard/      # Dashboard analytics (DashboardHome)
 │   ├── devices/        # Device management (DeviceListView)
+│   ├── landing/        # Public landing page (LandingView)
 │   ├── leaderboard/    # Leaderboard rankings (LeaderboardView)
 │   └── settings/       # User settings (ProfileView, ApiKeysView)
 ├── layouts/            # Layout components
 │   ├── AuthLayout.vue  # Login/Register layout (minimal, centered)
-│   └── AppLayout.vue   # Main app layout (sidebar, responsive)
+│   ├── AppLayout.vue   # Main app layout (sidebar, responsive)
+│   └── MarketingLayout.vue # Public shell (top bar + content + footer, no sidebar/user menu)
 ├── components/         # Shared components
 │   ├── ui/             # shadcn-vue primitives (Button, Input, etc.)
 │   ├── app/            # App-specific components (Sidebar, Header)
@@ -41,7 +43,8 @@ src/
 │   └── utils.ts        # Utility functions (cn, etc.)
 ├── stores/             # Pinia stores
 │   ├── auth.ts         # Auth store (JWT token management)
-│   └── counter.ts      # Example store (placeholder)
+│   ├── theme.ts        # Theme store (light/dark/auto, VueUse persistence)
+│   └── publicConfig.ts # Public runtime config from the backend
 ├── router/             # Vue Router configuration
 │   ├── index.ts        # Main router setup + auto-import
 │   ├── guard.ts        # Navigation guards (auth, NProgress)
@@ -50,11 +53,12 @@ src/
 │       ├── auth.ts     # /auth/login, /auth/register
 │       ├── dashboard.ts # /dashboard
 │       ├── devices.ts  # /devices
+│       ├── landing.ts  # / (public landing + MarketingLayout)
 │       ├── leaderboard.ts # /leaderboard
 │       └── settings.ts # /settings/profile, /settings/api-keys
-└── views/              # Top-level views
-    ├── HomeView.vue    # Landing page
-    └── Exception/      # Error pages (404View)
+└── views/              # Top-level views (exception pages only;
+    └── Exception/      # feature views live under features/)
+                        #   404View
 ```
 
 ## Feature-Based Routing
@@ -87,7 +91,6 @@ const authRoutes: RouteRecordRaw[] = [
     path: '/auth',
     name: RouteNames.AUTH_LAYOUT,
     component: () => import('@/layouts/AuthLayout.vue'),
-    redirect: { name: RouteNames.LOGIN },
     meta: { title: 'Authentication', hideInMenu: true },
     children: [
       {
@@ -143,7 +146,8 @@ In Vue Router, child routes with paths starting with `/` are treated as **root p
 | Field          | Type      | Purpose                                 |
 | -------------- | --------- | --------------------------------------- |
 | `title`        | `string`  | Page title (document.title + NProgress) |
-| `requiresAuth` | `boolean` | Auth guard check (redirect to Login)    |
+| `requiresAuth` | `boolean` | Auth guard check (redirect to Login). Absent/false = public |
+| `guestOnly`    | `boolean` | Send authenticated visitors to the dashboard — never set it on a public page such as `/` |
 | `layout`       | `string`  | Layout type ('auth' or 'app')           |
 | `hideInMenu`   | `boolean` | Hide route from sidebar navigation      |
 
@@ -155,6 +159,7 @@ All route components use dynamic imports for code splitting:
 // Layouts
 component: () => import('@/layouts/AuthLayout.vue')
 component: () => import('@/layouts/AppLayout.vue')
+component: () => import('@/layouts/MarketingLayout.vue')
 
 // Feature views
 component: () => import('@/features/auth/views/LoginView.vue')
