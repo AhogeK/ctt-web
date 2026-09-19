@@ -18,16 +18,7 @@
  * leading, letter-spacing = size x -0.022em).
  */
 import { Button } from '@/components/ui/button'
-
-const SOURCE_URL = 'https://github.com/AhogeK/ctt-web'
-
-/**
- * The plugin's Marketplace listing, verified against the Marketplace API
- * (`plugins.jetbrains.com/api/searchPlugins?search=Code Time Tracker` →
- * xmlId `com.ahogek.code-time-tracker`). The IDE plugin is the product; this
- * page is its companion.
- */
-const PLUGIN_URL = 'https://plugins.jetbrains.com/plugin/29379'
+import { SITE_REPO_URL, PLUGIN_INSTALL_URL } from '@/lib/site-links'
 </script>
 
 <template>
@@ -45,12 +36,12 @@ const PLUGIN_URL = 'https://plugins.jetbrains.com/plugin/29379'
 
     <div class="mt-10 flex flex-col gap-3 sm:flex-row sm:items-center">
       <Button as-child size="lg">
-        <a :href="PLUGIN_URL" target="_blank" rel="noopener noreferrer" data-testid="landing-primary-cta">
+        <a :href="PLUGIN_INSTALL_URL" target="_blank" rel="noopener noreferrer" data-testid="landing-primary-cta">
           Install the plugin
         </a>
       </Button>
       <Button as-child size="lg" variant="outline">
-        <a :href="SOURCE_URL" target="_blank" rel="noopener noreferrer">View source</a>
+        <a :href="SITE_REPO_URL" target="_blank" rel="noopener noreferrer">View source</a>
       </Button>
     </div>
   </section>
