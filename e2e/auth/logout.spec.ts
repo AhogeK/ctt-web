@@ -52,6 +52,17 @@ test.describe('Logout flow', () => {
     await expect(page).toHaveURL(/\/auth\/login(?:\?.*)?$/)
   })
 
+  test('login → click logout → confirms the sign-out', async ({ page }) => {
+    await loginViaForm(page)
+    await expect(page).toHaveURL(/\/dashboard$/)
+
+    await clickLogout(page)
+
+    // The user must be able to tell a deliberate sign-out from a dropped
+    // session: the destination page changing is not evidence on its own.
+    await expect(page.getByText('Signed out')).toBeVisible()
+  })
+
   test('login → click logout → clears localStorage tokens', async ({ page }) => {
     await loginViaForm(page)
 
