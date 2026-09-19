@@ -195,6 +195,6 @@ assertion had already been rewritten.
   kill by port alone.
 - **Close every browser tab you opened** — `app.relay` tabs live in the user's real browser and
   cannot be closed for them: after releasing one, **ask the user to confirm**. Then run
-  `bash .omp/tools/sweep.sh`: it kills scratch-profile browsers **first**, deletes their profiles
+  `bash ~/.omp/packages/session-discipline/tools/sweep.sh`: it kills scratch-profile browsers **first**, deletes their profiles
   **after**. **A profile count read right after an `rm` is a lie** (a live Chrome recreates the
   directory) — that is how a stray window survived a round reporting "clean".

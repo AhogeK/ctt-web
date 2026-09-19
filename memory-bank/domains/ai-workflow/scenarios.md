@@ -142,9 +142,9 @@ Trigger: a task needs a visual/interaction/layout decision that the repo does no
 ticked, leftovers removed) and say so in the report — it is session state, so no script can check
 it and the report is the only place it can be verified.
 
-**Sweep, and show it.** Run `bash .omp/tools/sweep.sh` and put its output in the report;
+**Sweep, and show it.** Run `bash ~/.omp/packages/session-discipline/tools/sweep.sh` and put its output in the report;
 "clean ✓" is the only evidence of a clean round. It removes Playwright artifacts and scratch
-profiles/browsers, and flags untracked files. `bash .omp/tools/check-knowledge.sh` does the same for
+profiles/browsers, and flags untracked files. `bash ~/.omp/packages/session-discipline/tools/check-knowledge.sh` does the same for
 the knowledge base (index drift · size limits · dead links).
 
 After that, answer all five **with evidence**. An unanswered one is a finding, not a formality.
@@ -164,3 +164,28 @@ silent risk.** Writing it down is what makes the rest trustworthy.
 knowledge file: refresh its line count, add/remove entries for files that appeared or vanished, and
 re-check that each `answers` line still describes what the file answers. A stale index is worse than
 no index — it sends the next session to the wrong place.
+
+## S12 · 收尾顺序（每次任务结束，按序执行，一步都不许跳）
+
+**为什么有序**：这些步骤各自都"做过"，但**跳过某一步时看不出来** —— 只有把顺序写死，跳步才会变成显性违规。
+
+| # | 动作 | 跳过的后果（真实事故） |
+|---|---|---|
+| 0 | **todo 对齐**：把已完成项标掉、把消失项删掉、把新发现补上 —— **必须是一次真实的 tool 调用** | 汇报里写"剩 3 项"但**列表还是旧的** → 用户看列表，等于没更新（被指出 3 次） |
+| 1 | **停掉自起服务 / 杀进程** | 端口占着、日志继续长、用户以为页面坏了 |
+| 2 | **删 profile / 临时物** | 必须先杀后删：活着的 Chrome 会立刻重建目录，删完立刻查是**假干净**（被指出 1 次） |
+| 3 | 跑 `sweep.sh` + `check-knowledge.sh`，**把输出贴进汇报** | "我记得清了" ≠ 干净；索引漂移/超限/死链只能靠脚本发现 |
+| 4 | 汇报：todo 状态 + 上述输出 + 剩余项归属（我的 / 待用户的） | 用户无法验收会话状态 —— todo 是**唯一脚本读不到**的状态项 |
+
+**红线**：**不得以"我在汇报里写了"代替"我更新了列表"** ✗ —— 两者是不同对象，用户看的是列表。
+
+## S13 · 通用产物 ≠ 项目工单
+
+**场景**：在做**通用工具**（skill / hook / 脚本）时，过程中会**顺带看到具体项目的问题**（评测、审计、复现都会看到）。
+
+**红线**：
+- 通用产物的**验收标准是它自己**（技能可被任意项目复用 · 钩子能拦该拦的）——**不含**"把这个项目的问题修掉" ✗
+- 顺带发现的项目缺陷，**只作为该产物的证据** ✓（写进技能的反模式表、钩子的判定用例）；**不得升格为"要不要改业务"的决策去问用户** ✗ —— 那是**用户没提的需求** ✓
+- 需要动业务时：**先问"这在你现在的范围内吗"** ✓，得到明确指令再动 ✓（R8 讨论 ≠ 指令 · R23 无授权不改架构）
+
+**事故**：做动效 skill 时，评测跑出一个 `AuthLayout` 背景动效的真实缺陷，我把"背景漂移要不要回归 / 动效 token 要不要进 DESIGN"当成**待用户拍板的产品决定**报了上去 ✗ —— 用户根本没要动那个页面 ✓，那两条**是我发明的工单** ✓。

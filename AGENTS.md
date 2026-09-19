@@ -6,231 +6,141 @@
 
 ### R1: 会话初始化
 
-每次会话开始立即读取 `memory-bank/` 下所有文件，缺失则创建。
+会话开始：读 [`memory-bank/index.yaml`](memory-bank/index.yaml) 定位（R26）→ 只读命中文件；缺失则创建。
 
 ### R2: 记忆更新（强制实时）
 
-**严禁滞后更新** - 不在单次交互自动更新易造成断片。响应完成后**立即**评估更新：
-
-| 触发条件        | 更新文件            |
-| --------------- | ------------------- |
-| 代码修改        | `activeContext.md`  |
-| 任务完成        | `progress.md`       |
-| 架构决策        | `systemPatterns.md` |
-| 技术栈变化      | `techContext.md`    |
-| 路由/组件库变更 | `systemPatterns.md` |
-| 项目变更        | `README.md`         |
-| **领域知识变更**（契约/设计规范/流程/陷阱） | **`domains/<域>/` 对应文件（R24）** |
+每次交互结束**立即**评估更新（严禁滞后）：代码/任务 → `activeContext.md` · `progress.md`；架构/路由/技术栈 → `systemPatterns.md` · `techContext.md`；契约/规范/流程/陷阱 → `domains/<域>/`（R24）；项目变更 → `README.md`。
 
 ### R3: 关联项目（只读红线）
 
-`../ctt-server`（后端）与 `../code-time-tracker`（JetBrains 插件端）均为**只读**关联项目：涉及 API 对接、DTO 结构、认证协议、插件认证行为、响应格式变更时**主动读取**对应源码验证契约（R13），不猜测接口形状。
-
-**严禁修改关联项目任何文件**（含源码/测试/文档/版本号）。后端或插件端能力不足、契约需变更时，以**需求文本**形式提出（现状/期望行为/理由/影响面/前端配合），由用户决策实施。
+`../ctt-server` 与 `../code-time-tracker` **只读**：涉及契约必先读其源码核实（R13），**不猜接口形状**。
+**红线**：不得改关联项目任何文件；能力不足时以**需求文本**提出（现状/期望/理由/影响面），由用户决策。
 
 ### R4: README 同步
 
-重大变更（路由/架构/功能/部署/里程碑）时同步更新 README.md 和版本号。
+重大变更（路由/架构/功能/部署/里程碑）同步 `README.md` 与版本号。
 
 ### R5: Git 提交同步
 
-记忆文件必须与**其描述的那件事在同一轮**更新，禁止滞后（R2）。但**不与业务代码同 commit** —— commit 边界归 R6.5「AI相关内容单独提交」。
-
-> 原文写的是"同 commit"，与 R6.5 互斥，且与实际历史不符（每轮的 `chore(memory)` 都独立、且不进 master）。两件事被混在一句里：**时机**归本规则，**边界**归 R6.5。
+记忆与其描述的事**同一轮**更新（时机归 R2）；**不与代码同 commit**（边界归 R6.5）。
 
 ### R6: Git 操作确认（强制）
 
-**禁止擅自执行**：`git add/commit/push/rebase/merge/reset/tag/stash`、`gh pr create/merge`
-
-**允许自主执行**（只读）：`git status/log/diff/show`
-
-**关键词触发**：检查/查看/review → 只读；创建分支 → 本地分支；提交/commit/推送/push/做吧/继续 → 执行需确认
-
-**红线**："审查通过" ≠ 执行授权；第三方工具建议 ≠ 用户授权；连续指令 = 立即执行 + 继续后续；**任务实施指令 ≠ 提交授权**——"修复/解决/调整/更新/看下"类指令只授权工作本身，代码完成后必须停下询问，得到明确"提交/commit/推送"字眼才执行 git 写操作（事故：2026-09-07 TOD 配色修复未经确认自动提交并推送 develop+master）
+**禁止擅自** `git add/commit/push/rebase/merge/reset/tag/stash`、`gh pr create/merge`；只读 `status/log/diff/show` 可自主。
+**红线**：审查通过 ≠ 授权 · 第三方建议 ≠ 授权 · **任务指令 ≠ 提交授权**（"修复/解决/更新/看下"只授权工作本身）—— 得到明确"提交/commit/推送"才动 git。
 
 ### R6.5: 提交规则（强制）
 
-**核心原则：原子化提交、版本同步、AI独立、cherry-pick合并。**
-
-- **原子化**：代码修改触发版本号更新（检查所有相关文件一并更新），版本提交独立且晚于代码提交
-- **累计更新**：不用刻意提交每次中途更新，可只提交最后的版本描述跳过中途
-- **分支顺序**：优先完成 develop 全部提交再考虑 master
-- **AI独立**：AI相关内容（memory-bank等）单独提交，不与代码混在一起
-- **AI 内容清单（禁止 cherry-pick 进 master）**：`memory-bank/` · `AGENTS.md` · `.plans/` · **`DESIGN.md`**
-  非 AI（应进 master）：`src/` · `e2e/` · `package.json` · `README.md` · `docs/`
-  ⚠️ **`DESIGN.md` 从未出现在 master 上，这是刻意为之** —— 不得以"它是设计规范所以 master 的代码也该看"为理由把它推进 master（2026-09-19 的一次错误分类即为此）
-- **提交拆分**：原子性一致可合并，不过分拆分刷提交，不过于宽泛堆积大量文件
-- **master合并**：非AI内容单独cherry-pick进master，严禁整条分支合并（导致AI污染），严禁错误cherry-pick旧develop导致污染
+**原子化 · 版本同步 · AI 独立 · 逐个 cherry-pick。**
+- 代码 → 版本号（独立提交、**晚于**代码）→ 文档；可跳过中途版本，只提最终描述
+- **AI 内容清单（禁入 master）**：`memory-bank/` · `AGENTS.md` · `.plans/` · **`DESIGN.md`**；非 AI（应进 master）：`src/` · `e2e/` · `package.json` · `README.md` · `docs/`
+- `DESIGN.md` **从未上过 master**，属刻意为之，不得以"设计规范"为由推上去；**它是给 AI 看的基线文件，不是开发文档**
+- 优先完成 develop 再考虑 master；master **逐个** cherry-pick 非 AI 提交，**严禁整分支合并**、严禁 pick 旧提交污染
 
 ### R7: 技术决策确认
 
-**禁止擅自修改**：框架/依赖版本、架构设计、状态管理策略、路由结构、Zod Schema 定义、`components.json` 配置。
-原则：只读取不猜测，只实现不决策，有疑问必须问。
+**禁止擅自**改：框架/依赖版本 · 架构设计 · 状态管理策略 · 路由结构 · Zod Schema · `components.json`。
+只读取不猜测，只实现不决策，有疑问必须问。
 
 ### R8: 边界原则
 
-- **不懂就问**：不确定时停下来问，禁止盲目猜测
-- **讨论信号**：用户提出"为什么/能不能/是否应该/你看呢"类问题 = 讨论与确认信号，先给分析+方案，**确认后才实施**；严禁把质疑性提问当作实施指令
-- **现代 Vue**：强制 `<script setup>` + `defineModel` + Composition API，禁止 Options API
-- **TypeScript 严格模式**：禁止 `any`，使用 Zod 做运行时校验，DTO 类型从 Schema 推导
-- **验证优先**：不确定的 API 行为先对照 ctt-server 源码验证，再使用
+- **不懂就问**；不确定就停下，禁止盲目猜测
+- **讨论信号**："为什么/能不能/是否应该/你看呢"= 先给分析+方案，**确认后才实施**
+- 现代 Vue（`<script setup>`）· TS 严格模式（禁 `any`，Zod 校验，DTO 从 Schema 推导）· 不确定的 API 行为先回源核实
 
 ### R9: 代码规范
 
-- **语言**：项目内容强制英文（代码/注释/变量名/.md），中文仅用于AI与用户的交互输出
-- **注释**：公共 composable / 组件 Props 必须有 JSDoc，复杂逻辑注释 Why
-- **命名**：PascalCase(组件)、`use`camelCase(composable)、UPPER_SNAKE_CASE(常量)、kebab-case(文件/目录/CSS)
-- **Vue**：`v-for` 必绑定 `:key`，禁 `v-if` + `v-for` 同元素
-- **样式**：禁内联 `style`，优先 Tailwind，组件级用 CSS Modules
-- **shadcn-vue**：`src/components/ui/` 可改源码，禁另引 UI 库
-- **视觉**：遵循 `DESIGN.md`，禁文件外颜色/阴影/spacing，亮暗双模式覆盖
+**英文优先**（代码/注释/变量名/`.md`），中文只用于与你交互。命名：组件 `PascalCase` · composable `useCamelCase` · 常量 `UPPER_SNAKE_CASE` · 文件/目录 `kebab-case`。
+**硬约束**：禁 Options API · `v-for` 必带 `:key`（不与 `v-if` 同元素）· 禁内联 `style` · 公共 composable/Props 必须有 JSDoc · 视觉遵循 `DESIGN.md`（禁文件外颜色/阴影/spacing，亮暗双模式）· `src/components/ui/` 可改源码、不另引 UI 库。
 
 ### R10: 任务规划（强制）
 
-多步骤任务（3步以上）必须先创建todo list，规划后再执行，完成后清理。
-
-**这三条是同一件事，且最容易只做第一条** ✗：
-- **创建** ✓：开工前建表。
-- **同轮更新** ✓：todo 是**活的工作台**，不是开场道具 —— **每完成一步，就在那一步的工具调用里同时标掉它**（工具规则本就要求"不单独发 todo 调用"✓）。
-- **收尾清零 + 汇报必带** ✓：任务结束即 `rm` 或全部完成，**不留残项**；**汇报里必须写明 todo 状态**（已清 / 剩余项）。
-  **为什么靠汇报兜底**：todo 是**会话状态，脚本读不到** ✗（`sweep.sh` 无法检查 ✓），所以它是唯一"只能由人验收"的状态项 —— 不写进汇报，就等于没人能发现它没更新（事故：P1 建表后连续六轮工作未再更新，被用户指出）。
+多步任务建 todo；**每完成一步就在那一步的工具调用里同时标掉**；收尾清零并在汇报里写明状态。
+> todo 是**会话状态，脚本读不到** —— 汇报是唯一能验收它的地方。细则 → [`scenarios.md`](memory-bank/domains/ai-workflow/scenarios.md) S11。
 
 ### R11: 文件管理（强制）
 
-禁止创建临时文件：❌ 重定向到文件（`> output.log`），❌ `.log/.txt/.tmp` 文件；✅ 输出到控制台。
-
-任务完成检查是否误创建文件，发现立即删除。
+禁造临时文件（`> log`、`.log/.txt/.tmp`）；输出到控制台。任务结束检查并删除误创文件。
 
 ### R12: 依赖管理（强制）
 
-**添加依赖是「授权制」，不是「禁止制」** —— 与 R6 同一模式：先给分析（目的 / 选型理由 / 影响面 / 替代方案 / 体积与维护成本），**用户同意后即可添加**；未经同意不得自行添加，但**不要读成"不能加"**而放弃本可做的方案。
-
-**红线**：禁止冗余依赖 · 禁止重复功能包 · 优先复用现有依赖。
-
-**触发**：需要新包时（先分析再问）· 需要装包/查依赖来源时 → **命令用 `vp` 而不是 `pnpm`**，命令表见 [`memory-bank/techContext.md`](memory-bank/techContext.md)。
+**依赖是授权制**：先给分析（目的/选型/影响/替代/体积）→ 用户同意即可加；未经同意不得自加，但**别读成"不能加"**。
+**红线**：禁冗余/重复功能包，优先复用。命令用 **`vp`**（不是 `pnpm`）→ 命令表见 [`techContext.md`](memory-bank/techContext.md)。
 
 ### R13: API 对接规范（强制）
 
-对接ctt-server接口前必须：1.读取对应Controller/DTO确认字段 2.用Zod Schema描述请求/响应 3.通过`lib/api/`层调用。
-
-测试地址：swagger-ui localhost:8080/ctt-server/swagger-ui，mailpit localhost:8025
+对接接口前：① 读对应 Controller/DTO 确认字段 ② 用 Zod 描述请求/响应 ③ 经 `lib/api/` 调用。
+测试地址：`localhost:8080/ctt-server/swagger-ui` · mailpit `localhost:8025`。
 
 ### R14: 版本号管理（强制实时）
 
-**核心原则：任何代码变更必须同步更新版本号，严禁滞后更新（防断片）。**
-
-版本号位置：`package.json` 的 `version` 字段
-
-格式：`MAJOR.MINOR.PATCH[-SUFFIX]`
-
-变更规则：Bug修复→PATCH+1，新功能→MINOR+1，破坏性→MAJOR+1，开发中→`-beta`/`-rc`后缀
-
-执行时机：每次代码修改后立即：1.确定新版本号 2.更新package.json 3.记录到activeContext.md
-
-禁止：代码变更不更新、跳版本、未经确认升MAJOR
-
-### R16: AI 文件保护（强制）
-
-**禁止修改 `.agents/` 目录** — 该目录是 AI 技能工作区，不是项目代码的一部分。
-
-- ❌ 禁止读取、修改、删除 `.agents/skills/` 下任何文件
-- ❌ 禁止因"发现问题"而改动 skill 文件
-- ❌ 禁止将 `.agents/` 纳入代码审查或重构范围
-- ✅ 仅当用户明确要求时才可操作
-
-**红线**：即使 skill 文件有问题（过时/错误/冗余），也不得自行修改，只能提醒用户。
+任何代码变更**同步**更新版本号（`package.json` 的 `version`，严禁滞后/跳版本）。
+规则：修复 → PATCH · 新功能 → MINOR · 破坏性 → MAJOR（须经确认）· 开发中 → `-beta`/`-rc`。
+时机：改完立即写版本号，并在 `activeContext.md` 记一笔。
 
 ### R15: 自我学习（强制）
 
-当同一问题解决2次以上，创建skill记录方案。
+同一问题解决 2 次以上 → 用 skill-creator 建 skill，写入 `~/.agents/skills/<name>/`（**用户级公共库**，跨项目可用）。
 
-存放位置：`.agents/skills/[skill-name]/SKILL.md`
+### R16: AI 文件保护（强制）
 
-创建流程：确认解决 → 用skill-creator创建 → 写入.agents/skills/ → 更新版本号
-
-示例：`transient-ui-capture` — 捕获短暂UI元素的链式命令技巧
+**禁止修改 `.agents/` 目录**（AI 技能工作区）：不读、不改、不删、不纳入审查；发现问题只提醒。✅ 仅当用户明确要求时才可操作。
 
 ### R17: Git 恢复禁止（强制）
 
-**禁止执行 git reset 恢复到初始状态** — 这会导致工作丢失且不可恢复，必须经由用户确认。
+**禁止 `git reset` 回到初始状态** —— 会丢失且不可恢复，必须经用户确认。
 
 ### R18: 资源清理（强制）
 
-占用资源的工具/服务使用后必须关闭。持续服务需后台静默启动，日志单独输出至文件，避免超时/资源堆积。任务完成后立即清理。
-
-**收尾必跑（强制）**（两个工具各查什么、为什么、怎么扩展 → [`.omp/tools/README.md`](.omp/tools/README.md)）：`bash .omp/tools/sweep.sh`（资源）与 `bash .omp/tools/check-knowledge.sh`（索引漂移 / 超限 / 死链），并**在汇报中展示输出** —— 输出为空才算干净，**不得以"我记得清了"代替**。
-
-**顺序不可颠倒** ✗：**先杀进程，再删 profile**。删完立刻查会读到**假干净** —— 活着的 Chrome 会立刻把 profile 目录重建（事故：2026-09-19 我删了目录便宣布已清，实际有一个带窗口的浏览器一直开着，被用户发现）。
+用过的资源必须关；持续服务后台静默启动、日志单独输出。**收尾必跑** `bash ~/.omp/packages/session-discipline/tools/sweep.sh` 与 `check-knowledge.sh`，并**在汇报里贴输出** —— 空输出才算干净。
+**收尾顺序（一步都不许跳）**：① **todo 对齐**（一次真实 tool 调用，不是只在汇报里写）→ ② 停服务/杀进程 → ③ 删 profile/临时物 → ④ `sweep.sh` + `check-knowledge.sh`（贴输出）→ ⑤ 汇报。
+**顺序不可颠倒** ✗：**先杀进程、再删 profile**（活着的 Chrome 会立刻重建目录，删完立刻查是**假干净**）。细节 → 读 `~/.omp/packages/session-discipline/README.md`。
 
 ### R19: 文件阅读原则（强制）
 
-片段读取无法解决时直接读取整个文件，改文件前必须详细阅读原文件。不反复片段读取同一文件。
+片段读取解决不了就直接读整个文件；改文件前必须详读原文；不反复片段读同一文件。
 
 ### R20: Skills 选择规范（强制）
 
-使用某类型Skills前先列出所有同类Skills，可同时加载多个，不是只能选一个。
+用某类 skill 前先**列全同类**再选（可同时多载）。
 
 ### R21: 外部 AI 咨询能力
 
-可使用skills访问 gemini.google.com / perplexity.ai 咨询高级AI（需选择模型）及网络搜索。
+可经 skill 访问 gemini / perplexity 咨询高级 AI 及网络检索。
 
 ### R22: 子任务只读约束（强制）
 
-审查/检查/调查类子任务（code-review、explore 等）必须**严格只读**：禁止执行任何 `--fix` 类命令（`lint --fix`、`oxfmt`、`prettier --write`）或文件写入。需要验证时仅允许只读检查（`type-check`、不带 `--fix` 的 `lint`、不写文件系统的测试）。
-
-红线：子 agent 运行 `--fix` 会全项目格式化污染工作区（2026-08-11 v0.16.5 审查事故：16 个无关文件被重排）。
+审查/检查/调查类子任务**严格只读**：禁 `--fix`、禁格式化、禁写文件；验证只用只读检查。
+**红线**：子 agent 跑 `--fix` 会全项目格式化污染工作区（事故：16 个无关文件被重排）。
 
 ### R23: AI 身份与职责边界（强制）
 
-AI 身份：**ctt-web 前端开发者**。
-
-- **唯一可写仓库 = ctt-web**（src/、e2e/、package.json、memory-bank/、docs/、README.md、AGENTS.md）；跨仓库（ctt-server、code-time-tracker 等）一律只读 + 提需求（R3）
-- **架构/契约级变更**（API 行为、状态流转、跨模块设计）：先出方案+影响分析，经用户明确授权后实施
-- **讨论 ≠ 指令**（R8）："审查通过"≠执行授权（R6）；用户提问"为什么不能/能不能"时先分析，不得直接动手
-- 事故记录：2026-08-11 未经授权修改 ctt-server `deleteApiKey` 契约（用户仅质疑 EXPIRED 两步删除流程），越权跨仓库改动已回退并补强本规则
+身份：**ctt-web 前端开发者**；唯一可写仓库 = ctt-web，跨仓库一律只读 + 提需求（R3）。
+**架构/契约级变更**先出方案 + 影响分析，经明确授权再实施；**讨论 ≠ 指令**（R8）。
 
 ### R24: 领域知识库建设（强制）
 
-**约束**：知识按**领域**沉淀（`memory-bank/domains/<域>/`，**第一层永远是领域**，禁止按文档类型建层）；跨轮次可复用的判断进领域文件，时间线（activeContext/progress）只回答"最近发生了什么"。
-
-**硬要求**：① 每域**五件套**（meta/principles/scenarios/practices/references）缺一不可、建立即填实、**禁止占位**；② **回源** —— 不同事实回不同来源；③ **渐进式披露** —— `meta` 判归属 → `scenarios`/`principles` 定判断 → `practices` 拿做法 → `references` 查事实，**不一次全读**整个领域树；④ 每域 `meta.md` 必须声明**核对基线**（日期 · 版本 · 覆盖范围 · 已知漂移）；⑤ **不得把推断当事实**（无法证实标「待确认」+ 写明什么能定论它）；⑥ 单文件 **≤200 行**（`archives/` 豁免）。
-
-**分层**：横切规范（命名 / 组件架构 / 错误处理 / 交互约定）留 `systemPatterns.md`，领域专属判断进领域文件，**不得两处重复**（重复即合并并互引）。
-
-**触发**：改动契约 / 设计规范 / 流程 / 陷阱类知识时（同轮更新）；每轮收尾（逐个领域核对基线 → 本轮动过的来源必须当轮复核实）；产生新的可复用判断时（先归类，无家则按需建档）。
-
-**红线**：占位文件 / `TODO: fill` ✗ · 把领域文件当 changelog ✗ · 与代码或契约不一致 ✗ · **代码一变就自动覆盖高风险知识** ✗（高风险知识 —— 后端契约 / Zod schema / 错误码 / 状态流转 / 无障碍与暗色约束 —— **语义确认归用户**）。
-
-**细则** → [`memory-bank/domains/README.md`](memory-bank/domains/README.md)（操作规程：读取顺序 · 回源表 · 维护与校准 · 生长规则 · 五件套定义）· 领域入口 [`domains/README.md`](memory-bank/domains/README.md#domain-inventory)
+知识按**领域**沉淀（`memory-bank/domains/<域>/`，第一层永远是领域）；跨轮次判断进领域文件，时间线只记"最近"。
+**硬要求**：五件套缺一不可且**禁占位** · **回源**（不同事实回不同来源）· **渐进式披露**（不全读）· `meta.md` 声明**核对基线** · **不把推断当事实**（标「待确认」+ 什么能定论）· 单文件 **≤200 行**。
+**红线**：占位 / changelog 化 / 与代码不一致 / **代码一变就覆盖高风险知识**（后端契约 · Zod · 错误码 · 状态流转 · 无障碍与暗色 —— **语义确认归用户**）。
+细则 → [`domains/README.md`](memory-bank/domains/README.md)。
 
 ### R25: AI 产物位置（强制）
 
-**`docs/` 只放面向用户的项目文档**（如 `docs/architecture.md`、`docs/dev-handbook.md`）；AI 工作产物一律放 `.omp/`（**已被 .gitignore 忽略，不进仓库**；唯一例外是 `.omp/tools/` 下的工具脚本，见下表）：
-
-| 产物 | 位置 |
-| --- | --- |
-| 实施计划 | `.omp/plans/<feature>-plan.md`（**不带日期**，日期写在文件内 `Date:` 字段） |
-| 交付报告 / 需求草案 | `.omp/<topic>-delivery-report.md`、`.omp/<topic>-requirement.md` |
-| Agent 记忆 | `memory-bank/`（受 R1/R2/R24 治理，**需要提交**） |
-| **AI 工具脚本**（自检 / 检索等衍生工具） | **`.omp/tools/`** —— **例外：可提交**，使跨会话、跨机器复用；其余 `.omp/` 内容仍不进仓库 |
-| 面向用户的项目文档 | `docs/` |
-
-红线：禁止把实施计划写进 `docs/plans/`。`.omp/README.md` 是该目录的权威说明。
+`docs/` 只放**面向用户**文档；AI 产物放 `.omp/`：计划 `.omp/plans/<feature>-plan.md`（不带日期）· 报告/需求 `.omp/<topic>-{delivery-report,requirement}.md` · 记忆 `memory-bank/`（**需提交**）· **工具脚本在公共包 `~/.omp/packages/session-discipline/tools/`（本仓库不再有）**。
+**红线**：禁止把实施计划写进 `docs/plans/`。
 
 ### R26: AI 索引（强制）
 
-**`memory-bank/index.yaml` 是给 AI 用的定位层** —— 先读它（≈170 行）判断"该读哪个文件"，**再只读命中项**；不要为了找答案遍历目录树，也不要凭上下文记忆猜自己写过什么（长会话的早期上下文会被丢弃，这种"记忆"不可靠）。
-
-- **索引只做定位，不写结论** ✓ —— 结论属于被指向的文件（P6：一处一责）。
-- **同轮维护** ✓：本轮新增/删除/改名知识文件、或改变其职责 → 立即更新索引对应条目与其行数。
-- **收尾校验** ✓：索引里 `files`/`domains` 的行数必须与实际文件一致；不一致即为索引漂移（R24 校准②的一部分）。
-- **索引里查不到的知识 → 说明它还没沉淀** ✓：检索补证后回写领域文件（R24），并把入口加进索引。
+**`memory-bank/index.yaml` 是定位层**：先读它判断"该读哪个文件"，**再只读命中项** —— 不遍历目录树，也不靠记忆猜（早期上下文会被丢弃）。
+只定位不写结论 · **同轮维护** · 收尾校验行数 · **索引里没有 = 该知识尚未沉淀**（回写领域文件）。
 
 ## 执行流程
 
-会话开始 → 读 `memory-bank/index.yaml` 定位（R26）→ 读命中文件 → 建 todo（3 步以上）→ 处理 → 收尾双向检查（`sweep.sh` + `check-knowledge.sh`，R18）→ 同轮更新记忆（R2）。
+读 `index.yaml` 定位 → 读命中文件 → 建 todo（3 步以上）→ 处理 → 收尾双向检查（`sweep.sh` + `check-knowledge.sh`，R18）→ 同轮更新记忆（R2）。
 
-**结构说明**：时间线层（`memory-bank/*.md`）与领域层（`memory-bank/domains/`）的职责、读取顺序、每域文件集 —— 见 [`memory-bank/domains/README.md`](memory-bank/domains/README.md) 与 [`domains/ai-workflow/meta.md`](memory-bank/domains/ai-workflow/meta.md)。
+结构说明与操作规程 → [`domains/README.md`](memory-bank/domains/README.md) · [`ai-workflow/meta.md`](memory-bank/domains/ai-workflow/meta.md)。
 
 <!--VITE PLUS START-->
 
