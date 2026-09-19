@@ -93,6 +93,18 @@ test.describe('Protected route access (authenticated)', () => {
     await expect(page).toHaveURL(/\/dashboard$/)
   })
 
+  test('login → the dashboard renders its content, not an empty shell', async ({ page }) => {
+    await loginViaForm(page)
+    await expect(page).toHaveURL(/\/dashboard$/)
+
+    // The URL being right is not the same as the page being rendered. Two main
+    // landmarks exist (SidebarInset's, then AppLayout's content region), so scope
+    // to the last one. Regression guard for: landing here after login showed an
+    // empty shell because the parent route matched without its default child —
+    // every URL assertion still passed while the region stayed blank.
+    await expect(page.getByRole('main').last()).not.toBeEmpty({ timeout: 8000 })
+  })
+
   test('login → navigate to /settings/profile → stay on /settings/profile', async ({ page }) => {
     await loginViaForm(page)
 

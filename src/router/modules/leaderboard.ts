@@ -18,6 +18,11 @@ const leaderboardRoutes: RouteRecordRaw[] = [
     path: '/leaderboard',
     name: RouteNames.LEADERBOARD,
     component: () => import('@/layouts/AppLayout.vue'),
+    // Parent records must redirect to their default child: navigating to this
+    // record by NAME resolves the parent alone, so the layout's inner
+    // <router-view> has no matched child and the content region renders blank —
+    // with no error and a correct URL. See the same note in dashboard.ts.
+    redirect: { name: RouteNames.LEADERBOARD_GLOBAL },
     meta: { title: 'Leaderboard', requiresAuth: true, layout: 'app' },
     children: [
       {
