@@ -180,21 +180,16 @@ declaration into the last value.
 
 - Update **immediately** in the same round as the change (R2) — deferred updates are how the timeline
   falls behind reality.
-- Before adding an entry, read the target file; extend the matching topic instead of appending.
-- Keep one canonical location per fact (P6); elsewhere, link.
-- Archive to `memory-bank/archives/YYYY-MM-DD-<name>-archive.md` and leave a pointer line behind.
-  Archives live under `memory-bank/` (not `docs/` — R25) and are the one artifact exempt from the
-  200-line limit; that is what they are for.
+- Before adding an entry, read the target file; extend the matching topic instead of appending — one
+  canonical location per fact (P6); elsewhere, link.
+- Archive to `memory-bank/archives/YYYY-MM-DD-<name>-archive.md` and leave a pointer line behind — under
+  `memory-bank/` (not `docs/` — R25); archives are the one artifact exempt from the 200-line limit.
 
 ## Resource hygiene
 
 - Long-running process → background it with its own log file; record the PID for teardown.
 - Teardown: match the process command line against the resource you started, never kill by port alone.
-- **Verification browsers must never steal the user's focus.** A visible scratch window takes the
-  keyboard away from whatever they are doing — run headless (`--headless=new`) or drive their own
-  browser, never a visible new window "just to check".
-- **Close every browser tab you opened** — `app.relay` tabs live in the user's real browser and cannot
-  be closed for them: after releasing one, **ask the user to confirm**. Then run
-  `bash ~/.omp/packages/session-discipline/tools/sweep.sh`: it kills scratch-profile browsers **first**,
-  deletes their profiles **after**. **A profile count read right after an `rm` is a lie** (a live
-  Chrome recreates the directory) — that is how a stray window survived a round reporting "clean".
+- **Browsers: the whole contract now lives in `skill://user-chrome-tabs`** ✓ (user-level, cross-project — written
+  after three of this session's own failures: a relay without `target` hijacks the tab being read ✗, a heuristic
+  filter closed the user's login tab ✗, and two tabs were left open ✗). Read it before any browser automation on
+  this machine; the verified ceremony, the `omp`-group recipe and the self-check are all there.

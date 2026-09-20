@@ -1,3 +1,15 @@
+### 用户级技能 `user-chrome-tabs`（2026-09-21 ✓）
+一天里我在**用户真 Chrome** 上犯满三次 ✗：① relay 不带 `target` **劫持他正在读的页** ×2 ✓ ② 启发式筛选**关掉了他的登录页** ✗ ③ 两个我开的页**没关**（闸门只认 `/tmp` profile ✓ 看不见浏览器标签页 ✗）。工具实况：relay **默认接管** ✓ · 桥只给页面级 CDP ✗ · `browser-use` 才能建页 ✓ · **分组由 relay 扩展做**（组名写死 `{title:"omp",color:"cyan"}` ✓）但**只对真实页面生效** ✗（`about:` 跳过 ✓）。
+已落盘 `~/.agents/skills/user-chrome-tabs/`（跨项目 ✓ 且含第四条：relay 会话不释放 ⇒ Chrome 顶部留 'started debugging' 横幅 ✗ ⇒ 收尾必 `browser.close({all:true})` ✓）：仪式 = `new_tab(真实URL?omp=标记)` → relay 按标记 adopt ⇒ **进 `omp` 组** ✓ → 释放 ⇒ 自动退组 ✓ → **精确整串关闭** ✓；附三条红线与收尾自检 ✓。仓内规则缩为一行指针 ✓（`ai-workflow/practices.md:192` ✓ 195 行 ✓）；收尾闸门加 `new_tab(`/`close_tab(` 计数 ✓（`check-hooks` 23 → **26** ✓ 含 3 条行为断言 ✓）。
+### 落地页 hero 动效（2026-09-21，工作树未提交，v0.48.0）
+
+- **规格权威 = `DESIGN.md` §10 Motion** ✓（七字段 + 4 条可失败判据 ✓）；实测与陷阱记在 `domains/landing-page/practices.md` ✓。
+- 参照物按用户指定用 **Apple 产品页**（不是首页 ✗）：`animation-timeline` 3 · sticky 12 · reduce 27 块 · 媒体层随滚动 `180px → 0` ✓，**h1 全程不动** ✗ → 挂在滚动上的是媒体层 ✓。
+- 交付两效：**入场**（4 层 · 320ms = 实测的 `0.32s` ✓ · h1 只位移不透明 ✓）与 **交棒**（`view()` exit · 位移全程 + 淡出只占后半段 ✓）。
+- **两处构造性决策**：① 入场只在 `no-preference` 里**声明**（全局 reduce 规则只归零时长 ✗，`animation-delay` 照常兑现 → 延迟期不可见 ✗）；② 顶部 hero 没有"进入"滚动段 ✓ → 滚动叙事只能是**离场** ✓。
+- 证据：reduce 下 `getAnimations()=[]` ✓ · `opacity:1 / translate:none` ✓ · 交棒映射与公式逐点吻合 ✓ · LCP 三次对照 252/256/252 vs 256/260/256 ✓ · type-check ✓ 单测 **1443/1443** ✓ landing e2e **3/3** ✓（跑的是 `vp preview` 生产构建 ✓）。 **计划勘误（2026-09-21 用户修正 ✗）**：计划里"默认不做滚动动画 ✓"是错的 ✗（那只是参考站点现状统计 ✓ 不是规则 ✗）—— 规则 = **按需做 ✓**；两处已改正 ✓；受保护的 `~/.agents/skills/motion-spec/` 有同源说法 ✗ → 按 R16 只提醒 ✓。
+- ⚠️ **未提交** ✗（R6 无授权 ✓）；`vp check` 报的是**仓内既有** 105 文件格式问题 ✓（与本轮无关 ✓，只对自己的文件跑了 `vp fmt --check` ✓）。
+
 **已提交**: v0.47.4 —— develop `b585fcf` ✓ / master `fe9b5bc` ✓（已推送 · clean · 代码面 0 差异 ✓）
   `fix(auth): make bare /auth land on the login page` + `chore(release): 0.47.4`（逐个 cherry-pick ✓）
   **新增回归测试** `src/router/__tests__/parent-redirect.test.ts`（2 断言：有 children 必须 redirect · `/auth` 必须指向 LOGIN）
@@ -137,17 +149,6 @@
   （最多 2 单位）。修法：图形按自身包围盒中心缩放并映射到格心，统一入圈且居中。
 - **我的第一版公式错了**：漏 `CENTER*(1-s)` 项 → 每个奖杯整体位移 ≈4.7 单位。审查看不出来，**真机量渲染**才暴露。
 - 细节与「几何必须真机测」的教训入 `achievements/trophy-geometry.md`。1384/1384。
-
-### Achievements 三轮迭代（v0.39.0 → v0.41.0）
-
-- **v0.39.0** 后端 67 阶 / 14 阶梯（原 15 / 7）→ 前端 code→家族表删除，改数据驱动。真机 14 卡 / `19 / 67 · 28%`。
-- **v0.40.0** 「Current period」按窗口分子区，每区日期区间 + 倒计时；截止期属**窗口**而非奖杯，故只在分组头渲染一次。
-- **v0.41.0** 外圈未包住图形（九个全溢出、六个偏心）→ 图形按自身中心缩放并映射到格心，统一入圈且居中。
-- **v0.41.0** Leaderboard 契约修复（该页原调用不存在的端点，永远只能报错）→ 按实测契约重建 + 路由补 `AppLayout`。
-- **v0.42.2** 成就页 / 排行榜页 E2E（此前两页零覆盖）→ 8 + 13 用例，两条断言只有真机能验（环几何、非法组合不外发），均已注入缺陷验证可证伪。
-- **v0.42.0** 周期成就历史（`totalUnlocks` / `periodStreak`）→ 卡片显示「得过几次 + 🔥连击」。
-  我给后端的需求报告**判断错了**（以为数解锁行即可，实则那些行只在访问页面时写入）—— 详见 `references.md` 与 `practices.md`。
-- 各轮的可复用判断已入领域文件（P6、practices、trophy-geometry.md）；流水见 `progress.md`。
 
 ## Leaderboard（v0.75.0 契约）
 

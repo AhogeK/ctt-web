@@ -77,6 +77,17 @@ design against** — re-derive only if a source changes.
 The hero copy shipped in P1 is a placeholder for the *layout*, not the final messaging — the capability
 walkthrough, open-source block and pricing structure are still open (see `meta.md`).
 
+## hero 动效：权威在 `DESIGN.md` §10，这里只记实测与陷阱（2026-09-21 ✓）
+
+参照物按用户指定改用 **Apple 产品页**（不是首页 ✗）：`animation-timeline` 3 · `position:sticky` 12 条 · `prefers-reduced-motion` **27** 块 · 媒体层由滚动进度驱动 `translateY 180px → 0`，而 **h1 全程不动** ✗ → 挂在滚动上的是**媒体层**，不是文字 ✓。
+
+- **入口构造** ✓：入场只在 `@media (prefers-reduced-motion: no-preference)` 里**声明** ✓，不靠"时长归零" ✗ —— `main.css` 的全局规则只归零 `duration` ✓，`animation-delay` 照常兑现 ✓ → "从隐藏出发"的入场会在延迟期一直不可见 ✗（技能点名的陷阱 ✓）。实测 reduce 下 `getAnimations() = []` ✓、`opacity: 1 / translate: none` ✓。
+- **LCP 元素不做透明** ✓：h1 只位移不淡入 → 首帧即有像素 ✓。三次对照：无减动效 **252/256/252** vs reduce **256/260/256** ✓（入场不拖首绘 ✓）。
+- **顶部 hero 没有"进入"滚动段** ✗（加载时已在视口内 ✓）→ 滚动叙事只能是**离场交棒** ✓（`animation-timeline: view()` + `animation-range: exit` ✓）。
+- **交棒必须分级** ✗✓：exit 区间 = 一屏高，而本页可滚动量只有 **281px（37%）** → 未分级的淡出会让"滚到底"停在 `opacity 0.63` = 发灰 ✗ → 改为**位移全程 + 淡出只占后半段** ✓。实测 y=281：`opacity=1` / `translate=-14.86px` ✓（= −0.371 × 40，与公式逐点吻合 ✓）；回滚复原 ✓。
+- **探针陷阱**：`browser.open({ viewport })` 仍不生效 ✗ → 用 `page.setViewport` ✓；页面比视口短时 `window.scrollTo` 恒为 0 ✗（先量 `scrollHeight > innerHeight` ✓）。
+- **验证结论**：type-check ✓ · 单测 **1443/1443** ✓ · landing e2e **3/3** ✓（跑 `vp preview` 生产构建 → 证明 `@layer` + `@media` + `@supports` 嵌套与关键帧过了构建管线 ✓）。
+
 ## 主题首帧与粘性偏移的两条契约（2026-09-20 实测，均已交付）
 
 **首帧主题脚本必须外链，不能内联** ✗：`index.html` 的 CSP 是 **`script-src 'self'`**（无 `unsafe-inline`）→ 内联脚本会被静默拦截。做法 = `public/theme.js`（**经典脚本**，非 `type=module` ✗，否则会延迟到解析后 ✗）+ `<head>` 内、**在 CSP meta 之后、应用模块之前**引用 ✓。
