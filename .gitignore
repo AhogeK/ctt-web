@@ -63,3 +63,9 @@ skills-lock.fast-update-cache.json
 # Obsidian's per-vault configuration, written the moment a reader opens a note here. It is
 # editor state, not content: committing it would put a plugin bundle under lint and review.
 .plans/.obsidian/
+
+# Editor/tooling backups. A backup of a tracked file is never repository content: the tracked file
+# is the truth, and the .bak is how a tool says "I was about to overwrite something". Gitignored
+# rather than deleted, so a tool that re-creates one cannot leave the tree permanently dirty.
+*.bak
+
