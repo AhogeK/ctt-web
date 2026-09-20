@@ -60,7 +60,7 @@ defineExpose({
     <FormField v-slot="{ componentField }" name="email">
       <FormItem>
         <FormLabel
-          class="text-sm font-[510] text-gray-600 dark:text-[#8a8f98]"
+          class="text-sm font-emphasis text-foreground/80 dark:text-muted-foreground"
           style="font-feature-settings: 'cv01', 'ss03'"
           >Email</FormLabel
         >
@@ -71,11 +71,11 @@ defineExpose({
             autocomplete="email"
             :class="
               cn(
-                'h-10 rounded-md border border-[#d0d6e0] bg-[#f3f4f5] text-[#1a1a2e]',
-                'placeholder:text-[#8a8f98] transition-all duration-200',
-                'focus:border-[#5e6ad2] focus:bg-white focus:ring-2 focus:ring-[#5e6ad2]/20',
-                'dark:border-white/8 dark:bg-white/2 dark:text-[#f7f8f8] dark:placeholder:text-[#62666d]',
-                'dark:focus:border-[#5e6ad2] dark:focus:bg-white/4 dark:focus:ring-[#5e6ad2]/25',
+                'h-10 rounded-md border border-border bg-secondary text-foreground',
+                'placeholder:text-muted-foreground transition-[color,box-shadow] duration-200',
+                'focus:border-primary focus:bg-white focus:ring-2 focus:ring-primary/20',
+                'dark:border-white/8 dark:bg-white/2 dark:text-foreground dark:placeholder:text-muted-foreground',
+                'dark:focus:border-primary dark:focus:bg-white/4 dark:focus:ring-primary/25',
               )
             "
             v-bind="componentField"
@@ -108,9 +108,9 @@ defineExpose({
       :disabled="loading"
       :class="
         cn(
-          'group w-full h-10 rounded-md bg-[#7b85d4] text-white font-[510] text-base',
-          'shadow-lg shadow-[#7b85d4]/15 transition-all duration-200',
-          'hover:bg-[#8b95e0] hover:shadow-[#8b95e0]/20 hover:scale-[1.02] active:scale-[0.98]',
+          'group w-full h-10 rounded-md bg-primary text-white font-emphasis text-base',
+          'shadow-lg shadow-primary/15 transition-[box-shadow,transform] duration-200',
+          'hover:bg-accent-hover hover:shadow-accent-hover/20 hover:scale-[1.02] active:scale-[0.98]',
           'disabled:opacity-70 disabled:cursor-not-allowed disabled:hover:scale-100',
         )
       "

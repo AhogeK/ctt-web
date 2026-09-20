@@ -74,7 +74,7 @@ const handleSubmit = (data: RegisterFormData) => {
     <div class="space-y-4">
       <div class="flex items-center gap-2.5 lg:hidden">
         <div
-          class="flex h-9 w-9 items-center justify-center rounded-lg bg-[#5e6ad2] text-white shadow-md shadow-[#5e6ad2]/20"
+          class="flex h-9 w-9 items-center justify-center rounded-lg bg-primary text-white shadow-md shadow-primary/20"
         >
           <svg
             class="h-5 w-5"
@@ -89,17 +89,22 @@ const handleSubmit = (data: RegisterFormData) => {
             <polyline points="12 6 12 12 16 14" />
           </svg>
         </div>
-        <span class="text-lg font-[510] text-gray-900 dark:text-[#f7f8f8]" style="font-feature-settings: 'cv01', 'ss03'"
+        <span
+          class="text-lg font-emphasis text-foreground dark:text-foreground"
+          style="font-feature-settings: 'cv01', 'ss03'"
           >CTT</span
         >
       </div>
       <h1
-        class="text-3xl font-[510] text-gray-900 dark:text-[#f7f8f8]"
+        class="text-3xl font-emphasis text-foreground dark:text-foreground"
         style="font-feature-settings: 'cv01', 'ss03'; letter-spacing: -0.704px"
       >
         Create your account
       </h1>
-      <p class="text-base text-gray-500 dark:text-[#8a8f98]" style="font-feature-settings: 'cv01', 'ss03'">
+      <p
+        class="text-base text-muted-foreground dark:text-muted-foreground"
+        style="font-feature-settings: 'cv01', 'ss03'"
+      >
         Start tracking your coding time across all devices.
       </p>
     </div>
@@ -114,11 +119,11 @@ const handleSubmit = (data: RegisterFormData) => {
 
     <!-- Sign In Link -->
     <div class="pt-2 text-center">
-      <p class="text-sm text-gray-500 dark:text-[#8a8f98]" style="font-feature-settings: 'cv01', 'ss03'">
+      <p class="text-sm text-muted-foreground dark:text-muted-foreground" style="font-feature-settings: 'cv01', 'ss03'">
         Already have an account?
         <RouterLink
           :to="{ name: RouteNames.LOGIN }"
-          class="ml-1 font-[510] text-[#5e6ad2] underline-offset-4 hover:text-[#7170ff] hover:underline dark:text-[#7170ff] dark:hover:text-[#828fff]"
+          class="ml-1 font-emphasis text-primary underline-offset-4 hover:text-accent hover:underline dark:text-accent dark:hover:text-accent-hover"
           style="font-feature-settings: 'cv01', 'ss03'"
         >
           Sign in

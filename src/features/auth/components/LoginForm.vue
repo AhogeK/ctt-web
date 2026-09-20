@@ -96,7 +96,7 @@ defineExpose({
     <FormField v-slot="{ componentField }" name="email">
       <FormItem>
         <FormLabel
-          class="text-sm font-[510] text-gray-600 dark:text-[#8a8f98]"
+          class="text-sm font-emphasis text-foreground/80 dark:text-muted-foreground"
           style="font-feature-settings: 'cv01', 'ss03'"
           >Email</FormLabel
         >
@@ -107,11 +107,11 @@ defineExpose({
             autocomplete="email"
             :class="
               cn(
-                'h-10 rounded-md border border-[#d0d6e0] bg-[#f3f4f5] text-[#1a1a2e]',
-                'placeholder:text-[#8a8f98] transition-all duration-200',
-                'focus:border-[#5e6ad2] focus:bg-white focus:ring-2 focus:ring-[#5e6ad2]/20',
-                'dark:border-white/8 dark:bg-white/2 dark:text-[#f7f8f8] dark:placeholder:text-[#62666d]',
-                'dark:focus:border-[#5e6ad2] dark:focus:bg-white/4 dark:focus:ring-[#5e6ad2]/25',
+                'h-10 rounded-md border border-border bg-secondary text-foreground',
+                'placeholder:text-muted-foreground transition-[color,box-shadow] duration-200',
+                'focus:border-primary focus:bg-white focus:ring-2 focus:ring-primary/20',
+                'dark:border-white/8 dark:bg-white/2 dark:text-foreground dark:placeholder:text-muted-foreground',
+                'dark:focus:border-primary dark:focus:bg-white/4 dark:focus:ring-primary/25',
               )
             "
             v-bind="componentField"
@@ -125,13 +125,13 @@ defineExpose({
       <FormItem>
         <div class="flex items-center justify-between">
           <FormLabel
-            class="text-sm font-[510] text-gray-600 dark:text-[#8a8f98]"
+            class="text-sm font-emphasis text-foreground/80 dark:text-muted-foreground"
             style="font-feature-settings: 'cv01', 'ss03'"
             >Password</FormLabel
           >
           <RouterLink
             :to="{ name: RouteNames.FORGOT_PASSWORD }"
-            class="text-sm font-[510] text-[#5e6ad2] underline-offset-4 hover:text-[#7170ff] hover:underline dark:text-[#7170ff] dark:hover:text-[#828fff]"
+            class="text-sm font-emphasis text-primary underline-offset-4 hover:text-accent hover:underline dark:text-accent dark:hover:text-accent-hover"
             style="font-feature-settings: 'cv01', 'ss03'"
           >
             Forgot password?
@@ -145,11 +145,11 @@ defineExpose({
               autocomplete="current-password"
               :class="
                 cn(
-                  'h-10 rounded-md border border-[#d0d6e0] bg-[#f3f4f5] text-[#1a1a2e]',
-                  'placeholder:text-[#8a8f98] transition-all duration-200',
-                  'focus:border-[#5e6ad2] focus:bg-white focus:ring-2 focus:ring-[#5e6ad2]/20',
-                  'dark:border-white/8 dark:bg-white/2 dark:text-[#f7f8f8] dark:placeholder:text-[#62666d]',
-                  'dark:focus:border-[#5e6ad2] dark:focus:bg-white/4 dark:focus:ring-[#5e6ad2]/25',
+                  'h-10 rounded-md border border-border bg-secondary text-foreground',
+                  'placeholder:text-muted-foreground transition-[color,box-shadow] duration-200',
+                  'focus:border-primary focus:bg-white focus:ring-2 focus:ring-primary/20',
+                  'dark:border-white/8 dark:bg-white/2 dark:text-foreground dark:placeholder:text-muted-foreground',
+                  'dark:focus:border-primary dark:focus:bg-white/4 dark:focus:ring-primary/25',
                   'pr-10',
                 )
               "
@@ -158,7 +158,7 @@ defineExpose({
             <button
               type="button"
               tabindex="-1"
-              class="absolute right-2.5 top-1/2 -translate-y-1/2 text-[#8a8f98] hover:text-[#5e6ad2] transition-colors cursor-pointer"
+              class="absolute right-2.5 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-primary transition-colors cursor-pointer"
               @click="showPassword = !showPassword"
             >
               <EyeOff v-if="!showPassword" class="h-4 w-4" />
@@ -193,9 +193,9 @@ defineExpose({
       :disabled="loading"
       :class="
         cn(
-          'group w-full h-10 rounded-md bg-[#7b85d4] text-white font-[510] text-base',
-          'shadow-lg shadow-[#7b85d4]/15 transition-all duration-200',
-          'hover:bg-[#8b95e0] hover:shadow-[#8b95e0]/20 hover:scale-[1.02] active:scale-[0.98]',
+          'group w-full h-10 rounded-md bg-primary text-white font-emphasis text-base',
+          'shadow-lg shadow-primary/15 transition-[box-shadow,transform] duration-200',
+          'hover:bg-accent-hover hover:shadow-accent-hover/20 hover:scale-[1.02] active:scale-[0.98]',
           'disabled:opacity-70 disabled:cursor-not-allowed disabled:hover:scale-100',
         )
       "
@@ -217,10 +217,10 @@ defineExpose({
 
     <div class="relative my-2">
       <div class="absolute inset-0 flex items-center">
-        <div class="w-full border-t border-[#d0d6e0] dark:border-white/8" />
+        <div class="w-full border-t border-border dark:border-white/8" />
       </div>
       <div class="relative flex justify-center text-xs">
-        <span class="bg-[#f3f4f5] px-2 text-[#8a8f98] dark:bg-white/2 dark:text-[#62666d]">or</span>
+        <span class="bg-secondary px-2 text-muted-foreground dark:bg-white/2 dark:text-muted-foreground">or</span>
       </div>
     </div>
 
@@ -230,12 +230,12 @@ defineExpose({
       :disabled="isGithubLoading"
       :class="
         cn(
-          'w-full h-10 rounded-md font-[510] text-sm',
-          'border-[#d0d6e0] bg-white text-[#1a1a2e]!',
-          'dark:border-white/8 dark:bg-white/2 dark:text-[#f7f8f8]!',
-          'transition-all duration-200',
-          'hover:bg-white! hover:border-[#5e6ad2]!',
-          'dark:hover:bg-white/5! dark:hover:border-[#7170ff]/50!',
+          'w-full h-10 rounded-md font-emphasis text-sm',
+          'border-border bg-white text-foreground!',
+          'dark:border-white/8 dark:bg-white/2 dark:text-foreground!',
+          'transition-[background-color,border-color] duration-200',
+          'hover:bg-white! hover:border-primary!',
+          'dark:hover:bg-white/5! dark:hover:border-accent/50!',
         )
       "
       style="font-feature-settings: 'cv01', 'ss03'"
