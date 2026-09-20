@@ -40,16 +40,16 @@ function handleResend() {
     :class="
       cn(
         'flex items-start gap-3 rounded-lg border p-4',
-        'border-amber-200 bg-amber-50 text-amber-900',
-        'dark:border-amber-500/20 dark:bg-amber-500/10 dark:text-amber-200',
+        'border-warning-border bg-warning-surface text-warning',
+        'dark:border-warning-border dark:bg-warning-surface dark:text-warning',
       )
     "
   >
-    <AlertTriangle class="mt-0.5 h-5 w-5 shrink-0 text-amber-600 dark:text-amber-400" />
+    <AlertTriangle class="mt-0.5 h-5 w-5 shrink-0 text-warning dark:text-warning" />
     <div class="flex flex-1 flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
       <div class="space-y-1">
         <p class="text-sm font-medium">Email not verified</p>
-        <p class="text-sm text-amber-700 dark:text-amber-300/80">
+        <p class="text-sm text-warning dark:text-warning/80">
           Please verify your email address to access all features.
         </p>
       </div>
@@ -59,10 +59,10 @@ function handleResend() {
         :class="
           cn(
             'shrink-0 gap-1.5',
-            'border-amber-300 bg-white text-amber-900',
-            'hover:bg-amber-100 hover:text-amber-900',
-            'dark:border-amber-500/30 dark:bg-amber-500/10 dark:text-amber-200',
-            'dark:hover:bg-amber-500/20',
+            'border-warning-border bg-white text-warning',
+            'hover:bg-warning-surface hover:text-warning',
+            'dark:border-warning-border dark:bg-warning-surface dark:text-warning',
+            'dark:hover:bg-warning-surface',
           )
         "
         :disabled="isPending || countdown > 0"

@@ -66,7 +66,7 @@ const { mutation } = useDeleteAccount()
 /** Shared input treatment, matching the other password fields in this feature. */
 const inputClass = cn(
   'h-10 rounded-md border border-input bg-muted text-foreground',
-  'placeholder:text-muted-foreground transition-all duration-200',
+  'placeholder:text-muted-foreground transition-[color,box-shadow] duration-200',
   'focus:border-primary focus:bg-card focus:ring-2 focus:ring-primary/20',
   'dark:border-border dark:bg-secondary dark:text-foreground dark:placeholder:text-muted-foreground/70',
   'dark:focus:border-primary dark:focus:bg-card dark:focus:ring-primary/25',
@@ -172,7 +172,7 @@ watch(
              typing its own email instead — mistake prevention, not authentication. -->
         <FormField v-if="props.hasPassword" v-slot="{ componentField }" name="password">
           <FormItem>
-            <FormLabel class="text-sm font-[510] text-muted-foreground [font-feature-settings:'cv01'_'ss03']">
+            <FormLabel class="text-sm font-emphasis text-muted-foreground [font-feature-settings:'cv01'_'ss03']">
               Confirm your password
             </FormLabel>
             <FormControl>
@@ -204,7 +204,7 @@ watch(
 
         <FormField v-else v-slot="{ componentField }" name="confirmEmail">
           <FormItem>
-            <FormLabel class="text-sm font-[510] text-muted-foreground [font-feature-settings:'cv01'_'ss03']">
+            <FormLabel class="text-sm font-emphasis text-muted-foreground [font-feature-settings:'cv01'_'ss03']">
               Type your email to confirm
             </FormLabel>
             <FormControl>

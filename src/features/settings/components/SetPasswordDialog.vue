@@ -174,7 +174,7 @@ watch(
         <!-- Current Password (change mode only) -->
         <FormField v-if="mode === 'change'" v-slot="{ componentField }" name="currentPassword">
           <FormItem>
-            <FormLabel class="text-sm font-[510] text-muted-foreground [font-feature-settings:'cv01'_'ss03']">
+            <FormLabel class="text-sm font-emphasis text-muted-foreground [font-feature-settings:'cv01'_'ss03']">
               Current Password
             </FormLabel>
             <FormControl>
@@ -187,7 +187,7 @@ watch(
                   :class="
                     cn(
                       'h-10 rounded-md border border-input bg-muted text-foreground',
-                      'placeholder:text-muted-foreground transition-all duration-200',
+                      'placeholder:text-muted-foreground transition-[color,box-shadow] duration-200',
                       'focus:border-primary focus:bg-card focus:ring-2 focus:ring-primary/20',
                       'dark:border-border dark:bg-secondary dark:text-foreground dark:placeholder:text-muted-foreground/70',
                       'dark:focus:border-primary dark:focus:bg-card dark:focus:ring-primary/25',
@@ -214,7 +214,7 @@ watch(
 
         <FormField v-slot="{ componentField }" name="newPassword">
           <FormItem>
-            <FormLabel class="text-sm font-[510] text-muted-foreground [font-feature-settings:'cv01'_'ss03']">
+            <FormLabel class="text-sm font-emphasis text-muted-foreground [font-feature-settings:'cv01'_'ss03']">
               New Password
             </FormLabel>
             <FormControl>
@@ -228,7 +228,7 @@ watch(
                     :class="
                       cn(
                         'h-10 rounded-md border border-input bg-muted text-foreground',
-                        'placeholder:text-muted-foreground transition-all duration-200',
+                        'placeholder:text-muted-foreground transition-[color,box-shadow] duration-200',
                         'focus:border-primary focus:bg-card focus:ring-2 focus:ring-primary/20',
                         'dark:border-border dark:bg-secondary dark:text-foreground dark:placeholder:text-muted-foreground/70',
                         'dark:focus:border-primary dark:focus:bg-card dark:focus:ring-primary/25',
@@ -257,7 +257,7 @@ watch(
 
         <FormField v-slot="{ componentField }" name="confirmPassword">
           <FormItem>
-            <FormLabel class="text-sm font-[510] text-muted-foreground [font-feature-settings:'cv01'_'ss03']">
+            <FormLabel class="text-sm font-emphasis text-muted-foreground [font-feature-settings:'cv01'_'ss03']">
               Confirm Password
             </FormLabel>
             <FormControl>
@@ -270,7 +270,7 @@ watch(
                   :class="
                     cn(
                       'h-10 rounded-md border border-input bg-muted text-foreground',
-                      'placeholder:text-muted-foreground transition-all duration-200',
+                      'placeholder:text-muted-foreground transition-[color,box-shadow] duration-200',
                       'focus:border-primary focus:bg-card focus:ring-2 focus:ring-primary/20',
                       'dark:border-border dark:bg-secondary dark:text-foreground dark:placeholder:text-muted-foreground/70',
                       'dark:focus:border-primary dark:focus:bg-card dark:focus:ring-primary/25',
@@ -309,8 +309,8 @@ watch(
             :disabled="mutation.isPending.value || changePasswordMutation.isPending.value"
             :class="
               cn(
-                'bg-primary text-primary-foreground font-[510]',
-                'shadow-lg shadow-primary/15 transition-all duration-200',
+                'bg-primary text-primary-foreground font-emphasis',
+                'shadow-lg shadow-primary/15 transition-[box-shadow,transform] duration-200',
                 'hover:bg-primary/90 hover:shadow-primary/20',
                 'disabled:opacity-70 disabled:cursor-not-allowed',
               )

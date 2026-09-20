@@ -119,7 +119,7 @@ watch(
         <FormField v-slot="{ componentField }" name="email">
           <FormItem>
             <FormLabel
-              class="text-sm font-[510] text-gray-600 [font-feature-settings:'cv01'_'ss03'] dark:text-[#8a8f98]"
+              class="text-sm font-emphasis text-foreground/80 [font-feature-settings:'cv01'_'ss03'] dark:text-muted-foreground"
             >
               New Email
             </FormLabel>
@@ -131,11 +131,11 @@ watch(
                 autocomplete="email"
                 :class="
                   cn(
-                    'h-10 rounded-md border border-[#d0d6e0] bg-[#f3f4f5] text-[#1a1a2e]',
-                    'placeholder:text-[#8a8f98] transition-all duration-200',
-                    'focus:border-[#5e6ad2] focus:bg-white focus:ring-2 focus:ring-[#5e6ad2]/20',
-                    'dark:border-white/8 dark:bg-white/2 dark:text-[#f7f8f8] dark:placeholder:text-[#62666d]',
-                    'dark:focus:border-[#5e6ad2] dark:focus:bg-white/4 dark:focus:ring-[#5e6ad2]/25',
+                    'h-10 rounded-md border border-border bg-secondary text-foreground',
+                    'placeholder:text-muted-foreground transition-[color,box-shadow] duration-200',
+                    'focus:border-primary focus:bg-white focus:ring-2 focus:ring-primary/20',
+                    'dark:border-white/8 dark:bg-white/2 dark:text-foreground dark:placeholder:text-muted-foreground',
+                    'dark:focus:border-primary dark:focus:bg-white/4 dark:focus:ring-primary/25',
                   )
                 "
                 v-bind="componentField"
@@ -148,7 +148,7 @@ watch(
         <FormField v-if="showPasswordField" v-slot="{ componentField }" name="password">
           <FormItem>
             <FormLabel
-              class="text-sm font-[510] text-gray-600 [font-feature-settings:'cv01'_'ss03'] dark:text-[#8a8f98]"
+              class="text-sm font-emphasis text-foreground/80 [font-feature-settings:'cv01'_'ss03'] dark:text-muted-foreground"
             >
               Current Password
             </FormLabel>
@@ -160,11 +160,11 @@ watch(
                 autocomplete="current-password"
                 :class="
                   cn(
-                    'h-10 rounded-md border border-[#d0d6e0] bg-[#f3f4f5] text-[#1a1a2e]',
-                    'placeholder:text-[#8a8f98] transition-all duration-200',
-                    'focus:border-[#5e6ad2] focus:bg-white focus:ring-2 focus:ring-[#5e6ad2]/20',
-                    'dark:border-white/8 dark:bg-white/2 dark:text-[#f7f8f8] dark:placeholder:text-[#62666d]',
-                    'dark:focus:border-[#5e6ad2] dark:focus:bg-white/4 dark:focus:ring-[#5e6ad2]/25',
+                    'h-10 rounded-md border border-border bg-secondary text-foreground',
+                    'placeholder:text-muted-foreground transition-[color,box-shadow] duration-200',
+                    'focus:border-primary focus:bg-white focus:ring-2 focus:ring-primary/20',
+                    'dark:border-white/8 dark:bg-white/2 dark:text-foreground dark:placeholder:text-muted-foreground',
+                    'dark:focus:border-primary dark:focus:bg-white/4 dark:focus:ring-primary/25',
                   )
                 "
                 v-bind="componentField"
@@ -187,9 +187,9 @@ watch(
             :disabled="requestMutation.isPending.value"
             :class="
               cn(
-                'bg-[#7b85d4] text-white font-[510]',
-                'shadow-lg shadow-[#7b85d4]/15 transition-all duration-200',
-                'hover:bg-[#8b95e0] hover:shadow-[#8b95e0]/20',
+                'bg-primary text-white font-emphasis',
+                'shadow-lg shadow-primary/15 transition-[box-shadow,transform] duration-200',
+                'hover:bg-accent-hover hover:shadow-accent-hover/20',
                 'disabled:opacity-70 disabled:cursor-not-allowed',
               )
             "

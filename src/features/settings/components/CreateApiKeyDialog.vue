@@ -320,7 +320,7 @@ watch(
         <FormField v-slot="{ componentField }" name="name">
           <FormItem>
             <div class="flex items-center justify-between">
-              <FormLabel class="text-sm font-[510] text-muted-foreground [font-feature-settings:'cv01'_'ss03']">
+              <FormLabel class="text-sm font-emphasis text-muted-foreground [font-feature-settings:'cv01'_'ss03']">
                 Name
               </FormLabel>
               <!-- Live counter: maxlength silently truncates pasted text, so the
@@ -341,7 +341,7 @@ watch(
                 :class="
                   cn(
                     'h-10 rounded-md border border-input bg-muted text-foreground',
-                    'placeholder:text-muted-foreground transition-all duration-200',
+                    'placeholder:text-muted-foreground transition-[color,box-shadow] duration-200',
                     'focus:border-primary focus:bg-card focus:ring-2 focus:ring-primary/20',
                     'dark:border-border dark:bg-secondary dark:text-foreground dark:placeholder:text-muted-foreground/70',
                     'dark:focus:border-primary dark:focus:bg-card dark:focus:ring-primary/25',
@@ -359,7 +359,7 @@ watch(
 
         <!-- Scopes -->
         <div class="flex flex-col gap-2">
-          <Label class="text-sm font-[510] text-muted-foreground [font-feature-settings:'cv01'_'ss03']">
+          <Label class="text-sm font-emphasis text-muted-foreground [font-feature-settings:'cv01'_'ss03']">
             Permissions
           </Label>
           <div class="flex gap-2">
@@ -428,7 +428,7 @@ watch(
 
         <!-- Expiration -->
         <div class="flex flex-col gap-2">
-          <Label class="text-sm font-[510] text-muted-foreground [font-feature-settings:'cv01'_'ss03']">
+          <Label class="text-sm font-emphasis text-muted-foreground [font-feature-settings:'cv01'_'ss03']">
             Expiration
           </Label>
           <div class="flex flex-wrap gap-2">
@@ -499,8 +499,8 @@ watch(
             :disabled="mutation.isPending.value || form.values.scopes.length === 0"
             :class="
               cn(
-                'bg-primary text-primary-foreground font-[510]',
-                'shadow-lg shadow-primary/15 transition-all duration-200',
+                'bg-primary text-primary-foreground font-emphasis',
+                'shadow-lg shadow-primary/15 transition-[box-shadow,transform] duration-200',
                 'hover:bg-primary/90 hover:shadow-primary/20',
                 'disabled:opacity-70 disabled:cursor-not-allowed',
               )
