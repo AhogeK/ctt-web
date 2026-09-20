@@ -245,3 +245,87 @@
     transform: translateY(0);
   }
 }
+
+/**
+ * Landing hero motion (2026-09-21). Spec and acceptance criteria: `DESIGN.md` §Motion.
+ *
+ * Two effects, one target each, and only `translate` / `opacity` change — both composite, neither
+ * touches layout:
+ *   .hero-rise / .hero-fade-rise — the entrance, once per page load, 320ms. 320ms is the timed
+ *     transition measured on the reference's product page (`0.32s|opacity, transform`), not a guess;
+ *     `ease-out` because it is entering and should settle.
+ *   .hero-handoff — scroll-linked, therefore it has **no duration at all**: progress in the section's
+ *     own view() exit range drives it. Browsers without scroll-driven animations (Firefox, per
+ *     2026-01) simply keep the static hero.
+ *
+ * Everything here is declared under `prefers-reduced-motion: no-preference`, so under reduce the
+ * animations do not exist and the hero renders in its final state. The document-wide reduce rule
+ * above only zeroes *durations* — a zeroed animation still honours `animation-delay` and would hold
+ * the `from` frame (invisible text) for that delay, which is the entrance version of the trap this
+ * file already documents.
+ *
+ * The h1 is `.hero-rise`, not `.hero-fade-rise`, on purpose: it is the largest-contentful-paint
+ * element, and an element that starts transparent is not painted until it is not — a fade would move
+ * the LCP measurement (and the first thing a visitor sees) to the end of the delay. Translation
+ * alone keeps it painted from the first frame.
+ */
+@layer components {
+  @media (prefers-reduced-motion: no-preference) {
+    .hero-rise {
+      animation: hero-rise 320ms ease-out both;
+    }
+    .hero-fade-rise {
+      animation: hero-fade-rise 320ms ease-out both;
+    }
+    @supports (animation-timeline: view()) {
+      .hero-handoff {
+        animation: hero-handoff auto linear both;
+        animation-timeline: view();
+        animation-range: exit;
+      }
+    }
+  }
+}
+
+@keyframes hero-rise {
+  from {
+    translate: 0 12px;
+  }
+  to {
+    translate: 0 0;
+  }
+}
+
+@keyframes hero-fade-rise {
+  from {
+    opacity: 0;
+    translate: 0 12px;
+  }
+  to {
+    opacity: 1;
+    translate: 0 0;
+  }
+}
+
+/**
+ * Hand-off keyframes are **staged**: the drift runs across the whole exit range, the dissolve only
+ * over its second half. Reason, measured not assumed (2026-09-21): the exit range is one viewport
+ * tall, and today's landing page holds only the hero plus the footer — 281px of scroll, i.e. 37% of
+ * the range. With an unstaged fade the hero was left at `opacity 0.63` whenever the visitor reached
+ * the bottom of the page, which reads as washed-out text. Staged, that same 37% shows drift only
+ * (opacity stays 1), and the dissolve completes as soon as the page has sections to hand off to.
+ */
+@keyframes hero-handoff {
+  0% {
+    opacity: 1;
+    translate: 0 0;
+  }
+  50% {
+    opacity: 1;
+    translate: 0 -20px;
+  }
+  100% {
+    opacity: 0;
+    translate: 0 -40px;
+  }
+}
