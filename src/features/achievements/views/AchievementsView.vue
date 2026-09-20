@@ -18,7 +18,7 @@
  * which is exactly the confusion the split removes.
  */
 import { computed, watch } from 'vue'
-import { useNow } from '@vueuse/core'
+import { useIntervalFn, useNow } from '@vueuse/core'
 import { AlertCircle, CalendarClock, RefreshCw, Trophy as TrophyIcon } from '@lucide/vue'
 import { Button } from '@/components/ui/button'
 import { Skeleton } from '@/components/ui/skeleton'
@@ -41,7 +41,12 @@ const { data, isPending, isError, refetch } = useStatsAchievements()
  * claiming yesterday's remaining days. Minute granularity is enough: the countdown
  * is expressed in whole days, and only the local *date* changes its value.
  */
-const now = useNow({ interval: 60_000 })
+/*
+ * VueUse 15 dropped the ad-hoc `interval` option in favour of a `scheduler`, so the
+ * cadence is supplied explicitly: `useIntervalFn` returns exactly the `Pausable`
+ * shape the option requires. The behaviour is unchanged — one tick per minute.
+ */
+const now = useNow({ scheduler: (cb) => useIntervalFn(cb, 60_000) })
 
 /**
  * The clock and the data must move together.
