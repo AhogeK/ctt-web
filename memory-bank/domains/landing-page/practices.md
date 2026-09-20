@@ -85,6 +85,32 @@ walkthrough, open-source block and pricing structure are still open (see `meta.m
 
 **粘性偏移只有一个来源**：`--marketing-header-height`（定义在 `MarketingLayout.vue` 壳元素 ✓ 3.5rem）→ 任何需要吸在顶栏之下的元素写 `sticky top-[var(--marketing-header-height)]` ✓。参照物用 `top-[65px]` 是**它们自己的 header 高度** ✗，抄数值就是两条栏重叠的成因 ✓。验收判据：**变量解析值 == header 的 `getBoundingClientRect().height`** ✓（56px ✓ 已测），变量与类名一旦脱钩即红 ✓。
 
+## 可点击元素的光标：一处全局规则（2026-09-20 用户报缺 ✗）
+
+**Tailwind v4 的 preflight 故意把 `button, [role=button]` 设成 `cursor: default`** ✗（v4 的既定破坏性变更 ✓），所以指针要逐处补回 ✓ —— 而"散补"漏掉了真的：**shadcn 的对话框关闭按钮**（= 每个对话框的 X ✗，用户举的例子 ✓）· `SidebarRail` · auth 表单的 `<label for>` ✗。全仓当时只有 24 处 `cursor-pointer` ✓。
+
+**修法** ✓：在 `src/assets/main.css` 的 `@layer base` 里一条规则覆盖 `button:not(:disabled)` · `[role=button]` · `[role=tab]` · `[role=menuitem]` · `label[for]` · `summary` · `select:not(:disabled)` ✓✓ —— **禁用态不排除**（用 `:not(:disabled)` ✓ 保持 `default` ✓，禁用控件不该给手型 ✓）。
+
+**验收判据（可失败 ✓）**：页面里**注入一个无任何类的裸 `<button>`** ✓ —— 那正是 shadcn 关闭按钮的处境 ✓ —— 计算 `cursor` 必须为 `pointer` ✓；同页所有 `button/[role=button]/label[for]` 扫一遍必须**全为 pointer** ✓，禁用按钮**保持 default** ✓。
+
+## 颜色只有令牌一条路（2026-09-20，全仓清零 ✓）
+
+三条债都清完了：**方括号字面量 245 → 0** ✓ · **Tailwind 调色板类 177 → 1** ✓（仅剩一个琥珀发光 ✗）。做法与可复用的判据：
+
+- **先按角色映射，再动手** ✓：`gray-900 → foreground` ✓ · `gray-700/600 → foreground/90|80`（**令牌 alpha** ✓，与仓库既有的 `border-border/60` 同一手法 ✓）· `gray-500/400 → muted-foreground` ✓ · `red-* → destructive` ✓ · `green/emerald-* → success` ✓ · `amber/yellow-* → warning` ✓。
+- **数字色阶不能压成一个令牌** ✗：`text-amber-900` 配 `bg-amber-50` 是高对比 ✓；压成单一 warning 色会变低对比 ✗ = 把无障碍改坏 ✓ → 所以警告要**三件套**（ink · surface · border ✓），取值直接取代码里**既有**色阶 → 近乎零视觉变化 ✓。
+- **断言必须能失败** ✓：本次"非目标族残留 = 0"的断言抓出**两次漏网**（16 处 + 13 处 ✗✓）——没有它，那些前缀组合会静静留下 ✓。
+- **每轮收尾复查 `git diff --name-only`** ✗：一次全仓 `vp fmt src/` 顺手重排了一个**无关文件**（`AuthLayout.css` 18 行纯格式 ✗）→ 已 `git restore` 撤掉 ✓。格式化只对**本轮改动的文件**跑 ✓。
+
+## 字重工具类被「无层」重置压死（2026-09-20 实测，已修 ✓）
+
+`src/assets/base.css` 曾有 `*, *::before, *::after { box-sizing: border-box; font-weight: normal; }` ✗ —— **无层（unlayered）CSS 的优先级高于任何 `@layer`** ✗✓，而 Tailwind 的工具类都住在 `@layer utilities` 里 ⇒ 这条通配符把**全站 98 处** `font-*` 一并压成 400 ✓✓（实测：连自己构造的 `.font-bold` 探针计算值都是 400 ✓）。
+
+- **为什么难发现** ✓：`font-size` / `letter-spacing` 不在那条重置里 ✓ → 它们照常生效 ✓，现象只剩「字看着偏细」✗，不报错、不漂移 ✓；而且它是**既有**问题 ✗ —— `8413845 fix(css): remove unlayered margin reset for Tailwind v4` 只修了同一块里的 `margin` ✗✓，另一半留在原地 ✓。
+- **修法** ✓：删掉那一行 ✓。preflight 本就负责标题字重 ✓（`h1,h2,h3,h4,h5,h6{ font-size:inherit; font-weight:inherit }` ✓），那条通配符实际只会削掉 `<b>` / `<strong>` / `<th>` 的字重 ✗。
+- **验收判据（可失败 ✓）**：`getComputedStyle` 上 `.font-medium` → 500 · `.font-semibold` → 600 · `.font-bold` → 700 ✓；这条修好之后，标题阶梯要求的 **510** 才可能生效 ✓（同轮实测 h1 = 64px / 510 / −1.408px / 行高 1 ✓✓）。
+- **通用教训** ✓：写下 `*` 选择器前先问「它会不会压掉一整层工具类」✓；同一个块里出现过的同类错误，**要一次查完该块的每个属性** ✗ —— `8413845` 的教训写在 commit 里了 ✓，但只修了一半 ✓。
+
 ## ThemeToggle 的对比度告警是**假阳性**（2026-09-20 实测，不要再改颜色 ✗）
 
 SonarLint `css:S7924` 报了 `ThemeToggle.vue` 的四条 `color:` 声明（两个主题 × 静止/悬停）。**四条全部不成立** ✓，原因有两条，都可复现：

@@ -172,3 +172,29 @@ substantive code commit and nothing else substantial — that reads as a documen
 token code change. So: give a round enough code work to produce **several** functional commits, and
 let the AI commits ride alongside as peers, still strictly separated (R6.5). Stop to ask for the
 commit word when a real chunk is ready — not after a sliver, and not only once everything is finished.
+
+## P13. Put decisions in the question tool, not at the end of a report
+
+When a choice is the user's to make — do X or not, A vs B, scope in or out — ask it with **omp's
+question tool** (`ask`), so they can pick an option instead of reading a numbered list buried under a
+long report. User, 2026-09-20: *"这种问题你应该直接用 omp 的询问工具来问我，我可以直接做选择，而不是这样
+非常不清晰看着"*.
+
+A report may **summarise** state; it must not be the **mechanism** for a decision. If the answer
+changes what happens next, it belongs in the question tool — which also records the answer as a
+choice in the transcript, instead of prose the next round has to re-derive.
+
+## P14. `transition-all` is a bug, not a shorthand
+
+`transition-all` makes every property animatable, so Chrome may promote the element to a composited
+layer for the duration — and a promoted layer loses subpixel (LCD) antialiasing, which the user sees
+as **text going soft for ~150ms** on hover. Measured on the login page (element screenshots at 4×,
+Laplacian variance of the text band): `transition-all` rest 696.5 → mid **454.2** (ratio **0.652** ✗);
+after narrowing to `transition-colors`, rest 696.5 → mid **758.6** (ratio **1.089** ✓).
+
+Always name the properties that change: `transition-colors` · `transition-[color,box-shadow]` ·
+`transition-[width]` (a 2026-09-20 sweep replaced the last 43 uses; Tailwind's `-colors/-opacity/
+-transform` are already narrow — only `all` is the trap). **Measure it against the same end state** (mid-transition vs settled), never rest vs a state whose
+content also changed: the input's rest→mid read 0.882 ✗ only because focusing moved its border, while
+its mid vs settled read **1.000** ✓ — the real answer.
+**Assert the new form too, not only the old pattern's absence** — a bulk replacement can leave a valid-looking fake: `bg-amber-50 → bg-warning-surface` matched *inside* `bg-amber-500` and produced `bg-warning-surface0`, so the old pattern was gone ✓ while the class was garbage ✗. Grep the result shape as well.
