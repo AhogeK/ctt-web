@@ -408,3 +408,39 @@ The color system is almost entirely achromatic — dark backgrounds with white/g
 5. Brand indigo (`#5e6ad2` / `#7170ff`) is the only chromatic color — everything else is grayscale
 6. Borders are always semi-transparent white, never solid dark colors on dark backgrounds
 7. Berkeley Mono for any code or technical content, Inter Variable for everything else
+
+## 10. Motion
+
+Measured basis: this project's own baseline (`memory-bank/domains/landing-page/practices.md` —
+interface transitions 0.15–0.2s, most elements declaring none) plus the reference's product page
+measured 2026-09-21 (MacBook Pro page: 12 sticky rules, 3 `animation-timeline` declarations, 27
+`prefers-reduced-motion` blocks, media layers translated 180px → 0 by scroll progress with
+`will-change: transform` — and the `h1` itself not moving at all).
+
+Two effects exist on the landing hero, one target each. **Nothing else on the landing page moves.**
+
+| Field | Entrance (`.hero-rise` · `.hero-fade-rise`) | Hand-off (`.hero-handoff`) |
+| --- | --- | --- |
+| Trigger | page load, once | scrolling past the hero |
+| Target | eyebrow · h1 · description · CTA row | the hero section (single element) |
+| From → To | `translate 0 12px → 0`; the three small layers also `opacity 0 → 1` | drift across the whole exit (`translate 0 → 0 -40px`), dissolve only in its **second half** (`opacity 1 → 0`) |
+| Duration | **320ms** — the timed transition measured on the reference's product page (`0.32s`) | none: progress-mapped, not timed |
+| Easing | `ease-out` (it is entering, so it settles) | `linear` progress |
+| Reduced motion | animation is not declared → final state renders | animation is not declared → final state renders |
+| Exit | n/a (one-shot) | reverse scroll reverses it (progress-mapped) |
+| Capability | any browser, `no-preference` only | `@supports (animation-timeline: view())`; Firefox (2026-01) keeps the static hero |
+
+Rules these follow:
+
+- Only `translate` and `opacity` change — both composite; nothing layout-bound, no colour, no new tokens (§2 untouched).
+- The `h1` is `.hero-rise`, **not** faded, on purpose: it is the largest-contentful-paint element, and a transparent element is not painted — a fade would move both the metric and the first thing a visitor sees.
+- The entrance is declared *inside* `@media (prefers-reduced-motion: no-preference)`, not merely zeroed by the document rule in `main.css`: zeroing a duration still honours `animation-delay`, which would hold the invisible `from` frame for that delay.
+- Stagger is 0 / 0 / 70 / 140ms across the four layers — two beats (headline block, then support + action), not four.
+- Register: hero-only. The effect exists because the hero is the first impression and the page has no sections yet to carry a page-wide scroll rhythm; when sections arrive, the rhythm is decided once for the page, not per component.
+
+Acceptance criteria (each falsifiable in a real browser — see `memory-bank/domains/landing-page/practices.md`):
+
+1. With `prefers-reduced-motion: reduce` emulated: `document.getAnimations().length === 0` and the hero computes to `opacity: 1`, no `translate`.
+2. Without reduce: the `h1`'s computed `opacity` is `1` at **every** sampled instant (the LCP element is never transparent).
+3. Scrolling from 0 into the hero's exit range maps monotonically to the hand-off values, and scrolling back restores them.
+4. `LCP(no-preference) ≤ LCP(reduce)` measured with `PerformanceObserver` — the entrance may not cost the first paint.
