@@ -18,26 +18,23 @@ git checkout master && git cherry-pick <feat-hash> <version-hash>
 git diff develop master --stat -- src/ e2e/ package.json README.md   # must be empty
 ```
 
-A non-empty diff here means either an AI commit leaked in, or a wrong (stale) commit was
-cherry-picked — stop and investigate before pushing.
-
 ## Verification recipes
 
-| Purpose                    | Command / method                                                   |
-| -------------------------- | ------------------------------------------------------------------ |
-| Types                      | `pnpm type-check`                                                   |
-| Lint                       | `pnpm lint`                                                         |
-| Unit tests                 | `pnpm test:unit --run`                                              |
-| Build                      | `pnpm build`                                                        |
-| E2E (specific spec)        | `env -u CI pnpm test:e2e e2e/<path>.spec.ts --project=chromium`      |
-| Dark-mode rendering        | CDP `page.emulateMediaFeatures([{name:'prefers-color-scheme',value:'dark'}])` then screenshot/pixel sample |
-| Endpoint payload           | Direct `curl` with the panel's exact params (see `backend-contract`) |
+| Purpose             | Command / method                                                   |
+| ------------------- | ------------------------------------------------------------------ |
+| Types               | `vp run type-check`                                                 |
+| Lint                | `vp lint`                                                           |
+| Format              | `vp fmt --check <path>`                                             |
+| Unit tests          | `vp test run [path]`                                                |
+| Build               | `vp build`                                                          |
+| E2E (one spec)      | `env -u CI vp test:e2e e2e/<path>.spec.ts --project=chromium`        |
+| Dark-mode rendering | CDP `page.emulateMediaFeatures([{name:'prefers-color-scheme',value:'dark'}])`, then sample |
+| Endpoint payload    | Direct `curl` with the panel's exact params (see `backend-contract`) |
 
-`env -u CI` matters: with `CI` set, Playwright switches to a preview build instead of the running
-dev server.
+`env -u CI` matters: with `CI` set, Playwright switches to a preview build instead of the dev server.
 
 **The suite is headless, including locally — `--headed` is the opt-in** (the default is
-`chromium_headless_shell`, which cannot open a window; the old default opened one browser per spec).
+`chromium_headless_shell`, which cannot open a window; the old default opened one per spec).
 
 **Check whose server is on 5173 before believing a failed run.** `reuseExistingServer: !CI` drives
 whatever holds the port, so another project's dev server there makes **every** spec fail at the first
@@ -54,31 +51,22 @@ Per-commit checking needs a worktree **with its own install**; one that borrows 
 ## Reading a rendered value instead of guessing it
 
 ```js
-// computed style of a specific element
 await page.evaluate(() => getComputedStyle(document.querySelector('[data-testid="x"]')).backgroundColor)
-// rendered pixels, when a composited layer could differ from the declared value
-// (screenshot the region, decode in-page with canvas, read the RGBA)
 ```
 
-Declared CSS is not evidence of what a user sees — gradients, masks, opacity and stacking all
-change the result. Sample the render.
-
-## Capturing a transient UI state
-
-- Screenshot from the same `tab.run` cell that triggered it; a separate call can miss the window.
-- For hover/press states, dispatch the interaction then screenshot before the state expires.
+Declared CSS is not evidence of what a user sees — gradients, masks, opacity and stacking all change
+the result. Sample the render in the same `tab.run` cell that triggered a transient state.
 
 ## When an edit tool corrupts a file
 
 Symptom: the file stops parsing, duplicate blocks appear, or a boundary line is echoed twice. The
-usual origin is **shell/Python string replacement**, which reports success while writing valid-looking nonsense (a `[, EMAIL]` sparse array; `{…}` rewritten as `[…]`); prefer the editor's own edit tool, which echoes what it wrote.
+usual origin is **shell/Python string replacement**, which reports success while writing
+valid-looking nonsense (a `[, EMAIL]` sparse array; `{…}` rewritten as `[…]`).
 
 1. Stop patching. Re-read the whole file.
-2. If the structure is damaged beyond a single hunk, **rewrite the file in one `write`** with the
-   complete intended content.
-3. Re-run the full verification (types + tests + build) — a silent structural change is exactly
-   what tests are for.
-4. Prefer one whole-file write over many hunks for template-heavy files in the first place.
+2. Damaged beyond a single hunk → **rewrite the file in one `write`** with the complete intent.
+3. Re-run the full verification — a silent structural change is what tests are for.
+4. For template-heavy files, prefer one whole-file write over many hunks in the first place.
 
 ## Browser sessions for dashboard verification
 
@@ -102,24 +90,23 @@ await page.goto('http://localhost:5173/dashboard', { waitUntil: 'networkidle2' }
 
 Traps — each one cost a full debugging round:
 
-- **Write the tokens as bare strings.** `useStorage(key, null)` picks the *string* serializer for
-  a `null` default, so a JSON-quoted value is sent verbatim (`"\"abc\""`) and every refresh
-  returns `AUTH_003`. This is also why the app's own login looks broken when driven with a
+- **Write the tokens as bare strings.** `useStorage(key, null)` picks the *string* serializer for a
+  `null` default, so a JSON-quoted value is sent verbatim (`"\"abc\""`) and every refresh returns
+  `AUTH_003`. This is also why the app's own login looks broken when driven with a
   `JSON.stringify`'d token.
-- **Write them before navigating, in the same `tab.run`.** `page.evaluateOnNewDocument` registers
-  for the lifetime of the call, not the page — it never took effect and silently fell back to
-  whatever token the profile already had (which produced verification against the *wrong account*
-  without any error).
+- **Write them before navigating, in the same `tab.run`.** `page.evaluateOnNewDocument` registers for
+  the lifetime of the call, not the page — it never took effect and silently fell back to whatever
+  token the profile already had (verification then ran against the *wrong account*, with no error).
 - **A saved token pair is good for one run.** The refresh token rotates and reuse is detected
-  (`AUTH_009`), so reusing a pair gets `403 /auth/refresh` and a bounce to `/auth/login` — which looks
-  exactly like "my change broke the page". Fetch a fresh pair per run.
-- **One live tab per Chrome profile.** A second tab with the app open keeps its own silent-refresh
-  timer running and rewrites the shared `localStorage`, so the token you injected rotates back to
-  the other account mid-check. Kill the old instance, or use a fresh profile per verification.
+  (`AUTH_009`), so reuse gets `403 /auth/refresh` and a bounce to `/auth/login` — which looks exactly
+  like "my change broke the page". Fetch a fresh pair per run.
+- **One live tab per Chrome profile.** A second tab keeps its own silent-refresh timer running and
+  rewrites the shared `localStorage`, rotating your token back mid-check. Kill the old instance or
+  use a fresh profile per verification.
 - **The app's CSP blocks `fetch()`/`Image()` on `data:` URLs**, so screenshots cannot be decoded
   in-page (canvas pixel sampling fails with `Failed to fetch` / `EncodingError`). Read *resolved*
-  computed styles instead — for a track-sized gradient, `backgroundSize: "783.5px 100%"` is the
-  proof that the `cqw` container query resolved, which is the mechanism under test.
+  computed styles instead — for a track-sized gradient, `backgroundSize: "783.5px 100%"` proves the
+  `cqw` container query resolved, which is the mechanism under test.
 
 ## Test accounts: reuse a prefix, never invent one
 
@@ -132,7 +119,7 @@ registers a real server account that needs seeding, and there is no delete-accou
 | `lang`     | 10 languages                                                     |
 | `repro`    | Error/edge repro seeding                                         |
 | `tdd`      | Local unit-test work                                             |
-| `proj`     | Stray — created in error during the project-panel round; empty now (its API key was purged). Safe to reuse, do not add more. |
+| `proj`     | Stray — created in error; empty now (its API key was purged). Safe to reuse, do not add more. |
 
 Seeding writes need a SYNC-scoped API key on that account:
 
@@ -141,60 +128,73 @@ curl -s -X POST $API/v1/auth/api-keys -H "Authorization: Bearer $JWT" \
   -d '{"name":"…","scopes":["READ","SYNC"],"expiresAt":null}'      # → data.rawKey
 ```
 
-Devices require a **UUID** `deviceId` (`COMMON_001` otherwise). Purge the key when done:
+Devices require a **UUID** `deviceId` (`COMMON_001` otherwise). Purge when done:
 `DELETE /auth/api-keys/{id}` (revoke) then `DELETE /auth/api-keys/{id}/delete`.
 
 ## Where an artifact goes (.omp vs docs)
 
 `.omp/README.md` is the authority; the short version:
 
-| Artifact                       | Home                                     | Committed? |
-| ------------------------------ | ---------------------------------------- | ---------- |
-| Implementation plan            | `.omp/plans/<feature>-plan.md`           | No (`.omp/` is gitignored) |
-| Delivery report / requirement  | `.omp/<topic>-{delivery-report,requirement}.md` | No  |
-| User-facing project doc        | `docs/`                                  | Yes        |
-| Agent memory                   | `memory-bank/`                           | Yes        |
+| Artifact                      | Home                                             | Committed? |
+| ----------------------------- | ------------------------------------------------ | ---------- |
+| Implementation plan           | `.omp/plans/<feature>-plan.md`                   | No (gitignored) |
+| Delivery report / requirement | `.omp/<topic>-{delivery-report,requirement}.md`  | No         |
+| User-facing project doc       | `docs/`                                          | Yes        |
+| Agent memory                  | `memory-bank/`                                   | Yes        |
 
-An implementation plan is a **working artifact**: it is worth writing for any change spanning
->5 files, and it is worth keeping afterwards as the record of why — but it is not project
-documentation, so it does not go in `docs/`. Plan filenames carry no date (recency is the file's
-mtime); the plan itself has a `Date:` field.
-
-Writing a plan to `docs/plans/` is the specific mistake to avoid — `docs/` receives user-facing
-docs only.
+A plan is a **working artifact**: worth writing for any change spanning >5 files, worth keeping as
+the record of why — but it is not project documentation, so it never goes in `docs/`. Plan filenames
+carry no date (recency is the mtime); the plan itself has a `Date:` field.
 
 ## Proving a lint rule is actually enabled
 
-`pnpm lint` runs with `--fix`, so a newly added rule can appear to do nothing: it silently rewrites
-the file instead of reporting. Two checks, in this order:
+`vp lint` runs with `--fix`, so a newly added rule can appear to do nothing: it silently rewrites the
+file instead of reporting. Two checks, in this order:
 
 1. **Read-only path proves it is registered** — `vp lint <path>` on a deliberately violating file
-   must print the rule by name and exit 1. No output means the rule name or plugin is wrong
-   (a misnamed rule is accepted silently rather than rejected).
-2. **Fix path proves it is wired into the normal flow** — after `pnpm lint`, the violating file
-   should now be corrected.
+   must print the rule by name and exit 1 (a misnamed rule is accepted silently, so no output means
+   the name or plugin is wrong).
+2. **Fix path proves it is wired into the normal flow** — after `vp lint`, the file is corrected.
 
-Both were needed when adding `vitest/prefer-to-have-length`: the `--fix` run reported nothing at
-all, which looked exactly like "the rule is not working" until the file was inspected and the
-assertion had already been rewritten.
+Both were needed for `vitest/prefer-to-have-length`: `--fix` reported nothing at all, which looked like "the rule is not working" until the assertion turned out to be already rewritten.
+
+## Proving a CSS change is broken: the SFC style sub-request
+
+A stylesheet reached through `<style src>` has **two** URLs: the bare file (`/src/x.css`) and the
+sub-request Vite builds for the component (`…?t=1&vue&type=style&index=0&src=true&lang.css`).
+**PostCSS only runs on the second** — the bare file and the `.vue` both 200 while the page dies.
+
+```bash
+curl -s -o err.html -w '%{http_code}' \
+  'http://localhost:5173/src/<path>.css?t=1&vue&type=style&index=0&src=true&lang.css'
+grep -oE '"message":"[^"]{0,120}' err.html   # → "X.vue:524:25: Missed semicolon" (real line!)
+```
+
+The body carries the PostCSS error with file:line:col; browser-side,
+`performance.getEntriesByType('resource').filter(e => e.responseStatus >= 400)` lists the failing URL
+after the fact. A 500 here lands the route on the error boundary, so a CSS syntax error masquerades as
+a render bug. Trap it already charged: regex-replacing a multi-line declaration swallowed the **next**
+declaration into the last value.
 
 ## Memory upkeep mechanics
 
-- Update **immediately** in the same round as the change (R2) — deferred updates are how the
-  timeline falls behind reality.
+- Update **immediately** in the same round as the change (R2) — deferred updates are how the timeline
+  falls behind reality.
 - Before adding an entry, read the target file; extend the matching topic instead of appending.
 - Keep one canonical location per fact (P6); elsewhere, link.
 - Archive to `memory-bank/archives/YYYY-MM-DD-<name>-archive.md` and leave a pointer line behind.
-  Archives live under `memory-bank/` (not `docs/`, which is user-facing docs only — R25) and are the
-  one memory artifact exempt from the 200-line limit; that is what they are for.
+  Archives live under `memory-bank/` (not `docs/` — R25) and are the one artifact exempt from the
+  200-line limit; that is what they are for.
 
 ## Resource hygiene
 
 - Long-running process → background it with its own log file; record the PID for teardown.
-- Teardown: match the process command line against the resource you started, then stop it. Never
-  kill by port alone.
-- **Close every browser tab you opened** — `app.relay` tabs live in the user's real browser and
-  cannot be closed for them: after releasing one, **ask the user to confirm**. Then run
-  `bash ~/.omp/packages/session-discipline/tools/sweep.sh`: it kills scratch-profile browsers **first**, deletes their profiles
-  **after**. **A profile count read right after an `rm` is a lie** (a live Chrome recreates the
-  directory) — that is how a stray window survived a round reporting "clean".
+- Teardown: match the process command line against the resource you started, never kill by port alone.
+- **Verification browsers must never steal the user's focus.** A visible scratch window takes the
+  keyboard away from whatever they are doing — run headless (`--headless=new`) or drive their own
+  browser, never a visible new window "just to check".
+- **Close every browser tab you opened** — `app.relay` tabs live in the user's real browser and cannot
+  be closed for them: after releasing one, **ask the user to confirm**. Then run
+  `bash ~/.omp/packages/session-discipline/tools/sweep.sh`: it kills scratch-profile browsers **first**,
+  deletes their profiles **after**. **A profile count read right after an `rm` is a lie** (a live
+  Chrome recreates the directory) — that is how a stray window survived a round reporting "clean".

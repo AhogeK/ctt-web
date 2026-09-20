@@ -33,7 +33,7 @@ domains:
     memory-bank/domains/ai-workflow/practices.md: 200
     memory-bank/domains/ai-workflow/principles.md: 144
     memory-bank/domains/ai-workflow/references.md: 109
-    memory-bank/domains/ai-workflow/scenarios.md: 191
+    memory-bank/domains/ai-workflow/scenarios.md: 199
   backend-contract:
     memory-bank/domains/backend-contract/meta.md: 87
     memory-bank/domains/backend-contract/practices.md: 92
@@ -49,7 +49,7 @@ domains:
     memory-bank/domains/dashboard-visualization/scenarios.md: 128
   landing-page:
     memory-bank/domains/landing-page/meta.md: 55
-    memory-bank/domains/landing-page/practices.md: 89
+    memory-bank/domains/landing-page/practices.md: 115
     memory-bank/domains/landing-page/principles.md: 54
     memory-bank/domains/landing-page/references.md: 42
     memory-bank/domains/landing-page/scenarios.md: 36

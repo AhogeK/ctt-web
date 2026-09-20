@@ -77,6 +77,32 @@ design against** — re-derive only if a source changes.
 The hero copy shipped in P1 is a placeholder for the *layout*, not the final messaging — the capability
 walkthrough, open-source block and pricing structure are still open (see `meta.md`).
 
+## AuthLayout 三块 3D 面板的**静止契约**（2026-09-20 实测）
+
+`.auth-dashboard` + 两张 `.auth-card-3d` 的静止外观由**入场动画的填充分布**决定，**不是**由
+`useCardTilt` 的参数决定：
+
+- 入场关键帧 `to` 是 `translateZ(0) rotateX(0) rotateY(0) rotateZ(0) scale(1)` = **平且同深度**
+- `animation-fill-mode: forwards` 让它在播完后**永久占据 `transform`** ⇒ 组件的
+  `baseRotate*`（15/-20/-3 · 10/-15/2 · 18/-25/-4）与 `translateZ`（**40 / 0 / −60**）**从未生效**
+  ⇒ 原设计里三块静止时**一律平正、同尺度**
+- 场景 `perspective: 1000px` 的作用只在播放中：`from` 的 `translateZ(-200px)` 把它们从远处拉近
+
+**把 `forwards` 改成 `backwards` 会解锁内联 transform** ⇒ 顶面板立刻按 `translateZ(40px)` 朝观察者
+放大、并因透视发虚（另两张 Z=0/−60，肉眼只在最上面那张看到）。症状原话：**"进场停下后突然卡片
+变大一圈变模糊"**。用户的判据是"**静止必须方方正正**"。
+
+**要让静止保持原样、同时让悬停能动，两条必须同时成立（方案 · 待用户确认）**：
+1. `baseRotateX/Y/Z` 与 `translateZ` **全部归零** ⇒ 静止 = 恒等矩阵 = 与原像素同一
+2. 再把 `forwards` → `backwards`（否则动画播完后仍压住悬停的 transform）
+
+**验收判据（针对该症状）**：静止时 `getBoundingClientRect()` 尺寸 == 布局尺寸，且
+`getComputedStyle(el).transform` 为恒等矩阵；一旦出现放大/模糊即红。
+
+**探针陷阱（都实测过）**：`browser.open({ viewport })` **未生效**（页面报 `vw=1200` ⇒ 低于左栏断点
+⇒ 面板 `display:none` ⇒ 0×0，所有断言都在量隐藏元素）；必须 `page.setViewport({width:1440,height:1000})`
+显式设置。`page.mouse.move` 移到卡片**正中**时倾斜量恒为 0（`x−0.5` 就是零点），必须量**偏心**位置。
+
 ## AuthLayout 背景：审计发现（**仅记录，不实施** — 技能实验期间实测，非本轮任务）
 
 登录/注册页背景由 `src/layouts/AuthLayout.css`（独立 CSS，不在 `.vue` 里）提供，实测：
