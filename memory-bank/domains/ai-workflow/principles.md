@@ -165,7 +165,10 @@ What follows:
   (`memory-bank/`, `.plans/`, `AGENTS.md`, `DESIGN.md`) or all code — the mix is the defect, and a
   one-line assertion catches it.
 
-**Batch size (user, 2026-09-20).** An authorization round should carry a **substantial** batch:
-several functional commits, not one small code change followed by a pile of AI documents. Stop to ask
-for the commit word when a real chunk is ready — not after a sliver, and not only once everything is
-finished.
+**Batch composition (user, 2026-09-20 — corrected twice; read this precisely).** AI content is **equally
+important** as a deliverable. This rule is about **the amount of code a round carries**, not about
+ranking the two. The failure it prevents: a round so thin that the delivered set holds **one**
+substantive code commit and nothing else substantial — that reads as a documentation round with a
+token code change. So: give a round enough code work to produce **several** functional commits, and
+let the AI commits ride alongside as peers, still strictly separated (R6.5). Stop to ask for the
+commit word when a real chunk is ready — not after a sliver, and not only once everything is finished.
