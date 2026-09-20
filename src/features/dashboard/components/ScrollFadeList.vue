@@ -158,10 +158,12 @@ defineExpose({ refresh })
 }
 
 /* Reveal on interaction: hover, keyboard focus, or while scrolling. */
-.scroll-fade:hover,
-.scroll-fade:focus-visible,
-.scroll-fade.is-scrolling {
-  scrollbar-color: color-mix(in oklab, var(--muted-foreground) 60%, transparent) transparent;
+@media (hover: hover) {
+  .scroll-fade:hover,
+  .scroll-fade:focus-visible,
+  .scroll-fade.is-scrolling {
+    scrollbar-color: color-mix(in oklab, var(--muted-foreground) 60%, transparent) transparent;
+  }
 }
 
 .scroll-fade:focus-visible {
@@ -183,9 +185,11 @@ defineExpose({ refresh })
   border-radius: 9999px;
 }
 
-.scroll-fade:hover::-webkit-scrollbar-thumb,
-.scroll-fade:focus-visible::-webkit-scrollbar-thumb,
-.scroll-fade.is-scrolling::-webkit-scrollbar-thumb {
-  background-color: color-mix(in oklab, var(--muted-foreground) 60%, transparent);
+@media (hover: hover) {
+  .scroll-fade:hover::-webkit-scrollbar-thumb,
+  .scroll-fade:focus-visible::-webkit-scrollbar-thumb,
+  .scroll-fade.is-scrolling::-webkit-scrollbar-thumb {
+    background-color: color-mix(in oklab, var(--muted-foreground) 60%, transparent);
+  }
 }
 </style>
