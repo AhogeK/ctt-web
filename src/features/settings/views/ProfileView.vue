@@ -186,15 +186,15 @@ onMounted(() => {
     <EmailVerificationBanner />
 
     <div class="flex flex-col gap-2">
-      <h1 class="text-2xl font-semibold text-gray-900 dark:text-[#f7f8f8]">Profile Settings</h1>
-      <p class="text-sm text-gray-500 dark:text-[#8a8f98]">Manage your account information</p>
+      <h1 class="text-2xl font-semibold text-foreground dark:text-foreground">Profile Settings</h1>
+      <p class="text-sm text-muted-foreground dark:text-muted-foreground">Manage your account information</p>
     </div>
 
     <AccountSection />
 
     <!-- Connected Accounts Section -->
-    <div class="rounded-lg border border-gray-200 dark:border-white/8 bg-gray-50 dark:bg-white/2 p-6">
-      <h2 class="text-lg font-medium text-gray-900 dark:text-[#f7f8f8] mb-4">Connected Accounts</h2>
+    <div class="rounded-lg border border-border dark:border-white/8 bg-muted dark:bg-white/2 p-6">
+      <h2 class="text-lg font-medium text-foreground dark:text-foreground mb-4">Connected Accounts</h2>
       <div class="flex items-center justify-between">
         <div class="flex items-center gap-3">
           <!-- Provider icon: GitHub SVG today; future providers should
@@ -218,23 +218,23 @@ onMounted(() => {
             </text>
           </svg>
           <div>
-            <p class="font-medium text-gray-900 dark:text-[#f7f8f8]">{{ providerDisplay.label }}</p>
+            <p class="font-medium text-foreground dark:text-foreground">{{ providerDisplay.label }}</p>
             <p
               v-if="isAccountsPending"
-              class="text-sm text-gray-500 dark:text-[#8a8f98]"
+              class="text-sm text-muted-foreground dark:text-muted-foreground"
               data-testid="github-status-loading"
             >
               Checking connection…
             </p>
             <p
               v-else-if="isAccountsError"
-              class="text-sm text-red-600 dark:text-red-400"
+              class="text-sm text-destructive dark:text-destructive"
               data-testid="github-status-error"
             >
               Failed to load connection status
               <button
                 type="button"
-                class="ml-1 underline underline-offset-2 hover:text-red-700 dark:hover:text-red-300"
+                class="ml-1 underline underline-offset-2 hover:text-destructive dark:hover:text-destructive"
                 data-testid="github-status-retry"
                 @click="handleRetryLoad"
               >
@@ -243,16 +243,22 @@ onMounted(() => {
             </p>
             <p
               v-else-if="githubBinding"
-              class="text-sm text-gray-500 dark:text-[#8a8f98]"
+              class="text-sm text-muted-foreground dark:text-muted-foreground"
               data-testid="github-status-connected"
             >
-              <span class="text-green-600 dark:text-green-400">Connected</span>
+              <span class="text-success dark:text-success">Connected</span>
               <template v-if="getBindingLabel(githubBinding)">
                 <span> as </span>
-                <span class="font-medium text-gray-900 dark:text-[#f7f8f8]">{{ getBindingLabel(githubBinding) }}</span>
+                <span class="font-medium text-foreground dark:text-foreground">{{
+                  getBindingLabel(githubBinding)
+                }}</span>
               </template>
             </p>
-            <p v-else class="text-sm text-gray-500 dark:text-[#8a8f98]" data-testid="github-status-disconnected">
+            <p
+              v-else
+              class="text-sm text-muted-foreground dark:text-muted-foreground"
+              data-testid="github-status-disconnected"
+            >
               Not connected
             </p>
           </div>
@@ -262,12 +268,12 @@ onMounted(() => {
           variant="outline"
           :class="
             cn(
-              'h-9 rounded-md font-[510] text-sm',
-              'border-[#d0d6e0] bg-white text-[#1a1a2e]',
-              'dark:border-white/8 dark:bg-white/2 dark:text-[#f7f8f8]',
-              'transition-all duration-200',
-              'hover:bg-[#f3f4f5] hover:border-[#5e6ad2]/50',
-              'dark:hover:bg-white/5 dark:hover:border-[#7170ff]/50',
+              'h-9 rounded-md font-emphasis text-sm',
+              'border-border bg-white text-foreground',
+              'dark:border-white/8 dark:bg-white/2 dark:text-foreground',
+              'transition-[background-color,border-color] duration-200',
+              'hover:bg-secondary hover:border-primary/50',
+              'dark:hover:bg-white/5 dark:hover:border-accent/50',
             )
           "
           :disabled="githubMutation.isPending.value"
@@ -281,12 +287,12 @@ onMounted(() => {
               variant="outline"
               :class="
                 cn(
-                  'h-9 rounded-md font-[510] text-sm',
-                  'border-[#d0d6e0] bg-white text-[#1a1a2e]',
-                  'dark:border-white/8 dark:bg-white/2 dark:text-[#f7f8f8]',
-                  'transition-all duration-200',
-                  'hover:bg-[#f3f4f5] hover:border-red-300',
-                  'dark:hover:bg-white/5 dark:hover:border-red-400',
+                  'h-9 rounded-md font-emphasis text-sm',
+                  'border-border bg-white text-foreground',
+                  'dark:border-white/8 dark:bg-white/2 dark:text-foreground',
+                  'transition-[background-color,border-color] duration-200',
+                  'hover:bg-secondary hover:border-destructive',
+                  'dark:hover:bg-white/5 dark:hover:border-destructive',
                 )
               "
               :disabled="unbindMutation.isPending.value"

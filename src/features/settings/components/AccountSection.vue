@@ -31,12 +31,12 @@ const passwordButtonLabel = computed(() => {
 
 /** Shared action button styling for outline buttons in the account section */
 const actionButtonClass = cn(
-  'h-9 rounded-md font-[510] text-sm',
-  'border-[#d0d6e0] bg-white text-[#1a1a2e]',
-  'dark:border-white/8 dark:bg-white/2 dark:text-[#f7f8f8]',
-  'transition-all duration-200',
-  'hover:bg-[#f3f4f5] hover:border-[#5e6ad2]/50',
-  'dark:hover:bg-white/5 dark:hover:border-[#7170ff]/50',
+  'h-9 rounded-md font-emphasis text-sm',
+  'border-border bg-white text-foreground',
+  'dark:border-white/8 dark:bg-white/2 dark:text-foreground',
+  'transition-[background-color,border-color] duration-200',
+  'hover:bg-secondary hover:border-primary/50',
+  'dark:hover:bg-white/5 dark:hover:border-accent/50',
 )
 
 const email = computed(() => emailStatus.value?.email ?? authStore.email)
@@ -56,8 +56,8 @@ function formatRegistrationTime(isoString: string | null | undefined): string {
 
 const formattedRegistrationTime = computed(() => formatRegistrationTime(authStore.createdAt))
 
-const sectionLabelClass = 'text-sm font-medium text-gray-500 dark:text-[#8a8f98]'
-const sectionValueClass = 'text-sm text-gray-900 dark:text-[#f7f8f8]'
+const sectionLabelClass = 'text-sm font-medium text-muted-foreground dark:text-muted-foreground'
+const sectionValueClass = 'text-sm text-foreground dark:text-foreground'
 
 function handleOpenChangeDialog() {
   isDialogOpen.value = true
@@ -83,8 +83,8 @@ function handleSetPasswordSuccess() {
 </script>
 
 <template>
-  <div class="rounded-lg border border-gray-200 dark:border-white/8 bg-gray-50 dark:bg-white/2 p-6">
-    <h2 class="text-lg font-medium text-gray-900 dark:text-[#f7f8f8] mb-4">Account</h2>
+  <div class="rounded-lg border border-border dark:border-white/8 bg-muted dark:bg-white/2 p-6">
+    <h2 class="text-lg font-medium text-foreground dark:text-foreground mb-4">Account</h2>
 
     <div class="flex flex-col gap-4">
       <!-- Email -->
@@ -97,14 +97,14 @@ function handleSetPasswordSuccess() {
             <Badge
               v-if="!isEmailStatusPending && emailVerified"
               variant="default"
-              class="bg-green-600 text-white dark:bg-green-700"
+              class="bg-success text-white dark:bg-success"
             >
               Verified
             </Badge>
             <Badge
               v-else-if="!isEmailStatusPending && !emailVerified"
               variant="secondary"
-              class="bg-yellow-100 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-400"
+              class="bg-warning-surface text-warning dark:bg-warning-surface dark:text-warning"
             >
               Unverified
             </Badge>
@@ -115,16 +115,14 @@ function handleSetPasswordSuccess() {
       <!-- Pending email change -->
       <div
         v-if="emailChangePending && pendingNewEmail"
-        class="rounded-md border border-amber-200 bg-amber-50 p-3 dark:border-amber-800 dark:bg-amber-900/20"
+        class="rounded-md border border-warning-border bg-warning-surface p-3 dark:border-warning-border dark:bg-warning-surface"
         data-testid="email-change-pending"
       >
-        <p class="text-sm text-amber-800 dark:text-amber-300">
+        <p class="text-sm text-warning dark:text-warning">
           Email change pending:
           <span class="font-medium">{{ pendingNewEmail }}</span>
         </p>
-        <p class="mt-1 text-xs text-amber-600 dark:text-amber-400">
-          Check your new email inbox for the confirmation link.
-        </p>
+        <p class="mt-1 text-xs text-warning dark:text-warning">Check your new email inbox for the confirmation link.</p>
       </div>
 
       <!-- Display name -->

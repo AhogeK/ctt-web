@@ -66,7 +66,7 @@ const showPlaceholder = computed(() => isPending.value || !data.value)
       <div
         v-for="card in cards"
         :key="card.label"
-        class="group rounded-xl border border-border/50 bg-gradient-to-b from-card to-muted/40 p-4 transition-all duration-200 hover:border-border hover:shadow-sm"
+        class="group rounded-xl border border-border/50 bg-gradient-to-b from-card to-muted/40 p-4 transition-[border-color,box-shadow] duration-200 hover:border-border hover:shadow-sm"
       >
         <div class="flex items-center justify-between gap-2">
           <p class="text-[11px] font-medium uppercase tracking-wider text-muted-foreground/90">

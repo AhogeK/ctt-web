@@ -54,7 +54,7 @@ const isDeleteDialogOpen = ref(false)
     <h2 class="mb-4 text-lg font-medium text-destructive">Danger zone</h2>
     <div class="flex flex-wrap items-start justify-between gap-4">
       <div class="flex flex-col gap-1">
-        <span class="text-sm text-gray-900 dark:text-[#f7f8f8]">Delete account</span>
+        <span class="text-sm text-foreground dark:text-foreground">Delete account</span>
         <span class="max-w-prose text-sm text-muted-foreground">
           Permanently delete your account and everything the server stores for it: sessions, statistics, achievements,
           devices and API keys. This cannot be undone.

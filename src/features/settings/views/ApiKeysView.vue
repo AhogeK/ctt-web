@@ -179,7 +179,7 @@ function statusVariant(status: ApiKeyStatus): 'default' | 'secondary' | 'destruc
 function statusClass(status: ApiKeyStatus): string {
   switch (status) {
     case 'ACTIVE':
-      return 'bg-emerald-600/15 text-emerald-600 hover:bg-emerald-600/20 dark:bg-emerald-500/15 dark:text-emerald-400 dark:hover:bg-emerald-500/20'
+      return 'bg-success/15 text-success hover:bg-success/20 dark:bg-success/15 dark:text-success dark:hover:bg-success/20'
     case 'EXPIRED':
       return ''
     case 'REVOKED':

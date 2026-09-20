@@ -114,7 +114,7 @@ watch(
       </div>
 
       <!-- Raw key display -->
-      <div class="rounded-md border border-amber-500/40 bg-amber-500/10 p-4">
+      <div class="rounded-md border border-warning-border bg-warning/10 p-4">
         <input
           ref="rawKeyDisplay"
           type="text"
@@ -140,8 +140,8 @@ watch(
           :disabled="!hasCopied"
           :class="
             cn(
-              'bg-primary text-primary-foreground font-[510]',
-              'shadow-lg shadow-primary/15 transition-all duration-200',
+              'bg-primary text-primary-foreground font-emphasis',
+              'shadow-lg shadow-primary/15 transition-[box-shadow,transform] duration-200',
               'hover:bg-primary/90 hover:shadow-primary/20',
               'disabled:opacity-70 disabled:cursor-not-allowed',
             )
