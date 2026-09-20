@@ -3,7 +3,13 @@
 *::before,
 *::after {
   box-sizing: border-box;
-  font-weight: normal;
+  /* No `font-weight` here. An unlayered universal rule beats every `@layer utilities`
+   * declaration, so `font-weight: normal` silently flattened all 98 `font-*` utilities in
+   * the app (measured: `.font-bold` computed to 400). Tailwind's preflight already
+   * normalises heading weight (`h1..h6 { font-weight: inherit }`), which is the part that
+   * was wanted; this line only ever removed weight from <b>, <strong>, <th> and friends.
+   * Same root cause as 8413845 ("remove unlayered margin reset") — that commit fixed one
+   * property of this block and left the other. */
 }
 
 body {
