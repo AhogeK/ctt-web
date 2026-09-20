@@ -24,7 +24,7 @@ and the reference research behind all of it.
 | `DESIGN.md` | Token/typography/spacing authority; this domain cites it, never overrides it |
 | `src/features/landing/**` (future) | The implementation, once the plan is approved |
 
-**Status: P1 shipped (2026-09-19) — the entry and routing shell only.** `/` is public
+**Status: P2 in progress (2026-09-20) — P1 shipped the entry and routing shell; P2 has just landed its first slice, `LandingSection.vue`.** `/` is public
 (`route-names.ts` `LANDING`, `router/modules/landing.ts`, `layouts/MarketingLayout.vue`) and the top-bar
 CTA switches on `authStore.isAuthenticated`. The sections themselves (capability list, open-source block,
 pricing structure) are later stages of the plan and are deliberately absent rather than stubbed. The rest

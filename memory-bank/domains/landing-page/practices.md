@@ -32,8 +32,9 @@ design against** — re-derive only if a source changes.
 
 | Gap | Evidence | Fix |
 | --- | --- | --- |
-| Hover gating — **was mis-measured** | Earlier: "`@media (hover: hover)` 0 hits in `src/`" ⇒ recorded as a repo-wide gap. **Wrong**: Tailwind v4 compiles the `hover:` variant *into* `@media (hover: hover)` — the built CSS carries **8** occurrences for **0** in source. The measurement looked at source and concluded about output. | The real instance is the **hand-written** CSS: `ThemeToggle.vue`'s `.theme-toggle:hover` (and `:root:not(.dark) …`) sit **outside** any `@media (hover: hover)` — verified in the built CSS — so a tap can leave the hover style stuck. Wrap hand-written `:hover`; Tailwind variants need nothing. |
-| Touch targets not numeric | `DESIGN.md` §8 is qualitative; the four "44" are colour hexes | Propose **44×44 CSS px** minimum → into `DESIGN.md`, not a component |
+| Hover gating — rule **is** in `DESIGN.md` §8 | **The rule is already written** ("Hover-driven styles must be wrapped in `@media (hover: hover)`"); what remains is one **code** instance below | Wrap hand-written `:hover`; Tailwind variants need nothing |
+| Hover gating — the measurement story | Earlier: "`@media (hover: hover)` 0 hits in `src/`" ⇒ recorded as a repo-wide gap. **Wrong**: Tailwind v4 compiles the `hover:` variant *into* `@media (hover: hover)` — the built CSS carries **8** occurrences for **0** in source. The measurement looked at source and concluded about output. | The real instance is the **hand-written** CSS: `ThemeToggle.vue`'s `.theme-toggle:hover` (and `:root:not(.dark) …`) sit **outside** any `@media (hover: hover)` — verified in the built CSS — so a tap can leave the hover style stuck. Wrap hand-written `:hover`; Tailwind variants need nothing. |
+| Touch targets — **already specified** | `DESIGN.md` §8 now carries "**Minimum target: 44×44 CSS px for anything clickable**" with its basis (Apple HIG 44pt · Material 48dp · WCAG 2.5.8’s 24px as the floor) | Nothing to propose — components read §8 |
 | `motion-reduce:` not used as variants | 3 `prefers-reduced-motion` occurrences, none as Tailwind variants | Convert to variant form |
 | No mounted guard on theme-aware first paint | `src/stores/theme.ts` has no `mounted` gate | Add it where the first screen renders theme-dependent UI (see the reference's `use-mounted.ts`) |
 
@@ -47,6 +48,14 @@ design against** — re-derive only if a source changes.
   by a CSS variable — the wrong version was nearly written as fact.
 - **Screenshots are the weakest evidence.** Reading code, computed styles and source is what turned
   impressions into rules.
+
+## Shipped so far (P2 first slice — the section primitive)
+
+| Fact | Where it lives |
+| --- | --- |
+| One shell for every marketing band: container 1200px · prose 730px · rail 24→32px · rhythm none/sm/md/lg (80→48px) | `src/features/landing/components/LandingSection.vue` |
+| The primitive is the **only** place those four decisions are made — later sections pass `spacing`/`width` instead of inventing padding | same file |
+| Its test was falsified before being trusted (wrong container width ⇒ red) | `__tests__/LandingSection.test.ts` |
 
 ## Shipped so far (P1 — entry and routing shell)
 

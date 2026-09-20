@@ -1,3 +1,15 @@
+**已提交**: v0.47.4 —— develop `b585fcf` ✓ / master `fe9b5bc` ✓（已推送 · clean · 代码面 0 差异 ✓）
+  `fix(auth): make bare /auth land on the login page` + `chore(release): 0.47.4`（逐个 cherry-pick ✓）
+  **新增回归测试** `src/router/__tests__/parent-redirect.test.ts`（2 断言：有 children 必须 redirect · `/auth` 必须指向 LOGIN）
+
+### 落地页 P2 第一段：区块基元（2026-09-20，工作树未提交）
+
+- **新增** `src/features/landing/components/LandingSection.vue` —— 营销区块的唯一外壳：容器宽度 · 横向留白 · 纵向节奏
+  （取值全部来自 `DESIGN.md`：容器 1200px §5 · 阅读列 ~730px · 8px 栅格横距 24→32px · 区块节奏 80→48px §8）
+- **测试** `LandingSection.test.ts` 4 例，已**证伪**（改错容器宽度即红 ✓）· `vue-tsc` 零错误 ✓
+- **阅读中发现的两处前提修正**：触摸目标 44×44 与 `@media (hover: hover)` 规则 **`DESIGN.md` §8 早已写入** ✓
+  （P2 清单里"需确认后写入"作废 ✗）；剩下的真实 code 缺口只有 `ThemeToggle.vue` 的**手写** `:hover` 未包该媒体查询 ✓
+
 **已提交**: v0.47.2 —— develop `e782010` ✓ / master `d73e493` ✓（均已推送 · clean · 代码面 0 差异 ✓）
 
 ### 落地页 P1：`/` 由「重定向登录」变为公开首页（2026-09-19，v0.47.0）
@@ -21,7 +33,7 @@
 
 **为什么此时才暴露**：这条路一直存在，但此前 `/` 受保护 → 未登录必带 `?redirect=/` → 登录后按**路径**跳而正常；**P1 把 `/` 变公开**且新入口直连 `/auth/login`（无 redirect 参数）→ 埋着的路成了主路径。
 
-修复：**6 个模块的父级路由全部补 `redirect` 指向默认子页**；`auth` 故意不加（用户要求移除）。回归守卫：`protected-routes.spec.ts` 断言**内容区非空**（修复前连红两次、修复后转绿）——原断言只覆盖 URL，这正是它长期隐身的原因。约定与推论（**URL 断言不是"页面渲染了"的证据**）已入 [`systemPatterns.md`](./systemPatterns.md)。
+修复：**全部 7 个父级路由都补 `redirect` 指向默认子页**。`auth` 曾在 P1 被**有意排除** ✗（注释理由："静默转发会掩盖访客真正请求的 URL"），但裸 `/auth` 因此渲染出**空壳**（装饰栏 + 主题按钮、无表单）✗ —— 2026-09-20 用户报告后**加回** ✓，并按仓库规则补 `src/router/__tests__/parent-redirect.test.ts`（先红后绿 ✓）钉住"有 children 的父级必须声明 redirect" ✓（v0.47.4 已进 develop 与 master）。回归守卫：`protected-routes.spec.ts` 断言**内容区非空**（修复前连红两次、修复后转绿）——原断言只覆盖 URL，这正是它长期隐身的原因。约定与推论（**URL 断言不是"页面渲染了"的证据**）已入 [`systemPatterns.md`](./systemPatterns.md)。
 
 ### 登出落点与提示（用户提问 → 已定，2026-09-19）
 
@@ -82,20 +94,6 @@
 
 > **v0.28 – v0.37 的逐版本细节**已归档 → [`archives/2026-09-15-dashboard-era-archive.md`](./archives/2026-09-15-dashboard-era-archive.md)。
 > 其中的耐久判断已回迁 [`domains/dashboard-visualization/`](./domains/dashboard-visualization/meta.md)（不该留在时间线层）。
-
-### E2E 会话被真实 401 清空（根因，2026-09-17）
-
-settings/profile 的 E2E 曾长期表现为「分支选错、`hasPassword` 永远是 false」。逐边界取证后定位：
-
-**`GET /api/v1/auth/oauth/accounts` 未被 mock → 打到真服务端 → 401 → 全局 `handle401Error` → `clearAuth()` → token 从 localStorage 删除、store 归默认。** 因果链：`initializeAuth()` 返回 false → `main.ts` 不调用 `fetchUserProfile()` → `hasPassword` 停在默认 false → 对话框渲染邮箱分支。**不是产品缺陷，是测试夹具不完整。**
-
-同一个 mock 缺口还掩盖了第二处：`e2e/utils/auth-helpers.ts` 的 refresh 响应**漏了 `userId`**，而 `LoginResponseSchema` 要求它是 UUID —— 任何整页重载都会因解析失败清空会话。
-
-两处均修（`userId` + oauth mock 移入共享 `mockAuthApis`）。相关 spec 改为**只读** auth store：分支必须来自应用自身的启动拉取，而不是测试写进去的值。
-
-**已修复**：`mockAuthApis` 增加**最先注册**的兜底路由（未 mock 的 `/api/v1/**` 返 200），`leaderboard` helper 改为仅在无会话时登录。**93/93 e2e 全绿**。
-
-**方法论教训**：`initializeAuth` 的 `catch {}` 把原因吞掉了，只有逐边界插桩（refresh 响应 → profile 响应 → console → 非 2xx URL）才看得到 401。另外 `e2e/dashboard` + `e2e/leaderboard` 有**既有 flaky**（A/B 对照：有该 mock 时 2 failed / 25 passed，无 mock 时 4 failed / 23 passed，且失败用例名每次不同）——与本次改动无关。
 
 ### 账号删除 v0.45.0 —— Danger zone（2026-09-17）
 
