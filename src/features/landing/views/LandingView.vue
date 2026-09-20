@@ -25,9 +25,7 @@ import { SITE_REPO_URL, PLUGIN_INSTALL_URL } from '@/lib/site-links'
   <section class="mx-auto w-full max-w-[1200px] px-4 py-20 sm:px-6 sm:py-28">
     <p class="text-sm font-medium text-primary">Code Time Tracker</p>
 
-    <h1 class="mt-4 max-w-3xl text-4xl leading-[1.08] font-semibold tracking-[-0.022em] sm:text-6xl sm:leading-[1.05]">
-      Know where your coding time actually goes.
-    </h1>
+    <h1 class="mt-4 max-w-3xl text-display-lg">Know where your coding time actually goes.</h1>
 
     <p class="mt-6 max-w-xl text-base text-muted-foreground sm:text-lg">
       Track time by language, project and IDE from your JetBrains IDE — then read it back in a dashboard you own. Open
