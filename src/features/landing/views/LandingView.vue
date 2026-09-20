@@ -22,17 +22,17 @@ import { SITE_REPO_URL, PLUGIN_INSTALL_URL } from '@/lib/site-links'
 </script>
 
 <template>
-  <section class="mx-auto w-full max-w-[1200px] px-4 py-20 sm:px-6 sm:py-28">
-    <p class="text-sm font-medium text-primary">Code Time Tracker</p>
+  <section class="hero-handoff mx-auto w-full max-w-[1200px] px-4 py-20 sm:px-6 sm:py-28">
+    <p class="hero-fade-rise text-sm font-medium text-primary">Code Time Tracker</p>
 
-    <h1 class="mt-4 max-w-3xl text-display-lg">Know where your coding time actually goes.</h1>
+    <h1 class="hero-rise mt-4 max-w-3xl text-display-lg">Know where your coding time actually goes.</h1>
 
-    <p class="mt-6 max-w-xl text-base text-muted-foreground sm:text-lg">
+    <p class="hero-fade-rise mt-6 max-w-xl text-base text-muted-foreground [animation-delay:70ms] sm:text-lg">
       Track time by language, project and IDE from your JetBrains IDE — then read it back in a dashboard you own. Open
       source, and self-hostable if you would rather keep the data on your own server.
     </p>
 
-    <div class="mt-10 flex flex-col gap-3 sm:flex-row sm:items-center">
+    <div class="hero-fade-rise mt-10 flex flex-col gap-3 [animation-delay:140ms] sm:flex-row sm:items-center">
       <Button as-child size="lg">
         <a :href="PLUGIN_INSTALL_URL" target="_blank" rel="noopener noreferrer" data-testid="landing-primary-cta">
           Install the plugin
