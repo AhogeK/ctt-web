@@ -18,7 +18,7 @@ const forwardedProps = useForwardProps(delegatedProps)
     v-bind="forwardedProps"
     :class="
       cn(
-        'inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-md text-sm font-medium transition-all',
+        'inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-md text-sm font-medium transition-colors',
         'h-9 px-4 py-2',
         'border bg-background shadow-xs hover:bg-accent hover:text-accent-foreground',
         'disabled:pointer-events-none disabled:opacity-50',
