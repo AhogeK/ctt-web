@@ -16,3 +16,9 @@ settings/profile 的 E2E 曾长期表现为「分支选错、`hasPassword` 永�
 
 **方法论教训**：`initializeAuth` 的 `catch {}` 把原因吞掉了，只有逐边界插桩（refresh 响应 → profile 响应 → console → 非 2xx URL）才看得到 401。另外 `e2e/dashboard` + `e2e/leaderboard` 有**既有 flaky**（A/B 对照：有该 mock 时 2 failed / 25 passed，无 mock 时 4 failed / 23 passed，且失败用例名每次不同）——与本次改动无关。
 
+---
+
+### 落地页外壳：仓库入口与页脚（用户设计反馈，2026-09-19）
+
+用户关键判断 **「开源的项目不止一个」** ✓。**页脚**：单个 `github.com/…` 链接 ✗ → **生态三仓库清单**（插件 / 后端 / 本看板，各带图标与角色说明）+ 版权行 **`© <年> AhogeK`** ✓。**未写 "All rights reserved"** ✗ —— 与上方 MIT 授权自相矛盾（MIT 已授予所有人权利）；取其版权行之意、弃其法律措辞。**结构**：三处外部地址原散在布局与视图 ✗ → 收进 **`src/lib/site-links.ts`** 单一来源 ✓。**真机验证** ✓：页脚三条链接各含 `<svg>` ✓、版权行存在 ✓（Iconify 是运行时拉取，DOM 断言证明不了渲染 ✗）。
+

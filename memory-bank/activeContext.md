@@ -2,11 +2,19 @@
   `fix(auth): make bare /auth land on the login page` + `chore(release): 0.47.4`（逐个 cherry-pick ✓）
   **新增回归测试** `src/router/__tests__/parent-redirect.test.ts`（2 断言：有 children 必须 redirect · `/auth` 必须指向 LOGIN）
 
+### 落地页 P2 第二段：手写 hover 守卫（2026-09-20，工作树未提交）
+
+- **全仓 `src/` 手写 `:hover` 共 16 条 / 4 文件**（`ThemeToggle` 2 · `AuthLayout.css` 11 · `ScrollFadeList` 2 · `TermsDialog` 1）→ **全部包入 `@media (hover: hover)`** ✓；Tailwind 变体不动 ✓（v4 已编译 ✓）。
+- **真机对照（决定性 ✓✓）**：桌面 hover → 变色 ✓（零回归 ✓）；触摸 `hover: none` hover → **不变** ✓✓。
+- **⚠️ 测量陷阱** ✗✓：`page.emulateMediaFeatures([{name:'hover'}])` **不支持** ✗ 而我的 `.catch` 吞了它 ✗ → 上一轮"触摸"其实跑在桌面条件下、结论反了 ✗；**正解 = `page.emulate({ isMobile, hasTouch, userAgent: 移动端 })`** ✓✓（会把 `hover: hover→none`、`pointer: fine→coarse` ✓）。
+- 单测 35/35 ✓ · `vue-tsc` 零错误 ✓ · 版本 `0.47.6`（PATCH）。
+
 ### 落地页 P2 第一段：区块基元（2026-09-20，工作树未提交）
 
 - **新增** `src/features/landing/components/LandingSection.vue` —— 营销区块的唯一外壳：容器宽度 · 横向留白 · 纵向节奏
   （取值全部来自 `DESIGN.md`：容器 1200px §5 · 阅读列 ~730px · 8px 栅格横距 24→32px · 区块节奏 80→48px §8）
 - **测试** `LandingSection.test.ts` 4 例，已**证伪**（改错容器宽度即红 ✓）· `vue-tsc` 零错误 ✓
+- **计划文件已同轮更新** ✓：`.plans/ctt-web-development-plan.md` §P2 标记为「进行中（第一段已交付）」+ 完成记录（本文件约定：阶段完成就地更新 ✓）
 - **阅读中发现的两处前提修正**：触摸目标 44×44 与 `@media (hover: hover)` 规则 **`DESIGN.md` §8 早已写入** ✓
   （P2 清单里"需确认后写入"作废 ✗）；剩下的真实 code 缺口只有 `ThemeToggle.vue` 的**手写** `:hover` 未包该媒体查询 ✓
 
@@ -38,10 +46,6 @@
 ### 登出落点与提示（用户提问 → 已定，2026-09-19）
 
 结论（用户认可）✓：**登出落点维持 `/auth/login`**（登出是结束会话；换账号零点击可达；`/` 的职责是介绍产品，给刚登出的人看营销页是错配）；已说明反方观点，属产品取向。并补上缺失反馈 ✓：`logout()` 发 `Signed out` toast（没有它，页面无声变化，用户分不清"主动退出"与"会话掉了"；`logoutAll` 失败也照发，fail-safe 本义即本地已退出）。守卫：`e2e/auth/logout.spec.ts` 断言该提示可见。
-
-### 落地页外壳：仓库入口与页脚（用户设计反馈，2026-09-19）
-
-用户关键判断 **「开源的项目不止一个」** ✓。**页脚**：单个 `github.com/…` 链接 ✗ → **生态三仓库清单**（插件 / 后端 / 本看板，各带图标与角色说明）+ 版权行 **`© <年> AhogeK`** ✓。**未写 "All rights reserved"** ✗ —— 与上方 MIT 授权自相矛盾（MIT 已授予所有人权利）；取其版权行之意、弃其法律措辞。**结构**：三处外部地址原散在布局与视图 ✗ → 收进 **`src/lib/site-links.ts`** 单一来源 ✓。**真机验证** ✓：页脚三条链接各含 `<svg>` ✓、版权行存在 ✓（Iconify 是运行时拉取，DOM 断言证明不了渲染 ✗）。
 
 ### 顶栏仓库入口：**移除**（用户追问 → 已定，2026-09-19）
 

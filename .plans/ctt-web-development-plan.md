@@ -1307,7 +1307,7 @@ flowchart LR
 - **一处遗留（非本阶段范围）** ✗：**注册页没有 GitHub OAuth** —— 顶栏的 `Sign in` 入口已缓解；根治需先只读核对 `../ctt-server` 的 OAuth 建号语义（R3/R13），**归用户排期，AI 不得自行改动注册流程**
 
 ---
-### P2：视觉基元与版面节奏
+### P2：视觉基元与版面节奏 🚧 进行中（第一段已交付）
 
 > **前置已完成（2026-09-19）** ✓：本节的**全部实测依据**已归入领域文件
 > [`memory-bank/domains/landing-page/`](../memory-bank/domains/landing-page/)（`principles.md` 证据分级 · `practices.md` 实测基线与组件原型 · `references.md` 参照物与源码路径），
@@ -1315,7 +1315,7 @@ flowchart LR
 
 **目标：** 把"继承产品语言"落成可复用的基元，使后续区块**不需要各自发明样式**。
 
-- [ ] 区块容器与纵向节奏：统一的 section 包裹（最大宽度、左右留白、上下间距阶梯）
+- [x] **区块容器与纵向节奏 ✅ 已交付（2026-09-20）**：`src/features/landing/components/LandingSection.vue` —— 容器/留白/节奏的唯一决定处（详见下方完成记录）
 - [ ] 标题层级：与 `DESIGN.md` 阶梯对齐（不新造字号）。**参照实测（5 站）**：H1 **64px 出现 4/5**（Supabase 46px 例外）；**字重 500–600** 为主（不是 800 —— 那是 Plausible 一家 ✗）；**行高贴紧 1.0–1.1**（不是 1.5 ✗）；**负字距只有 Linear 用**（`-1.408px`）✓ 属其特色，**非普遍规律** ✗
 - [ ] **令牌体系（读其 CSS 本体得出 —— 这是设计系统真身）**
   - **Raycast = 三层令牌结构（最值得照搬）** ✓✓：基础层 `grey-50=#e6e6e6` → 语义层 `color-bg=var(--grey-900)` → 组件层 `navbar-*`/`chat-*`
@@ -1323,6 +1323,7 @@ flowchart LR
   - **Supabase 用 Tailwind v4 `@theme` + oklch 色彩空间** ✓：`color-emerald-50=oklch(97.9% .021 166.113)`；并有**语义化图表令牌** `chart-1=var(--color-brand-800)`（直接对应 ctt 的图表色板需求）
   - **Linear 有 12 栅格与页面内边距体系** ✓：`grid-columns=12` / `grid-gap=32px` / `offset=var(--page-padding-right)`
   - **字体选择（开发工具类）** ✓：Raycast = 正文 `Inter` + 代码 `JetBrains Mono`/`Geist Mono` → ctt 作为开发者工具**需要等宽字体令牌**
+- [x] **手写 `:hover` 审计 ✅ 已交付（2026-09-20）**：全仓 `src/` 扫描 → **Tailwind 变体**（`hover:` / `dark:hover:` / `[a&]:hover:`）**无需处理** ✓（v4 已编译进 `@media (hover: hover)` ✓，产物中验证 ✓）；**手写 CSS 16 条 / 4 文件**全部包入该媒体查询 ✓（`ThemeToggle.vue` 2 · `AuthLayout.css` 11 · `ScrollFadeList.vue` 2 · `TermsDialog.vue` 1）
 - [ ] **组件内部实现（读其 CSS 状态选择器与 JS 键盘逻辑得出）**
   - **状态用属性表达** ✓✓：Supabase 有 **153 条 `[data-state=]` 条件规则**；`[data-side]`/`[data-align]`/`[data-orientation]` 为组件定位与朝向状态
   - **`@media (hover: hover)`（本计划此前完全遗漏）** ✓✓✓：Supabase **20 处**、Raycast **7 处** → **触摸设备不得触发悬停态**
@@ -1341,8 +1342,8 @@ flowchart LR
   - **口径** ✓：**落地页必须完整响应式**；既有页面（统计 / 排行 / 设置）本阶段**一律不触碰** ✗（用户尚未自测移动端，留到最后统一验证）
   - **断点照 `DESIGN.md` §8** ✓（已存在，不另立）：`<600` Mobile Small（单列紧凑）· `600–640` Mobile · `640–768` Tablet（进入两列）· `768–1024` Desktop Small（完整卡片网格）· `1024–1280` Desktop（完整导航）· `>1280` Large Desktop
     → 与 Tailwind 默认的映射：`600→sm 之前` · `640→sm` · `768→md` · `1024→lg` · `1280→xl` ✓ **不引入自造断点**
-  - **`@media (hover: hover)`（确证缺口，移动端专属）** ✓✓：`src/` 全量扫描 **0 处**；对照 Supabase 20 / Raycast 7；仓库内已有受害实例 `ThemeToggle.vue:83` → **触摸设备上悬停态会粘连**
-  - **触摸目标数值化（`DESIGN.md` 缺口）** ✓：其 `Touch Targets` 节为**定性描述** ✗（"comfortable"/"adequate" 无数值；文中 4 处 "44" 均为色值 ✗）→ **补规则**：**可点区域最小 44×44 CSS px**（依据：Apple HIG 44pt · Material 48dp · WCAG 2.5.8 下限 24px）—— **这是新增规范，需你确认后写入 `DESIGN.md`**
+  - **`@media (hover: hover)`** ✓✓ **（2026-09-20 复核更正）**：**规则本身也早已写进 `DESIGN.md` §8** ✓（"Hover-driven styles must be wrapped in `@media (hover: hover)`"，并引用 `systemPatterns.md` 横切约定）→ 所以这不是"规范缺口" ✗，而是**代码缺口**：`src/` 里 Tailwind 的 `hover:` 已被 v4 编译进该媒体查询 ✓（产物 8 处 ✓），真正裸露的是**手写 CSS** ✗ —— 已知实例 `ThemeToggle.vue:83` 的 `.theme-toggle:hover` → **触摸设备上悬停态会粘连**
+  - ~~**触摸目标数值化（`DESIGN.md` 缺口）**~~ → **已作废 ✗（2026-09-20 复核）**：`DESIGN.md` §8 **早已写入** ✓✓ "**Minimum target: 44×44 CSS px for anything clickable**"，并附依据（Apple HIG 44pt · Material 48dp · WCAG 2.5.8 的 24px 为**下限而非目标**）✓ → **无需再提**，组件直接读 §8 ✓
   - **`motion-reduce:` 变体**（`prefers-reduced-motion` 的 Tailwind 写法）✓✓：Supabase 手风琴实证 `motion-reduce:transition-none` / `motion-reduce:duration-0` / `motion-reduce:animate-none`；ctt 现有 3 处 `prefers-reduced-motion` 但**非变体形式** → 统一改为变体
   - **移动端导航** ✓：`{ open, setOpen }` 状态 hook + Sheet（Dialog 语义：焦点陷阱 + 滚动锁定 + Esc 关闭）；粘性导航的 `top-[Npx]` 偏移量**须取实际 header 高度**（Supabase 用 `top-[65px]` 对应其 header ✓，**不可硬抄数值** ✗）
   - **栅格** ✓：Linear 实证 `grid-columns=12` / `grid-gap=32px` → 宽屏 12 栅格；断点收敛为单列（<640）/ 两列（640–1024）/ 多列（>1024）
@@ -1390,6 +1391,27 @@ flowchart LR
 - [ ] 主/次按钮：直接复用 `components/ui/button`（`default` = 品牌靛蓝，`outline` = 次按钮），**不新建按钮样式**
 - [ ] 动效：**默认不做滚动动画** —— 实测 5 站中 3 站 `animatedEls = 0`（Linear / WakaTime / Cal.com），唯一较多的是 Supabase（19）✓，属**风格选择**而非必要条件 ✗。仅保留既有 hover/焦点过渡；若最终加入任何动效，**必须全量覆盖 `prefers-reduced-motion`**（先例见排行榜跳转闪烁）
 - [ ] **令牌审计**：逐一列出首页用到的每个值，确认全部来自 `DESIGN.md`；若有例外，必须在本计划里写明来源
+
+**完成记录（第一段，2026-09-20）：**
+
+- **交付**：`src/features/landing/components/LandingSection.vue` —— 营销区块的**唯一外壳**（后续区块传参，不再各自发明内边距 ✗）。
+  接口 `as`（语义标签）· `spacing`（`none|sm|md|lg`）· `width`（`container|prose|full`）；取值全部可回源 `DESIGN.md`：容器 **1200px §5** · 8px 栅格横距 **24→32px §5** · 区块节奏 **80→48px §8** · 阅读列 **~730px**（`landing-page/practices.md` 实测基线）。
+- **测试**：`__tests__/LandingSection.test.ts` 4 例；**先证伪后信任** ✓（把容器宽度改成 `1100px` → 红；还原 → 绿）；`vue-tsc` 零错误。
+- **画面未变** ✗：`LandingSection` 目前**零引用** ✓（只落基元，尚无区块使用）—— 这也是"验收标准 1（未新增令牌）"此刻即可成立的原因。
+- **同轮更正两条已被证伪的前提**（见上）：触摸目标 44×44 ✓ 与 hover 媒体查询规则 ✓ **均已在 `DESIGN.md` §8**，不再是"待你确认后写入" ✗。
+- **版本**：`0.47.5`（PATCH：内部基元，无用户可见行为变化）。
+- **仍待做**（本阶段剩余）：标题层级基元 → 手写 `:hover` 审计 → `motion-reduce:` 变体统一 → 主题首帧 `mounted` 卫兵 → 移动端/粘性导航基元 → 令牌审计。
+
+**完成记录（第二段 · 手写 hover 守卫，2026-09-20）：**
+
+- **交付**：`src/` 全部**手写** `:hover` 规则包入 `@media (hover: hover)` —— 共 **16 条 / 4 文件**（`ThemeToggle.vue` 2 · `AuthLayout.css` 11 · `ScrollFadeList.vue` 2 · `TermsDialog.vue` 1）。
+  Tailwind 变体**不动** ✓：v4 把它们编译进同一媒体查询（在浏览器里数到产物中的该查询块 ✓）。
+- **真机对照（决定性证据 ✓✓）**：受管 Chrome，同一页面同一元素：
+  桌面（`hover: hover` ✓）hover 后 `rgba(0,0,0,0.02) → 0.04` **变色** ✓（**桌面零回归** ✓）；
+  触摸（`hover: none` ✓，`page.emulate({ isMobile, hasTouch })`）hover 后 **保持 0.02 不变** ✓✓ —— 守卫确实生效 ✓。
+- **测量陷阱（本段踩到并记录 ✗✓）**：`page.emulateMediaFeatures([{name:'hover'}])` **不受支持** ✗（报 `Unsupported media feature: hover`），而**我最初的 `.catch(() => null)` 把它吞掉了** ✗ → 那轮"触摸场景"实际一直跑在桌面条件下 ✓，结论完全反了 ✗。**改用 `page.emulate({ hasTouch: true, isMobile: true })`** ✓ 才真正翻转 `hover: hover → none` ✓✓。教训与 `content-visibility` 一节归入领域文件 ✓。
+- **验证**：相关单测 35/35 ✓ · `vue-tsc` 零错误 ✓ · 版本 `0.47.6`（PATCH）。
+- **仍待做**：`motion-reduce:` 变体统一 → 主题首帧 `mounted` 卫兵 → 移动端/粘性导航基元 → 令牌审计。
 
 **验收标准：**
 1. 首页**未新增任何设计令牌**（`DESIGN.md` 是唯一来源）；若新增，计划里有出处说明
