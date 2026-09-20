@@ -30,7 +30,7 @@ domains:
     memory-bank/domains/achievements/trophy-geometry.md: 52
   ai-workflow:
     memory-bank/domains/ai-workflow/meta.md: 59
-    memory-bank/domains/ai-workflow/practices.md: 195
+    memory-bank/domains/ai-workflow/practices.md: 198
     memory-bank/domains/ai-workflow/principles.md: 200
     memory-bank/domains/ai-workflow/references.md: 109
     memory-bank/domains/ai-workflow/scenarios.md: 199
