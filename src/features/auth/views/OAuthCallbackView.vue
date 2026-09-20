@@ -60,9 +60,9 @@ onMounted(() => {
   <div class="flex min-h-screen items-center justify-center">
     <div class="flex flex-col items-center gap-3">
       <div
-        class="h-8 w-8 animate-spin rounded-full border-2 border-gray-300 border-t-[#5e6ad2] dark:border-white/20 dark:border-t-[#7170ff]"
+        class="h-8 w-8 animate-spin rounded-full border-2 border-border border-t-primary dark:border-white/20 dark:border-t-accent"
       />
-      <p class="text-sm text-gray-500 dark:text-[#8a8f98]">Completing sign in...</p>
+      <p class="text-sm text-muted-foreground dark:text-muted-foreground">Completing sign in...</p>
     </div>
   </div>
 </template>

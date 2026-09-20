@@ -86,7 +86,7 @@ const showConfirmPassword = ref(false)
     <div class="space-y-4">
       <div class="flex items-center gap-2.5 lg:hidden">
         <div
-          class="flex h-9 w-9 items-center justify-center rounded-lg bg-[#5e6ad2] text-white shadow-md shadow-[#5e6ad2]/20"
+          class="flex h-9 w-9 items-center justify-center rounded-lg bg-primary text-white shadow-md shadow-primary/20"
         >
           <svg
             class="h-5 w-5"
@@ -101,17 +101,22 @@ const showConfirmPassword = ref(false)
             <polyline points="12 6 12 12 16 14" />
           </svg>
         </div>
-        <span class="text-lg font-[510] text-gray-900 dark:text-[#f7f8f8]" style="font-feature-settings: 'cv01', 'ss03'"
+        <span
+          class="text-lg font-emphasis text-foreground dark:text-foreground"
+          style="font-feature-settings: 'cv01', 'ss03'"
           >CTT</span
         >
       </div>
       <h1
-        class="text-3xl font-[510] text-gray-900 dark:text-[#f7f8f8]"
+        class="text-3xl font-emphasis text-foreground dark:text-foreground"
         style="font-feature-settings: 'cv01', 'ss03'; letter-spacing: -0.704px"
       >
         Reset password
       </h1>
-      <p class="text-base text-gray-500 dark:text-[#8a8f98]" style="font-feature-settings: 'cv01', 'ss03'">
+      <p
+        class="text-base text-muted-foreground dark:text-muted-foreground"
+        style="font-feature-settings: 'cv01', 'ss03'"
+      >
         Enter your new password below.
       </p>
     </div>
@@ -120,7 +125,10 @@ const showConfirmPassword = ref(false)
     <div v-if="!token" class="space-y-6">
       <div
         :class="
-          cn('flex h-16 w-16 items-center justify-center rounded-2xl', 'bg-red-500/10 text-red-500 dark:bg-red-500/15')
+          cn(
+            'flex h-16 w-16 items-center justify-center rounded-2xl',
+            'bg-destructive/10 text-destructive dark:bg-destructive/15',
+          )
         "
       >
         <svg
@@ -139,21 +147,24 @@ const showConfirmPassword = ref(false)
       </div>
       <div class="space-y-3">
         <h1
-          class="text-2xl font-[510] text-gray-900 dark:text-[#f7f8f8] sm:text-3xl"
+          class="text-2xl font-emphasis text-foreground dark:text-foreground sm:text-3xl"
           style="font-feature-settings: 'cv01', 'ss03'; letter-spacing: -0.704px"
         >
           Invalid Reset Link
         </h1>
-        <p class="text-base text-gray-500 dark:text-[#8a8f98]" style="font-feature-settings: 'cv01', 'ss03'">
+        <p
+          class="text-base text-muted-foreground dark:text-muted-foreground"
+          style="font-feature-settings: 'cv01', 'ss03'"
+        >
           This password reset link is invalid or has expired. Please request a new one.
         </p>
       </div>
       <Button
         :class="
           cn(
-            'w-full h-11 rounded-md font-[510]',
-            'bg-[#5e6ad2] text-white hover:bg-[#5e6ad2]/90',
-            'dark:bg-[#5e6ad2] dark:hover:bg-[#5e6ad2]/80',
+            'w-full h-11 rounded-md font-emphasis',
+            'bg-primary text-white hover:bg-primary/90',
+            'dark:bg-primary dark:hover:bg-primary/80',
           )
         "
         @click="router.push({ name: RouteNames.FORGOT_PASSWORD })"
@@ -168,7 +179,7 @@ const showConfirmPassword = ref(false)
       <FormField v-slot="{ componentField }" name="newPassword">
         <FormItem>
           <FormLabel
-            class="text-sm font-[510] text-gray-600 dark:text-[#8a8f98]"
+            class="text-sm font-emphasis text-foreground/80 dark:text-muted-foreground"
             style="font-feature-settings: 'cv01', 'ss03'"
             >New Password</FormLabel
           >
@@ -179,18 +190,18 @@ const showConfirmPassword = ref(false)
                 placeholder="Enter new password"
                 :class="
                   cn(
-                    'h-11 rounded-md border border-[#d0d6e0] bg-[#f3f4f5] text-[#1a1a2e]',
-                    'placeholder:text-[#8a8f98] transition-all duration-200',
-                    'focus:border-[#5e6ad2] focus:bg-white focus:ring-2 focus:ring-[#5e6ad2]/20',
-                    'dark:border-white/8 dark:bg-white/2 dark:text-[#f7f8f8] dark:placeholder:text-[#62666d]',
-                    'dark:focus:border-[#5e6ad2] dark:focus:bg-white/4 dark:focus:ring-[#5e6ad2]/25',
+                    'h-11 rounded-md border border-border bg-secondary text-foreground',
+                    'placeholder:text-muted-foreground transition-[color,box-shadow] duration-200',
+                    'focus:border-primary focus:bg-white focus:ring-2 focus:ring-primary/20',
+                    'dark:border-white/8 dark:bg-white/2 dark:text-foreground dark:placeholder:text-muted-foreground',
+                    'dark:focus:border-primary dark:focus:bg-white/4 dark:focus:ring-primary/25',
                   )
                 "
                 v-bind="componentField"
               />
               <button
                 type="button"
-                class="absolute right-3 top-1/2 -translate-y-1/2 cursor-pointer text-gray-400 hover:text-gray-600 dark:text-[#62666d] dark:hover:text-[#d0d6e0]"
+                class="absolute right-3 top-1/2 -translate-y-1/2 cursor-pointer text-muted-foreground hover:text-foreground/80 dark:text-muted-foreground dark:hover:text-secondary-foreground"
                 @click="showNewPassword = !showNewPassword"
               >
                 <svg
@@ -221,7 +232,7 @@ const showConfirmPassword = ref(false)
       <FormField v-slot="{ componentField }" name="confirmPassword">
         <FormItem>
           <FormLabel
-            class="text-sm font-[510] text-gray-600 dark:text-[#8a8f98]"
+            class="text-sm font-emphasis text-foreground/80 dark:text-muted-foreground"
             style="font-feature-settings: 'cv01', 'ss03'"
             >Confirm Password</FormLabel
           >
@@ -232,18 +243,18 @@ const showConfirmPassword = ref(false)
                 placeholder="Confirm new password"
                 :class="
                   cn(
-                    'h-11 rounded-md border border-[#d0d6e0] bg-[#f3f4f5] text-[#1a1a2e]',
-                    'placeholder:text-[#8a8f98] transition-all duration-200',
-                    'focus:border-[#5e6ad2] focus:bg-white focus:ring-2 focus:ring-[#5e6ad2]/20',
-                    'dark:border-white/8 dark:bg-white/2 dark:text-[#f7f8f8] dark:placeholder:text-[#62666d]',
-                    'dark:focus:border-[#5e6ad2] dark:focus:bg-white/4 dark:focus:ring-[#5e6ad2]/25',
+                    'h-11 rounded-md border border-border bg-secondary text-foreground',
+                    'placeholder:text-muted-foreground transition-[color,box-shadow] duration-200',
+                    'focus:border-primary focus:bg-white focus:ring-2 focus:ring-primary/20',
+                    'dark:border-white/8 dark:bg-white/2 dark:text-foreground dark:placeholder:text-muted-foreground',
+                    'dark:focus:border-primary dark:focus:bg-white/4 dark:focus:ring-primary/25',
                   )
                 "
                 v-bind="componentField"
               />
               <button
                 type="button"
-                class="absolute right-3 top-1/2 -translate-y-1/2 cursor-pointer text-gray-400 hover:text-gray-600 dark:text-[#62666d] dark:hover:text-[#d0d6e0]"
+                class="absolute right-3 top-1/2 -translate-y-1/2 cursor-pointer text-muted-foreground hover:text-foreground/80 dark:text-muted-foreground dark:hover:text-secondary-foreground"
                 @click="showConfirmPassword = !showConfirmPassword"
               >
                 <svg
@@ -275,9 +286,9 @@ const showConfirmPassword = ref(false)
         :disabled="isSubmitting"
         :class="
           cn(
-            'group w-full h-11 mt-3 rounded-md bg-[#5e6ad2] text-white font-[510] text-base',
-            'shadow-lg shadow-[#5e6ad2]/25 transition-all duration-200',
-            'hover:bg-[#7170ff] hover:shadow-[#7170ff]/30 hover:scale-[1.02] active:scale-[0.98]',
+            'group w-full h-11 mt-3 rounded-md bg-primary text-white font-emphasis text-base',
+            'shadow-lg shadow-primary/25 transition-[box-shadow,transform] duration-200',
+            'hover:bg-accent hover:shadow-accent/30 hover:scale-[1.02] active:scale-[0.98]',
             'disabled:opacity-70 disabled:cursor-not-allowed disabled:hover:scale-100',
           )
         "
@@ -300,7 +311,7 @@ const showConfirmPassword = ref(false)
 
     <Button
       variant="ghost"
-      :class="cn('w-full h-11 font-[510] text-muted-foreground')"
+      :class="cn('w-full h-11 font-emphasis text-muted-foreground')"
       @click="router.push({ name: RouteNames.LOGIN })"
       style="font-feature-settings: 'cv01', 'ss03'"
     >

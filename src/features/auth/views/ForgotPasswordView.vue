@@ -75,7 +75,7 @@ const isSubmitting = computed(() => toValue(mutation.isPending))
     <div class="space-y-4">
       <div class="flex items-center gap-2.5 lg:hidden">
         <div
-          class="flex h-9 w-9 items-center justify-center rounded-lg bg-[#5e6ad2] text-white shadow-md shadow-[#5e6ad2]/20"
+          class="flex h-9 w-9 items-center justify-center rounded-lg bg-primary text-white shadow-md shadow-primary/20"
         >
           <svg
             class="h-5 w-5"
@@ -90,19 +90,21 @@ const isSubmitting = computed(() => toValue(mutation.isPending))
             <polyline points="12 6 12 12 16 14" />
           </svg>
         </div>
-        <span class="text-lg font-[510] text-gray-900 dark:text-[#f7f8f8]" style="font-feature-settings: 'cv01', 'ss03'"
+        <span
+          class="text-lg font-emphasis text-foreground dark:text-foreground"
+          style="font-feature-settings: 'cv01', 'ss03'"
           >CTT</span
         >
       </div>
       <h1
-        class="text-3xl font-[510] text-gray-900 dark:text-[#f7f8f8]"
+        class="text-3xl font-emphasis text-foreground dark:text-foreground"
         style="font-feature-settings: 'cv01', 'ss03'; letter-spacing: -0.704px"
       >
         Reset your password
       </h1>
       <p
         v-if="!isSubmitted"
-        class="text-base text-gray-500 dark:text-[#8a8f98]"
+        class="text-base text-muted-foreground dark:text-muted-foreground"
         style="font-feature-settings: 'cv01', 'ss03'"
       >
         Enter your email address and we'll send you a link to reset your password.
@@ -116,7 +118,7 @@ const isSubmitting = computed(() => toValue(mutation.isPending))
         :class="
           cn(
             'flex h-16 w-16 items-center justify-center rounded-2xl',
-            'bg-green-500/10 text-green-600 dark:bg-green-500/15 dark:text-green-400',
+            'bg-success/10 text-success dark:bg-success/15 dark:text-success',
           )
         "
       >
@@ -136,14 +138,20 @@ const isSubmitting = computed(() => toValue(mutation.isPending))
 
       <!-- Success Message -->
       <div class="space-y-2">
-        <h2 class="text-xl font-[510] text-gray-900 dark:text-[#f7f8f8]" style="font-feature-settings: 'cv01', 'ss03'">
+        <h2
+          class="text-xl font-emphasis text-foreground dark:text-foreground"
+          style="font-feature-settings: 'cv01', 'ss03'"
+        >
           {{ isIdempotent ? 'Email already sent' : 'Check your email' }}
         </h2>
-        <p class="text-base text-gray-500 dark:text-[#8a8f98]" style="font-feature-settings: 'cv01', 'ss03'">
+        <p
+          class="text-base text-muted-foreground dark:text-muted-foreground"
+          style="font-feature-settings: 'cv01', 'ss03'"
+        >
           <template v-if="isIdempotent">
             We already sent a reset link to
             <code
-              class="px-2 py-0.5 rounded-md bg-gray-100 dark:bg-gray-800 font-mono text-sm font-medium text-gray-700 dark:text-gray-300"
+              class="px-2 py-0.5 rounded-md bg-muted dark:bg-card font-mono text-sm font-medium text-foreground/90 dark:text-muted-foreground"
               >{{ submittedEmail }}</code
             >
             recently. Please check your inbox or spam folder. If you didn't receive it, please wait a few minutes before
@@ -152,7 +160,7 @@ const isSubmitting = computed(() => toValue(mutation.isPending))
           <template v-else>
             If
             <code
-              class="px-2 py-0.5 rounded-md bg-gray-100 dark:bg-gray-800 font-mono text-sm font-medium text-gray-700 dark:text-gray-300"
+              class="px-2 py-0.5 rounded-md bg-muted dark:bg-card font-mono text-sm font-medium text-foreground/90 dark:text-muted-foreground"
               >{{ submittedEmail }}</code
             >
             exists in our database, you will receive a password recovery link shortly.
@@ -173,7 +181,7 @@ const isSubmitting = computed(() => toValue(mutation.isPending))
     <!-- Back to sign in -->
     <Button
       variant="ghost"
-      :class="cn('w-full h-11 font-[510] text-muted-foreground')"
+      :class="cn('w-full h-11 font-emphasis text-muted-foreground')"
       @click="router.push({ name: RouteNames.LOGIN })"
       style="font-feature-settings: 'cv01', 'ss03'"
     >

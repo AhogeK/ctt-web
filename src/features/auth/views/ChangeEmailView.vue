@@ -62,14 +62,12 @@ onMounted(() => {
 <template>
   <div class="flex min-h-screen items-center justify-center">
     <div
-      :class="
-        cn('w-full max-w-md rounded-lg border p-8', 'border-gray-200 bg-white', 'dark:border-white/8 dark:bg-[#1a1a2e]')
-      "
+      :class="cn('w-full max-w-md rounded-lg border p-8', 'border-border bg-white', 'dark:border-white/8 dark:bg-card')"
     >
       <!-- Loading state -->
       <div v-if="status === 'loading'" class="flex flex-col items-center gap-4">
         <svg
-          class="h-8 w-8 animate-spin text-[#5e6ad2]"
+          class="h-8 w-8 animate-spin text-primary"
           viewBox="0 0 24 24"
           fill="none"
           stroke="currentColor"
@@ -78,16 +76,14 @@ onMounted(() => {
           <circle cx="12" cy="12" r="10" stroke-opacity="0.25" />
           <path d="M12 2a10 10 0 0 1 10 10" stroke-linecap="round" />
         </svg>
-        <p class="text-sm text-gray-500 dark:text-[#8a8f98]">Verifying your email change...</p>
+        <p class="text-sm text-muted-foreground dark:text-muted-foreground">Verifying your email change...</p>
       </div>
 
       <!-- Success state -->
       <div v-else-if="status === 'success'" class="flex flex-col items-center gap-4">
-        <div
-          :class="cn('flex h-12 w-12 items-center justify-center rounded-full', 'bg-green-100 dark:bg-green-900/30')"
-        >
+        <div :class="cn('flex h-12 w-12 items-center justify-center rounded-full', 'bg-success/15 dark:bg-success/20')">
           <svg
-            class="h-6 w-6 text-green-600 dark:text-green-400"
+            class="h-6 w-6 text-success dark:text-success"
             viewBox="0 0 24 24"
             fill="none"
             stroke="currentColor"
@@ -96,8 +92,8 @@ onMounted(() => {
             <path d="M20 6L9 17l-5-5" stroke-linecap="round" stroke-linejoin="round" />
           </svg>
         </div>
-        <h2 class="text-lg font-medium text-gray-900 dark:text-[#f7f8f8]">Email Changed Successfully</h2>
-        <p class="text-sm text-gray-500 dark:text-[#8a8f98]">
+        <h2 class="text-lg font-medium text-foreground dark:text-foreground">Email Changed Successfully</h2>
+        <p class="text-sm text-muted-foreground dark:text-muted-foreground">
           Your email address has been updated. You will be redirected to your profile shortly.
         </p>
         <Button variant="outline" @click="router.push({ name: RouteNames.SETTINGS_PROFILE })"> Go to Profile </Button>
@@ -105,9 +101,13 @@ onMounted(() => {
 
       <!-- Error state -->
       <div v-else class="flex flex-col items-center gap-4">
-        <div :class="cn('flex h-12 w-12 items-center justify-center rounded-full', 'bg-red-100 dark:bg-red-900/30')">
+        <div
+          :class="
+            cn('flex h-12 w-12 items-center justify-center rounded-full', 'bg-destructive/15 dark:bg-destructive/20')
+          "
+        >
           <svg
-            class="h-6 w-6 text-red-600 dark:text-red-400"
+            class="h-6 w-6 text-destructive dark:text-destructive"
             viewBox="0 0 24 24"
             fill="none"
             stroke="currentColor"
@@ -118,14 +118,14 @@ onMounted(() => {
             <line x1="9" y1="9" x2="15" y2="15" />
           </svg>
         </div>
-        <h2 class="text-lg font-medium text-gray-900 dark:text-[#f7f8f8]">Verification Failed</h2>
-        <p class="text-sm text-gray-500 dark:text-[#8a8f98]">
+        <h2 class="text-lg font-medium text-foreground dark:text-foreground">Verification Failed</h2>
+        <p class="text-sm text-muted-foreground dark:text-muted-foreground">
           {{ errorMessage }}
         </p>
         <div class="flex gap-3">
           <Button variant="outline" @click="router.push({ name: RouteNames.SETTINGS_PROFILE })"> Go to Profile </Button>
           <Button
-            :class="cn('bg-[#5e6ad2] text-white', 'hover:bg-[#4f5bc4]')"
+            :class="cn('bg-primary text-white', 'hover:bg-accent-hover')"
             @click="router.push({ name: RouteNames.LOGIN })"
           >
             Sign In

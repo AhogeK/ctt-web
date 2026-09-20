@@ -119,9 +119,9 @@ function handleClose() {
         </div>
 
         <div
-          class="mt-6 p-4 rounded-lg bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-800"
+          class="mt-6 p-4 rounded-lg bg-warning-surface dark:bg-warning-surface border border-warning-border dark:border-warning-border"
         >
-          <p class="text-xs leading-relaxed text-yellow-800 dark:text-yellow-200">
+          <p class="text-xs leading-relaxed text-warning dark:text-warning">
             {{ termsContent.disclaimer }}
           </p>
         </div>

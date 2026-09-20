@@ -41,10 +41,16 @@ function handleGoHome() {
   <div class="flex min-h-screen items-center justify-center">
     <div class="mx-auto w-full max-w-sm space-y-6 text-center">
       <div class="space-y-2">
-        <h1 class="text-2xl font-[510] text-gray-900 dark:text-[#f7f8f8]" style="font-feature-settings: 'cv01', 'ss03'">
+        <h1
+          class="text-2xl font-emphasis text-foreground dark:text-foreground"
+          style="font-feature-settings: 'cv01', 'ss03'"
+        >
           Sign in failed
         </h1>
-        <p class="text-sm text-gray-500 dark:text-[#8a8f98]" style="font-feature-settings: 'cv01', 'ss03'">
+        <p
+          class="text-sm text-muted-foreground dark:text-muted-foreground"
+          style="font-feature-settings: 'cv01', 'ss03'"
+        >
           {{ errorMessage }}
         </p>
       </div>
@@ -53,9 +59,9 @@ function handleGoHome() {
         <Button
           :class="
             cn(
-              'w-full h-10 rounded-md bg-[#7b85d4] text-white font-[510] text-base',
-              'shadow-lg shadow-[#7b85d4]/15 transition-all duration-200',
-              'hover:bg-[#8b95e0] hover:shadow-[#8b95e0]/20 hover:scale-[1.02] active:scale-[0.98]',
+              'w-full h-10 rounded-md bg-primary text-white font-emphasis text-base',
+              'shadow-lg shadow-primary/15 transition-[box-shadow,transform] duration-200',
+              'hover:bg-accent-hover hover:shadow-accent-hover/20 hover:scale-[1.02] active:scale-[0.98]',
             )
           "
           style="font-feature-settings: 'cv01', 'ss03'"
@@ -65,7 +71,7 @@ function handleGoHome() {
         </Button>
         <Button
           variant="ghost"
-          class="w-full h-10 font-[510] text-muted-foreground"
+          class="w-full h-10 font-emphasis text-muted-foreground"
           style="font-feature-settings: 'cv01', 'ss03'"
           @click="handleGoHome"
         >
@@ -73,7 +79,7 @@ function handleGoHome() {
         </Button>
       </div>
 
-      <p class="text-xs text-gray-400 dark:text-[#62666d]">Error code: {{ errorCode }}</p>
+      <p class="text-xs text-muted-foreground dark:text-muted-foreground">Error code: {{ errorCode }}</p>
     </div>
   </div>
 </template>
