@@ -19,6 +19,9 @@
       http-equiv="Content-Security-Policy"
       content="default-src 'self'; script-src 'self' https://hcaptcha.com https://*.hcaptcha.com; frame-src 'self' https://*.hcaptcha.com; connect-src 'self' https://hcaptcha.com https://*.hcaptcha.com https://api.iconify.design https://api.unisvg.com https://api.simplesvg.com; img-src 'self' data: https://hcaptcha.com https://*.hcaptcha.com https://api.iconify.design https://api.unisvg.com https://api.simplesvg.com; style-src 'self' 'unsafe-inline'; font-src 'self' data:; object-src 'none'; base-uri 'self'; form-action 'self';"
     />
+    <!-- Sets the theme class before the first paint. Must stay a same-origin external file:
+         the CSP above is `script-src 'self'`, so inlining it would be blocked. -->
+    <script src="/theme.js"></script>
     <title>Code Time Tracker</title>
   </head>
   <body>
