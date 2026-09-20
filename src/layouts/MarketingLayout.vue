@@ -15,6 +15,13 @@
  *
  * Error Handling: content sits inside ErrorBoundary so a failing view still
  * leaves the shell (and the way back) intact — same contract as AppLayout.
+ *
+ * Sticky offset contract: the header's height lives in exactly one place,
+ * `--marketing-header-height` (set on the shell below, consumed by `h-[var(...)]`).
+ * Any element that must stick *under* this bar reads that variable —
+ * `sticky top-[var(--marketing-header-height)]` — instead of hard-coding a pixel
+ * offset. Reference sites legitimately use values like `top-[65px]`; that number is
+ * *their* header, not ours, and copying it is how two bars overlap.
  */
 import { computed } from 'vue'
 import { RouterLink } from 'vue-router'
@@ -43,9 +50,11 @@ const cta = computed(() =>
 </script>
 
 <template>
-  <div class="flex min-h-screen flex-col bg-background text-foreground">
+  <div class="[--marketing-header-height:3.5rem] flex min-h-screen flex-col bg-background text-foreground">
     <header class="sticky top-0 z-30 border-b border-border/60 bg-background/80 backdrop-blur">
-      <div class="mx-auto flex h-14 w-full max-w-[1200px] items-center justify-between gap-3 px-4 sm:px-6">
+      <div
+        class="mx-auto flex h-[var(--marketing-header-height)] w-full max-w-[1200px] items-center justify-between gap-3 px-4 sm:px-6"
+      >
         <RouterLink
           :to="{ name: RouteNames.LANDING }"
           class="text-sm font-semibold tracking-tight focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
