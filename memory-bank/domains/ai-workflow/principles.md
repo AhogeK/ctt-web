@@ -142,3 +142,30 @@ produced a real defect.
 
 **Single-source conclusions are the common root of all three.** One site, one document, one sentence
 is a lead, not a verdict (P10). Cross-check before acting.
+
+## P12. A commit is a claim about its file set — verify it before pushing
+
+The failure of 2026-09-20 came from one omission: **the file set was never checked**.
+
+A hunk-splitting script (`split_pkg`) applied `package.json`'s dependency hunks on its first call, so
+the second call received an empty patch, `&&` broke the chain, and the *next* `git commit` — meant for
+AI content — swept the still-staged dependency change in with `memory-bank/`. Two commits were then
+wrong at once: one mixed AI content with code, and the dependency commit was missing its own
+`package.json`. Had it been pushed, `master` would have received a new `pnpm-lock.yaml` next to an old
+manifest (a real inconsistency), and the fix would have required rewriting **pushed** history.
+
+What follows:
+
+- **Assert the file set, then commit — and re-read it after.** `git show --stat` must equal the
+  intended list exactly; a mismatch is fixed by rewriting *before* the first push, never after.
+- **Split by hunk only when the remainder is re-verified.** A file carrying three intents
+  (`package.json`: dependency bump + version + a config removal) is fine to split — but recompute the
+  diff after every partial apply instead of assuming the rest is untouched.
+- **Check AI/code separation mechanically.** Every commit's paths are either all AI content
+  (`memory-bank/`, `.plans/`, `AGENTS.md`, `DESIGN.md`) or all code — the mix is the defect, and a
+  one-line assertion catches it.
+
+**Batch size (user, 2026-09-20).** An authorization round should carry a **substantial** batch:
+several functional commits, not one small code change followed by a pile of AI documents. Stop to ask
+for the commit word when a real chunk is ready — not after a sliver, and not only once everything is
+finished.

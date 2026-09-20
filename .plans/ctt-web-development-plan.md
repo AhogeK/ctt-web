@@ -1332,19 +1332,22 @@ flowchart LR
   - **键盘逻辑必备** ✓：三站 JS 均含 `Escape` / `ArrowUp` / `ArrowDown` / `keydown` / `tabindex`
   - **`data-platform` 差异化** ✓：Raycast 12 处（macOS/Windows 分支）→ ctt 有插件端跨平台，同需
   - **营销页与应用分离** ✓：Cal.com 落地页仅 **24KB JS** vs Supabase **958KB** → ctt 落地页应独立轻量
+- [x] **主题首帧 ✅ 已交付（2026-09-20）**：落点是 `public/theme.js` + `index.html` 的 `<head>`，**不是**此处原先写的 `mounted` 卫兵（那条针对 SSR/水合 ✗，本项目是纯 CSR ✗）。详见完成记录第四段
 - [ ] **主题落地实现（读其实例 HTML 得出 —— 决定性）**
   - **`next-themes` 是本领域的既成标准** ✓✓：Linear 与 Supabase 使用**同一份最小化脚本**
   - **零闪烁做法** ✓✓✓：`<html data-theme="dark">` **直接由服务端输出**（Linear 实证）——默认主题在 JS 运行前即已生效
   - **三层优先级** ✓：`localStorage` > `prefers-color-scheme`（`system` 为第三档，Supabase 实证）
   - **`style.colorScheme` 必须同步** ✓✓：脚本显式设置它，使**原生滚动条与表单控件**随主题变化
   - **单主题也是合法选择** ✓：Raycast（深）与 Plausible（浅）均无主题脚本
+- [x] **移动端/粘性导航基元 ✅ 已交付（2026-09-20）**：粘性偏移的**单一来源** `--marketing-header-height` + 窄档响应式实测（详见完成记录第四段）；移动端 Sheet 菜单按「不建空壳」✗ 推迟到 P3/P4 真有区块锚点可用时
 - [ ] **移动端范围（用户 2026-09-19 澄清：移动端在范围内，技术上必须完整响应式）**
   - **口径** ✓：**落地页必须完整响应式**；既有页面（统计 / 排行 / 设置）本阶段**一律不触碰** ✗（用户尚未自测移动端，留到最后统一验证）
   - **断点照 `DESIGN.md` §8** ✓（已存在，不另立）：`<600` Mobile Small（单列紧凑）· `600–640` Mobile · `640–768` Tablet（进入两列）· `768–1024` Desktop Small（完整卡片网格）· `1024–1280` Desktop（完整导航）· `>1280` Large Desktop
     → 与 Tailwind 默认的映射：`600→sm 之前` · `640→sm` · `768→md` · `1024→lg` · `1280→xl` ✓ **不引入自造断点**
   - **`@media (hover: hover)`** ✓✓ **（2026-09-20 复核更正）**：**规则本身也早已写进 `DESIGN.md` §8** ✓（"Hover-driven styles must be wrapped in `@media (hover: hover)`"，并引用 `systemPatterns.md` 横切约定）→ 所以这不是"规范缺口" ✗，而是**代码缺口**：`src/` 里 Tailwind 的 `hover:` 已被 v4 编译进该媒体查询 ✓（产物 8 处 ✓），真正裸露的是**手写 CSS** ✗ —— 已知实例 `ThemeToggle.vue:83` 的 `.theme-toggle:hover` → **触摸设备上悬停态会粘连**
   - ~~**触摸目标数值化（`DESIGN.md` 缺口）**~~ → **已作废 ✗（2026-09-20 复核）**：`DESIGN.md` §8 **早已写入** ✓✓ "**Minimum target: 44×44 CSS px for anything clickable**"，并附依据（Apple HIG 44pt · Material 48dp · WCAG 2.5.8 的 24px 为**下限而非目标**）✓ → **无需再提**，组件直接读 §8 ✓
-  - **`motion-reduce:` 变体**（`prefers-reduced-motion` 的 Tailwind 写法）✓✓：Supabase 手风琴实证 `motion-reduce:transition-none` / `motion-reduce:duration-0` / `motion-reduce:animate-none`；ctt 现有 3 处 `prefers-reduced-motion` 但**非变体形式** → 统一改为变体
+  - **`motion-reduce:` 覆盖 ⏸ 待用户拍板 ✗（2026-09-20 实测纠正）**：只读清点 `src/` 全部 **171 个 `.vue`** → 带 `motion-reduce:` 兜底的**仅 1 个文件**（`RankedDistributionList.vue`），**58 个文件 / 126 处元素缺失** ✗；原立项前提「3 处 `prefers-reduced-motion` 应转成变体」**不成立** ✗ —— 那 3 处全是手写 CSS/JS，本就没有可转对象。**方案 A（推荐）**：全局一条规则（`src/assets/main.css` 的 `@media (prefers-reduced-motion: reduce)` 内 `*,*::before,*::after { animation-duration:.01ms !important; animation-iteration-count:1 !important; transition-duration:.01ms !important }`）—— 覆盖全部 126 处、与本仓库 `AuthLayout.css` 的现有写法一致、不依赖任何人记得写；**方案 B**：逐处加变体 —— 58 文件改动，且此后每个新组件都得自觉（「靠记忆的守卫」是会被关掉的守卫 ✗）。按 R23 未擅自实施。
+  - 原依据（保留对照）**`motion-reduce:` = `prefers-reduced-motion` 的 Tailwind 写法**（`prefers-reduced-motion` 的 Tailwind 写法）✓✓：Supabase 手风琴实证 `motion-reduce:transition-none` / `motion-reduce:duration-0` / `motion-reduce:animate-none`；ctt 现有 3 处 `prefers-reduced-motion` 但**非变体形式** → 统一改为变体
   - **移动端导航** ✓：`{ open, setOpen }` 状态 hook + Sheet（Dialog 语义：焦点陷阱 + 滚动锁定 + Esc 关闭）；粘性导航的 `top-[Npx]` 偏移量**须取实际 header 高度**（Supabase 用 `top-[65px]` 对应其 header ✓，**不可硬抄数值** ✗）
   - **栅格** ✓：Linear 实证 `grid-columns=12` / `grid-gap=32px` → 宽屏 12 栅格；断点收敛为单列（<640）/ 两列（640–1024）/ 多列（>1024）
 
@@ -1390,7 +1393,7 @@ flowchart LR
 - [ ] 表面与分隔：卡片面取自 `#0f1011`/`#191a1b`，分隔用发丝线 `rgba(255,255,255,0.05–0.08)`
 - [ ] 主/次按钮：直接复用 `components/ui/button`（`default` = 品牌靛蓝，`outline` = 次按钮），**不新建按钮样式**
 - [ ] 动效：**默认不做滚动动画** —— 实测 5 站中 3 站 `animatedEls = 0`（Linear / WakaTime / Cal.com），唯一较多的是 Supabase（19）✓，属**风格选择**而非必要条件 ✗。仅保留既有 hover/焦点过渡；若最终加入任何动效，**必须全量覆盖 `prefers-reduced-motion`**（先例见排行榜跳转闪烁）
-- [ ] **令牌审计**：逐一列出首页用到的每个值，确认全部来自 `DESIGN.md`；若有例外，必须在本计划里写明来源
+- [x] **令牌审计 ✅ 已完成（2026-09-20）**：首页面（`MarketingLayout.vue` · `LandingView.vue` · `LandingSection.vue`）**零自造颜色 / 零自造阴影 / 零内联 style / 零硬编码色值** ✓；例外仅 4 项且各有出处 —— `max-w-[1200px]` ×4（`DESIGN.md` §5）· `max-w-[730px]`（实测正文列基线）· `leading-[1.08]`（实测 h1 行高 1.0–1.1）· `tracking-[-0.022em]`（实测可推导规则：字号 × −0.022em）
 
 **完成记录（第一段，2026-09-20）：**
 
@@ -1421,6 +1424,13 @@ flowchart LR
 - **暂停的方案（未实施 ✓，用户指示"这个动画多次下来都没好结果，先不动了"）**：`baseRotate*` 与 `translateZ` **同时归零**（静止 = 恒等矩阵 = 与原像素同一）**且** `forwards → backwards`（悬停才能接管）。**验收判据**：静止时 `getBoundingClientRect()` 尺寸 == 布局尺寸，且 `getComputedStyle(el).transform` 为恒等矩阵 —— 出现放大/模糊即红。
 - **代码状态**：`src/` **零改动** ✓ —— 与 `cba90a9` 逐字节一致（sha256 已比对 ✓）；本轮只更新 `memory-bank/` 与本文件。
 - **教训已归领域文件** ✓（本文件不重复）：`domains/landing-page/practices.md`（静止契约与验收判据 · 探针陷阱：`browser.open({viewport})` 不生效、`mouse.move` 到正中即倾斜零点）· `domains/ai-workflow/practices.md`（SFC style 子请求才是 CSS 语法判定 · 验证浏览器不得抢用户焦点）。
+
+**完成记录（第四段 · 主题首帧 · 导航契约 · 令牌审计，2026-09-20）：**
+
+- **主题首帧 ✅**：`public/theme.js`（同源经典脚本，置于 `<head>`、在应用模块之前）。**关键约束**：`index.html` 的 CSP 是 `script-src 'self'` ✗ → 内联脚本会被拦，必须外链 ✓。**存储契约实测**：视觉状态在 `vueuse-color-scheme`（VueUse `useDark` 默认键）**而不是** `theme-appearance`（那只是用户模式偏好）✗；值为裸字符串 `dark|light|auto`，缺失按 `auto` 处理；并同步 `style.colorScheme` ✓。**证据**：隔离测试（拦掉 bundle，页面只剩该脚本）—— 存储 dark → 首帧 `class="dark"` + `colorScheme=dark` ✓；light → 不 dark ✓；无存储时按系统深/浅各自正确 ✓；`dist/index.html` 中该 tag 确实在应用模块**之前** ✓；单测 **1443/1443** ✓ · E2E **103/103** ✓ · 版本 `0.47.7` ✓。
+- **导航契约 ✅**：`--marketing-header-height: 3.5rem` 定义在 `MarketingLayout.vue` 壳元素上，顶栏高度由 `h-[var(...)]` 消费 —— **单一来源** ✓。实测：变量解析 **56px** == header 实测 **56px** ✓；320/390/1440 三档**零横向溢出** ✓、最窄档 CTA 仍在视口内 ✓。移动端 Sheet 菜单**刻意不建** ✗（当前顶栏无区块链接，建了就是空壳；P3/P4 有锚点时再建）。受影响的 `e2e/landing` 3/3 ✓。
+- **令牌审计 ✅**：见上（4 项例外，全部有出处）。
+- **未提交** ✗：`src/layouts/MarketingLayout.vue` · `index.html` · `public/theme.js`（新增）· `package.json`（0.47.7）—— 等一句「提交」✓（R6）。
 
 **验收标准：**
 1. 首页**未新增任何设计令牌**（`DESIGN.md` 是唯一来源）；若新增，计划里有出处说明
@@ -1566,3 +1576,12 @@ flowchart LR
 - **版本与提交**：任何代码改动必同步版本号；版本提交独立且晚于代码提交；AI 内容（`memory-bank/`）单独提交、不进 master；非 AI 提交逐个 cherry-pick 进 master，禁止整条分支合并。
 - **验证纪律**：UI 改动必须在真实浏览器上验证（本轮有三个缺陷——裸 Zod 报错泄漏、`email: string | null` 的安全阀漏洞、em dash 与「空值占位符」冲突——**类型检查、lint、单测全绿也照样漏**）。
 - **测试有效性**：新增回归用例必须验证「能失败」（撤掉修复即变红），否则只是看起来在测。
+
+---
+## 依赖升级（2026-09-20 · `vp update -L` 全量）
+
+- **执行**：`vp update -L` ✓ → 15 个包移动：`@vueuse/core 14.4.0 → 15.0.0`（major ✗）· `vite-plus`/`vite` `0.3.1 → 0.3.3` ✓ · `zod ^4.6.5` · `vue-i18n 11.4.12` · `jsdom 30.1.0` · `@lucide/vue 1.47.0` · `@tanstack/vue-query ^5.103.1` · `@types/node ^26.6.2` 等。`pnpm-workspace.yaml` **未被改动** ✓（`verifyDepsBeforeRun: warn` 守卫生效 ✓，2026 年那次被 pnpm 反写的事故没有重演 ✓）。
+- **两处回钉（`-L` 之后必做 ✓）**：`typescript` **6.0.3 精确** ✓ —— 实测 7.0.2：`@typescript-eslint/*` 的 peer 为 `>=4.8.4 <6.1.0` ✓，且 **`vue-tsc@3.3.11` 直接崩**（`ERR_PACKAGE_PATH_NOT_EXPORTED` @ `index.js:44` ✓）→ 所以不是"7 被禁止" ✗，而是**当前工具链尚未支持 7** ✓（`vue-tsc` 自己的 peer 只写 `>=5.0.0` ✗ → 范围拦不住，只能装上去实测 ✓）；`vitest` + `@vitest/coverage-v8` **4.1.11 精确** ✓（vite-plus 0.3.3 仍硬钉 ✓）。
+- **一处必须的代码适配** ✗：VueUse 15 移除了 `useNow` 的 `interval` 选项 ✗ → `AchievementsView.vue` 改为 `useNow({ scheduler: (cb) => useIntervalFn(cb, 60_000) })` ✓（行为不变：每分钟一跳 ✓）。**单测发现不了它** ✗（该视图整体 mock 了 `useNow` ✓），是 `type-check` 抓到的 ✓。
+- **验证**：`pnpm peers check` 无警告 ✓ · `type-check` exit 0 ✓ · `build` exit 0 ✓ · `test:unit` **1443/1443** ✓ · `lint` clean ✓。
+- **刻意不做** ✗：不改 `pnpm-workspace.yaml` 的 zod peer 规则 ✓（既有修复 ✓）、不降 zod ✓（14 个文件用 zod 4 独有 API ✓）、本次升级**不改版本号** ✓（用户明确要求 ✓）。

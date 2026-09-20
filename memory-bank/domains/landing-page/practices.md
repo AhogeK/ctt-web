@@ -77,6 +77,14 @@ design against** — re-derive only if a source changes.
 The hero copy shipped in P1 is a placeholder for the *layout*, not the final messaging — the capability
 walkthrough, open-source block and pricing structure are still open (see `meta.md`).
 
+## 主题首帧与粘性偏移的两条契约（2026-09-20 实测，均已交付）
+
+**首帧主题脚本必须外链，不能内联** ✗：`index.html` 的 CSP 是 **`script-src 'self'`**（无 `unsafe-inline`）→ 内联脚本会被静默拦截。做法 = `public/theme.js`（**经典脚本**，非 `type=module` ✗，否则会延迟到解析后 ✗）+ `<head>` 内、**在 CSP meta 之后、应用模块之前**引用 ✓。
+
+**脚本要读的键是 `vueuse-color-scheme`，不是 `theme-appearance`** ✗✓ —— 后者只是用户选择的模式（`light|dark|auto`），**视觉状态**由 VueUse `useDark`（`storageKey` 默认值 ✓ 已在其源码确证）持久化。两者取值均为**裸字符串**（无 JSON 引号 ✓）；缺失或 `auto` → 回落 `matchMedia('(prefers-color-scheme: dark)')` ✓；并同步 `documentElement.style.colorScheme` ✓（原生滚动条/表单控件跟随）。判据：**拦掉应用 bundle 后**仍能看到首帧 class 正确 ✓（无隔离则无法区分是谁设的 ✗）。
+
+**粘性偏移只有一个来源**：`--marketing-header-height`（定义在 `MarketingLayout.vue` 壳元素 ✓ 3.5rem）→ 任何需要吸在顶栏之下的元素写 `sticky top-[var(--marketing-header-height)]` ✓。参照物用 `top-[65px]` 是**它们自己的 header 高度** ✗，抄数值就是两条栏重叠的成因 ✓。验收判据：**变量解析值 == header 的 `getBoundingClientRect().height`** ✓（56px ✓ 已测），变量与类名一旦脱钩即红 ✓。
+
 ## AuthLayout 三块 3D 面板的**静止契约**（2026-09-20 实测）
 
 `.auth-dashboard` + 两张 `.auth-card-3d` 的静止外观由**入场动画的填充分布**决定，**不是**由
