@@ -157,7 +157,9 @@ function handleClose() {
   background-color: var(--muted-foreground);
   border-radius: 3px;
 }
-.terms-scrollable::-webkit-scrollbar-thumb:hover {
-  background-color: var(--foreground);
+@media (hover: hover) {
+  .terms-scrollable::-webkit-scrollbar-thumb:hover {
+    background-color: var(--foreground);
+  }
 }
 </style>

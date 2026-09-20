@@ -63,10 +63,12 @@ function cycleTheme(): void {
   outline: none;
 }
 
-.theme-toggle:hover {
-  background: rgba(255, 255, 255, 0.05);
-  border-color: rgba(255, 255, 255, 0.08);
-  color: #f7f8f8;
+@media (hover: hover) {
+  .theme-toggle:hover {
+    background: rgba(255, 255, 255, 0.05);
+    border-color: rgba(255, 255, 255, 0.08);
+    color: #f7f8f8;
+  }
 }
 
 .theme-toggle:focus-visible {
@@ -80,10 +82,12 @@ function cycleTheme(): void {
   color: #62666d;
 }
 
-:root:not(.dark) .theme-toggle:hover {
-  background: rgba(0, 0, 0, 0.04);
-  border-color: #8a8f98;
-  color: #1a1a2e;
+@media (hover: hover) {
+  :root:not(.dark) .theme-toggle:hover {
+    background: rgba(0, 0, 0, 0.04);
+    border-color: #8a8f98;
+    color: #1a1a2e;
+  }
 }
 
 .theme-toggle__icon {
