@@ -40,11 +40,66 @@
   --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
   --color-sidebar-border: var(--sidebar-border);
   --color-sidebar-ring: var(--sidebar-ring);
+  --color-surface: var(--surface);
+  --color-accent-hover: var(--accent-hover);
+
+  /* Type ladder — DESIGN.md §3 "Hierarchy", values verbatim (no new sizes).
+   * Display sizes track size × −0.022em, which is why 72/64/48/32 carry −1.584/−1.408/−1.056/−0.704px
+   * (the ladder's own stated principle); below 24px it relaxes toward normal, hence −0.012em here.
+   * Tailwind v4 derives line-height, letter-spacing and weight from the companion keys, so a heading
+   * is one class and cannot drift from the spec. */
+  --text-display-xl: 4.5rem;
+  --text-display-xl--line-height: 1;
+  --text-display-xl--letter-spacing: -0.022em;
+  --text-display-xl--font-weight: 510;
+  --text-display-lg: 4rem;
+  --text-display-lg--line-height: 1;
+  --text-display-lg--letter-spacing: -0.022em;
+  --text-display-lg--font-weight: 510;
+  --text-display: 3rem;
+  --text-display--line-height: 1;
+  --text-display--letter-spacing: -0.022em;
+  --text-display--font-weight: 510;
+  --text-heading-1: 2rem;
+  --text-heading-1--line-height: 1.13;
+  --text-heading-1--letter-spacing: -0.022em;
+  --text-heading-1--font-weight: 400;
+  --text-heading-2: 1.5rem;
+  --text-heading-2--line-height: 1.33;
+  --text-heading-2--letter-spacing: -0.012em;
+  --text-heading-2--font-weight: 400;
+  --text-heading-3: 1.25rem;
+  --text-heading-3--line-height: 1.33;
+  --text-heading-3--letter-spacing: -0.012em;
+  --text-heading-3--font-weight: 590;
+
+  /* DESIGN.md §3 calls 510 "the signature weight … between regular 400 and medium 500".
+   * It appeared 71 times as `font-[510]`; this is its name. */
+  --font-weight-emphasis: 510;
+
+  /* DESIGN.md §2 Status Colors: "Emerald (#10b981) — secondary success, pill badges,
+   * completion states". A palette entry that had no token; it appeared as `[#10b981]`. */
+  --color-success: #10b981;
+  /* DESIGN.md §2 defines green and emerald as status colours but no warning — the amber scale
+   * (amber-50…900) had been typed by hand in 40 places across the auth/settings surfaces. These
+   * three roles are the shades already in use, so adopting them is visually near-identical. */
+  --color-warning: var(--warning);
+  --color-warning-surface: var(--warning-surface);
+  --color-warning-border: var(--warning-border);
+  --color-warning-solid: var(--warning-solid);
 }
 
 :root {
   --radius: 0.625rem;
   --background: #f7f8f8;
+  --warning: #92400e; /* amber-800 ink */
+  --warning-surface: #fffbeb; /* amber-50 */
+  --warning-border: #fde68a; /* amber-200 */
+  --warning-solid: #f59e0b; /* amber-500 — fills and glows keep their brightness in both themes */
+  /* DESIGN.md §4 says a card surface is translucent, never solid. `--card` is the opaque
+   * page-surface variant; `--surface` is the spec value for panels that sit on a page. */
+  --surface: rgba(0, 0, 0, 0.02);
+  --accent-hover: #828fff;
   --foreground: #08090a;
   --card: #ffffff;
   --card-foreground: #08090a;
@@ -79,6 +134,14 @@
 
 .dark {
   --background: #08090a;
+  --warning: #fbbf24; /* amber-400 ink */
+  --warning-surface: rgba(245, 158, 11, 0.1); /* amber-500/10 */
+  --warning-border: rgba(245, 158, 11, 0.3); /* amber-500/30 */
+  --warning-solid: #f59e0b;
+  /* Same two roles in dark: DESIGN.md's card surface is `rgba(255,255,255,0.02)`, and
+   * `#828fff` is the palette's Accent Hover (both themes — it is a palette entry, not a per-theme one). */
+  --surface: rgba(255, 255, 255, 0.02);
+  --accent-hover: #828fff;
   --foreground: #f7f8f8;
   --card: #191a1b;
   --card-foreground: #f7f8f8;
