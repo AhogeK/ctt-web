@@ -899,3 +899,31 @@ toast.promise(saveSettings(), {
 6. **Chunk error recovery**: Auto-reload on deployment-induced chunk failures with single retry
 7. **Type-safe navigation**: Use `RouteNames` constants for 404 navigation actions
 8. **TODO integration**: Mark Sentry/Datadog integration points for future production monitoring
+
+
+## AuthLayout: the pointer-light stacking model
+
+The login shell's showcase column stacks three glass panels in a flex column. Each panel carries an
+inline `transform` driven by `useCardTilt`, which makes it a **stacking context** — so a panel's own
+`::after` can never be occluded by a neighbouring panel (`A < B` and `B < A` cannot both hold).
+
+The underglow therefore lives in a **single scene-level layer** (`.auth-underglow`, `z-index: 0` below
+every card):
+
+```
+.auth-3d-scene            isolation: isolate
+├── .auth-underglow       z-index: 0   one emitter, anchored to the hovered card's box
+├── .auth-dashboard       z-index: 1   opaque card = occluder
+└── .auth-cards-container z-index: 2   opaque cards = occluders
+```
+
+Consequences that fall out of the structure rather than from per-card tuning: light appears in the gaps,
+a blocked ray reappears in the next gap, no face is ever washed, and all three panels behave identically.
+Two budgets keep it honest — the emitter box must outlive the light (`margin ≥ radius + 2σ`, currently
+136px against a 110px gradient with a 24px blur, since a background can never paint outside its box), and
+the visible geometry must not follow the pointer (only the bright core does; the box changes only when
+the pointer changes cards).
+
+The pointer physics share one clock: `useCardTilt` normalises to an **isotropic** reference radius
+(`hypot(w, h) / 2.4`) so equal pointer travel yields equal angular increments on any aspect ratio, then
+clamps to the unit disk so a corner cannot ask for a composite tilt larger than an edge.
