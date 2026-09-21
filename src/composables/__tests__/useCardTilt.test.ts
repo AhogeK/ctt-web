@@ -1,4 +1,4 @@
-import { describe, expect, it } from 'vite-plus/test'
+import { beforeEach, describe, expect, it, vi } from 'vite-plus/test'
 import { defineComponent } from 'vue'
 import { mount } from '@vue/test-utils'
 import { useCardTilt, type UseCardTiltOptions } from '../useCardTilt'
@@ -15,7 +15,26 @@ import { useCardTilt, type UseCardTiltOptions } from '../useCardTilt'
 
 type Tilt = ReturnType<typeof useCardTilt>
 
-function mountTilt(options: UseCardTiltOptions = {}) {
+/**
+ * The rendered pose is advanced in requestAnimationFrame now, not by a CSS transition, so the tests
+ * drive the frames themselves instead of relying on wall-clock time.
+ */
+let pendingFrames: FrameRequestCallback[] = []
+function flushFrames(count = 30): void {
+  for (let i = 0; i < count; i++) {
+    const batch = pendingFrames
+    pendingFrames = []
+    for (const cb of batch) cb(i * 16)
+  }
+}
+
+beforeEach(() => {
+  pendingFrames = []
+  vi.stubGlobal('requestAnimationFrame', (cb: FrameRequestCallback) => pendingFrames.push(cb))
+  vi.stubGlobal('cancelAnimationFrame', () => undefined)
+})
+
+function mountTilt(options: UseCardTiltOptions = { smoothness: 1 }) {
   const harness = defineComponent({
     setup() {
       const tilt = useCardTilt(options)
@@ -47,7 +66,9 @@ describe('useCardTilt', () => {
     expect(angles(tilt.transform.value)).toEqual({ x: 0, y: 0 })
 
     tilt.handleMouseEnter()
+    flushFrames()
     tilt.handleMouseMove(moveTo(320, 60)) // right of centre, above centre
+    flushFrames()
 
     const a = angles(tilt.transform.value)
     expect(a.y).toBeGreaterThan(1) // pointer right of centre → positive Y rotation
@@ -65,15 +86,19 @@ describe('useCardTilt', () => {
     const { wrapper, tilt } = mountTilt()
 
     tilt.handleMouseEnter({ currentTarget: target, clientX: 200, clientY: 100 } as unknown as MouseEvent)
+    flushFrames()
     tilt.handleMouseMove({ currentTarget: target, clientX: 300, clientY: 100 } as unknown as MouseEvent)
+    flushFrames()
     const afterMove = angles(tilt.transform.value).y
 
     // No further element events — only what a real browser sends while the pointer keeps moving.
     window.dispatchEvent(new MouseEvent('pointermove', { clientX: 340, clientY: 100 }))
+    flushFrames()
 
     expect(angles(tilt.transform.value).y).toBeGreaterThan(afterMove)
     // And leaving the frozen box on the window stream still ends the gesture.
     window.dispatchEvent(new MouseEvent('pointermove', { clientX: 600, clientY: 100 }))
+    flushFrames()
     expect(tilt.isHovering.value).toBe(false)
     expect(angles(tilt.transform.value)).toEqual({ x: 0, y: 0 })
     wrapper.unmount()
@@ -91,7 +116,9 @@ describe('useCardTilt', () => {
 
     expect(scaleOf(tilt.transform.value)).toBe(1)
     tilt.handleMouseEnter(at(200, 100))
+    flushFrames()
     tilt.handleMouseMove(at(320, 60))
+    flushFrames()
     expect(scaleOf(tilt.transform.value)).toBeCloseTo(1.03, 3)
     tilt.handleMouseLeave(at(-50, -50)) // outside the frozen box AND its LEAVE_MARGIN: (0,0) is still "inside"
     expect(scaleOf(tilt.transform.value)).toBe(1)
@@ -124,7 +151,9 @@ describe('useCardTilt', () => {
     const { wrapper, tilt } = mountTilt({ intensity: 8 })
 
     tilt.handleMouseEnter(at(320, 60))
+    flushFrames()
     tilt.handleMouseMove(at(320, 60))
+    flushFrames()
 
     tilt.handleMouseLeave(at(320, 202)) // 2px below the box: inside the 4px tolerance, so not a leave
     expect(angles(tilt.transform.value).y).toBeGreaterThan(1)
@@ -146,11 +175,14 @@ describe('useCardTilt', () => {
     const at = (clientX: number) => ({ currentTarget: target, clientX, clientY: 100 }) as unknown as MouseEvent
 
     tilt.handleMouseEnter(at(300))
+    flushFrames()
     tilt.handleMouseMove(at(300))
+    flushFrames()
     const before = angles(tilt.transform.value)
 
     width = 420 // the tilt has grown the box, as the browser does
     tilt.handleMouseMove(at(300))
+    flushFrames()
     const after = angles(tilt.transform.value)
 
     // Tolerance is 0.05° on purpose: the lerp may still be converging towards an unchanged target,
@@ -163,14 +195,19 @@ describe('useCardTilt', () => {
   it('returns to rest after the pointer leaves, and tilts again on the next entry', () => {
     const { wrapper, tilt } = mountTilt({ intensity: 8 })
     tilt.handleMouseEnter()
+    flushFrames()
     tilt.handleMouseMove(moveTo(320, 60))
+    flushFrames()
 
     tilt.handleMouseLeave()
+    flushFrames()
     expect(angles(tilt.transform.value)).toEqual({ x: 0, y: 0 })
 
     // A second pass: the animation loop has to be restartable (rafId must be released).
     tilt.handleMouseEnter()
+    flushFrames()
     tilt.handleMouseMove(moveTo(80, 160))
+    flushFrames()
     const a = angles(tilt.transform.value)
     expect(a.y).toBeLessThan(-1)
     expect(a.x).toBeLessThan(-1)
