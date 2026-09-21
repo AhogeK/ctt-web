@@ -379,6 +379,9 @@
 
 .auth-visual {
   position: relative;
+  /* No `overflow: hidden` here: it clipped the underglow 64px out from the card, which read as an
+     invisible wall. The scene layer needs room for its energy to fall to zero on its own. */
+  overflow: visible;
   display: none;
   width: 50%;
   flex-direction: column;
@@ -1443,9 +1446,6 @@
 
 /* Stacking: the cards below must occlude the card above — an upper card's glow must not travel
    over a lower card's face. */
-.auth-3d-scene > *:nth-child(1) { z-index: 1; }
-.auth-3d-scene > *:nth-child(2) { z-index: 2; }
-.auth-3d-scene > *:nth-child(3) { z-index: 3; }
 
 /* ============================================================================
    Pointer light for the dashboard: three layers on one coordinate pair.
@@ -1545,4 +1545,239 @@
 
 @media (hover: hover) {
   .auth-dashboard.is-tilting .auth-dashboard__spotlight { opacity: 1; }
+}
+
+/* ============================================================================
+   Secondary cards: spotlight stroke, surface sheen, hover ring, underglow.
+   ============================================================================ */
+.auth-card-3d__inner {
+  border-radius: inherit;
+}
+
+.auth-card-3d--metrics,
+.auth-card-3d--terminal {
+  overflow: visible;
+}
+
+.auth-card-3d__spotlight {
+  position: absolute;
+  inset: -1px;
+  width: calc(100% + 2px);
+  height: calc(100% + 2px);
+  pointer-events: none;
+  z-index: 10;
+  opacity: 0;
+  transition: opacity 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+  overflow: visible;
+  shape-rendering: geometricPrecision;
+}
+
+.auth-card-3d__spotlight-rect {
+  width: calc(100% - 1.5px);
+  height: calc(100% - 1.5px);
+  fill: none;
+  stroke-width: 1.5px;
+}
+
+/* A faint theme wash instead of a white specular core: a bright dot inside a card this size always
+   reads as a disc, and the underglow already carries the colour. */
+.auth-card-3d--metrics .auth-card-3d__sheen {
+  background: radial-gradient(
+    140px circle at var(--sheen-x, 50%) var(--sheen-y, 50%),
+    rgba(113, 112, 255, 0.1),
+    rgba(113, 112, 255, 0) 100%
+  );
+  filter: blur(20px);
+}
+
+.auth-card-3d--terminal .auth-card-3d__sheen {
+  background: radial-gradient(
+    120px circle at var(--sheen-x, 50%) var(--sheen-y, 50%),
+    rgba(113, 112, 255, 0.1),
+    rgba(113, 112, 255, 0) 100%
+  );
+  filter: blur(20px);
+}
+
+:root:not(.dark) .auth-card-3d--metrics .auth-card-3d__sheen {
+  background: radial-gradient(
+    140px circle at var(--sheen-x, 50%) var(--sheen-y, 50%),
+    rgba(94, 106, 210, 0.1),
+    rgba(94, 106, 210, 0) 100%
+  );
+}
+
+:root:not(.dark) .auth-card-3d--terminal .auth-card-3d__sheen {
+  background: radial-gradient(
+    120px circle at var(--sheen-x, 50%) var(--sheen-y, 50%),
+    rgba(94, 106, 210, 0.1),
+    rgba(94, 106, 210, 0) 100%
+  );
+}
+
+@media (hover: hover) {
+  .auth-card-3d.is-tilting .auth-card-3d__spotlight {
+    opacity: 1;
+  }
+}
+
+.auth-card-3d.is-tilting {
+  z-index: 10;
+  border-color: rgba(255, 255, 255, 0.08);
+  /* The dashboard lights its whole perimeter on hover (`0 0 0 1px` indigo); the secondary cards read
+     as dimmer without it, because the SVG stroke only lights the arc nearest the pointer. */
+  box-shadow:
+    0 0 0 1px rgba(94, 106, 210, 0.2),
+    0 8px 16px rgba(0, 0, 0, 0.2),
+    0 16px 32px rgba(0, 0, 0, 0.15),
+    inset 0 1px 0 rgba(255, 255, 255, 0.1),
+    inset 0 -1px 0 rgba(255, 255, 255, 0.04);
+}
+
+:root:not(.dark) .auth-card-3d.is-tilting {
+  border-color: #d0d6e0;
+  background: rgba(255, 255, 255, 0.98);
+  box-shadow:
+    0 0 0 1px rgba(94, 106, 210, 0.25),
+    0 8px 16px rgba(0, 0, 0, 0.06),
+    0 16px 32px rgba(0, 0, 0, 0.06),
+    inset 0 1px 0 rgba(255, 255, 255, 1),
+    inset 0 -1px 0 rgba(255, 255, 255, 0.8);
+}
+
+/* Dark-mode dashboard sheen: the same faint theme wash the secondary cards use. */
+.auth-dashboard__sheen {
+  background: radial-gradient(
+    180px circle at var(--sheen-x, 50%) var(--sheen-y, 50%),
+    rgba(113, 112, 255, 0.13),
+    rgba(113, 112, 255, 0) 100%
+  );
+  filter: blur(24px);
+}
+
+:root:not(.dark) .auth-dashboard__sheen {
+  filter: none;
+}
+
+/* Layer 2 — the per-card underglow is retired in favour of the scene-level emitter below.
+   Kept in place (display: none) rather than deleted: a revert is one line, not a stylesheet rebuild. */
+.auth-card-3d::after,
+.auth-dashboard::after {
+  display: none;
+  content: "";
+  position: absolute;
+  inset: -56px;
+  border-radius: calc(0.75rem + 56px);
+  z-index: -1;
+  pointer-events: none;
+  opacity: 0;
+  filter: blur(24px);
+  transform: translateZ(-2px);
+  will-change: opacity;
+  transition: opacity 0.35s ease;
+  background: radial-gradient(
+    320px circle at calc(var(--sheen-x, 50%) + 56px) calc(var(--sheen-y, 50%) + 56px),
+    rgba(94, 106, 210, 0.42) 0%,
+    rgba(94, 106, 210, 0.26) 20%,
+    rgba(113, 112, 255, 0.12) 40%,
+    rgba(113, 112, 255, 0.04) 65%,
+    rgba(113, 112, 255, 0) 80%
+  );
+}
+
+.auth-card-3d--metrics::after {
+  background: radial-gradient(
+    420px circle at calc(var(--sheen-x, 50%) + 56px) calc(var(--sheen-y, 50%) + 56px),
+    rgba(94, 106, 210, 0.3) 0%,
+    rgba(94, 106, 210, 0) 100%
+  );
+}
+
+.auth-card-3d--terminal::after {
+  background: radial-gradient(
+    380px circle at calc(var(--sheen-x, 50%) + 56px) calc(var(--sheen-y, 50%) + 56px),
+    rgba(94, 106, 210, 0.32) 0%,
+    rgba(94, 106, 210, 0) 100%
+  );
+}
+
+@media (hover: hover) {
+  .auth-card-3d.is-tilting::after,
+  .auth-dashboard.is-tilting::after {
+    opacity: 1;
+  }
+}
+
+/* ============================================================================
+   Underglow — one scene-level emitter, below every card.
+
+   A card's own `::after` can never satisfy both directions: `A < B` and `B < A` cannot hold at once,
+   and the inline `transform` traps the pseudo-element inside the card's stacking context. A single
+   layer at the scene root, stacked below every card, is occluded by whichever card is in front — so
+   light pours into the gaps, travels behind a card and reappears in the next gap, for all three
+   cards alike. Explicit class selectors replace the old `nth-child` position rules, which silently
+   re-assigned these layers whenever the scene's child order changed.
+   ============================================================================ */
+.auth-3d-scene {
+  position: relative;
+  isolation: isolate;
+}
+
+.auth-underglow {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  pointer-events: none;
+  /* No clipping anywhere: the blur must feather past the scene's edges on its own. */
+  overflow: visible;
+  opacity: 0;
+  transition: opacity 0.35s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.auth-underglow.is-active {
+  opacity: 1;
+}
+
+.auth-dashboard {
+  z-index: 1;
+}
+
+.auth-cards-container {
+  z-index: 2;
+}
+
+/* Anchored to the exciter card: the box follows the card, only the core follows the pointer.
+   Zero horizontal bleed, 12px above and 48px below so both gaps can be fed. */
+.auth-underglow__emitter {
+  position: absolute;
+  /* The box must outlive the light: the gradient dies 88px from the core (110px radius, last stop at
+     80%) and the 24px blur then reaches ~136px, so the box carries 136px of margin on every side. A
+     box that ends mid-falloff is exactly what read as an invisible wall. */
+  left: calc(var(--ug-card-x, 0px) - 136px);
+  top: calc(var(--ug-card-y, 0px) - 136px);
+  width: calc(var(--ug-card-w, 100%) + 272px);
+  height: calc(var(--ug-card-h, 100%) + 272px);
+  border-radius: 28px;
+  pointer-events: none;
+  filter: blur(24px);
+  will-change: opacity;
+  background: radial-gradient(
+    110px circle at calc(var(--ug-spot-x, 50%) + 136px) calc(var(--ug-spot-y, 50%) + 136px),
+    rgba(94, 106, 210, 0.46) 0%,
+    rgba(94, 106, 210, 0.26) 30%,
+    rgba(113, 112, 255, 0.1) 55%,
+    rgba(113, 112, 255, 0.02) 72%,
+    rgba(113, 112, 255, 0) 80%
+  );
+}
+
+:root:not(.dark) .auth-underglow__emitter {
+  background: radial-gradient(
+    110px circle at calc(var(--ug-spot-x, 50%) + 136px) calc(var(--ug-spot-y, 50%) + 136px),
+    rgba(80, 92, 200, 0.52) 0%,
+    rgba(94, 106, 210, 0.3) 30%,
+    rgba(130, 143, 255, 0.1) 55%,
+    rgba(130, 143, 255, 0.02) 72%,
+    rgba(94, 106, 210, 0) 80%
+  );
 }

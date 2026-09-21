@@ -27,6 +27,11 @@ const props = defineProps<{
 
           <!-- 3D Scene Container — shared perspective vanishing point -->
           <div class="auth-3d-scene">
+            <!-- Scene-level underglow: one emitter below every card, so any card occludes it. -->
+            <div class="auth-underglow" aria-hidden="true">
+              <div class="auth-underglow__emitter" />
+            </div>
+
             <AuthDashboard />
             <div class="auth-cards-container">
               <AuthMetricsCard />
