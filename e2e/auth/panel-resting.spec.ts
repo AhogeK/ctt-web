@@ -13,8 +13,18 @@ import { mockAuthApis } from '../utils/auth-helpers.js'
  *    finished and the cards vanished one by one.
  */
 
-/** What a panel computes to with no transform of its own. */
-const RESTING = 'none'
+/**
+ * What "at rest" computes to, per panel.
+ *
+ * The dashboard runs with `tilt: true` and therefore carries an identity transform at rest (the
+ * composable writes translateZ(0) rotate*(0) scale(1)); the two cards below it still run with
+ * `tilt: false`, which writes no transform at all.
+ */
+const RESTING = ['matrix(1, 0, 0, 1, 0, 0)', 'none']
+/** The dashboard inlines `perspective(1200px)`, so its resting matrix carries the perspective term
+ *  (-1/1200) and no rotation or scale. */
+const isResting = (v: string): boolean =>
+  RESTING.includes(v) || /^matrix3d\(1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, -0\.000833333, 0, 0, 0, 1\)$/.test(v)
 
 /**
  * Wait for a panel's CSS transitions to finish instead of sleeping a fixed number of milliseconds.
@@ -27,7 +37,7 @@ async function settle(panel: Locator): Promise<void> {
 }
 
 test.describe('Auth showcase panels', () => {
-  test('stay visible and flat after the entrance, then light up under the pointer', async ({ page }) => {
+  test('stay visible and flat after the entrance, then lift and light up under the pointer', async ({ page }) => {
     await page.setViewportSize({ width: 1440, height: 1000 }) // the panels hide below the lg breakpoint
     await mockAuthApis(page)
     await page.goto('/auth/login')
@@ -48,15 +58,21 @@ test.describe('Auth showcase panels', () => {
         }
       })
       expect(state.opacity, `panel ${index} is not visible`).toBe('1')
-      expect(state.transform, `panel ${index} is not flat at rest`).toBe(RESTING)
+      expect(isResting(state.transform), `panel ${index} is not flat at rest (got ${state.transform})`).toBe(true)
       expect(state.height, `panel ${index} is not laid out`).toBe(state.layout)
     }
 
     // Every panel answers the pointer on its own: the glare lights up and the hover shadow differs
-    // from the resting one. With `tilt: false` the panel itself must not move.
+    // from the resting one. The panel lifts while the pointer is on it.
     for (const [index, panel] of (await panels.all()).entries()) {
       await page.mouse.move(8, 8)
-      await settle(panel)
+      // Poll instead of sampling once: the transform transition may not have started yet when
+      // `settle()` looks, and a single read would catch the previous panel's lifted matrix.
+      await expect
+        .poll(async () => isResting(await panel.evaluate((el: Element) => getComputedStyle(el).transform)), {
+          message: `panel ${index} did not return to rest before its turn`,
+        })
+        .toBe(true)
 
       const box = await panel.boundingBox()
       expect(box, `panel ${index} has no box`).not.toBeNull()
@@ -72,21 +88,39 @@ test.describe('Auth showcase panels', () => {
           sheen: sheen ? getComputedStyle(sheen).opacity : '0',
         }
       })
-      expect(state.sheen, `panel ${index} glare is not lit`).toBe('1')
+      // Poll: the glare fades in over 0.3s, so a single read can catch it mid-transition (0.95x).
+      await expect
+        .poll(
+          async () =>
+            await panel.evaluate((el: Element) => {
+              const sheen = el.querySelector('.auth-dashboard__sheen, .auth-card-3d__sheen')
+              return sheen ? getComputedStyle(sheen).opacity : '0'
+            }),
+          { message: `panel ${index} glare is not lit` },
+        )
+        .toBe('1')
       expect(state.tilting, `panel ${index} never entered the tilting state`).toBe(true)
       // No inline transform at all — not even an identity one, which would open a stacking context.
-      expect(state.inline, `panel ${index} carries a transform while the tilt is off`).toBe('')
-      expect(state.transform, `panel ${index} moved under the pointer`).toBe(RESTING)
+      // Only the dashboard runs with the tilt on; the two cards below it stay still by design.
+      if (state.tilting && state.inline) {
+        // The lift is integrated per frame now, so a single read can catch it mid-climb (~1.025).
+        await expect
+          .poll(
+            async () => await panel.evaluate((el: Element) => (el instanceof HTMLElement ? el.style.transform : '')),
+            { message: `panel ${index} never finished lifting` },
+          )
+          .toContain('scale(1.03)')
+      } else {
+        expect(state.inline, `panel ${index} wrote a transform without the tilt`).toBe('')
+      }
     }
 
     // Leaving puts every panel back to its resting pose, animated by the CSS transition.
     await page.mouse.move(8, 8)
     await Promise.all((await panels.all()).map(settle))
     for (const [index, panel] of (await panels.all()).entries()) {
-      expect(
-        await panel.evaluate((el: Element) => getComputedStyle(el).transform),
-        `panel ${index} did not settle back`,
-      ).toBe(RESTING)
+      const settled = await panel.evaluate((el: Element) => getComputedStyle(el).transform)
+      expect(isResting(settled), `panel ${index} did not settle back (got ${settled})`).toBe(true)
     }
   })
 })
