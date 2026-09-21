@@ -2,17 +2,16 @@
 import { useCardTilt } from '@/composables/useCardTilt'
 
 const tilt = useCardTilt({
+  tilt: false,
   intensity: 8,
-  baseRotateX: 18,
-  baseRotateY: -25,
-  baseRotateZ: -4,
-  translateZ: -60,
+  // Resting pose stays flat on purpose — see the entrance fill note in AuthLayout.css.
   depthMultiplier: 0.5,
 })
 </script>
 
 <template>
   <div
+    :class="{ 'is-tilting': tilt.isHovering.value }"
     class="auth-card-3d auth-card-3d--terminal"
     @mousemove="tilt.handleMouseMove"
     @mouseenter="tilt.handleMouseEnter"

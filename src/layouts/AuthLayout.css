@@ -522,14 +522,16 @@
     inset 0 -1px 0 rgba(255, 255, 255, 0.02);
   transform-style: preserve-3d;
   will-change: transform;
-  transition: box-shadow 0.4s cubic-bezier(0.22, 1, 0.36, 1);
-  opacity: 0;
-  animation: dashboard-entrance 1s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+  transition:
+    transform 0.5s cubic-bezier(0.03, 0.98, 0.52, 0.99),
+    box-shadow 0.4s cubic-bezier(0.22, 1, 0.36, 1);
+
+  animation: dashboard-entrance 1s cubic-bezier(0.16, 1, 0.3, 1) backwards; /* NOT forwards — see card-entrance */
   animation-delay: 0.1s;
 }
 
 @media (hover: hover) {
-  .auth-dashboard:hover {
+  .auth-dashboard.is-tilting {
     box-shadow:
       0 0 0 1px rgba(94, 106, 210, 0.2),
       0 8px 16px rgba(0, 0, 0, 0.25),
@@ -554,7 +556,7 @@
 }
 
 @media (hover: hover) {
-  :root:not(.dark) .auth-dashboard:hover {
+  :root:not(.dark) .auth-dashboard.is-tilting {
     box-shadow:
       0 0 0 1px rgba(94, 106, 210, 0.25),
       0 8px 16px rgba(0, 0, 0, 0.06),
@@ -586,15 +588,15 @@
   opacity: 0;
   transition: opacity 0.3s ease;
   background: radial-gradient(
-    500px circle at var(--sheen-x, 50%) var(--sheen-y, 50%),
-    rgba(255, 255, 255, 0.08),
-    transparent 40%
+    110px circle at var(--sheen-x, 50%) var(--sheen-y, 50%),
+    rgba(255, 255, 255, 0.3),
+    rgba(255, 255, 255, 0) 100%
   );
   z-index: 1;
 }
 
 @media (hover: hover) {
-  .auth-dashboard:hover .auth-dashboard__sheen {
+  .auth-dashboard.is-tilting .auth-dashboard__sheen {
     opacity: 1;
   }
 }
@@ -602,9 +604,9 @@
 
 :root:not(.dark) .auth-dashboard__sheen {
   background: radial-gradient(
-    500px circle at var(--sheen-x, 50%) var(--sheen-y, 50%),
-    rgba(94, 106, 210, 0.06),
-    transparent 40%
+    110px circle at var(--sheen-x, 50%) var(--sheen-y, 50%),
+    rgba(94, 106, 210, 0.22),
+    rgba(94, 106, 210, 0) 100%
   );
 }
 
@@ -842,10 +844,10 @@
   transform-style: preserve-3d;
   will-change: transform;
   transition:
-    border-color 0.3s cubic-bezier(0.22, 1, 0.36, 1),
+    transform 0.5s cubic-bezier(0.03, 0.98, 0.52, 0.99),
     box-shadow 0.4s cubic-bezier(0.22, 1, 0.36, 1);
-  opacity: 0;
-  animation: card-entrance 1s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+
+  animation: card-entrance 1s cubic-bezier(0.16, 1, 0.3, 1) backwards; /* NOT forwards: it would hold the identity transform over the inline tilt forever */
 }
 
 .auth-card-3d--metrics {
@@ -856,7 +858,7 @@
 }
 
 @media (hover: hover) {
-  .auth-card-3d:hover {
+  .auth-card-3d.is-tilting {
     border-color: rgba(94, 106, 210, 0.3);
     box-shadow:
       0 0 0 1px rgba(94, 106, 210, 0.2),
@@ -880,7 +882,7 @@
 }
 
 @media (hover: hover) {
-  :root:not(.dark) .auth-card-3d:hover {
+  :root:not(.dark) .auth-card-3d.is-tilting {
     border-color: rgba(94, 106, 210, 0.4);
     background: rgba(255, 255, 255, 0.98);
     box-shadow:
@@ -894,7 +896,7 @@
 
 
 @media (hover: hover) {
-  :root:not(.dark) .auth-card-3d:hover {
+  :root:not(.dark) .auth-card-3d.is-tilting {
     border-color: rgba(94, 106, 210, 0.4);
     background: rgba(255, 255, 255, 0.98);
     box-shadow:
@@ -927,15 +929,15 @@
   opacity: 0;
   transition: opacity 0.3s ease;
   background: radial-gradient(
-    400px circle at var(--sheen-x, 50%) var(--sheen-y, 50%),
-    rgba(255, 255, 255, 0.08),
-    transparent 40%
+    85px circle at var(--sheen-x, 50%) var(--sheen-y, 50%),
+    rgba(255, 255, 255, 0.3),
+    rgba(255, 255, 255, 0) 100%
   );
   z-index: 1;
 }
 
 @media (hover: hover) {
-  .auth-card-3d:hover .auth-card-3d__sheen {
+  .auth-card-3d.is-tilting .auth-card-3d__sheen {
     opacity: 1;
   }
 }
@@ -943,9 +945,9 @@
 
 :root:not(.dark) .auth-card-3d__sheen {
   background: radial-gradient(
-    400px circle at var(--sheen-x, 50%) var(--sheen-y, 50%),
-    rgba(94, 106, 210, 0.06),
-    transparent 40%
+    85px circle at var(--sheen-x, 50%) var(--sheen-y, 50%),
+    rgba(94, 106, 210, 0.22),
+    rgba(94, 106, 210, 0) 100%
   );
 }
 
@@ -1421,3 +1423,25 @@
     transition: none !important;
   }
 }
+
+
+/**
+ * Pointer-time tuning.
+ * - Follow while the pointer is ON a panel: the reference's own `0.6s cubic-bezier(.23,1,.32,1)`.
+ * - Return: the base rule carries `0.5s cubic-bezier(.03,.98,.52,.99)` — vanilla-tilt re-arms exactly
+ *   that in `setTransition()` on `mouseleave`, which is why the two curves differ.
+ */
+@media (hover: hover) {
+  .auth-dashboard.is-tilting,
+  .auth-card-3d.is-tilting {
+    transition:
+      transform 0.6s cubic-bezier(0.23, 1, 0.32, 1),
+      box-shadow 0.35s cubic-bezier(0.22, 1, 0.36, 1);
+  }
+}
+
+/* Stacking: the cards below must occlude the card above — an upper card's glow must not travel
+   over a lower card's face. */
+.auth-3d-scene > *:nth-child(1) { z-index: 1; }
+.auth-3d-scene > *:nth-child(2) { z-index: 2; }
+.auth-3d-scene > *:nth-child(3) { z-index: 3; }
