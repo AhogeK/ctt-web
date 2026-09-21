@@ -2,11 +2,9 @@
 import { useCardTilt } from '@/composables/useCardTilt'
 
 const tilt = useCardTilt({
+  tilt: false,
   intensity: 6,
-  baseRotateX: 15,
-  baseRotateY: -20,
-  baseRotateZ: -3,
-  translateZ: 40,
+  // Resting pose stays flat on purpose — see the entrance fill note in AuthLayout.css.
   depthMultiplier: 1.2,
 })
 
@@ -40,6 +38,7 @@ function heatmapLevel(row: number, col: number): number {
 
 <template>
   <div
+    :class="{ 'is-tilting': tilt.isHovering.value }"
     class="auth-dashboard"
     @mousemove="tilt.handleMouseMove"
     @mouseenter="tilt.handleMouseEnter"

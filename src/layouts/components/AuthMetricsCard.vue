@@ -4,11 +4,9 @@ import { useTransition } from '@vueuse/core'
 import { useCardTilt } from '@/composables/useCardTilt'
 
 const tilt = useCardTilt({
+  tilt: false,
   intensity: 8,
-  baseRotateX: 10,
-  baseRotateY: -15,
-  baseRotateZ: 2,
-  translateZ: 0,
+  // Resting pose stays flat on purpose — see the entrance fill note in AuthLayout.css.
   depthMultiplier: 0.8,
 })
 
@@ -63,6 +61,7 @@ onMounted(() => {
 
 <template>
   <div
+    :class="{ 'is-tilting': tilt.isHovering.value }"
     class="auth-card-3d auth-card-3d--metrics"
     @mousemove="tilt.handleMouseMove"
     @mouseenter="tilt.handleMouseEnter"
