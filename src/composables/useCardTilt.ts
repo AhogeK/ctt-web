@@ -1,5 +1,67 @@
 import { ref, computed, getCurrentScope, onScopeDispose } from 'vue'
 
+/**
+ * Scene-level underglow sync.
+ *
+ * One emitter serves all three cards, so a card's light is occluded by whichever card is in front of
+ * it — the blocking that a card's own `::after` could never express, because `A < B` and `B < A`
+ * cannot both hold and the card's inline `transform` pins the pseudo-element inside its own stacking
+ * context.
+ *
+ * The box is anchored to the exciter card; only the bright core follows the pointer. Geometry is
+ * written once per hover, the core once per pointer frame, and both go straight to CSS custom
+ * properties so neither costs a Vue re-render or a gradient rebuild.
+ */
+
+/** The scene element, bound by `AuthLayout.vue`. */
+const underglowSceneEl: { value: HTMLElement | null } = { value: null }
+
+/**
+ * Margin the emitter's box carries beyond the card on every side. It must exceed the light's own
+ * reach (110px radius with its last stop at 80% = 88px, plus the 24px blur) so the energy reaches
+ * zero before the box's edge — a box that ends mid-falloff reads as an invisible wall.
+ */
+export const UNDERGLOW_BOX_MARGIN = 136
+
+function scene(): HTMLElement | null {
+  return underglowSceneEl.value ?? (document.querySelector('.auth-3d-scene') as HTMLElement | null)
+}
+
+/**
+ * Anchors the emitter to the card and shows the layer. Called once when the hover starts: the box
+ * must not move with the pointer, only when the pointer changes cards.
+ */
+function anchorUnderglow(cardEl: HTMLElement | null): void {
+  const sceneEl = scene()
+  if (!sceneEl || !cardEl) return
+  const sceneRect = sceneEl.getBoundingClientRect()
+  const cardRect = cardEl.getBoundingClientRect()
+  const layer = sceneEl.querySelector('.auth-underglow') as HTMLElement | null
+  if (!layer) return
+
+  sceneEl.style.setProperty('--ug-card-x', `${cardRect.left - sceneRect.left}px`)
+  sceneEl.style.setProperty('--ug-card-y', `${cardRect.top - sceneRect.top}px`)
+  sceneEl.style.setProperty('--ug-card-w', `${cardRect.width}px`)
+  sceneEl.style.setProperty('--ug-card-h', `${cardRect.height}px`)
+  layer.classList.add('is-active')
+}
+
+/**
+ * Moves the bright core. Deliberately unclamped: braking at the card's edge reads as a mechanical
+ * stop, and the blur plus the downward bleed already soften an overhanging core.
+ */
+function publishUnderglowCore(localX: number, localY: number): void {
+  const sceneEl = scene()
+  if (!sceneEl) return
+  sceneEl.style.setProperty('--ug-spot-x', `${localX}px`)
+  sceneEl.style.setProperty('--ug-spot-y', `${localY}px`)
+}
+
+function dismissUnderglow(): void {
+  const sceneEl = scene()
+  sceneEl?.querySelector('.auth-underglow')?.classList.remove('is-active')
+}
+
 export interface UseCardTiltOptions {
   /**
    * Whether the card itself moves (rotation + the hover lift).
@@ -154,6 +216,7 @@ export function useCardTilt(options: UseCardTiltOptions = {}) {
 
   /** End the gesture: back to rest, animated by the CSS transition. */
   function settle() {
+    dismissUnderglow()
     stopTracking()
     isHovering.value = false
     hoverRect = null
@@ -196,27 +259,39 @@ export function useCardTilt(options: UseCardTiltOptions = {}) {
       settle()
       return
     }
-    const nx = (clientX - rect.left - rect.width / 2) / (rect.width / 2)
-    const ny = (clientY - rect.top - rect.height / 2) / (rect.height / 2)
+    /* Isotropic reference radius. Normalising each axis by its own half-extent made the vertical
+       axis of a flat card hypersensitive: the terminal is 448 x 170, so a 10px vertical move covers
+       11.8% of the angle range against 4.5% horizontally (2.64x), and the two axes saturate at
+       different rates on the way to a corner. Both axes now share the diagonal, so equal pointer
+       travel in any direction yields the same angular increment and any aspect ratio puts its
+       corner at the same normalised radius (2/2.4 = 1.2). */
+    const referenceRadius = Math.hypot(rect.width, rect.height) / 2.4
+    const nx = (clientX - rect.left - rect.width / 2) / referenceRadius
+    const ny = (clientY - rect.top - rect.height / 2) / referenceRadius
 
-    /* The box normalisation is Chebyshev, so a corner reaches |(nx, ny)| = sqrt(2) and would ask for a
-       composite tilt 41% larger than an edge: sqrt(5.5^2 + 5.5^2) = 7.8 degrees, which is where the
-       projection distortion becomes visible (both axes deform at once). Clamping to the unit disk caps
-       the composite angle at the edge value. */
+    /* Clamp to the unit disk so a corner cannot ask for a composite tilt larger than an edge. There
+       is deliberately no sine softening here: `sin(d * pi/2) / d` amplifies mid radii by 1.41x at
+       d = 0.5 instead of softening them, and the temporal smoothing the eye actually reads comes
+       from MAX_ROTATION_STEP in the integrator. */
     const distance = Math.hypot(nx, ny)
     const clampedX = distance > 1 ? nx / distance : nx
     const clampedY = distance > 1 ? ny / distance : ny
-    const softFactor = distance > 0 ? Math.sin((Math.min(distance, 1) * Math.PI) / 2) / Math.min(distance, 1) : 1
+
+    publishUnderglowCore(clientX - rect.left, clientY - rect.top)
 
     // Parallax: depth multiplier amplifies/reduces mouse response
-    targetRotateY = clampedX * softFactor * intensity * depthMultiplier
-    targetRotateX = -clampedY * softFactor * intensity * depthMultiplier
+    targetRotateY = clampedX * intensity * depthMultiplier
+    targetRotateX = -clampedY * intensity * depthMultiplier
     targetScale = maxScale
 
     // The glare stays event-driven on purpose: the light should sit exactly under the pointer even
-    // while the card is still easing towards its pose.
-    sheenX.value = `${clientX - rect.left}px`
-    sheenY.value = `${clientY - rect.top}px`
+    // while the card is still easing towards its pose. The lift scales the card about its centre, so a
+    // local coordinate renders at `centre + (local - centre) * scale`; dividing by the current scale
+    // cancels that drift (~7-9px at scale 1.03) and keeps the disc under the cursor.
+    const scale = currentScale.value || 1
+
+    sheenX.value = `${(clientX - rect.left - rect.width / 2) / scale + rect.width / 2}px`
+    sheenY.value = `${(clientY - rect.top - rect.height / 2) / scale + rect.height / 2}px`
 
     startPhysics()
   }
@@ -255,8 +330,10 @@ export function useCardTilt(options: UseCardTiltOptions = {}) {
      * corner shows about a quarter of a circle.
      */
     if (e && hoverRect) {
-      sheenX.value = `${e.clientX - hoverRect.left}px`
-      sheenY.value = `${e.clientY - hoverRect.top}px`
+      anchorUnderglow(el ?? null)
+      const s = currentScale.value || 1
+      sheenX.value = `${(e.clientX - hoverRect.left - hoverRect.width / 2) / s + hoverRect.width / 2}px`
+      sheenY.value = `${(e.clientY - hoverRect.top - hoverRect.height / 2) / s + hoverRect.height / 2}px`
     }
     // From here on the gesture lives on the window: it must survive the pointer leaving the
     // *projected* quad, which is what the tilt is about to change.
