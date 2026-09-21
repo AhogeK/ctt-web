@@ -194,7 +194,7 @@ declaration into the last value.
 
 - Long-running process → background it with its own log file; record the PID for teardown.
 - Teardown: match the process command line against the resource you started, never kill by port alone.
-- **Browsers: the whole contract now lives in `skill://user-chrome-tabs`** ✓ (user-level, cross-project — written
+- **Browsers: the whole contract now lives in `skill://user-chrome-tabs`** ✓ (user-level, cross-project — written **报告格式已成 skill** ✓（`~/.agents/skills/problem-report/` ✓ 引用真实代码而非行号 ✓ 现状分已实现/未实现 ✓ 技术点带实测数字 ✓ 问题点含"未确定"列 ✓ 未被要求不给方案 ✓）。
   after three of this session's own failures: a relay without `target` hijacks the tab being read ✗, a heuristic
   filter closed the user's login tab ✗, and two tabs were left open ✗). Read it before any browser automation on
   this machine; the verified ceremony, the `omp`-group recipe and the self-check are all there.
