@@ -12,13 +12,14 @@ maintenance:
   - '每轮收尾校验：files/domains 的键是相对路径、值是 wc -l 语义的行数；与实际不符即索引漂移'
   - '索引只做定位，不写结论 —— 结论属于被指向的文件（避免两处重复，P6）'
 files:
-  AGENTS.md: 160
-  memory-bank/activeContext.md: 196
-  memory-bank/progress.md: 135
+  AGENTS.md: 177
+  memory-bank/activeContext.md: 172
+  memory-bank/progress.md: 141
   memory-bank/systemPatterns.md: 200
   memory-bank/techContext.md: 101
   memory-bank/projectbrief.md: 30
   memory-bank/archives/2026-09-20-activeContext-trim.md: 43
+  memory-bank/archives/2026-09-22-activeContext-trim.md: 38
   memory-bank/domains/README.md: 148
 domains:
   achievements:
@@ -28,6 +29,12 @@ domains:
     memory-bank/domains/achievements/references.md: 186
     memory-bank/domains/achievements/scenarios.md: 80
     memory-bank/domains/achievements/trophy-geometry.md: 52
+  auth-layout:
+    memory-bank/domains/auth-layout/meta.md: 17
+    memory-bank/domains/auth-layout/practices.md: 41
+    memory-bank/domains/auth-layout/principles.md: 28
+    memory-bank/domains/auth-layout/references.md: 22
+    memory-bank/domains/auth-layout/scenarios.md: 23
   ai-workflow:
     memory-bank/domains/ai-workflow/meta.md: 59
     memory-bank/domains/ai-workflow/practices.md: 200
@@ -114,6 +121,16 @@ entries:
       - '已定的取舍'
     read_when: '需要领域的读法/流程时'
     source_of_truth: '本文件自身'
+
+  - id: 'domain.auth-layout'
+    path: 'memory-bank/domains/auth-layout/'
+    answers:
+      - '登录页展示面板的三层光怎么分工'
+      - '底光为什么必须在场景级单层'
+      - '光的"无形墙"是怎么来的'
+      - '量这些光要注意什么'
+    read_when: '改 AuthLayout 的任何视觉/交互'
+    source_of_truth: '真实浏览器渲染 + getComputedStyle（声明式 CSS 不是证据）'
 
   - id: 'domain.ai-workflow'
     path: 'memory-bank/domains/ai-workflow/'

@@ -1,3 +1,12 @@
+### AuthLayout 展示面板：指针光 + 场景级底光（2026-09-21，v0.51.0）
+
+- **三层光各自归属** ✓：**掠光**属鼠标（卡内 ✓ 顶部卡 180px / 副卡 140·120px ✓ 暗色改用主题紫 0.10–0.13 + `blur` ✓ 去掉白核 = 去掉"灯泡感" ✓）；**聚光描边**属几何（SVG `<rect>` + `userSpaceOnUse` 渐变 ✓ r=160/145/130 ✓）；**底光**属**卡片** ✓ 指针只**激发**它 ✓。
+- **架构定论** ✓：卡片自带的 `::after` **不可能**被相邻卡遮挡 ✗（`A<B` 与 `B<A` 不可同时成立 ✓ 且内联 `transform` 把它锁在卡的层叠上下文里 ✓）⇒ 底光改为**场景级单层**（`.auth-underglow`，z=0，位于三卡之下 ✓，显式类名取代 `nth-child` 位置规则 ✓）⇒ 三张卡**行为一致** ✓：光在上下间隙渗出 ✓、被相邻卡挡住 ✓、在下一段间隙继续出现 ✓、卡面 ≤1 count ✓。
+- **"无形墙"两因** ✗→✓：① 盒子小于光的射程 ⇒ `blur` 把断崖涂成圆角"光盾" ✓ ⇒ 盒子改为**四周各外扩 136px**（= 110px 半径×80% 的 88px + 2×24px 模糊 ✓ 满足 `B ≥ R + 2σ` ✓）；② 祖先 `.auth-visual { overflow: hidden }` 在卡外 64px 处二次裁剪 ✓ ⇒ 释放 ✓。
+- **测量方法（血泪 ✓）** ✗：悬停会改 `transform`（1.03 缩放+旋转 ✓）⇒ 朴素对照差量到的是**位移**不是光 ✗（"卡面穿透 25.3" 冻结 `transform` 后降到 **3.7** ✓）⇒ **差分前必须冻结几何** ✓（已入 `auth-layout/principles.md` P4 ✓）。
+- **两次自伤事故（记账 ✓）** ✗：对 1783 行样式表用**删除正则**批量清洗 ⇒ ① 吃掉 41 行"值换行"声明的属性名（`font-family:` / `transition:` / `box-shadow:` ✓）② 第二阶段把文件削到 **187 行** ✓ ⇒ 两次都靠 `git show HEAD:` + 逐字写回恢复 ✓ ⇒ **新规矩：此文件只许"追加"或"精确整串替换"，每步立即构建** ✓（已入 AGENTS.md R27 ✓）。
+- **用户级钩子改动** ✓（在 `~/.omp/packages/session-discipline/` ✓ 非本仓库 ✓）：软残留提醒加数据开关 `hooks/pre/closing-discipline.json`（采样时重读 ⇒ 无需重启 ✓ 坏配置回退为开启 ✓）；授权词表加 `add\s*it` 与 `\badd\b`（裸 `add` 被既有**否定/疑问守卫**压住 ✓ 实测 `先别 add` / `要不要 add?` 均不放行 ✓）。测试 `check-hooks` 35/35 ✓ · `check-git-policy` 61/61 ✓ · `check-todo-freshness` 16/16 ✓。
+
 ### AuthLayout 三块面板：静止契约 ✅ 已解决（2026-09-21，P2 最后一项）
 
 诉求"静止方方正正 ✓ 悬停才浮起 ✓"卡了两轮 ✗ → **真因两层**：① 入场关键帧 `to` 是恒等、`forwards` **永久占住 `transform`** ✗；② `useCardTilt` 本身是**死代码** ✗（`currentRotate*` 用普通 `let` ⇒ `computed` 无依赖只求值一次；`rafId` 从不复位 ⇒ 循环起不来 ✓）。修法三处 ✓：组件删掉从未生效的 `baseRotate*`/`translateZ` · fill `forwards→backwards` · `currentRotate*` 改 `ref` + `rafId` 释放 ✓。**真机**：静止三块 `matrix(1,0,0,1,0,0)` 且 rect == 布局 ✓ · 悬停偏心点 → `matrix3d(0.998…)`、448×421→453×425（浮起 ✓）· 移开回恒等 ✓ · reduce 静止 ✓。回归测试 `useCardTilt.test.ts` **先红后绿**（旧实现 2/2 全红 ✓）。版本 0.48.1（PATCH ✓）。
@@ -16,39 +25,6 @@
 **已提交**: v0.47.4 —— develop `b585fcf` ✓ / master `fe9b5bc` ✓（已推送 · clean · 代码面 0 差异 ✓）
   `fix(auth): make bare /auth land on the login page` + `chore(release): 0.47.4`（逐个 cherry-pick ✓）
   **新增回归测试** `src/router/__tests__/parent-redirect.test.ts`（2 断言：有 children 必须 redirect · `/auth` 必须指向 LOGIN）
-
-### 落地页 P2 第二段：手写 hover 守卫（2026-09-20，工作树未提交）
-
-- **全仓 `src/` 手写 `:hover` 共 16 条 / 4 文件**（`ThemeToggle` 2 · `AuthLayout.css` 11 · `ScrollFadeList` 2 · `TermsDialog` 1）→ **全部包入 `@media (hover: hover)`** ✓；Tailwind 变体不动 ✓（v4 已编译 ✓）。
-- **真机对照（决定性 ✓✓）**：桌面 hover → 变色 ✓（零回归 ✓）；触摸 `hover: none` hover → **不变** ✓✓。
-- **⚠️ 测量陷阱** ✗✓：`page.emulateMediaFeatures([{name:'hover'}])` **不支持** ✗ 而我的 `.catch` 吞了它 ✗ → 上一轮"触摸"其实跑在桌面条件下、结论反了 ✗；**正解 = `page.emulate({ isMobile, hasTouch, userAgent: 移动端 })`** ✓✓（会把 `hover: hover→none`、`pointer: fine→coarse` ✓）。
-- 单测 35/35 ✓ · `vue-tsc` 零错误 ✓ · 版本 `0.47.6`（PATCH）。
-
-### 落地页 P2 第一段：区块基元（2026-09-20，工作树未提交）
-
-- **新增** `src/features/landing/components/LandingSection.vue` —— 营销区块的唯一外壳：容器宽度 · 横向留白 · 纵向节奏
-  （取值全部来自 `DESIGN.md`：容器 1200px §5 · 阅读列 ~730px · 8px 栅格横距 24→32px · 区块节奏 80→48px §8）
-- **测试** `LandingSection.test.ts` 4 例，已**证伪**（改错容器宽度即红 ✓）· `vue-tsc` 零错误 ✓
-- **计划文件已同轮更新** ✓：`.plans/ctt-web-development-plan.md` §P2 标记为「进行中（第一段已交付）」+ 完成记录（本文件约定：阶段完成就地更新 ✓）
-- **阅读中发现的两处前提修正**：触摸目标 44×44 与 `@media (hover: hover)` 规则 **`DESIGN.md` §8 早已写入** ✓
-  （P2 清单里"需确认后写入"作废 ✗）；剩下的真实 code 缺口只有 `ThemeToggle.vue` 的**手写** `:hover` 未包该媒体查询 ✓
-
-**已提交**: v0.47.2 —— develop `e782010` ✓ / master `d73e493` ✓（均已推送 · clean · 代码面 0 差异 ✓）
-
-### 落地页 P1：`/` 由「重定向登录」变为公开首页（2026-09-19，v0.47.0）
-
-`RouteNames` 增 `MARKETING_LAYOUT` + `LANDING`（镜像 `AUTH_LAYOUT` 模式）· `/` 移入 `router/modules/landing.ts`（`constantRoutes` 随之删除）· 新增 `MarketingLayout` + `LandingView` · 死代码 `HomeView`/`AboutView` 删除 · 分包 `feature-landing` ✓。**关键语义**：守卫只在 `requiresAuth` 为真时拦；**`guestOnly` 会把已登录用户弹走** → `/` 绝不标它。完整交付记录见 [`.plans/ctt-web-development-plan.md`](../.plans/ctt-web-development-plan.md) §P1。
-
-# Active Context: ctt-web
-
-## Current Status
-
-**已提交**: v0.47.0 —— develop `7704628` ✓ / master `2e22f5f` ✓（两分支均已推送、clean、代码面 0 差异 ✓）
-
-**已提交**: v0.47.1 —— develop `7059fcb` ✓ / master `6ef9fa5` ✓（两分支均已推送、clean、代码面 0 差异 ✓）
-  4 个 develop 提交：`b16a6cc` fix(router 父级重定向) · `5131f5d` feat(auth 登出提示) · `fa1ed27` chore(release) · `7059fcb` chore(memory)
-  其中 3 个非 AI 提交**逐个** cherry-pick 进 master（`911412b` / `07ab46b` / `6ef9fa5`）✓ 零冲突 ✓；AI 内容未进 master ✓（已逐一核验：index.yaml / systemPatterns / AGENTS.md / .plans 在 master 上**均不存在** ✓）
-  **钩子复核** ✓：pre-commit 跑过 `vp fmt`/`vp lint --fix` → 对**提交后**的状态重跑门禁：type-check ✓ lint ✓ unit **1437/1437** ✓ build ✓ E2E **104/104** ✓
 
 ### 登录后 Dashboard 空白（用户报告 → 已修，2026-09-19）
 
