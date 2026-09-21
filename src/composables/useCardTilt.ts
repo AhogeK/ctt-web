@@ -9,6 +9,18 @@ export interface UseCardTiltOptions {
    * the transform is omitted rather than zeroed.
    */
   tilt?: boolean
+  /**
+   * Per-frame smoothing for the rendered pose, 0..1 — 1 tracks the pointer exactly.
+   *
+   * The tween is advanced in `requestAnimationFrame`, never by a CSS transition: a transition on
+   * `transform` is restarted by every pointermove, and each restart begins from the current value with
+   * zero velocity, so the card never leaves the flat start of the curve. That reads as a rubber-band
+   * trail plus micro-stutter whenever event spacing jitters. An rAF integrator shares the compositor's
+   * clock, so a lower value only adds a deliberate, constant weight instead of a moving target.
+   */
+  smoothness?: number
+  /** Hover lift, reached through the same integrator as the angles (default 1.03). */
+  maxScale?: number
   /** Maximum rotation angle from mouse movement in degrees (default: 8) */
   intensity?: number
   /** Base static rotation X in degrees — the card's resting 3D angle */
@@ -35,6 +47,8 @@ export interface UseCardTiltOptions {
 export function useCardTilt(options: UseCardTiltOptions = {}) {
   const {
     tilt = true,
+    smoothness = 0.2,
+    maxScale = 1.03,
     intensity = 8,
     baseRotateX = 0,
     baseRotateY = 0,
@@ -57,6 +71,44 @@ export function useCardTilt(options: UseCardTiltOptions = {}) {
    */
   const rotateX = ref(0)
   const rotateY = ref(0)
+  // Written by pointer events, approached per frame by the rAF integrator below.
+  let targetRotateX = 0
+  let targetRotateY = 0
+  let targetScale = 1
+  // Rendered values: scale is integrated alongside the angles so it cannot step in a single frame.
+  const currentScale = ref(1)
+  /** Largest angle change the integrator may apply in one frame. Caps the entry impulse (the pointer always
+   *  crosses the border at an edge, so the raw target starts at full deflection), and never binds during
+   *  normal tracking: a hand moving across the panel rarely asks for more than ~0.4°/frame. */
+  const MAX_ROTATION_STEP = 0.65
+  /** Scale advance per frame, matched to the angle ramp so the two read as one rigid body. */
+  const SCALE_STEP = 0.0035
+  let rafId: number | null = null
+
+  /** One integrator per frame; shares the compositor clock, so it cannot fight a transition. */
+  function tickPhysics() {
+    if (!isHovering.value) {
+      rafId = null
+      return
+    }
+    const stepX = Math.min(
+      MAX_ROTATION_STEP,
+      Math.max(-MAX_ROTATION_STEP, (targetRotateX - rotateX.value) * smoothness),
+    )
+    const stepY = Math.min(
+      MAX_ROTATION_STEP,
+      Math.max(-MAX_ROTATION_STEP, (targetRotateY - rotateY.value) * smoothness),
+    )
+    rotateX.value += stepX
+    rotateY.value += stepY
+    // One clock for both dimensions: the lift advances at a fixed rate instead of an independent LERP.
+    if (currentScale.value < targetScale) currentScale.value = Math.min(targetScale, currentScale.value + SCALE_STEP)
+    rafId = requestAnimationFrame(tickPhysics)
+  }
+
+  function startPhysics() {
+    if (rafId === null) rafId = requestAnimationFrame(tickPhysics)
+  }
 
   /**
    * The card's box, sampled once per hover.
@@ -94,6 +146,10 @@ export function useCardTilt(options: UseCardTiltOptions = {}) {
     window.removeEventListener('pointermove', handleWindowPointerMove)
     document.removeEventListener('pointerleave', stopTracking)
     trackingPointer = false
+    if (rafId !== null) {
+      cancelAnimationFrame(rafId)
+      rafId = null
+    }
   }
 
   /** End the gesture: back to rest, animated by the CSS transition. */
@@ -101,8 +157,13 @@ export function useCardTilt(options: UseCardTiltOptions = {}) {
     stopTracking()
     isHovering.value = false
     hoverRect = null
+    targetRotateX = 0
+    targetRotateY = 0
+    targetScale = 1
+    // Zeroing here hands the return trip to the base rule's CSS transition (0.6s).
     rotateX.value = 0
     rotateY.value = 0
+    currentScale.value = 1
   }
 
   function insideHoverRect(e: MouseEvent): boolean {
@@ -135,15 +196,29 @@ export function useCardTilt(options: UseCardTiltOptions = {}) {
       settle()
       return
     }
-    const x = (clientX - rect.left - rect.width / 2) / (rect.width / 2)
-    const y = (clientY - rect.top - rect.height / 2) / (rect.height / 2)
+    const nx = (clientX - rect.left - rect.width / 2) / (rect.width / 2)
+    const ny = (clientY - rect.top - rect.height / 2) / (rect.height / 2)
+
+    /* The box normalisation is Chebyshev, so a corner reaches |(nx, ny)| = sqrt(2) and would ask for a
+       composite tilt 41% larger than an edge: sqrt(5.5^2 + 5.5^2) = 7.8 degrees, which is where the
+       projection distortion becomes visible (both axes deform at once). Clamping to the unit disk caps
+       the composite angle at the edge value. */
+    const distance = Math.hypot(nx, ny)
+    const clampedX = distance > 1 ? nx / distance : nx
+    const clampedY = distance > 1 ? ny / distance : ny
+    const softFactor = distance > 0 ? Math.sin((Math.min(distance, 1) * Math.PI) / 2) / Math.min(distance, 1) : 1
 
     // Parallax: depth multiplier amplifies/reduces mouse response
-    rotateY.value = x * intensity * depthMultiplier
-    rotateX.value = -y * intensity * depthMultiplier
+    targetRotateY = clampedX * softFactor * intensity * depthMultiplier
+    targetRotateX = -clampedY * softFactor * intensity * depthMultiplier
+    targetScale = maxScale
 
+    // The glare stays event-driven on purpose: the light should sit exactly under the pointer even
+    // while the card is still easing towards its pose.
     sheenX.value = `${clientX - rect.left}px`
     sheenY.value = `${clientY - rect.top}px`
+
+    startPhysics()
   }
 
   function handleWindowPointerMove(e: PointerEvent) {
@@ -163,6 +238,9 @@ export function useCardTilt(options: UseCardTiltOptions = {}) {
   /** `e` is optional so a caller (or a test) may enter without an event: the first move then samples. */
   function handleMouseEnter(e?: MouseEvent) {
     isHovering.value = true
+    // Start strictly at 1.00; the entry impulse is handled by MAX_ROTATION_STEP, not by an envelope.
+    currentScale.value = 1
+    targetScale = maxScale
     // Re-entering while still inside the frozen box must not re-sample it: the box already grew with
     // the tilt, and re-sampling on every stutter is drift that shows up as a wobble.
     const resample = !(hoverRect && e && insideHoverRect(e))
@@ -217,8 +295,9 @@ export function useCardTilt(options: UseCardTiltOptions = {}) {
     const rx = baseRotateX + rotateX.value
     const ry = baseRotateY + rotateY.value
     const rz = baseRotateZ
-    const scale = isHovering.value ? 1.03 : 1
-    return `translateZ(${translateZ}px) rotateX(${rx}deg) rotateY(${ry}deg) rotateZ(${rz}deg) scale(${scale})`
+    // Perspective inlined so the vanishing point is this card's own centre; the ancestor used to supply
+    // `perspective: 1000px` with `perspective-origin: 50% 30%`, which tilted every card off-axis.
+    return `perspective(1200px) translateZ(${translateZ}px) rotateX(${rx}deg) rotateY(${ry}deg) rotateZ(${rz}deg) scale(${currentScale.value})`
   })
 
   // The window listener must not outlive the component (guarded: a plain call has no scope).

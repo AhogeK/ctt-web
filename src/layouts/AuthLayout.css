@@ -386,8 +386,8 @@
   justify-content: center;
   overflow: hidden;
   padding: 2rem;
-  perspective: 1000px;
-  perspective-origin: 50% 30%;
+  /* Perspective moved onto each card (see useCardTilt): a container-level perspective with an
+     off-centre origin tilted every card away from the viewer's axis. */
 }
 
 @media (min-width: 1024px) {
@@ -403,7 +403,7 @@
   flex-direction: column;
   align-items: center;
   width: 100%;
-  transform-style: preserve-3d;
+  transform-style: flat;
   z-index: 1;
 }
 
@@ -510,7 +510,9 @@
   width: 100%;
   max-width: 28rem;
   border-radius: 0.75rem;
-  overflow: hidden;
+  /* Visible so the underglow can escape the card. `hidden` also forces the used value of
+     `transform-style` to `flat`, which would kill any child `translateZ`. */
+  overflow: visible;
   border: 1px solid rgba(255, 255, 255, 0.08);
   background: rgb(25, 26, 27);
   box-shadow:
@@ -523,11 +525,13 @@
   transform-style: preserve-3d;
   will-change: transform;
   transition:
-    transform 0.5s cubic-bezier(0.03, 0.98, 0.52, 0.99),
+    transform 0.6s cubic-bezier(0.23, 1, 0.32, 1),
     box-shadow 0.4s cubic-bezier(0.22, 1, 0.36, 1);
 
   animation: dashboard-entrance 1s cubic-bezier(0.16, 1, 0.3, 1) backwards; /* NOT forwards — see card-entrance */
   animation-delay: 0.1s;
+  backface-visibility: hidden;
+  transform-origin: center center;
 }
 
 @media (hover: hover) {
@@ -586,7 +590,7 @@
   border-radius: inherit;
   pointer-events: none;
   opacity: 0;
-  transition: opacity 0.3s ease;
+  transition: opacity 0.2s cubic-bezier(0.16, 1, 0.3, 1);
   background: radial-gradient(
     110px circle at var(--sheen-x, 50%) var(--sheen-y, 50%),
     rgba(255, 255, 255, 0.3),
@@ -610,22 +614,11 @@
   );
 }
 
-/* Reflection */
-.auth-dashboard__reflection {
-  position: absolute;
-  bottom: -4rem;
-  left: 5%;
-  right: 5%;
-  height: 4rem;
-  background: linear-gradient(to bottom, rgba(94, 106, 210, 0.08), transparent);
-  filter: blur(8px);
-  transform: scaleY(-1);
-  opacity: 0.3;
-  pointer-events: none;
-}
 
 /* Browser Chrome */
 .auth-dashboard__chrome {
+  border-top-left-radius: inherit;
+  border-top-right-radius: inherit;
   display: flex;
   align-items: center;
   gap: 0.75rem;
@@ -817,6 +810,9 @@
    ============================================ */
 
 .auth-cards-container {
+  /* `z-index` needs a positioned element to take effect: without this the container was
+     `static` and its z-index: 2 was an inert declaration. */
+  position: relative;
   display: flex;
   flex-direction: column;
   gap: 1rem;
@@ -1435,8 +1431,13 @@
   .auth-dashboard.is-tilting,
   .auth-card-3d.is-tilting {
     transition:
-      transform 0.6s cubic-bezier(0.23, 1, 0.32, 1),
-      box-shadow 0.35s cubic-bezier(0.22, 1, 0.36, 1);
+      /* Tracking: NO tweening on transform. Every pointermove would otherwise interrupt the running
+         transition and restart it from the current value with an initial velocity of zero, so the
+         card would never leave the first, flattest part of the curve — that is the rubber-band trail.
+         The smoothing, when wanted, is done per frame in useCardTilt instead (rAF LERP), where the
+         clock matches the compositor. */
+      transform 0s linear,
+      box-shadow 0.2s ease-out;
   }
 }
 
@@ -1445,3 +1446,103 @@
 .auth-3d-scene > *:nth-child(1) { z-index: 1; }
 .auth-3d-scene > *:nth-child(2) { z-index: 2; }
 .auth-3d-scene > *:nth-child(3) { z-index: 3; }
+
+/* ============================================================================
+   Pointer light for the dashboard: three layers on one coordinate pair.
+   Chosen for the static card (`tilt: false`) because a mask or a background-clip
+   band paints NOTHING on a transformed element — measured against a ~290k px region:
+   240 px and 0 px changed, versus 65080 px for the same mask on an untransformed one.
+   No `filter: blur()`: the gradient's centre moves every frame, so the blur input and
+   its recomputation would move with it. Five stops approximate the Gaussian falloff.
+   ============================================================================ */
+
+/* Layer 2 — underglow escaping the card, one step back in the 3D space. */
+.auth-dashboard::after {
+  content: "";
+  position: absolute;
+  /* Asymmetric on purpose: 48px of buffer above and to the sides, but only 4px below. The card below
+     is not open sky — light pouring 48px downwards gets cut off by that card's top edge, and the hard
+     cut reads as a dark band sweeping along it (a Mach band at the high-contrast edge). */
+  inset: -48px -48px -4px -48px;
+  border-radius: calc(0.75rem + 48px) calc(0.75rem + 48px) 0.75rem 0.75rem;
+  z-index: -1;
+  pointer-events: none;
+  opacity: 0;
+  filter: blur(24px);
+  transform: translateZ(-2px);
+  will-change: opacity;
+  transition: opacity 0.35s ease;
+  background: radial-gradient(
+    320px circle at var(--sheen-x, 50%) var(--sheen-y, 50%),
+    rgba(94, 106, 210, 0.42) 0%,
+    rgba(94, 106, 210, 0.26) 20%,
+    rgba(113, 112, 255, 0.12) 40%,
+    rgba(113, 112, 255, 0.04) 65%,
+    rgba(113, 112, 255, 0) 80%
+  );
+}
+
+:root:not(.dark) .auth-dashboard::after {
+  /* Light backgrounds punish low alpha twice: the blur spreads the energy and 8-bit quantisation then
+     rounds the remainder away. The base alpha is roughly 2.5x the dark-mode-equivalent value. */
+  background: radial-gradient(
+    300px circle at var(--sheen-x, 50%) var(--sheen-y, 50%),
+    rgba(80, 92, 200, 0.62) 0%,
+    rgba(94, 106, 210, 0.4) 20%,
+    rgba(113, 112, 255, 0.2) 40%,
+    rgba(130, 143, 255, 0.08) 60%,
+    rgba(94, 106, 210, 0) 80%
+  );
+}
+
+
+
+
+@media (hover: hover) {
+  .auth-dashboard.is-tilting::before,
+  .auth-dashboard.is-tilting::after {
+    opacity: 1;
+  }
+}
+
+
+/* Spotlight border as an SVG stroke. The CSS mask version painted nothing on a transformed panel
+   (240 px against a ~290k px region), so the ring is drawn as a vector stroke instead: the SVG is a
+   child of the panel, so it inherits the panel's transform and stays geometry-locked to it, and
+   `gradientUnits="userSpaceOnUse"` keeps its coordinates in the panel's own pixel space. */
+.auth-dashboard__spotlight {
+  position: absolute;
+  inset: -1px;
+  width: calc(100% + 2px);
+  height: calc(100% + 2px);
+  pointer-events: none;
+  z-index: 10;
+  opacity: 0;
+  transition: opacity 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+  overflow: visible;
+  /* Keep the 1.5px stroke crisp under 3D projection. */
+  shape-rendering: geometricPrecision;
+  transform: translateZ(0.5px);
+}
+
+.auth-dashboard__spotlight-rect {
+  width: calc(100% - 1.5px);
+  height: calc(100% - 1.5px);
+  fill: none;
+  stroke: url(#dashboard-spotlight-grad);
+  stroke-width: 1.5px;
+}
+
+.spotlight-stop-0 { stop-color: #ffffff; stop-opacity: 0.9; }
+.spotlight-stop-1 { stop-color: #8c96ff; stop-opacity: 0.65; }
+.spotlight-stop-2 { stop-color: #5e6ad2; stop-opacity: 0.3; }
+.spotlight-stop-3 { stop-color: #5e6ad2; stop-opacity: 0; }
+
+:root:not(.dark) .spotlight-stop-0 { stop-color: #5e6ad2; stop-opacity: 0.85; }
+:root:not(.dark) .spotlight-stop-1 { stop-color: #7170ff; stop-opacity: 0.5; }
+:root:not(.dark) .spotlight-stop-2 { stop-color: #94a3b8; stop-opacity: 0.2; }
+:root:not(.dark) .spotlight-stop-3 { stop-color: #94a3b8; stop-opacity: 0; }
+
+@media (hover: hover) {
+  .auth-dashboard.is-tilting .auth-dashboard__spotlight { opacity: 1; }
+}

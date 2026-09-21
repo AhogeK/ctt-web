@@ -1,12 +1,17 @@
 <script setup lang="ts">
+import { computed } from 'vue'
 import { useCardTilt } from '@/composables/useCardTilt'
 
 const tilt = useCardTilt({
-  tilt: false,
+  tilt: true,
   intensity: 6,
   // Resting pose stays flat on purpose — see the entrance fill note in AuthLayout.css.
   depthMultiplier: 1.2,
 })
+
+/** The spotlight gradient is an SVG <radialGradient>, whose coordinates must be unitless numbers. */
+const rawSheenX = computed(() => parseFloat(tilt.sheenX.value) || 0)
+const rawSheenY = computed(() => parseFloat(tilt.sheenY.value) || 0)
 
 /** Generate heatmap level (0-3) from a deterministic pattern */
 function heatmapLevel(row: number, col: number): number {
@@ -49,6 +54,25 @@ function heatmapLevel(row: number, col: number): number {
       '--sheen-y': tilt.sheenY.value,
     }"
   >
+    <!-- Spotlight border: a vector stroke, so it survives the panel's transform. -->
+    <svg class="auth-dashboard__spotlight" aria-hidden="true">
+      <defs>
+        <radialGradient
+          id="dashboard-spotlight-grad"
+          gradientUnits="userSpaceOnUse"
+          :cx="rawSheenX"
+          :cy="rawSheenY"
+          r="160"
+        >
+          <stop class="spotlight-stop-0" offset="0%" />
+          <stop class="spotlight-stop-1" offset="25%" />
+          <stop class="spotlight-stop-2" offset="55%" />
+          <stop class="spotlight-stop-3" offset="85%" />
+        </radialGradient>
+      </defs>
+      <rect class="auth-dashboard__spotlight-rect" x="0.75" y="0.75" rx="12" ry="12" />
+    </svg>
+
     <div class="auth-dashboard__sheen" />
     <!-- Browser Chrome -->
     <div class="auth-dashboard__chrome">
@@ -108,7 +132,4 @@ function heatmapLevel(row: number, col: number): number {
       </div>
     </div>
   </div>
-
-  <!-- Reflection beneath dashboard -->
-  <div class="auth-dashboard__reflection" />
 </template>
