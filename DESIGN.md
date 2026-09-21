@@ -444,3 +444,18 @@ Acceptance criteria (each falsifiable in a real browser — see `memory-bank/dom
 2. Without reduce: the `h1`'s computed `opacity` is `1` at **every** sampled instant (the LCP element is never transparent).
 3. Scrolling from 0 into the hero's exit range maps monotonically to the hand-off values, and scrolling back restores them.
 4. `LCP(no-preference) ≤ LCP(reduce)` measured with `PerformanceObserver` — the entrance may not cost the first paint.
+
+### The showcase panels' tilt (the technique the user pointed at, 2026-09-21)
+
+Reference: a `vanilla-tilt` card — the mechanism, not the look. Three parts, all now in place:
+
+| Part | Value | Why |
+| --- | --- | --- |
+| Smoothing | `transition: transform .6s cubic-bezier(.23, 1, .32, 1)` on the panel; the handler only **sets** the transform | frame-by-frame lerping advanced in visible steps and snapped to rest on leave; a transition follows and restores on the compositor |
+| Depth | glare `translateZ(4px)` · chrome `0` · content `24–30px` inside `transform-style: preserve-3d` (+ the container's `perspective: 1000px`) | rotation alone reads as a flat card; the parallax between layers is what reads as 3D |
+| Glare | **centre = the pointer**, radius `110px` on the dashboard / `85px` on the cards (~¼ of the panel), `rgba(255,255,255,.30)` (light: `rgba(94,106,210,.22)`) fading to 0 at 100% | the user's remembered glare is a small soft disc that **unfolds where the pointer is**; near an edge only its quarter is inside the box, because a background gradient is clipped by its element |
+| Tracked border | the same gradient, masked to the 1px border (`padding:1px` + `mask-composite: exclude`), sharing `--sheen-x/y` | the edge must light up **where the glare is** and travel with it — a flat border-colour swap is not "发光" |
+| Hover speed | `transform .6s cubic-bezier(.23,1,.32,1)` while hovered, `0.5s cubic-bezier(.03,.98,.52,.99)` as the base it returns with | the reference's own CSS is the follow curve; its `setTransition()` on `mouseleave` re-arms its default easing for the return — two different curves is what feels "follows, then eases back" |
+| Gesture source | the pointer is tracked on **`window`** against the box frozen at enter (`4px` tolerance); visuals hang off an `is-tilting` class, never `:hover` | the browser hit-tests the projected quad of a transformed element, so a tilt moves its own hit area off the pointer — measured: `:hover` false two frames in, angle frozen, panel pulsing every few hundred ms |
+
+Gesture rules that stay: geometry is sampled once per hover and frozen (`getBoundingClientRect` of a transformed box feeds the tilt back into itself); a leave only counts once the pointer is ≥16px outside that frozen box (the card's own edge slides off the pointer, and without the margin CSS toggles `:hover` on every move — the flicker the user saw in the glare).
