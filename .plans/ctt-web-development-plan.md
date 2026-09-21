@@ -1424,6 +1424,7 @@ flowchart LR
 - **根因（已定论 ✓）**：入场关键帧的 `to` 是 `translateZ(0) rotateX(0) rotateY(0) rotateZ(0) scale(1)` = **平且同深度**，而 `animation-fill-mode: forwards` 让它**永久占据 `transform`** ⇒ 组件里的 `translateZ`（**40 / 0 / −60**）与 `baseRotate*`（15/-20/-3 · 10/-15/2 · 18/-25/-4）**从未生效** —— 这恰恰是"原本就是正"的机制 ✓。改成 `backwards` 会**解锁内联 transform** ⇒ 顶面板在场景 `perspective: 1000px` 下按 `+40px` 朝观察者**放大 + 透视发虚** ✓（另两张 Z=0/−60，故肉眼只在最上面那张看到）。
 - **暂停的方案（未实施 ✓，用户指示"这个动画多次下来都没好结果，先不动了"）**：`baseRotate*` 与 `translateZ` **同时归零**（静止 = 恒等矩阵 = 与原像素同一）**且** `forwards → backwards`（悬停才能接管）。**验收判据**：静止时 `getBoundingClientRect()` 尺寸 == 布局尺寸，且 `getComputedStyle(el).transform` 为恒等矩阵 —— 出现放大/模糊即红。
 - **代码状态**：`src/` **零改动** ✓ —— 与 `cba90a9` 逐字节一致（sha256 已比对 ✓）；本轮只更新 `memory-bank/` 与本文件。
+- **✅ 2026-09-21 已复起并解决** ✓：实施方案即下面那条（组件侧归零 + fill `backwards` ✓），但**真因比本记录深一层** ✗ —— `useCardTilt` 的 `currentRotate*` 是普通 `let`、`transform` 是无依赖的 `computed`、且 `rafId` 从不复位 ⇒ 静态基角与悬停**都从未生效** ✓。三处同修后真机实测：静止 = 恒等矩阵（rect == 布局尺寸 ✓）· 悬停 → `matrix3d(0.998…)` 且浮起 5px ✓ · 移开回恒等 ✓ · reduce 下静止 ✓；回归测试先红后绿 ✓（2 条 ✓）。
 - **教训已归领域文件** ✓（本文件不重复）：`domains/landing-page/practices.md`（静止契约与验收判据 · 探针陷阱：`browser.open({viewport})` 不生效、`mouse.move` 到正中即倾斜零点）· `domains/ai-workflow/practices.md`（SFC style 子请求才是 CSS 语法判定 · 验证浏览器不得抢用户焦点）。
 
 **完成记录（第四段 · 主题首帧 · 导航契约 · 令牌审计，2026-09-20）：**

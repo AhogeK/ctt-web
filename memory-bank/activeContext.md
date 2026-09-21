@@ -1,3 +1,6 @@
+### AuthLayout 三块面板：静止契约 ✅ 已解决（2026-09-21，P2 最后一项）
+
+诉求"静止方方正正 ✓ 悬停才浮起 ✓"卡了两轮 ✗ → **真因两层**：① 入场关键帧 `to` 是恒等、`forwards` **永久占住 `transform`** ✗；② `useCardTilt` 本身是**死代码** ✗（`currentRotate*` 用普通 `let` ⇒ `computed` 无依赖只求值一次；`rafId` 从不复位 ⇒ 循环起不来 ✓）。修法三处 ✓：组件删掉从未生效的 `baseRotate*`/`translateZ` · fill `forwards→backwards` · `currentRotate*` 改 `ref` + `rafId` 释放 ✓。**真机**：静止三块 `matrix(1,0,0,1,0,0)` 且 rect == 布局 ✓ · 悬停偏心点 → `matrix3d(0.998…)`、448×421→453×425（浮起 ✓）· 移开回恒等 ✓ · reduce 静止 ✓。回归测试 `useCardTilt.test.ts` **先红后绿**（旧实现 2/2 全红 ✓）。版本 0.48.1（PATCH ✓）。
 ### 用户级技能 `user-chrome-tabs`（2026-09-21 ✓）
 一天里我在**用户真 Chrome** 上犯满三次 ✗：① relay 不带 `target` **劫持他正在读的页** ×2 ✓ ② 启发式筛选**关掉了他的登录页** ✗ ③ 两个我开的页**没关**（闸门只认 `/tmp` profile ✓ 看不见浏览器标签页 ✗）。工具实况：relay **默认接管** ✓ · 桥只给页面级 CDP ✗ · `browser-use` 才能建页 ✓ · **分组由 relay 扩展做**（组名写死 `{title:"omp",color:"cyan"}` ✓）但**只对真实页面生效** ✗（`about:` 跳过 ✓）。
 已落盘 `~/.agents/skills/user-chrome-tabs/`（跨项目 ✓ 且含第四条：relay 会话不释放 ⇒ Chrome 顶部留 'started debugging' 横幅 ✗ ⇒ 收尾必 `browser.close({all:true})` ✓）：仪式 = `new_tab(真实URL?omp=标记)` → relay 按标记 adopt ⇒ **进 `omp` 组** ✓ → 释放 ⇒ 自动退组 ✓ → **精确整串关闭** ✓；附三条红线与收尾自检 ✓。仓内规则缩为一行指针 ✓（`ai-workflow/practices.md:192` ✓ 195 行 ✓）；收尾闸门加 `new_tab(`/`close_tab(` 计数 ✓（`check-hooks` 23 → **26** ✓ 含 3 条行为断言 ✓）。
@@ -131,12 +134,6 @@
 - v0.66.0 起 `/distribution` 支持 `start`/`end`（闭区间，缺省全史，`end<start` → 400 COMMON_003），前端分布面板已接入筛选栏窗口。
 - 语义分界：**时间轴分布守恒**（TIME_OF_DAY == summary.total）；**分类分布必然超线性**（多语言/多项目并行）。
 - 历史缺口已闭环：曾因 `/distribution` 无窗口参数导致"分布面板恒全史 vs summary 卡随窗口变"被读作 total 不一致。
-
-### 依赖与工具链
-
-- **typescript 6.0.3 精确钉定**（TS7 移除 programmatic API，vue-tsc/compiler-sfc 崩）；**vitest + @vitest/coverage-v8 4.1.11 精确钉定**（vite-plus@0.3.0 硬钉）。每次 `vp update -L` 后都要重新钉定。
-- 本轮升级：vue-router 5.3.1、zod 4.5.4、playwright 1.63.0（需 `playwright install chromium`）等。
-- **`pnpm-workspace.yaml` 是 pnpm 11 的配置文件**（`.npmrc` 对 `verify-deps-before-run` 已失效）。
 
 ### pnpm 隐式安装污染受控文件（BUG，v0.36.1 修）
 

@@ -176,10 +176,11 @@ after the fact. A 500 here lands the route on the error boundary, so a CSS synta
 a render bug. Trap it already charged: regex-replacing a multi-line declaration swallowed the **next**
 declaration into the last value.
 
+**汇报必须以总结块收尾**（2026-09-21 用户反馈 ✗ "最后你的输出没啥总结就一句 git 未动"）：长汇报**结尾**不许只剩一行状态 ✗ —— 要用能独立读懂的总结块（做了什么 ✓ 证据 ✓ 还欠什么 ✓ 等谁决定 ✓）；用户常常只看到最后一段 ✓。
 ## 长操作不许静默阻塞（2026-09-21 用户反馈 ✗ "以为你会话卡了，差点停掉"）
 
 **超过 ~30 秒又无法自证进度的步骤：先挂后台 + 一句话告知**（"我挂后台 ✓ 好了贴结果 ✓"）✗ 否则他看到的就是"没动静" ✗ · `bash` 用 `async: true` ✓ · 服务用 `hub start` ✓ · `eval` 必设 `timeout` 且**自带上限** ✓。
-**嵌套 omp 探针能做通 ✓（实测 34s 跑完 ✓）：四件套缺一不可** —— scratch cwd ✓ · 项目级 `.omp/mcp.json` 把 MCP 全 `enabled:false` ✓（真凶是启动时 `npm exec chrome-devtools-mcp@latest` ✓ 拉 MCP 卡住 ✓）· **`timeout -k 5`（必须 `-k` ✗ 嵌套 omp 忽略 SIGTERM ✓ 只写 timeout 会永久挂 ✓）** · `stdin=/dev/null` ✓ · **`--no-session`（必须 ✗ 否则它会按 cwd 续上最近会话 ✓ 与本会话同时写同一个 jsonl ✓ → "Session file changed before rewrite" ✓）** ✓。
+**嵌套 omp 探针能做通 ✓（实测 34s 跑完 ✓）：四件套缺一不可** —— scratch cwd ✓ · 项目级 `.omp/mcp.json` 把 MCP 全 `enabled:false` ✓（真凶是启动时 `npm exec chrome-devtools-mcp@latest` ✓ 拉 MCP 卡住 ✓）· **`timeout -k 5`（必须 `-k` ✗ 嵌套 omp 忽略 SIGTERM ✓ 只写 timeout 会永久挂 ✓）** · `stdin=/dev/null` ✓ · **`--no-session`（必须 ✗ 否则它会按 cwd 续上最近会话 ✓ 与本会话同时写同一个 jsonl ✓ → "Session file changed before rewrite" ✓）** ✓。 **验证前先确认「你测的就是新产物」** ✗✓（2026-09-21 两次假失败）：`pnpm preview` **不构建** ✗（吃旧 `dist/` ✓）→ 先 `vp build` ✓；长跑的 dev server 模块图会漂移 ✓ → `curl localhost:5173/src/…` 看它吐新码还是旧码 ✓。旧产物曾让我把已修好的东西判成「还坏着」✗。
 ## Memory upkeep mechanics
 
 - Update **immediately** in the same round as the change (R2) — deferred updates are how the timeline
