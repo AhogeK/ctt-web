@@ -9,7 +9,7 @@
 | Pointer physics, underglow sync | `src/composables/useCardTilt.ts` (`referenceRadius`, `anchorUnderglow`, `publishUnderglowCore`) |
 | Per-card presets | `AuthDashboard.vue` / `AuthMetricsCard.vue` / `AuthTerminalCard.vue` (spotlight `r`, sheen) |
 | CSS custom properties | `--sheen-x/y` (card-local, scale-compensated) · `--ug-card-*` · `--ug-spot-*` |
-| Session evidence (grading, not authority) | `.omp/report/underglow-*.md` (gitignored) |
+| Session evidence (grading, not authority) | `.omp/report/2026-09-24/` (gitignored; index: `.omp/report/README.md`) |
 
 ## Traps paid for
 

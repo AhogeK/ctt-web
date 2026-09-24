@@ -107,3 +107,16 @@ branch it was deliberately kept off.
 Consequence: a change to `DESIGN.md` rides in an AI commit and **is not cherry-picked**. A patch
 that only adds lines to `DESIGN.md` cannot be cherry-picked onto `master` at all — the file is
 absent there, so the patch conflicts on its context (observed 2026-09-19).
+
+## Driving the browser on this machine: the infobar facts (2026-09-24)
+
+| Claim | Truth |
+| --- | --- |
+| "CDP attach causes `Chrome is being controlled by automated test software`" | **Wrong** ✗ — attaching an external debugger does not show that bar. It appears **only** when Chrome is **launched with `--enable-automation`** (Chromium source), and ChromeDriver can force that flag back even with `excludeSwitches` configured. |
+| "`"<tool>" started debugging this browser`" | A **different** bar ✗ — different wording, different trigger (an extension/debugger session on that tab). Do not conflate the two. |
+| Reliable policy | **Tools must not launch their own Chrome**; only connect to an instance the user started themselves (external debugger). That is the only reliable way to never see the bar. |
+| Closing it without CDP | macOS GUI scripting works and needs no debug session: `osascript` → `System Events` → walk `windows` → `groups` → find the static text containing `automated test software` → click the button whose description is `Close`. Requires Accessibility permission for the host (verified granted on this machine 2026-09-24; the call returned `not found`, i.e. no live bar). |
+| Discriminator when someone reports "the bar is still there" | Ask them to **click the ×**: if it disappears it is a live infobar ✓; if nothing happens or it scales with an image, they are looking at a **screenshot** ✗ — no process work needed. |
+| Never do | Kill or relaunch the user's **daily** Chrome PID to "clear" the bar — its launch args have no automation flag, so it is the wrong target ✗. |
+
+**Two mistakes that cost this session** ✗: (a) inventing a "tab-attached infobar" explanation for a bar whose wording is the `--enable-automation` one; (b) treating a **window title** as evidence — the title read was the **conversation page** that was discussing the bar, not the bar itself. Accessibility/window text is page content: it can be about the bug rather than being the bug.

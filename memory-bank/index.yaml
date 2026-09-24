@@ -12,9 +12,9 @@ maintenance:
   - '每轮收尾校验：files/domains 的键是相对路径、值是 wc -l 语义的行数；与实际不符即索引漂移'
   - '索引只做定位，不写结论 —— 结论属于被指向的文件（避免两处重复，P6）'
 files:
-  AGENTS.md: 185
-  memory-bank/activeContext.md: 30
-  memory-bank/progress.md: 147
+  AGENTS.md: 189
+  memory-bank/activeContext.md: 76
+  memory-bank/progress.md: 153
   memory-bank/systemPatterns.md: 200
   memory-bank/techContext.md: 101
   memory-bank/projectbrief.md: 30
@@ -32,7 +32,7 @@ domains:
     memory-bank/domains/achievements/trophy-geometry.md: 52
   auth-layout:
     memory-bank/domains/auth-layout/meta.md: 17
-    memory-bank/domains/auth-layout/practices.md: 67
+    memory-bank/domains/auth-layout/practices.md: 83
     memory-bank/domains/auth-layout/principles.md: 28
     memory-bank/domains/auth-layout/references.md: 22
     memory-bank/domains/auth-layout/scenarios.md: 23
@@ -40,7 +40,7 @@ domains:
     memory-bank/domains/ai-workflow/meta.md: 59
     memory-bank/domains/ai-workflow/practices.md: 200
     memory-bank/domains/ai-workflow/principles.md: 200
-    memory-bank/domains/ai-workflow/references.md: 109
+    memory-bank/domains/ai-workflow/references.md: 122
     memory-bank/domains/ai-workflow/scenarios.md: 199
   backend-contract:
     memory-bank/domains/backend-contract/meta.md: 87

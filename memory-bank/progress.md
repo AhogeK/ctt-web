@@ -53,6 +53,12 @@
 - **验收实测**（1440×900 · 暗/亮/reduce）：② 双模成立 ✓（15 处文本 **14 处 ≥ 4.5** ✓；hero 眉题 `text-primary` **4.24 / 4.42** —— **用户目视裁定：可接受 ✓ 不改动**（2026-09-24））；③ reduce `getAnimations() = 0` ✓ vs 对照组 5 ✓。**滚动动效不可测** ✗（页面无可滚内容 ✓）。
 - 后续阶段：P3 Hero 与价值演示 · P4 能力/开源 · P5 定价 · P6 测试与文档（见计划 §P3–P6 ✓）。
 
+## UI 对比度与 hover 口径（v0.51.3，2026-09-24）
+
+- **按钮 hover 定稿** ✓：实心主按钮 = 填充与文字不动、只动 `box-shadow`（1px 品牌外轮廓 + 沉降阴影，180ms）✓；outline 家族 = 边框 + 阴影、**不加底色** ✗；ghost = 文字 + 发光 ✓；破坏性 = 红边框 ✓。配方登记 `DESIGN.md` §6/§10 ✓，状态样式由 `main.css` 的 `[data-variant='default']` 规则独占（9 处调用点的旧 hover 全部撤除 ✓）。
+- **暗色面层**：抬灰被否 ✗ ⇒ 只加强边框（`rgba(255,255,255,0.12)` ✓）。
+- **两次组件级修复** ✓：`Button.vue` 的 `data-variant` 反映生效变体（否则按它写的 CSS 永不匹配 ✗）；复杂任意阴影改走纯 CSS（Tailwind v4 静默丢弃 ✗）。
+
 ## Leaderboard
 
 - [x] **v0.41.0 (2026-09-14)** 契约修复 — 该页**从未能工作**：契约层写的是一个**不存在的 API**（三个端点在真机上 `/global`、`/me` 均返 **HTTP 500**，而真实的单一端点 `GET /api/v1/leaderboard?dimension=…` 返 200），字段（`totalMinutes`/`totalUsers`/`updatedAt`/`avatarUrl`）后端从不返回，且没有 `dimension` 概念。按实测契约重建：五种维度 + 可选周期 + `limit`/`offset` 分页 + 自己的排名（在同一响应内，非第二个端点）。三个必须容忍的服务端行为：`displayName` 与 `currentUserRank` 对「账号已删」/「未上榜」是**键缺失而非 null**（写成 required-but-nullable 会让**整页解析失败**，实测第 2 页落入错误态）；非法维度×周期组合返 **400 `COMMON_003`**，故合法组合编码为数据（STREAK/NIGHT_OWL/EARLY_BIRD 仅 ALL，GROWTH 仅 WEEK），选择器据此生成，实测全程**零非法请求**。`rank` 原样显示（并列同名，实测 1,2,3,3,5,5…）、分数按维度格式化（秒 / 连击天数 / 带符号增长）、空页是状态非错误。路由补上 `AppLayout`（原先扁平注册导致**无侧边栏与导航**）。

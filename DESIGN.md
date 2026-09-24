@@ -302,6 +302,22 @@ The color system is almost entirely achromatic — dark backgrounds with white/g
 | Dialog (Level 5)   | Multi-layer stack: `rgba(0,0,0,0) 0px 8px 2px, rgba(0,0,0,0.01) 0px 5px 2px, rgba(0,0,0,0.04) 0px 3px 2px, rgba(0,0,0,0.07) 0px 1px 1px, rgba(0,0,0,0.08) 0px 0px 1px` | Popovers, command palette, modals      |
 | Focus              | `rgba(0,0,0,0.1) 0px 4px 12px` + additional layers                                                                                                                     | Keyboard focus on interactive elements |
 
+**Hover feedback on filled buttons (registered 2026-09-24 — an experiment starting point, not a verified visual conclusion)**:
+
+A filled accent button keeps its **fill and label unchanged** on hover; the feedback lives in **outline + depth**, so the
+text/fill contrast is untouched. This is *state feedback*, not elevation — §6's "don't use drop shadows for elevation on
+dark surfaces" still holds, and per the paragraph above the **1px brand outline is what carries the depth on dark**.
+
+| | value |
+| --- | --- |
+| Rest | `box-shadow: 0 1px 2px rgba(0,0,0,0.3)` |
+| Hover | `box-shadow: 0 0 0 1px rgba(94,106,210,0.6), 0 4px 12px rgba(0,0,0,0.35)` (1px brand outline + settling shadow) |
+| Transition | `box-shadow` only · 180ms · `cubic-bezier(.2,.8,.2,1)` (see §10) |
+| Not in the first pass | top-edge `inset` highlight · `translateY(-1px)` · brand glow — add one at a time, only after the first pass is judged |
+
+**Caveats**: the outline may be clipped inside `overflow: hidden` containers; in **forced-colors** mode `box-shadow` becomes
+`none`, so the button must keep a visible border or focus ring; focus must never be communicated by the hover shadow alone.
+
 **Shadow Philosophy**: On dark surfaces, traditional shadows (dark on dark) are nearly invisible. Linear solves this by using semi-transparent white borders as the primary depth indicator. Elevation isn't communicated through shadow darkness but through background luminance steps — each level slightly increases the white opacity of the surface background (`0.02` → `0.04` → `0.05`), creating a subtle stacking effect. The inset shadow technique (`rgba(0,0,0,0.2) 0px 0px 12px 0px inset`) creates a unique "sunken" effect for recessed panels, adding dimensional depth that traditional dark themes lack.
 
 ## 7. Do's and Don'ts
@@ -410,6 +426,8 @@ The color system is almost entirely achromatic — dark backgrounds with white/g
 7. Berkeley Mono for any code or technical content, Inter Variable for everything else
 
 ## 10. Motion
+> **Filled-button hover (2026-09-24)**: transition **`box-shadow` only**, **180ms**, `cubic-bezier(.2,.8,.2,1)`; no displacement in the first pass. Tailwind v4 note: `scale` / `translate` are independent properties — `transform` alone does not transition them.
+
 
 Measured basis: this project's own baseline (`memory-bank/domains/landing-page/practices.md` —
 interface transitions 0.15–0.2s, most elements declaring none) plus the reference's product page

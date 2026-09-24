@@ -105,9 +105,13 @@
 
 用某类 skill 前先**列全同类**再选（可同时多载）。
 
-### R21: 外部 AI 咨询能力
+### R21: 外部 AI 咨询（强制边界）
 
-可经 skill 访问 gemini / perplexity 咨询高级 AI 及网络检索。
+**咨询由用户投递** ✗：需要外部高级 AI（gemini / perplexity 等）的意见时，我**只负责写出 brief** ——
+背景一句话 · 硬约束**给数字** · 已试过并失败的路（引用用户原话 ✓）· 请对方给的 4 问 —— 然后**停下交给用户去发** ✓。
+**禁止**自行调用外部 AI ✗（避免用不够聪明的模型把机会浪费掉 ✓）。
+**仍然允许** ✓：只读的**事实检索**（内置 `WebSearch` · `read` 直读静态页 · grep.app 等 ✓）—— 它不改变"判断归谁" ✓。
+brief 模板与**已命中的范例** → `~/.agents/skills/problem-report/`（§两种提问模式 + `assets/report-template.md` ✓）。
 
 ### R22: 子任务只读约束（强制）
 
@@ -128,7 +132,7 @@
 
 ### R25: AI 产物位置（强制）
 
-`docs/` 只放**面向用户**文档；AI 产物放 `.omp/`（**根目录只留目录级文件** ✓ 分类归子目录 ✓）：计划 `.omp/plans/<feature>-plan.md`（不带日期）· 问题报告 `.omp/report/` · 交付报告 `.omp/delivery/` · 需求草稿 `.omp/requirements/` · 设计草稿 `.omp/design/` · 目视 QA `.omp/qa/`（权威与新旧对照 → `.omp/README.md` ✓）· 记忆 `memory-bank/`（**需提交**）· **工具脚本在公共包 `~/.omp/packages/session-discipline/tools/`（本仓库不再有）**。
+`docs/` 只放**面向用户**文档；AI 产物放 `.omp/`（**根目录只留目录级文件** ✓ 分类归子目录 ✓）：计划 `.omp/plans/<feature>-plan.md`（不带日期）· 问题报告 `.omp/report/<YYYY-MM-DD>/`（按日期归档 ✓ 索引 `.omp/report/README.md` ✓） · 交付报告 `.omp/delivery/` · 需求草稿 `.omp/requirements/` · 设计草稿 `.omp/design/` · 目视 QA `.omp/qa/`（权威与新旧对照 → `.omp/README.md` ✓）· 记忆 `memory-bank/`（**需提交**）· **工具脚本在公共包 `~/.omp/packages/session-discipline/tools/`（本仓库不再有）**。
 **红线**：禁止把实施计划写进 `docs/plans/`。
 
 ### R26: AI 索引（强制）

@@ -65,3 +65,19 @@ implementation).
 **Measuring tilt/hover must freeze geometry** — hover changes `transform` (scale + rotation), so a naive
 hover-vs-idle pixel difference measures *displacement*, not light (25.3 counts → **3.7** after freezing).
 See `principles.md` P4.
+
+## The auth buttons' cursor is fine — do not "fix" it (2026-09-24)
+
+The submit buttons' `cursor` / `pointer-events` / hover `scale` were suspected of causing a cursor
+flicker on `/auth/forgot-password`. Two changes were made and both were **reverted** ✗ — the flicker
+turned out to be caused by those very changes, and the untouched code was fine:
+
+- Removing `disabled:pointer-events-none` (so `disabled:cursor-not-allowed` would win) made disabled
+  buttons hoverable at call sites that had no `enabled:` guard on their `hover:*` classes — a new
+  flicker ✗.
+- Dropping `hover:scale-[1.02]` did remove a real 3.8px hit-box jump (`448/384` ⟷ `444.2/391.7`), but
+  it was not the reported symptom ✗.
+
+**Do not re-apply either without first reproducing the original symptom and capturing before/after
+numbers** ✓ — "this looks like a defect" is not evidence, and a user-visible regression costs more than
+the theoretical wart ✗. The current files are the accepted state (v0.51.0).
