@@ -801,3 +801,35 @@ Playwright E2E 测试使用 `page.route()` 进行 API mock（Playwright 官方�
 - `e2e/mocks/handlers/auth.ts` — API 契约参考文档（typed response constants，无运行时依赖）
 
 **设计决策**：`page.route()` 是 Playwright 的原生网络拦截 API，无需额外依赖。MSW（Mock Service Worker）设计用于 vitest/jest 的单元/集成测试，与 Playwright E2E 的 Node.js test runner 架构不兼容（`setupWorker` 需要 `navigator.serviceWorker`）。
+
+## 6. 动效 · 悬停 · 主题：动手前必须知道的三条横切规则
+
+这三条是**全站约定**，写新 UI 时不必各自发明；漏了**不会报错** —— jsdom 测不出来，只有触摸设备或首帧才暴露 ✗。
+
+### 6.1 悬停态：手写 `:hover` 必须包进 `@media (hover: hover)`
+
+- Tailwind 的 `hover:` / `dark:hover:` 变体由 v4 自动编译进该媒体查询 ✓ **不用管**；裸露的是**手写 CSS** ✗
+  （组件 `<style>` 里的 `:hover`）。
+- 不包的后果：触摸设备上"悬停态粘连" —— 点过一次后样式一直停在按下态 ✓。
+- 现状（2026-09-20 全仓审计 ✓）：`src/` 手写 `:hover` 共 **16 条 / 4 文件**，全部已包 ✓；**新增的必须同批包上** ✗。
+- 判据：`@media (hover: hover)` 下生效 ✓、`hover: none` 下**不生效** ✓（真机用 `page.emulate({ hasTouch: true, isMobile: true })` 验 ✓，`emulateMediaFeatures({name:'hover'})` **不受支持** ✗）。
+
+### 6.2 动效：全局 reduce 兜底 + 需要细控时用 `motion-reduce:`
+
+- `src/assets/main.css` 有一条**全局** `@media (prefers-reduced-motion: reduce)`：`animation-duration` / `transition-duration`
+  → `0.01ms !important`、`animation-iteration-count: 1`、`scroll-behavior: auto` ✓ ⇒ 任何动效**自动**被减掉 ✓，
+  不依赖作者记得写 ✓。
+- 需要更细的控制（`duration-0` / `animate-none` / `transition-none`）用 Tailwind 的 `motion-reduce:` 变体 ✓。
+- 动效**按需做** ✓（不是"默认不做" ✗）：要做就过 `DESIGN.md` §10 的七字段 + 4 条可失败判据 ✓。
+- 判据：reduce 下 `document.getAnimations().length === 0` ✓，且位移/缩放归零 ✓（拿对照组证明探针能看见动效 ✗ 否则结论无效 ✓）。
+
+### 6.3 主题：首帧由 `public/theme.js` 决定，不由 Vue 决定
+
+- 首帧脚本**必须外链** ✗：`index.html` 的 CSP 是 `script-src 'self'`（无 `unsafe-inline`）⇒ 内联脚本被**静默拦截** ✗。
+- `public/theme.js` 是**经典脚本**（不是 `type=module` ✗，否则会延后到解析之后 ✓），放在 `<head>`、**CSP meta 之后、应用模块之前** ✓。
+- **读的键是 `vueuse-color-scheme`** ✗ 不是 `theme-appearance`：前者是**视觉状态**（VueUse `useDark` 的默认键，裸字符串
+  `dark|light|auto` ✓），后者只是用户的模式偏好 ✓；缺失或 `auto` 时回落 `matchMedia('(prefers-color-scheme: dark)')` ✓，
+  并同步 `documentElement.style.colorScheme` ✓（原生滚动条与表单控件跟随 ✓）。
+- 判据：**拦掉应用 bundle** 后首帧 class 仍正确 ✓ —— 不隔离就分不清是谁设的 ✓。
+
+> **已定稿的视觉不要顺手改** ✗ —— 见 `AGENTS.md` R30（"已接受 = 冻结"）。
