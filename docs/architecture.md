@@ -20,6 +20,10 @@
 ## Directory Structure
 
 ```text
+public/                 # Static files served verbatim (referenced from index.html)
+├── theme.js            # First-paint theme bootstrap (external: the CSP is script-src 'self')
+└── favicon.{ico,svg}
+
 src/
 ├── features/           # Feature modules
 │   ├── achievements/   # Achievements trophy cabinet (AchievementsView)
