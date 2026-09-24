@@ -189,7 +189,7 @@ watch(
               cn(
                 'bg-primary text-white font-emphasis',
                 'shadow-lg shadow-primary/15 transition-[box-shadow,transform] duration-200',
-                'hover:bg-accent-hover hover:shadow-accent-hover/20',
+                ' hover:shadow-accent-hover/20',
                 'disabled:opacity-70 disabled:cursor-not-allowed',
               )
             "

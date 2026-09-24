@@ -17,9 +17,11 @@ const props = withDefaults(defineProps<Props>(), {
 </script>
 
 <template>
+  <!-- `data-variant` must carry the *effective* variant: a button that omits the prop would otherwise
+       ship no attribute, and CSS keyed on it (main.css, filled-button hover) silently never matches ✗ -->
   <Primitive
     data-slot="button"
-    :data-variant="variant"
+    :data-variant="variant ?? 'default'"
     :data-size="size"
     :as="as"
     :as-child="asChild"

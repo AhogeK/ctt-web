@@ -8,14 +8,14 @@ export const buttonVariants = cva(
   {
     variants: {
       variant: {
-        default: 'bg-primary text-primary-foreground hover:bg-accent-hover',
+        default: 'bg-primary text-primary-foreground',
         destructive:
           'bg-destructive text-white hover:bg-destructive/90 focus-visible:ring-destructive/20 dark:focus-visible:ring-destructive/40 dark:bg-destructive/60',
         outline:
-          'border bg-background shadow-xs hover:bg-accent hover:text-accent-foreground dark:bg-input/30 dark:border-input dark:hover:bg-input/50',
+          'border bg-background shadow-xs hover:shadow-sm hover:text-foreground dark:bg-input/30 dark:border-input',
         secondary: 'bg-secondary text-secondary-foreground hover:bg-secondary/80',
         ghost:
-          'hover:text-accent dark:hover:text-accent-hover hover:[text-shadow:0_0_8px_rgba(113,112,255,0.25),0_0_2px_rgba(113,112,255,0.15)] dark:hover:[text-shadow:0_0_12px_rgba(130,143,255,0.4),0_0_4px_rgba(130,143,255,0.2)] transition-[color,text-shadow] duration-200',
+          'hover:text-accent dark:hover:text-accent-hover hover:[text-shadow:0_0_8px_color-mix(in_oklab,var(--accent)_25%,transparent),0_0_2px_color-mix(in_oklab,var(--accent)_15%,transparent)] dark:hover:[text-shadow:0_0_12px_color-mix(in_oklab,var(--accent-hover)_40%,transparent),0_0_4px_color-mix(in_oklab,var(--accent-hover)_20%,transparent)] transition-[color,text-shadow] duration-200',
         link: 'text-primary underline-offset-4 hover:underline',
       },
       size: {

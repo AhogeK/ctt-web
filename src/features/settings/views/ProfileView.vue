@@ -272,7 +272,7 @@ onMounted(() => {
               'border-border bg-white text-foreground',
               'dark:border-white/8 dark:bg-white/2 dark:text-foreground',
               'transition-[background-color,border-color] duration-200',
-              'hover:bg-secondary hover:border-primary/50',
+              'hover:border-primary/50',
               'dark:hover:bg-white/5 dark:hover:border-accent/50',
             )
           "
@@ -291,8 +291,8 @@ onMounted(() => {
                   'border-border bg-white text-foreground',
                   'dark:border-white/8 dark:bg-white/2 dark:text-foreground',
                   'transition-[background-color,border-color] duration-200',
-                  'hover:bg-secondary hover:border-destructive',
-                  'dark:hover:bg-white/5 dark:hover:border-destructive',
+                  'hover:text-foreground hover:border-destructive',
+                  'dark:hover:border-destructive',
                 )
               "
               :disabled="unbindMutation.isPending.value"

@@ -108,7 +108,7 @@ onUnmounted(() => {
           cn(
             'w-full h-11 rounded-md bg-primary text-white font-emphasis',
             'shadow-lg shadow-primary/25 transition-[box-shadow,transform] duration-200',
-            'hover:bg-accent hover:shadow-accent/30 hover:scale-[1.02] active:scale-[0.98]',
+            'active:scale-[0.98]',
           )
         "
         @click="router.push({ name: RouteNames.LOGIN })"

@@ -35,7 +35,7 @@ const actionButtonClass = cn(
   'border-border bg-white text-foreground',
   'dark:border-white/8 dark:bg-white/2 dark:text-foreground',
   'transition-[background-color,border-color] duration-200',
-  'hover:bg-secondary hover:border-primary/50',
+  'hover:border-primary/50',
   'dark:hover:bg-white/5 dark:hover:border-accent/50',
 )
 
