@@ -40,3 +40,13 @@ Collect: `document.styleSheets` rules (keyframes, custom properties, media queri
 for the type ladder, `rowGap`/`borderRadius`/`transitionDuration` tallies over `body *`, and
 `document.body` background luminance for the light/dark call. For source, list directories through
 the GitHub contents API rather than guessing paths.
+
+## Migrated from the P2 research (2026-09-24 — the plan no longer keeps a second copy)
+
+| Fact | Source | Why it is kept |
+| --- | --- | --- |
+| **Numeric token naming** — `spacing-none=0` · `spacing-0-5=4px` · `spacing-1=8px` · `rounding-xs=4px` · `rounding-sm=6px` | Raycast stylesheet | "The number *is* the multiple" — no invented semantic names for spacing/radius |
+| **`data-platform` branching** — 12 occurrences (macOS/Windows) | Raycast JS | ctt ships a cross-platform plugin, so it needs the same branch point |
+| **`inert` as the focus trap** — preferred over a hand-written `aria-hidden` | Linear JS | The modern primitive; check before writing a trap by hand |
+| **`:focus-visible` and `:focus` governed separately** — 72 / 126 occurrences | Supabase CSS | Two different intents; collapsing them loses keyboard-only affordance |
+| **Keyboard logic is mandatory** — `Escape` / `ArrowUp` / `ArrowDown` / `keydown` / `tabindex` present in all three sites' JS | Supabase · Raycast · Linear | The minimum a menu/dialog must ship |

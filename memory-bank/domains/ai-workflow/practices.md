@@ -138,7 +138,7 @@ Devices require a **UUID** `deviceId` (`COMMON_001` otherwise). Purge when done:
 | Artifact                      | Home                                             | Committed? |
 | ----------------------------- | ------------------------------------------------ | ---------- |
 | Implementation plan           | `.omp/plans/<feature>-plan.md`                   | No (gitignored) |
-| Delivery report / requirement | `.omp/<topic>-{delivery-report,requirement}.md`  | No         |
+| Delivery report / requirement / design       | `.omp/delivery/` · `.omp/requirements/` · `.omp/design/` | No |
 | User-facing project doc       | `docs/`                                          | Yes        |
 | Agent memory                  | `memory-bank/`                                   | Yes        |
 

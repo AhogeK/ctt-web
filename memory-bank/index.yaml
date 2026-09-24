@@ -12,14 +12,15 @@ maintenance:
   - '每轮收尾校验：files/domains 的键是相对路径、值是 wc -l 语义的行数；与实际不符即索引漂移'
   - '索引只做定位，不写结论 —— 结论属于被指向的文件（避免两处重复，P6）'
 files:
-  AGENTS.md: 177
-  memory-bank/activeContext.md: 172
-  memory-bank/progress.md: 141
+  AGENTS.md: 185
+  memory-bank/activeContext.md: 30
+  memory-bank/progress.md: 147
   memory-bank/systemPatterns.md: 200
   memory-bank/techContext.md: 101
   memory-bank/projectbrief.md: 30
   memory-bank/archives/2026-09-20-activeContext-trim.md: 43
   memory-bank/archives/2026-09-22-activeContext-trim.md: 38
+  memory-bank/archives/2026-09-24-activeContext-trim.md: 163
   memory-bank/domains/README.md: 148
 domains:
   achievements:
@@ -31,7 +32,7 @@ domains:
     memory-bank/domains/achievements/trophy-geometry.md: 52
   auth-layout:
     memory-bank/domains/auth-layout/meta.md: 17
-    memory-bank/domains/auth-layout/practices.md: 41
+    memory-bank/domains/auth-layout/practices.md: 67
     memory-bank/domains/auth-layout/principles.md: 28
     memory-bank/domains/auth-layout/references.md: 22
     memory-bank/domains/auth-layout/scenarios.md: 23
@@ -55,11 +56,11 @@ domains:
     memory-bank/domains/dashboard-visualization/rendering.md: 75
     memory-bank/domains/dashboard-visualization/scenarios.md: 128
   landing-page:
-    memory-bank/domains/landing-page/meta.md: 55
-    memory-bank/domains/landing-page/practices.md: 198
+    memory-bank/domains/landing-page/meta.md: 52
+    memory-bank/domains/landing-page/practices.md: 200
     memory-bank/domains/landing-page/principles.md: 54
-    memory-bank/domains/landing-page/references.md: 42
-    memory-bank/domains/landing-page/scenarios.md: 36
+    memory-bank/domains/landing-page/references.md: 52
+    memory-bank/domains/landing-page/scenarios.md: 67
 entries:
   - id: 'rules'
     path: 'AGENTS.md'

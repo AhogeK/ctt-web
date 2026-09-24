@@ -22,13 +22,10 @@ and the reference research behind all of it.
 | --- | --- |
 | `.plans/ctt-web-development-plan.md` | The working plan (gitignored — never the only home of a fact) |
 | `DESIGN.md` | Token/typography/spacing authority; this domain cites it, never overrides it |
-| `src/features/landing/**` (future) | The implementation, once the plan is approved |
+| `src/features/landing/**` | The implementation: `views/LandingView.vue`, `components/LandingSection.vue` |
+| `src/layouts/MarketingLayout.vue` | The marketing shell (header/footer, `--marketing-header-height` source) |
 
-**Status: P2 in progress (2026-09-20) — P1 shipped the entry and routing shell; P2 has just landed its first slice, `LandingSection.vue`.** `/` is public
-(`route-names.ts` `LANDING`, `router/modules/landing.ts`, `layouts/MarketingLayout.vue`) and the top-bar
-CTA switches on `authStore.isAuthenticated`. The sections themselves (capability list, open-source block,
-pricing structure) are later stages of the plan and are deliberately absent rather than stubbed. The rest
-of this domain is still *research*, not shipped behaviour — keep that distinction when citing it.
+**Status: P2 complete (2026-09-24)** — P1 shipped the entry and routing shell; P2 shipped the visual primitives (section container · type scale · surface/divider tokens · hover guard · theme bootstrap · sticky contract · `motion-reduce` cover · token audit · the showcase-panel motion) and passed its three measured acceptance criteria. Later phases (P3 hero/value demo, P4 capability/open-source, P5 pricing, P6 tests/docs) remain open. `/` is public (`route-names.ts` `LANDING`, `router/modules/landing.ts`, `layouts/MarketingLayout.vue`) and the top-bar CTA switches on `authStore.isAuthenticated`. Sections that belong to later stages are **deliberately absent, not stubbed**.
 
 ## Terminology
 
@@ -51,5 +48,5 @@ of this domain is still *research*, not shipped behaviour — keep that distinct
 | | |
 | --- | --- |
 | Checked against source | External: 6 sites probed, 4 read down to CSS token tables and JS bundles, **Supabase's open-source component source** (2026-09-19). Internal: `DESIGN.md` §3/§8, `src/stores/theme.ts`, `src/components/app/ThemeToggle.vue`, `src/` full scan. **Re-checked 2026-09-19 after P1**: `router/route-names.ts`, `router/modules/landing.ts`, `layouts/MarketingLayout.vue`, `features/landing/views/LandingView.vue` |
-| Coverage | Container width, spacing/radius/font laws, breakpoints, motion policy, theme bootstrap, four component archetypes — each with hit counts or a source path |
-| Known drift | **No implementation exists yet**, so nothing here can have drifted from code. Re-measure when the page ships; the external values are snapshots of other people's sites and will age. |
+| Coverage | Container width, spacing/radius/font laws, breakpoints, motion policy, theme bootstrap, four component archetypes — each with hit counts or a source path. **Re-measured 2026-09-24 (P2 closure, 1440×900, dark/light/reduce)**: h1 `64px/510/−1.408px/64px` identical in both themes; 15 text probes (14 ≥ 4.5, one at 4.24 dark / 4.42 light); `getAnimations()` **0** under reduce vs **5** in the control |
+| Known drift | The **P2 implementation gap is closed**; the external reference values are snapshots of other people's sites and will age with them. **Scroll-driven motion is not testable yet** — at 1440×900 the page's `scrollHeight` equals the viewport, so the P2 motion pass covers entry/hover only; do not cite it as covering scroll. |

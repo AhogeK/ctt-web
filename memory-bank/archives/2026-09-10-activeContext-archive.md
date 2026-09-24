@@ -146,7 +146,7 @@ of `memory-bank/activeContext.md` to keep that file within the AGENTS.md
 
 - **All plugin-panel dimensions mounted as placeholder panels** (user direction: mount the panels, no content yet — plain-text stat lists were rejected as ugly): every panel is ChartSection (three states) wired to its query with the chart mount point reserved as an empty placeholder. Panels: Coding heatmap (filter range) / Coding trend last-30-days (own heatmap query, filter-independent) / Language / Yearly activity / Coding streaks / Project / Time of day / IDE distributions / Average hourly / Weekday. New components: DistributionPanel (generic, 1:1 to DistributionType), StreaksPanel, HourlyPanel — each query-wired, placeholder body.
 - Backend verified: distribution supports LANGUAGES/PROJECTS/TIME_OF_DAY/WEEKDAY/DEVICES/IDES; hourly returns points + activeDays. Browser-verified all 10 panels render with correct endpoints fired.
-- **IDE as a filter is NOT possible** (contract): stats endpoints only accept deviceId; IDE attribution derives from the device registry (devices.ide_name, one deviceId per machine install). IDE works only as a distribution dimension. Requirement text for backend IDE filtering drafted for the user to relay (see .omp/ide-filter-requirement.md).
+- **IDE as a filter is NOT possible** (contract): stats endpoints only accept deviceId; IDE attribution derives from the device registry (devices.ide_name, one deviceId per machine install). IDE works only as a distribution dimension. Requirement text for backend IDE filtering drafted for the user to relay (see a requirement draft（**已不在盘上** ✗ 此处仅存历史 ✓） — **no longer on disk** ✗ (cited here as history ✓; not relocated by the 2026-09-24 reorg ✓)).
 
 ### IDE filter wired end-to-end (backend v0.60.0 delivered, same v0.20.0)
 
@@ -195,7 +195,7 @@ of `memory-bank/activeContext.md` to keep that file within the AGENTS.md
 
 - Notion「🌐 ctt-web 开发计划」updated via MCP: D2 section rewritten to completed state (✅ v0.20.0 — full delivery record: user acceptance fixes, design iterations/revert, tests, dual-axis review, branch state) matching the D1 completed-section format; D3 section rewritten to completed state (✅ v0.20.0 — 6 cards, formatDuration rules, three states, responsive grid, design iteration history); Dashboard delivery checklist table D1/D2/D3 rows flipped from ⬜ to ✅ with corrected actuals (D1: 7 composables not 5). D4–D7 untouched.
 - Note: D3 was delivered as part of the D2 batch (v0.20.0) — no separate commit; the Notion record documents this explicitly ("随 D2 框架同批交付").
-- Delivery report for the summary cards added: `.omp/summary-cards-delivery-report.md` (data flow / formatDuration rules table / design iteration + revert rationale / acceptance matrix — mirrors the D2 report structure).
+- Delivery report for the summary cards added: `delivery/summary-cards.md（AI 工作区 ✓ 2026-09-24 迁入）` (data flow / formatDuration rules table / design iteration + revert rationale / acceptance matrix — mirrors the D2 report structure).
 
 ## Recent Activity (v0.19.0 — 2026-08-31)
 

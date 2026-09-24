@@ -19,7 +19,7 @@
 | Dashboard (框架 + 面板迭代)       | ✅ Complete | 0.37.0         |
 | Achievements (奖杯系统)           | ✅ Complete | 0.42.0         |
 | Leaderboard                       | ✅ Complete | 0.41.0         |
-| Landing Page (P1 入口与路由骨架)  | 🚧 In Progress | 0.47.0      |
+| Landing Page (P2 视觉基元与版面节奏) | ✅ Complete (P2) · P3–P6 待做 | 0.51.0 |
 | AuthLayout 展示面板 (指针光/3D)   | ✅ Complete | 0.51.0         |
 | Settings                          | ⏳ Pending  | 1.0.0          |
 | i18n (zh/en)                      | ⏳ Pending  | 1.0.0          |
@@ -46,6 +46,12 @@
 
 - [x] **v0.51.0 (2026-09-21)** 指针光与底光的架构定论 — 三层光各自归属：掠光属鼠标（卡内）、聚光描边属几何、**底光属卡片**（指针只激发）。核心结论：卡片自带的 `::after` **不可能**被相邻卡遮挡（`A<B` 与 `B<A` 不可兼得 + 内联 `transform` 锁死层叠上下文）⇒ 底光改为**场景级单层**（z=0，位于三卡之下）⇒ 三张卡行为一致（间隙渗光 / 被相邻卡遮挡 / 被挡的光在下一段间隙继续 / 卡面 ≤1 count）。两处"无形墙"根因：盒子射程小于光（需 `B ≥ R + 2σ`）与祖先 `overflow: hidden` 的 64px 二次裁剪。测量教训：差分前必须冻结卡片 `transform`，否则量到的是位移（"卡面穿透 25.3" 冻结后为 3.7）。两次样式表自伤事故（删除正则吃掉属性行 / 把 1783 行削到 187 行）促使新规矩：该文件只许追加或精确整串替换 + 每步构建（AGENTS.md R27）。1450/1450 unit · auth e2e 21/21。
 - 领域知识：新建 `domains/auth-layout/`（五件套 ✓ 含 P1–P4 原则与实测参数表）。
+
+## 落地页 P2 收口（v0.51.0，2026-09-24）
+
+- **P2「视觉基元与版面节奏」✅ 完成** ✓：区块容器（`LandingSection.vue`）· 手写 hover 守卫（手写 CSS 16 条全包 `@media (hover: hover)` ✓）· 主题首帧（`public/theme.js`，CSP 下必须外链 ✓）· 粘性契约（`--marketing-header-height` 单一来源 ✓）· 标题阶梯（`@theme` 令牌，h1 实测 **64px / 510 / −1.408px** ✓）· 表面与分隔（按 `DESIGN.md` §4 注册 `--surface` ✓）· 按钮复用（`components/ui/button`，未新建样式 ✓）· `motion-reduce` 全局覆盖 ✓ · 令牌审计（4 项例外各有出处 ✓）· **面板动效**（2026-09-21 复起 ✓ v0.48.1 → v0.51.0 ✓）。
+- **验收实测**（1440×900 · 暗/亮/reduce）：② 双模成立 ✓（15 处文本 **14 处 ≥ 4.5** ✓；hero 眉题 `text-primary` **4.24 / 4.42** —— **用户目视裁定：可接受 ✓ 不改动**（2026-09-24））；③ reduce `getAnimations() = 0` ✓ vs 对照组 5 ✓。**滚动动效不可测** ✗（页面无可滚内容 ✓）。
+- 后续阶段：P3 Hero 与价值演示 · P4 能力/开源 · P5 定价 · P6 测试与文档（见计划 §P3–P6 ✓）。
 
 ## Leaderboard
 

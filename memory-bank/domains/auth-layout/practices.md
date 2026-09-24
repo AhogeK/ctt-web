@@ -39,3 +39,29 @@ than the dashboard — measured border-band blue-shift went +48 / +49 / +46 coun
 angle per pixel, so a flat card is no longer hypersensitive vertically: 448×170 was 2.64× worse before
 this). `intensity` 8 / 8 / 6 · `depthMultiplier` 0.8 / 0.8 / 1.2 · `MAX_ROTATION_STEP` 0.65°/frame ·
 `SCALE_STEP` 0.0035/frame · `maxScale` 1.03 · `LEAVE_MARGIN` 4px.
+
+## Motion: one clock, an isotropic field, and a resting contract (2026-09-21, v0.48.1 → v0.51.0)
+
+**One kinematic clock** — all three cards are integrated by a single `requestAnimationFrame` loop, not by
+CSS transitions: each frame moves the angle toward its target by `(target − current) × smoothness` with
+`smoothness = 0.2`, clamped to `MAX_ROTATION_STEP = 0.65°` per frame. Scale targets `1.03` on hover and a
+5px lift follows from the same envelope. Measured: resting = identity matrix and `rect == layout size`;
+hover `matrix3d(0.998…)`; leaving returns to identity; under `reduce` nothing moves.
+
+**Isotropic tilt radius** — `referenceRadius = hypot(W, H) / 2.4` so any aspect ratio reaches the same
+normalised radius; before this the vertical axis was **2.64×** more sensitive than the horizontal. A
+`softFactor = sin(d·π/2)/d` term was **deleted** — it *amplified* mid-radius by 1.41× instead of softening.
+
+**Resting contract (why "static" needed three fixes, not one)** — the entry keyframe's `to` is the
+identity transform and `animation-fill-mode: forwards` **kept owning `transform` forever**, so the
+component's `baseRotate*` / `translateZ` never applied (that is why cards *looked* straight). Flipping to
+`backwards` alone unlocks an inline `translateZ(+40px)` and the scene `perspective: 1000px` then *enlarges
+and blurs* the top card. The real layer was deeper: `useCardTilt` was **dead code** — `currentRotate*` were
+plain `let`s (a dependency-free `computed` evaluated once) and `rafId` was never reset, so its loop never
+started. Fix all three together: component zeros `baseRotate*`/`translateZ`, fill `forwards → backwards`,
+`currentRotate*` become `ref`s and `rafId` is released. Regression test went red first (2/2 on the old
+implementation).
+
+**Measuring tilt/hover must freeze geometry** — hover changes `transform` (scale + rotation), so a naive
+hover-vs-idle pixel difference measures *displacement*, not light (25.3 counts → **3.7** after freezing).
+See `principles.md` P4.

@@ -17,7 +17,7 @@ Lookup facts about the working environment and project conventions. No judgement
 | `docs/`                                       | **User-facing project docs only** — `architecture.md`, `dev-handbook.md`. Never AI artifacts (R25) |
 | `.omp/`                                       | AI working directory (**gitignored** — nothing here is committed)                             |
 | `.omp/plans/`                                 | Implementation plans: `<feature>-plan.md` (no date — recency is mtime)                         |
-| `.omp/*.md`                                   | Delivery reports (`<feature>-delivery-report.md`), requirement drafts (`<topic>-requirement.md`) |
+| `.omp/<category>/`                            | Category dirs: `plans/` · `report/` (diagnosis) · `delivery/` · `requirements/` · `design/` · `qa/` — root holds directory-level files only (`README.md` · `ai-planning-method.md`) |
 | `.sisyphus/`                                  | Local dev helpers (token bootstrap, verification scratch)      |
 
 ## Limits and formats

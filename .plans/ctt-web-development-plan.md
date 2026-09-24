@@ -1273,7 +1273,7 @@ flowchart LR
 - [x] 新增 `src/layouts/MarketingLayout.vue`：公开层外壳（顶栏 + 内容 + 页脚），**不引入** AppLayout 的侧边栏与用户菜单 ✓
 - [x] 新增路由 `RouteNames.LANDING`，`/` 指向 `features/landing/views/LandingView.vue`（懒加载，与既有 feature 一致）✓
       实施注记：同时新增 `RouteNames.MARKETING_LAYOUT`（镜像既有的 `AUTH_LAYOUT` 模式：**布局级命名 + 视图级命名**）；路由落在 `src/router/modules/landing.ts`（与既有 feature 模块一致），因此 `router/index.ts` 的 `constantRoutes` 空置并**随之删除**（不留悬空结构）
-- [x] 移除 `src/router/modules/auth.ts` 的 `redirect: { name: ROUTE names.LOGIN }`；`/auth/*` 子路由不动 ✓
+- [x] 移除 `src/router/modules/auth.ts` 的 `redirect: { name: RouteNames.LOGIN }`；`/auth/*` 子路由不动 ✓
 - [x] 守卫：`/` 加入**公开白名单**（`requiresAuth: false`），并确认 guest-guard **不**把已登录用户从 `/` 弹走 ✓
       实施注记：守卫只在 `requiresAuth` 为真时拦截 → **公开即不设该标志或显式 `false`**；而 **`guestOnly` 会把已登录用户弹去 dashboard** —— 故 `/` **绝不能**标它。此语义已写进 `landing.ts` 的 JSDoc 与 E2E 用例
 - [x] **核实死代码**：`src/views/HomeView.vue`、`src/views/AboutView.vue` 是否被任何路由/组件引用；无用则**删除** ✓
@@ -1307,94 +1307,47 @@ flowchart LR
 - **一处遗留（非本阶段范围）** ✗：**注册页没有 GitHub OAuth** —— 顶栏的 `Sign in` 入口已缓解；根治需先只读核对 `../ctt-server` 的 OAuth 建号语义（R3/R13），**归用户排期，AI 不得自行改动注册流程**
 
 ---
-### P2：视觉基元与版面节奏 🚧 进行中（第一段已交付）
+### P2：视觉基元与版面节奏 ✅ 已完成（收口 2026-09-24 · 交付 2026-09-20 → 2026-09-22）
 
-> **前置已完成（2026-09-19）** ✓：本节的**全部实测依据**已归入领域文件
-> [`memory-bank/domains/landing-page/`](../memory-bank/domains/landing-page/)（`principles.md` 证据分级 · `practices.md` 实测基线与组件原型 · `references.md` 参照物与源码路径），
-> 并由 `memory-bank/index.yaml` 索引。**P2 只负责把结论落成基元** —— 下面的清单是研究当时的原始记录，保留作依据，**不再重复维护** ✗。
+> **版本 v0.47.5 → v0.51.0** ✓ · **验收 3/3 达成** ✓（其中一处附条件 ✗，见「开口项」）· 逐段记录见文末「完成记录（第一~五段）」✓。
 
-**目标：** 把"继承产品语言"落成可复用的基元，使后续区块**不需要各自发明样式**。
+**目标：** 把"继承产品语言"落成可复用的基元，使后续区块**不需要各自发明样式** ✓ —— `LandingSection.vue` 是这个契约的唯一执行者 ✓（P3 起所有区块传参使用 ✓）。
 
-- [x] **区块容器与纵向节奏 ✅ 已交付（2026-09-20）**：`src/features/landing/components/LandingSection.vue` —— 容器/留白/节奏的唯一决定处（详见下方完成记录）
-- [x] **标题层级 ✅ 已交付（2026-09-20）**：阶梯已落成 `@theme` 令牌（`--text-display-xl/lg/display` · `--text-heading-1/2/3`，取值**逐字**取自 §3 表格 ✓ 不新造字号 ✓），Tailwind v4 由伴随键推导行高/字距/字重 → 标题**一个类**即完整规格 ✓。`LandingView.vue` 的 h1 已改用它 ✓（实测 **64px / 510 / −1.408px / 行高 1** = Display Large 逐值吻合 ✓）。原依据（保留对照）：与 `DESIGN.md` 阶梯对齐（不新造字号）。**参照实测（5 站）**：H1 **64px 出现 4/5**（Supabase 46px 例外）；**字重 500–600** 为主（不是 800 —— 那是 Plausible 一家 ✗）；**行高贴紧 1.0–1.1**（不是 1.5 ✗）；**负字距只有 Linear 用**（`-1.408px`）✓ 属其特色，**非普遍规律** ✗
-- [ ] **令牌体系（读其 CSS 本体得出 —— 这是设计系统真身）**
-  - **Raycast = 三层令牌结构（最值得照搬）** ✓✓：基础层 `grey-50=#e6e6e6` → 语义层 `color-bg=var(--grey-900)` → 组件层 `navbar-*`/`chat-*`
-  - **Spacing/Rounding 用编号制** ✓✓：`spacing-none=0` / `spacing-0-5=4px` / `spacing-1=8px`；`rounding-xs=4px` / `rounding-sm=6px` → **数字即倍数，不自造语义名**
-  - **Supabase 用 Tailwind v4 `@theme` + oklch 色彩空间** ✓：`color-emerald-50=oklch(97.9% .021 166.113)`；并有**语义化图表令牌** `chart-1=var(--color-brand-800)`（直接对应 ctt 的图表色板需求）
-  - **Linear 有 12 栅格与页面内边距体系** ✓：`grid-columns=12` / `grid-gap=32px` / `offset=var(--page-padding-right)`
-  - **字体选择（开发工具类）** ✓：Raycast = 正文 `Inter` + 代码 `JetBrains Mono`/`Geist Mono` → ctt 作为开发者工具**需要等宽字体令牌**
-- [x] **手写 `:hover` 审计 ✅ 已交付（2026-09-20）**：全仓 `src/` 扫描 → **Tailwind 变体**（`hover:` / `dark:hover:` / `[a&]:hover:`）**无需处理** ✓（v4 已编译进 `@media (hover: hover)` ✓，产物中验证 ✓）；**手写 CSS 16 条 / 4 文件**全部包入该媒体查询 ✓（`ThemeToggle.vue` 2 · `AuthLayout.css` 11 · `ScrollFadeList.vue` 2 · `TermsDialog.vue` 1）
-- [ ] **组件内部实现（读其 CSS 状态选择器与 JS 键盘逻辑得出）**
-  - **状态用属性表达** ✓✓：Supabase 有 **153 条 `[data-state=]` 条件规则**；`[data-side]`/`[data-align]`/`[data-orientation]` 为组件定位与朝向状态
-  - **`@media (hover: hover)`（本计划此前完全遗漏）** ✓✓✓：Supabase **20 处**、Raycast **7 处** → **触摸设备不得触发悬停态**
-  - **`:focus-visible` 与 `:focus` 分开治理** ✓：Supabase 72 / 126 处
-  - **`inert` 作焦点陷阱** ✓：Linear JS 中确认存在（优于手写 aria-hidden）
-  - **键盘逻辑必备** ✓：三站 JS 均含 `Escape` / `ArrowUp` / `ArrowDown` / `keydown` / `tabindex`
-  - **`data-platform` 差异化** ✓：Raycast 12 处（macOS/Windows 分支）→ ctt 有插件端跨平台，同需
-  - **营销页与应用分离** ✓：Cal.com 落地页仅 **24KB JS** vs Supabase **958KB** → ctt 落地页应独立轻量
-- [x] **主题首帧 ✅ 已交付（2026-09-20）**：落点是 `public/theme.js` + `index.html` 的 `<head>`，**不是**此处原先写的 `mounted` 卫兵（那条针对 SSR/水合 ✗，本项目是纯 CSR ✗）。详见完成记录第四段
-- [ ] **主题落地实现（读其实例 HTML 得出 —— 决定性）**
-  - **`next-themes` 是本领域的既成标准** ✓✓：Linear 与 Supabase 使用**同一份最小化脚本**
-  - **零闪烁做法** ✓✓✓：`<html data-theme="dark">` **直接由服务端输出**（Linear 实证）——默认主题在 JS 运行前即已生效
-  - **三层优先级** ✓：`localStorage` > `prefers-color-scheme`（`system` 为第三档，Supabase 实证）
-  - **`style.colorScheme` 必须同步** ✓✓：脚本显式设置它，使**原生滚动条与表单控件**随主题变化
-  - **单主题也是合法选择** ✓：Raycast（深）与 Plausible（浅）均无主题脚本
-- [x] **移动端/粘性导航基元 ✅ 已交付（2026-09-20）**：粘性偏移的**单一来源** `--marketing-header-height` + 窄档响应式实测（详见完成记录第四段）；移动端 Sheet 菜单按「不建空壳」✗ 推迟到 P3/P4 真有区块锚点可用时
-- [ ] **移动端范围（用户 2026-09-19 澄清：移动端在范围内，技术上必须完整响应式）**
-  - **口径** ✓：**落地页必须完整响应式**；既有页面（统计 / 排行 / 设置）本阶段**一律不触碰** ✗（用户尚未自测移动端，留到最后统一验证）
-  - **断点照 `DESIGN.md` §8** ✓（已存在，不另立）：`<600` Mobile Small（单列紧凑）· `600–640` Mobile · `640–768` Tablet（进入两列）· `768–1024` Desktop Small（完整卡片网格）· `1024–1280` Desktop（完整导航）· `>1280` Large Desktop
-    → 与 Tailwind 默认的映射：`600→sm 之前` · `640→sm` · `768→md` · `1024→lg` · `1280→xl` ✓ **不引入自造断点**
-  - **`@media (hover: hover)`** ✓✓ **（2026-09-20 复核更正）**：**规则本身也早已写进 `DESIGN.md` §8** ✓（"Hover-driven styles must be wrapped in `@media (hover: hover)`"，并引用 `systemPatterns.md` 横切约定）→ 所以这不是"规范缺口" ✗，而是**代码缺口**：`src/` 里 Tailwind 的 `hover:` 已被 v4 编译进该媒体查询 ✓（产物 8 处 ✓），真正裸露的是**手写 CSS** ✗ —— 已知实例 `ThemeToggle.vue:83` 的 `.theme-toggle:hover` → **触摸设备上悬停态会粘连**
-  - ~~**触摸目标数值化（`DESIGN.md` 缺口）**~~ → **已作废 ✗（2026-09-20 复核）**：`DESIGN.md` §8 **早已写入** ✓✓ "**Minimum target: 44×44 CSS px for anything clickable**"，并附依据（Apple HIG 44pt · Material 48dp · WCAG 2.5.8 的 24px 为**下限而非目标**）✓ → **无需再提**，组件直接读 §8 ✓
-  - **`motion-reduce:` 覆盖 ✅ 已按方案 A 实施（2026-09-20）**：`src/assets/main.css` 的 `@media (prefers-reduced-motion: reduce)` 内全局压掉 `animation-duration` / `transition-duration`（`0.01ms !important`）+ `animation-iteration-count: 1` + `scroll-behavior: auto` ✓ —— 与 `AuthLayout.css` 既有写法一致 ✓、覆盖全部 126 处 ✓、不依赖任何人记得写 ✓。**实测（A/B 对照 ✓）**：正常态按钮 `transitionDuration: 0.15s` → reduce 态 `1e-05s` ✓，动画同理 ✓。原依据（保留对照）： ✗（2026-09-20 实测纠正）**：只读清点 `src/` 全部 **171 个 `.vue`** → 带 `motion-reduce:` 兜底的**仅 1 个文件**（`RankedDistributionList.vue`），**58 个文件 / 126 处元素缺失** ✗；原立项前提「3 处 `prefers-reduced-motion` 应转成变体」**不成立** ✗ —— 那 3 处全是手写 CSS/JS，本就没有可转对象。**方案 A（推荐）**：全局一条规则（`src/assets/main.css` 的 `@media (prefers-reduced-motion: reduce)` 内 `*,*::before,*::after { animation-duration:.01ms !important; animation-iteration-count:1 !important; transition-duration:.01ms !important }`）—— 覆盖全部 126 处、与本仓库 `AuthLayout.css` 的现有写法一致、不依赖任何人记得写；**方案 B**：逐处加变体 —— 58 文件改动，且此后每个新组件都得自觉（「靠记忆的守卫」是会被关掉的守卫 ✗）。按 R23 未擅自实施。
-  - 原依据（保留对照）**`motion-reduce:` = `prefers-reduced-motion` 的 Tailwind 写法**（`prefers-reduced-motion` 的 Tailwind 写法）✓✓：Supabase 手风琴实证 `motion-reduce:transition-none` / `motion-reduce:duration-0` / `motion-reduce:animate-none`；ctt 现有 3 处 `prefers-reduced-motion` 但**非变体形式** → 统一改为变体
-  - **移动端导航** ✓：`{ open, setOpen }` 状态 hook + Sheet（Dialog 语义：焦点陷阱 + 滚动锁定 + Esc 关闭）；粘性导航的 `top-[Npx]` 偏移量**须取实际 header 高度**（Supabase 用 `top-[65px]` 对应其 header ✓，**不可硬抄数值** ✗）
-  - **栅格** ✓：Linear 实证 `grid-columns=12` / `grid-gap=32px` → 宽屏 12 栅格；断点收敛为单列（<640）/ 两列（640–1024）/ 多列（>1024）
+**交付清单（全部完成 ✓）**
 
-- [ ] **组件交互规格（读 Supabase 开源组件源码得出 —— `apps/www` + `apps/ui-library` + `packages/ui`）**
-  1. **粘性导航** ✓（`apps/www/components/SolutionsStickyNav.tsx` 实证）：`sticky z-30` + **`top-[65px]`**（吸在主 header 之下，不是 top-0）+ **`bg-background/90` + `backdrop-blur-xs`**（半透明毛玻璃）+ `border-b`；外层 `pointer-events-none`、内层 `pointer-events-auto`（绝对定位包裹层不得挡点击）
-  2. **下拉菜单** ✓：状态由 hook 承载（`useState` + `onOpenChange`），菜单项数据与状态分离（`useDropdownMenu.tsx` 实为菜单项数据源，非状态机）；交互态用 `data-state`；键盘 `Escape` / `ArrowUp` / `ArrowDown`
-  3. **移动端菜单** ✓（`use-mobile-menu.ts` 仅 35 行）：**状态抽成 `{ open, setOpen }` hook**，渲染交给 `Sheet`（Dialog 语义：焦点陷阱 + 滚动锁定 + `aria-modal`）
-  4. **FAQ 手风琴** ✓✓（**已核实**：`packages/ui/src/components/shadcn/ui/accordion.tsx`，89 行，基于 `radix-ui` 原语）
-     - **状态驱动**：一切走 `data-state` —— 触发图标用 **`[&[data-state=open]>svg]:rotate-180`** 属性选择器旋转 180°（不需要额外 JS）
-     - **开合动画**：内容用 **`data-[state=closed]:animate-accordion-up` / `data-[state=open]:animate-accordion-down`** keyframe 工具类 + `overflow-hidden`
-       —— ⚠️ **纠正**：此前我写"由 `--radix-accordion-content-height` 变量驱动" ✗ **不准确**：该变量是 Radix 内部实现细节，**组件层用的是 keyframe 工具类**
-     - **时长 200ms**：`duration-200`（`transition-transform`）→ **与本计划「过渡 ≤0.2s」基线精确吻合** ✓（交叉印证）
-     - **无障碍**：**`motion-reduce:` 变体全量覆盖** —— `motion-reduce:transition-none` + `motion-reduce:duration-0` + `motion-reduce:animate-none`
-       → **这就是 `prefers-reduced-motion` 的 Tailwind 写法，ctt 可直接照用** ✓✓
-  5. **定价卡片** ✓（`apps/www/components/Pricing`）：结构为主，代码无特殊机制 —— **不构成独立规格**（如实标注）
-  6. **主题切换** ✓（`theme-switcher-dropdown.tsx` + `use-mounted.ts`）：`useTheme` + **`mounted` 卫兵**（`useState(false)` → `useEffect` 置真，**服务端不知客户端主题，未挂载前不渲染，避免闪烁**）+ `resolvedTheme`（system 解析为实际值）+ `aria-label`。
-     **对 ctt 的增量**：ctt 已有三档主题与 `.dark` 同步 ✓，**但未使用 mounted 卫兵** → 落地页若首屏渲染主题图标，需补该卫兵，否则图标会在水合时跳变
-- [ ] **ctt 现状回源（2026-09-19 实测，`src/` 全量扫描）**
-  - 已具备能力 ✓：`@vueuse/core`（含 `useColorMode` = next-themes 的 Vue 等价物）· `reka-ui`（Radix 的 Vue 版，**原生输出 `data-state` 系属性**）· `tailwindcss 4`（`@theme` 令牌）· `tailwind-merge`
-  - **主题实现已达标，无需改动** ✓✓（`src/stores/theme.ts` 57 行 + `ThemeToggle.vue` 94 行 + 单测）：
-    三档模式 `'light' | 'dark' | 'auto'` ✓（**与 Supabase 的 light/dark/system 同构**）· 基于 VueUse `useDark`（含 `matchMedia('(prefers-color-scheme: dark)')` 系统探测与 localStorage 同步）· DOM 以 `.dark` class 驱动 Tailwind `dark:` 前缀 ✓
-  - **确证缺口仅一项** ✗：`@media (hover: hover)` **0 处**（对照 Supabase 20 / Raycast 7）
-    仓库内已有受影响实例：`ThemeToggle.vue:83` 的 `.theme-toggle:hover` → **触摸设备上悬停态会粘连**
-  - **`data-state` 仅 6 处**（Supabase 153 条规则）：reka-ui **原生输出** `data-state`/`data-side`/`data-orientation` → 属**未用满**而非缺失；落地页若用 reka-ui 组件，状态样式应写 `data-[state=open]:` 形式
-  - **首次呈现 = 深色（据此拍板）** ✓✓：`DESIGN.md` 暗色提及 27 处、亮色仅一节；源码 **358 个 `dark:` 变体** → 代码库实态即 dark-first；且同类开发工具（Linear / Supabase / Raycast）**服务端 HTML 默认深色**（Linear 实证 `<html data-theme="dark">`）
+| 交付 | 落点 | 证据 |
+| --- | --- | --- |
+| 区块容器与纵向节奏 | `features/landing/components/LandingSection.vue`（`as` / `spacing` / `width` 三个 prop ✓） | 4 例单测，**先证伪后信任** ✓（容器改 1100px → 红 ✓） |
+| 标题层级 | `@theme` 的 `--text-display-xl/lg/display` · `--text-heading-1/2/3` —— 取值**逐字**取自 `DESIGN.md` §3 ✓ 不新造字号 ✓ | h1 实测 **64px / 510 / −1.408px / 行高 1** ✓ |
+| 手写 `:hover` 守卫 | `src/` 全部**手写** `:hover`（16 条 / 4 文件）包入 `@media (hover: hover)` ✓；Tailwind 变体不动（v4 已编译进同一查询 ✓） | 真机 A/B：`hasTouch` 下悬停**不变色** ✓ ⟷ 桌面变色 ✓ |
+| 主题首帧 | `public/theme.js`（**经典脚本 + 外链** ✓ —— `index.html` 的 CSP 是 `script-src 'self'`，内联会被拦 ✗） | 隔离测试（拦掉 bundle）✓；键是 **`vueuse-color-scheme`** 而非 `theme-appearance` ✓ |
+| 粘性导航契约 | `--marketing-header-height: 3.5rem`（定义在 `MarketingLayout.vue` 壳元素 ✓ 消费于 `h-[var(…)]` ✓ —— **单一来源** ✓） | 320 / 390 / 1440 零横向溢出 ✓ |
+| 表面与分隔 | 既有令牌 ✓ + 按 `DESIGN.md` §4 注册 `--surface`（暗 `rgba(255,255,255,0.02)` / 亮 `rgba(0,0,0,0.02)` ✓）—— **P3 消费** ✓（此刻不造空壳 ✗） | 确认到一处分歧并已按规范注册 ✓ |
+| 主/次按钮 | 复用 `components/ui/button` ✓ **未新建任何样式** ✓ | `ghost` 变体两个面落回令牌 ✓（悬停实测 rgb(113,112,255) / rgb(130,143,255) ✓） |
+| `motion-reduce` 全量覆盖 | `src/assets/main.css` 的全局规则（`animation-duration` / `transition-duration` → `0.01ms !important` ✓ + `iteration-count: 1` + `scroll-behavior: auto` ✓） | A/B：正常态 `0.15s` → reduce 态 `1e-05s` ✓ |
+| `transition-all` 清零 | 43 处按真实目标改窄（19 输入框 → `transition-[color,box-shadow]` · 11 卡片 → `transition-[box-shadow,transform]` · 5 按钮 → `transition-colors` …） | 像素判据：文字带拉普拉斯方差 **696.5 → 758.6** ✓（修前 454.2 ✗ = 用户报的"悬停字发虚" ✓） |
+| 令牌审计 | 首页面三文件（`MarketingLayout` · `LandingView` · `LandingSection`）**零自造颜色 / 零自造阴影 / 零内联 style / 零硬编码色值** ✓ | 例外仅 4 项且各有出处 ✓：`max-w-[1200px]`（§5）· `max-w-[730px]` · `leading-[1.08]` · `tracking-[-0.022em]`（后三项均为实测可推导规则 ✓） |
+| 动效（**按需做** ✓） | hero 入场 + 离场交棒（`DESIGN.md` §10 七字段 ✓） | LCP 252/256/252 ⟷ reduce 256/260/256 ✓（入场不拖首绘 ✓） |
+| **面板动效**（P2 最后一项 ✓） | AuthLayout 三块展示面板：**指针驱动** ✓ · 一个 **rAF 运动学时钟** ✓ · **场景级底光** ✓ · **SVG 聚光** ✓ | 静止 = 恒等矩阵 ✓ · 悬停 `matrix3d(0.998…)` + 浮起 5px ✓ · 移开回恒等 ✓ |
 
-- [ ] **UI 逻辑指纹（读其 JS bundle 得出，CSS/JS 双向印证）** ✓✓
-  - **明暗双模式是三站标配** ✓✓✓：三站 JS 均含 **`prefers-color-scheme` + `matchMedia`** → 结论**不是"选暗或选浅"，而是"两者都支持、只定首次呈现"** —— **此结论取代原待决项"暗色 vs 混合"** ✓
-  - **默认呈现倾向** ✓：Linear / Supabase / Raycast（开发工具）**默认深色**；WakaTime / Cal.com 默认浅色 → ctt 属开发工具类，**默认深色有同类先例** ✓
-  - **滚动动效再次被否证** ✓✓：**只有 Supabase 含 `IntersectionObserver`**（与其 `animatedEls: 19` 精确对应 ✓）；Linear / Raycast 均无 → **CSS 与 JS 双向交叉验证**：参考站点多以不做为主 ✗✗ **该结论已被用户 2026-09-21 修正：这是现状统计 ✓ 不是 ctt 的规则 ✗**（规则 = 按需做 ✓）
-  - **无障碍** ✓：三站均含 `prefers-reduced-motion` 检测惯例 → ctt 的动效必须全量覆盖
-- [ ] **视觉基线（实测三站代码得出，可直接照用）** —— 来源：Linear / Supabase / Raycast 的**计算样式与样式表**（非截图）
-  - **容器宽度 = `1200px`** ✓✓ 三站一致（Linear 22 次 / Supabase 26 次 / Raycast 11 次命中）；窄正文列另设 ~730–750px
-  - **间距基准 = 8px 网格** ✓✓（`rowGap` 命中：8px 分别 44 / 50 / 26 次）；最小间隔用 4px，区块间距用 40px
-  - **圆角 = 8px 主级** ✓✓（三站最高频：22 / 67 / 89 次）+ 胶囊 `9999px`/`50%` 仅用于徽章与头像
-  - **交互过渡 = 0.15–0.2s** ✓（Linear 0.16s / Supabase 0.15s / Raycast 0.2s）；且**绝大多数元素 `transitionDuration: 0s`**（1142 / 1145 / 1092 个）→ 再次印证"默认不动效"
-  - **大标题负字距随字号缩放** ✓✓ Linear 实测 `h1 -1.408px @64px`、`h2 -0.88px @40px` → **恰好都是字号 × −0.022em**（64×0.022=1.408 ✓ 40×0.022=0.88 ✓）；这是**可推导的规则**，不是抄一个数
-  - **字重 500–600 为上限** ✓✓ 三站 h1 分别 510 / 500 / 600，**均未超 600**
-  - **响应式断点用框架默认** ✓✓ Linear 为 640 / 768 / 1024 / 1280（= Tailwind 默认）→ **不自造断点**
-  - **令牌按语义分类编号** ✓ Raycast 的命名结构最规范：`color-*`(27) / `spacing-*`(17) / `rounding-*`(9) / `font-*`(7) / `container-*`(4) → 组织方式可借
-  - **粘性定位慎用** ✓ 三站 `position: sticky` 计数为 0 / 1 / 0
+**验收标准（3/3 ✓ 实测 2026-09-24 · 1440×900 · 暗 / 亮 / reduce）**
 
-- [x] **表面与分隔 ✅ 已定（2026-09-20，结论=用既有令牌、不新建 ✗）**：`bg-card` / `bg-secondary` / `border-border` 已覆盖实际用到的面与发丝线 ✓。**确认到规范与实现的一处分歧** ✗：`DESIGN.md` §4 要求卡片面「never solid — always translucent」`rgba(255,255,255,0.02)–0.05`，而 `--card` 是实色 `#191a1b` → 已按 §4 注册 `--surface`（暗 `rgba(255,255,255,0.02)` / 亮 `rgba(0,0,0,0.02)` ✓），**等 P3 真有卡片时再消费** ✓（此刻无消费者，不造空壳 ✗）。原依据（保留对照）：卡片面取自 `#0f1011`/`#191a1b`，分隔用发丝线 `rgba(255,255,255,0.05–0.08)`
-- [x] **主/次按钮 ✅ 已验证（2026-09-20）：复用 `components/ui/button` ✓ 未新建任何样式 ✓**。顺手把 `ghost` 变体的两个字面色落回令牌 ✓（`hover:text-[#7170ff]` → `hover:text-accent` · `dark:hover:text-[#828fff]` → `dark:hover:text-accent-hover`；两值与 DESIGN.md 的 Accent Violet / Accent Hover **逐值相同** → 零视觉变化 ✓，已用真实元素悬停实测 rgb(113,112,255) / rgb(130,143,255) ✓）。该变体还留有两串 `text-shadow` 字面值 ✗（发光），需一对令牌才能落回 —— **只报告、未改** ✗。原依据（保留对照）直接复用 `components/ui/button`（`default` = 品牌靛蓝，`outline` = 次按钮），**不新建按钮样式**
-- [x] **动效（2026-09-20 定；2026-09-21 用户修正 ✗）**：~~默认不做滚动动画~~ ✗ —— **动效按需做 ✓ 需要就做** ✓；三站多为零动效只是**行业现状统计** ✓ 不是 ctt 的规则 ✗；`prefers-reduced-motion` 全量覆盖仍成立 ✓（全局规则 ✓）。**已交付的预留**：hero 入场 + 离场交棒 ✓（`DESIGN.md` §10 ✓ 实测 LCP 252/256/252 vs 256/260/256 ✓）；**章节式滚动待内容就位后再评估** ✓（现在没有可滚的内容 ✗ 缩小窗口去验没有意义 ✗）。既有 hover/焦点过渡保留 ✓；**`prefers-reduced-motion` 的全量覆盖已由全局规则满足** ✓（见下一条）→ 验收标准第 3 条据此成立 ✓。**手打色值令牌化（2026-09-20，用户批准「做」✓）** —— 全量清点得 **245 处**方括号颜色 ✗（我先前的"34 处"是错的 ✗，只按已知值搜所致 ✓）。**波 1 已完成 114 处** ✓：`dark:text-[#f7f8f8]` ×43 → `dark:text-foreground` ✓ · `dark:text-[#8a8f98]` ×40 → `dark:text-muted-foreground` ✓ · `dark:text-[#d0d6e0]` ×6 → `dark:text-secondary-foreground` ✓（三组与暗色令牌**逐值相同 → 像素零变化** ✓）；另统一了**两套靛蓝** ✓（auth 表单提交按钮自用的 `#7b85d4`/`#8b95e0` ×24 → `primary`/`accent-hover` ✓ + `#4f5bc4` ×1 → `accent-hover` ✓，`hover:scale` 按压手感保留 ✓）—— 此项**有可见色差** ✓（ΔE≈8），用户已批准 ✓。**波 2 已完成（2026-09-20）** ✓：确定性映射 79 处（`border-[#d0d6e0]`×25 → `border-border` ✓ · `text-[#62666d]`×19 → `text-muted-foreground` ✓ · `bg-[#f3f4f5]`×17 → `bg-secondary` ✓ · `placeholder:text-[#8a8f98]`×14 → `placeholder:text-muted-foreground` ✓）+ 角色归位 38 处（`text-[#1a1a2e]`×19 → `text-foreground` ✓ · `text-[#ef4444]`×4 → `text-destructive` ✓ · `bg-[#e5e7eb]/80`×3 → `bg-muted/80` ✓ · `dark:hover:text-[#d0d6e0]`×3 → `dark:hover:text-secondary-foreground` ✓ · `dark:bg-[#1a1a2e]`×1 → `dark:bg-card` ✓）+ 新注册两枚令牌 ✓（`--font-weight-emphasis: 510` ✓ 71 处签名字重 · `--color-success: #10b981` ✓ Emerald 调色板值 ✓）。**终局：全仓方括号颜色字面量 = 0** ✓✓（245 → 0 ✓）。 **Tailwind 调色板类迁移完成（2026-09-20）** ✓：177 → **1** ✓（`gray-900 → foreground` ✓ · `gray-700/600 → foreground/90|80`（令牌 alpha ✓）· `gray-500/400 → muted-foreground` ✓ · `gray-50/100 → muted` ✓ · `border-gray-200/300 → border` ✓ · `red-* → destructive` ✓ · `green/emerald-* → success` ✓ · `amber/yellow-* → warning 三件套` ✓）。**新增令牌 5 枚** ✓：`--font-weight-emphasis: 510` ✓ · `--color-success: #10b981` ✓ · `--warning`（亮 `#92400e` / 暗 `#fbbf24` ✓）· `--warning-surface`（亮 `#fffbeb` / 暗 `amber-500@10%` ✓）· `--warning-border`（亮 `#fde68a` / 暗 `amber-500@30%` ✓）—— 取值均取自代码**既有**色阶 ✓ → 近乎零视觉变化 ✓。**唯一残留**：`PasswordStrengthMeter` 的 `shadow-amber-500/40`（琥珀发光 ✗，用 `--warning` 会变暗棕 ✗ → 待定第 4 枚 `--warning-glow` ✓）。断言抓出过两次漏网（16 处 + 13 处 ✗✓），否则会静默留下 ✓。 **光标修复（2026-09-20，用户报缺 ✗）** ✓：Tailwind v4 的 preflight 故意把 `button, [role=button]` 设为 `cursor: default` ✗ → 散补只覆盖 24 处 ✓，漏掉 shadcn 的**对话框关闭按钮**（= 每个对话框的 X ✗，用户举例 ✓）· `SidebarRail` · 表单 `<label for>` ✗。改为 `@layer base` **一条全局规则** ✓（`button/[role=button]/[role=tab]/[role=menuitem]:not(:disabled)` + `label[for]` + `summary` + `select:not(:disabled)` ✓），禁用态用 `:not(:disabled)` 保持 default ✓。验收判据：页面注入**无类名的裸 `<button>`**（= shadcn 关闭按钮的同处境 ✓）计算 `cursor` 必须为 `pointer` ✓。
-**另：全仓 `transition-all` 已清零 ✓（2026-09-20）** —— 它声明"过渡所有属性"✗，会让 Chrome 在过渡期把元素提为合成层 ✓ → 文字在那百余毫秒里换成灰度抗锯齿 ✓ = 用户报的"Sign in 悬停时字发虚" ✓（像素判据：文字带拉普拉斯方差 **696.5 → 454.2**，比值 0.652 ✗；收窄后 **→ 758.6**，比值 1.089 ✓）。43 处按真实目标改窄 ✓（19 输入框 → `transition-[color,box-shadow]` ✓ · 11 卡片 → `transition-[box-shadow,transform]` ✓ · 5 按钮 → `transition-colors` ✓ · 进度条/SidebarRail → `transition-[width]` ✓ · 其余按 hover 改的属性 ✓），其中 2 处分类器误判已按上下文修正 ✓。原依据（保留对照）：**默认不做滚动动画** —— 实测 5 站中 3 站 `animatedEls = 0`（Linear / WakaTime / Cal.com），唯一较多的是 Supabase（19）✓，属**风格选择**而非必要条件 ✗。仅保留既有 hover/焦点过渡；若最终加入任何动效，**必须全量覆盖 `prefers-reduced-motion`**（先例见排行榜跳转闪烁）
-- [x] **令牌审计 ✅ 已完成（2026-09-20）**：首页面（`MarketingLayout.vue` · `LandingView.vue` · `LandingSection.vue`）**零自造颜色 / 零自造阴影 / 零内联 style / 零硬编码色值** ✓；例外仅 4 项且各有出处 —— `max-w-[1200px]` ×4（`DESIGN.md` §5）· `max-w-[730px]`（实测正文列基线）· `leading-[1.08]`（实测 h1 行高 1.0–1.1）· `tracking-[-0.022em]`（实测可推导规则：字号 × −0.022em）
+1. ✓ **未新增无出处的令牌** —— 新增两处（§3 标题阶梯 ✓ §4 `--surface` ✓）**均有出处** ✓；其余例外 4 项列在上表「令牌审计」✓；`--marketing-header-height` 实测 header **57px** = `border-box` 的 56 + 1px 底边 ✓（**非漂移** ✓）。
+2. ✓ **亮/暗双模成立** —— h1 两主题**逐值相同**（64px / 510 / −1.408px / 行高 64px ✓）；`--background` `#08090a` ↔ `#f7f8f8` ✓，`--card`/`--surface`/`--border` 同步反转 ✓；15 处文本审计 **14 处 ≥ 4.5** ✓，1 处（hero 眉题）**已由用户目视裁定：可接受 ✓ 不改动**（2026-09-24 ✓）；原始读数留在第五段 ✓。
+3. ✓ **reduce 下无位移/缩放** —— `getAnimations()` **0** ✓ ⟷ 对照组 **5** ✓；reduce 下全部 `transition-duration` = 全局规则的 `0.01ms` ✓。
+   - **显式局限 ✗**：**滚动动效现在不可测** —— 落地页 `scrollHeight == viewport` ⇒ 没有可滚内容 ✓（与「章节式滚动待内容就位后再评估 ✓」一致 ✓）。**不得**把 `movedOnScroll = 0` 当证据 ✗ —— 对照组同为 0 ✓ ⇒ 该探针**无自证能力** ✗。
+
+**开口项（2026-09-24 复核：仅剩 1 项未决 ✗）**
+
+- **按钮 `ghost` 变体残留两串 `text-shadow` 字面值** ✗（发光）：落回令牌需**一对新令牌** ✗ ⇒ 只报告、未改 ✓ —— **这是 P2 现在唯一未决项** ✓（要不要为发光加一对令牌 ⇒ R7 你的决定 ✓）。
+- **目视验收五项 → 用户确认"没啥问题" ✓**（2026-09-24）⇒ 一律维持现状 ✓（结论档在 `.omp/qa/visual-qa.md` ✓）。
+- 探针三坑（已入领域 ✓ 供后续复用 ✓）：`browser.open({ viewport })` **不生效** ✗ ⇒ 用 `page.setViewport()` ✓；Tailwind v4 的 `color` 是 **`oklab(…)`** ✗ ⇒ 对比度必须过 canvas 归一化 ✓（否则读出 **1.05 假象** ✗）；reduce 把 `transition-duration` 变成 `0.01ms` ✗ ⇒ 不能拿「≠ `0s`」当非零判据 ✓。
+
+**明确不在 P2 范围 ✓（延续既有决定 ✓）**：移动端 Sheet 菜单（P3/P4 有锚点再建 ✓）· 卡片表面令牌的消费（P3 ✓）· 章节式滚动动效（内容就位后 ✓）。
+
+**依据（已入领域 ✓ 本节不再留第二份 ✗）** —— 研究快照与实测基线全在 [`domains/landing-page/`](../memory-bank/domains/landing-page/)：`principles.md`（证据分级与什么可凭质感决定）· `practices.md`（实测基线 · 组件原型 · 陷阱）· `references.md`（哪家站教了什么 + 源码路径）· `scenarios.md`（LS1–LS6 操作规程）✓，并由 [`index.yaml`](../memory-bank/index.yaml) 索引 ✓。
+> **历史说明**：本节原有的 8 块研究清单（令牌体系 / 组件内部实现 / 主题落地实现 / 移动端范围 / 组件交互规格 / ctt 现状回源 / UI 逻辑指纹 / 视觉基线）已在完成时**删除** ✗ —— 耐久结论逐条迁入上列领域文件 ✓（含 2026-09-24 补迁的 5 项 ✗→✓），仅留结论与出处 ✓。删除理由：同一事实两处保留会互相打脸 ✗（实例：旧块内"滚动动效默认不做" ✗ 与用户 2026-09-21 的修正「按需做」✓ 曾并存 ✓）。
+
 
 **完成记录（第一段，2026-09-20）：**
 
@@ -1404,7 +1357,7 @@ flowchart LR
 - **画面未变** ✗：`LandingSection` 目前**零引用** ✓（只落基元，尚无区块使用）—— 这也是"验收标准 1（未新增令牌）"此刻即可成立的原因。
 - **同轮更正两条已被证伪的前提**（见上）：触摸目标 44×44 ✓ 与 hover 媒体查询规则 ✓ **均已在 `DESIGN.md` §8**，不再是"待你确认后写入" ✗。
 - **版本**：`0.47.5`（PATCH：内部基元，无用户可见行为变化）。
-- **仍待做**（本阶段剩余）：标题层级基元 → 手写 `:hover` 审计 → `motion-reduce:` 变体统一 → 主题首帧 `mounted` 卫兵 → 移动端/粘性导航基元 → 令牌审计。
+- **当时的剩余项**（**后均已交付 ✓**，见上「交付清单」）：标题层级基元 → 手写 `:hover` 审计 → `motion-reduce:` 变体统一 → 主题首帧 → 移动端/粘性导航基元 → 令牌审计。
 
 **完成记录（第二段 · 手写 hover 守卫，2026-09-20）：**
 
@@ -1415,7 +1368,7 @@ flowchart LR
   触摸（`hover: none` ✓，`page.emulate({ isMobile, hasTouch })`）hover 后 **保持 0.02 不变** ✓✓ —— 守卫确实生效 ✓。
 - **测量陷阱（本段踩到并记录 ✗✓）**：`page.emulateMediaFeatures([{name:'hover'}])` **不受支持** ✗（报 `Unsupported media feature: hover`），而**我最初的 `.catch(() => null)` 把它吞掉了** ✗ → 那轮"触摸场景"实际一直跑在桌面条件下 ✓，结论完全反了 ✗。**改用 `page.emulate({ hasTouch: true, isMobile: true })`** ✓ 才真正翻转 `hover: hover → none` ✓✓。教训与 `content-visibility` 一节归入领域文件 ✓。
 - **验证**：相关单测 35/35 ✓ · `vue-tsc` 零错误 ✓ · 版本 `0.47.6`（PATCH）。
-- **仍待做**：`motion-reduce:` 变体统一 → 主题首帧 `mounted` 卫兵 → 移动端/粘性导航基元 → 令牌审计。
+- **当时的剩余项**（**后均已交付 ✓**）：`motion-reduce:` 变体统一 → 主题首帧 → 移动端/粘性导航基元 → 令牌审计。
 
 **完成记录（第三段 · AuthLayout 三块 3D 面板的静止契约，2026-09-20 — 尝试后否决、已回退 ✗，方案暂停）：**
 
@@ -1432,17 +1385,23 @@ flowchart LR
 - **主题首帧 ✅**：`public/theme.js`（同源经典脚本，置于 `<head>`、在应用模块之前）。**关键约束**：`index.html` 的 CSP 是 `script-src 'self'` ✗ → 内联脚本会被拦，必须外链 ✓。**存储契约实测**：视觉状态在 `vueuse-color-scheme`（VueUse `useDark` 默认键）**而不是** `theme-appearance`（那只是用户模式偏好）✗；值为裸字符串 `dark|light|auto`，缺失按 `auto` 处理；并同步 `style.colorScheme` ✓。**证据**：隔离测试（拦掉 bundle，页面只剩该脚本）—— 存储 dark → 首帧 `class="dark"` + `colorScheme=dark` ✓；light → 不 dark ✓；无存储时按系统深/浅各自正确 ✓；`dist/index.html` 中该 tag 确实在应用模块**之前** ✓；单测 **1443/1443** ✓ · E2E **103/103** ✓ · 版本 `0.47.7` ✓。
 - **导航契约 ✅**：`--marketing-header-height: 3.5rem` 定义在 `MarketingLayout.vue` 壳元素上，顶栏高度由 `h-[var(...)]` 消费 —— **单一来源** ✓。实测：变量解析 **56px** == header 实测 **56px** ✓；320/390/1440 三档**零横向溢出** ✓、最窄档 CTA 仍在视口内 ✓。移动端 Sheet 菜单**刻意不建** ✗（当前顶栏无区块链接，建了就是空壳；P3/P4 有锚点时再建）。受影响的 `e2e/landing` 3/3 ✓。
 - **令牌审计 ✅**：见上（4 项例外，全部有出处）。
-- **未提交** ✗：`src/layouts/MarketingLayout.vue` · `index.html` · `public/theme.js`（新增）· `package.json`（0.47.7）—— 等一句「提交」✓（R6）。
+  - **提交** ✓：该批（`MarketingLayout.vue` / `index.html` / `public/theme.js` / 版本号 0.47.7）已于**当日 2026-09-20** 随 `ebb9b2a` 进入 develop ✓，随后续版本进 master ✓（当时记录的"未提交 ✗"是彼时状态 ✓ 已闭环 ✓）。
 
-**验收标准：**
-1. 首页**未新增任何设计令牌**（`DESIGN.md` 是唯一来源）；若新增，计划里有出处说明
-2. 亮/暗两种模式下都成立 —— 首页虽是暗色优先，但**不假设用户一定在暗色**（`DESIGN.md` 有 Light Mode 中性色一节）
-3. `prefers-reduced-motion: reduce` 下无位移/缩放动效
+
+**完成记录（第五段 · 面板动效复起交付与 P2 收口；交付 2026-09-21/22 · 收口 2026-09-24）：**
+
+- **面板动效 ✅ —— P2 最后一项，第三段的暂停已于 2026-09-21 解除 ✓**：交付路线是**指针驱动**而非"入场姿态"——
+ ① `c14b9e9`：展示面板手势由 hit-testing 改为**指针源**驱动 ✓；② `3667fae`：三张卡共用**一个 rAF 运动学时钟**（积分器 + `MAX_ROTATION_STEP = 0.65°/帧` ✓）并做**各向同性归一化** `R_ref = hypot(W,H)/2.4` ✓（此前竖直灵敏度是水平的 **2.64×** ✗）；③ 底光由"卡自带 `::after`"改为**场景级单层** `.auth-underglow`（z=0 ✓ 显式类名取代 `nth-child` 位置规则 ✓）；④ 聚光描边由 CSS `mask` 换为 **SVG `<rect>` + `userSpaceOnUse`** ✓。
+ **真机**：静止 = 恒等矩阵（rect == 布局尺寸 ✓）· 悬停 `matrix3d(0.998…)` + 浮起 5px ✓ · 移开回恒等 ✓ · reduce 静止 ✓。
+- **版本**：v0.48.1 → **v0.51.0** ✓。提交 `c14b9e9`（代码）· `e225abc`（版本）· `90ed64d`（文档）· `e908693`（记忆）✓；master **逐个 cherry-pick** 8 个非 AI 提交 ✓ ⇒ 内容面差异 **0 文件** ✓（AI 文件 0 ✓）。
+- **P2 验收、显式局限、探针三坑、开口项与范围边界** → 全部上移到本节顶部（「验收标准」/「开口项」/「明确不在 P2 范围」✓），**此处不再留第二份** ✗。
 
 ---
 ### P3：Hero 与「真实产品」价值演示
 
 **目标：** 首屏 3 秒内说清"这是什么、我能用"，并且**用产品自己作证**而非抽象插画。
+
+> **前置**：手机上大标题的大小 **已定 —— 维持现状 64px** ✓（2026-09-24 用户目视确认"没啥问题" ✓ ⇒ hero 阶段**不再纠缠此项** ✓，跟着现状做即可 ✓）。
 
 - [ ] **评估定位手法**：Plausible 的 H1 是「Easy to use and privacy-friendly **Google Analytics alternative**」—— 直接**点名它替代谁**。ctt 是否采用对比式定位**属于产品/市场决策**，故本项仅列为**待决项**，不擅自定文案
 - [ ] Hero：一句话定位（平实陈述，**不用营销腔**）+ 副文案 + 主 CTA + 次 CTA + 视觉主体
@@ -1522,7 +1481,7 @@ flowchart LR
 | 子任务 | 核心产出 | 状态 |
 |---|---|---|
 | P1：入口与路由骨架 | `MarketingLayout` + `/` 公开路由 + 守卫白名单 + CTA 随登录态 + 死代码核实 | ✅ 已完成 v0.47.0 |
-| P2：视觉基元与节奏 | 区块容器 ✓ · 手写 hover 守卫 ✓ · 主题首帧 ✓ · 粘性契约 ✓ · **标题阶梯 ✓ · 表面与分隔 ✓（令牌化，卡片待 P3）· 按钮复用 ✓ · motion-reduce 全局覆盖 ✓** · 面板动效（暂缓 ✗，见完成记录第三段）· 令牌审计 ✓ | ✅ 全部交付（第四/五段见完成记录） | 区块容器 ✓ · 手写 hover 守卫 ✓ · 面板动效（**多次尝试无果 → 暂缓** ✗，根因与暂停方案见「完成记录（第三段）」）· 标题阶梯 / 表面与分隔 / 复用按钮 / reduced-motion / 令牌审计 待做 | 🚧 进行中（两段已交付） |
+| P2：视觉基元与节奏 | 区块容器 ✓ · 手写 hover 守卫 ✓ · 主题首帧 ✓ · 粘性契约 ✓ · 标题阶梯 ✓ · 表面与分隔 ✓（令牌化，卡片待 P3） · 按钮复用 ✓ · motion-reduce 全局覆盖 ✓ · 面板动效 ✓ · 令牌审计 ✓ | ✅ 全部交付（第一~五段 ✓；第五段 = 2026-09-24 收口 ✓） | 移动端 Sheet 菜单（P3/P4）· 卡片表面令牌（P3）· 章节式滚动动效（内容就位后）—— 均为**已记录的延后** ✓ 非缺口 ✓ | ✅ 已完成 v0.51.0 |
 | P3：Hero 与价值演示 | Hero + 真实组件渲染的样例展示 + 样例数据单一来源 | 待开始 |
 | P4：能力 · 怎么工作 · 开源 | 数字化能力清单 + 三步流程 + 数据归属声明 + 仓库与部署命令 | 待开始 |
 | P5：定价（数据驱动） | 档位类型 + 清单常量 + `PricingTable`（免费 / 设计中两态，零硬编码） | 待开始 |
@@ -1533,7 +1492,7 @@ flowchart LR
 | 项 | 风险 | 缓解措施 |
 |---|---|---|
 | 入口变更影响既有 E2E | `protected-routes` / `guest-guard` 依赖当前跳转行为 | **已实测** ✓：`protected-routes` / `guest-guard` / `login` / `logout` **全绿未改**；但 `e2e/vue.spec.ts` **必须重写** —— 它原本断言"未登录访问 `/` 跳登录、登录后看 Home"，与新契约**正好相反**（教训：*受影响的 E2E 未必是被点名的那几个，凡断言过旧行为的都要逐一核对*） |
-| 「继承产品语言」容易走样 | 实施时随手加新灰阶/新彩色 | P2 的**令牌审计**列为交付物；新增令牌必须在计划里写出处 |
+| 「继承产品语言」容易走样 | 实施时随手加新灰阶/新彩色 | **已闭环 ✓（P2）**：令牌审计已交付 —— 首页面三文件零自造/零内联/零硬编码 ✓，例外 4 项各有出处 ✓；新增令牌（§3 阶梯 · §4 `--surface`）均写明出处 ✓ |
 | 真实组件作视觉主体 | 组件带查询逻辑，直接嵌入首页会发请求 | P3 明确用**样例数据**驱动，组件需能在"无查询"下渲染（若做不到，抽取展示子组件，不复制实现） |
 | 定价结构先于业务 | 结构可能与最终档位不匹配 | 数据驱动 + 零硬编码：改清单即可，不动模板；「设计中」状态如实呈现 |
 | **视觉与文案脱节** | 丢一堆截图不加解释 —— 开发者工具落地页最常见的失手 | P3 把"每个视觉配一行说明"列为**交付物**（不是可选） |
@@ -1542,10 +1501,18 @@ flowchart LR
 **整体验收标准（按阶段进度逐条勾选）：**
 - [x] 未登录访问 `/` 呈现首页；受保护路由守卫行为**未变**（既有 E2E 全绿）✓ **P1 达成**
 - [x] 已登录访问 `/` 仍呈现首页，CTA 指向 `/dashboard` ✓ **P1 达成**
-- [x] 首页**未新增设计令牌**（或新增有出处）✓ **P1 达成** —— 首屏只用既有语义类（`bg-background` / `text-foreground` / `text-primary` / `border-border` / `text-muted-foreground`），零新值 ✓
+- [x] 首页**未新增设计令牌**（或新增有出处）✓ **P1 达成** · **P2 复核达成**（新增仅 §3 标题阶梯 / §4 `--surface`，出处逐条写在 P2 段 ✓；例外 4 项见「令牌审计」✓） —— 首屏只用既有语义类（`bg-background` / `text-foreground` / `text-primary` / `border-border` / `text-muted-foreground`），零新值 ✓
+- [x] 亮/暗两种模式下都成立 —— ✓ **P2 达成**（h1 两主题逐值相同 ✓ 令牌同步反转 ✓ 15 处文本 14 处 ≥ 4.5 ✓；1 处 4.24/4.42 ✗ 已登记为开口项）
+- [x] `prefers-reduced-motion: reduce` 下无位移/缩放 —— ✓ **P2 达成**（`getAnimations()` **0** ⟷ 对照组 **5** ✓；滚动动效因页面无可滚内容**未覆盖** ✗ 已如实标注）
 - [ ] 定价区数据驱动、零硬编码数字 —— **P5 未开始**
 - [ ] 单测 + E2E + 真机截图三处证据齐备 —— **单测 1437/1437 ✓ · E2E 24/24 ✓ · 真机截图待 P6**（P1 阶段以构建产物与 E2E 断言为证，未出截图）
 - [x] README / `docs/architecture.md` / `memory-bank` 已同步 ✓ **P1 达成**
+
+### 目视验收（交给人判的部分）
+
+> 需要你**看一眼、说一句**的项集中在 [`../.omp/qa/visual-qa.md`](../.omp/qa/visual-qa.md) ✓ —— **当前无待判项** ✓（第一批 5 项 2026-09-24 确认无问题 ✓）；本文件不收录感官判断类内容 ✗（计划只放工程事实与决策 ✓）。
+
+---
 
 ## 📌 进度同步（2026-09-18 · v0.45.3）
 > 上一次页面同步停在 v0.15.2（2026-09-13 编辑），此后仓库推进到 **v0.45.3**。本节补齐这段缺口，并把仍未完成的事项列为新目标。
@@ -1574,6 +1541,11 @@ flowchart LR
 - [ ] **与后端真实联调**：契约均已对照源码验证，但尚无一次完整的端到端真实环境冒烟记录。
 - [ ] **侧边栏入口覆盖度**：Leaderboard 入口已补；后续新增页面需同步确认导航可达性（曾出现「页面已存在但无入口」）。
 - [ ] **`memory-bank/domains/` 是否需要新增 `leaderboard` 领域**：排行榜已积累可复用判断（7 维度单位语义、分区维度、分数格式化、切榜加载行为），目前散落在 `progress.md` 时间线层，尚未按 R24 归入领域。需确认归属后再建档。
+### P2 收口新增（2026-09-24）
+
+- 感官判断类（手机上大标题大小 · 眉题虚不虚 · 面板跟不跟手 · 亮色怪不怪 · 留白高不高级）→ [`../.omp/qa/visual-qa.md`](../.omp/qa/visual-qa.md) ✓
+- 工程遗留：`ghost` 按钮残留两串 `text-shadow` 字面值 ✗（发光）—— 落回令牌需新增一对令牌 ⇒ 只报告未改 ✓
+
 ### 工程纪律备忘（本轮总结）
 - **版本与提交**：任何代码改动必同步版本号；版本提交独立且晚于代码提交；AI 内容（`memory-bank/`）单独提交、不进 master；非 AI 提交逐个 cherry-pick 进 master，禁止整条分支合并。
 - **验证纪律**：UI 改动必须在真实浏览器上验证（本轮有三个缺陷——裸 Zod 报错泄漏、`email: string | null` 的安全阀漏洞、em dash 与「空值占位符」冲突——**类型检查、lint、单测全绿也照样漏**）。
