@@ -124,10 +124,7 @@ onMounted(() => {
         </p>
         <div class="flex gap-3">
           <Button variant="outline" @click="router.push({ name: RouteNames.SETTINGS_PROFILE })"> Go to Profile </Button>
-          <Button
-            :class="cn('bg-primary text-white', 'hover:bg-accent-hover')"
-            @click="router.push({ name: RouteNames.LOGIN })"
-          >
+          <Button :class="cn('bg-primary text-white', '')" @click="router.push({ name: RouteNames.LOGIN })">
             Sign In
           </Button>
         </div>

@@ -288,8 +288,7 @@ const showConfirmPassword = ref(false)
           cn(
             'group w-full h-11 mt-3 rounded-md bg-primary text-white font-emphasis text-base',
             'shadow-lg shadow-primary/25 transition-[box-shadow,transform] duration-200',
-            'hover:bg-accent hover:shadow-accent/30 hover:scale-[1.02] active:scale-[0.98]',
-            'disabled:opacity-70 disabled:cursor-not-allowed disabled:hover:scale-100',
+            'active:scale-[0.98]',
           )
         "
         style="font-feature-settings: 'cv01', 'ss03'"

@@ -132,7 +132,7 @@ function pickRolling(): void {
     <PopoverContent class="w-60" data-testid="trend-month-popover">
       <button
         type="button"
-        class="mb-2 w-full rounded-md px-2 py-1.5 text-left text-xs font-medium transition-colors hover:bg-accent hover:text-accent-foreground"
+        class="mb-2 w-full rounded-md px-2 py-1.5 text-left text-xs font-medium transition-colors hover:text-foreground"
         :class="month === null ? 'text-foreground' : 'text-muted-foreground'"
         data-testid="trend-month-rolling"
         @click="pickRolling"
@@ -175,7 +175,7 @@ function pickRolling(): void {
           :class="
             isSelected(index)
               ? 'bg-primary text-primary-foreground font-medium'
-              : 'enabled:hover:bg-accent enabled:hover:text-accent-foreground text-foreground'
+              : 'enabled:hover:text-foreground text-foreground'
           "
           :disabled="!isAvailable(index)"
           :aria-pressed="isSelected(index)"

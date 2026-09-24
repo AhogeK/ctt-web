@@ -273,7 +273,7 @@ defineExpose({
         cn(
           'group w-full h-10 rounded-md bg-primary text-white font-emphasis text-base',
           'shadow-lg shadow-primary/15 transition-[box-shadow,transform] duration-200',
-          'hover:bg-accent-hover hover:shadow-accent-hover/20 hover:scale-[1.02] active:scale-[0.98]',
+          'active:scale-[0.98]',
         )
       "
       style="font-feature-settings: 'cv01', 'ss03'"
