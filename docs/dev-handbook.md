@@ -832,4 +832,21 @@ Playwright E2E 测试使用 `page.route()` 进行 API mock（Playwright 官方�
   并同步 `documentElement.style.colorScheme` ✓（原生滚动条与表单控件跟随 ✓）。
 - 判据：**拦掉应用 bundle** 后首帧 class 仍正确 ✓ —— 不隔离就分不清是谁设的 ✓。
 
+
+### 6.4 按钮的 hover：按"族"分配能量，别换身份
+
+| 族 | hover 时变什么 | 不许变什么 |
+| --- | --- | --- |
+| **实心主按钮**（`variant="default"`） | **只动 `box-shadow`**：1px 品牌外轮廓 + 沉降阴影（配方登记在 `DESIGN.md` §6 / §10） | **填充与文字都不动** ✗ —— 换了填充或文字色，用户读到的就是"另一个按钮"✗ |
+| **outline 家族**（`AlertDialogCancel` · 徽章 · 选择器 · 设置页操作按钮） | **边框色 + 阴影抬一档** | **不加底色** ✗ |
+| **ghost** | 文字转强调色 + 一层柔和发光 | 不加底色 ✗ |
+| **破坏性** | **红色边框** | 不用紫填充 ✗（与红框不搭） |
+
+**为什么**：`#5e6ad2` + 白字 = 4.70:1，已是 AA 的**上限**；只要把填充提亮一点，白字就跌破 4.5（混白 2% 就只剩 ≈4.53，混白 10% 只剩 3.90）⇒ "提亮 + 白字 + 达标"三者数学上不可兼得 ✓，所以能量只能给阴影/边框。
+
+### 6.5 两个会让状态样式"静默失效"的陷阱 ✗
+
+1. **Tailwind v4 会静默丢弃复杂的任意阴影** ✗：`hover:shadow-[0_4px_12px_rgba(0,0,0,0.35)]` 编不出来（同批的 `hover:ring-1` 却能编 ✓）。⇒ 复杂阴影写进 `src/assets/main.css` 的普通 CSS（本仓库用 `[data-slot='button'][data-variant='default']` 选择器 + `--btn-shadow-*` 变量 ✓），**改完必须查产物**（`grep` 构建后的 CSS 里有没有那条声明 ✓）。
+2. **`data-variant` 只在调用点显式传了 `variant` 时才存在** ✗：九个调用点都没传 ⇒ 属性为 `null` ⇒ 按 `[data-variant='default']` 写的 CSS **永远匹配不上** ✓。已在 `Button.vue` 修为 `:data-variant="variant ?? 'default'"`（让属性反映**生效后**的变体 ✓）—— 新增 `data-*` 规则前先确认属性在 DOM 里真的存在 ✓。
+
 > **已定稿的视觉不要顺手改** ✗ —— 见 `AGENTS.md` R30（"已接受 = 冻结"）。
