@@ -13,10 +13,10 @@ maintenance:
   - '索引只做定位，不写结论 —— 结论属于被指向的文件（避免两处重复，P6）'
 files:
   AGENTS.md: 189
-  memory-bank/activeContext.md: 76
+  memory-bank/activeContext.md: 85
   memory-bank/progress.md: 153
   memory-bank/systemPatterns.md: 200
-  memory-bank/techContext.md: 101
+  memory-bank/techContext.md: 102
   memory-bank/projectbrief.md: 30
   memory-bank/archives/2026-09-20-activeContext-trim.md: 43
   memory-bank/archives/2026-09-22-activeContext-trim.md: 38
