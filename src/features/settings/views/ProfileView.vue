@@ -193,7 +193,7 @@ onMounted(() => {
     <AccountSection />
 
     <!-- Connected Accounts Section -->
-    <div class="rounded-lg border border-border dark:border-white/8 bg-muted dark:bg-white/2 p-6">
+    <div data-surface="card" class="rounded-lg border border-border dark:border-white/8 bg-muted dark:bg-card p-6">
       <h2 class="text-lg font-medium text-foreground dark:text-foreground mb-4">Connected Accounts</h2>
       <div class="flex items-center justify-between">
         <div class="flex items-center gap-3">
