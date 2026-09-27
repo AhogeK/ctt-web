@@ -40,7 +40,7 @@ domains:
     memory-bank/domains/ai-workflow/meta.md: 59
     memory-bank/domains/ai-workflow/practices.md: 196
     memory-bank/domains/ai-workflow/principles.md: 200
-    memory-bank/domains/ai-workflow/references.md: 135
+    memory-bank/domains/ai-workflow/references.md: 142
     memory-bank/domains/ai-workflow/scenarios.md: 199
   backend-contract:
     memory-bank/domains/backend-contract/meta.md: 87

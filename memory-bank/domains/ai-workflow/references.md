@@ -133,3 +133,10 @@ not the dev server — and any source change made after the last build is invisi
 - run `pnpm build` first when the point is to measure the shipped artifact;
 - always read back **which stylesheet the page loaded** (`[...document.styleSheets]` + a regex over
   `cssRules`) before believing a computed value — that single probe is what identified the trap.
+
+## Branch-scoped claims need branch-scoped commands (R29's cousin)
+
+`git log --oneline -5` prints **the current branch** — pasting it under a "master:" label is a false claim
+that nearly produced an "AI commit leaked into master" report (2026-09-26, master was clean). Use
+`git log master --oneline` · `git ls-tree -r master` · `git rev-list --count origin/x..x`; the unqualified
+form is only for "whatever is checked out".
