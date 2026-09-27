@@ -138,20 +138,20 @@
   --warning-surface: rgba(245, 158, 11, 0.1); /* amber-500/10 */
   --warning-border: rgba(245, 158, 11, 0.3); /* amber-500/30 */
   --warning-solid: #f59e0b;
-  /* Same two roles in dark: DESIGN.md's card surface is `rgba(255,255,255,0.02)`, and
+  /* Same two roles in dark: DESIGN.md's card surface is the app-shell plate below, and
    * `#828fff` is the palette's Accent Hover (both themes — it is a palette entry, not a per-theme one). */
   --surface: rgba(255, 255, 255, 0.02);
   --accent-hover: #828fff;
   --foreground: #f7f8f8;
-  --card: #191a1b;
+  --card: #101116;
   --card-foreground: #f7f8f8;
-  --popover: #191a1b;
+  --popover: #101116;
   --popover-foreground: #f7f8f8;
   --primary: #5e6ad2;
   --primary-foreground: #ffffff;
-  --secondary: #0f1011;
+  --secondary: #1f2023;
   --secondary-foreground: #d0d6e0;
-  --muted: #0f1011;
+  --muted: #1f2023;
   --muted-foreground: #8a8f98;
   --accent: #7170ff;
   --accent-foreground: #ffffff;
@@ -164,7 +164,7 @@
   --chart-3: oklch(0.769 0.188 70.08);
   --chart-4: oklch(0.627 0.265 303.9);
   --chart-5: oklch(0.645 0.246 16.439);
-  --sidebar: #0f1011;
+  --sidebar: #1f2023;
   --sidebar-foreground: #f7f8f8;
   --sidebar-primary: #5e6ad2;
   --sidebar-primary-foreground: #ffffff;
@@ -348,6 +348,59 @@
 [data-slot='button'][data-variant='default']:hover:not(:disabled) {
   box-shadow: var(--btn-shadow-hover);
 }
+
+/*
+ * Dark cards are near-black plates, keyed on the semantic attribute (never on a utility class — a rule
+ * keyed on `bg-card` stops matching the moment the class is spelled differently).
+ */
+.dark [data-surface='card'] {
+  /*
+   * The plate should *float*, and its premium feel is material, not geometry: a near-black surface with a
+   * whisper of grain reads as a material, while a perfectly flat fill reads as paint (and bands). The
+   * gradient only ever lightens — a bottom that "sinks" has no range left on a near-black canvas (measured
+   * 1.02:1, invisible), so that half was removed rather than kept as decoration.
+   * No hover response and no brand colour: the accent budget belongs to CTAs and active states.
+   */
+  position: relative;
+  /* The lit rim below replaces the flat border in dark mode, so exactly one rim is drawn. */
+  border-color: transparent;
+  background-image:
+    url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='140' height='140'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='3' stitchTiles='stitch'/%3E%3CfeColorMatrix type='saturate' values='0'/%3E%3C/filter%3E%3Crect width='140' height='140' filter='url(%23n)' opacity='0.05'/%3E%3C/svg%3E"),
+    linear-gradient(180deg, rgba(255, 255, 255, 0.045) 0%, rgba(255, 255, 255, 0.012) 42%, rgba(255, 255, 255, 0) 74%);
+  box-shadow:
+    0 1px 2px rgba(0, 0, 0, 0.5),
+    0 12px 28px -18px rgba(0, 0, 0, 0.8),
+    0 34px 80px -40px rgba(0, 0, 0, 0.95);
+}
+
+/*
+ * A rim that answers the light: brighter along the top edge, fading toward the bottom. Masked to a 1px
+ * ring so it never paints the card face, and it is the only border in dark mode (the flat border is made
+ * transparent above) — a doubled rim would read as a seam.
+ */
+.dark [data-surface='card']::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  padding: 1px;
+  pointer-events: none;
+  background: linear-gradient(
+    180deg,
+    rgba(255, 255, 255, 0.13) 0%,
+    rgba(255, 255, 255, 0.085) 34%,
+    rgba(255, 255, 255, 0.05) 100%
+  );
+  -webkit-mask:
+    linear-gradient(#fff 0 0) content-box,
+    linear-gradient(#fff 0 0);
+  mask:
+    linear-gradient(#fff 0 0) content-box,
+    linear-gradient(#fff 0 0);
+  -webkit-mask-composite: xor;
+  mask-composite: exclude;
+}
+
 @media (prefers-reduced-motion: reduce) {
   [data-slot='button'][data-variant='default'] { transition: none; }
 }

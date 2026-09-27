@@ -85,7 +85,8 @@ onBeforeUnmount(() => {
 
 <template>
   <section
-    class="group flex min-w-0 flex-col rounded-xl border border-border/60 bg-linear-to-b from-card to-muted/40 p-4 transition-colors hover:border-border"
+    data-surface="card"
+    class="group flex min-w-0 flex-col rounded-xl border border-border/60 dark:border-border bg-linear-to-b from-card to-muted/40 dark:bg-none dark:bg-card p-4 transition-colors hover:border-border"
   >
     <header class="mb-4 flex items-center justify-between gap-3">
       <h2 class="text-[11px] font-medium uppercase tracking-wider text-muted-foreground">{{ title }}</h2>

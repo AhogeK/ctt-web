@@ -83,7 +83,7 @@ function handleSetPasswordSuccess() {
 </script>
 
 <template>
-  <div class="rounded-lg border border-border dark:border-white/8 bg-muted dark:bg-white/2 p-6">
+  <div data-surface="card" class="rounded-lg border border-border dark:border-white/8 bg-muted dark:bg-card p-6">
     <h2 class="text-lg font-medium text-foreground dark:text-foreground mb-4">Account</h2>
 
     <div class="flex flex-col gap-4">

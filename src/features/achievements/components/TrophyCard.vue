@@ -99,7 +99,8 @@ const streakAriaLabel = computed(() => {
 
 <template>
   <article
-    class="flex flex-col gap-3 rounded-lg border border-border/60 bg-card p-4 transition-colors hover:border-border"
+    data-surface="card"
+    class="flex flex-col gap-3 rounded-lg border border-border/60 dark:border-border bg-card p-4 transition-colors hover:border-border"
     :class="{ 'opacity-70': grade === 0 }"
     data-testid="trophy-card"
     :data-trophy="trophy.key"
