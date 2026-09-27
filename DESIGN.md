@@ -30,6 +30,33 @@ The color system is almost entirely achromatic — dark backgrounds with white/g
 - **Level 3 Surface** (`#191a1b`): Elevated surface areas, card backgrounds, dropdowns.
 - **Secondary Surface** (`#28282c`): The lightest dark surface — used for hover states and slightly elevated components.
 
+### Dark regions, as shipped (measured 2026-09-26)
+
+Regions separate by **surface luminance**; the card's own quality comes from **material and light**, never
+from a lighter fill.
+
+| Layer | Token | Value | vs. the layer below |
+| --- | --- | --- | --- |
+| Canvas — main content **and the top bar** | `--background` | `#08090a` | — a full-width lighter chrome bar was tried and rejected: it sits between the eye and the content |
+| Navigation, sidebar, panels, muted blocks | `--secondary` · `--muted` · `--sidebar` | `#1f2023` | **1.22:1** |
+| Cards, panels, dropdowns, popovers | `--card` · `--popover` | `#101116` | **1.06:1** — the plate is nearly black *by design* |
+| Structural border | `--border` · `--input` · `--sidebar-border` | `rgba(255,255,255,0.12)` | the chrome's edge; 1.45:1 against the sidebar |
+| Card rim (dark only) | a 1px masked gradient on `::before` | `white 0.13 → 0.085 at 34% → 0.05` | **1.43:1** — deliberately just *under* the chrome's edge |
+| Card face | grain + top light | inline SVG noise (~2–3 %) · `white 0.045 → 0.012 → 0` | material, not paint; the gradient only ever lightens (a "sinking" bottom has no range left on a near-black canvas) |
+| Sink | three layers | `0 1px 2px .5` · `0 12px 28px -18px .8` · `0 34px 80px -40px .95` | floats the plate |
+| Secondary text | `--muted-foreground` | `#8a8f98` | 5.53:1 on a card |
+
+Three rules keep this from collapsing, each paid for:
+
+1. **The frame's edge must be at least as strong as the content's.** A card rim at 0.19 (1.77:1) out-shouted the
+   sidebar's own border and read as "抢占了 navigation" — the fill was never the problem (it stayed at 1.06:1).
+2. **Never stack the same cue twice.** The rim is the edge; the 1px inset edge lights that were layered on top of
+   it were the actual overshoot and were removed rather than tuned.
+3. **"深度" is material, not geometry.** Pale fills (`#191a1e`, `#32333a`) read as matte grey; a sinking bottom
+   has 1.02:1 of range on a black canvas. Grain plus a soft top light is what reads as a surface.
+
+**Rejected:** structure by border weight (the token at 0.20 read as wireframe) · pale card fills · a hover/pointer
+light or brand colour on cards (the accent budget belongs to CTAs and active states) · a lighter top bar.
 ### Text & Content
 
 - **Primary Text** (`#f7f8f8`): Near-white with a barely-warm cast. The default text color — not pure white, preventing eye strain on dark backgrounds.

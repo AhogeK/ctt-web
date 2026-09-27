@@ -131,21 +131,6 @@ curl -s -X POST $API/v1/auth/api-keys -H "Authorization: Bearer $JWT" \
 Devices require a **UUID** `deviceId` (`COMMON_001` otherwise). Purge when done:
 `DELETE /auth/api-keys/{id}` (revoke) then `DELETE /auth/api-keys/{id}/delete`.
 
-## Where an artifact goes (.omp vs docs)
-
-`.omp/README.md` is the authority; the short version:
-
-| Artifact                      | Home                                             | Committed? |
-| ----------------------------- | ------------------------------------------------ | ---------- |
-| Implementation plan           | `.omp/plans/<feature>-plan.md`                   | No (gitignored) |
-| Delivery report / requirement / design       | `.omp/delivery/` · `.omp/requirements/` · `.omp/design/` | No |
-| User-facing project doc       | `docs/`                                          | Yes        |
-| Agent memory                  | `memory-bank/`                                   | Yes        |
-
-A plan is a **working artifact**: worth writing for any change spanning >5 files, worth keeping as
-the record of why — but it is not project documentation, so it never goes in `docs/`. Plan filenames
-carry no date (recency is the mtime); the plan itself has a `Date:` field.
-
 ## Proving a lint rule is actually enabled
 
 `vp lint` runs with `--fix`, so a newly added rule can appear to do nothing: it silently rewrites the
@@ -190,11 +175,22 @@ declaration into the last value.
 - Archive to `memory-bank/archives/YYYY-MM-DD-<name>-archive.md` and leave a pointer line behind — under
   `memory-bank/` (not `docs/` — R25); archives are the one artifact exempt from the 200-line limit.
 
+## Independent judgement (R31)
+
+- **Research first, then decide whether to obey.** The user's proposal is an input, not the default. Read the
+  code, run the probe, do the arithmetic — then either execute or push back with a reason and an alternative.
+- **Match the standard to the claim**: facts and numbers must hold up; taste and trade-offs may be stated
+  straight from trained judgement. A rule that demands evidence for every opinion turns judgement into
+  paperwork (the first draft of R31 did exactly that and was corrected the same day).
+- Instances worth remembering: the header "chrome band" (executed, then rejected — the pushback belonged
+  *before* the edit) and the card-depth saga (five static cues tried before anyone asked whether "depth" here
+  meant surface shading at all).
+
 ## Resource hygiene
 
-- Long-running process → background it with its own log file; record the PID for teardown.
-- Teardown: match the process command line against the resource you started, never kill by port alone.
-- **Browsers: the whole contract now lives in `skill://user-chrome-tabs`** ✓ (user-level, cross-project — written **报告格式已成 skill** ✓（`~/.agents/skills/problem-report/` ✓ 引用真实代码而非行号 ✓ 现状分已实现/未实现 ✓ 技术点带实测数字 ✓ 问题点含"未确定"列 ✓ 未被要求不给方案 ✓）。
-  after three of this session's own failures: a relay without `target` hijacks the tab being read ✗, a heuristic
-  filter closed the user's login tab ✗, and two tabs were left open ✗). Read it before any browser automation on
-  this machine; the verified ceremony, the `omp`-group recipe and the self-check are all there.
+- Long-running process → background it with its own log file; **record the PID the launcher printed**.
+- **Only kill a PID you started and recorded.** All three of these read as "cleanup" while killing someone
+  else's process: `lsof -t -iTCP:<port> | xargs kill` · `pkill -f <name>` · `killall`. Ownership unclear ⇒
+  leave it and report it; a "cleaned up" claim must list the killed PIDs (2026-09-26: the user's own dev
+  server died to the port form above, after the report claimed only my PIDs were touched).
+- Browsers: contract in `skill://user-chrome-tabs` (`target`-less relay hijacks the tab). Report format

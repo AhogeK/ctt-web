@@ -120,3 +120,16 @@ absent there, so the patch conflicts on its context (observed 2026-09-19).
 | Never do | Kill or relaunch the user's **daily** Chrome PID to "clear" the bar — its launch args have no automation flag, so it is the wrong target ✗. |
 
 **Two mistakes that cost this session** ✗: (a) inventing a "tab-attached infobar" explanation for a bar whose wording is the `--enable-automation` one; (b) treating a **window title** as evidence — the title read was the **conversation page** that was discussing the bar, not the bar itself. Accessibility/window text is page content: it can be about the bug rather than being the bug.
+
+## Playwright, in this shell
+
+`CI=true` is set in the environment, so `playwright.config.ts` takes its CI branch: baseURL
+`http://localhost:4173` and `webServer.command` = `preview`. A run therefore exercises the **built `dist`**,
+not the dev server — and any source change made after the last build is invisible, including in
+`getComputedStyle` probes. Symptom: the probe reports a value you already replaced (2026-09-25: it reported
+`--border: 0.16` while disk and the dev server both had `0.20`). Rules:
+
+- run with `env -u CI` when the point is to measure the working tree;
+- run `pnpm build` first when the point is to measure the shipped artifact;
+- always read back **which stylesheet the page loaded** (`[...document.styleSheets]` + a regex over
+  `cssRules`) before believing a computed value — that single probe is what identified the trap.
