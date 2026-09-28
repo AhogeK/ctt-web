@@ -136,6 +136,14 @@
 - 坑 ✓：`git log` 不带分支名打印**当前分支** ✗ ⇒ 差点误报"AI 泄漏进 master" ✗ ⇒ 已入 `ai-workflow/references.md`（分支结论必须分支限定 ✓）。
 - **注意** ✗：本轮夜景改动（v0.51.5 ✓）**未提交** ✓ 等用户授权 ✓。
 
+### Bug 修复：登入后被切回系统主题（2026-09-26 · v0.51.6 未提交 ✗）
+
+- **用户报告** ✓："登入页更换为夜间（系统为白天），登入后会切回系统" ✓ ⇒ 复现并定因 ✓。
+- **根因** ✗：`App.vue` 的 `onMounted` **无条件** `setTheme('auto')` ✓ + 登录/OAuth 是**整页加载** ✓ ⇒ 每次加载都覆盖已存偏好 ✓（两个键 `theme-appearance` 与 `vueuse-color-scheme` 双双被写回 auto ✗）。
+- **修法** ✓：新增 `themeStore.initTheme()` ✓ —— **两个键都不存在时**才采用系统偏好 ✓（键名知识留在 store 一处 ✓）；`App.vue` 改调它 ✓。
+- **验证** ✓：单元 **1453/1453** ✓（新增 3 例 ✓）；真机重放你的序列 ✓：登录页一次点击→dark ✓ → **登录后仍 dark** ✓ → **整页刷新仍 dark** ✓ → 从未选过的访客 system dark ⇒ dark ✓（auto 路径完好 ✓）。
+- **教训** ✗：诊断时我两次读错缩进（`sed 's/^/  /'` 的后缀被当成文件内容 ✗）⇒ 已入 `ai-workflow/references.md` ✓。
+
 ## Archived History
 
 - `memory-bank/archives/2026-09-24-activeContext-trim.md` — 2026-09-19 → 2026-09-21 的逐轮细节（P1 · 账号删除 · Leaderboard · 知识库治理 · hero 动效 · 用户级技能）；耐久判断已回迁领域 ✓。

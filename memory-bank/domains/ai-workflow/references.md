@@ -140,3 +140,10 @@ not the dev server — and any source change made after the last build is invisi
 that nearly produced an "AI commit leaked into master" report (2026-09-26, master was clean). Use
 `git log master --oneline` · `git ls-tree -r master` · `git rev-list --count origin/x..x`; the unqualified
 form is only for "whatever is checked out".
+
+## Never infer indentation from output you prefixed yourself
+
+Diagnosing the theme fix took two failed writes because the source was read through `sed 's/^/  /'` and the
+two added spaces were read as part of the file. When a literal anchor misses, read `repr()` (Python) or
+`cat -A` **without** an added prefix, and prefer whitespace-tolerant anchors
+(`re.search(r"^(\s*)describe\(", text, re.M)`) over literal indentation.

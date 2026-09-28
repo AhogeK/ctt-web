@@ -54,6 +54,22 @@ about fills — and the two 1px inset edge lights that had accumulated on top of
 than tuned (they were the actual overshoot). The chrome's own tone was left alone: the user had already
 accepted it, and trimming it would have moved the goalposts instead of fixing the inversion.
 
+## Never reset a stored theme choice on mount
+
+**Rule**: page-load initialization may only *adopt* the system preference when the visitor has never chosen
+one. `App.vue`'s mount runs on **every** full load, and an OAuth sign-in is exactly that (`location.href`
+out, a fresh document back) — the unconditional `setTheme('auto')` that used to live there silently
+overwrote a stored choice ("I switched to dark on the login page and it came back as system once I signed
+in", 2026-09-26).
+
+- Either stored key counts as a choice: `theme-appearance` (this store) and `vueuse-color-scheme` (read by
+  `useDark` **and** by the first-paint script `public/theme.js`).
+- The fix lives in the store (`initTheme()`), not in `App.vue`, so the key names have one owner.
+- Regression tests in `src/stores/__tests__/theme.test.ts`: a stored dark survives and `matchMedia` is never
+  consulted; a legacy `vueuse-color-scheme`-only choice survives; a fresh visitor still adopts the system.
+- Browser replay of the exact sequence (login → one toggle to dark → sign in → reload) asserted
+  `html.class`, `theme-appearance` and `vueuse-color-scheme` at each step.
+
 ## Lowering the surfaces: the edges and lights must come down with them
 
 Measured 2026-09-26, after "到了晚上…太亮了，没有黑色高级感": every *surface* dropped one notch (chrome
