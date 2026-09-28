@@ -54,6 +54,40 @@ describe('Theme Store', () => {
   /**
    * Tests for store initialization and default state.
    */
+  describe('initTheme (regression: a stored choice survives a page load)', () => {
+    it('keeps a stored "dark" preference and never consults the system', () => {
+      localStorage.setItem('theme-appearance', 'dark')
+      mockMode.value = 'dark'
+      store.initTheme()
+      expect(store.mode).toBe('dark')
+      expect(mockMatchMedia).not.toHaveBeenCalled()
+    })
+
+    it('keeps a legacy vueuse-color-scheme choice too', () => {
+      localStorage.setItem('vueuse-color-scheme', 'light')
+      mockMode.value = 'light'
+      store.initTheme()
+      expect(store.mode).toBe('light')
+      expect(mockMatchMedia).not.toHaveBeenCalled()
+    })
+
+    it('adopts the system preference when nothing has ever been stored', () => {
+      mockMatchMedia.mockReturnValueOnce({
+        matches: true,
+        media: '(prefers-color-scheme: dark)',
+        onchange: null,
+        addListener: vi.fn<() => void>(),
+        removeListener: vi.fn<() => void>(),
+        addEventListener: vi.fn<() => void>(),
+        removeEventListener: vi.fn<() => void>(),
+        dispatchEvent: vi.fn<() => boolean>(),
+      })
+      store.initTheme()
+      expect(store.mode).toBe('auto')
+      expect(mockMatchMedia).toHaveBeenCalledWith('(prefers-color-scheme: dark)')
+    })
+  })
+
   describe('initialization', () => {
     it('initializes with default mode "auto"', () => {
       expect(store.mode).toBe('auto')

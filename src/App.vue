@@ -53,7 +53,8 @@ function handleTermsRejected() {
 
 // Initialize theme to follow system preference
 onMounted(() => {
-  useThemeStore().setTheme('auto')
+  // Adopts the system preference only when no theme has been chosen yet — see `initTheme`.
+  useThemeStore().initTheme()
   globalThis.addEventListener(TERMS_EXPIRED_EVENT, handleTermsExpired)
   globalThis.addEventListener('chunk-load-failed', handleChunkLoadFailed)
 })
