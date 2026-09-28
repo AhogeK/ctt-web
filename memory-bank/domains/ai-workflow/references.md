@@ -147,3 +147,10 @@ Diagnosing the theme fix took two failed writes because the source was read thro
 two added spaces were read as part of the file. When a literal anchor misses, read `repr()` (Python) or
 `cat -A` **without** an added prefix, and prefer whitespace-tolerant anchors
 (`re.search(r"^(\s*)describe\(", text, re.M)`) over literal indentation.
+
+## Push failing with "Error in the HTTP2 framing layer"
+
+Transient transport failure, not a repo problem — the retry a minute later pushed the same commit
+(2026-09-26, `c788be2..90d8258`). Retry first; if it persists, downgrade **for that one command only**
+(`git -c http.version=HTTP1.1 …` — hmm: use the exact flag `git -c http.version=HTTP/1.1 push …`) rather
+than changing any global git config. Do not re-commit or reset anything in response to it.

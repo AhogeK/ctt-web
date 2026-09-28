@@ -40,7 +40,7 @@ domains:
     memory-bank/domains/ai-workflow/meta.md: 59
     memory-bank/domains/ai-workflow/practices.md: 196
     memory-bank/domains/ai-workflow/principles.md: 200
-    memory-bank/domains/ai-workflow/references.md: 149
+    memory-bank/domains/ai-workflow/references.md: 156
     memory-bank/domains/ai-workflow/scenarios.md: 199
   theme-system:
     memory-bank/domains/theme-system/meta.md: 12
