@@ -825,6 +825,8 @@ Playwright E2E 测试使用 `page.route()` 进行 API mock（Playwright 官方�
 
 ### 6.3 主题：首帧由 `public/theme.js` 决定，不由 Vue 决定
 
+**已存的用户选择绝不能被挂载逻辑覆盖** ✓ —— 页面加载初始化**只能**在"用户从未选过"时采用系统偏好 ✓；OAuth 登录是**整页加载** ✓，无条件 `setTheme('auto')` 会把用户显式选的 dark 悄悄改回跟随系统 ✗（2026-09-26 修 ✓ 实现落在 store 的 `initTheme()` ✓ 回归测试在 `src/stores/__tests__/theme.test.ts` ✓）。
+
 - 首帧脚本**必须外链** ✗：`index.html` 的 CSP 是 `script-src 'self'`（无 `unsafe-inline`）⇒ 内联脚本被**静默拦截** ✗。
 - `public/theme.js` 是**经典脚本**（不是 `type=module` ✗，否则会延后到解析之后 ✓），放在 `<head>`、**CSP meta 之后、应用模块之前** ✓。
 - **读的键是 `vueuse-color-scheme`** ✗ 不是 `theme-appearance`：前者是**视觉状态**（VueUse `useDark` 的默认键，裸字符串
