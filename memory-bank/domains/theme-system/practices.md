@@ -5,7 +5,7 @@
 | Layer | Token | Value | vs. the layer below |
 | --- | --- | --- | --- |
 | Canvas — main content | `--background` | `#08090a` | — |
-| Navigation, sidebar, panels, muted blocks | `--secondary` · `--muted` · `--sidebar` | `#1f2023` | **1.22:1** |
+| Navigation, sidebar, panels, muted blocks | `--secondary` · `--muted` · `--sidebar` | `#131419` | **1.08:1** (was `#1f2023`/1.22:1 until the night-calibration pass, 2026-09-26) |
 | Top bar (app shell) | **same tone as the content** — `AppHeader` stays `bg-background` | `#08090a` | a full-width lighter chrome bar reads worse than the sidebar does: it sits *between* the eye and the content. Tried and reverted 2026-09-26 ("顶部不同色反而变得好丑") — the header keeps only its hairline `border-b`. |
 | Cards, panels, dropdowns, popovers | `--card` · `--popover` | `#101116` | **1.06:1** over the canvas — the plate is nearly black on purpose; its read comes from the rim, the gloss and the shadow |
 | Structural border | `--border` · `--input` · `--sidebar-border` | `rgba(255,255,255,0.12)` | the card's rim; never the load-bearing cue |
@@ -54,7 +54,22 @@ about fills — and the two 1px inset edge lights that had accumulated on top of
 than tuned (they were the actual overshoot). The chrome's own tone was left alone: the user had already
 accepted it, and trimming it would have moved the goalposts instead of fixing the inversion.
 
-## Settled judgement calls
+## Lowering the surfaces: the edges and lights must come down with them
+
+Measured 2026-09-26, after "到了晚上…太亮了，没有黑色高级感": every *surface* dropped one notch (chrome
+1.22 → 1.08:1, cards 1.06 → 1.02:1) while the canvas stayed at `#08090a` and every text token was left alone
+(5.66–18.37:1 on the new surfaces).
+
+The rule this pass established: **when a surface gets darker, the same alpha on its border and light gets
+*stronger* relative to it** — 0.12 hairline read 1.40:1 on the old chrome and would have read even higher on
+the new one, so the token went to 0.09 and the card rim to 0.095. Light cues move with their surface or they
+silently become the brightest thing on screen again.
+
+Why one notch is enough at night: contrast sensitivity rises as the room darkens, so a *smaller numeric step*
+still reads as a layer. The ladders here are 1.02 / 1.08 / (canvas) — deliberate, and judged on a real screen,
+not in a bright room.
+
+
 
 - **Grey-ish region fills are wanted** for *regions* (navigation vs main) — an earlier note generalised a
   light-theme button complaint into "never lift a dark surface with grey" ✗, which the user corrected

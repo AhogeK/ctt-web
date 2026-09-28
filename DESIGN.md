@@ -30,7 +30,7 @@ The color system is almost entirely achromatic — dark backgrounds with white/g
 - **Level 3 Surface** (`#191a1b`): Elevated surface areas, card backgrounds, dropdowns.
 - **Secondary Surface** (`#28282c`): The lightest dark surface — used for hover states and slightly elevated components.
 
-### Dark regions, as shipped (measured 2026-09-26)
+### Dark regions, as shipped (measured 2026-09-26, night calibration)
 
 Regions separate by **surface luminance**; the card's own quality comes from **material and light**, never
 from a lighter fill.
@@ -38,11 +38,11 @@ from a lighter fill.
 | Layer | Token | Value | vs. the layer below |
 | --- | --- | --- | --- |
 | Canvas — main content **and the top bar** | `--background` | `#08090a` | — a full-width lighter chrome bar was tried and rejected: it sits between the eye and the content |
-| Navigation, sidebar, panels, muted blocks | `--secondary` · `--muted` · `--sidebar` | `#1f2023` | **1.22:1** |
-| Cards, panels, dropdowns, popovers | `--card` · `--popover` | `#101116` | **1.06:1** — the plate is nearly black *by design* |
-| Structural border | `--border` · `--input` · `--sidebar-border` | `rgba(255,255,255,0.12)` | the chrome's edge; 1.45:1 against the sidebar |
-| Card rim (dark only) | a 1px masked gradient on `::before` | `white 0.13 → 0.085 at 34% → 0.05` | **1.43:1** — deliberately just *under* the chrome's edge |
-| Card face | grain + top light | inline SVG noise (~2–3 %) · `white 0.045 → 0.012 → 0` | material, not paint; the gradient only ever lightens (a "sinking" bottom has no range left on a near-black canvas) |
+| Navigation, sidebar, panels, muted blocks | `--secondary` · `--muted` · `--sidebar` | `#131419` | **1.08:1** |
+| Cards, panels, dropdowns, popovers | `--card` · `--popover` | `#0b0c10` | **1.02:1** — nearly black *by design*, and **below** the chrome so content stays the quieter plane |
+| Structural border | `--border` · `--input` · `--sidebar-border` | `rgba(255,255,255,0.09)` | the chrome's edge; 1.27:1 against the sidebar |
+| Card rim (dark only) | a 1px masked gradient on `::before` | `white 0.095 → 0.062 at 34% → 0.036` | **1.25:1** — just *under* the chrome's edge |
+| Card face | grain + top light | inline SVG noise (~2 %) · `white 0.028 → 0.008 → 0` | material, not paint; the brightest point of the face lands at ≈ the chrome's own tone |
 | Sink | three layers | `0 1px 2px .5` · `0 12px 28px -18px .8` · `0 34px 80px -40px .95` | floats the plate |
 | Secondary text | `--muted-foreground` | `#8a8f98` | 5.53:1 on a card |
 
@@ -54,6 +54,15 @@ Three rules keep this from collapsing, each paid for:
    it were the actual overshoot and were removed rather than tuned.
 3. **"深度" is material, not geometry.** Pale fills (`#191a1e`, `#32333a`) read as matte grey; a sinking bottom
    has 1.02:1 of range on a black canvas. Grain plus a soft top light is what reads as a surface.
+
+4. **When a surface darkens, its edge and light alpha must come down with it.** The same 0.12 hairline reads
+   1.40:1 on the old chrome and *more* on a darker one — the token went to 0.09 and the rim to 0.095 so the
+   frame keeps its lead. Light cues move with their surface or they silently become the brightest thing again.
+5. **Day and night want different calibrations.** The night pass (2026-09-26: "到了晚上…太亮了，没有黑色高级感")
+   moved every surface down one notch — chrome 1.22 → 1.08:1, cards 1.06 → 1.02:1 — while the canvas and every
+   text token stayed put. Contrast sensitivity rises as a room darkens, so a smaller numeric step still reads as
+   a layer, but on a bright-ambient panel this calibration gives up the fills and the hairlines carry everything.
+   The daylight calibration is kept in `domains/theme-system/` so switching back is a token swap.
 
 **Rejected:** structure by border weight (the token at 0.20 read as wireframe) · pale card fills · a hover/pointer
 light or brand colour on cards (the accent budget belongs to CTAs and active states) · a lighter top bar.

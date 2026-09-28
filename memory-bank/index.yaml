@@ -13,8 +13,8 @@ maintenance:
   - '索引只做定位，不写结论 —— 结论属于被指向的文件（避免两处重复，P6）'
 files:
   AGENTS.md: 205
-  memory-bank/activeContext.md: 145
-  memory-bank/progress.md: 160
+  memory-bank/activeContext.md: 159
+  memory-bank/progress.md: 161
   memory-bank/systemPatterns.md: 200
   memory-bank/techContext.md: 102
   memory-bank/projectbrief.md: 30
@@ -42,6 +42,12 @@ domains:
     memory-bank/domains/ai-workflow/principles.md: 200
     memory-bank/domains/ai-workflow/references.md: 142
     memory-bank/domains/ai-workflow/scenarios.md: 199
+  theme-system:
+    memory-bank/domains/theme-system/meta.md: 12
+    memory-bank/domains/theme-system/practices.md: 92
+    memory-bank/domains/theme-system/principles.md: 32
+    memory-bank/domains/theme-system/references.md: 13
+    memory-bank/domains/theme-system/scenarios.md: 36
   backend-contract:
     memory-bank/domains/backend-contract/meta.md: 87
     memory-bank/domains/backend-contract/practices.md: 92
