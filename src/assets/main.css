@@ -404,3 +404,136 @@
 @media (prefers-reduced-motion: reduce) {
   [data-slot='button'][data-variant='default'] { transition: none; }
 }
+
+/*
+ * Marketing hero — the product as a dissolving plane.
+ *
+ * Four reference heroes measured 2026-09-29 (Linear / Vercel / Resend / Raycast) all do the same two
+ * things, and the two earlier versions of this hero did neither: the product surface shares the copy's
+ * *vertical band* instead of sitting in a band of its own, and its edges are dissolved (mask / bleed)
+ * rather than closed with a border. None of the four rotates anything for style — the earlier 8deg
+ * lean here had no support in the measurements and is gone.
+ *
+ * The mask is also what makes a bleed safe: content fades to nothing before any clip edge can cut it.
+ * An earlier version let the window run 48px past the container and the section's own `overflow-x-clip`
+ * sliced its border, badge and cards (the probe had only checked the viewport, not the section box).
+ */
+/*
+ * The nearer plane: it hangs 48px below the window's top edge, so it overlaps the main plane instead of
+ * lining up beside it. Every measured reference puts its depth in an overlap like this, not in rotation.
+ */
+/*
+ * The hero's own viewport height: content is centred inside the first screen on tall viewports.
+ */
+.hero-viewport {
+  min-height: calc(100svh - var(--marketing-header-height));
+}
+
+/*
+ * Vertical centring — the "centred full page" read the user asked for — but only when the viewport can
+ * hold the composition: `justify-content: center` on a flex column that *overflows* pushes its own top
+ * out from under the sticky header, so short viewports stay top-aligned.
+ */
+@media (min-height: 1040px) {
+  .hero-viewport {
+    justify-content: center;
+  }
+}
+
+/*
+ * Dark-mode shadow for the two hero plates only — the plane's direct children.
+ *
+ * Deliberately NOT the global `.dark [data-surface='card']` recipe: that attribute also sits on nested
+ * surfaces (the summary tiles inside the demo), and tinting those reads as "the card inside the card"
+ * catching the same glow. Scope stays on the two surfaces that actually float.
+ *
+ * Geometry mirrors the light theme's `shadow-2xl` exactly (one layer, `0 25px 50px -12px`) so the two
+ * themes stay balanced. The colour is `--primary` at a low alpha: on the near-black page a black shadow
+ * can only darken towards black, and measured against the local page (luminance 0.0027) the black stack
+ * lands at 0.0024 — i.e. invisible; a tint at this alpha lands slightly above the page (measured 0.0030 at
+ * 18%) and is what actually reads as a shadow. It is kept dim on purpose: 35% measured 0.0036 and read as
+ * a glow that stole attention, so this sits between the two. Only the 1px contact layer stays pure black.
+ */
+.dark .hero-plane > [data-surface='card'] {
+  box-shadow:
+    0 1px 2px rgba(0, 0, 0, 0.5),
+    0 25px 50px -12px color-mix(in oklab, var(--primary) 9%, transparent);
+}
+
+/*
+ * The hero plane: ONE shared 3D transform for both cards, so the pair can never disagree.
+ *
+ *   perspective(700px)         the depth. Three steps shorter than the original 1800px — at that distance the
+ *                              near/far size difference was too small to read as depth at all (25px of
+ *                              wedge) and the sink too shallow (36px of left-edge drop at 1200px). The
+ *                              sink scales as roughly tan(angle) x (1200px / distance): measured points
+ *                              36px at 13deg/1200, 58px here, and that same law predicts the 22px and 98px
+ *                              measured at 10deg/1600 and 20deg/700 to within 7%.
+ *   rotateY(-18deg)            the left half turns away from the viewer, the right half comes toward it;
+ *                              that is what makes the left narrower and the right wider on screen.
+ *   transform-origin: center   the vanishing point of this transform. The projection divide then does
+ *                              the rest: the far (left) half contracts toward the origin, so its top edge
+ *                              drops and it reads as sinking, while the near (right) half expands away
+ *                              from it and reads as floating. That asymmetry is the effect — it is not
+ *                              produced by any in-plane rotation, and not by `perspective-origin`
+ *                              (measured: setting that property to its initial value changes no reading).
+ *
+ * Starts at 1280px because of a measured constraint: the projection magnifies the plane, so between 1024
+ * and 1279 the painted right edge passes the viewport and raises a horizontal scrollbar (measured
+ * +11px at 1024 and +29px at 1200). Clipping instead was tried and rejected — the section box is 1200px
+ * wide, so a clip chops the card's right border and rounding. Below 1280 the hero stays axis-aligned.
+ *
+ * Crispness rule that must not be broken: NO width compensation. The old `width: calc(100% + 9.75rem)`
+ * laid the plane out wider than it drew it (903 -> 719, a 0.80x downscale), and that resample, not the
+ * angle, is what blurred the cards. The wrapper keeps its natural size.
+ *
+ * Known cost of the projection, measured per element rather than as a bounding box: the local scale runs
+ * from 0.886 at the card's left edge to 1.075 at its right, so the left-hand text is rasterised at ~89%
+ * of its layout size. A bounding-box ratio (0.98) does not show this and must not be quoted as proof of
+ * sharpness.
+ *
+ * Cost, accepted and recorded: a transform on an ancestor stops `mask-composite` from painting the dark
+ * card's inset ring, so dark mode falls back to a plain border in the same block.
+ */
+@media (min-width: 1280px) {
+  .hero-plane {
+    transform: perspective(700px) rotateY(-18deg);
+    transform-origin: center center;
+  }
+
+  .dark .hero-plane [data-surface='card'] {
+    border-color: color-mix(in oklab, var(--border), var(--foreground) 14%);
+  }
+
+  /*
+   * The two floating plates get a stronger edge than that fallback. The plane carries a transform, and a
+   * transformed ancestor stops the `mask-composite` rim from painting at all — so on exactly these two
+   * surfaces the rim device `DESIGN.md` relies on for dark depth is absent, and the border is all that is
+   * left. At 14% it measured 1.88:1 against the plate and read as "sometimes there, sometimes not".
+   */
+  .dark .hero-plane > [data-surface='card'] {
+    border-color: color-mix(in oklab, var(--border), var(--foreground) 26%);
+  }
+}
+
+/*
+ * Specificity is deliberate: the dark card recipe is scoped `.dark [data-surface='card']` (0,2,0) and
+ * sets `position: relative`, which would silently beat a plain `.hero-panel` `position: absolute` — the
+ * panel would be positioned in light and stacked inline in dark. Matching that specificity and coming
+ * later in the file wins the tie.
+ *
+ * Positioning only, and no transform anywhere in the hero: a perspective rescale is what made the cards
+ * read as blurry, and two cards at different angles read as a skew. Both angles are zero; depth comes
+ * from overlap and the shadows `DESIGN.md` already owns.
+ *
+ * The panel is dropped 4.5rem past the card's top edge — the user's second guided step, "recent sessions
+ * 再低点，它太高了"; it previously hung only 1.25rem over the edge.
+ */
+@media (min-width: 1024px) {
+  .hero-panel[data-surface='card'] {
+    position: absolute;
+    right: 5rem;
+    bottom: calc(100% - 4.5rem);
+    width: min(22rem, 45%);
+  }
+}
