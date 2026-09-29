@@ -356,6 +356,15 @@ dark surfaces" still holds, and per the paragraph above the **1px brand outline 
 
 **Shadow Philosophy**: On dark surfaces, traditional shadows (dark on dark) are nearly invisible. Linear solves this by using semi-transparent white borders as the primary depth indicator. Elevation isn't communicated through shadow darkness but through background luminance steps — each level slightly increases the white opacity of the surface background (`0.02` → `0.04` → `0.05`), creating a subtle stacking effect. The inset shadow technique (`rgba(0,0,0,0.2) 0px 0px 12px 0px inset`) creates a unique "sunken" effect for recessed panels, adding dimensional depth that traditional dark themes lack.
 
+**Registered 2026-09-29 — the hero plates' dark shadow carries the brand colour**: the two floating plates in
+the landing hero (the plane\'s direct children, `.dark .hero-plane > [data-surface='card']`) use `--primary`
+at a low alpha for their soft shadow layer (`color-mix(in oklab, var(--primary) 35%, transparent)`) with the
+same geometry as the light theme\'s `shadow-2xl`, instead of the dark recipe\'s three black layers. Reason: a
+black shadow over the near-black page measures ~1.05:1 and reads as absent, so the two themes could not match.
+Scope is deliberate — the global `.dark [data-surface='card']` recipe keeps its black stack, because that
+attribute also sits on nested surfaces (summary tiles) where a tinted shadow reads as stray glow. The 1px
+contact layer stays black; the white-rim rule above is unchanged.
+
 ## 7. Do's and Don'ts
 
 ### Do

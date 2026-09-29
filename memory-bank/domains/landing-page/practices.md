@@ -32,7 +32,6 @@ design against** — re-derive only if a source changes.
 
 | Gap | Evidence | Fix |
 | --- | --- | --- |
-| Hover gating — **closed 2026-09-20** ✓ | All **16 hand-written** `:hover` rules in `src/` are now wrapped (`ThemeToggle` 2 · `AuthLayout.css` 11 · `ScrollFadeList` 2 · `TermsDialog` 1). Tailwind variants need nothing — v4 compiles them into the same query (counted in the served CSS ✓). | Proof: real browser, same element, `hover: hover` → colour changes; `hover: none` → **unchanged** ✓✓ |
 | **Emulating `hover: none`** | `page.emulateMediaFeatures([{ name: 'hover' }])` is **unsupported** (throws `Unsupported media feature: hover`) — and swallowing that error makes a "touch" run silently execute under desktop conditions, inverting the conclusion ✗ | Use `page.emulate({ viewport: { isMobile: true, hasTouch: true }, userAgent: <mobile> })`, which does flip `hover: hover → none` and `pointer: fine → coarse` ✓ |
 | Hover gating — the measurement story | Earlier: "`@media (hover: hover)` 0 hits in `src/`" ⇒ recorded as a repo-wide gap. **Wrong**: Tailwind v4 compiles the `hover:` variant *into* `@media (hover: hover)` — the built CSS carries **8** occurrences for **0** in source. The measurement looked at source and concluded about output. | The real instance is the **hand-written** CSS: `ThemeToggle.vue`'s `.theme-toggle:hover` (and `:root:not(.dark) …`) sit **outside** any `@media (hover: hover)` — verified in the built CSS — so a tap can leave the hover style stuck. Wrap hand-written `:hover`; Tailwind variants need nothing. |
 | Touch targets — **already specified** | `DESIGN.md` §8 now carries "**Minimum target: 44×44 CSS px for anything clickable**" with its basis (Apple HIG 44pt · Material 48dp · WCAG 2.5.8’s 24px as the floor) | Nothing to propose — components read §8 |
@@ -76,6 +75,17 @@ design against** — re-derive only if a source changes.
 
 The hero copy shipped in P1 is a placeholder for the *layout*, not the final messaging — the capability
 walkthrough, open-source block and pricing structure are still open (see `meta.md`).
+
+## Shipped so far (P3 stage A — the hero's product evidence, 2026-09-26)
+
+| Fact | Where it lives |
+| --- | --- |
+| The hero's right column renders **the dashboard's own components** from example data — no screenshot, no illustration, no canvas | `src/features/landing/components/LandingHeroPreview.vue` |
+| `SummaryStatGrid` is the **presentational half** of the dashboard's overview row (markup + testids), split out of `SummaryCards` so a surface with no query client can render the same cards: one implementation, two consumers | `src/features/dashboard/components/SummaryStatGrid.vue` + `summary-stat-fields.ts` |
+| Language ranking reuses the real row model (`useRankedDistribution`) — share, bar length and the folded tail are derived, never hand-written | `LandingHeroPreview` + `src/features/dashboard/composables/useRankedDistribution.ts` |
+| Example data is one module and **always labelled** (`Example data` badge + note); `total` is *derived* from the language list because two hand-written numbers drifted apart the first time (90h list beside a 3148h total ✗) | `src/features/landing/demo-data.ts` |
+| Acceptance is now **asserted, not probed** (first screen: h1 + primary CTA + framed preview · `LCP = H1` · 0 img/canvas · 375 no overflow) | `e2e/landing/page.spec.ts` |<br>hero composition: **two interlocking planes** (left copy; product plane; a floating *statistics* card crossing 60px into it), the four reference measurements, the decorations the user rejected, and the `.dark [data-surface]` position trap → `hero-composition.md`
+| The heatmap is **deliberately not** in the hero: it draws on ECharts' canvas and pulls the chart bundle, which contradicts the LCP criterion ✗ | recorded here so it is not retried |
 
 ## hero 动效：权威在 `DESIGN.md` §10，这里只记实测与陷阱（2026-09-21 ✓）
 
@@ -152,7 +162,7 @@ SonarLint `css:S7924` 报了 `ThemeToggle.vue` 的四条 `color:` 声明（两�
 
 **改后实测**（同样的叠加与稳态方法 ✓）：**5.86 / 17.90 / 5.74 / 18.10** ✓ —— **最差 5.74:1** ✓（比改前的最差 5.49 **更好** ✓✓，因为亮色悬停文字从手写的 `#1a1a2e` 换成令牌 `#08090a` ✓）。原先那 12 个手写值里有 **10 个**就是这些令牌的精确值或 ΔE<1.7 的近似 ✓ —— 所以这次迁移的**可见差异几乎为零** ✓，换来的是：一套主题定义、悬停守卫由 Tailwind 的 `hover:` 变体自动获得（不再需要手写 `@media (hover: hover)` ✓）。**`DESIGN.md` 无需新增令牌** ✓（每个角色都已有归属 ✓；为不存在的东西造一个 token 只会留下死规范 ✗）。
 
-- **一个真案例（2026-09-24 ✓ 勿与上条混为一谈 ✗）**：hero 眉题 `text-primary`（`#5e6ad2`，14px/500）**运行时**实测 **4.24（暗）/4.42（亮）** ✗ —— 判据三重独立吻合：canvas 归一化运行时读数 ✓ · 逐层 alpha 叠加 ✓ · 解析式计算 **4.243 / 4.416** ✓；与上条不同在于上条是**静态分析**未叠加背景 ✗ 且元素无文字 ✗，本条元素确有 14px 文本 ✓ 且为稳态令牌值 ✓。**单一紫色令牌无法双主题同时过线** ✓（`--accent` 暗 5.19 ✓ 亮 3.61 ✗；`--accent-hover` 暗 6.95 ✓ 亮 2.69 ✗）⇒ 修法属设计决策 ✓ 未决 ✓。
+- **一个真案例（2026-09-24 ✓ 勿与上条混为一谈 ✗）**：hero 眉题 `text-primary`（`#5e6ad2`，14px/500）**运行时**实测 **4.24（暗）/4.42（亮）** ✗ —— 判据三重独立吻合：canvas 归一化运行时读数 ✓ · 逐层 alpha 叠加 ✓ · 解析式计算 **4.243 / 4.416** ✓；与上条不同在于上条是**静态分析**未叠加背景 ✗ 且元素无文字 ✗，本条元素确有 14px 文本 ✓ 且为稳态令牌值 ✓。**单一紫色令牌无法双主题同时过线** ✓（`--accent` 暗 5.19 ✓ 亮 3.61 ✗；`--accent-hover` 暗 6.95 ✓ 亮 2.69 ✗）⇒ 修法属设计决策 ✓ —— **用户 2026-09-24 已目视确认"不改"** ✗（R30 冻结 ✓ 记录见 `.omp/qa/visual-qa.md` ✓）。
 
 ## AuthLayout 三块 3D 面板的**静止契约**（2026-09-20 实测）
 
@@ -188,13 +198,3 @@ SonarLint `css:S7924` 报了 `ThemeToggle.vue` 的四条 `color:` 声明（两�
 ⇒ 面板 `display:none` ⇒ 0×0，所有断言都在量隐藏元素）；必须 `page.setViewport({width:1440,height:1000})`
 显式设置。`page.mouse.move` 移到卡片**正中**时倾斜量恒为 0（`x−0.5` 就是零点），必须量**偏心**位置。
 
-## AuthLayout 背景：审计发现（**仅记录，不实施** — 技能实验期间实测，非本轮任务）
-
-登录/注册页背景由 `src/layouts/AuthLayout.css`（独立 CSS，不在 `.vue` 里）提供，实测：
-
-- **10 处 `animation: … infinite`**：网格 `mesh-shift 20s`；光斑 `orb-drift-1..6` = **15/20/25/18/22/16 s**；假光标 **1.2s**
-- 六个光斑周期互质组合 → 最小公倍数 ≈ **39600 s ≈ 11 小时** → **永不重同步**，背景从不静止
-- 周期最短的 1.2s 元素最抢眼，与前景 3D 卡片争焦点
-- 手写 `:hover` 未包 `@media (hover: hover)`：本域相关文件含 `AuthLayout.css`（11 处）与 auth 各表单/视图；是否构成缺陷取决于该 hover 是否承载**必需信息**（纯装饰则无害）
-
-**处置**：这不是待办 —— 按项目节奏，既有页面的动效统一在后续阶段处理；届时用 `motion-spec` 技能生成方案，而非当作规则约束。

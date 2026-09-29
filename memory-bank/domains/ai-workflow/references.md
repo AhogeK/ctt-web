@@ -154,3 +154,11 @@ Transient transport failure, not a repo problem — the retry a minute later pus
 (2026-09-26, `c788be2..90d8258`). Retry first; if it persists, downgrade **for that one command only**
 (`git -c http.version=HTTP1.1 …` — hmm: use the exact flag `git -c http.version=HTTP/1.1 push …`) rather
 than changing any global git config. Do not re-commit or reset anything in response to it.
+
+## Editing a Vue template: splice by index, never by literal indentation
+
+The theme fix and the P3 hero each lost a round to the same thing: a literal anchor built from output
+that had been read through `sed 's/^/  /'` (the two added spaces were read as file content). Two rules
+that end it: derive the anchors from the file itself (`t.index('<section class="…')`, then slice to the
+tag's own `>`), and rebuild after **every** template edit — a missing `grid` class or a class attribute
+pasted outside its quotes compiles silently until the build runs.
