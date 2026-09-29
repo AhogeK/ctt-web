@@ -14,7 +14,7 @@ maintenance:
 files:
   AGENTS.md: 220
   memory-bank/activeContext.md: 200
-  memory-bank/progress.md: 194
+  memory-bank/progress.md: 195
   memory-bank/systemPatterns.md: 200
   memory-bank/techContext.md: 104
   memory-bank/projectbrief.md: 30
@@ -65,7 +65,7 @@ domains:
   landing-page:
     memory-bank/domains/landing-page/meta.md: 52
     memory-bank/domains/landing-page/practices.md: 200
-    memory-bank/domains/landing-page/hero-composition.md: 93
+    memory-bank/domains/landing-page/hero-composition.md: 94
     memory-bank/domains/landing-page/principles.md: 54
     memory-bank/domains/landing-page/references.md: 52
     memory-bank/domains/landing-page/scenarios.md: 67
