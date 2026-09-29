@@ -88,7 +88,7 @@ const languagesLabel = computed(
     <div
       data-testid="hero-recent-panel"
       data-surface="card"
-      class="hero-panel mt-5 rounded-xl border border-border/60 bg-card p-3 shadow-xl dark:border-border lg:shadow-2xl"
+      class="hero-panel mt-5 rounded-xl border border-border/60 bg-card p-3 shadow-xl [animation-delay:440ms] dark:border-border lg:shadow-2xl"
     >
       <p class="mb-2 text-[11px] font-medium uppercase tracking-wider text-muted-foreground/90">Recent sessions</p>
       <RecentSessionsList :groups="sessionGroups" max-height-class="max-h-44" />

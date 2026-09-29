@@ -277,6 +277,15 @@
     .hero-fade-rise {
       animation: hero-fade-rise 320ms ease-out both;
     }
+    /*
+     * The floating panel enters after the plane it sits on. The plane's wrapper carries the 210ms delay
+     * in the markup, and the panel adds its own later one, so the big card is already in place when the
+     * panel arrives — that stagger is what makes the pair read as two layers instead of one surface.
+     * During its delay `both` holds the `from` frame, so the panel is simply not there yet.
+     */
+    .hero-panel {
+      animation: hero-fade-rise 320ms ease-out both;
+    }
     @supports (animation-timeline: view()) {
       .hero-handoff {
         animation: hero-handoff auto linear both;
