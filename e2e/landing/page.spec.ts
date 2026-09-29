@@ -33,6 +33,32 @@ test.describe('Landing page', () => {
     await expect(page.locator('a[href="/auth/register"]')).toHaveCount(0)
   })
 
+  test('shows the real product surface above the fold, labelled as example data', async ({ page }) => {
+    await page.setViewportSize({ width: 1440, height: 800 })
+    await page.goto('/')
+
+    // P3's acceptance: within the first screen the visitor must be able to tell
+    // what this is, see one piece of real UI evidence, and reach the main CTA —
+    // all before scrolling. The evidence is the real dashboard components
+    // (SummaryStatGrid + the ranked list), not a screenshot, so it must carry no
+    // image or canvas: that also keeps the LCP element text.
+    await expect(page.getByRole('heading', { level: 1 })).toBeInViewport()
+    await expect(page.getByTestId('landing-primary-cta')).toBeInViewport()
+    await expect(page.getByTestId('hero-preview')).toBeInViewport()
+    await expect(page.getByTestId('hero-preview').getByText('Example data')).toBeVisible()
+    await expect(page.getByTestId('hero-preview').getByText(/total/i)).toBeVisible()
+    await expect(page.locator('[data-testid="hero-preview"] img, [data-testid="hero-preview"] canvas')).toHaveCount(0)
+  })
+
+  test('stacks the first screen on a phone without a horizontal scrollbar', async ({ page }) => {
+    await page.setViewportSize({ width: 375, height: 812 })
+    await page.goto('/')
+
+    await expect(page.getByTestId('hero-preview')).toBeInViewport()
+    const overflow = await page.evaluate(() => document.documentElement.scrollWidth - window.innerWidth)
+    expect(overflow).toBeLessThanOrEqual(0)
+  })
+
   test('points an authenticated visitor at the dashboard', async ({ page }) => {
     await mockAuthApis(page)
     await loginViaForm(page)
