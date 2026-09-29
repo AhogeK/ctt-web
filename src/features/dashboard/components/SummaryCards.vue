@@ -2,28 +2,16 @@
 /**
  * SummaryCards — the overview row of the dashboard.
  *
- * Shows all six summary fields from the backend (today / daily average /
- * this week / this month / this year / lifetime total), mirroring the plugin
- * panel, formatted as compact durations.
+ * Owns the query and nothing else: it maps the backend's six summary fields onto
+ * `SummaryStatGrid`, which holds the markup (so the marketing hero can render the same cards from
+ * its own example data without a query client).
  *
- * Visual language follows DESIGN.md (Linear-inspired): translucent card
- * surfaces with hairline borders, muted uppercase tracked labels, one icon
- * per metric, and tabular numerals for stable alignment. Cards surface a
- * retry action on failure without blocking the rest of the row.
+ * Cards surface a retry action on failure without blocking the rest of the row.
  */
 import { computed } from 'vue'
-import {
-  Activity,
-  CalendarDays,
-  CalendarRange,
-  CalendarCheck,
-  CalendarClock,
-  Timer,
-  type LucideIcon,
-} from '@lucide/vue'
 import { useStatsSummary } from '@/composables/useStats'
-import { formatDuration } from '@/lib/utils'
-import { Skeleton } from '@/components/ui/skeleton'
+import SummaryStatGrid from './SummaryStatGrid.vue'
+import { SUMMARY_STAT_FIELDS, type SummaryStatItem } from './summary-stat-fields'
 
 const props = defineProps<{
   /** Origin-device filter (null → all devices) */
@@ -39,69 +27,18 @@ const { data, isPending, isError, refetch } = useStatsSummary(
   })),
 )
 
-interface SummaryCard {
-  label: string
-  seconds: number
-  icon: LucideIcon
-}
-
-const cards = computed<SummaryCard[]>(() => [
-  { label: 'Today', seconds: data.value?.today ?? 0, icon: Activity },
-  { label: 'Daily avg', seconds: data.value?.dailyAverage ?? 0, icon: CalendarCheck },
-  { label: 'This week', seconds: data.value?.thisWeek ?? 0, icon: CalendarDays },
-  { label: 'This month', seconds: data.value?.thisMonth ?? 0, icon: CalendarRange },
-  { label: 'This year', seconds: data.value?.thisYear ?? 0, icon: CalendarClock },
-  { label: 'Total', seconds: data.value?.total ?? 0, icon: Timer },
-])
+const items = computed<SummaryStatItem[]>(() =>
+  SUMMARY_STAT_FIELDS.map((field) => ({
+    label: field.label,
+    icon: field.icon,
+    seconds: data.value?.[field.key] ?? 0,
+  })),
+)
 
 // While pending or after a failed request there is no value to show yet.
 const showPlaceholder = computed(() => isPending.value || !data.value)
 </script>
 
 <template>
-  <!-- @container/sc wrapper: the query target must be an ANCESTOR of the
-       grid — a container cannot query itself. Wrapper width == row width. -->
-  <div class="@container/sc">
-    <div class="grid grid-cols-2 gap-4 md:grid-cols-3 @[1430px]/sc:grid-cols-6" data-testid="summary-cards">
-      <div
-        v-for="card in cards"
-        :key="card.label"
-        data-surface="card"
-        class="group rounded-xl border border-border/50 dark:border-border bg-gradient-to-b from-card to-muted/40 dark:bg-none dark:bg-card p-4 transition-[border-color,box-shadow] duration-200 hover:border-border hover:shadow-sm"
-      >
-        <div class="flex items-center justify-between gap-2">
-          <p class="text-[11px] font-medium uppercase tracking-wider text-muted-foreground/90">
-            {{ card.label }}
-          </p>
-          <component
-            :is="card.icon"
-            class="h-3.5 w-3.5 transition-colors"
-            :class="
-              card.icon === Activity || card.icon === Timer
-                ? 'text-primary/70'
-                : 'text-muted-foreground/50 group-hover:text-muted-foreground'
-            "
-            aria-hidden="true"
-          />
-        </div>
-        <Skeleton v-if="showPlaceholder" class="mt-3 h-7 w-20" data-testid="summary-loading" />
-        <p
-          v-else
-          class="mt-2 text-[26px] font-semibold leading-none tracking-tight tabular-nums text-foreground"
-          data-testid="summary-value"
-        >
-          {{ formatDuration(card.seconds) }}
-        </p>
-        <button
-          v-if="isError"
-          type="button"
-          class="mt-1.5 text-xs text-destructive hover:underline"
-          data-testid="summary-retry"
-          @click="refetch()"
-        >
-          Failed to load — retry
-        </button>
-      </div>
-    </div>
-  </div>
+  <SummaryStatGrid :items="items" :placeholder="showPlaceholder" :error="Boolean(isError)" @retry="refetch()" />
 </template>
