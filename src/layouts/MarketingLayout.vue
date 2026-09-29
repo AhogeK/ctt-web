@@ -53,7 +53,7 @@ const cta = computed(() =>
   <div class="[--marketing-header-height:3.5rem] flex min-h-screen flex-col bg-background text-foreground">
     <header class="sticky top-0 z-30 border-b border-border/60 bg-background/80 backdrop-blur">
       <div
-        class="mx-auto flex h-[var(--marketing-header-height)] w-full max-w-[1200px] items-center justify-between gap-3 px-4 sm:px-6"
+        class="mx-auto flex h-[var(--marketing-header-height)] w-full max-w-[1440px] items-center justify-between gap-3 px-4 sm:px-6"
       >
         <RouterLink
           :to="{ name: RouteNames.LANDING }"
