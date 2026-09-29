@@ -449,24 +449,37 @@
   }
 }
 
+
 /*
  * Dark-mode shadow for the two hero plates only — the plane's direct children.
  *
- * Deliberately NOT the global `.dark [data-surface='card']` recipe: that attribute also sits on nested
- * surfaces (the summary tiles inside the demo), and tinting those reads as "the card inside the card"
- * catching the same glow. Scope stays on the two surfaces that actually float.
+ * Brand colour, no black. On the near-black page a black shadow can only darken towards black — measured at
+ * 0.0024 against a page of 0.0027, i.e. invisible — and every version with a black companion layer read as
+ * a hard-edged plate rather than a shadow: the offset minus spread pushed the shadow's top inside the card,
+ * so the card's own edge already sat at ~95% of maximum depth. A brand-coloured layer with zero spread puts
+ * the card edge at the middle of the falloff instead, and it is what the design asks for in dark mode.
  *
- * Geometry mirrors the light theme's `shadow-2xl` exactly (one layer, `0 25px 50px -12px`) so the two
- * themes stay balanced. The colour is `--primary` at a low alpha: on the near-black page a black shadow
- * can only darken towards black, and measured against the local page (luminance 0.0027) the black stack
- * lands at 0.0024 — i.e. invisible; a tint at this alpha lands slightly above the page (measured 0.0030 at
- * 18%) and is what actually reads as a shadow. It is kept dim on purpose: 35% measured 0.0036 and read as
- * a glow that stole attention, so this sits between the two. Only the 1px contact layer stays pure black.
+ * Colour comes from a higher-chroma derivation of `--primary` (same hue, `c * 1.6`) rather than a raised
+ * alpha: raising alpha alone keeps the added light's blue/red ratio at exactly 2.00, which reads as a
+ * whitish haze instead of the brand tint. Measured blue/red ratios of the added light at +8px:
+ *   color-mix(primary 6%)   -> ΔR/ΔG/ΔB = +3/+3/+6   ratio 2.00
+ *   color-mix(primary 10%)  -> +5/+6/+10             ratio 2.00   (alpha does not change the hue)
+ *   color-mix(accent 6%)    -> +3/+3/+8              ratio 2.67
+ *   oklch(from primary 0.62 c*1.6 h / …) -> +7/+7/+21 ratio 3.00  ← current, at alpha 0.08
+ *
+ * Measured with a three-state, same-coordinate differential (none / candidate, five columns per card,
+ * median; noise floor 0.00000). ΔL against "no shadow" at 2 / 8 / 24 / 48 / 64px:
+ *   current (0.08) -> +0.0020 / +0.0019 / +0.0010 / +0.0002 / 0.0000
+ *   0.14           -> +0.0036 / +0.0034 / +0.0020 / +0.0004 / +0.0001
+ * Alpha scales it roughly linearly at a fixed hue; chroma is what decides whether it reads as brand.
+ *
+ * Scoped deliberately to the plates: the summary tiles inside the demo carry `data-surface='card'` too, and
+ * tinting those reads as "the card inside the card" catching the same glow. Under `forced-colors` the
+ * shadow is forced to `none`, which is fine here — both plates keep a real 1px border, so their shape
+ * survives without it.
  */
 .dark .hero-plane > [data-surface='card'] {
-  box-shadow:
-    0 1px 2px rgba(0, 0, 0, 0.5),
-    0 25px 50px -12px color-mix(in oklab, var(--primary) 9%, transparent);
+  box-shadow: 0 16px 60px 0 oklch(from var(--primary) 0.62 calc(c * 1.6) h / 0.08);
 }
 
 /*
