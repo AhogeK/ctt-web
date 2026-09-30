@@ -31,6 +31,7 @@
 import { Button } from '@/components/ui/button'
 import { SITE_REPO_URL, PLUGIN_INSTALL_URL } from '@/lib/site-links'
 import LandingHeroPreview from '../components/LandingHeroPreview.vue'
+import LandingProofSection from '../components/LandingProofSection.vue'
 </script>
 
 <template>
@@ -66,4 +67,6 @@ import LandingHeroPreview from '../components/LandingHeroPreview.vue'
       </div>
     </div>
   </section>
+
+  <LandingProofSection />
 </template>

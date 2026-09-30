@@ -12,6 +12,8 @@ import type { SummaryStatKey } from '@/features/dashboard/components/summary-sta
 import type { RankedEntry } from '@/features/dashboard/composables/useRankedDistribution'
 import type { RecentSession } from '@/lib/schemas/stats.schema'
 import { groupSessions, type SessionDayGroup } from '@/features/dashboard/components/session-groups'
+import { buildTrophies, type Trophy } from '@/features/achievements/composables/trophy-model'
+import type { Achievement, AchievementWindow } from '@/lib/schemas/stats.schema'
 
 /** Badge text shown wherever example data appears. */
 export const EXAMPLE_DATA_BADGE = 'Example data'
@@ -93,3 +95,107 @@ export function exampleSessionGroups(now: Date = new Date()): SessionDayGroup[] 
     now,
   )
 }
+
+/** One rung of an example ladder, as the API states it per badge. */
+interface ExampleRung {
+  code: string
+  displayName: string
+  target: number
+}
+
+/**
+ * Expand one ladder into the badge rows the API returns.
+ *
+ * The API reports **one threshold per row** and **one progress value per (family, window)** — progress
+ * is deliberately not repeated per rung, and `buildTrophies` reads it back off the family. Writing the
+ * rows through this helper is what keeps that contract true in the example: the caller states the
+ * family's progress once, so a rung can never disagree with its siblings.
+ */
+function exampleLadder(
+  type: string,
+  description: string,
+  unit: string,
+  progress: number,
+  rungs: ExampleRung[],
+  options: {
+    window?: AchievementWindow
+    periodsReached?: number
+    periodStreak?: number
+  } = {},
+): Achievement[] {
+  const { window = 'LIFETIME', periodsReached = 0, periodStreak = 0 } = options
+  return rungs.map((rung) => ({
+    code: rung.code,
+    type,
+    tier: rungs.indexOf(rung) + 1,
+    displayName: rung.displayName,
+    description,
+    unlocked: progress >= rung.target,
+    unlockedAt: progress >= rung.target ? '2026-09-14T18:00:00Z' : null,
+    progress,
+    target: rung.target,
+    unit,
+    window,
+    windowStart: null,
+    windowEnd: null,
+    totalUnlocks: periodsReached,
+    periodStreak,
+  }))
+}
+
+/**
+ * Example trophies for the proof section below the hero.
+ *
+ * Built by calling the achievements page's own `buildTrophies()` on example badges rather than by
+ * hand-writing a `Trophy`: grouping, tier order, the earned count, `currentTier` / `nextTier` and the
+ * completion fraction all come out of the real code, so a marketing surface cannot show a ladder shape
+ * the product would never produce (the same reason the ranking reuses `useRankedDistribution` and the
+ * session log reuses `groupSessions`).
+ *
+ * Three ladders, not the cabinet's fourteen: the section shows what a ladder *is*. The weekly one is
+ * included on purpose — a resetting ladder is the only kind that carries the history row, which is the
+ * part a reader needs in order to see that progress restarts.
+ *
+ * The arithmetic ties to the surfaces above instead of being invented a second time: the weekly
+ * ladder's progress **is** `EXAMPLE_SUMMARY_SECONDS.thisWeek`, so a reader comparing the two never
+ * finds a contradiction.
+ */
+export const EXAMPLE_TROPHIES: Trophy[] = buildTrophies([
+  ...exampleLadder(
+    'STREAK',
+    'Code on consecutive days',
+    'days',
+    23,
+    [
+      { code: 'STREAK_7', displayName: 'One Week Streak', target: 7 },
+      { code: 'STREAK_14', displayName: 'Two Week Streak', target: 14 },
+      { code: 'STREAK_30', displayName: 'One Month Streak', target: 30 },
+      { code: 'STREAK_60', displayName: 'Two Month Streak', target: 60 },
+    ],
+    { periodsReached: 4, periodStreak: 23 },
+  ),
+  ...exampleLadder(
+    'TOTAL_SECONDS',
+    'Accumulate coding time',
+    'seconds',
+    EXAMPLE_SUMMARY_SECONDS.thisWeek,
+    [
+      { code: 'WEEKLY_5H', displayName: 'Five Hour Week', target: 5 * 3600 },
+      { code: 'WEEKLY_15H', displayName: 'Fifteen Hour Week', target: 15 * 3600 },
+      { code: 'WEEKLY_25H', displayName: 'Twenty Five Hour Week', target: 25 * 3600 },
+    ],
+    { window: 'WEEK', periodsReached: 3, periodStreak: 2 },
+  ),
+  ...exampleLadder(
+    'LANGUAGE_COUNT',
+    'Code in different languages',
+    'languages',
+    7,
+    [
+      { code: 'LANG_3', displayName: 'Trilingual', target: 3 },
+      { code: 'LANG_5', displayName: 'Five Languages', target: 5 },
+      { code: 'LANG_10', displayName: 'Ten Languages', target: 10 },
+    ],
+    { periodsReached: 2, periodStreak: 2 },
+  ),
+])
