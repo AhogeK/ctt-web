@@ -167,14 +167,18 @@ SonarLint `css:S7924` 报了 `ThemeToggle.vue` 的四条 `color:` 声明（两�
 
 > **AuthLayout 三块 3D 面板的静止契约 · 指针光三层 · 探针陷阱**已迁出 → [`archives/2026-09-30-landing-practices-trim.md`](../../archives/2026-09-30-landing-practices-trim.md) ✓（属 auth 面；2026-09-21 已交付 ✓）
 
-## Shipped so far (P3 stage B — the proof band, 2026-09-30)
+## Shipped so far (P3 stage B — the staged landing, 2026-09-30)
 
 | Fact | Where it lives |
 | --- | --- |
-| The band sits **directly under the hero** ("stack proof early") — never below a capability list | `src/features/landing/views/LandingView.vue` |
-| Two fragments, each one real component **plus a one-line caption and its own `Example data` label** — an uncaptioned render is the failure this guards | `src/features/landing/components/LandingProofSection.vue` |
-| Fragment ① is the **full six-card summary row** (the hero shows three, so the set is new information) | `SummaryStatGrid` + `demo-data.ts` |
-| Fragment ② is **three trophy ladders**, one of them resetting — only a resetting ladder carries the history row, which is how a reader sees that progress restarts | `TrophyCard` + `buildTrophies()` |
-| Example trophies are **built by the achievements model**, never hand-written: grouping, order, `earned`, `currentTier`/`nextTier` and completion all come out of the real code | `demo-data.ts` → `EXAMPLE_TROPHIES` |
-| Cross-surface arithmetic is enforced: the weekly ladder's progress **is** `EXAMPLE_SUMMARY_SECONDS.thisWeek`, so two adjacent surfaces cannot disagree (the 90h/3148h defect is why) | `demo-data.ts` |
-| Acceptance is asserted: 0 img/canvas in the band · 375 px hides no overflow and the trophy cards **stack** (equal x) · dark geometry identical to light | `e2e/landing/page.spec.ts` + `LandingProofSection.test.ts` |
+| The landing is a **pinned stage**, not a stack of bands: a track (300svh) holds a sticky full-height stage, and each beat is positioned in it | `src/assets/main.css` (`.stage` / `.stage-pin` / `.beat-*`) |
+| A beat **parks at the centre** and stays — the blog's own maths (`translateY` 120 → 50 in viewport units, `-50%` of its own height cancelling out) | `beat-lead` / `beat-hold` keyframes |
+| The hand-off is **sequential, never superimposed**: hero fades out over `0→90svh`, the beat arrives `80→180svh`. Measured: the product of the two opacities is 0.000 at every sampled scroll | same file |
+| The **last** beat holds to the end of the track — a beat that reused the "leave upward" keyframe faded the page's own content out at the bottom | `beat-hold` |
+| Degradation is structural: the absolute layout lives **inside** `@supports (animation-timeline: scroll())`, so without it (or under reduce) the beats are ordinary sections in normal flow | same file |
+| One arriving beat, holding **both** the year grid and the trophy ladders: they answer the same question, so they share a screen | `LandingActivityBeat.vue` |
+| The grid is the product's own ladder — `<15m · 15–60m · 1–2h · 2–5h · 5–8h · >8h` — in DOM, because the dashboard's version is an ECharts option that cannot be extracted | `LandingActivityGrid.vue` |
+| Example data must survive a reader's eye: **no week column may be all-zero**, Sunday is light (0.9h base, 34% off) not empty, and the daily multiplier must span more than one bucket or a weekday row is one flat colour for a year | `demo-data.ts` + `__tests__/demo-data.test.ts` |
+| The year's trailing seven days **are** `EXAMPLE_SUMMARY_SECONDS.thisWeek`, and the trophies are built by `buildTrophies()` — cross-surface arithmetic cannot drift | `demo-data.ts` |
+| Acceptance asserted: beat top == viewport centre (±4px) · 364 painted days · 3 trophy cards · no horizontal overflow at 375 | `e2e/landing/page.spec.ts` |
+| Reference measurements behind the layout (5 product pages probed): none uses `position: sticky` for its tour (Linear 0, Supabase 1 = header); they use scroll-driven animation (Linear 5018 elements, Supabase 7746); one beat ≈ 1–1.5 screens and the artefact spans the container | this session's probe, `/tmp/ref-verify` |
