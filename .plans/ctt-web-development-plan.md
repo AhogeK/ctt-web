@@ -1399,27 +1399,52 @@ flowchart LR
 ---
 ### P3：Hero 与「真实产品」价值演示
 
+> **状态：进行中 —— A 段（hero）已交付 ✓（2026-09-29 · v0.51.50）· B 段（价值演示区）待开工 ✗。**
+> 验收 3/3 已具备证据 ✓（见下方「完成记录（第一段）」）· 目视验收与冻结项见 [`../.omp/qa/visual-qa.md`](../.omp/qa/visual-qa.md) ✓。
+
 **目标：** 首屏 3 秒内说清"这是什么、我能用"，并且**用产品自己作证**而非抽象插画。
 
 > **前置**：手机上大标题的大小 **已定 —— 维持现状 64px** ✓（2026-09-24 用户目视确认"没啥问题" ✓ ⇒ hero 阶段**不再纠缠此项** ✓，跟着现状做即可 ✓）。
 
 - [ ] **评估定位手法**：Plausible 的 H1 是「Easy to use and privacy-friendly **Google Analytics alternative**」—— 直接**点名它替代谁**。ctt 是否采用对比式定位**属于产品/市场决策**，故本项仅列为**待决项**，不擅自定文案
-- [ ] Hero：一句话定位（平实陈述，**不用营销腔**）+ 副文案 + 主 CTA + 次 CTA + 视觉主体
+- [x] Hero：一句话定位（平实陈述，**不用营销腔**）+ 副文案 + 主 CTA + 次 CTA + 视觉主体 ✓
+      交付形态：**满屏居中**（`min-height: calc(100svh - var(--marketing-header-height))` + `items-center`，消除高视口下的空场 ✓）· 左列文案 + 右列产品窗**重叠 + 透视**（用户要求"不用这么板正…做重叠效果，类似透视感，大小不一" ✓）
   - **主 CTA 已定（P1 交付时拍板）** ✓：**`Install the plugin`** → JetBrains Marketplace `plugin/29379`（地址已核实）。原计划写的「免费开始 → 注册页」**已废弃** ✗ —— 首屏该卖产品本体，且注册页没有 OAuth
   - **次 CTA** ✓：`View source` → 仓库（开源是产品事实，入口为一等公民）
   - **账户入口不放 hero** ✗：归顶栏（`Sign in`）—— 营销首屏卖产品、工具导航管账户，职责分离
   - 账号入口是否再入 hero：**当前判断为否** —— 顶栏已常驻，重复即浪费首屏最值钱的位置（此判断在 P3 实施时可复核）
-- [ ] **视觉主体用真实组件渲染**（热力图 / 7 维度榜单 / 奖杯柜），喂**代表性样例数据**，而不是截图或插画
+- [x] **视觉主体用真实组件渲染**（热力图 / 7 维度榜单 / 奖杯柜），喂**代表性样例数据**，而不是截图或插画 ✓
+      **实际选型**：`SummaryStatGrid`（取 3 项）+ `RankedDistributionList`（7 项语言榜，走真实行模型 `useRankedDistribution`），包在**产品窗口框**里 ✓。
+      **热力图有意排除 ✗**（与验收 2 冲突）：`HeatmapChart` 是 ECharts **canvas** 且内部自带查询 —— LCP 不能是图片，canvas 同理 ⇒ 换用上面两个 DOM/SVG 组件 ✓。
   - 参照证据（2026-09-18 实测 Plausible 首页 —— 与 ctt 同构：开源 + 自托管免费 + 云版付费）：首页视觉 **58 个 inline SVG / 10 个 img / 0 个 canvas**，**hero 内确有 >400×200 的大视觉**。即：同类产品的产品展示走的是**矢量/组件**而非位图 ✓
-- [ ] 价值演示区：2–3 个"你的一天会变成这样"的片段，每个一句话说明 + 一个真实组件
+- [ ] 价值演示区：2–3 个"你的一天会变成这样"的片段，每个一句话说明 + 一个真实组件 **← 下一段（B）· 未开工 ✗**
   - **收紧到首屏之后立刻**：研究结论是 *"Stack Proof Early — do not wait until the bottom; add proof right under the main header"*。ctt 没有客户 logo 可用 ✗，**可用的证明就是产品本身**（真实组件渲染）+ 仓库 —— 因此这一段必须紧跟 hero，**不能被能力清单挤到后面** ✓
 - [ ] **每个视觉都配一行说明/收益点** —— 不让截图自己说话（外部研究的一致结论：开发者工具页最常见失手就是丢一张图不作解释）
-- [ ] 样例数据集中定义（单一来源），且**明确标注为示例**，不冒充真实用户数据
+- [x] 样例数据集中定义（单一来源），且**明确标注为示例**，不冒充真实用户数据 ✓
+      单一来源 = `src/features/landing/demo-data.ts` ✓（`EXAMPLE_LANGUAGES` / `EXAMPLE_SUMMARY_SECONDS` / `EXAMPLE_DATA_BADGE` / `EXAMPLE_DATA_NOTE`）；**`total` 由语言行推导**而非手写 ✗（首版两处手写数字自相矛盾 90h vs 3148h，目视复核抓出后改为推导 ✓）；窗口 chrome 条上常驻 `Example data` 标识 ✓
 
 **验收标准：**
 1. 首屏无需滚动即可看到：产品是什么 + 一个真实 UI 证据 + 主 CTA
 2. 首屏 LCP 元素为文本或内联 SVG，**不为图片**（无外部图片依赖）
 3. 组件在移动端不溢出；表格/榜单在窄屏改为堆叠而非横向滚动
+
+
+**完成记录（第一段 · A：hero 交付；2026-09-29 · v0.51.50）**
+
+- **交付物**（7 个文件 ✓）：
+  - 新 `src/features/landing/demo-data.ts`（样例数据单一来源 ✓）
+  - 新 `src/features/landing/components/LandingHeroPreview.vue`（产品窗口框：chrome 三点 + 标签 + `Example data` 标识 + 圆角边框 + `data-surface="card"` ✓）
+  - **抽取**（非复制 ✗）`src/features/dashboard/components/summary-stat-fields.ts`（`SummaryStatItem` / `SUMMARY_STAT_FIELDS` / `SUMMARY_ACCENT_ICONS`）与 `SummaryStatGrid.vue`（纯 props 展示层 ✓，保留原容器查询阈值与四个 testid ✓）；`SummaryCards.vue` 改为只留查询 + 映射，渲染委托展示层 ⇒ **dashboard 与营销页共用同一份实现** ✓
+  - 改 `src/features/landing/views/LandingView.vue`（hero 版面）+ `src/assets/main.css`（hero 三个独立模块：`.hero-viewport` · `.hero-frame-3d` · `.hero-bloom` ✓）
+- **关键取舍**：
+  - **热力图不进 hero** ✗ —— canvas + 自带查询，与验收 2（LCP 非图片）直接冲突 ✓
+  - **`<script setup>` 不能有 `export`** ✗ ⇒ 类型与字段表必须放独立 TS 模块，否则 SFC 编译报 `ScriptCompileContext.error` ✓
+  - **复杂 CSS 走 `main.css` 而非 Tailwind 任意值**：实测被静默丢弃的有 `min-h-[calc(100svh-var(--marketing-header-height))]` ✗ 与**逗号型任意值** `minmax(0,1fr)` ✗；而 `lg:-ml-[12%]` / `lg:scale-[1.04]` **能**编译 ✓ —— 判定必须用**运行时 `getComputedStyle`**，`grep dist` 会被转义骗过 ✗
+  - **已知代价**（有意接受 ✓）：带 `transform` 的元素**或祖先**会让 `mask-composite` 描边环完全不画 ⇒ 倾斜层成为祖先 ⇒ 暗色下产品窗失去"圈边"，仅靠扁平边框兜底 ✓
+- **验收证据**：1440×1080 hero 高度 = 视口 − `--marketing-header-height`（56px）✓、`emptyBelowHero = -1`（"空?感"消除 ✓）· 产品窗 645×437（>400×200 参照 ✓）· `images = 0 && canvas = 0` ✓ · 1512/1440/1280 重叠 68px 且不压字形 ✓ · 375×812 `overflow = 0` ✓ · 单测 **1453/1453** ✓ · landing E2E **9 用例** ✓（首屏三要素 / 375 无溢出 / 示例标注）· `build` / `lint` 全绿 ✓
+- **冻结（R30）**：暗色两片的品牌色投影经用户刷新目视确认"**现在没问题的**" ✓（配方 `0 16px 60px 0 oklch(from var(--primary) 0.62 calc(c * 1.6) h / 0.08)`）⇒ 结论档在 `memory-bank/domains/landing-page/hero-composition.md` ✓，**不得**再当"发现"重报 ✗
+- **B 段（价值演示区）未开工** ✗：完整 6 卡汇总 + 奖杯柜片段（每个配一行说明 ✓）仍待做；奖杯形状需先读 `Trophy` / `TrophyTier` / `TrophyArt`（不猜 ✗）
+
 
 ---
 ### P4：能力清单 · 怎么工作 · 开源
@@ -1482,7 +1507,7 @@ flowchart LR
 |---|---|---|
 | P1：入口与路由骨架 | `MarketingLayout` + `/` 公开路由 + 守卫白名单 + CTA 随登录态 + 死代码核实 | ✅ 已完成 v0.47.0 |
 | P2：视觉基元与节奏 | 区块容器 ✓ · 手写 hover 守卫 ✓ · 主题首帧 ✓ · 粘性契约 ✓ · 标题阶梯 ✓ · 表面与分隔 ✓（令牌化，卡片待 P3） · 按钮复用 ✓ · motion-reduce 全局覆盖 ✓ · 面板动效 ✓ · 令牌审计 ✓ | ✅ 全部交付（第一~五段 ✓；第五段 = 2026-09-24 收口 ✓） | 移动端 Sheet 菜单（P3/P4）· 卡片表面令牌（P3）· 章节式滚动动效（内容就位后）—— 均为**已记录的延后** ✓ 非缺口 ✓ | ✅ 已完成 v0.51.0 |
-| P3：Hero 与价值演示 | Hero + 真实组件渲染的样例展示 + 样例数据单一来源 | 待开始 |
+| P3：Hero 与价值演示 | Hero + 真实组件渲染的样例展示 + 样例数据单一来源 | **进行中** —— A 段（hero）✅ 已交付 v0.51.50；B 段（价值演示区）待开工 ✗ |
 | P4：能力 · 怎么工作 · 开源 | 数字化能力清单 + 三步流程 + 数据归属声明 + 仓库与部署命令 | 待开始 |
 | P5：定价（数据驱动） | 档位类型 + 清单常量 + `PricingTable`（免费 / 设计中两态，零硬编码） | 待开始 |
 | P6：测试 · 真机 · 文档 | 单测 + E2E（`e2e/landing/`）+ 真机截图 + README/architecture/memory-bank | 待开始 |
@@ -1505,7 +1530,7 @@ flowchart LR
 - [x] 亮/暗两种模式下都成立 —— ✓ **P2 达成**（h1 两主题逐值相同 ✓ 令牌同步反转 ✓ 15 处文本 14 处 ≥ 4.5 ✓；1 处 4.24/4.42 ✗ 已登记为开口项）
 - [x] `prefers-reduced-motion: reduce` 下无位移/缩放 —— ✓ **P2 达成**（`getAnimations()` **0** ⟷ 对照组 **5** ✓；滚动动效因页面无可滚内容**未覆盖** ✗ 已如实标注）
 - [ ] 定价区数据驱动、零硬编码数字 —— **P5 未开始**
-- [ ] 单测 + E2E + 真机截图三处证据齐备 —— **单测 1437/1437 ✓ · E2E 24/24 ✓ · 真机截图待 P6**（P1 阶段以构建产物与 E2E 断言为证，未出截图）
+- [ ] 单测 + E2E + 真机截图三处证据齐备 —— **单测 1453/1453 ✓ · landing E2E 9 用例 ✓ · 真机截图待 P6**（P3 的 A 段以运行时读数与 E2E 断言为证 ✓，整页截图仍归 P6 ✗）
 - [x] README / `docs/architecture.md` / `memory-bank` 已同步 ✓ **P1 达成**
 
 ### 目视验收（交给人判的部分）
