@@ -199,3 +199,163 @@ export const EXAMPLE_TROPHIES: Trophy[] = buildTrophies([
     { periodsReached: 2, periodStreak: 2 },
   ),
 ])
+
+/**
+ * The window the activity grid shows: a full year.
+ *
+ * 52 weeks, not 12, because of what the reference pages measure: their product artefacts span the
+ * container (Linear's app window bleeds past both edges, Supabase's four tiles fill the row), while a
+ * 12-week grid is ~200px of indigo in a 1200px row — empty space where the product should be. Stated
+ * on the surface, because the window is not lifetime.
+ */
+export const EXAMPLE_ACTIVITY_WEEKS = 52
+
+/** One painted day. `seconds` of 0 is a real value: the visitor coded nothing that day. */
+export interface ActivityCell {
+  /** `YYYY-MM-DD`, for the accessible summary and stable keys. */
+  date: string
+  seconds: number
+}
+
+/** A column of the grid: seven slots, Sunday first, `null` where the window does not reach. */
+export interface ActivityWeek {
+  cells: (ActivityCell | null)[]
+}
+
+/**
+ * Twelve weeks of example days, oldest first, aligned to whole weeks.
+ *
+ * Deterministic on purpose — a random fill would make screenshots, tests and any two page loads
+ * disagree — and it rises towards the present, so the grid reads as a habit rather than wallpaper.
+ *
+ * The trailing seven days are **rescaled to sum to `EXAMPLE_SUMMARY_SECONDS.thisWeek`**: the summary
+ * row and this grid are read one after the other, and a mismatch between them is a contradiction
+ * rather than a rounding difference (the same rule that made `total` a derivation rather than a
+ * second number). Nothing else about this window is stated as a total, so nothing else can disagree.
+ *
+ * @param now - the day the window ends on; injectable so tests are not time-dependent.
+ * @returns Week columns for the grid, each with seven slots, Sunday first.
+ */
+export function exampleActivityWeeks(now: Date = new Date()): ActivityWeek[] {
+  const days = EXAMPLE_ACTIVITY_WEEKS * 7
+  const today = new Date(now)
+  today.setHours(0, 0, 0, 0)
+
+  /**
+   * Deterministic pseudo-noise: a sine pair, not `Math.random()`. Two page loads, a screenshot and a
+   * test must all see the same year.
+   */
+  const noise = (index: number) => {
+    const a = Math.sin(index * 12.9898) * 43758.5453
+    return a - Math.floor(a)
+  }
+
+  /**
+   * A break, not a blackout: the first version zeroed twelve consecutive days, which lands across two
+   * whole columns and reads as "the data is missing" rather than "they were away" (user, 2026-09-30:
+   * "中间有一列正好全空也很假"). Fourteen days, of which two or three still have a short session —
+   * which is also what a real holiday looks like when the laptop comes along.
+   */
+  const VACATION_UNTIL = 168 // ~24 weeks back
+  const VACATION_LENGTH = 14
+
+  const raw: ActivityCell[] = []
+  for (let back = days - 1; back >= 0; back -= 1) {
+    const date = new Date(today)
+    date.setDate(date.getDate() - back)
+    const weekday = date.getDay()
+    const index = days - 1 - back
+    const n = noise(index)
+
+    let hours = 0
+    /*
+     * Sundays are light, not empty. The first version hard-coded them to zero, which painted one
+     * completely blank row across the whole grid — the single most obvious tell that the data is
+     * generated (user, 2026-09-30: "整一排周日都是没数据的有感觉吗？太假了"). A real year has quiet
+     * Sundays, some busy ones, and a few skipped entirely; the `off` chance below is higher on
+     * Sundays so that mix comes out of the same rules as every other day.
+     */
+    const isSunday = weekday === 0
+    const offChance = isSunday ? 0.34 : 0.14
+    const onVacation = back >= VACATION_UNTIL - VACATION_LENGTH && back <= VACATION_UNTIL
+    // Two short sessions inside the break, so no column is ever a blank stripe.
+    const vacationDabble = onVacation && (back === VACATION_UNTIL - 4 || back === VACATION_UNTIL - 9)
+    const off = (onVacation && !vacationDabble) || n < offChance
+    const sprint = back >= 40 && back <= 47 // one heavy week, so the year has a shape rather than a level
+    // A handful of five-minute days: without them the lightest bucket never occurs, because the
+    // days whose multiplier would land there are exactly the ones the `off` rule above turns into
+    // zeros. Selection effect, not noise.
+    const brief = !off && n > 0.97
+    if (brief) {
+      hours = 6 / 60
+    } else if (!off) {
+      // Sunday keeps a small base (0.9h) instead of zero: with the wide spread below it lands
+      // anywhere from a few minutes to a long weekend session.
+      const base = [0.9, 2.2, 3.6, 2.6, 3.8, 3.2, 1.2][weekday] ?? 0
+      /*
+       * The multiplier has to be **wider than the colour ladder's buckets**, or the grid reads as
+       * wallpaper: the buckets are `<15m · 15–60m · 1–2h · 2–5h · 5–8h · >8h`, so a Monday that only
+       * ever ranges 1.8–3.0h is one colour for fifty-two weeks — which is exactly what the user
+       * spotted ("一行如果是有颜色都是一样的颜色，规律感太重"). Skewed by `n ** 1.7` so most days are
+       * short and the long ones are rare, the way a real year looks.
+       */
+      // Floor at ~6m so the lightest bucket also occurs: a ladder whose first shade never appears
+      // invites the reader to wonder whether the scale is real.
+      const spread = 0.1 + 2.35 * n ** 1.7 + (sprint ? 0.6 : 0)
+      hours = base * spread
+    }
+    raw.push({
+      date: `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`,
+      seconds: Math.round(hours * 3600),
+    })
+  }
+
+  const target = EXAMPLE_SUMMARY_SECONDS.thisWeek
+  const trail = raw.slice(-7)
+  const trailSum = trail.reduce((sum, cell) => sum + cell.seconds, 0)
+  const scale = trailSum === 0 ? 0 : target / trailSum
+  let assigned = 0
+  trail.forEach((cell, index) => {
+    // The last cell absorbs the rounding so the seven add up to `target` exactly, not approximately.
+    const seconds = index === trail.length - 1 ? target - assigned : Math.round(cell.seconds * scale)
+    assigned += seconds
+    cell.seconds = seconds
+  })
+
+  /*
+   * Hard rule, enforced rather than hoped for: **no week column may be entirely empty.** An empty
+   * column is indistinguishable from a gap in the rendering — the reader sees a missing stripe, not
+   * a quiet week. Any that survive the rules above (a break, or a run of unlucky draws) get one short
+   * session on their middle day. The assertion lives in the unit test so it can fail.
+   */
+  const byWeek = new Map<string, ActivityCell[]>()
+  for (const cell of raw) {
+    const day = new Date(`${cell.date}T12:00:00`)
+    const sunday = new Date(day)
+    sunday.setDate(day.getDate() - day.getDay())
+    const key = sunday.toISOString().slice(0, 10)
+    const bucket = byWeek.get(key)
+    if (bucket) bucket.push(cell)
+    else byWeek.set(key, [cell])
+  }
+  for (const cells of byWeek.values()) {
+    if (cells.some((cell) => cell.seconds > 0)) continue
+    const middle = cells[Math.floor(cells.length / 2)]
+    if (middle) middle.seconds = 25 * 60
+  }
+
+  const weeks: ActivityWeek[] = []
+  let current: (ActivityCell | null)[] = Array.from({ length: 7 }, () => null)
+  let slot = new Date(raw[0]?.date ?? today).getDay()
+  for (const cell of raw) {
+    current[slot] = cell
+    slot += 1
+    if (slot === 7) {
+      weeks.push({ cells: current })
+      current = Array.from({ length: 7 }, () => null)
+      slot = 0
+    }
+  }
+  if (slot !== 0) weeks.push({ cells: current })
+  return weeks
+}

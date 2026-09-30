@@ -292,7 +292,134 @@
         animation-timeline: view();
         animation-range: exit;
       }
+      /*
+       * The band below the hero rises into place as it enters — the second half of the hand-off.
+       * Without it the exit drift alone reads as the page simply scrolling, which is what "general"
+       * describes: something leaves, nothing arrives.
+       *
+       * The driver is the element's own `view()` entry range, so the movement is scrubbed by the
+       * visitor's own scroll rather than timed. Range ends at `cover 40%` — i.e. it settles once the
+       * band's top has reached 40% of the way up the viewport, which is earlier than "fully entered"
+       * on purpose: a section that is still sliding when it is already being read looks broken, not
+       * animated. Both properties are composite (`translate`, `opacity`), so neither touches layout.
+       *
+       * Same two guards as every other landing animation: `@supports` (Firefox, per 2026-01, has no
+       * scroll-driven animations — it simply gets the static band) and `prefers-reduced-motion`, since
+       * this whole block is nested inside `no-preference`.
+       */
+      .section-rise {
+        animation: section-rise auto linear both;
+        animation-timeline: view();
+        animation-range: entry 0% cover 40%;
+      }
     }
+  }
+}
+
+/**
+ * Staged scroll beats (2026-09-30): the blog's mechanism, ported literally this time.
+ *
+ * The blog's own maths, which is the part that was missed twice: each layer's `translateY` is mapped
+ * in **viewport units** from `120` to **`50`** — i.e. the arriving layer rises from below the fold and
+ * comes to rest **halfway up the viewport**, with `translateY(-50%)` cancelling its own height. It does
+ * not scroll past; it *becomes* the new hero, holds while its range lasts, then leaves upward as the
+ * next one arrives. The previous layer fades out on the same clock. That is the whole mechanism:
+ *
+ *   track (N × 100svh) ─┬─ sticky stage (100svh, clipped)
+ *                       └─ beats, each positioned in the stage and scrubbed by its own range
+ *
+ * Differences from the blog, all deliberate: scroll progress comes from `scroll(root block)` instead
+ * of a JS listener + React state (zero JS here), the track is ~3 beats instead of 8000px, and the
+ * blog's "scroll to unlock" mini-game is not part of a product page.
+ *
+ * Progressive degradation: the layout (absolute beats inside a clipped stage) exists **only** under
+ * `@supports (animation-timeline: scroll())`. Without scroll timelines the beats are ordinary
+ * sections in normal flow — the page reads top to bottom and nothing is hidden behind a stage that
+ * cannot move. Under `prefers-reduced-motion` the same applies, because this block is nested inside
+ * `no-preference`.
+ */
+@layer components {
+  @media (prefers-reduced-motion: no-preference) {
+    @supports (animation-timeline: scroll()) {
+      .stage {
+        /* One viewport per beat, plus one of scrubbing before the first hand-off. */
+        min-block-size: 300svh;
+      }
+      .stage-pin {
+        position: sticky;
+        inset-block-start: 0;
+        block-size: 100svh;
+        overflow: clip;
+      }
+      .beat {
+        position: absolute;
+        inset-inline: 0;
+        inset-block-start: 50%;
+        /* Parked state: centred, which is where `100%` of the layer's own height cancels out.
+           No `will-change`: it is the classic "text looks soft" trigger here — the layer gets
+           rasterised once and then transformed, so any fractional offset blurs the glyphs, and the
+           beats are three elements, not a per-frame animation. */
+        translate: 0 -50%;
+      }
+      /* Each beat owns a window of the track: it arrives, holds centred, then leaves upward. The
+         ranges overlap on purpose — the next beat starts rising while the current one is still
+         centred, which is what makes the page feel like it has one continuous stage rather than a
+         sequence of slides. Set per beat by `--beat` (its index) so the numbers stay in one place. */
+      .beat-hero {
+        animation: beat-lead auto linear both;
+        animation-timeline: scroll(root block);
+        /* Gone by 90svh, and its opacity is what the crossfade is timed around: the arriving beat
+           must not climb into a hero that is still half-visible. */
+        animation-range: 0svh 90svh;
+      }
+      .beat-a {
+        animation: beat-hold auto linear both;
+        animation-timeline: scroll(root block);
+        /* 80 → 180: it starts rising only as the hero finishes dissolving (90svh) and is parked
+           (keyframe 22%) from ~102svh. Holding past 180svh to the end of the track is what makes it
+           the final screen; the scrollable range is 300 − 100 = 200svh. */
+        animation-range: 80svh 180svh;
+      }
+
+    }
+  }
+}
+
+/** The first beat: settled, then leaves upward — it has no arrival. */
+@keyframes beat-lead {
+  0% {
+    opacity: 1;
+    translate: 0 -50%;
+  }
+  55% {
+    opacity: 1;
+    translate: 0 -66%;
+  }
+  100% {
+    opacity: 0;
+    translate: 0 -92%;
+  }
+}
+
+/**
+ * The arriving beat: rises from below the fold to the centre and **stays** there.
+ *
+ * It must not leave — it is the last beat, so there is nothing to make room for, and an earlier
+ * version reused a "leave upward" keyframe here: measured, the artefact faded to 0 again at the
+ * bottom of the page, which reads as the page having lost its own content.
+ */
+@keyframes beat-hold {
+  0% {
+    opacity: 0;
+    translate: 0 50%;
+  }
+  22% {
+    opacity: 1;
+    translate: 0 -50%;
+  }
+  100% {
+    opacity: 1;
+    translate: 0 -50%;
   }
 }
 
@@ -319,10 +446,15 @@
 /**
  * Hand-off keyframes are **staged**: the drift runs across the whole exit range, the dissolve only
  * over its second half. Reason, measured not assumed (2026-09-21): the exit range is one viewport
- * tall, and today's landing page holds only the hero plus the footer — 281px of scroll, i.e. 37% of
- * the range. With an unstaged fade the hero was left at `opacity 0.63` whenever the visitor reached
- * the bottom of the page, which reads as washed-out text. Staged, that same 37% shows drift only
- * (opacity stays 1), and the dissolve completes as soon as the page has sections to hand off to.
+ * tall, and at the time the landing page held only the hero plus the footer — 281px of scroll, i.e.
+ * 37% of the range. With an unstaged fade the hero was left at `opacity 0.63` whenever the visitor
+ * reached the bottom, which reads as washed-out text.
+ *
+ * Drift raised 40px → 9vh (2026-09-30, user feedback "现在的设计很一般"): 40px is roughly one text
+ * line, so the hero appeared to sit still while the page scrolled under it. A fraction of the
+ * viewport is the amount the eye actually reads as "the hero is leaving" without the copy visibly
+ * racing the scroll. Staging is kept: with sections below, the fade completes inside the range, and
+ * a short page still cannot strand the hero half-faded.
  */
 @keyframes hero-handoff {
   0% {
@@ -331,11 +463,23 @@
   }
   50% {
     opacity: 1;
-    translate: 0 -20px;
+    translate: 0 -4.5vh;
   }
   100% {
     opacity: 0;
-    translate: 0 -40px;
+    translate: 0 -9vh;
+  }
+}
+
+/** The arriving half: a band slides up into its place as the visitor's scroll reaches it. */
+@keyframes section-rise {
+  from {
+    opacity: 0;
+    translate: 0 56px;
+  }
+  to {
+    opacity: 1;
+    translate: 0 0;
   }
 }
 

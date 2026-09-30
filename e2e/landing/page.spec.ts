@@ -71,38 +71,44 @@ test.describe('Landing page', () => {
     await expect(page.getByTestId('marketing-cta')).toHaveCount(1)
   })
 
-  test('backs the hero with the full summary row and the trophy cabinet', async ({ page }) => {
+  test('raises each beat into the centre of the same stage', async ({ page }) => {
     await page.setViewportSize({ width: 1440, height: 900 })
     await page.goto('/')
+    // The entrance is a timed animation; wait for its end state rather than for a duration.
+    await expect(page.locator('[data-testid="hero-preview"]').locator('..')).toHaveCSS('opacity', '1')
 
-    // The proof band sits directly under the hero and is reachable by scrolling
-    // — never below a capability list, which is the rule the stage was planned
-    // around ("stack proof early": the product's own artefacts before any claim).
-    const proof = page.getByTestId('landing-proof')
-    await proof.scrollIntoViewIfNeeded()
-    await expect(proof).toBeVisible()
+    // Beat 2 arrives at the centre of the viewport, not somewhere below the fold: the stage is pinned
+    // and the layer is translated to -50% of its own height from the middle. This is the user's own
+    // description of the mechanism, and it is the only place it can be checked.
+    await page.evaluate(() => window.scrollTo(0, window.innerHeight * 1.6))
+    // Poll instead of sleeping: the beat must actually arrive within ±4px of the centre, and a fixed
+    // wait would both slow the suite and hide a beat that never gets there.
+    const centred = async () =>
+      page.evaluate(() => {
+        const beat = document.querySelector('[data-testid="landing-beat-activity"]') as HTMLElement
+        const rect = beat.getBoundingClientRect()
+        const centre = (window.innerHeight - rect.height) / 2
+        return { offset: Math.round(rect.top - centre), opacity: Number(getComputedStyle(beat).opacity) }
+      })
+    await expect
+      .poll(async () => Math.abs((await centred()).offset), { message: 'beat never parked at the centre' })
+      .toBeLessThanOrEqual(4)
+    expect((await centred()).opacity).toBeGreaterThan(0.8)
 
-    // Each fragment carries its own one-line explanation and its own example-data
-    // label: a rendered UI without a caption is the failure mode this guards.
-    await expect(proof.locator('[data-testid$="-caption"]')).toHaveCount(2)
-    for (const caption of await proof.locator('[data-testid$="-caption"]').all()) {
-      await expect(caption).not.toBeEmpty()
-    }
-    await expect(proof.getByText('Example data')).toHaveCount(2)
-
-    // And the fragments really are the product's components: all six summary
-    // figures (the hero shows three, so the set is new information here) and the
-    // three trophy ladders.
-    await expect(proof.getByTestId('summary-value')).toHaveCount(6)
-    await expect(proof.getByTestId('trophy-card')).toHaveCount(3)
+    // And the beat really is the product's artefact: a year of days plus the cabinet's ladders,
+    // which share the beat because they answer the same question.
+    const activity = page.getByTestId('landing-beat-activity')
+    await expect(activity.locator('[data-date]')).toHaveCount(364)
+    await expect(activity.getByTestId('trophy-card')).toHaveCount(3)
+    await expect(activity.getByText('Example data')).toBeVisible()
   })
 
-  test('keeps the proof band inside a phone viewport', async ({ page }) => {
+  test('keeps the stage inside a phone viewport', async ({ page }) => {
     await page.setViewportSize({ width: 375, height: 812 })
     await page.goto('/')
 
-    await page.getByTestId('landing-proof').scrollIntoViewIfNeeded()
-    await expect(page.getByTestId('landing-proof-trophies')).toBeVisible()
+    await page.evaluate(() => window.scrollTo(0, document.documentElement.scrollHeight))
+    await expect(page.getByTestId('landing-beat-activity')).toBeVisible()
     const overflow = await page.evaluate(() => document.documentElement.scrollWidth - window.innerWidth)
     expect(overflow).toBeLessThanOrEqual(0)
   })
