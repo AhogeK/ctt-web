@@ -30,7 +30,7 @@ src/
 │   ├── auth/           # Authentication (LoginView, RegisterView)
 │   ├── dashboard/      # Dashboard analytics (DashboardHome)
 │   ├── devices/        # Device management (DeviceListView)
-│   ├── landing/        # Public landing page (LandingView)
+│   ├── landing/        # Public landing page (LandingView: staged hero + one arriving beat)
 │   ├── leaderboard/    # Leaderboard rankings (LeaderboardView)
 │   └── settings/       # User settings (ProfileView, ApiKeysView)
 ├── layouts/            # Layout components
