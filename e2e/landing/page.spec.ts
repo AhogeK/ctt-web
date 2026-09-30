@@ -70,4 +70,40 @@ test.describe('Landing page', () => {
     // One entry only: the sign-in affordance is the same control, relabelled.
     await expect(page.getByTestId('marketing-cta')).toHaveCount(1)
   })
+
+  test('backs the hero with the full summary row and the trophy cabinet', async ({ page }) => {
+    await page.setViewportSize({ width: 1440, height: 900 })
+    await page.goto('/')
+
+    // The proof band sits directly under the hero and is reachable by scrolling
+    // — never below a capability list, which is the rule the stage was planned
+    // around ("stack proof early": the product's own artefacts before any claim).
+    const proof = page.getByTestId('landing-proof')
+    await proof.scrollIntoViewIfNeeded()
+    await expect(proof).toBeVisible()
+
+    // Each fragment carries its own one-line explanation and its own example-data
+    // label: a rendered UI without a caption is the failure mode this guards.
+    await expect(proof.locator('[data-testid$="-caption"]')).toHaveCount(2)
+    for (const caption of await proof.locator('[data-testid$="-caption"]').all()) {
+      await expect(caption).not.toBeEmpty()
+    }
+    await expect(proof.getByText('Example data')).toHaveCount(2)
+
+    // And the fragments really are the product's components: all six summary
+    // figures (the hero shows three, so the set is new information here) and the
+    // three trophy ladders.
+    await expect(proof.getByTestId('summary-value')).toHaveCount(6)
+    await expect(proof.getByTestId('trophy-card')).toHaveCount(3)
+  })
+
+  test('keeps the proof band inside a phone viewport', async ({ page }) => {
+    await page.setViewportSize({ width: 375, height: 812 })
+    await page.goto('/')
+
+    await page.getByTestId('landing-proof').scrollIntoViewIfNeeded()
+    await expect(page.getByTestId('landing-proof-trophies')).toBeVisible()
+    const overflow = await page.evaluate(() => document.documentElement.scrollWidth - window.innerWidth)
+    expect(overflow).toBeLessThanOrEqual(0)
+  })
 })

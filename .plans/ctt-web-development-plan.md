@@ -1417,7 +1417,8 @@ flowchart LR
       **实际选型**：`SummaryStatGrid`（取 3 项）+ `RankedDistributionList`（7 项语言榜，走真实行模型 `useRankedDistribution`），包在**产品窗口框**里 ✓。
       **热力图有意排除 ✗**（与验收 2 冲突）：`HeatmapChart` 是 ECharts **canvas** 且内部自带查询 —— LCP 不能是图片，canvas 同理 ⇒ 换用上面两个 DOM/SVG 组件 ✓。
   - 参照证据（2026-09-18 实测 Plausible 首页 —— 与 ctt 同构：开源 + 自托管免费 + 云版付费）：首页视觉 **58 个 inline SVG / 10 个 img / 0 个 canvas**，**hero 内确有 >400×200 的大视觉**。即：同类产品的产品展示走的是**矢量/组件**而非位图 ✓
-- [ ] 价值演示区：2–3 个"你的一天会变成这样"的片段，每个一句话说明 + 一个真实组件 **← 下一段（B）· 未开工 ✗**
+- [x] 价值演示区：2–3 个"你的一天会变成这样"的片段，每个一句话说明 + 一个真实组件 ✓
+      交付形态：`LandingProofSection.vue` 紧跟 hero ✓ —— 片段 ① **完整 6 卡汇总**（hero 只显示 3 张 ⇒ 此处是新信息 ✓）· 片段 ② **奖杯柜 3 条阶梯**（含一条**重置型** ✓ —— 只有它带"已达成多少周期"的历史行 ✓，这是读者理解"进度会归零"必须看到的那部分 ✓）
   - **收紧到首屏之后立刻**：研究结论是 *"Stack Proof Early — do not wait until the bottom; add proof right under the main header"*。ctt 没有客户 logo 可用 ✗，**可用的证明就是产品本身**（真实组件渲染）+ 仓库 —— 因此这一段必须紧跟 hero，**不能被能力清单挤到后面** ✓
 - [ ] **每个视觉都配一行说明/收益点** —— 不让截图自己说话（外部研究的一致结论：开发者工具页最常见失手就是丢一张图不作解释）
 - [x] 样例数据集中定义（单一来源），且**明确标注为示例**，不冒充真实用户数据 ✓
@@ -1445,6 +1446,14 @@ flowchart LR
 - **冻结（R30）**：暗色两片的品牌色投影经用户刷新目视确认"**现在没问题的**" ✓（配方 `0 16px 60px 0 oklch(from var(--primary) 0.62 calc(c * 1.6) h / 0.08)`）⇒ 结论档在 `memory-bank/domains/landing-page/hero-composition.md` ✓，**不得**再当"发现"重报 ✗
 - **B 段（价值演示区）未开工** ✗：完整 6 卡汇总 + 奖杯柜片段（每个配一行说明 ✓）仍待做；奖杯形状需先读 `Trophy` / `TrophyTier` / `TrophyArt`（不猜 ✗）
 
+
+**完成记录（第二段 · B：价值演示区交付；2026-09-30 · v0.52.0）**
+
+- **交付物**（5 个文件 ✓）：新 `src/features/landing/components/LandingProofSection.vue` ✓（两个片段，均走 `LandingSection` 的外壳 ✓ 视觉量一律取自 P2 的 `@theme` 阶梯 ✓）· `demo-data.ts` 补 `EXAMPLE_TROPHIES` ✓ · `LandingView.vue` 在 hero 之后挂载 ✓ · `e2e/landing/page.spec.ts` +2 用例 ✓ · 新 `LandingProofSection.test.ts`（3 用例 ✓）
+- **示例数据仍然只有一个来源，且经真实模型推导** ✓：奖杯由 `buildTrophies()` 从示例徽章行生成 —— 分组 / 阶梯顺序 / `earned` / `currentTier` / `nextTier` / 完成度全部由真实代码算出 ✓（与榜单走 `useRankedDistribution`、会话走 `groupSessions` 同一纪律 ✓）；**周阶梯的进度直接取 `EXAMPLE_SUMMARY_SECONDS.thisWeek`** ✓ ⇒ 两条相邻表面的数字不可能互相矛盾 ✓
+- **每段都带说明与示例标注** ✓（P3 把它列为交付物而非装饰 ✓）：两段各自一行说明 ✓ + 各自一个 `Example data` 徽标 ✓，E2E 逐段断言（2 条 caption 非空 ✓、2 个徽标 ✓）
+- **验收证据**：1440×900 与 375×812 均 `overflow = 0` ✓；演示区内 **0 img / 0 canvas**（整页同为 0 ✓ ⇒ 验收②的"非图片"前提在整个落地页成立 ✓）；6 个 `summary-value` ✓、3 张 `trophy-card` ✓；375 下奖杯卡三张同 x ✓（**堆叠而非横向滚动** ✓ 满足验收③）；暗色几何与亮色逐值相同 ✓；单测 **1456/1456** ✓ · landing E2E **7/7** ✓ · `build` 全绿 ✓
+- **已知代价**：`feature-landing` chunk 由 1.32 kB 增至 ~20 kB（gzip ~7 kB ✓）—— 因为证明区纳入了 `SummaryStatGrid` / `TrophyCard` / `trophy-model` ✓；它们与 dashboard 共享同一实现（不复制 ✗）⇒ 分包把共享模块留在各自 chunk，属**有意**取舍 ✓
 
 ---
 ### P4：能力清单 · 怎么工作 · 开源
@@ -1507,7 +1516,7 @@ flowchart LR
 |---|---|---|
 | P1：入口与路由骨架 | `MarketingLayout` + `/` 公开路由 + 守卫白名单 + CTA 随登录态 + 死代码核实 | ✅ 已完成 v0.47.0 |
 | P2：视觉基元与节奏 | 区块容器 ✓ · 手写 hover 守卫 ✓ · 主题首帧 ✓ · 粘性契约 ✓ · 标题阶梯 ✓ · 表面与分隔 ✓（令牌化，卡片待 P3） · 按钮复用 ✓ · motion-reduce 全局覆盖 ✓ · 面板动效 ✓ · 令牌审计 ✓ | ✅ 全部交付（第一~五段 ✓；第五段 = 2026-09-24 收口 ✓） | 移动端 Sheet 菜单（P3/P4）· 卡片表面令牌（P3）· 章节式滚动动效（内容就位后）—— 均为**已记录的延后** ✓ 非缺口 ✓ | ✅ 已完成 v0.51.0 |
-| P3：Hero 与价值演示 | Hero + 真实组件渲染的样例展示 + 样例数据单一来源 | **进行中** —— A 段（hero）✅ 已交付 v0.51.50；B 段（价值演示区）待开工 ✗ |
+| P3：Hero 与价值演示 | Hero + 真实组件渲染的样例展示 + 样例数据单一来源 | ✅ **已完成** v0.51.50 + v0.52.0（A：hero ✓ B：价值演示区 ✓） |
 | P4：能力 · 怎么工作 · 开源 | 数字化能力清单 + 三步流程 + 数据归属声明 + 仓库与部署命令 | 待开始 |
 | P5：定价（数据驱动） | 档位类型 + 清单常量 + `PricingTable`（免费 / 设计中两态，零硬编码） | 待开始 |
 | P6：测试 · 真机 · 文档 | 单测 + E2E（`e2e/landing/`）+ 真机截图 + README/architecture/memory-bank | 待开始 |
@@ -1530,7 +1539,7 @@ flowchart LR
 - [x] 亮/暗两种模式下都成立 —— ✓ **P2 达成**（h1 两主题逐值相同 ✓ 令牌同步反转 ✓ 15 处文本 14 处 ≥ 4.5 ✓；1 处 4.24/4.42 ✗ 已登记为开口项）
 - [x] `prefers-reduced-motion: reduce` 下无位移/缩放 —— ✓ **P2 达成**（`getAnimations()` **0** ⟷ 对照组 **5** ✓；滚动动效因页面无可滚内容**未覆盖** ✗ 已如实标注）
 - [ ] 定价区数据驱动、零硬编码数字 —— **P5 未开始**
-- [ ] 单测 + E2E + 真机截图三处证据齐备 —— **单测 1453/1453 ✓ · landing E2E 9 用例 ✓ · 真机截图待 P6**（P3 的 A 段以运行时读数与 E2E 断言为证 ✓，整页截图仍归 P6 ✗）
+- [ ] 单测 + E2E + 真机截图三处证据齐备 —— **单测 1456/1456 ✓ · landing E2E 7 用例 ✓ · 真机截图待 P6**（P3 的 A 段以运行时读数与 E2E 断言为证 ✓，整页截图仍归 P6 ✗）
 - [x] README / `docs/architecture.md` / `memory-bank` 已同步 ✓ **P1 达成**
 
 ### 目视验收（交给人判的部分）
