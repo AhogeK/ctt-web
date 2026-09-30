@@ -194,3 +194,13 @@ declaration into the last value.
   leave it and report it; a "cleaned up" claim must list the killed PIDs (2026-09-26: the user's own dev
   server died to the port form above, after the report claimed only my PIDs were touched).
 - Browsers: contract in `skill://user-chrome-tabs` (`target`-less relay hijacks the tab). Report format
+
+## 提交被拦下后的三坑（2026-09-30 踩中两次 ✗）
+
+- **`git add` 分区留在索引** ✗：pre-commit 失败只回滚**工作树** ✓，暂存区不回滚 ✗ ⇒ 重提时上一轮的
+  `package.json`/`README.md`/`memory-bank/` 一起进同一 commit ✗（实例：应有的 4 笔被 1 个 12 文件提交吞掉 ✗）。
+  做法：先 `git diff --cached --name-only` 核对 ✓、提交用**路径限定** `git commit -- <paths>` ✓。
+- **"内容一致"必须逐文件核验** ✗：中间态下一条 `git diff --name-only A B` 的空结果会**假通过** ✓
+  （实例：master 少了 `package.json`/`README.md` 却报 ✓ ✗）。做法：逐路径打印 一致/差异 ✓ + 另核关键值（版本两边各打印 ✓）。
+- **`git restore --staged --worktree <paths>` 在 cherry-pick 冲突态会按被 pick 版本还原** ✗ ⇒ 会撤过头 ✓。
+  做法：只撤索引用 `git restore --staged <paths>` ✓ 或直接路径限定提交 ✓。
