@@ -22,8 +22,15 @@ Object.defineProperty(globalThis, 'matchMedia', {
   })),
 })
 
-globalThis.ResizeObserver = vi.fn<() => ResizeObserver>().mockImplementation(() => ({
-  observe: vi.fn<() => void>(),
-  unobserve: vi.fn<() => void>(),
-  disconnect: vi.fn<() => void>(),
-}))
+/**
+ * `ResizeObserver` has to be a **class**: components construct it (`new ResizeObserver(...)` in
+ * `ScrollFadeList`), and a `vi.fn()` implementation that returns an object literal is not
+ * constructible — the call site fails with "is not a constructor" before any assertion runs. Found
+ * when the landing stage started rendering the dashboard's list components (2026-09-30).
+ */
+class ResizeObserverMock {
+  observe = vi.fn<() => void>()
+  unobserve = vi.fn<() => void>()
+  disconnect = vi.fn<() => void>()
+}
+globalThis.ResizeObserver = ResizeObserverMock as unknown as typeof ResizeObserver
