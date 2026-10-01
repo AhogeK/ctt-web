@@ -434,7 +434,7 @@ See also:
 
 - `src/lib/api/auth.ts` — `getGitHubAuthorizeUrl` signature + JSDoc
 - `src/lib/errors/oauth-bind-error-messages.ts` — error code → toast copy mapping
-- `memory-bank/techContext.md` — runtime config (staleTime, refetchOnWindowFocus) of the binding status query
+- Runtime config (staleTime, refetchOnWindowFocus) of the binding status query
 
 ### OAuth Account Management Endpoints
 
