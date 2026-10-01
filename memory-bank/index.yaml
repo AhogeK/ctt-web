@@ -14,7 +14,7 @@ maintenance:
 files:
   AGENTS.md: 230
   memory-bank/activeContext.md: 200
-  memory-bank/progress.md: 199
+  memory-bank/progress.md: 200
   memory-bank/systemPatterns.md: 200
   memory-bank/techContext.md: 104
   memory-bank/projectbrief.md: 30
