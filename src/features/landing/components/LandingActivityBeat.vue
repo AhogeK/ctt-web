@@ -22,7 +22,7 @@ const weeks = exampleActivityWeeks()
 </script>
 
 <template>
-  <article class="flex flex-col gap-10">
+  <article class="beat-unit flex flex-col gap-10">
     <section class="flex flex-col gap-5">
       <header class="flex flex-col gap-3">
         <div class="flex flex-wrap items-center gap-3">
