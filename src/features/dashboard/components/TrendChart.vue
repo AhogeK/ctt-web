@@ -6,8 +6,8 @@
  * day, hour-scaled Y axis, smooth curve. Design differs from the plugin's
  * blue→green two-hue gradient on purpose — this dashboard's charts share a
  * single brand indigo ramp (DESIGN.md), so the line is brand ink and the
- * area fades from a soft indigo tint to transparent (the top/bottom color
- * separation the user asked for).
+ * area fades from a soft indigo tint to transparent (the top/bottom colour
+ * separation this design uses).
  *
  * Data contract: dense daily points (date + seconds), zero days included —
  * the same HeatmapResponse the heatmap consumes (parent reuses one query).

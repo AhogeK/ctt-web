@@ -79,7 +79,7 @@ const BUCKET_RANGE: Record<BucketKey, string> = {
  * Single-hue indigo ramp following the daylight metaphor: Night deepest,
  * Daytime brightest, Evening settling back down. Light mode darkens the
  * ramp for white-background contrast; dark mode lifts it off #0f1011.
- * Endpoint-vs-surface contrast was tuned up (user feedback) — adjacent
+ * Endpoint-vs-surface contrast is deliberately high; adjacent
  * segment distinctness is carried by the 2px paper seams instead.
  */
 const BUCKET_COLORS: Record<BucketKey, { light: string; dark: string }> = {

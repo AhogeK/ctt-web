@@ -82,8 +82,8 @@ test.describe('Landing page', () => {
     await expect(page.locator('[data-testid="hero-preview"]').locator('..')).toHaveCSS('opacity', '1')
 
     // Beat 2 arrives at the centre of the viewport, not somewhere below the fold: the stage is pinned
-    // and the layer is translated to -50% of its own height from the middle. This is the user's own
-    // description of the mechanism, and it is the only place it can be checked.
+    // and the layer is translated to -50% of its own height from the middle. That is the whole
+    // mechanism, and this is the only place it can be checked.
     await page.evaluate(() => window.scrollTo(0, window.innerHeight * 1.6))
     // Poll instead of sleeping: the beat must actually arrive within ±4px of the centre, and a fixed
     // wait would both slow the suite and hide a beat that never gets there.

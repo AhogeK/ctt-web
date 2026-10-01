@@ -4,15 +4,14 @@
  *
  * The hero is not a band that scrolls away; it is the first **beat** of a pinned stage. The visitor
  * scrolls, the first beat leaves upward, and the next one rises from below the fold to the centre —
- * becoming the new hero in place — and holds there until the one after it arrives. That is the
- * mechanism the user asked for ("以 hero 页为中心，滚动时下面的内容会上来也来到中心成为新的 hero 页内容"),
- * and it is the blog's own maths: each layer's translateY runs in viewport units from 120 to 50, with
+ * becoming the new hero in place — and holds there until the one after it arrives. It is the
+ * blog's own maths: each layer's translateY runs in viewport units from 120 to 50, with
  * `-50%` of its own height cancelling out, so "50" means *centred*. See `main.css` for the keyframes
  * and the two guards (no scroll-timeline support, or reduced motion, and the beats are ordinary
  * sections in normal flow — nothing is hidden behind a stage that cannot move).
  *
- * The hero's own content is unchanged: the copy column, the product plane that tucks under it, the two
- * calls to action. What changed is the box it lives in.
+ * The hero's content is the copy column, the product plane that tucks under it and the two calls to
+ * action; the stage only changes the box it lives in.
  */
 import { Button } from '@/components/ui/button'
 import { SITE_REPO_URL, PLUGIN_INSTALL_URL } from '@/lib/site-links'
@@ -27,7 +26,7 @@ import LandingActivityBeat from '../components/LandingActivityBeat.vue'
       <!-- Beat 1 — the hero. -->
       <div class="beat beat-hero w-full" data-testid="landing-beat-hero">
         <div class="mx-auto flex w-full max-w-[1440px] flex-col px-4 py-14 sm:px-6 lg:pt-12 lg:pb-20">
-          <!-- Copy column. 42rem is the measure the user's screenshot shows for the two-line headline. -->
+          <!-- Copy column. 42rem is the measure that keeps the headline to two lines. -->
           <div class="hero-copy min-w-0 lg:max-w-[42rem]">
             <h1 class="hero-rise text-display-lg">Know where your coding time actually goes.</h1>
 

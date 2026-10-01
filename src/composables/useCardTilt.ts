@@ -127,9 +127,9 @@ export function useCardTilt(options: UseCardTiltOptions = {}) {
    * Values are set straight from the pointer and the **CSS transition** does the smoothing, the way
    * the reference implementation does it (`transition: transform .6s cubic-bezier(.23,1,.32,1)`).
    *
-   * The previous version lerped towards a target frame by frame: the motion advanced in visible steps
-   * , and a leave snapped to zero with no animation at all. A transition gives
-   * both the follow and the restore for free, and it runs on the compositor.
+   * Lerping towards a target frame by frame would advance in visible steps, and a leave would snap
+   * to zero with no animation at all. A transition gives both the follow and the restore for free,
+   * and it runs on the compositor.
    */
   const rotateX = ref(0)
   const rotateY = ref(0)

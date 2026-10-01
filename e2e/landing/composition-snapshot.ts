@@ -1,11 +1,11 @@
 /**
- * Pre-change snapshot (2026-10-01), captured on the accepted 0.53.0 build before the first-screen
- * visibility fix. Purpose, per review: the relationship gates below prove the panel is in the right
- * area and that both themes agree — they **cannot** prove both themes did not drift *together*. These
- * numbers close that hole: any change that moves the composition shows up as a per-rect delta.
+ * Desktop composition baseline, recorded on the 0.53.0 build. Purpose: the relationship gates in
+ * the spec prove the panel is in the right area and that both themes agree — they **cannot** prove
+ * both themes did not drift *together*. These numbers close that hole: any change that moves the
+ * composition shows up as a per-rect delta.
  *
- * Desktop numbers must stay as they are; the two viewports that were explicitly excepted by the
- * visibility fix (low-height desktop, phone) carry their own acceptance further down instead.
+ * Desktop numbers must stay as they are; the two viewports excepted here (low-height desktop, phone)
+ * carry their own acceptance further down instead.
  */
 export const SNAPSHOT_DESKTOP = {
   900: {

@@ -3,10 +3,9 @@
  * The year beat — the one arriving stage beat after the hero.
  *
  * The grid and the ladders are **one thought, not two**: both answer "what have I built up", the days
- * on the left, the ladders those days feed underneath. They were two beats for one round, which split
- * the same idea across two stage screens and read as repetition (user, 2026-09-30).
+ * on the left, the ladders those days feed underneath. Held apart, the same idea spreads across two stage screens and reads as repetition.
  *
- * Layout follows what the reference product pages measure (probe, 2026-09-30): the artefact spans the
+ * Layout follows what the reference product pages measure: the artefact spans the
  * container and the copy stays to one or two lines. A year of cells at 15px is ~950px, so it fills the
  * row rather than floating in the middle of it — and cells that small-but-not-tiny is the difference
  * between a chart and a texture.
