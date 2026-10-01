@@ -203,12 +203,11 @@
 /**
  * Reduced motion, globally.
  *
- * Measured 2026-09-20: 58 files / 126 elements use motion utilities with no `motion-reduce:`
+ * A sweep found 58 files / 126 elements using motion utilities with no `motion-reduce:`
  * companion — the spinner, the skeleton pulse, every dialog/sheet/popover/dropdown transition.
  * Per-element variants would mean touching all of them and then hoping every future component
  * remembers; this is the same rule `AuthLayout.css` already applies to its own subtree, promoted to
- * the whole document, so coverage cannot depend on anyone's memory (the plan's acceptance criterion
- * is "no transform/scale motion under reduce").
+ * the whole document, so coverage cannot depend on anyone's memory.
  *
  * Duration alone is zeroed, not the animation: a spinner keeps its start frame (still visible, just
  * still), and `iteration-count: 1` stops an infinite loop from running forever at 0.01ms.
@@ -247,7 +246,7 @@
 }
 
 /**
- * Landing hero motion (2026-09-21). Spec and acceptance criteria: `DESIGN.md` §Motion.
+ * Landing hero motion. Spec and acceptance criteria: `DESIGN.md` §Motion.
  *
  * Two effects, one target each, and only `translate` / `opacity` change — both composite, neither
  * touches layout:
@@ -255,8 +254,7 @@
  *     transition measured on the reference's product page (`0.32s|opacity, transform`), not a guess;
  *     `ease-out` because it is entering and should settle.
  *   .hero-handoff — scroll-linked, therefore it has **no duration at all**: progress in the section's
- *     own view() exit range drives it. Browsers without scroll-driven animations (Firefox, per
- *     2026-01) simply keep the static hero.
+ *     own view() exit range drives it. Browsers without scroll-driven animations (Firefox) simply keep the static hero.
  *
  * Everything here is declared under `prefers-reduced-motion: no-preference`, so under reduce the
  * animations do not exist and the hero renders in its final state. The document-wide reduce rule
@@ -317,9 +315,9 @@
 }
 
 /**
- * Staged scroll beats (2026-09-30): the blog's mechanism, ported literally this time.
+ * Staged scroll beats: the blog's mechanism, ported literally.
  *
- * The blog's own maths, which is the part that was missed twice: each layer's `translateY` is mapped
+ * The blog's own maths: each layer's `translateY` is mapped
  * in **viewport units** from `120` to **`50`** — i.e. the arriving layer rises from below the fold and
  * comes to rest **halfway up the viewport**, with `translateY(-50%)` cancelling its own height. It does
  * not scroll past; it *becomes* the new hero, holds while its range lasts, then leaves upward as the
@@ -337,8 +335,8 @@
  * under `prefers-reduced-motion`, or on a phone, the beats are ordinary sections in normal flow — the
  * page reads top to bottom and nothing is hidden behind a stage that cannot move.
  *
- * Two viewport-scoped exceptions to "the composition never moves", both decided 2026-10-01 against the
- * measured first-screen failure (phone: h1 fully off-screen at `top:-275`; 1440x800: h1's top 8px under
+ * Two viewport-scoped exceptions to "the composition never moves", both driven by a measured
+ * first-screen failure (phone: h1 fully off-screen at `top:-275`; 1440x800: h1's top 8px under
  * the 57px header). They are exceptions *because* the strict rule and "put the h1 back on the first
  * screen" cannot both hold:
  * 1. phones exit the stage entirely (below `1024px`) and read as a normal document;
@@ -348,7 +346,7 @@
  */
 @layer components {
   /**
-   * Phone motion (2026-10-01). Same *language* as the desktop scroll scene, without the pinning that
+   * Phone motion. Same *language* as the desktop scroll scene, without the pinning that
    * the phone cannot afford: every block stays in normal flow, so nothing can ever be cut off, and the
    * movement is driven by the visitor's own scrolling instead of a timer.
    *
@@ -392,9 +390,8 @@
         /*
          * Every piece below the intro runs the **whole passage** in one animation: it arrives already
          * part-faded (0.35), settles while it is readable, then drifts up and dissolves as it leaves.
-         * The first version only had the arrival, so the windows and the content blocks scrolled away
-         * at full strength — the same "no exit" gap the intro had, just elsewhere (user, 2026-10-01:
-         * "两个窗口到内容介绍，这个窗口没有淡出 … 你再全都检查下").
+         * Without the dissolve the windows and the content blocks scroll away
+         * at full strength — the same "no exit" gap the intro had, just elsewhere.
          *
          * One animation with four stops rather than a separate exit animation: the two would need a
          * comma-matched `animation-timeline`/`animation-range` pair, and a single `view()` range from
@@ -405,8 +402,7 @@
           /*
            * Two animations, each pinned to a **position** range rather than a share of the whole passage:
            * a percentage of the passage means different scrolling distances for a 120px header and a 700px
-           * window, so one number cannot be right for both — the first attempt got this wrong twice over
-           * ("渐入过快，一下就是清晰状态" and "淡出不明显"). `entry` and `exit` are the positions the
+           * window, so one number cannot be right for both. `entry` and `exit` are the positions the
            * visitor actually sees: the fade-in runs while the piece is arriving, the fade-out while it is
            * leaving, and the piece simply stays at full strength in between.
            *
@@ -419,24 +415,22 @@
           animation-timeline: view(), view();
           /*
            * `entry 0%` is the position where the piece's top sits exactly at the bottom edge — so it
-           * starts from **nothing** and fades in as it arrives ("凭空渐入"). The exit stops at 70% of
+           * starts from **nothing** and fades in as it arrives. The exit stops at 70% of
            * its own range, i.e. the piece is fully gone while it is still partly on screen, instead of
-           * still being visible on the way out ("没有完全消失").
+           * still being visible on the way out.
            */
           /*
            * Distances are taken from the **cover** range — the piece's height *plus* one viewport — so a
            * fade always covers a few hundred pixels whatever the piece's height. Anchor-based ranges
            * (`entry`/`exit`) cover only the piece's own height, which made a 120px header fade in ~120px
-           * and read as appearing out of nowhere (user, 2026-10-01: "绝对不要突然不见或突然出现 … 就算是
-           * 一个区域的内容也要有渐渐的效果"). Fade-in: first 30% of the cover range; fade-out: last 35%.
+           * and read as appearing out of nowhere. Fade-in: first 30% of the cover range; fade-out: last 35%.
            */
           animation-range: cover 0% cover 30%, cover 65% cover 100%;
         }
         /*
          * The year + ladders is **one** block: it is read as a single piece of content, so it fades in
-         * and out as a single piece — per-section fades made one half dissolve while the other sat
-         * crisp (user, 2026-10-01: "A year of coding 跟 ladders 的内容应该是一块内容，不该拆开来
-         * 渐入淡出").
+         * and out as a single piece — per-section fades make one half
+         * dissolve while the other sits crisp.
          *
          * Its ranges are anchored to its own `entry`/`exit` rather than to `cover` percentages, because
          * it is far taller than a screen: a cover-relative window would leave it half-faded for most of
@@ -635,12 +629,12 @@
 
 /**
  * Hand-off keyframes are **staged**: the drift runs across the whole exit range, the dissolve only
- * over its second half. Reason, measured not assumed (2026-09-21): the exit range is one viewport
- * tall, and at the time the landing page held only the hero plus the footer — 281px of scroll, i.e.
- * 37% of the range. With an unstaged fade the hero was left at `opacity 0.63` whenever the visitor
+ * over its second half. Reason, measured not assumed: the exit range is one viewport
+ * tall, and a short page gives it only a few hundred pixels of scroll — 281px, i.e.
+ * 37% of the range, on the page this was measured against. With an unstaged fade the hero was left at `opacity 0.63` whenever the visitor
  * reached the bottom, which reads as washed-out text.
  *
- * Drift raised 40px → 9vh (2026-09-30, user feedback "现在的设计很一般"): 40px is roughly one text
+ * Drift is 9vh rather than 40px: 40px is roughly one text
  * line, so the hero appeared to sit still while the page scrolled under it. A fraction of the
  * viewport is the amount the eye actually reads as "the hero is leaving" without the copy visibly
  * racing the scroll. Staging is kept: with sections below, the fade completes inside the range, and
@@ -674,7 +668,7 @@
 }
 
 /**
- * Filled-button hover — outline + depth (DESIGN.md §6, registered 2026-09-24).
+ * Filled-button hover — outline + depth (DESIGN.md §6).
  *
  * The fill and the label never change, so the text/fill contrast is untouched (4.70:1).
  * Tailwind v4 silently drops `hover:shadow-[…rgba(…)]`, so the recipe lives here as plain CSS on the
@@ -751,15 +745,15 @@
 /*
  * Marketing hero — the product as a dissolving plane.
  *
- * Four reference heroes measured 2026-09-29 (Linear / Vercel / Resend / Raycast) all do the same two
- * things, and the two earlier versions of this hero did neither: the product surface shares the copy's
+ * Reference heroes (Linear / Vercel / Resend / Raycast) all do the same two
+ * things: the product surface shares the copy's
  * *vertical band* instead of sitting in a band of its own, and its edges are dissolved (mask / bleed)
  * rather than closed with a border. None of the four rotates anything for style — the earlier 8deg
  * lean here had no support in the measurements and is gone.
  *
  * The mask is also what makes a bleed safe: content fades to nothing before any clip edge can cut it.
- * An earlier version let the window run 48px past the container and the section's own `overflow-x-clip`
- * sliced its border, badge and cards (the probe had only checked the viewport, not the section box).
+ * A window that runs past the container is sliced by the section's own `overflow-x-clip`
+ * — border, badge and cards (checking the viewport alone does not catch this).
  */
 /*
  * The nearer plane: it hangs 48px below the window's top edge, so it overlaps the main plane instead of
@@ -773,7 +767,7 @@
 }
 
 /*
- * Vertical centring — the "centred full page" read the user asked for — but only when the viewport can
+ * Vertical centring — the centred full-page read — but only when the viewport can
  * hold the composition: `justify-content: center` on a flex column that *overflows* pushes its own top
  * out from under the sticky header, so short viewports stay top-aligned.
  */
@@ -882,8 +876,8 @@
  * read as blurry, and two cards at different angles read as a skew. Both angles are zero; depth comes
  * from overlap and the shadows `DESIGN.md` already owns.
  *
- * The panel is dropped 4.5rem past the card's top edge — the user's second guided step, "recent sessions
- * 再低点，它太高了"; it previously hung only 1.25rem over the edge.
+ * The panel is dropped 4.5rem past the card's top edge, where it would otherwise hang only 1.25rem
+ * over the edge.
  */
 @media (min-width: 1024px) {
   .hero-panel[data-surface='card'] {

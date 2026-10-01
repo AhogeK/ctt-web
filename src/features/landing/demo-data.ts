@@ -85,7 +85,7 @@ export function exampleSessionGroups(now: Date = new Date()): SessionDayGroup[] 
     [
       // Deliberately sums to the Today card (3h 25m = 205m): the two surfaces are read side by side,
       // so arithmetic that does not reconcile is a bug, not a rounding difference (the same class of
-      // contradiction the user caught once before with the total).
+      // contradiction the total above would be).
       row('11', 'ctt-web', 'TypeScript', 52, start(0, 14, 5)),
       row('12', 'ctt-web', 'Vue', 79, start(0, 11, 40)),
       row('13', 'code-time-tracker', 'Kotlin', 74, start(0, 9, 12)),
@@ -251,9 +251,8 @@ export function exampleActivityWeeks(now: Date = new Date()): ActivityWeek[] {
   }
 
   /**
-   * A break, not a blackout: the first version zeroed twelve consecutive days, which lands across two
-   * whole columns and reads as "the data is missing" rather than "they were away" (user, 2026-09-30:
-   * "中间有一列正好全空也很假"). Fourteen days, of which two or three still have a short session —
+   * A break, not a blackout: a run of blank days lands across two whole
+   * columns and reads as "the data is missing" rather than "they were away". Fourteen days, of which two or three still have a short session —
    * which is also what a real holiday looks like when the laptop comes along.
    */
   const VACATION_UNTIL = 168 // ~24 weeks back
@@ -269,9 +268,8 @@ export function exampleActivityWeeks(now: Date = new Date()): ActivityWeek[] {
 
     let hours = 0
     /*
-     * Sundays are light, not empty. The first version hard-coded them to zero, which painted one
-     * completely blank row across the whole grid — the single most obvious tell that the data is
-     * generated (user, 2026-09-30: "整一排周日都是没数据的有感觉吗？太假了"). A real year has quiet
+     * Sundays are light, not empty. Zeroing them paints one completely blank row across the whole
+     * grid — the single most obvious tell that the data is generated. A real year has quiet
      * Sundays, some busy ones, and a few skipped entirely; the `off` chance below is higher on
      * Sundays so that mix comes out of the same rules as every other day.
      */
@@ -295,8 +293,7 @@ export function exampleActivityWeeks(now: Date = new Date()): ActivityWeek[] {
       /*
        * The multiplier has to be **wider than the colour ladder's buckets**, or the grid reads as
        * wallpaper: the buckets are `<15m · 15–60m · 1–2h · 2–5h · 5–8h · >8h`, so a Monday that only
-       * ever ranges 1.8–3.0h is one colour for fifty-two weeks — which is exactly what the user
-       * spotted ("一行如果是有颜色都是一样的颜色，规律感太重"). Skewed by `n ** 1.7` so most days are
+       * ever ranges 1.8–3.0h is one colour for fifty-two weeks. Skewed by `n ** 1.7` so most days are
        * short and the long ones are rare, the way a real year looks.
        */
       // Floor at ~6m so the lightest bucket also occurs: a ladder whose first shade never appears

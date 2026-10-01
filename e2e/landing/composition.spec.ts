@@ -4,16 +4,15 @@ import { SNAPSHOT_DESKTOP } from './composition-snapshot.js'
 /**
  * Composition checks for the landing page.
  *
- * Two families live here. The first four pin the **desktop** composition the user accepted (rectangles,
- * both themes agreeing, the fold, and the recorded baseline): they exist because the composition has
- * already been broken twice by well-meaning CSS, and because relationship checks alone cannot prove that
- * both themes did not drift *together*.
+ * Two families live here. The first four pin the accepted **desktop** composition (rectangles,
+ * both themes agreeing, the fold, and the recorded baseline): they exist because relationship checks
+ * alone cannot prove that both themes did not drift *together*.
  *
  * The rest cover the **phone** motion. The phone keeps every block in normal flow (nothing pinned) and
  * gives each *region* — the intro, each demo window, the year-and-ladders block — a fade-in, a hold and a
- * fade-out, all driven by the visitor's own scrolling. The rules that took several rounds to settle:
- * every one of those pieces must fade gradually (no popping in or out), stay at full strength through
- * the middle of its passage, and leave as the unit it is read as.
+ * fade-out, all driven by the visitor's own scrolling. The rules: every one of those pieces must fade
+ * gradually (no popping in or out), stay at full strength through the middle of its passage, and leave
+ * as the unit it is read as.
  */
 const VIEWPORT_PHONE = { width: 440, height: 956 }
 
@@ -145,7 +144,7 @@ test.describe('landing hero composition (desktop)', () => {
       return {
         unit: n('.beat-unit'),
         window1: n('[data-testid="hero-preview"]'),
-        // The panel has had a desktop entrance since long before this round; it stays.
+        // The panel has its own desktop entrance; it stays.
         window2: n('[data-testid="hero-recent-panel"]'),
       }
     })

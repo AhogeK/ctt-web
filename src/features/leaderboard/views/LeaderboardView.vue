@@ -5,9 +5,9 @@
  * ## What the server actually serves
  *
  * One endpoint, `GET /api/v1/leaderboard`, parameterised by a **dimension** (what is
- * being ranked) and a **period** (over what window). The previous version of this
- * page asked three endpoints that do not exist and read fields the server never
- * sends, so it could only ever render its error state.
+ * being ranked) and a **period** (over what window). Everything this page renders
+ * comes from that single response; the endpoints and the fields an earlier draft assumed
+ * (`totalMinutes`, `totalUsers`, `updatedAt`, `avatarUrl`) do not exist.
  *
  * Dimensions are not interchangeable: `STREAK` is only ranked over all time, and
  * `GROWTH` only over a bounded window. The period selector is therefore built from
@@ -23,7 +23,7 @@
  * signed delta), and that is `formatScore`'s job.
  *
  * The caller's own rank travels **inside** the same response, so this page is one
- * query — not the previous arrangement of a second request to a `/me` endpoint.
+ * query and needs no second request to a `/me` endpoint.
  */
 import { computed, nextTick, ref, watch } from 'vue'
 import { AlertCircle, ArrowLeft, ArrowRight, RefreshCw, Trophy as TrophyIcon } from '@lucide/vue'

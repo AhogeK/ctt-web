@@ -52,9 +52,8 @@ export const useThemeStore = defineStore('theme', () => {
    * Adopt the system preference — but only for a visitor who has never chosen a theme.
    *
    * Runs on every page load, and an OAuth sign-in is a *full* load (`location.href` out, then a
-   * fresh document back), so resetting the theme unconditionally overwrote a stored choice:
-   * "I switched to dark on the login page and it came back as system once I signed in"
-   * (2026-09-26). Either key counts as a choice — `theme-appearance` belongs to this store, and
+   * fresh document back), so resetting the theme unconditionally would overwrite a stored choice — a
+   * theme picked on the login page reverting to system after sign-in. Either key counts as a choice — `theme-appearance` belongs to this store, and
    * `vueuse-color-scheme` is the one `useDark` and `public/theme.js` both read.
    */
   function initTheme(): void {

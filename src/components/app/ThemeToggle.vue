@@ -18,7 +18,7 @@ import { Icon } from '@iconify/vue'
  *
  * The hover state needs no `@media (hover: hover)` guard of its own: Tailwind compiles
  * the `hover:` variant into that query, so a touch device cannot leave a stuck hover.
- * Measured contrast (2026-09-20, `getComputedStyle` composited over the page): the icon
+ * Measured contrast (`getComputedStyle` composited over the page): the icon
  * clears 4.5:1 in all four theme × state combinations — 5.86 / 17.90 / 5.74 / 18.10, so
  * the worst case is 5.74:1.
  */

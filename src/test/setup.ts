@@ -25,8 +25,8 @@ Object.defineProperty(globalThis, 'matchMedia', {
 /**
  * `ResizeObserver` has to be a **class**: components construct it (`new ResizeObserver(...)` in
  * `ScrollFadeList`), and a `vi.fn()` implementation that returns an object literal is not
- * constructible — the call site fails with "is not a constructor" before any assertion runs. Found
- * when the landing stage started rendering the dashboard's list components (2026-09-30).
+ * constructible — the call site fails with "is not a constructor" before any assertion runs. The
+ * landing stage renders the dashboard's list components, which is where this surfaces.
  */
 class ResizeObserverMock {
   observe = vi.fn<() => void>()

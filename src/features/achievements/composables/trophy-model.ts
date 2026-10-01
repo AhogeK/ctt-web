@@ -199,8 +199,8 @@ export const TROPHY_RING_INNER = TROPHY_RING_RADIUS - TROPHY_RING_STROKE / 2
  *
  * Taken with the browser's own `getBBox()` plus half the stroke (SVG bounding boxes
  * exclude stroke), at the earned stroke width of 1.5. These are measurements, not
- * estimates — the previous version of this file assumed every artwork filled the
- * grid symmetrically, which was true for none of them: `polyglot` is 2 units high of
+ * estimates. Assuming every artwork fills the grid symmetrically is wrong for all of
+ * them: `polyglot` is 2 units high of
  * centre, `streak` 1.68, and the calendar shapes reach 13.08 from the centre while
  * the ring's inner edge is only 10.5 away. The result was a ring that cut through
  * every maxed trophy.
@@ -257,8 +257,8 @@ export function medalFitTransform(art: TrophyArt): string {
   // `translate(CENTER - s*(CENTER + offset)) scale(s)`, i.e.
   // `translate(CENTER*(1-s) - s*offset) scale(s)`.
 
-  // The `CENTER*(1-s)` term is what a first version of this got wrong: writing
-  // `translate(CENTER - s*offset)` scaled the offset but not the grid centre, leaving
+  // The `CENTER*(1-s)` term matters: writing `translate(CENTER - s*offset)` scales
+  // the offset but not the grid centre, leaving
   // every artwork offset by `CENTER*(1-s)` — up to ~4.9 units at s=0.6, which is
   // nearly half the artwork. Measured on the real page as a centre of (21.6, 21.6)
   // rather than (12, 12).

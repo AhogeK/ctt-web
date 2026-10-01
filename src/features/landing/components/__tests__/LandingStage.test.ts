@@ -7,7 +7,7 @@ import LandingView from '../../views/LandingView.vue'
 const mountOptions = { global: { plugins: [createPinia()] } }
 
 /**
- * The stage contract, which is the user's own description of it: the hero is the first beat, and the
+ * The stage contract: the hero is the first beat, and the
  * beat after it arrives **into the same centre** rather than being a band below it. jsdom has no scroll
  * timeline, so what is asserted here is structure and content — the beat exists, it carries its own
  * heading, its own line of explanation and its own example-data label, and the artefacts really are the
@@ -15,7 +15,7 @@ const mountOptions = { global: { plugins: [createPinia()] } }
  * exist without a scroll timeline.
  *
  * One arriving beat, not two: the year grid and the ladders answer the same question ("what have I
- * built up"), so they share a stage screen. That is a user decision, not a layout accident.
+ * built up"), so they share a stage screen.
  */
 describe('LandingView stage', () => {
   it('renders the hero beat and one arriving beat', () => {

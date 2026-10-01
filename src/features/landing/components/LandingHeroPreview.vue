@@ -7,8 +7,7 @@
  * past the fold, which is what removes the empty band that used to sit under it. No image, no canvas — everything here
  * is text and inline SVG, so the heading stays the LCP element.
  *
- * What is deliberately NOT here (a previous pass added all three and the user rejected them, measured
- * and reported): a tinted "stage" plate behind the window (it read as a rounded colour card, not as
+ * Three things are deliberately NOT here: a tinted "stage" plate behind the window (it read as a rounded colour card, not as
  * depth), a violet floor glow under the window (it read as a glow pasted over a colour card), and a
  * bespoke two-part shadow on the window. Depth now comes from the composition itself — the copy's
  * detail column sharing the band — plus the card treatment `DESIGN.md` already owns.

@@ -4,8 +4,7 @@ import { EXAMPLE_ACTIVITY_WEEKS, EXAMPLE_LANGUAGES, EXAMPLE_SUMMARY_SECONDS, exa
 /**
  * The example data has one job beyond looking plausible: it must not contradict itself. Two surfaces
  * show these numbers one after the other, so an arithmetic mismatch reads as a defect in the product
- * rather than in the sample — which is exactly how the first version's 90h language list beside a
- * 3148h total was caught.
+ * rather than in the sample.
  */
 describe('landing example data', () => {
   it('keeps the lifetime total equal to the language list it sits beside', () => {

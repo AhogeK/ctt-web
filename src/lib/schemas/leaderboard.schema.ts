@@ -6,12 +6,11 @@ import { z } from 'zod'
  * Written against the live endpoint and the server's `LeaderboardDimension` /
  * `LeaderboardPeriod` enums, then re-checked against **ctt-server v0.73.0**, which
  * widened the contract (commit `0111900`): a sixth dimension, broader period support,
- * and a `totalParticipants` field. Authoritative source, per the R24 回源 rule:
+ * and a `totalParticipants` field. Authoritative source:
  * `leaderboard/enums/LeaderboardDimension.supports()` and `dto/LeaderboardResponse.java`.
  *
- * (An earlier version of this file described an API that does not exist at all —
- * three endpoints, `totalMinutes`, `totalUsers`, `updatedAt`, `avatarUrl` — which is
- * why the page could only ever render its error state.)
+ * No field outside this file exists on the server — `totalMinutes`, `totalUsers`, `updatedAt` and
+ * `avatarUrl` are not part of the contract.
  */
 
 /** What the ranking measures. Each is a separate server-side ranking. */
