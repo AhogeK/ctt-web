@@ -43,7 +43,7 @@
   --color-surface: var(--surface);
   --color-accent-hover: var(--accent-hover);
 
-  /* Type ladder — DESIGN.md §3 "Hierarchy", values verbatim (no new sizes).
+  /* Type ladder — values verbatim from the design system, no new sizes.
    * Display sizes track size × −0.022em, which is why 72/64/48/32 carry −1.584/−1.408/−1.056/−0.704px
    * (the ladder's own stated principle); below 24px it relaxes toward normal, hence −0.012em here.
    * Tailwind v4 derives line-height, letter-spacing and weight from the companion keys, so a heading
@@ -73,14 +73,14 @@
   --text-heading-3--letter-spacing: -0.012em;
   --text-heading-3--font-weight: 590;
 
-  /* DESIGN.md §3 calls 510 "the signature weight … between regular 400 and medium 500".
+  /* 510 is the signature weight — heavier than regular 400, lighter than medium 500.
    * It appeared 71 times as `font-[510]`; this is its name. */
   --font-weight-emphasis: 510;
 
-  /* DESIGN.md §2 Status Colors: "Emerald (#10b981) — secondary success, pill badges,
+  /* Emerald (#10b981) — secondary success, pill badges,
    * completion states". A palette entry that had no token; it appeared as `[#10b981]`. */
   --color-success: #10b981;
-  /* DESIGN.md §2 defines green and emerald as status colours but no warning — the amber scale
+  /* The status palette defines green and emerald but no warning colour — the amber scale
    * (amber-50…900) had been typed by hand in 40 places across the auth/settings surfaces. These
    * three roles are the shades already in use, so adopting them is visually near-identical. */
   --color-warning: var(--warning);
@@ -96,7 +96,7 @@
   --warning-surface: #fffbeb; /* amber-50 */
   --warning-border: #fde68a; /* amber-200 */
   --warning-solid: #f59e0b; /* amber-500 — fills and glows keep their brightness in both themes */
-  /* DESIGN.md §4 says a card surface is translucent, never solid. `--card` is the opaque
+  /* A card surface is translucent, never solid. `--card` is the opaque
    * page-surface variant; `--surface` is the spec value for panels that sit on a page. */
   --surface: rgba(0, 0, 0, 0.02);
   --accent-hover: #828fff;
@@ -138,7 +138,7 @@
   --warning-surface: rgba(245, 158, 11, 0.1); /* amber-500/10 */
   --warning-border: rgba(245, 158, 11, 0.3); /* amber-500/30 */
   --warning-solid: #f59e0b;
-  /* Same two roles in dark: DESIGN.md's card surface is the app-shell plate below, and
+  /* Same two roles in dark: the card surface is the app-shell plate below, and
    * `#828fff` is the palette's Accent Hover (both themes — it is a palette entry, not a per-theme one). */
   --surface: rgba(255, 255, 255, 0.02);
   --accent-hover: #828fff;
@@ -246,7 +246,7 @@
 }
 
 /**
- * Landing hero motion. Spec and acceptance criteria: `DESIGN.md` §Motion.
+ * Landing hero motion.
  *
  * Two effects, one target each, and only `translate` / `opacity` change — both composite, neither
  * touches layout:
@@ -668,7 +668,7 @@
 }
 
 /**
- * Filled-button hover — outline + depth (DESIGN.md §6).
+ * Filled-button hover — outline + depth.
  *
  * The fill and the label never change, so the text/fill contrast is untouched (4.70:1).
  * Tailwind v4 silently drops `hover:shadow-[…rgba(…)]`, so the recipe lives here as plain CSS on the
@@ -858,7 +858,7 @@
   /*
    * The two floating plates get a stronger edge than that fallback. The plane carries a transform, and a
    * transformed ancestor stops the `mask-composite` rim from painting at all — so on exactly these two
-   * surfaces the rim device `DESIGN.md` relies on for dark depth is absent, and the border is all that is
+   * surfaces the inset-rim device used for dark depth is absent, and the border is all that is
    * left. At 14% it measured 1.88:1 against the plate and read as "sometimes there, sometimes not".
    */
   .dark .hero-plane > [data-surface='card'] {
@@ -874,7 +874,7 @@
  *
  * Positioning only, and no transform anywhere in the hero: a perspective rescale is what made the cards
  * read as blurry, and two cards at different angles read as a skew. Both angles are zero; depth comes
- * from overlap and the shadows `DESIGN.md` already owns.
+ * from overlap and the existing card shadows.
  *
  * The panel is dropped 4.5rem past the card's top edge, where it would otherwise hang only 1.25rem
  * over the edge.

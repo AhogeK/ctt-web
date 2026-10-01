@@ -10,7 +10,7 @@ import { useCardTilt, type UseCardTiltOptions } from '../useCardTilt'
  * It is worth a test because it silently did neither for a long time: `currentRotate*` were plain
  * `let` variables, so the `computed` transform had no reactive dependency and was evaluated once,
  * and `rafId` was never cleared, so only the first animation loop could ever start. Nothing failed —
- * the panels simply never tilted (see the pause note in .plans/ctt-web-development-plan.md).
+ * the panels simply never tilted.
  */
 
 type Tilt = ReturnType<typeof useCardTilt>

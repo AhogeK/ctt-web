@@ -48,7 +48,7 @@ const isDeleteDialogOpen = ref(false)
   <!--
     Last and visually set apart: it is the only irreversible thing on this page, and a reader
     scanning for a routine setting should not meet it halfway up. Destructive tokens rather than a
-    new colour (DESIGN.md), so it reads as the same kind of warning as every other one.
+    new colour, so it reads as the same kind of warning as every other one.
   -->
   <div class="rounded-lg border border-destructive/30 bg-destructive/5 p-6" data-testid="danger-zone">
     <h2 class="mb-4 text-lg font-medium text-destructive">Danger zone</h2>

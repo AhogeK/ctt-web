@@ -15,7 +15,7 @@
  * the value's first significant digit, never fewer than `step`. `step` sets the
  * resolution for values that can afford it (2 decimals for the distribution
  * lists, 0 for a coarse legend), and does not cap precision — it is a floor,
- * not a ceiling. (See dashboard-visualization P8.)
+ * not a ceiling.
  *
  * Trailing zeros are trimmed, so the columns read as numbers rather than as
  * padded fields (`41.67%`, `0.21%`, `5%`, `0.0033%`).

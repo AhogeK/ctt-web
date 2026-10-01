@@ -74,7 +74,7 @@ const palette = computed<Palette>(() => {
   const dark = theme.isDark
   return dark
     ? {
-        // Brand ramp (DESIGN.md #5e6ad2 indigo): quiet = neutral dark cell,
+        // Brand ramp (indigo #5e6ad2): quiet = neutral dark cell,
         // buckets climb toward bright brand ink as coding time increases.
         quietCell: '#26282b',
         buckets: ['#313a5c', '#3d4a75', '#5e6ad2', '#7b85e0', '#9aa2ec', '#bcc2f4'],

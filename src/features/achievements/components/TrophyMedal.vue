@@ -6,7 +6,7 @@
  * One path set per family, a shared 24×24 grid, one stroke weight. A new tier
  * therefore needs no new asset; only the paint changes.
  *
- * **Colour stays inside the design system.** `DESIGN.md` is explicit that the
+ * **Colour stays inside the design system.** The rule is explicit that the
  * palette is almost entirely achromatic, that brand indigo is the only chromatic
  * colour, and that it must not be used decoratively. A trophy wall is exactly
  * where that rule would be tempting to break with bronze/silver/gold — so instead

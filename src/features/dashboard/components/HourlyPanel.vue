@@ -9,7 +9,7 @@
  * when props are provided, otherwise falls back to all-history semantics.
  * The hour axis is fixed 0–23 (missing hours zero-fill).
  *
- * Rendering is ECharts bar with the DESIGN.md indigo family — a vertical
+ * Rendering is ECharts bar with the brand indigo family — a vertical
  * gradient (bright top → deep base) matching the 30-day trend's stroke, and
  * rounded bar tops matching the heatmap's cell language. The Y axis reuses
  * the shared getHourAxisScale (readable hour steps, explicit interval), so
