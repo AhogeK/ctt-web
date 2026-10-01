@@ -38,6 +38,7 @@
 - **AI 内容清单（禁入 master）**：`memory-bank/` · `AGENTS.md` · `.plans/` · **`DESIGN.md`**；非 AI（应进 master）：`src/` · `e2e/` · `package.json` · `README.md` · `docs/`
 - `DESIGN.md` **从未上过 master**，属刻意为之，不得以"设计规范"为由推上去；**它是给 AI 看的基线文件，不是开发文档**
 - 优先完成 develop 再考虑 master；master **逐个** cherry-pick 非 AI 提交，**严禁整分支合并**、严禁 pick 旧提交污染
+- **形状守卫（2026-10-01 事故）**：提交命令**不接管道** ✗（管道吃掉退出码 ⇒ `set -e` 不触发 ⇒ 下一笔 `git add` 会把**上一笔没提上去的文件**一起带走 ✗，实例：代码与版本混进 `chore(release)` ✗）；每笔提交后**必**用 `git show --name-only HEAD` 核对 ✓；多笔提交用**路径限定** `git commit -m … -- <paths>` ✓（`-m` 必须在 `--` **之前** ✗，不依赖索引残留 ✓）；未推送时改形状用 `git reset --soft <事故前>`（工作区与暂存**零丢失** ✓），并以 `git diff <事故前> HEAD` **必须为空** 自证 ✓
 
 ### R7: 技术决策确认
 
