@@ -28,7 +28,7 @@ import LandingActivityBeat from '../components/LandingActivityBeat.vue'
       <div class="beat beat-hero w-full" data-testid="landing-beat-hero">
         <div class="mx-auto flex w-full max-w-[1440px] flex-col px-4 py-14 sm:px-6 lg:pt-12 lg:pb-20">
           <!-- Copy column. 42rem is the measure the user's screenshot shows for the two-line headline. -->
-          <div class="min-w-0 lg:max-w-[42rem]">
+          <div class="hero-copy min-w-0 lg:max-w-[42rem]">
             <h1 class="hero-rise text-display-lg">Know where your coding time actually goes.</h1>
 
             <p

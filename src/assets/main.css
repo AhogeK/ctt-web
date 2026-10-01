@@ -333,54 +333,220 @@
  * blog's "scroll to unlock" mini-game is not part of a product page.
  *
  * Progressive degradation: the layout (absolute beats inside a clipped stage) exists **only** under
- * `@supports (animation-timeline: scroll())`. Without scroll timelines the beats are ordinary
- * sections in normal flow — the page reads top to bottom and nothing is hidden behind a stage that
- * cannot move. Under `prefers-reduced-motion` the same applies, because this block is nested inside
- * `no-preference`.
+ * `@supports (animation-timeline: scroll())` **and** `min-width: 1024px`. Without scroll timelines, or
+ * under `prefers-reduced-motion`, or on a phone, the beats are ordinary sections in normal flow — the
+ * page reads top to bottom and nothing is hidden behind a stage that cannot move.
+ *
+ * Two viewport-scoped exceptions to "the composition never moves", both decided 2026-10-01 against the
+ * measured first-screen failure (phone: h1 fully off-screen at `top:-275`; 1440x800: h1's top 8px under
+ * the 57px header). They are exceptions *because* the strict rule and "put the h1 back on the first
+ * screen" cannot both hold:
+ * 1. phones exit the stage entirely (below `1024px`) and read as a normal document;
+ * 2. at `max-height: 840px` on desktop, the hero beat gains 1rem of top margin — a layout property that
+ *    does **not** compete with the animation's `translate` — so the whole hero (copy + both cards)
+ *    shifts down together and the headline clears the header. 1280x900 and up are untouched.
  */
 @layer components {
+  /**
+   * Phone motion (2026-10-01). Same *language* as the desktop scroll scene, without the pinning that
+   * the phone cannot afford: every block stays in normal flow, so nothing can ever be cut off, and the
+   * movement is driven by the visitor's own scrolling instead of a timer.
+   *
+   *   the headline + buttons  →  rise a little and fade out as they leave the screen
+   *   each block below        →  rise into place and fade in as it arrives, one after another
+   *
+   * Ranges are relative to each element's own position, so the second block simply arrives after the
+   * first one — no separate scheduling. `h1` and the calls to action are never faded *in*: the first
+   * screen is readable the moment the page opens (the headline is the largest-contentful-paint element).
+   * `prefers-reduced-motion` and browsers without scroll timelines both get the static page.
+   */
+  @media (max-width: 1023px) {
+    /*
+     * The phone intro keeps its natural height: headline, paragraph and buttons flow from under the
+     * header, exactly as before the split. A one-screen box was tried two ways and rejected both times
+     * — centred, it opened a 96–184px band above the headline; top-aligned, it left the screen looking
+     * unfinished. What gives the first screen its whole-composition read instead is the *next* piece
+     * already fading in as it peeks over the fold (see the entry keyframes below).
+     */
+    @media (prefers-reduced-motion: no-preference) {
+      @supports (animation-timeline: view()) {
+        /*
+         * Piece by piece, not block by block. Animating a whole panel moved one big rectangle, which
+         * reads as a single slide; animating its **leaves** (heading, caption+grid, each card) gives the
+         * staircase the eye actually notices — and because every range is relative to the element's own
+         * position, the order and the stagger fall out of the layout: no schedule to maintain.
+         * Containers are deliberately *not* animated, so no two fades multiply and nothing stays
+         * invisible longer than its own piece.
+         */
+        /*
+         * The intro leaves as **one block**, not piece by piece. Each piece's own exit range is offset by
+         * its position — on a phone the three sit 150–250px apart, so the headline reached 0 while the
+         * buttons had not started (measured: 0.43 / 1.00 / 1.00 at 0.3 screens, 0 / 0.88 / 1.00 at 0.5):
+         * the block tore apart instead of dissolving. Arriving stays per-piece; leaving does not.
+         */
+        .hero-copy {
+          animation: phone-copy-leave auto linear both;
+          animation-timeline: view();
+          animation-range: exit 0% exit 90%;
+        }
+        /*
+         * Every piece below the intro runs the **whole passage** in one animation: it arrives already
+         * part-faded (0.35), settles while it is readable, then drifts up and dissolves as it leaves.
+         * The first version only had the arrival, so the windows and the content blocks scrolled away
+         * at full strength — the same "no exit" gap the intro had, just elsewhere (user, 2026-10-01:
+         * "两个窗口到内容介绍，这个窗口没有淡出 … 你再全都检查下").
+         *
+         * One animation with four stops rather than a separate exit animation: the two would need a
+         * comma-matched `animation-timeline`/`animation-range` pair, and a single `view()` range from
+         * `entry 0%` to `exit 100%` expresses "the whole time this element is on screen" exactly.
+         */
+        [data-testid='hero-preview'],
+        [data-testid='hero-recent-panel'] {
+          /*
+           * Two animations, each pinned to a **position** range rather than a share of the whole passage:
+           * a percentage of the passage means different scrolling distances for a 120px header and a 700px
+           * window, so one number cannot be right for both — the first attempt got this wrong twice over
+           * ("渐入过快，一下就是清晰状态" and "淡出不明显"). `entry` and `exit` are the positions the
+           * visitor actually sees: the fade-in runs while the piece is arriving, the fade-out while it is
+           * leaving, and the piece simply stays at full strength in between.
+           *
+           * Fill modes are a list on purpose: the second animation must **not** fill backwards, or its
+           * `from` (opacity 1) would outrank the first one (later animations win) and cancel the fade-in.
+           */
+          animation:
+            phone-piece-in auto linear both,
+            phone-piece-out auto linear forwards;
+          animation-timeline: view(), view();
+          /*
+           * `entry 0%` is the position where the piece's top sits exactly at the bottom edge — so it
+           * starts from **nothing** and fades in as it arrives ("凭空渐入"). The exit stops at 70% of
+           * its own range, i.e. the piece is fully gone while it is still partly on screen, instead of
+           * still being visible on the way out ("没有完全消失").
+           */
+          /*
+           * Distances are taken from the **cover** range — the piece's height *plus* one viewport — so a
+           * fade always covers a few hundred pixels whatever the piece's height. Anchor-based ranges
+           * (`entry`/`exit`) cover only the piece's own height, which made a 120px header fade in ~120px
+           * and read as appearing out of nowhere (user, 2026-10-01: "绝对不要突然不见或突然出现 … 就算是
+           * 一个区域的内容也要有渐渐的效果"). Fade-in: first 30% of the cover range; fade-out: last 35%.
+           */
+          animation-range: cover 0% cover 30%, cover 65% cover 100%;
+        }
+        /*
+         * The year + ladders is **one** block: it is read as a single piece of content, so it fades in
+         * and out as a single piece — per-section fades made one half dissolve while the other sat
+         * crisp (user, 2026-10-01: "A year of coding 跟 ladders 的内容应该是一块内容，不该拆开来
+         * 渐入淡出").
+         *
+         * Its ranges are anchored to its own `entry`/`exit` rather than to `cover` percentages, because
+         * it is far taller than a screen: a cover-relative window would leave it half-faded for most of
+         * its transit (for a 1500px block the 35–60% window only opens once its top is 518px above the
+         * top edge). Anchored this way the fade-in is 45% of its arrival and the fade-out 45% of its
+         * departure — both several hundred pixels — and the visible part is at full strength in between.
+         */
+        .beat-unit {
+          animation:
+            phone-piece-in auto linear both,
+            phone-piece-out auto linear forwards;
+          animation-timeline: view(), view();
+          animation-range: entry 0% entry 45%, exit 55% exit 100%;
+        }
+        /** Arriving: starts part-faded (so a piece peeking over the fold already reads as "coming in")
+         *  and climbs to full strength across the whole entry — a fade the visitor can actually see. */
+        @keyframes phone-piece-in {
+          from {
+            /* Nothing visible yet: a piece must not be readable before it has really arrived. */
+            opacity: 0;
+            translate: 0 3rem;
+          }
+          to {
+            opacity: 1;
+            translate: 0 0;
+          }
+        }
+
+        /** Leaving: the whole exit is the dissolve — long enough to be visible on any piece size. */
+        @keyframes phone-piece-out {
+          from {
+            opacity: 1;
+            translate: 0 0;
+          }
+          to {
+            opacity: 0;
+            translate: 0 -3rem;
+          }
+        }
+      }
+    }
+  }
+
+  /*
+   * Whenever the stage is *not* running — a phone, `prefers-reduced-motion`, or a browser without
+   * scroll timelines — the beats are ordinary sections and must read **vertically**. The shell carries
+   * `flex items-center` for the stage's sake (where the children are absolutely positioned and the
+   * flex axis does not matter), but in flow that same class lays the beats out in a **row**: measured
+   * on a 375px phone, the second beat sat at `left: 375` and the page grew a 375px horizontal scroll.
+   * A column is correct in both modes, so it needs no media query.
+   */
+  .stage-pin {
+    flex-direction: column;
+  }
+
   @media (prefers-reduced-motion: no-preference) {
     @supports (animation-timeline: scroll()) {
-      .stage {
-        /* One viewport per beat, plus one of scrubbing before the first hand-off. */
-        min-block-size: 300svh;
+      @media (min-width: 1024px) {
+        .stage {
+          /* One viewport per beat, plus one of scrubbing before the first hand-off. */
+          min-block-size: 300svh;
+        }
+        .stage-pin {
+          position: sticky;
+          inset-block-start: 0;
+          block-size: 100svh;
+          overflow: clip;
+        }
+        .beat {
+          position: absolute;
+          inset-inline: 0;
+          inset-block-start: 50%;
+          /* Parked state: centred, which is where `100%` of the layer's own height cancels out.
+             No `will-change`: it is the classic "text looks soft" trigger here — the layer gets
+             rasterised once and then transformed, so any fractional offset blurs the glyphs, and the
+             beats are three elements, not a per-frame animation. */
+          translate: 0 -50%;
+        }
+        /* Each beat owns a window of the track: it arrives, holds centred, then leaves upward. The
+           ranges overlap on purpose — the next beat starts rising while the current one is still
+           centred, which is what makes the page feel like it has one continuous stage rather than a
+           sequence of slides. Set per beat by `--beat` (its index) so the numbers stay in one place. */
+        .beat-hero {
+          animation: beat-lead auto linear both;
+          animation-timeline: scroll(root block);
+          /* Gone by 90svh, and its opacity is what the crossfade is timed around: the arriving beat
+             must not climb into a hero that is still half-visible. */
+          animation-range: 0svh 90svh;
+        }
+        .beat-a {
+          animation: beat-hold auto linear both;
+          animation-timeline: scroll(root block);
+          /* 80 → 180: it starts rising only as the hero finishes dissolving (90svh) and is parked
+             (keyframe 22%) from ~102svh. Holding past 180svh to the end of the track is what makes it
+             the final screen; the scrollable range is 300 − 100 = 200svh. */
+          animation-range: 80svh 180svh;
+        }
+        /*
+         * Low-height desktops only: the hero is taller than the stage, so centring it puts the h1's top
+         * under the header at 800px tall (measured: 7.59px of clearance at 1rem of margin, i.e. just
+         * short of the 8px the acceptance asks for). 1.25rem lands at ~11.6px. It is a margin — not a
+         * transform — so it cannot fight the scroll animation that owns `translate`, and the whole hero
+         * (copy + both cards) shifts together, keeping their relative composition.
+         */
+        @media (max-height: 840px) {
+          .beat-hero {
+            margin-block-start: 1.25rem;
+          }
+        }
       }
-      .stage-pin {
-        position: sticky;
-        inset-block-start: 0;
-        block-size: 100svh;
-        overflow: clip;
-      }
-      .beat {
-        position: absolute;
-        inset-inline: 0;
-        inset-block-start: 50%;
-        /* Parked state: centred, which is where `100%` of the layer's own height cancels out.
-           No `will-change`: it is the classic "text looks soft" trigger here — the layer gets
-           rasterised once and then transformed, so any fractional offset blurs the glyphs, and the
-           beats are three elements, not a per-frame animation. */
-        translate: 0 -50%;
-      }
-      /* Each beat owns a window of the track: it arrives, holds centred, then leaves upward. The
-         ranges overlap on purpose — the next beat starts rising while the current one is still
-         centred, which is what makes the page feel like it has one continuous stage rather than a
-         sequence of slides. Set per beat by `--beat` (its index) so the numbers stay in one place. */
-      .beat-hero {
-        animation: beat-lead auto linear both;
-        animation-timeline: scroll(root block);
-        /* Gone by 90svh, and its opacity is what the crossfade is timed around: the arriving beat
-           must not climb into a hero that is still half-visible. */
-        animation-range: 0svh 90svh;
-      }
-      .beat-a {
-        animation: beat-hold auto linear both;
-        animation-timeline: scroll(root block);
-        /* 80 → 180: it starts rising only as the hero finishes dissolving (90svh) and is parked
-           (keyframe 22%) from ~102svh. Holding past 180svh to the end of the track is what makes it
-           the final screen; the scrollable range is 300 − 100 = 200svh. */
-        animation-range: 80svh 180svh;
-      }
-
     }
   }
 }
@@ -420,6 +586,30 @@
   100% {
     opacity: 1;
     translate: 0 -50%;
+  }
+}
+
+/** Phone: the headline block drifts up and dissolves as it leaves the screen. */
+@keyframes phone-copy-leave {
+  from {
+    opacity: 1;
+    translate: 0 0;
+  }
+  to {
+    opacity: 0;
+    translate: 0 -5rem;
+  }
+}
+
+/** Phone: each block below rises into place and fades in as it arrives. */
+@keyframes phone-panel-enter {
+  from {
+    opacity: 0;
+    translate: 0 2.5rem;
+  }
+  to {
+    opacity: 1;
+    translate: 0 0;
   }
 }
 

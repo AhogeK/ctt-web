@@ -54,6 +54,10 @@ test.describe('Landing page', () => {
     await page.setViewportSize({ width: 375, height: 812 })
     await page.goto('/')
 
+    // The first screen is the pitch (headline + action); the demo window is its own step just below,
+    // so it arrives after a short scroll rather than competing with the headline for the same screen.
+    await expect(page.getByTestId('landing-primary-cta')).toBeInViewport()
+    await page.evaluate(() => window.scrollTo(0, window.innerHeight * 0.9))
     await expect(page.getByTestId('hero-preview')).toBeInViewport()
     const overflow = await page.evaluate(() => document.documentElement.scrollWidth - window.innerWidth)
     expect(overflow).toBeLessThanOrEqual(0)
