@@ -37,7 +37,7 @@ test.describe('Landing page', () => {
     await page.setViewportSize({ width: 1440, height: 800 })
     await page.goto('/')
 
-    // P3's acceptance: within the first screen the visitor must be able to tell
+    // The landing page's acceptance: within the first screen the visitor must be able to tell
     // what this is, see one piece of real UI evidence, and reach the main CTA —
     // all before scrolling. The evidence is the real dashboard components
     // (SummaryStatGrid + the ranked list), not a screenshot, so it must carry no

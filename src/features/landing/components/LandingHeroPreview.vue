@@ -10,7 +10,7 @@
  * Three things are deliberately NOT here: a tinted "stage" plate behind the window (it read as a rounded colour card, not as
  * depth), a violet floor glow under the window (it read as a glow pasted over a colour card), and a
  * bespoke two-part shadow on the window. Depth now comes from the composition itself — the copy's
- * detail column sharing the band — plus the card treatment `DESIGN.md` already owns.
+ * detail column sharing the band — plus the existing card treatment.
  */
 import { computed } from 'vue'
 import SummaryStatGrid from '@/features/dashboard/components/SummaryStatGrid.vue'

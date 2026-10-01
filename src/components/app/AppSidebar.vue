@@ -28,7 +28,7 @@ import PluginIcon from './PluginIcon.vue'
  *                       Sheet closes via overlay click or navigation (see handleNavigate).
  *
  * Active state: the current route highlights its menu item via the shared
- * sidebar data-active styles (brand violet background, DESIGN.md compliant).
+ * sidebar data-active styles (brand violet background).
  */
 const route = useRoute()
 const { state, isMobile, setOpenMobile } = useSidebar()

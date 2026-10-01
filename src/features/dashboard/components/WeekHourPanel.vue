@@ -14,7 +14,7 @@
  *    `visualMap min 0 → max = data maximum` onto a continuous ramp, so a
  *    cell's shade depends on the window's own peak (1h fills the scale when
  *    the peak is 1h, dims when the peak is 8h). We reproduce that with a
- *    continuous interpolation over the DESIGN.md indigo family.
+ *    continuous interpolation over the brand indigo family.
  * 2. CELLS ARE SQUARE — drawn as an ECharts `custom` series with manual
  *    pixel layout (the same architecture as the main heatmap), so the side
  *    length is computed from the container and every cell stays a square
@@ -64,7 +64,7 @@ const cells = computed(() => (query.data.value ? buildWeekHourMatrix(query.data.
 interface Palette {
   quiet: string
   /** Dynamic-ramp spine: quiet → brand indigo → peak. The mid-stop keeps
-   *  mid intensities on DESIGN.md's #5e6ad2 instead of a muddy gray-blue
+   *  mid intensities on indigo #5e6ad2 instead of a muddy gray-blue
    *  (a two-point #313a5c→#bcc2f4 lerp bottoms out at desaturated slate). */
   dataLow: string
   dataMid: string

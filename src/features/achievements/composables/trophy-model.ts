@@ -627,9 +627,9 @@ export function isClosing(daysLeft: number | null): boolean {
 /**
  * Copy for how long a window has left.
  *
- * States the fact and stops: **no urgency colour**. `DESIGN.md` keeps the palette
- * almost achromatic with indigo as the only chromatic colour, and P3 already
- * records what happens when a second signal is invented — the last attempt used a
+ * States the fact and stops: **no urgency colour**. The palette is kept
+ * almost achromatic with indigo as the only chromatic colour, and inventing a
+ * second signal has already been paid for once — the last attempt used a
  * mode-dependent ramp and failed contrast in light mode. The countdown is
  * informative, not alarming (and a maxed periodic trophy still shows it, because
  * that is what explains why it will drop to zero when the period rolls).

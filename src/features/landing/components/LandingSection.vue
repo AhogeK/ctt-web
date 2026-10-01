@@ -4,10 +4,10 @@
  * padding and vertical rhythm are decided, so later sections inherit them instead of inventing
  * their own.
  *
- * Every value comes from DESIGN.md and is auditable there:
- * - container 1200px (§5 Grid & Container) · prose column ~730px (measured baseline)
- * - horizontal rail 24px → 32px (8px grid, §5 Spacing System)
- * - section rhythm 80px desktop → 48px mobile (§8 Collapsing Strategy: "Section spacing: 80px+ → 48px on mobile")
+ * Values, stated here so they can be checked in one place:
+ * - container 1200px · prose column ~730px (measured baseline)
+ * - horizontal rail 24px → 32px (8px grid)
+ * - section rhythm 80px desktop → 48px mobile
  */
 interface Props {
   /** Semantic element. Bands that are not a section (footer/header) say so. */

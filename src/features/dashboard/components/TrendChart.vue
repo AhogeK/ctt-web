@@ -5,7 +5,7 @@
  * Mirrors the plugin panel "Coding Activity (Last 30 Days)": one point per
  * day, hour-scaled Y axis, smooth curve. Design differs from the plugin's
  * blue→green two-hue gradient on purpose — this dashboard's charts share a
- * single brand indigo ramp (DESIGN.md), so the line is brand ink and the
+ * single brand indigo ramp, so the line is brand ink and the
  * area fades from a soft indigo tint to transparent (the top/bottom colour
  * separation this design uses).
  *

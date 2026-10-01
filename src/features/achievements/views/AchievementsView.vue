@@ -194,8 +194,8 @@ const isEmpty = computed(() => !isPending.value && !isError.value && totals.valu
             <!-- The deadline. Over the closing stretch — today and tomorrow — a target
                  is still reachable but no longer comfortably so, so the countdown is
                  emphasised. Two constraints shape how:
-                 1. No new colour. DESIGN.md has no "urgent" hue — its status colours
-                    (green/emerald) mean success — and P3 records what a bespoke
+                 1. No new colour. The status palette has no "urgent" hue — its colours
+                    (green/emerald) mean success — and a bespoke
                     urgency colour cost last time (a mode-dependent ramp that failed
                     contrast in light mode).
                  2. Weight does nothing here. The page specifies `font-family: Inter`
