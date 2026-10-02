@@ -887,3 +887,33 @@
     width: min(22rem, 45%);
   }
 }
+
+/*
+ * Light-mode card material.
+ *
+ * In dark mode a card is a plate whose material is grain, a top light and a masked rim. Light mode had no
+ * counterpart, so every card fell back to a 1px grey outline on a 248-luminance canvas — a rectangle, not a
+ * material. The device here is shadow, and every value is the depth ladder verbatim: the Level 1 contact
+ * layer plus the multi-layer dialog stack the ladder names for exactly this ("layered multi-shadow stacks").
+ *
+ * Selector discipline — this module once shipped with a specificity bug that dropped the hero panel back
+ * into the document flow, so the guard rails are part of the recipe:
+ *   - `:where()` keeps it at (0,0,0). Unlayered it still outranks every Tailwind utility; below (0,2,0) it
+ *     can never beat the hero panel's positioning rule.
+ *   - Scoped to the marketing shell. The dashboard and the auth pages are outside this round, and their
+ *     already-reviewed surfaces must not move.
+ *   - The hero's two plates are excluded: they carry their own reviewed shadows.
+ *
+ * One consequence, measured and accepted: a `hover:shadow-sm` on a demo tile is inert inside this scope —
+ * an unlayered rule wins over the utility even while hovered. Those tiles are display-only here; the
+ * dashboard copy of the same component keeps its hover.
+ */
+:where(:root:not(.dark) [data-surface-scope='marketing']) :where([data-surface='card']:not(.hero-plane > *)) {
+  box-shadow:
+    rgba(0, 0, 0, 0.03) 0 1.2px 0 0,
+    rgba(0, 0, 0, 0) 0 8px 2px,
+    rgba(0, 0, 0, 0.01) 0 5px 2px,
+    rgba(0, 0, 0, 0.04) 0 3px 2px,
+    rgba(0, 0, 0, 0.07) 0 1px 1px,
+    rgba(0, 0, 0, 0.08) 0 0 1px;
+}
