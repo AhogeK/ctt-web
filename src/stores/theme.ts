@@ -51,6 +51,10 @@ export const useThemeStore = defineStore('theme', () => {
   /**
    * Adopt the system preference — but only for a visitor who has never chosen a theme.
    *
+   * Note for anyone touching this default: VueUse writes its own `auto` defaults into storage when the
+   * store is created, so a "nothing has ever been chosen" check can be false by the time this runs — a
+   * first-visit default has to be seeded before the store exists.
+   *
    * Runs on every page load, and an OAuth sign-in is a *full* load (`location.href` out, then a
    * fresh document back), so resetting the theme unconditionally would overwrite a stored choice — a
    * theme picked on the login page reverting to system after sign-in. Either key counts as a choice — `theme-appearance` belongs to this store, and
