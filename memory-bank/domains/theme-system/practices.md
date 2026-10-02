@@ -106,3 +106,40 @@ In order of what they cost:
 
 - **Rim alpha** — the cheapest: the top stop is 0.19 today (0.16 in the first depth pass); a 1px line at 0.19 does not read as the "突兀" band that 0.13 over a 9 %-tall strip did, so there is room.
 - **Card fill step** — `#101116` is 1.06:1 over the canvas. Raising it is the robustness lever the reviews keep naming ("the plate effect collapses on a low-contrast display"), but `#191a1e` (1.11:1) and `#32333a` (1.59:1) were both rejected as "太白", so any move here needs the user's eye first.
+
+## Default stays `auto`; light gets its own material (2026-10-02)
+
+**A dark first-visit default was tried and rejected the same day.** The attempt read a line in the landing
+plan's direction table ("已决：首次呈现用深色") as a settled user decision; the user's response was
+"还有这个拍板？不行不行，得改，默认就系统" — the default is `auto` (follow the system). The code, the
+first-paint script and the store test are all back to that. The lesson travels with the rejection: **a line
+I wrote in a plan is my record, not the user's mandate** — treating it as one cost a rework cycle.
+
+**What the attempt taught, still worth keeping** (measured, not theorised): VueUse writes its own defaults
+into storage the moment the store is created — `vueuse-color-scheme` → `auto`, `theme-appearance` → `auto` —
+so any "the visitor never chose" test in `initTheme()` is already false by the time it runs. Making a
+first-visit default actually stick needs the first-paint script (`public/theme.js`) to seed storage *before*
+the store exists, and seeding both keys to keep the mode menu honest. That machinery is gone with the
+rejected default; this note is what remains, for anyone who tries again.
+
+**Light-mode card material** (`main.css`, marketing scope only) — kept, and independent of the above. Dark
+cards carry grain + top light + a masked rim; light cards had nothing and read as rectangles on a
+248-luminance canvas. The values are the §6 ladder verbatim: the Level 1 contact layer plus the multi-layer
+dialog stack. Selector:
+`:where(:root:not(.dark) [data-surface-scope='marketing']) :where([data-surface='card']:not(.hero-plane > *))`.
+
+- `:where()` is discipline, not style: an earlier attempt used a (0,3,0) selector that beat the hero panel's
+  positioning guard and dropped the panel back into the document flow. (0,0,0) unlayered still outranks every
+  Tailwind utility, and can never outrank the (0,2,0) guard.
+- The scope lives on the marketing shell (`data-surface-scope="marketing"`), so the auth pages' frozen light
+  items and every dashboard surface are untouched by construction (verified: the login page has no scope
+  ancestor, and no `data-surface='card'` element at all).
+- The hero's two plates are excluded — they keep their own `shadow-2xl` / brand shadow.
+- Accepted cost: inside the scope a `hover:shadow-sm` utility is inert (unlayered beats layered). The demo
+  tiles are display-only; the dashboard copy of the same component keeps its hover.
+
+**Measured (1440×900)**: light canvas `rgb(247,248,248)` with 11/11 marketing cards carrying the stack; panel
+`position: absolute` in both themes; geometry identical to the review baseline and identical between themes
+(plane 306/567/735×629, panel 112/834/363×322); overflow 0; 0 `<img>`, 0 `<canvas>`. After the revert the
+first-visit default is `auto` again — the store test asserts that the system preference is adopted and
+`matchMedia` is consulted.
