@@ -39,7 +39,7 @@ domains:
     memory-bank/domains/auth-layout/scenarios.md: 23
   ai-workflow:
     memory-bank/domains/ai-workflow/meta.md: 59
-    memory-bank/domains/ai-workflow/practices.md: 174
+    memory-bank/domains/ai-workflow/practices.md: 179
     memory-bank/domains/ai-workflow/principles.md: 200
     memory-bank/domains/ai-workflow/references.md: 164
     memory-bank/domains/ai-workflow/scenarios.md: 200
