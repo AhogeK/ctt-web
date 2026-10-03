@@ -1,6 +1,6 @@
 {
   "name": "ctt-web",
-  "version": "0.53.5",
+  "version": "0.53.8",
   "private": true,
   "type": "module",
   "scripts": {
