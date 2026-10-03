@@ -156,6 +156,17 @@ declaration into the last value.
   leave it and report it; a "cleaned up" claim must list the killed PIDs (2026-09-26: the user's own dev
   server died to the port form above, after the report claimed only my PIDs were touched).
 - Browsers: contract in `skill://user-chrome-tabs` (`target`-less relay hijacks the tab). Report format
+- **`browser.open` (eval) defaults to the relay on this machine = the user's real Chrome** ✗ (2026-10-02: a
+  local self-check opened a tab in the user's browser, next to their own `localhost:5173` review tab). Local
+  checks use the test runner's browser or the chrome-devtools MCP profile; never the eval `browser` without
+  an explicit `app`. Relay tabs are invisible to `sweep.sh` (S14), and a tab whose URL matches one the user
+  may also have open is **ambiguous — leave it, report it** ✗. The bridge (`browser-relay --port 9224`) is
+  this session's: prove it via the `ppid` chain, then kill it (both PIDs) and confirm the port is free.
+
+## 测试与工具的两处坑（2026-10-02 ✗✓）
+
+- **jsdom 缺的 API 要补「可构造的 class」模拟** ✗：`ResizeObserver` / `IntersectionObserver` 在 `src/test/setup.ts` 里都必须能 `new` ✓ —— 用箭头函数或返回对象字面量的 `vi.fn()` ⇒ 调用点抛 "is not a constructor"，整组测试在断言之前就崩 ✓（同型两次：先 ResizeObserver，后 IntersectionObserver ✓）。
+- **测试里别解构 testing-library 的返回方法** ✗：`const { getByTestId } = render(...)` 会触发 `typescript(unbound-method)` ✗ ⇒ 改成持有对象 `const view = render(...)` 再 `view.getByTestId(...)` ✓（`unmount` 同理 ✓）。
 
 ## 提交被拦下后的三坑（2026-09-30 踩中两次 ✗）
 

@@ -178,23 +178,22 @@ SonarLint `css:S7924` 报了 `ThemeToggle.vue` 的四条 `color:` 声明（两�
 - **后备态布局坑** ✗：`.stage-pin` 的 `flex items-center` 在舞台关闭时会把节拍**并排**（375 实测第二条 `left=375` ⇒ 多出 375px 横向滚动 ✗，
   此前被 `overflow: clip` 掩盖 ✗）⇒ 无条件 `flex-direction: column` ✓（两种模式都对 ✓）。
 - **门禁（`e2e/landing/composition.spec.ts`，现 11 条）** ✓：关系 2 · 亮暗几何一致 · CTA/平面折叠线 · **快照逐矩形比对（900/1080）** · 800 净空 ≥8px · 手机文档流三要素 · 手机动效 · 桌面不受影响 · reduce 终态；反向验证：把浮卡压回文档流即变红 ✓。
-## 手机滚动动效（2026-10-01：拆成一步一屏，逐件错开）
-
-手机（≤1023px）**第一屏只放"是什么 + 按钮"**（`.hero-copy` 占满一屏并居中 ✓），其余都是后续步骤：演示窗① → 演示窗② → 年网格 → 每张奖杯卡；**动的是每一件**（标题/说明/按钮/各块标题/格子/卡片/两个演示窗），区间各自相对自身位置 ⇒ 顺序与错开由版面自然产生 ✓。
-实测 375×812：载入时标题·说明·按钮 `1 / 0`、两个窗与内容 `0 / +48px` 在下方等；0.8 屏 **窗① `0.9` 而窗②仍 `0`** ✓；1.4 屏 窗① `1`、窗② `0.87` ✓；出场**整块一起**（`1.00 → 0.90 → 0.73 → 0.56 → 0.39 → 0.22 → 0.05`；逐件退场会把引言撕开：标题 `0.43` 时按钮仍 `1.00` ✗）；三张奖杯卡 `0.43 → 0.06 → 0` ✓。桌面：标题/说明仍是原来两个动画、五个新挂钩全 `none` ✓；reduce 全 `none` 且不透明 1 ✓。
-> 八条纪律：**"读起来是一块"的内容就按一块做动画** ✗（年网格 + 奖杯阶梯是一个区 ⇒ 整块渐入渐出，逐件做会让一半在淡、一半清晰 ✗）；**距离规则分两种** ✗：不高于一屏的件用 `cover 0–30% / 65–100%`（距离 ≈ 高度+一屏的 30%/35% ✓），高于一屏的大块用自身 `entry 0–45% / exit 55–100%`（cover 百分比会让大块长时间半淡 ✗）；**不许突然出现/消失** ✗（判据：每 100px 变化 ≤0.35，实测 ≤0.29 ✓）；**中段必须 ≥0.95** ✗；**每件都要有退场** ✗；**引言那种"读起来是一块"的退场整块** ✗；**进场逐件、容器不参与** ✗；**两条动画 fill 不能都是 `both`** ✗（须 `both, forwards`）；**"占满一屏"只用高度、绝不居中** ✗。
+## 手机滚动动效（2026-10-01 起；2026-10-02 改为**按时长**）
+手机（≤1023px）不做钉住，内容留在正常版面，**每件按状态淡入淡出**：状态 `in` / `above` / `below` 由 `useRevealOnScroll`（IntersectionObserver ✓）写进 `data-reveal-state`，CSS 用**固定 600ms 过渡**在状态间插值 ✓；作用对象 = 引言（`.hero-copy` 整块 ✓）· 两个演示窗 · 年网格 + 阶梯块（`.beat-unit` 整块 ✓）。桌面不受影响（`≥1024` 走钉住舞台 ✓）。
+> **为什么换掉距离区间（2026-10-02 ✗✓）**：旧实现把淡入淡出绑在**滚动距离**上（`view()` 区间）⇒ 一次大滚轮/惯性滑动（实测 1000px 手势）整段跨过：首屏"没了"、下一块"直接出现"，中间一帧都采不到 ✓ ⇒ **按距离的过渡永远可以被一次手势跨过** ⇒ 改为按时长 ✓。**翻板** ✗✓：动画的 `fill` 压过过渡 ⇒ 手机分支里必须 `.hero-panel { animation: none }` ✓。
+> **保留的纪律** ✓：**"读起来是一块"的内容按一块做** ✗（引言、年网格+阶梯各是一个状态单位 ✓）；**方向性三态** ✗（顶部离场走上、下方候场待下方 ⇒ 两态会让顶部回来的件朝下动 ✓）；**无 JS 不隐藏任何东西** ✗（规则只在状态属性存在时生效 ✓）；reduce 下全局规则把时长归零 ⇒ 直接切换 ✓；**"占满一屏"只用高度、绝不居中** ✗。
 ## Shipped so far (P3 stage B — the staged landing, 2026-09-30)
 
 | Fact | Where it lives |
 | --- | --- |
-| The landing is a **pinned stage**, not a stack of bands: a track (300svh) holds a sticky full-height stage, and each beat is positioned in it | `src/assets/main.css` (`.stage` / `.stage-pin` / `.beat-*`) |
-| A beat **parks at the centre** and stays — the blog's own maths (`translateY` 120 → 50 in viewport units, `-50%` of its own height cancelling out) | `beat-lead` / `beat-hold` keyframes |
-| The hand-off is **sequential, never superimposed**: hero fades out over `0→90svh`, the beat arrives `80→180svh`. Measured: the product of the two opacities is 0.000 at every sampled scroll | same file |
-| The **last** beat holds to the end of the track — a beat that reused the "leave upward" keyframe faded the page's own content out at the bottom | `beat-hold` |
+| The landing is a **pinned stage**, not a stack of bands: a track (480svh) holds a sticky full-height stage, and each beat is positioned in it | `src/assets/main.css` (`.stage` / `.stage-pin` / `.beat-*`) |
+| A beat **parks at the centre** and stays — the blog's own maths (`translateY` 120 → 50 in viewport units, `-50%` of its own height cancelling out); the **last** beat holds there to the end of the track, because a "leave upward" keyframe at that point faded the page's own content out at the bottom | `beat-lead` / `beat-hold` keyframes |
+| The hand-off is **sequential, never superimposed**: hero dissolves `0→215svh` (holding the opening fifth), the beat arrives `200→355svh`, parked from ~332svh; the stage unpins at 380svh | same file |
+| **The track must outlast one gesture** (2026-10-02, learned twice ✗✓): a scroll-driven window is scrubbed by scroll *distance*, so any track shorter than one wheel flick / trackpad coast is crossed before a transition can be seen — a 260svh track (2340px) was still finished by a single flick. The reference had already paid for this lesson: its timeline is 8000px with the comment "Significantly increased values to accommodate fast scrolling/trackpads". Shipped: track 480svh (≈3.5 screens of travel), hero dissolve `0→215svh`, arrival `200→355svh`; probe measured progress 0.645 / opacity 0.76 at 2700px and parked at 3240px | same file |
 | Degradation is structural: the absolute layout lives **inside** `@supports (animation-timeline: scroll())`, so without it (or under reduce) the beats are ordinary sections in normal flow | same file |
 | One arriving beat, holding **both** the year grid and the trophy ladders: they answer the same question, so they share a screen | `LandingActivityBeat.vue` |
 | The grid is the product's own ladder — `<15m · 15–60m · 1–2h · 2–5h · 5–8h · >8h` — in DOM, because the dashboard's version is an ECharts option that cannot be extracted | `LandingActivityGrid.vue` |
 | Example data must survive a reader's eye: **no week column may be all-zero**, Sunday is light (0.9h base, 34% off) not empty, and the daily multiplier must span more than one bucket or a weekday row is one flat colour for a year | `demo-data.ts` + `__tests__/demo-data.test.ts` |
 | The year's trailing seven days **are** `EXAMPLE_SUMMARY_SECONDS.thisWeek`, and the trophies are built by `buildTrophies()` — cross-surface arithmetic cannot drift | `demo-data.ts` |
 | Acceptance asserted: beat top == viewport centre (±4px) · 364 painted days · 3 trophy cards · no horizontal overflow at 375 | `e2e/landing/page.spec.ts` |
-| Reference measurements behind the layout (5 product pages probed): none uses `position: sticky` for its tour (Linear 0, Supabase 1 = header); they use scroll-driven animation (Linear 5018 elements, Supabase 7746); one beat ≈ 1–1.5 screens and the artefact spans the container | this session's probe, `/tmp/ref-verify` |
+| Reference measurements behind the layout (5 product pages probed): none uses `position: sticky` for its tour (Linear 0, Supabase 1 = header); they use scroll-driven animation (Linear 5018 elements, Supabase 7746); one beat ≈ 1–1.5 screens and the artefact spans the container | session probe |
