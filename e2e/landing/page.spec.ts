@@ -84,7 +84,10 @@ test.describe('Landing page', () => {
     // Beat 2 arrives at the centre of the viewport, not somewhere below the fold: the stage is pinned
     // and the layer is translated to -50% of its own height from the middle. That is the whole
     // mechanism, and this is the only place it can be checked.
-    await page.evaluate(() => window.scrollTo(0, window.innerHeight * 1.6))
+    // The beat parks from 332svh and the stage unpins at 380svh, so the check has to land between
+    // them: past the park point, short of the unpin — past that the whole stage is dragged upward by
+    // the document and every rect moves with it.
+    await page.evaluate(() => window.scrollTo(0, window.innerHeight * 3.6))
     // Poll instead of sleeping: the beat must actually arrive within ±4px of the centre, and a fixed
     // wait would both slow the suite and hide a beat that never gets there.
     const centred = async () =>

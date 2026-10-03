@@ -34,3 +34,17 @@ class ResizeObserverMock {
   disconnect = vi.fn<() => void>()
 }
 globalThis.ResizeObserver = ResizeObserverMock as unknown as typeof ResizeObserver
+
+/**
+ * `IntersectionObserver` is missing from jsdom the same way, and needs the same shape: the landing page
+ * constructs one to fade its phone pieces, so a `vi.fn()` that returns an object literal would fail at
+ * the call site. The callback is never invoked here — pieces keep their script-free state (visible),
+ * which is exactly the fallback the stylesheet is written for.
+ */
+class IntersectionObserverMock {
+  observe = vi.fn<() => void>()
+  unobserve = vi.fn<() => void>()
+  disconnect = vi.fn<() => void>()
+  takeRecords = vi.fn<() => []>(() => [])
+}
+globalThis.IntersectionObserver = IntersectionObserverMock as unknown as typeof IntersectionObserver
