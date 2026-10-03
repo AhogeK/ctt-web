@@ -13,15 +13,27 @@
  * The hero's content is the copy column, the product plane that tucks under it and the two calls to
  * action; the stage only changes the box it lives in.
  */
+import { ref } from 'vue'
 import { Button } from '@/components/ui/button'
 import { SITE_REPO_URL, PLUGIN_INSTALL_URL } from '@/lib/site-links'
 import LandingHeroPreview from '../components/LandingHeroPreview.vue'
 import LandingSection from '../components/LandingSection.vue'
 import LandingActivityBeat from '../components/LandingActivityBeat.vue'
+import { useRevealOnScroll } from '../composables/useRevealOnScroll'
+
+const root = ref<HTMLElement | null>(null)
+
+// Phone pieces fade on a fixed clock rather than by scroll distance — see the composable.
+useRevealOnScroll(root, [
+  '.hero-copy',
+  '[data-testid="hero-preview"]',
+  '[data-testid="hero-recent-panel"]',
+  '.beat-unit',
+])
 </script>
 
 <template>
-  <section class="stage relative w-full">
+  <section ref="root" class="stage relative w-full">
     <div class="stage-pin flex items-center">
       <!-- Beat 1 — the hero. -->
       <div class="beat beat-hero w-full" data-testid="landing-beat-hero">

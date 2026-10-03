@@ -23,16 +23,6 @@ async function settleHero(page: Page) {
   await expect(page.locator('[data-testid="hero-preview"]').locator('..')).toHaveCSS('opacity', '1')
 }
 
-/**
- * Waits for two animation frames. Scroll-driven styles are recomputed with the scroll position, and
- * reading `getComputedStyle` forces that flush — so two frames are enough, and a wall-clock wait does
- * not belong in a test.
- */
-const settleFrame = (page: Page) =>
-  page.evaluate(
-    () => new Promise<void>((resolve) => requestAnimationFrame(() => requestAnimationFrame(() => resolve()))),
-  )
-
 const selectorRect = (page: Page, selector: string) =>
   page.evaluate((sel) => {
     const el = document.querySelector(sel) as HTMLElement | null
@@ -201,10 +191,11 @@ test.describe('landing phone motion', () => {
     // Regression guard: the intro briefly carried `justify-content: center` inside a one-screen box,
     // which pushed the headline 96–184px down and left the top of the screen empty.
     expect(m.gap, 'empty band above the headline').toBeLessThanOrEqual(72)
-    // The next window peeks over the fold, already part-way in — the first screen reads as one composition.
+    // The next window peeks over the fold, so the first screen reads as one composition. Its opacity is
+    // only checked for "not nothing": the fade is a fixed clock now, and a piece that entered while the
+    // visitor was already looking legitimately sits at full strength.
     expect(m.peekTop).toBeLessThan(m.viewport)
     expect(m.peekOpacity).toBeGreaterThan(0.05)
-    expect(m.peekOpacity).toBeLessThan(0.95)
   })
 
   test('stays readable with reduced motion', async ({ page }) => {
@@ -233,9 +224,12 @@ test.describe('landing phone motion', () => {
     expect(motion.beatPosition).toBe('static')
   })
 
-  test('never lets a phone piece appear or vanish abruptly', async ({ page }) => {
-    // The rule that survived several rounds: nothing pops in or pops out. Every piece fades over a few
-    // hundred pixels, whatever its height, and is at full strength through the middle of its passage.
+  test('fades every phone piece on a clock a fast scroll cannot outrun', async ({ page }) => {
+    // The rule that survived several rounds: nothing pops in or pops out. The mechanism changed, though:
+    // a fade ranged over scroll distance is crossed by however far a gesture travels — measured before
+    // this change, one 1000px gesture took the intro from opacity 1 to 0 and left the next block fully
+    // opaque, with no intermediate frame sampled. Each piece now runs a fixed 600ms transition between
+    // states, so the fade is seen whatever the gesture does.
     await page.setViewportSize(VIEWPORT_PHONE)
     await page.goto('/')
     await page.locator('h1').waitFor()
@@ -245,68 +239,82 @@ test.describe('landing phone motion', () => {
       ['window 2', '[data-testid="hero-recent-panel"]'],
       ['year + ladders', '.beat-unit'],
     ] as const
-    const viewport = VIEWPORT_PHONE.height
-    const max = await page.evaluate(() => document.documentElement.scrollHeight - window.innerHeight)
 
-    const trace = new Map<string, { top: number; opacity: number; height: number }[]>()
-    for (let step = 0; step <= 80; step += 1) {
-      await page.evaluate((y) => window.scrollTo(0, y), Math.round((max * step) / 80))
-      await settleFrame(page)
-      const rows = await page.evaluate(
-        (selectors: string[]) => {
-          const out: { index: number; i: number; opacity: number; top: number; height: number }[] = []
-          selectors.forEach((sel, index) => {
-            for (const [i, node] of [...document.querySelectorAll(sel)].entries()) {
-              const el = node as HTMLElement
-              const b = el.getBoundingClientRect()
-              out.push({ index, i, opacity: Number(getComputedStyle(el).opacity), top: b.top, height: b.height })
-            }
-          })
-          return out
-        },
-        PIECES.map(([, sel]) => sel),
+    for (const [label, sel] of PIECES) {
+      // `transitionDuration` is a per-property list — one entry per animated property.
+      const duration = await page.evaluate(
+        (s) => getComputedStyle(document.querySelector(s) as HTMLElement).transitionDuration,
+        sel,
       )
-      for (const row of rows) {
-        const key = `${row.index}:${row.i}`
-        const list = trace.get(key) ?? []
-        list.push({ top: row.top, opacity: row.opacity, height: row.height })
-        trace.set(key, list)
-      }
+      const durations = duration.split(',').map((value) => value.trim())
+      expect(durations.length, `${label} declares no transition`).toBeGreaterThan(0)
+      expect(
+        durations.every((value) => value === '0.6s'),
+        `${label} does not fade on a fixed clock (${duration})`,
+      ).toBe(true)
     }
 
-    const problems: string[] = []
-    for (const [key, points] of trace) {
-      const label = PIECES[Number(key.split(':')[0])]![0]
-      const height = points[0]!.height
-      for (let i = 1; i < points.length; i += 1) {
-        const dy = Math.abs(points[i]!.top - points[i - 1]!.top)
-        const dop = Math.abs(points[i]!.opacity - points[i - 1]!.opacity)
-        if (dy > 20 && dop / (dy / 100) > 0.35)
-          problems.push(`${label} jumped ${dop.toFixed(2)} in ${Math.round(dy)}px`)
-      }
-      /*
-       * The crisp window, derived from the range each piece actually uses:
-       * - the windows fade over `cover 0–30%` / `cover 65–100%`, so they are at full strength while their
-       *   top sits between `viewport − 0.65 × (h + viewport)` and `viewport − 0.30 × (h + viewport)`;
-       * - the year block is taller than a screen and is anchored to its own `entry 0–45%` / `exit 55–100%`,
-       *   so its window is between `−0.55 × h` and `viewport − 0.45 × h`.
-       */
-      const cover = height + viewport
-      const anchored = height > viewport
-      const crispLower = anchored ? -height * 0.55 : viewport - cover * 0.65
-      const crispUpper = anchored ? viewport - height * 0.45 : viewport - cover * 0.3
-      for (const point of points) {
-        if (point.top <= crispUpper && point.top >= crispLower && point.opacity < 0.95) {
-          problems.push(
-            `${label} was only ${point.opacity.toFixed(2)} at top=${Math.round(point.top)} (its crisp band ${Math.round(crispLower)}…${Math.round(crispUpper)})`,
-          )
+    // Let the first observation pass settle: each piece gets its state on mount, and the jump must be
+    // what moves them — jumping before the first callback leaves nothing to animate.
+    await expect
+      .poll(
+        async () =>
+          page.evaluate(
+            (sels: string[]) => sels.every((s) => document.querySelector(s)?.hasAttribute('data-reveal-state')),
+            PIECES.map(([, s]) => s),
+          ),
+        { message: 'the pieces never received their first state' },
+      )
+      .toBe(true)
+
+    // Let the first pass *finish*: a piece below the fold starts visible (no state yet) and fades to its
+    // hidden state once the observer reports, so a jump taken during that fade would only ever see its
+    // tail. Waiting for the settled value keeps the check about the jump, not about the first paint.
+    await expect
+      .poll(
+        async () =>
+          page.evaluate(
+            (s) => Number(getComputedStyle(document.querySelector(s) as HTMLElement).opacity),
+            '[data-testid="hero-recent-panel"]',
+          ),
+        { message: 'the first observation pass never settled' },
+      )
+      .toBeLessThanOrEqual(0.05)
+
+    // Behaviour: a fast jump must leave at least one piece mid-fade. Sampled inside the page — a
+    // round-trip per sample can be slower than the 600ms fade itself, which is what made the first
+    // version of this check flaky.
+    const samples = await page.evaluate(
+      async (sels: string[]) => {
+        window.scrollTo(0, window.innerHeight * 1.2)
+        const read = () => sels.map((s) => Number(getComputedStyle(document.querySelector(s) as HTMLElement).opacity))
+        const rows: number[][] = [read()]
+        const started = performance.now()
+        while (performance.now() - started < 900) {
+          await new Promise((resolve) => requestAnimationFrame(() => resolve(null)))
+          rows.push(read())
         }
-      }
-    }
-    expect(problems, problems.slice(0, 6).join(' · ')).toEqual([])
+        return rows
+      },
+      PIECES.map(([, s]) => s),
+    )
+    const sawIntermediate = samples.some((row) => row.some((o) => o > 0.05 && o < 0.95))
+    expect(sawIntermediate, 'a fast scroll crossed every piece without one intermediate frame').toBe(true)
+
+    // And a piece that is on screen settles fully readable.
+    await expect
+      .poll(
+        async () =>
+          page.evaluate(
+            (s) => Number(getComputedStyle(document.querySelector(s) as HTMLElement).opacity),
+            PIECES[0][1],
+          ),
+        { message: 'window 1 never became readable' },
+      )
+      .toBeGreaterThan(0.95)
   })
 
-  test('gives every phone piece a full arrival-hold-exit passage', async ({ page }) => {
+  test('gives every phone piece arrival, hold and dissolve as states', async ({ page }) => {
     await page.setViewportSize(VIEWPORT_PHONE)
     await page.goto('/')
     await page.locator('h1').waitFor()
@@ -318,102 +326,81 @@ test.describe('landing phone motion', () => {
       ['year + ladders', '.beat-unit'],
     ] as const
 
-    const peak = new Map<string, number>()
-    /** Lowest opacity seen *after* a piece had scrolled off the top — must reach 0 by the end. */
-    const leftOver = new Map<string, number>()
     let overflow = 0
-
-    for (let step = 0; step <= 10; step += 1) {
-      await page.evaluate((f) => {
-        const max = document.documentElement.scrollHeight - window.innerHeight
-        window.scrollTo(0, Math.round(max * f))
-      }, step / 10)
-      await settleFrame(page)
+    for (const [label, sel] of PIECES) {
+      await page.evaluate((s) => (document.querySelector(s) as HTMLElement).scrollIntoView({ block: 'center' }), sel)
+      await expect
+        .poll(
+          async () =>
+            page.evaluate((s) => (document.querySelector(s) as HTMLElement).getAttribute('data-reveal-state'), sel),
+          { message: `${label} never entered` },
+        )
+        .toBe('in')
+      await expect
+        .poll(
+          async () =>
+            page.evaluate((s) => Number(getComputedStyle(document.querySelector(s) as HTMLElement).opacity), sel),
+          { message: `${label} never became readable` },
+        )
+        .toBeGreaterThan(0.95)
       overflow = Math.max(overflow, await page.evaluate(() => document.documentElement.scrollWidth - window.innerWidth))
+    }
 
-      const rows = await page.evaluate(
-        (selectors: string[]) => {
-          const out: { label: string; opacity: number; bottom: number }[] = []
-          selectors.forEach((sel, index) => {
-            for (const [i, node] of [...document.querySelectorAll(sel)].entries()) {
-              const el = node as HTMLElement
-              out.push({
-                label: `${index}:${i}`,
-                opacity: Number(getComputedStyle(el).opacity),
-                bottom: el.getBoundingClientRect().bottom,
-              })
-            }
-          })
-          return out
-        },
-        PIECES.map(([, sel]) => sel),
+    // Leaving: the intro is far above the fold at the bottom of the page, so it must be dissolved.
+    await page.evaluate(() => window.scrollTo(0, document.documentElement.scrollHeight))
+    await expect
+      .poll(
+        async () =>
+          page.evaluate(() => (document.querySelector('.hero-copy') as HTMLElement).getAttribute('data-reveal-state')),
+        { message: 'the intro never left upward' },
       )
+      .toBe('above')
+    await expect
+      .poll(
+        async () =>
+          page.evaluate(() => Number(getComputedStyle(document.querySelector('.hero-copy') as HTMLElement).opacity)),
+        { message: 'the intro never dissolved after leaving' },
+      )
+      .toBeLessThanOrEqual(0.05)
 
-      for (const row of rows) {
-        peak.set(row.label, Math.max(peak.get(row.label) ?? 0, row.opacity))
-        // A scroll animation's tail finishes after the piece has left the screen — invisible and harmless.
-        if (row.bottom < 0) leftOver.set(row.label, Math.min(leftOver.get(row.label) ?? 1, row.opacity))
-      }
-    }
-
-    for (const [label, value] of peak) {
-      const index = Number(label.split(':')[0])
-      expect(value, `${PIECES[index]![0]} (${label}) never became fully readable`).toBeGreaterThanOrEqual(0.95)
-    }
-    for (const [label, value] of leftOver) {
-      const index = Number(label.split(':')[0])
-      expect(
-        value,
-        `${PIECES[index]![0]} (${label}) never dissolved after leaving the screen (min ${value.toFixed(2)})`,
-      ).toBeLessThanOrEqual(0.05)
-    }
-    expect(leftOver.size, 'no piece was ever observed leaving the screen').toBeGreaterThan(0)
     expect(overflow).toBeLessThanOrEqual(0)
   })
 
-  test('leaves the intro as one block while the windows arrive one after another', async ({ page }) => {
+  test('keeps the intro as one block and the windows as separate steps', async ({ page }) => {
     await page.setViewportSize(VIEWPORT_PHONE)
     await page.goto('/')
     await page.locator('h1').waitFor()
 
-    // Leaving: the intro goes as one block. Per-piece exit ranges are offset by position and tore it apart.
-    let witnessed = false
-    for (const at of [0.2, 0.3, 0.4]) {
-      await page.evaluate((n) => window.scrollTo(0, window.innerHeight * n), at)
-      await settleFrame(page)
-      const block = await page.evaluate(() => {
-        const el = document.querySelector('.hero-copy') as HTMLElement
-        return {
-          opacity: Number(getComputedStyle(el).opacity),
-          childrenCarryingExit: [...el.children]
-            .map((c) => getComputedStyle(c).animationName)
-            .filter((n) => n.includes('phone-copy-leave')),
-        }
-      })
-      if (block.opacity > 0.05 && block.opacity < 0.95) {
-        expect(block.childrenCarryingExit, 'the intro must leave as one block, not piece by piece').toEqual([])
-        witnessed = true
-        break
+    // One block: the intro carries the state itself and hands none to its children, so it cannot tear
+    // apart the way per-piece ranges did.
+    const intro = await page.evaluate(() => {
+      const el = document.querySelector('.hero-copy') as HTMLElement
+      return {
+        own: el.hasAttribute('data-reveal-state'),
+        children: [...el.children].filter((child) => child.hasAttribute('data-reveal-state')).length,
       }
-    }
-    expect(witnessed, 'no scroll offset caught the intro mid-exit').toBe(true)
+    })
+    expect(intro.own, 'the intro must fade as one block').toBe(true)
+    expect(intro.children, 'the intro must fade as one block, not piece by piece').toBe(0)
 
-    // Arriving: the two demo windows are separate steps — the first is well ahead of the second.
-    await page.evaluate(() => window.scrollTo(0, window.innerHeight * 2))
+    // Separate steps: bring the first window *just* over the fold — the second is far below and must
+    // still be waiting. Centring the first window was too far down the page: at 375px the two windows
+    // are close enough that both enter together, which is not what the stagger is about.
+    await page.evaluate(() => {
+      const first = document.querySelector('[data-testid="hero-preview"]') as HTMLElement
+      const top = first.getBoundingClientRect().top + window.scrollY
+      window.scrollTo(0, top - window.innerHeight + 60)
+    })
     await expect
       .poll(
-        async () => {
-          const [a, b] = await page.evaluate(() => [
-            Number(getComputedStyle(document.querySelector('[data-testid="hero-preview"]') as HTMLElement).opacity),
-            Number(
-              getComputedStyle(document.querySelector('[data-testid="hero-recent-panel"]') as HTMLElement).opacity,
-            ),
-          ])
-          return a > 0.3 && b < a - 0.2
-        },
-        { message: 'the two demo windows arrived together' },
+        async () =>
+          page.evaluate(() => {
+            const state = (s: string) => (document.querySelector(s) as HTMLElement).getAttribute('data-reveal-state')
+            return [state('[data-testid="hero-preview"]'), state('[data-testid="hero-recent-panel"]')]
+          }),
+        { message: 'the two demo windows are not separate steps' },
       )
-      .toBe(true)
+      .toEqual(['in', 'below'])
   })
 
   test('keeps the headline clear of the header on a short desktop', async ({ page }) => {
