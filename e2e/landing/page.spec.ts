@@ -84,7 +84,7 @@ test.describe('Landing page', () => {
     // Beat 2 arrives at the centre of the viewport, not somewhere below the fold: the stage is pinned
     // and the layer is translated to -50% of its own height from the middle. That is the whole
     // mechanism, and this is the only place it can be checked.
-    // The beat parks from 332svh and the stage unpins at 380svh, so the check has to land between
+    // The beat parks from 332svh and the stage unpins at 460svh, so the check has to land between
     // them: past the park point, short of the unpin — past that the whole stage is dragged upward by
     // the document and every rect moves with it.
     await page.evaluate(() => window.scrollTo(0, window.innerHeight * 3.6))
@@ -101,6 +101,13 @@ test.describe('Landing page', () => {
       .poll(async () => Math.abs((await centred()).offset), { message: 'beat never parked at the centre' })
       .toBeLessThanOrEqual(4)
     expect((await centred()).opacity).toBeGreaterThan(0.8)
+
+    // The hold is sized against gestures: half a viewport further must still be the same parked
+    // screen, not the page bottom.
+    await page.evaluate(() => window.scrollBy(0, window.innerHeight * 0.5))
+    await expect
+      .poll(async () => Math.abs((await centred()).offset), { message: 'the beat left the centre too soon' })
+      .toBeLessThanOrEqual(4)
 
     // And the beat really is the product's artefact: a year of days plus the cabinet's ladders,
     // which share the beat because they answer the same question.
