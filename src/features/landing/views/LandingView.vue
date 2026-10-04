@@ -68,8 +68,10 @@ useRevealOnScroll(root, [
 
           <!-- Product plane: right of the copy and pulled up into its band, so its top-left corner tucks
                under the copy's lower half. The content container is 1440px wide (Vue's own hero uses that
-               cap), and the plane takes 54% of it. -->
-          <div class="hero-fade-rise mt-12 min-w-0 lg:-mt-[7rem] lg:ml-[34%] lg:w-[54%] [animation-delay:210ms]">
+               cap), and the plane keeps its 54% width; the 42.2% offset is measured so that its *painted*
+               right edge (the projection spreads it about 35px past its layout box) lands on the
+               container's right edge instead of leaving a 12% gap. -->
+          <div class="hero-fade-rise mt-12 min-w-0 lg:-mt-[7rem] lg:ml-[42.2%] lg:w-[54%] [animation-delay:210ms]">
             <LandingHeroPreview />
           </div>
         </div>
