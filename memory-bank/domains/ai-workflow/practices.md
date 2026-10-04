@@ -168,6 +168,11 @@ declaration into the last value.
 - **jsdom 缺的 API 要补「可构造的 class」模拟** ✗：`ResizeObserver` / `IntersectionObserver` 在 `src/test/setup.ts` 里都必须能 `new` ✓ —— 用箭头函数或返回对象字面量的 `vi.fn()` ⇒ 调用点抛 "is not a constructor"，整组测试在断言之前就崩 ✓（同型两次：先 ResizeObserver，后 IntersectionObserver ✓）。
 - **测试里别解构 testing-library 的返回方法** ✗：`const { getByTestId } = render(...)` 会触发 `typescript(unbound-method)` ✗ ⇒ 改成持有对象 `const view = render(...)` 再 `view.getByTestId(...)` ✓（`unmount` 同理 ✓）。
 
+## 自查截图与"给用户看的材料"（2026-10-02 ✗✓）
+
+- **截图 = 我自己的核对手段** ✗：给用户看的材料是**用户自己去看** ✓ —— 我只给"从哪进 / 看哪里 / 什么算不对"的指引，不拿自查截图当判据 ✓（用户明说 ✓）。
+- **截图必须等入场动画落定** ✗：入场动画在跑时停在自己的首帧（透明 ✗）⇒ 抢拍会得到"只剩标题"的假象 ✓（实例：一次自查因此误判为回归 ✗，探针实测各元素不透明度均为 1、页面完好 ✓）；做法：等**最后一件**入场（延迟最大的那件 ✓）不透明度为 1 ✓，再等两个 `requestAnimationFrame` 后拍 ✓。
+
 ## 提交被拦下后的三坑（2026-09-30 踩中两次 ✗）
 
 - **`git add` 分区留在索引** ✗：pre-commit 失败只回滚**工作树** ✓，暂存区不回滚 ✗ ⇒ 重提时上一轮的
