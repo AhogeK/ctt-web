@@ -75,6 +75,39 @@ test.describe('Landing page', () => {
     await expect(page.getByTestId('marketing-cta')).toHaveCount(1)
   })
 
+  test('opens the source dialog from both entries without moving the page', async ({ page }) => {
+    // "View source" after "Install the plugin" is a question about the whole ecosystem, and three
+    // repositories exist. The dialog answers it in place: scrolling to the footer catalogue would
+    // have to cross the landing stage's pinned track, which is exactly the performance this entry
+    // should not replay, and an instant jump loses the sense of travel.
+    await page.goto('/')
+    await page.locator('h1').waitFor()
+
+    // The footer catalogue stays as the page's own list, and as the no-JavaScript destination.
+    await expect(page.locator('#source')).toHaveCount(1)
+    await expect(page.getByRole('link', { name: 'View source' })).toHaveAttribute('href', '#source')
+
+    const before = await page.evaluate(() => window.scrollY)
+    await page.getByRole('link', { name: 'View source' }).click()
+
+    const dialog = page.getByRole('dialog')
+    await expect(dialog).toBeVisible()
+    await expect(dialog.getByRole('link')).toHaveCount(3)
+    await expect(dialog.getByRole('link', { name: /code-time-tracker/ })).toHaveAttribute(
+      'href',
+      'https://github.com/AhogeK/code-time-tracker',
+    )
+    // The point of the dialog: the page itself must not move.
+    expect(await page.evaluate(() => window.scrollY)).toBe(before)
+
+    await page.keyboard.press('Escape')
+    await expect(dialog).toBeHidden()
+
+    // The top bar's shortcut opens the same dialog.
+    await page.getByTestId('marketing-source').click()
+    await expect(page.getByRole('dialog')).toBeVisible()
+  })
+
   test('raises each beat into the centre of the same stage', async ({ page }) => {
     await page.setViewportSize({ width: 1440, height: 900 })
     await page.goto('/')

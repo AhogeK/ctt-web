@@ -32,6 +32,7 @@ import ThemeToggle from '@/components/app/ThemeToggle.vue'
 import { useAuthStore } from '@/stores/auth'
 import { RouteNames } from '@/router/route-names'
 import { ECOSYSTEM_REPOS } from '@/lib/site-links'
+import SourceReposDialog from '@/components/app/SourceReposDialog.vue'
 
 /** The current year for the copyright line — evaluated once, not per render. */
 const currentYear = new Date().getFullYear()
@@ -66,6 +67,23 @@ const cta = computed(() =>
         </RouterLink>
 
         <nav class="flex items-center gap-1 sm:gap-2">
+          <!-- The source shortcut. Every source entry on the page — this one and the hero's secondary
+               call to action — opens the same dialog, which answers "which repository" with one line
+               per repo instead of picking one. The anchor keeps working as the footer catalogue's
+               address when JavaScript is not running. -->
+          <SourceReposDialog>
+            <Button as-child variant="ghost" size="icon-sm">
+              <a
+                href="#source"
+                aria-label="Source repositories"
+                title="Source repositories"
+                data-testid="marketing-source"
+                @click.prevent
+              >
+                <Icon icon="mdi:github" class="size-[18px]" />
+              </a>
+            </Button>
+          </SourceReposDialog>
           <ThemeToggle />
           <Button as-child size="sm">
             <RouterLink :to="cta.to" data-testid="marketing-cta">{{ cta.label }}</RouterLink>
@@ -81,7 +99,10 @@ const cta = computed(() =>
     </main>
 
     <footer class="border-t border-border/60">
-      <div class="mx-auto w-full max-w-[1200px] px-4 py-10 text-sm text-muted-foreground sm:px-6">
+      <div
+        id="source"
+        class="mx-auto w-full max-w-[1200px] scroll-mt-16 px-4 py-10 text-sm text-muted-foreground sm:px-6"
+      >
         <!-- The ecosystem is more than one repository: listing them answers "what
              is this made of", which a single link to this dashboard cannot. -->
         <ul class="flex flex-col gap-3 sm:flex-row sm:flex-wrap sm:gap-x-8">
