@@ -12,7 +12,7 @@ maintenance:
   - '每轮收尾校验：files/domains 的键是相对路径、值是 wc -l 语义的行数；与实际不符即索引漂移'
   - '索引只做定位，不写结论 —— 结论属于被指向的文件（避免两处重复，P6）'
 files:
-  AGENTS.md: 235
+  AGENTS.md: 241
   memory-bank/activeContext.md: 200
   memory-bank/progress.md: 200
   memory-bank/systemPatterns.md: 200
