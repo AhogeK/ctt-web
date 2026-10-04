@@ -333,6 +333,16 @@
    */
   @media (max-width: 1023px) {
     /*
+     * A phone (or a narrow desktop window) reads this page as a normal document, so the last block is
+     * followed straight by the footer — one scroll threw the year-and-ladders block off the bottom of
+     * the page while it was still being looked at. The spacer keeps the block on screen for another
+     * third of a viewport before the page ends; it is bottom padding, not a pinned frame, so nothing
+     * is held against the visitor's scrolling.
+     */
+    .stage {
+      padding-block-end: 32svh;
+    }
+    /*
      * The phone intro keeps its natural height: headline, paragraph and buttons flow from under the
      * header, exactly as before the split. A one-screen box was tried two ways and rejected both times
      * — centred, it opened a 96–184px band above the headline; top-aligned, it left the screen looking
@@ -409,10 +419,10 @@
              three screens of scroll in a few hundred milliseconds, and a scroll-driven animation is
              scrubbed by exactly that distance — so a track shorter than a gesture is crossed before
              any transition can be seen. The reference's own timeline was raised for this reason
-             ("Significantly increased values to accommodate fast scrolling/trackpads"). 480svh leaves
-             380svh of scroll — around three and a half screens of travel — while everything on it is
-             still moving. */
-          min-block-size: 480svh;
+             ("Significantly increased values to accommodate fast scrolling/trackpads"). 560svh leaves
+             460svh of scroll: the two transitions use 355svh of it, and the last screen then holds for
+             about 128svh — a screen and a third — so one gesture cannot eject it into the page bottom. */
+          min-block-size: 560svh;
         }
         .stage-pin {
           position: sticky;
@@ -448,9 +458,9 @@
           animation: beat-hold auto linear both;
           animation-timeline: scroll(root block);
           /* 200 → 355svh: the arrival gets 155svh of travel — a little under two screens, again sized
-             against a gesture — and the beat is parked from ~332svh. The stage unpins at 380svh, so
-             the parked stretch is about half a screen: enough to read the year grid and the ladders,
-             short enough not to read as a wait. */
+             against a gesture — and the beat is parked from ~332svh. The stage unpins at 460svh, so the
+             last screen holds for about 128svh: long enough to read the year grid and the ladders, and
+             long enough that a normal scroll cannot throw it straight to the page bottom. */
           animation-range: 200svh 355svh;
         }
         /*
