@@ -15,7 +15,8 @@
  */
 import { ref } from 'vue'
 import { Button } from '@/components/ui/button'
-import { SITE_REPO_URL, PLUGIN_INSTALL_URL } from '@/lib/site-links'
+import { PLUGIN_INSTALL_URL } from '@/lib/site-links'
+import SourceReposDialog from '@/components/app/SourceReposDialog.vue'
 import LandingHeroPreview from '../components/LandingHeroPreview.vue'
 import LandingSection from '../components/LandingSection.vue'
 import LandingActivityBeat from '../components/LandingActivityBeat.vue'
@@ -60,9 +61,11 @@ useRevealOnScroll(root, [
                   Install the plugin
                 </a>
               </Button>
-              <Button as-child size="lg" variant="outline">
-                <a :href="SITE_REPO_URL" target="_blank" rel="noopener noreferrer">View source</a>
-              </Button>
+              <SourceReposDialog>
+                <Button as-child size="lg" variant="outline">
+                  <a href="#source" @click.prevent>View source</a>
+                </Button>
+              </SourceReposDialog>
             </div>
           </div>
 

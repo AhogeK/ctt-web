@@ -35,9 +35,6 @@ export const ECOSYSTEM_REPOS: readonly EcosystemRepo[] = [
   },
 ]
 
-/** This site's own source, for the shell's top-bar shortcut. */
-export const SITE_REPO_URL = 'https://github.com/AhogeK/ctt-web'
-
 /**
  * The plugin's JetBrains Marketplace listing — the product's install entry.
  * Verified against the Marketplace API (`searchPlugins?search=Code Time Tracker`
