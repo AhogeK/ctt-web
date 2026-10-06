@@ -98,13 +98,15 @@ const cta = computed(() =>
       </ErrorBoundary>
     </main>
 
+    <!-- The footer deliberately carries no reveal state: it is the page's last block, so an animated
+         entrance would only be one more thing to scroll past — it moves with the page like ordinary
+         content. -->
     <footer class="border-t border-border/60">
-      <div
-        id="source"
-        class="mx-auto w-full max-w-[1200px] scroll-mt-16 px-4 py-10 text-sm text-muted-foreground sm:px-6"
-      >
+      <div class="mx-auto w-full max-w-[1200px] px-4 py-10 text-sm text-muted-foreground sm:px-6">
         <!-- The ecosystem is more than one repository: listing them answers "what
-             is this made of", which a single link to this dashboard cannot. -->
+             is this made of", which a single link to this dashboard cannot. The `#source` anchor
+             itself lives on the landing page's open-source block; this list stays as the footer's
+             own catalogue. -->
         <ul class="flex flex-col gap-3 sm:flex-row sm:flex-wrap sm:gap-x-8">
           <li v-for="repo in ECOSYSTEM_REPOS" :key="repo.url">
             <a
@@ -121,7 +123,7 @@ const cta = computed(() =>
         </ul>
 
         <div class="mt-6 border-t border-border/60 pt-6 sm:flex sm:items-center sm:justify-between sm:gap-6">
-          <p>Open source under the MIT license — deploy it yourself, or use the hosted sync service.</p>
+          <p>Open source — deploy it yourself, or use the hosted sync service.</p>
           <!-- No "All rights reserved": MIT already grants those rights to everyone. -->
           <p class="mt-2 shrink-0 sm:mt-0">© {{ currentYear }} AhogeK</p>
         </div>

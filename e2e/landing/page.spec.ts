@@ -77,13 +77,14 @@ test.describe('Landing page', () => {
 
   test('opens the source dialog from both entries without moving the page', async ({ page }) => {
     // "View source" after "Install the plugin" is a question about the whole ecosystem, and three
-    // repositories exist. The dialog answers it in place: scrolling to the footer catalogue would
-    // have to cross the landing stage's pinned track, which is exactly the performance this entry
-    // should not replay, and an instant jump loses the sense of travel.
+    // repositories exist. The dialog answers it in place: scrolling to the open-source section at
+    // the page's end would have to cross the landing stage's pinned track, which is exactly the
+    // performance this entry should not replay, and an instant jump loses the sense of travel.
     await page.goto('/')
     await page.locator('h1').waitFor()
 
-    // The footer catalogue stays as the page's own list, and as the no-JavaScript destination.
+    // The footer keeps the ecosystem list; the anchor's no-JavaScript destination is now the
+    // open-source section at the page's end.
     await expect(page.locator('#source')).toHaveCount(1)
     await expect(page.getByRole('link', { name: 'View source' })).toHaveAttribute('href', '#source')
 
@@ -108,39 +109,181 @@ test.describe('Landing page', () => {
     await expect(page.getByRole('dialog')).toBeVisible()
   })
 
+  test('closes the page with capabilities, the pipeline and the open-source block', async ({ page }) => {
+    await page.setViewportSize({ width: 1440, height: 900 })
+    await page.goto('/')
+    await page.locator('h1').waitFor()
+
+    // Capabilities: one claim with one consequence per item, and the figures are the product's own.
+    const capabilities = page.getByTestId('landing-capabilities')
+    for (const title of [
+      '24 boards, every one real.',
+      '67 badges across 14 ladders.',
+      'Sync that converges.',
+      'Devices and keys, in plain sight.',
+    ]) {
+      await expect(capabilities.getByText(title), `${title} is missing`).toBeVisible()
+    }
+    await expect(capabilities.locator('article')).toHaveCount(4)
+
+    // Below the fold the band waits hidden, then arrives with the page's 600ms state fade — the same
+    // mechanism the phone uses, extended to these bands on desktop (the observer runs at every width).
+    // The footer deliberately does not join them: it is the page's last block and just scrolls.
+    await expect(capabilities).toHaveCSS('opacity', '0')
+    await expect(page.locator('footer')).toHaveCSS('opacity', '1')
+    await capabilities.scrollIntoViewIfNeeded()
+    await expect(capabilities).toHaveCSS('opacity', '1')
+
+    // The pipeline: three ordered steps, side by side only when there is room (see the phone case).
+    const pipeline = page.getByTestId('landing-how-it-works')
+    await expect(pipeline.locator('ol > li')).toHaveCount(3)
+    const columns = await pipeline
+      .locator('ol')
+      .evaluate((el) => getComputedStyle(el).gridTemplateColumns.split(' ').length)
+    expect(columns).toBe(3)
+
+    // Order is part of the claim: capabilities, then the pipeline, then the source.
+    const tops = await page.evaluate(() =>
+      ['landing-capabilities', 'landing-how-it-works', 'landing-open-source'].map(
+        (id) =>
+          (document.querySelector(`[data-testid="${id}"]`) as HTMLElement).getBoundingClientRect().top + window.scrollY,
+      ),
+    )
+    expect(tops[0]!).toBeLessThan(tops[1]!)
+    expect(tops[1]!).toBeLessThan(tops[2]!)
+
+    // The source anchor moved onto the open-source block; the footer keeps its ecosystem list.
+    await expect(page.locator('#source')).toHaveCount(1)
+    expect(
+      await page.evaluate(
+        () => document.getElementById('source')?.matches('[data-testid="landing-open-source"]') ?? false,
+      ),
+    ).toBe(true)
+    await expect(page.locator('footer').getByRole('link')).toHaveCount(3)
+
+    const source = page.getByTestId('landing-open-source')
+    await expect(source.getByRole('link')).toHaveCount(3)
+    await expect(source.getByRole('link', { name: 'code-time-tracker' })).toHaveAttribute(
+      'href',
+      'https://github.com/AhogeK/code-time-tracker',
+    )
+    await expect(source.getByText('Apache-2.0')).toHaveCount(1)
+    await expect(source.getByText('MIT', { exact: true })).toHaveCount(2)
+
+    // The deploy command copies as it reads.
+    await page.context().grantPermissions(['clipboard-read', 'clipboard-write'])
+    await source.getByRole('button', { name: 'Copy' }).click()
+    await expect(source.getByRole('button', { name: 'Copied' })).toBeVisible()
+    const clipboard = await page.evaluate(() => navigator.clipboard.readText())
+    expect(clipboard).toContain('git clone https://github.com/AhogeK/ctt-server')
+    expect(clipboard).toContain('docker compose up -d --build')
+
+    // ... and the footer is plain content at the page top and the page bottom alike: no arrival state,
+    // it simply sits at the end of the page.
+    await page.locator('footer').scrollIntoViewIfNeeded()
+    await expect(page.locator('footer')).toHaveCSS('opacity', '1')
+  })
+
+  test('stacks the pipeline into a readable column on a phone', async ({ page }) => {
+    await page.setViewportSize({ width: 375, height: 812 })
+    await page.goto('/')
+    await page.locator('h1').waitFor()
+
+    const list = page.getByTestId('landing-how-it-works').locator('ol')
+    const columns = await list.evaluate((el) => getComputedStyle(el).gridTemplateColumns.split(' ').length)
+    expect(columns).toBe(1)
+
+    // Stacked in order, each step on its own row at the list's full width — never a squeezed row.
+    const boxes = await list.locator('li').evaluateAll((els) =>
+      els.map((el) => {
+        const rect = el.getBoundingClientRect()
+        return { top: rect.top, bottom: rect.bottom, width: rect.width }
+      }),
+    )
+    expect(boxes[0]!.bottom).toBeLessThanOrEqual(boxes[1]!.top)
+    expect(boxes[1]!.bottom).toBeLessThanOrEqual(boxes[2]!.top)
+    const width = await list.evaluate((el) => el.getBoundingClientRect().width)
+    for (const box of boxes) {
+      expect(box.width, 'a step is narrower than the column').toBeGreaterThan(width * 0.95)
+    }
+
+    // And the page as a whole still fits the phone.
+    const overflow = await page.evaluate(() => document.documentElement.scrollWidth - window.innerWidth)
+    expect(overflow).toBeLessThanOrEqual(0)
+
+    // The new bands join the phone fade like every other piece.
+    await expect
+      .poll(async () =>
+        page.evaluate(() =>
+          ['landing-capabilities', 'landing-how-it-works', 'landing-open-source'].every((id) =>
+            document.querySelector(`[data-testid="${id}"]`)?.hasAttribute('data-reveal-state'),
+          ),
+        ),
+      )
+      .toBe(true)
+  })
+
   test('raises each beat into the centre of the same stage', async ({ page }) => {
     await page.setViewportSize({ width: 1440, height: 900 })
     await page.goto('/')
     // The entrance is a timed animation; wait for its end state rather than for a duration.
     await expect(page.locator('[data-testid="hero-preview"]').locator('..')).toHaveCSS('opacity', '1')
 
+    // The stage screens' fades are fixed clocks, and both hand-offs overlap so the stage is never
+    // empty: the year screen's entrance plays on the opening screen's exit trigger (1.2 screens), and
+    // the exit starts as the stage releases and the first closing band enters (3 screens). Neither
+    // fade depends on how far a gesture travels (a scrubbed fade would be crossed between two frames
+    // by a flick and never seen).
+    const heroFade = page.locator('[data-testid="landing-beat-hero"] [data-scroll-fade]')
+    const beatFade = page.locator('[data-testid="landing-beat-activity"] [data-scroll-fade]')
+    const beatOpacity = () => beatFade.evaluate((el) => Number(getComputedStyle(el).opacity))
+    await page.evaluate(() => window.scrollTo(0, window.innerHeight * 1.0))
+    await expect(heroFade).toHaveCSS('opacity', '1')
+    await expect(beatFade).toHaveCSS('opacity', '0')
+    await page.evaluate(() => window.scrollTo(0, window.innerHeight * 1.4))
+    await expect.poll(() => heroFade.evaluate((el) => Number(getComputedStyle(el).opacity))).toBeLessThan(0.95)
+    await expect
+      .poll(beatOpacity, { message: 'the year screen never entered while the opening screen left' })
+      .toBeGreaterThan(0.95)
+    await page.evaluate(() => window.scrollTo(0, window.innerHeight * 2.4))
+    await expect.poll(() => heroFade.evaluate((el) => Number(getComputedStyle(el).opacity))).toBeLessThanOrEqual(0.1)
+
     // Beat 2 arrives at the centre of the viewport, not somewhere below the fold: the stage is pinned
     // and the layer is translated to -50% of its own height from the middle. That is the whole
     // mechanism, and this is the only place it can be checked.
-    // The beat parks from 332svh and the stage unpins at 460svh, so the check has to land between
-    // them: past the park point, short of the unpin — past that the whole stage is dragged upward by
-    // the document and every rect moves with it.
-    await page.evaluate(() => window.scrollTo(0, window.innerHeight * 3.6))
+    // The beat parks from ~202svh and starts its own exit rise at ~231svh, so the check has to land
+    // inside that window: past the park point, before the rise — after the release the whole stage is
+    // dragged upward by the document and every rect moves with it.
+    await page.evaluate(() => window.scrollTo(0, window.innerHeight * 2.15))
     // Poll instead of sleeping: the beat must actually arrive within ±4px of the centre, and a fixed
     // wait would both slow the suite and hide a beat that never gets there.
     const centred = async () =>
       page.evaluate(() => {
         const beat = document.querySelector('[data-testid="landing-beat-activity"]') as HTMLElement
+        const fade = document.querySelector('[data-testid="landing-beat-activity"] [data-scroll-fade]') as HTMLElement
         const rect = beat.getBoundingClientRect()
         const centre = (window.innerHeight - rect.height) / 2
-        return { offset: Math.round(rect.top - centre), opacity: Number(getComputedStyle(beat).opacity) }
+        return { offset: Math.round(rect.top - centre), opacity: Number(getComputedStyle(fade).opacity) }
       })
     await expect
       .poll(async () => Math.abs((await centred()).offset), { message: 'beat never parked at the centre' })
       .toBeLessThanOrEqual(4)
     expect((await centred()).opacity).toBeGreaterThan(0.8)
 
-    // The hold is sized against gestures: half a viewport further must still be the same parked
-    // screen, not the page bottom.
-    await page.evaluate(() => window.scrollBy(0, window.innerHeight * 0.5))
+    // The park is sized against gestures: a further tenth of a viewport must still be the same parked
+    // screen — the settled stretch is a beat, not a freeze, and it ends where the screen starts its own
+    // visible exit rise. It is also still fully opaque: the dissolve waits for the release.
+    await page.evaluate(() => window.scrollBy(0, window.innerHeight * 0.1))
     await expect
       .poll(async () => Math.abs((await centred()).offset), { message: 'the beat left the centre too soon' })
       .toBeLessThanOrEqual(4)
+    await expect(beatFade).toHaveCSS('opacity', '1')
+
+    // The exit dissolve plays on its own clock from 300svh — as the stage releases and the first
+    // closing band enters, so the two overlap — and by the end of the track it has completed: no
+    // scroll length is involved, so every visitor sees the same dissolve.
+    await page.evaluate(() => window.scrollTo(0, window.innerHeight * 3.1))
+    await expect.poll(beatOpacity).toBeLessThan(0.95)
 
     // And the beat really is the product's artefact: a year of days plus the cabinet's ladders,
     // which share the beat because they answer the same question.
@@ -148,6 +291,13 @@ test.describe('Landing page', () => {
     await expect(activity.locator('[data-date]')).toHaveCount(364)
     await expect(activity.getByTestId('trophy-card')).toHaveCount(3)
     await expect(activity.getByText('Example data')).toBeVisible()
+
+    // And it completes: by the end of the track the year grid has dissolved, because the page
+    // continues with the closing bands below — an opaque slide-away is the missing exit.
+    await page.evaluate(() => window.scrollTo(0, window.innerHeight * 3.6))
+    await expect
+      .poll(beatOpacity, { message: 'the beat never faded out before the closing bands' })
+      .toBeLessThanOrEqual(0.1)
   })
 
   test('keeps the stage inside a phone viewport', async ({ page }) => {
