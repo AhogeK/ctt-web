@@ -102,3 +102,14 @@
 - **排除两片产品面** ✓（`.hero-plane > *`）—— 它们保留自己的 `shadow-2xl` / 品牌投影 ✓。
 - **已知代价** ✓：作用域内 `hover:shadow-sm` 失效 ✗（无层级规则胜过工具类 ✗）—— 演示瓦片不交互 ✓，看板副本不受影响 ✓。
 - **实测**（1440×900 · 亮 ⟷ 暗）：11/11 张卡有材质 ✓ · 平面 306/567/735×629 与浮板 112/834/363×322 **两主题逐值相同** ✓ · 面板 `position: absolute` 两主题都成立 ✓ · 溢出 0 ✓ · img/canvas 0 ✓。
+
+## hero 动效：权威在 `DESIGN.md` §10，这里只记实测与陷阱（2026-09-21 ✓ · 自 practices 迁入）
+
+参照物按用户指定改用 **Apple 产品页**（不是首页 ✗）：`animation-timeline` 3 · `position:sticky` 12 条 · `prefers-reduced-motion` **27** 块 · 媒体层由滚动进度驱动 `translateY 180px → 0`，而 **h1 全程不动** ✗ → 挂在滚动上的是**媒体层**，不是文字 ✓。
+
+- **入口构造** ✓：入场只在 `@media (prefers-reduced-motion: no-preference)` 里**声明** ✓，不靠"时长归零" ✗ —— `main.css` 的全局规则只归零 `duration` ✓，`animation-delay` 照常兑现 ✓ → "从隐藏出发"的入场会在延迟期一直不可见 ✗（技能点名的陷阱 ✓）。实测 reduce 下 `getAnimations() = []` ✓、`opacity: 1 / translate: none` ✓。
+- **LCP 元素不做透明** ✓：h1 只位移不淡入 → 首帧即有像素 ✓。三次对照：无减动效 **252/256/252** vs reduce **256/260/256** ✓（入场不拖首绘 ✓）。
+- **顶部 hero 没有"进入"滚动段** ✗（加载时已在视口内 ✓）→ 滚动叙事只能是**离场交棒** ✓（`animation-timeline: view()` + `animation-range: exit` ✓）。
+- **交棒必须分级** ✗✓：exit 区间 = 一屏高，而本页可滚动量只有 **281px（37%）** → 未分级的淡出会让"滚到底"停在 `opacity 0.63` = 发灰 ✗ → 改为**位移全程 + 淡出只占后半段** ✓。实测 y=281：`opacity=1` / `translate=-14.86px` ✓（= −0.371 × 40，与公式逐点吻合 ✓）；回滚复原 ✓。
+- **探针陷阱**：`browser.open({ viewport })` 仍不生效 ✗ → 用 `page.setViewport` ✓；页面比视口短时 `window.scrollTo` 恒为 0 ✗（先量 `scrollHeight > innerHeight` ✓）。
+- **验证结论**：type-check ✓ · 单测 **1443/1443** ✓ · landing e2e **3/3** ✓（跑 `vp preview` 生产构建 → 证明 `@layer` + `@media` + `@supports` 嵌套与关键帧过了构建管线 ✓）。
