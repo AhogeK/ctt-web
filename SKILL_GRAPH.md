@@ -3,7 +3,7 @@
 > **用途**：AI 在会话开始时快速扫描本文件，了解所有可用技能并按需加载。
 > **维护**：当新增/删除/修改 skill 时同步更新本文件；技能集合以磁盘目录为准（每条技能都必须能在下列八个来源目录中找到同名目录）。
 > **位置**：项目根目录，与 `AGENTS.md`、`DESIGN.md` 同级。
-> **来源**：`~/.agents/skills` (377) · `~/.claude/skills` (229) · `~/.config/opencode/skills` (65) · 项目 `.agents/skills` (38) · 项目 `.claude/skills` (35) · 项目 `skills/` (2) · `~/.omp/agent/skills` (2) · omp `superpowers` 扩展包 (14) → 去重后合计 486。
+> **来源**：`~/.agents/skills` (406) · `~/.claude/skills` (224) · `~/.config/opencode/skills` (67) · 项目 `.agents/skills` (38) · 项目 `.claude/skills` (35) · 项目 `skills/` (2) · `~/.omp/agent/skills` (2) · omp `superpowers` 扩展包 (15) → 去重后合计 523。
 
 
 ---
@@ -12,23 +12,23 @@
 
 | 领域 | 技能数量 | 跳转 |
 | --- | --- | --- |
-| 🧠 思维与流程 | 30 | [→](#思维与流程) |
-| 🎨 前端与UI | 55 | [→](#前端与ui) |
-| 🔧 工程与Git | 36 | [→](#工程与git) |
+| 🧠 思维与流程 | 37 | [→](#思维与流程) |
+| 🎨 前端与UI | 45 | [→](#前端与ui) |
+| 🔧 工程与Git | 40 | [→](#工程与git) |
 | 🧪 测试与质量 | 20 | [→](#测试与质量) |
 | 🔒 安全与审查 | 3 | [→](#安全与审查) |
-| 📝 文档与写作 | 22 | [→](#文档与写作) |
-| 🌐 浏览器与自动化 | 19 | [→](#浏览器与自动化) |
-| 🔬 研究与分析 | 22 | [→](#研究与分析) |
-| 🛠️ CLI工具集 | 76 | [→](#cli工具集) |
+| 📝 文档与写作 | 25 | [→](#文档与写作) |
+| 🌐 浏览器与自动化 | 20 | [→](#浏览器与自动化) |
+| 🔬 研究与分析 | 25 | [→](#研究与分析) |
+| 🛠️ CLI工具集 | 75 | [→](#cli工具集) |
 | 📚 学术与出版 | 15 | [→](#学术与出版) |
-| 🚀 GStack | 55 | [→](#gstack) |
-| 🧬 生物与化学 | 34 | [→](#生物与化学) |
-| 🧫 基因组学 | 26 | [→](#基因组学) |
+| 🚀 GStack | 57 | [→](#gstack) |
+| 🧬 生物与化学 | 46 | [→](#生物与化学) |
+| 🧫 基因组学 | 35 | [→](#基因组学) |
 | 🤖 机器学习 | 18 | [→](#机器学习) |
-| 📐 科学计算 | 19 | [→](#科学计算) |
+| 📐 科学计算 | 25 | [→](#科学计算) |
 | ✍️ 科研写作 | 16 | [→](#科研写作) |
-| 💾 数据与基础设施 | 8 | [→](#数据与基础设施) |
+| 💾 数据与基础设施 | 9 | [→](#数据与基础设施) |
 | 🧩 其他 | 12 | [→](#其他) |
 
 
@@ -44,6 +44,7 @@
 | `claude-handoff`              | 交接、后台代理、上下文转移                   | 把当前对话交接给新后台代理立即接手继续       |
 | `consciousness-council`       | 多视角审议、决策、专家视角、换位思考         | 用多角色委员会对问题做多视角审议决策         |
 | `context-engineering`         | 上下文配置、规则文件、会话                   | 优化agent上下文与规则配置                    |
+| `diagnosing-superpowers`      | 会话复盘、故障诊断、superpowers                        | 对出错的 superpowers 会话做复盘，定位重复劳动/被忽略计划并生成缺陷报告   |
 | `dispatching-parallel-agents` | 并行任务、独立任务、无共享状态、无顺序依赖   | 同时派发2个以上独立任务的子代理              |
 | `domain-modeling`             | 领域模型、术语、CONTEXT.md、ADR              | 构建与打磨项目领域模型术语与ADR              |
 | `executing-plans`             | 实施计划、独立会话、审查检查点、分步执行     | 在带审查检查点的独立会话中执行书面计划       |
@@ -53,20 +54,26 @@
 | `handoff`                     | 交接文档、上下文压缩、后续代理               | 把当前对话压缩成交接文档供其他代理接手       |
 | `idea-refine`                 | 想法打磨、发散收敛、假设压测                 | 用发散收敛把模糊想法打磨成可行动概念         |
 | `implement`                   | 实现、规格、票据、执行                       | 依据规格或票据集合实现具体工作               |
+| `implement-spec`              | 实现规格、落实票据、执行                                 | 把 /to-spec 与 /to-tickets 的产物落实为代码            |
 | `loop-me`                     | 工作流设计、追问、规格                       | 就你想构建的工作流反复追问并澄清规格         |
 | `planning-and-task-breakdown` | 任务拆分、排期、范围估算、并行               | 把规格拆成有序可实现的开发任务               |
+| `problem-report`              | 问题报告、取证、分轮提问                                 | 先出代码锚定取证报告再分轮提问，直到没有静默假设                     |
 | `prototype`                   | 原型、一次性验证、状态模型、UI探索           | 构建一次性原型以验证状态模型或UI设计         |
+| `retro`                       | 会话复盘、retro                                   | 对一次编码会话做复盘                                   |
 | `sisyphus-execution-rules`    | 会话开始、执行规则、Agent边界、委托规则      | 会话开始加载：Agent 分工、Git 限制与资源管理 |
 | `spec-driven-development`     | 规格先行、PRD、需求分解、能力图              | 在编码前创建规格与需求分解文档               |
 | `subagent-driven-development` | 实施计划、独立任务、当前会话、子代理执行     | 在当前会话中用子代理执行独立任务的计划       |
 | `teach`                       | 讲解、教学、理解而非背诵、知识推导           | 用两条原则讲解、确保真正理解而非记忆         |
 | `think`                       | 出方案、架构规划、可行性判断、交接           | 编码前把粗略想法变成可执行的完整方案         |
+| `to-questionnaire`            | 问卷、决策转交                                      | 把答不了的决策整理成供他人填写的问卷                           |
 | `to-spec`                     | 转规格、issue、对话综合                      | 把当前对话综合成规格并发布到issue跟踪器      |
 | `to-tickets`                  | 拆票、阻塞边、跟踪器、计划                   | 把计划或对话拆成带依赖关系的工作票据         |
 | `using-agent-skills`          | 技能发现、会话开始、工作流选择               | 会话开始时发现并调用合适的agent技能          |
 | `using-superpowers`           | 会话开始、技能调用、回答前、澄清问题前       | 会话开始即确立技能查找与调用规则             |
+| `wait-what`                   | 重讲、没听懂                                       | 让上一条没听懂的消息重新讲一遍                              |
 | `wayfinder`                   | 大型工作地图、决策票据、issue                | 把超大工作量规划成决策票据地图并逐条攻克     |
 | `what-if-oracle`              | 情景分析、what-if、分支推演、决策、压力测试  | 对不确定未来做4-6分支情景推演与决策压力测试  |
+| `write-plan`                  | 实施计划、证据锚定、决策台账                               | 写证据锚定的实施方案：先分类、量事实、区分已验证与未验证并逐步行验证           |
 | `writing-plans`               | 规格需求、多步任务、写代码前                 | 动手写代码前先为多步任务写计划               |
 
 ---
@@ -79,48 +86,38 @@
 | `algorithmic-art`               | 生成艺术、p5.js、流场、粒子系统                | p5.js 生成艺术与交互参数探索             |
 | `animation-vocabulary`          | 动画术语、动效命名、反查词汇、描述模糊         | 把模糊动效描述反查成准确术语             |
 | `archify`                       | 架构图、流程图、时序图、数据流、导出           | 生成可交互HTML架构与流程图               |
-| `archimate`                     | ArchiMate、企业架构、TOGAF、PlantUML           | 用PlantUML画ArchiMate企业架构            |
-| `architecture`                  | 架构图、技术栈、微服务、分层图                 | 用HTML/CSS模板画分层架构图               |
-| `bpmn`                          | BPMN、业务流程、审批流、价值流、PlantUML       | 用PlantUML画业务流程与审批流             |
 | `brand-guidelines`              | 品牌色、排版、Anthropic、视觉规范              | 应用 Anthropic 官方品牌配色与字体        |
 | `brandkit`                      | 品牌套件、logo、身份系统、视觉板               | 生成高端品牌规范与logo系统图             |
-| `canvas`                        | 概念图、知识图谱、坐标定位、JSON               | 用JSON坐标画自由布局概念图               |
 | `canvas-design`                 | 海报、视觉艺术、设计哲学、PNG/PDF              | 用设计哲学创作海报等静态视觉作品         |
 | `chart-designer`                | 图表设计、ECharts、Chart.js、仪表盘            | 设计图表配置与仪表盘报告                 |
-| `data-analytics`                | 数据管线、ETL、数据湖、PlantUML                | 用PlantUML画数据管线架构图               |
 | `design-taste-frontend`         | 落地页、作品集、重设计、反模板                 | 反模板前端设计并严格预检                 |
 | `design-taste-frontend-v1`      | v1兼容、旧版、落地页                           | 保留原v1行为的反模板前端                 |
+| `draw-ui`                       | 页面设计、落地页、截图还原、小程序                              | 设计 App/后台/落地页并可按需还原为 HTML/CSS 或小程序       |
 | `emil-design-eng`               | UI打磨、组件设计、动效决策、细节               | 按Emil Kowalski理念打磨UI细节与动效      |
 | `frontend-design`               | 视觉设计、审美方向、排版、新 UI                | 新 UI 或重塑时的视觉设计指导             |
 | `frontend-ui-engineering`       | 前端组件、响应式、WCAG、状态管理               | 构建生产级可访问响应式界面与组件         |
 | `gpt-taste`                     | GSAP、AIDA、bento、排版                        | 精英UX/UI与GSAP动效工程                  |
-| `graphviz`                      | DOT、依赖图、调用图                            | 用DOT画依赖与调用关系图                  |
 | `high-end-visual-design`        | 高端、精品、字体、阴影                         | 按高端机构标准设计网页                   |
 | `image-to-code`                 | 图片转代码、设计还原                           | 先出设计图再精确实现网页                 |
 | `imagegen-frontend-mobile`      | 移动端设计、iOS、Android                       | 生成移动端应用界面概念图                 |
 | `imagegen-frontend-web`         | 网页设计、分区出图、转化                       | 按分区生成落地页设计参考图               |
+| `impeccable`                    | 前端精修、界面打磨、设计审计                                 | 前端界面的设计/重构/精修/审计全流程（网站、仪表盘、组件、表单、动效）     |
 | `industrial-brutalist-ui`       | 工业、机械、瑞士印刷、终端                     | 工业粗野主义机制化界面                   |
-| `infocard`                      | 信息卡、HTML/CSS、杂志排版                     | 用HTML/CSS做杂志风信息卡                 |
-| `infographic`                   | 信息图、KPI、时间线、SWOT                      | 模板化信息图KPI与时间线                  |
-| `iot`                           | IoT、智能家居、边缘计算、传感器                | 画IoT与边缘计算架构图                    |
-| `mindmap`                       | 思维导图、头脑风暴、PlantUML                   | 用PlantUML画思维导图                     |
 | `minimalist-ui`                 | 极简、编辑风、单色                             | 干净编辑风极简界面                       |
 | `motion-spec`                   | 动效、过渡、微交互、丝滑                       | 把模糊动效需求变成可执行规格             |
-| `network`                       | 网络拓扑、LAN/WAN、数据中心                    | 画网络拓扑与机房互联图                   |
 | `nuxt`                          | Nuxt、SSR、useFetch、中间件                    | Nuxt 全栈开发：路由与服务端渲染          |
+| `oiloil-ui-ux-guide`            | 设计规范、design-spec、界面评审                          | 梳理 UI/UX 规范并输出 design-spec.md 或按优先级给评审建议 |
+| `oil-ui`                        | 界面设计、多风格对比、视觉精修                                | 设计/评审网站与应用界面：方向探索、多风格同屏、按画面迭代            |
 | `pinia`                         | Pinia、状态管理、store、actions                | Pinia 状态管理与 store 模式              |
 | `redesign-existing-projects`    | 升级现有站点、去AI味                           | 将现有网站升级到高级质量                 |
 | `review-animations`             | 动效评审、动画代码、工艺标准                   | 按高工艺标准评审动画与动效代码           |
-| `security`                      | 安全架构、IAM、零信任、加密                    | 画安全架构与零信任流程图                 |
 | `slack-gif-creator`             | Slack GIF、动图、尺寸校验、动画                | 制作符合 Slack 规格的动态 GIF            |
 | `slidev`                        | Slidev、技术演讲、幻灯片、代码高亮             | 用 Slidev 制作开发者技术演示幻灯片       |
 | `stitch-design-taste`           | Google Stitch、DESIGN.md                       | 为Google Stitch生成设计规范              |
 | `theme-factory`                 | 主题、配色、字体、幻灯片样式                   | 用预设或自建主题为制品统一样式           |
 | `transitions-dev`               | CSS 过渡、下拉、模态、页面切换                 | 九种即插即用的生产级 CSS 过渡            |
 | `ui`                            | 组件美化、排版、截图反馈、视觉打磨             | 产出有辨识度界面并基于截图做视觉打磨     |
-| `uml`                           | UML、类图、时序图                              | 用PlantUML画UML图                        |
 | `unocss`                        | UnoCSS、原子 CSS、预设、快捷方式               | UnoCSS 原子化 CSS 配置与使用             |
-| `vega`                          | Vega-Lite、图表、统计                          | 用Vega-Lite画数据驱动图表                |
 | `vercel-react-view-transitions` | View Transition、页面转场、共享元素、Next.js   | 用React视图转换API实现页面与列表动画过渡 |
 | `vite`                          | Vite 配置、插件、SSR、Rolldown                 | Vite 配置、插件、SSR 与迁移              |
 | `vitepress`                     | VitePress、文档站点、主题、Markdown            | VitePress 文档站点与主题配置             |
@@ -147,6 +144,7 @@
 | `create-pull-request`            | 创建PR、提交审查、gh CLI                               | 按项目约定创建GitHub PR                     |
 | `deploy-to-vercel`               | 部署Vercel、预览部署                                   | 部署应用到Vercel并给链接                    |
 | `deprecation-and-migration`      | 弃用、迁移、数据库变更、下线                           | 管理旧系统弃用、迁移与在线schema变更        |
+| `fictiv`                         | 按需制造、CAD 报价、DFM                                        | 在浏览器里操作 Fictiv 平台：上传 CAD、配置工艺与公差、取报价与交期     |
 | `finishing-a-development-branch` | 实现完成、测试通过、合并分支、集成工作                 | 实现完成且测试通过后决定如何合并分支        |
 | `git-guardrails-claude-code`     | git钩子、危险命令、拦截、push保护                      | 用Claude Code钩子拦截危险git命令            |
 | `git-workflow-and-versioning`    | 提交、分支、PR、语义化版本、变更日志                   | 规范提交分支、PR、版本与变更日志            |
@@ -154,15 +152,17 @@
 | `github-issue-dedupe`            | 重复issue、语义搜索                                    | 检测重复的GitHub issue                      |
 | `improve-codebase-architecture`  | 架构改进、深化机会、HTML报告                           | 扫描代码库找出架构深化机会并生成报告        |
 | `incremental-implementation`     | 增量交付、小步验证、特性开关                           | 把改动拆成薄的、可验证的增量切片交付        |
+| `lab-hardware-cad`               | 实验硬件、build123d、微流控                                     | 用参数化 build123d 设计实验硬件并导出 STEP/STL/DXF       |
 | `mcp-builder`                    | MCP 服务器、FastMCP、工具设计、外部 API                | 构建高质量 MCP 服务器与工具                 |
 | `migrate-to-shoehorn`            | shoehorn、类型断言、测试数据、迁移                     | 把测试中的as类型断言迁移到shoehorn          |
 | `performance-optimization`       | 性能优化、核心网页指标、N+1、剖析                      | 从前端到数据库定位并优化性能瓶颈            |
 | `pnpm`                           | pnpm、工作区、catalogs、patches                        | pnpm 命令与工作区依赖管理                   |
+| `pr`                             | PR 描述、拉取请求                                             | 撰写 PR 提交正文                                  |
 | `receiving-code-review`          | 评审反馈、技术严谨、核实、不盲从                       | 收到评审意见时先核实再实施、不盲从          |
 | `requesting-code-review`         | 完成任务、重大功能、合并前、核对需求                   | 完成任务或合并前请求评审以核对需求          |
-| `resolving-merge-conflicts`      | 合并冲突、rebase、冲突解决                             | 解决进行中的git合并或rebase冲突             |
 | `setup-matt-pocock-skills`       | 仓库配置、issue跟踪器、标签、文档布局                  | 为仓库配置issue跟踪器、标签与文档布局       |
 | `setup-pre-commit`               | Husky、lint-staged、预提交、类型检查                   | 为仓库配置Husky预提交钩子与检查             |
+| `setup-ts-deep-modules`          | dependency-cruiser、深层模块、入口导出                           | 给 TS 仓库接 dependency-cruiser，让每个包成为深层模块      |
 | `shipping-and-launch`            | 上线、发布检查、监控、回滚                             | 准备生产发布:清单、监控、灰度与回滚         |
 | `triage`                         | issue分诊、外部PR、状态机、简报                        | 按状态机分诊issue与外部PR并产出简报         |
 | `tsdown`                         | tsdown、库打包、类型声明、tsup 迁移                    | 打包 TS/JS 库并生成类型声明                 |
@@ -173,6 +173,7 @@
 | `vercel-optimize`                | Vercel成本、性能、缓存                                 | 优化Vercel成本与性能                        |
 | `vercel-react-best-practices`    | React、Next.js、性能                                   | React/Next.js性能优化规范                   |
 | `vercel-react-native-skills`     | React Native、Expo、列表                               | React Native/Expo最佳实践                   |
+| `wizard`                         | 安装向导、凭据配置、交互脚本                                         | 生成交互式 bash 向导，带人类完成只有人能做的步骤（凭据/CI/迁移）       |
 
 ---
 
@@ -217,9 +218,11 @@
 
 | Skill                      | 触发词                                      | 说明                                  |
 | -------------------------- | ------------------------------------------- | ------------------------------------- |
+| `beautify-github-readme`   | README 美化、重设计、SVG 头图                        | 重设计 GitHub README 首页并产出项目原生 SVG/PNG/GIF 视觉资产 |
 | `diagram-design`           | 架构图、流程图、时序图、UML、数据流         | 生成架构、流程、时序、ER等品牌化图表  |
 | `doc-coauthoring`          | 写文档、提案、技术规格、决策文档            | 结构化文档共创工作流（三阶段）        |
 | `docs-update`              | 更新文档、代码变更、文档任务                | 代码变更时更新用户文档                |
+| `documd-visuals`           | Markdown 视觉、图表卡片、架构图                        | 在 Markdown 里做文本驱动视觉：图表、卡片、架构与页面布局     |
 | `documentation-and-adrs`   | ADR、架构决策、API变更、文档                | 记录架构决策、公共API变更与项目文档   |
 | `docx`                     | Word、.docx、模板、修订批注                 | Word 文档的创建、读取与编辑           |
 | `infographics`             | 信息图、AI生成、可视化、调色板              | 用AI生成并迭代优化专业信息图          |
@@ -235,6 +238,7 @@
 | `visualize`                | 配图、示意图、几何图、依赖图                | 为课程配一张正确的最小图示并内联渲染  |
 | `write`                    | 改稿、润色、去AI味、本地化、文案            | 重写润色中英文文案与文稿并去除AI腔    |
 | `writing-beats`            | 写作、节拍、叙事、术语铺垫                  | 把素材编排成有节奏文章并先定义术语    |
+| `writing-for-agents`       | 给 agent 写文档、技能、AGENTS.md                    | 为 agent 撰写文档：技能、AGENTS.md/CLAUDE.md 编辑 |
 | `writing-fragments`        | 写作、素材挖掘、片段、无结构                | 挖掘原始素材片段、暂不组织结构        |
 | `writing-guidelines`       | 文档审查、写作风格                          | 按写作指南审查文档与文风              |
 | `writing-shape`            | 写作、成文、段落组织                        | 把素材逐段塑形成一篇文章              |
@@ -247,6 +251,7 @@
 | Skill                           | 触发词                                                     | 说明                                        |
 | ------------------------------- | ---------------------------------------------------------- | ------------------------------------------- |
 | `ai-chat-browser`               | Gemini、Perplexity、AI对话、浏览器自动化                   | 浏览器自动化与 Gemini/Perplexity 交互取回复 |
+| `browser`                       | CDP 真实浏览器、点击打字、登录态                                         | 经 CDP 控制真实浏览器（点击/输入/导航/登录态/JS 渲染页）；纯 HTTP 抓取不用它 |
 | `browser-harness`               | 真实浏览器、CDP、登录态、反爬页面                          | 通过CDP控制真实浏览器完成点击输入与访问     |
 | `browser-testing-with-devtools` | 浏览器测试、DOM、控制台、网络、性能                        | 用DevTools MCP在真实浏览器中测试与调试      |
 | `browser-use`                   | 浏览器控制、CDP、自动化、抓取、截图                        | 通过CDP直接控制浏览器做自动化与测试         |
@@ -260,10 +265,10 @@
 | `dokobot`                       | 读取网页、动态页面、JS渲染、抓正文                         | 用真实 Chrome 读取含 JS 渲染的动态页面内容  |
 | `open-source`                   | browser-use、Python、Agent                                 | browser-use开源库Python代码指南             |
 | `opencli-browser`               | Chrome、填表、已登录流程                                   | 用opencli驱动真实Chrome操作                 |
-| `opencli-browser-sitemap`       | sitemap、站点导航、状态签名                                | 用站点sitemap避免盲导航                     |
 | `remote-browser`                | 云端浏览器、沙箱、CLI                                      | 从沙箱控制云端浏览器                        |
 | `transient-ui-capture`          | 短暂 UI、Toast、截图、链式命令                             | 用 browser-use 链式命令抓拍瞬时 UI          |
 | `troubleshooting`               | 连接失败、页面枚举                                         | 用DevTools排查MCP连接问题                   |
+| `user-chrome-tabs`              | 用户真实 Chrome、登录态、不劫持标签                                      | 驱动用户自己的 Chrome 完成点击/输入/滚动且不动其现有标签           |
 | `x402`                          | 加密支付、USDC、Browser Use                                | 用x402钱包按次支付云浏览器                  |
 
 ---
@@ -283,7 +288,10 @@
 | `hypothesis-generation`        | 科学假设、竞争解释、预测、预注册             | 把观察转成可检验科学假设与预注册计划       |
 | `learn`                        | 深入学习、六阶段、材料汇编、长文             | 用六阶段研究流程把材料汇编成可发布长文     |
 | `market-research-reports`      | 市场研究、市场规模、竞争格局、TAM、预测      | 产出可溯源的市场研究报告与规模预测         |
+| `ontology-term-resolution`     | 本体术语、CURIE、OLS4                              | 把自由文本解析为本体术语 ID（OLS4/Bioregistry/Identifiers.org） |
+| `ncats-arax`                   | 生物医学知识图谱、RTX-KG2、TRAPI                       | 查询 NCATS Translator ARAX 的有界多跳生物医学关系（Biolink 约束） |
 | `open-notebook`                | 研究笔记本、资料摄取、播客生成、文档问答     | 自建研究库:摄取资料、生成笔记与播客并问答  |
+| `paperclip`                    | 生物医学文献、FDA/PMDA、试验                           | 检索并全文分析生物医学论文、监管文件与临床试验记录                  |
 | `parallel-web`                 | 网络搜索、深度研究、实体查询、监控           | 用Parallel CLI做网络检索与深度研究         |
 | `research`                     | 调研、一手来源、Markdown报告、后台代理       | 用后台代理调研问题并把结论写成仓库内文档   |
 | `research-lookup`              | 文献取证、背景证据、Parallel、来源核验       | 为科研稿件检索当前学术证据并核验来源       |
@@ -377,7 +385,6 @@
 | `cli-hub-meta-skill`             | CLI目录、工具发现、目录检索                      | 发现agent原生CLI工具目录                    |
 | `opencli-adapter-author`         | OpenCLI适配器、新站点                            | 为新站点编写OpenCLI适配器                   |
 | `opencli-autofix`                | 适配器修复、失败、trace                          | 自动修复失败的OpenCLI适配器                 |
-| `opencli-sitemap-author`         | sitemap、站点知识、维护                          | 创建维护OpenCLI站点sitemap                  |
 | `opencli-usage`                  | OpenCLI、适配器、命令发现、输出格式              | OpenCLI入门:能做什么与如何找命令            |
 
 ---
@@ -406,7 +413,7 @@
 
 ## GStack
 
-> GStack 是一套集成的开发工具套件，平铺于 `~/.config/opencode/skills/`（54 个 `gstack-*` 目录 + 路由本体 `gstack`）。
+> GStack 是一套集成的开发工具套件，平铺于 `~/.config/opencode/skills/`（56 个 `gstack-*` 目录 + 路由本体 `gstack`）。
 
 | Skill                          | 触发词                                         | 说明                                           |
 | ------------------------------ | ---------------------------------------------- | ---------------------------------------------- |
@@ -426,6 +433,7 @@
 | `gstack-design-html`           | 定稿设计、转HTML、写页面、实现设计             | 把已定设计转成生产级原生 HTML/CSS              |
 | `gstack-design-review`         | 设计审计、视觉QA、好看吗、设计打磨             | 设计师视角 QA：找视觉与层次问题并修复          |
 | `gstack-design-shotgun`        | 探索设计、看方案、设计变体、视觉头脑风暴       | 生成多个设计变体、比对板与结构化反馈迭代       |
+| `gstack-deslop-shared-libs`    | 共享库提取、去重复、重构建议                                 | 在近期改动里找出值得抽出的共享代码并给出可复用建议                      |
 | `gstack-devex-review`          | 测试DX、DX审计、上手体验、开发者体验           | 在浏览器实测开发者体验并出 DX 评分卡           |
 | `gstack-diagram`               | 画图、架构图、流程图、可视化流程               | 由描述或 mermaid 生成图源与渲染图              |
 | `gstack-document-generate`     | 写文档、生成文档、写教程、说明模块             | 按 Diataxis 从零生成缺失的文档                 |
@@ -463,6 +471,7 @@
 | `gstack-skillify`              | 固化抓取、保存脚本、skillify、永久化           | 把最近成功的 /scrape 流程固化为常驻脚本        |
 | `gstack-spec`                  | 写规格、建issue、提工单、转待办项              | 五阶段把模糊意图转为可执行规格并提 issue       |
 | `gstack-sync-gbrain`           | 同步gbrain、刷新索引、重建索引、gbrain搜不到   | 让 gbrain 跟上仓库代码并刷新检索指引           |
+| `gstack-test-audit`            | 测试审计、重复测试、低价值测试                                | 检测重复或低价值测试及只为测试存在的死代码                          |
 | `gstack-unfreeze`              | 解除冻结、解锁编辑、移除冻结、允许所有编辑     | 解除 /freeze 设置的编辑目录限制                |
 | `gstack-upgrade`               | 升级gstack、更新gstack、获取最新版本、更新工具 | 升级 gstack 到最新版并显示更新内容             |
 
@@ -472,9 +481,12 @@
 
 | Skill                       | 触发词                                            | 说明                                        |
 | --------------------------- | ------------------------------------------------- | ------------------------------------------- |
+| `13c-metabolic-flux`        | 代谢通量、13C 同位素追踪、MDV/MID、碳标记                        | 用原子映射与 13C 同位素模拟做多起点约束拟合，估计胞内代谢通量并输出通量诊断    |
 | `adaptyv`                   | 蛋白实验、结合测定、BLI/SPR、热稳定性、提交       | 经Adaptyv API提交蛋白实验并取回结果         |
+| `analytical-method-validation` | 方法学验证、ICH Q2/Q14、USP、CLSI                         | 按 ICH/USP/CLSI/ISO 17025 规划并归档分析方法的验证、确认与转移 |
 | `benchling-integration`     | Benchling、SDK、ELN、库存、数据仓库               | 用Benchling SDK自动化实验室注册与ELN数据    |
 | `bids`                      | BIDS、神经影像、数据集组织、DICOM转换、校验       | 按BIDS规范组织、校验与转换神经影像数据      |
+| `cellprofiler`              | 显微图像、核分割、细胞计数                                     | 跑可复现的 CellProfiler 显微流水线：核分割、细胞计数与逐对象荧光测量   |
 | `clinical-decision-support` | 临床决策支持、循证档案、队列、治理                | 准备仅研究用途的临床决策支持评估材料        |
 | `clinical-reports`          | 临床报告、脱敏、结构校验、安全性                  | 为临床与研究报告生成受限草稿并本地校验      |
 | `cobrapy`                   | 代谢模型、FBA、FVA、基因敲除、通量                | 用COBRA做代谢建模、通量分析与基因敲除       |
@@ -483,10 +495,12 @@
 | `diffdock`                  | 分子对接、位姿预测、虚拟筛选、蛋白-配体           | 用DiffDock预测蛋白-小分子对接位姿与筛选     |
 | `esm`                       | 蛋白语言模型、ESM3、折叠、Forge、Biohub           | 用esm SDK与ESM3模型做蛋白序列与折叠任务     |
 | `flowio`                    | 流式细胞术、FCS、通道、事件提取                   | 用FlowIO读写与检查FCS流式细胞术文件         |
+| `flowkit`                   | 流式细胞、门控、补偿                                        | 用 FlowKit 做流式分析：补偿、logicle 变换、层级门控与 FlowJo 工作区 |
 | `ginkgo-cloud-lab`          | Ginkgo、云实验室、蛋白表达                        | 提交并管理Ginkgo云实验室协议                |
 | `glycoengineering`          | 糖基化、序列扫描、O-糖基化、抗体优化、疫苗        | 分析蛋白糖基化位点并辅助糖工程与抗体优化    |
 | `histolab`                  | 全切片、瓦片提取、染色归一化、H&E                 | 用histolab做全切片组织检测与瓦片提取        |
 | `imaging-data-commons`      | 癌症影像、IDC、DICOM、CT、病理数据集              | 查询下载NCI癌症影像数据与元数据             |
+| `iso-standards-readiness`   | ISO 13485/14971/17025/15189、合规证据                  | 整理并结构化审查 ISO 医疗器械/实验室体系合规就绪证据               |
 | `labarchive-integration`    | LabArchives、ELN、签名请求、授权、容器            | 安全对接LabArchives ELN与库存API            |
 | `matchms`                   | 质谱、MS/MS、谱图比对、库匹配、相似度             | 用matchms清洗比对与检索串联质谱数据         |
 | `medchem`                   | 药物相似性、Lipinski、PAINS、复杂度、库筛选       | 用medchem规则与结构警报筛选分诊化合物库     |
@@ -494,17 +508,24 @@
 | `molfeat`                   | 分子特征化、ECFP、描述符、ChemBERTa、QSAR         | 把SMILES转成100+分子特征用于QSAR建模        |
 | `neurokit2`                 | 生理信号、时间序列、事件分析、变异性              | 用NeuroKit2做生理信号预处理与事件分析       |
 | `neuropixels-analysis`      | Neuropixels、电生理、尖峰排序、Kilosort、单元筛选 | 分析Neuropixels记录并做尖峰排序与筛选       |
+| `nwb-conversion`            | NWB、NeuroConv、时钟同步                                | 把神经采集数据转为 NWB 并做元数据/时钟校验与往返检查               |
+| `nmrglue`                   | 1D NMR、相位校正、积分                                    | 用 nmrglue 处理 1D NMR FID：相位谱、峰候选与积分区间        |
 | `omero-integration`         | OMERO、显微影像、元数据、ROI、标注                | 用omero-py安全巡查与自动化显微影像流程      |
 | `opentrons-integration`     | Opentrons、移液、协议API、仿真、Flex              | 编写与校验Opentrons移液协议并做仿真         |
 | `pathml`                    | 计算病理、瓦片、多重成像、空间图                  | 用PathML做计算病理切片处理与空间分析        |
+| `pkpd-modeling`             | PK/PD、NCA、群体药动学                                   | 药代/药效建模与仿真：NCA、群体 PK、TMDD、生物等效与剂量推导         |
 | `primekg`                   | 知识图谱、精准医学、基因、药物、疾病              | 查询PrimeKG知识图谱获取多尺度生物医学关系   |
+| `primer-design`             | 引物设计、Primer3、RT-qPCR                              | 用 Primer3 设计与审计 PCR/RT-qPCR 引物并做参考脱靶搜索      |
 | `protocolsio-integration`   | protocols.io、协议、导出、REST/MCP、只读          | 读取校验protocols.io协议数据与变更计划      |
 | `pydicom`                   | DICOM、医学影像、像素数据、去标识                 | 用pydicom读取转换与安全预检DICOM数据        |
 | `pylabrobot`                | 实验室自动化、移液、仿真、设备集成                | 开发与审查PyLabRobot移液方案与离线仿真      |
 | `pyopenms`                  | 质谱、蛋白组学、代谢组学、定量、特征检测          | 用pyOpenMS做蛋白/代谢组学质谱数据处理与定量 |
 | `rdkit`                     | 化学信息学、SMILES、描述符、指纹、子结构          | 用RDKit做分子解析、描述符、指纹与子结构检索 |
+| `relsa-severity-assessment` | 严重度评分、RELSA、动物实验                                  | 用 RELSA 做实验动物多变量严重度评估与终点时间预测                |
+| `relion`                    | 冷冻电镜、RELION、FSC                                   | 校验并执行 RELION 单颗粒精修与半图后处理（FSC/掩膜）            |
 | `rowan`                     | pKa预测、构象、对接、共折叠、分子动力学           | 在Rowan云平台做分子建模、性质预测与筛选     |
 | `tamarind`                  | 蛋白设计、结构预测、分子对接、抗体、云平台        | 在Tamarind云平台跑蛋白设计与结构预测工具    |
+| `tellurium`                 | SBML、动力学仿真、SED-ML                                 | 用 Tellurium 仿真 SBML/Antimony 动力学模型并导出 COMBINE 归档 |
 | `treatment-plans`           | 治疗计划、临床记录、溯源、发布门禁                | 格式化并结构校验本地治疗计划文档            |
 
 ---
@@ -513,32 +534,41 @@
 
 | Skill                  | 触发词                                       | 说明                                       |
 | ---------------------- | -------------------------------------------- | ------------------------------------------ |
+| `alphagenome`          | 调控变异、AVI 评分、GRCh38 SNV、SHAP                  | 查 AlphaGenome Atlas 预计算效应：任意 GRCh38 单核苷酸变体的 AVI 与多维功能轨道评分 |
 | `anndata`              | h5ad、注释矩阵、scverse、数据格式            | 处理单细胞注释矩阵与.h5ad数据格式          |
 | `arboreto`             | 基因调控网络、GRN、GRNBoost2、转录组         | 从表达数据推断基因调控网络与调控关系       |
 | `biopython`            | 序列处理、文件解析、Entrez、BLAST、系统发育  | 用Biopython做序列操作、文件解析与NCBI检索  |
 | `bioservices`          | 生物数据库、UniProt、KEGG、Reactome、ID映射  | 用bioservices统一访问40+生物数据库         |
 | `bulk-rnaseq`          | RNA-seq、FASTQ、比对、定量、差异表达         | 从FASTQ到差异表达与富集出图的RNA-seq流程   |
 | `cellxgene-census`     | 单细胞普查、元数据、表达切片、图谱           | 查询CELLxGENE普查的单细胞与空间数据        |
+| `deepspot-m`           | H&E、虚拟空间转录组、DeepSpot-M                       | 由 H&E 病理切片生成虚拟空间转录组（log1p-CPM 预测，20x 瓦片）   |
 | `deeptools`            | ChIP-seq、ATAC-seq、bigWig、热图、质量评估   | 用deepTools做NGS转换、质控与热图可视化     |
 | `dnanexus-integration` | DNAnexus、dxpy、应用、工作流、数据传输       | 在DNAnexus上构建运行可复现基因组学负载     |
 | `etetoolkit`           | 系统发育树、Newick、拓扑比较、分类学         | 用ETE4分析比较与可视化系统发育及层次树     |
+| `folklore-variant-evidence` | ClinGen、变异证据、GRCh38 胚系                       | 取 ClinGen 基因-疾病有效性并审查单个 GRCh38 胚系 SNV/indel 的来源链证据 |
 | `geniml`               | 区间模型、Region2Vec、scEmbed、宇宙          | 用Geniml审计基因组区间工作流与区域嵌入     |
+| `genomic-intelligence` | 启动子、剪接位点、DNA 语言模型                            | 用托管 DNA 语言模型从序列预测调控特征、基因结构与表达（REST/MCP）    |
+| `genomic-coordinates`  | 坐标约定、BED/VCF/GTF、装配错配                        | 转换坐标约定、规范化变异表示并在分析前捕捉装配/命名错配               |
 | `gget`                 | 基因查询、BLAST、AlphaFold、数据库、COSMIC   | 用gget快速查询20+生物信息数据库            |
 | `gtars`                | 基因组区间、交集、共识、分词、覆盖度         | 用Gtars做基因组区间集合运算与分词建模      |
 | `latchbio-integration` | Latch、工作流、Nextflow、注册、运行监控      | 在Latch平台构建注册与运行生信工作流        |
+| `mageck`               | CRISPR 筛选、sgRNA 计数、富集                        | 用 MAGeCK 分析池化 CRISPR 筛选（敲除/CRISPRi/CRISPRa）并给基因命中排名 |
 | `nextflow`             | Nextflow、nf-core、流水线、DSL2、执行器      | 构建、运行与调试Nextflow及nf-core流程      |
 | `onekgpd`              | 千人基因组、变异查询、个体、等位基因频率     | 查询1000 Genomes个体级变异与亲缘关系       |
 | `pacsomatic`           | nf-core、肿瘤配对、样本表、Nextflow、调度器  | 为pacsomatic肿瘤配对流程生成样本表并排障   |
+| `pathogen-variant-surveillance` | 病原变异、LAPIS、Pango 谱系                          | 查询 GenSpectrum LAPIS 的病原基因组监测数据（谱系占比/突变频率） |
 | `pathway-enrichment`   | 通路富集、GO、KEGG、GSEA、基因集             | 对基因列表做通路/GO/GSEA富集分析并解读     |
 | `phylogenetics`        | 系统发育、序列比对、IQ-TREE、建树、进化分析  | 用MAFFT/IQ-TREE等构建与分析系统发育树      |
 | `polars-bio`           | 基因组区间、重叠、BED、VCF、流式处理         | 在Polars上做基因组区间运算与生信文件IO     |
 | `pydeseq2`             | 差异表达、RNA-seq、Wald检验、FDR、收缩       | 用PyDESeq2做bulk RNA-seq差异表达与可视化   |
 | `pysam`                | SAM、BAM、CRAM、VCF、pileup、覆盖度          | 用pysam读写查询基因组文件并做覆盖度统计    |
+| `qiime2-amplicon`      | 16S、QIIME 2、ASV                              | 把双端 16S 读段处理为 QIIME 2 ASV 与物种注释并保留溯源       |
 | `scanpy`               | 单细胞、质控、降维、聚类、差异表达           | 用Scanpy完成单细胞RNA-seq标准分析与可视化  |
 | `scikit-bio`           | 序列分析、比对、系统发育、多样性、微生物组   | 做序列、系统发育树与微生物组多样性分析     |
 | `scvelo`               | RNA速率、轨迹推断、潜变量时间、驱动基因      | 从剪接动态推断单细胞状态转换与轨迹方向     |
 | `scvi-tools`           | 单细胞、批次校正、迁移学习、多模态、差异表达 | 用深度生成模型做单细胞批次校正与多模态整合 |
 | `tiledbvcf`            | 变异数据、VCF、BCF、TileDB、群体基因组       | 用TileDB入库存储与并行查询VCF/BCF变异数据  |
+| `waypoint-bio`         | 微生物组、Waypoint、Compass                        | 使用 Outpost Bio 微生物组基础模型（Waypoint/Compass）做嵌入与微调 |
 
 ---
 
@@ -572,15 +602,20 @@
 | Skill              | 触发词                                       | 说明                                       |
 | ------------------ | -------------------------------------------- | ------------------------------------------ |
 | `astropy`          | 天文、坐标、单位、FITS、WCS、宇宙学          | 用Astropy处理天文单位、坐标、FITS与宇宙学  |
+| `cantera`          | 燃烧、点火延迟、反应机理                                 | 运行 Cantera 均相反应器并评估点火延迟（机理溯源与守恒检查）         |
 | `cirq`             | 量子电路、噪声建模、Google量子硬件           | 用Cirq设计噪声感知量子电路并面向Google硬件 |
 | `fluidsim`         | 流体仿真、CFD、FFT、MPI、重启                | 规划与运行有界FluidSim流体仿真并校验       |
 | `geomaster`        | 遥感、GIS、空间分析、卫星影像、点云          | 处理遥感、GIS空间分析与地球观测数据        |
 | `geopandas`        | 地理数据、矢量、空间操作、GeoDataFrame       | 用GeoPandas做矢量数据IO与空间操作审计      |
+| `marine-carbonate-chemistry` | 海水碳酸盐、PyCO2SYS、饱和度                           | 用 PyCO2SYS 解海水碳酸盐体系：物种分布、饱和态与 Revelle 因子   |
 | `matlab`           | MATLAB、Octave、数值计算、MAT文件、互操作    | 编写与审查MATLAB/Octave数值计算与互操作    |
 | `matplotlib`       | 绘图、自定义图表、矢量导出、子图             | 用Matplotlib精细控制绘图并导出出版级图形   |
 | `networkx`         | 图算法、网络分析、中心性、社区发现、复杂网络 | 用NetworkX创建分析并可视化复杂网络与图     |
+| `openpiv`          | PIV、速度场、流场                                   | 用 OpenPIV 做粒子图像测速：互相关、向量校验与涡量/应变           |
 | `optimize-for-gpu` | GPU加速、CUDA、RAPIDS、性能剖析、内存瓶颈    | 用GPU加速科学Python并验证更快且结果正确    |
 | `pennylane`        | 量子机器学习、自动微分、VQE、QAOA、混合模型  | 用PennyLane训练量子电路与混合量子经典模型  |
+| `pycalphad`        | CALPHAD、相图、TDB                               | 从 TDB 热力学库计算有限温相平衡与相分数（pycalphad）          |
+| `pybamm`           | 锂电池、SPM/DFN、电压曲线                             | 用 PyBaMM 仿真锂电池充放电并对照实测电压曲线                 |
 | `pymatgen`         | 材料结构、相图、对称性、电子结构、MP         | 用pymatgen分析转换材料结构与计算材料数据   |
 | `pymc`             | 贝叶斯、层次模型、MCMC、变分推断、后验检验   | 用PyMC构建贝叶斯模型并做MCMC/变分推断      |
 | `pymoo`            | 多目标优化、NSGA-II、帕累托前沿、约束处理    | 用pymoo求解多目标优化与工程设计问题        |
@@ -590,6 +625,7 @@
 | `simpy`            | 离散事件、仿真、资源、监控、复现             | 用SimPy构建与分析离散事件仿真模型          |
 | `statsmodels`      | 统计模型、回归、GLM、时间序列、残差诊断      | 用statsmodels构建统计模型并输出诊断与推断  |
 | `sympy`            | 符号计算、代数、微积分、方程求解、代码生成   | 用SymPy做精确符号数学计算与公式生成        |
+| `uncertainty-and-units` | 单位换算、不确定度、GUM                                | 用 pint/uncertainties 做量纲检查与测量不确定度传播（GUM/蒙特卡洛） |
 
 ---
 
@@ -621,6 +657,7 @@
 | Skill                     | 触发词                                        | 说明                                        |
 | ------------------------- | --------------------------------------------- | ------------------------------------------- |
 | `dask`                    | 分布式、超内存、并行、集群、DataFrame         | 用Dask把pandas/NumPy负载扩展到集群          |
+| `datalad`                 | 数据集版本、git-annex、OpenNeuro/DANDI               | 用 DataLad/git-annex 拉取与发布科研数据集并记录计算溯源       |
 | `get-available-resources` | 资源盘点、CPU内存、调度器、加速器             | 探测主机可用CPU内存加速器以做资源规划       |
 | `lamindb`                 | LaminDB、数据血缘、注册、本体注释、存储       | 用LaminDB管理生物数据集的血缘与查询         |
 | `modal`                   | 无服务器、云端Python、GPU、批处理、部署       | 用Modal SDK在云端按需运行Python与GPU任务    |
@@ -714,7 +751,7 @@
 1. **用户指令** > **技能** > **默认行为**
 2. **流程技能优先**：`tdd`、`systematic-debugging`、`hunt` 等先于实现技能
 3. **项目技能优先**：`vue-best-practices` 优先于通用 `frontend-design`
-4. **同名去重**：本机 486 个技能名中有相当一部分同时安装在两个以上来源目录（如 `~/.agents/skills` 与 `~/.claude/skills` 均含 `vue`、`pdf` 等）；同名即同一技能，本文件只保留一行，分类取唯一口径
+4. **同名去重**：本机 523 个技能名中有相当一部分同时安装在两个以上来源目录（如 `~/.agents/skills` 与 `~/.claude/skills` 均含 `vue`、`pdf` 等）；同名即同一技能，本文件只保留一行，分类取唯一口径
 5. **多技能可叠加**：可同时加载多个相关技能
 
 ---
@@ -736,8 +773,8 @@ task(category="deep", load_skills=["tdd", "vue", "vitest"], ...)
 
 ---
 
-_最后更新: 2026-09-21_
-_技能总数: 486（去重后）_
-_来源: ~/.agents/skills (377) · ~/.claude/skills (229) · ~/.config/opencode/skills (65) · 项目 .agents/skills (38) · 项目 .claude/skills (35) · 项目 skills/ (2) · ~/.omp/agent/skills (2) · omp superpowers 扩展包 (14)（与本文件头一致）_
-_来源标签: `omp 原生` = omp native provider 目录 `~/.omp/agent/skills`（teach、visualize）；`superpowers 扩展包` = omp 插件 superpowers 6.3.0 随包技能 `~/.omp/plugins/node_modules/superpowers/skills`（brainstorming、dispatching-parallel-agents、executing-plans、finishing-a-development-branch、receiving-code-review、requesting-code-review、subagent-driven-development、systematic-debugging、test-driven-development、using-git-worktrees、using-superpowers、verification-before-completion、writing-plans、writing-skills，共 14 个）_
-_口径: 每行 = 磁盘上一个技能目录，名称取目录名；跨来源同名只保留一行（486 个名称中 260 个出现在两个以上来源）。omp 不内置任何技能，仅提供发现机制。_
+_最后更新: 2026-10-06_
+_技能总数: 523（去重后）_
+_来源: ~/.agents/skills (406) · ~/.claude/skills (224) · ~/.config/opencode/skills (67) · 项目 .agents/skills (38) · 项目 .claude/skills (35) · 项目 skills/ (2) · ~/.omp/agent/skills (2) · omp superpowers 扩展包 (15)（与本文件头一致）_
+_来源标签: `omp 原生` = omp native provider 目录 `~/.omp/agent/skills`（teach、visualize）；`superpowers 扩展包` = omp 插件 superpowers 6.3.0 随包技能 `~/.omp/plugins/node_modules/superpowers/skills`（brainstorming、dispatching-parallel-agents、executing-plans、finishing-a-development-branch、receiving-code-review、requesting-code-review、subagent-driven-development、systematic-debugging、test-driven-development、using-git-worktrees、using-superpowers、verification-before-completion、writing-plans、writing-skills、diagnosing-superpowers，共 15 个）_
+_口径: 每行 = 磁盘上一个技能目录，名称取目录名；跨来源同名只保留一行（523 个名称中 260 个出现在两个以上来源）。omp 不内置任何技能，仅提供发现机制。_
