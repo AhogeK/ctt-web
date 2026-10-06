@@ -15,6 +15,8 @@ export interface EcosystemRepo {
   url: string
   /** One-line role in the ecosystem */
   role: string
+  /** SPDX identifier of the repository's licence */
+  licence: 'Apache-2.0' | 'MIT'
 }
 
 export const ECOSYSTEM_REPOS: readonly EcosystemRepo[] = [
@@ -22,16 +24,19 @@ export const ECOSYSTEM_REPOS: readonly EcosystemRepo[] = [
     name: 'code-time-tracker',
     url: 'https://github.com/AhogeK/code-time-tracker',
     role: 'JetBrains plugin — where the data comes from',
+    licence: 'Apache-2.0',
   },
   {
     name: 'ctt-server',
     url: 'https://github.com/AhogeK/ctt-server',
     role: 'Sync backend — where it lands',
+    licence: 'MIT',
   },
   {
     name: 'ctt-web',
     url: 'https://github.com/AhogeK/ctt-web',
     role: 'This dashboard — where it is read',
+    licence: 'MIT',
   },
 ]
 

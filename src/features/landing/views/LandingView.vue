@@ -12,6 +12,9 @@
  *
  * The hero's content is the copy column, the product plane that tucks under it and the two calls to
  * action; the stage only changes the box it lives in.
+ *
+ * Below the stage the page returns to ordinary bands — capabilities, the pipeline, and the
+ * open-source block that carries the `#source` anchor the hero's "View source" falls back to.
  */
 import { ref } from 'vue'
 import { Button } from '@/components/ui/button'
@@ -20,9 +23,15 @@ import SourceReposDialog from '@/components/app/SourceReposDialog.vue'
 import LandingHeroPreview from '../components/LandingHeroPreview.vue'
 import LandingSection from '../components/LandingSection.vue'
 import LandingActivityBeat from '../components/LandingActivityBeat.vue'
+import LandingCapabilities from '../components/LandingCapabilities.vue'
+import LandingHowItWorks from '../components/LandingHowItWorks.vue'
+import LandingOpenSource from '../components/LandingOpenSource.vue'
 import { useRevealOnScroll } from '../composables/useRevealOnScroll'
+import { useScrollFade } from '../composables/useScrollFade'
 
 const root = ref<HTMLElement | null>(null)
+const heroFade = ref<HTMLElement | null>(null)
+const beatFade = ref<HTMLElement | null>(null)
 
 // Phone pieces fade on a fixed clock rather than by scroll distance — see the composable.
 useRevealOnScroll(root, [
@@ -30,61 +39,98 @@ useRevealOnScroll(root, [
   '[data-testid="hero-preview"]',
   '[data-testid="hero-recent-panel"]',
   '.beat-unit',
+  '[data-reveal-band]',
 ])
+
+// The stage screens' fades: fixed clocks that play at their scroll thresholds rather than fades
+// scrubbed by the scroll, and both hand-offs overlap so the stage is never left empty — the year beat
+// enters on the hero's exit trigger (120svh), and its own exit (300svh) starts as the stage releases
+// and the first closing band enters. See the composable.
+useScrollFade(heroFade, { leaveSvh: 120 })
+useScrollFade(beatFade, { enterSvh: 120, leaveSvh: 300 })
 </script>
 
 <template>
-  <section ref="root" class="stage relative w-full">
-    <div class="stage-pin flex items-center">
-      <!-- Beat 1 — the hero. -->
-      <div class="beat beat-hero w-full" data-testid="landing-beat-hero">
-        <div class="mx-auto flex w-full max-w-[1440px] flex-col px-4 py-14 sm:px-6 lg:pt-12 lg:pb-20">
-          <!-- Copy column. 42rem is the measure that keeps the headline to two lines. -->
-          <div class="hero-copy min-w-0 lg:max-w-[42rem]">
-            <h1 class="hero-rise text-display-lg">Know where your coding time actually goes.</h1>
+  <div ref="root">
+    <section class="stage relative w-full">
+      <div class="stage-pin flex items-center">
+        <!-- Beat 1 — the hero. Its exit dissolve is the same fixed clock as the year screen's
+             (`data-scroll-fade`); the rise stays with the pinned choreography on the beat itself. -->
+        <div class="beat beat-hero w-full" data-testid="landing-beat-hero">
+          <div ref="heroFade" data-scroll-fade="in">
+            <div class="mx-auto flex w-full max-w-[1440px] flex-col px-4 py-14 sm:px-6 lg:pt-12 lg:pb-20">
+              <!-- Copy column. 42rem is the measure that keeps the headline to two lines. -->
+              <div class="hero-copy min-w-0 lg:max-w-[42rem]">
+                <h1 class="hero-rise text-display-lg">Know where your coding time actually goes.</h1>
 
-            <p
-              class="hero-fade-rise mt-6 max-w-[22rem] text-base text-muted-foreground [animation-delay:70ms] sm:text-lg"
-            >
-              Track time by language, project and IDE from your JetBrains IDE — then read it back in a dashboard you
-              own. Open source, and self-hostable if you would rather keep the data on your own server.
-            </p>
-
-            <div class="hero-fade-rise mt-10 flex flex-col gap-3 [animation-delay:140ms] sm:flex-row sm:items-center">
-              <Button as-child size="lg">
-                <a
-                  :href="PLUGIN_INSTALL_URL"
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  data-testid="landing-primary-cta"
+                <p
+                  class="hero-fade-rise mt-6 max-w-[22rem] text-base text-muted-foreground [animation-delay:70ms] sm:text-lg"
                 >
-                  Install the plugin
-                </a>
-              </Button>
-              <SourceReposDialog>
-                <Button as-child size="lg" variant="outline">
-                  <a href="#source" @click.prevent>View source</a>
-                </Button>
-              </SourceReposDialog>
+                  Track time by language, project and IDE from your JetBrains IDE — then read it back in a dashboard you
+                  own. Open source, and self-hostable if you would rather keep the data on your own server.
+                </p>
+
+                <div
+                  class="hero-fade-rise mt-10 flex flex-col gap-3 [animation-delay:140ms] sm:flex-row sm:items-center"
+                >
+                  <Button as-child size="lg">
+                    <a
+                      :href="PLUGIN_INSTALL_URL"
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      data-testid="landing-primary-cta"
+                    >
+                      Install the plugin
+                    </a>
+                  </Button>
+                  <SourceReposDialog>
+                    <Button as-child size="lg" variant="outline">
+                      <a href="#source" @click.prevent>View source</a>
+                    </Button>
+                  </SourceReposDialog>
+                </div>
+              </div>
+
+              <!-- Product plane: right of the copy and pulled up into its band, so its top-left corner tucks
+                   under the copy's lower half. The content container is 1440px wide (Vue's own hero uses that
+                   cap), and the plane keeps its 54% width; the 42.2% offset is measured so that its *painted*
+                   right edge (the projection spreads it about 35px past its layout box) lands on the
+                   container's right edge instead of leaving a 12% gap. -->
+              <div class="hero-fade-rise mt-12 min-w-0 lg:-mt-[7rem] lg:ml-[42.2%] lg:w-[54%] [animation-delay:210ms]">
+                <LandingHeroPreview />
+              </div>
             </div>
           </div>
+        </div>
 
-          <!-- Product plane: right of the copy and pulled up into its band, so its top-left corner tucks
-               under the copy's lower half. The content container is 1440px wide (Vue's own hero uses that
-               cap), and the plane keeps its 54% width; the 42.2% offset is measured so that its *painted*
-               right edge (the projection spreads it about 35px past its layout box) lands on the
-               container's right edge instead of leaving a 12% gap. -->
-          <div class="hero-fade-rise mt-12 min-w-0 lg:-mt-[7rem] lg:ml-[42.2%] lg:w-[54%] [animation-delay:210ms]">
-            <LandingHeroPreview />
+        <!-- Beat 2 — the arriving artefact: it enters on the hero's exit trigger (so the two cross),
+             rises continuously into the centre, settles briefly, then hands off as the stage releases
+             (its exit is the dissolve plus the page's own slide — no rise of its own). Its fades are
+             the same fixed clocks the bands use (`data-scroll-fade`); the rise stays with the pinned
+             choreography on the beat itself. -->
+        <div class="beat beat-a w-full" data-testid="landing-beat-activity">
+          <div ref="beatFade" data-scroll-fade="out">
+            <LandingSection><LandingActivityBeat /></LandingSection>
           </div>
         </div>
       </div>
+    </section>
 
-      <!-- Beat 2 — the arriving artefact, and the last beat: it holds the centre to the end of the
-           track, because there is nothing after it to make room for. -->
-      <div class="beat beat-a w-full" data-testid="landing-beat-activity">
-        <LandingSection><LandingActivityBeat /></LandingSection>
-      </div>
-    </div>
-  </section>
+    <!-- Below the stage the page returns to ordinary bands: what else the product does, how the data
+         travels, and what "open source" means in practice. They sit outside the pinned track — the
+         stage owns the scroll performance, these are simply read. -->
+    <LandingSection data-testid="landing-capabilities" data-reveal-band>
+      <LandingCapabilities />
+    </LandingSection>
+
+    <LandingSection data-testid="landing-how-it-works" data-reveal-band>
+      <LandingHowItWorks />
+    </LandingSection>
+
+    <!-- The `#source` destination: the hero's secondary action and the top bar's mark fall back here
+         when JavaScript is off, and the footer's ecosystem list stays the page's own catalogue. -->
+    <LandingSection id="source" data-testid="landing-open-source" class="scroll-mt-16" data-reveal-band>
+      <LandingOpenSource />
+    </LandingSection>
+  </div>
 </template>

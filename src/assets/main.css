@@ -400,6 +400,63 @@
   }
 
   /*
+   * The closing bands join the page's fade language on desktop too.
+   *
+   * Since the stage was introduced every region dissolves as it hands over, and the bands below the
+   * stage — added later — arrived by plain scroll, so the seam after the year screen read as
+   * unfinished. This is the phone's own mechanism at desktop widths: the observer already writes the
+   * state attributes at every width, and the fixed 600ms transition means no gesture can outrun the
+   * fade. Scoped to `data-reveal-band` so the hero and the demo windows keep their own entrances.
+   */
+  @media (min-width: 1024px) {
+    @media (prefers-reduced-motion: no-preference) {
+      [data-reveal-band][data-reveal-state] {
+        opacity: 0;
+        translate: 0 2.5rem;
+        transition:
+          opacity 600ms ease,
+          translate 600ms ease;
+      }
+      [data-reveal-band][data-reveal-state='in'] {
+        opacity: 1;
+        translate: 0 0;
+      }
+      [data-reveal-band][data-reveal-state='above'] {
+        opacity: 0;
+        translate: 0 -2.5rem;
+      }
+      /*
+       * The stage screens' fades — both fixed clocks, and each hand-off overlapping so the stage is
+       * never blank (see `useScrollFade`): the opening screen's exit dissolve plays at 120svh, the year
+       * screen's entrance at 120svh (600ms, the page's standard — the same trigger, so the two cross)
+       * and its exit at 300svh over 900ms, as the stage releases and the first closing band enters — a
+       * full-screen exit, deliberately longer than the entrance. Neither is scrubbed, so no gesture can
+       * cross it between two frames and every visitor sees the same dissolve. The rises and the
+       * screens' motion stay with `.beat-lead` / `.beat-arc`; these wrappers only own opacity.
+       */
+      [data-scroll-fade] {
+        opacity: 0;
+        translate: 0 2.5rem;
+        transition:
+          opacity 600ms ease,
+          translate 600ms ease;
+      }
+      [data-scroll-fade='in'] {
+        opacity: 1;
+        translate: 0 0;
+        transition:
+          opacity 600ms ease,
+          translate 600ms ease;
+      }
+      [data-scroll-fade='leaving'] {
+        opacity: 0;
+        translate: 0 0;
+        transition: opacity 900ms ease;
+      }
+    }
+  }
+
+  /*
    * Whenever the stage is *not* running — a phone, `prefers-reduced-motion`, or a browser without
    * scroll timelines — the beats are ordinary sections and must read **vertically**. The shell carries
    * `flex items-center` for the stage's sake (where the children are absolutely positioned and the
@@ -415,14 +472,14 @@
     @supports (animation-timeline: scroll()) {
       @media (min-width: 1024px) {
         .stage {
-          /* The track must outlast one gesture. A fast wheel flick or a trackpad coast delivers one to
-             three screens of scroll in a few hundred milliseconds, and a scroll-driven animation is
-             scrubbed by exactly that distance — so a track shorter than a gesture is crossed before
-             any transition can be seen. The reference's own timeline was raised for this reason
-             ("Significantly increased values to accommodate fast scrolling/trackpads"). 560svh leaves
-             460svh of scroll: the two transitions use 355svh of it, and the last screen then holds for
-             about 128svh — a screen and a third — so one gesture cannot eject it into the page bottom. */
-          min-block-size: 560svh;
+          /* The track is sized in gestures — wider than one wheel flick delivers, and since the fades
+             are fixed clocks (not scrubbed), what a long coast skips is position, not the hand-offs.
+             Inside the 400svh: the arrival moves continuously from 40svh into its park at ~202svh,
+             settles for ~28svh, then leaves on its own visible rise (~231→299svh, the pace of the
+             hero's own exit rise) before the release — the exit is that rise, the 900ms dissolve and
+             the stage's own slide, and the rise ends at the release: carried into the slide it would
+             move the block at ~1.6× the scroll speed, which reads as being ejected. */
+          min-block-size: 400svh;
         }
         .stage-pin {
           position: sticky;
@@ -447,21 +504,28 @@
         .beat-hero {
           animation: beat-lead auto linear both;
           animation-timeline: scroll(root block);
-          /* Dissolves over 215svh: it holds the first screen for the opening ~20%, then fades and
-             rises across roughly two screens of travel. The window is sized in gestures, not taste —
-             wider than the scroll one flick delivers, or the flick completes it between two frames.
-             Its opacity is what the hand-off is timed around: the arriving beat must not climb into a
-             hero that is still half-visible. */
-          animation-range: 0svh 215svh;
+          /* Position only: it rises across the whole range, moving from the first pixel of scroll — a
+             hold at the top leaves the first half-screen of scrolling moving nothing, which reads as
+             the page freezing. The `data-scroll-fade` wrapper dissolves on a fixed 900ms clock
+             (triggered at 120svh, where the year screen starts entering, so the two cross). */
+          animation-range: 0svh 190svh;
         }
         .beat-a {
-          animation: beat-hold auto linear both;
+          animation: beat-arc auto linear both;
           animation-timeline: scroll(root block);
-          /* 200 → 355svh: the arrival gets 155svh of travel — a little under two screens, again sized
-             against a gesture — and the beat is parked from ~332svh. The stage unpins at 460svh, so the
-             last screen holds for about 128svh: long enough to read the year grid and the ladders, and
-             long enough that a normal scroll cannot throw it straight to the page bottom. */
-          animation-range: 200svh 355svh;
+          /* 40 → 400svh: the arrival rises continuously (parking by ~202svh — a screen that parks and
+             then sits frozen for over a screen reads as the page sticking), settles for ~28svh, then
+             **leaves the way the hero leaves**: a slow rise of its own from ~231svh to the release
+             (~299svh, about a quarter of the scroll speed). The rise stops at the release on purpose —
+             carried into the stage's own slide it would move the block at ~1.6× the scroll speed and
+             read as being ejected, while no rise at all reads as the block simply vanishing — so it
+             drifts up while the pin still holds, then rides the slide out. The entrance fade (600ms at
+             120svh, the hero's exit trigger) reveals the block already ~40% up; the exit dissolve
+             (900ms at 300svh, as the stage releases and the first closing band enters) fades it while
+             it leaves. This animation owns **position only**; both fades live on the `data-scroll-fade`
+             wrapper as fixed clocks — because a scrubbed fade is crossed between frames by any flick
+             and reads differently for every device. */
+          animation-range: 40svh 400svh;
         }
         /*
          * Low-height desktops only: the hero is taller than the stage, so centring it puts the h1's top
@@ -480,41 +544,57 @@
   }
 }
 
-/** The first beat: settled for the opening fifth, then leaves upward across the rest of its range. */
+/**
+ * The first beat: in motion from the first pixel of scroll, rising across its range while its wrapper
+ * plays the exit dissolve. Position only — the fade belongs to the `data-scroll-fade` wrapper (900ms
+ * at 120svh), so it does not vary with the gesture.
+ *
+ * No hold at the top: a first screen whose scroll moves nothing reads as a broken page. A pinned stage
+ * can afford a settled beat only where the beat has just arrived to be read.
+ */
 @keyframes beat-lead {
   0% {
-    opacity: 1;
-    translate: 0 -50%;
-  }
-  20% {
-    opacity: 1;
     translate: 0 -50%;
   }
   100% {
-    opacity: 0;
     translate: 0 -92%;
   }
 }
 
 /**
- * The arriving beat: rises from below the fold to the centre and **stays** there.
+ * The arriving beat: rises from below the fold to the centre, settles briefly, leaves upward the way
+ * the hero leaves, then the stage releases and the bands below take over.
  *
- * It must not leave — it is the last beat, so there is nothing to make room for, and an earlier
- * version reused a "leave upward" keyframe here: measured, the artefact faded to 0 again at the
- * bottom of the page, which reads as the page having lost its own content.
+ * Position only — both fades are the wrapper's fixed clocks (`data-scroll-fade`: 600ms entrance at
+ * 120svh, 900ms exit dissolve at 300svh). Milestones on the 360svh range: a continuous rise from 40svh
+ * to ~191svh (42%), a soft landing into the park by ~202svh (45% — the last two units of travel take
+ * the final 11svh, about half speed), a ~28svh settle, then an **exit rise while still pinned** from
+ * ~231svh (53%) to the release at ~299svh (72%: `-50%` → `-73%`, about a quarter of the scroll speed,
+ * the pace of the hero's own rise), flat through the stage's slide afterwards. The rise must end at the
+ * release: carried into the slide it would move the block at ~1.6× the scroll speed and read as being
+ * ejected, while no rise at all reads as the block simply vanishing — the hero's exit is a visible rise
+ * plus a dissolve, and the year screen leaves the same way. The overlap discipline stands: the entrance
+ * crosses the hero's exit, and the exit dissolve starts as the opening band enters, so the stage is
+ * never blank.
  */
-@keyframes beat-hold {
+@keyframes beat-arc {
   0% {
-    opacity: 0;
     translate: 0 50%;
   }
-  85% {
-    opacity: 1;
+  42% {
+    translate: 0 -48%;
+  }
+  45% {
     translate: 0 -50%;
   }
-  100% {
-    opacity: 1;
+  53% {
     translate: 0 -50%;
+  }
+  72% {
+    translate: 0 -73%;
+  }
+  100% {
+    translate: 0 -73%;
   }
 }
 
