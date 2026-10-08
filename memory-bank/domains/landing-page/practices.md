@@ -81,9 +81,11 @@ design against** — re-derive only if a source changes.
   as a data-risk hint (user review). Self-host keeps the positive form — "your data stays on hardware you control".
 - e2e: the `landing-free` test (statement, two options, hosted carries no control, support hrefs); the footer
   link count is now 6 (3 repos + 3 channels).
-- The footer shares the bands' shell (`LandingSection as="footer"`): it used to carry its own 1200px container with an
-  extra 24px inset, so its text sat 24px right of every band's left edge (measured 180 vs 156 at 1512). One grid now —
-  the e2e pins the two content boxes' left edges equal. The header and hero stay on their 1440 canvas by design.
+- One shell recipe for the whole page (2026-10-08): every group — top bar, hero, bands, footer — renders the same
+  1440px box with the shell's own rail (16px, 24px from `sm`). The rail sits *inside* the box; a rail on the outer
+  element shifts the box itself, which is exactly what kept the edges apart. Measured at 1512: header text, h1, every
+  band heading and the footer all start at 60; boxes 36..1476; no overflow. History: bands were a 1200px grid and the
+  footer briefly carried its own 1200 container plus a 24px inset (180 vs 156) until 1440 became the one width.
 
 ## hero 动效实测与陷阱 → 已迁入 [`hero-composition.md`](hero-composition.md) ✓（同类实测只留一个家 ✓）
 
