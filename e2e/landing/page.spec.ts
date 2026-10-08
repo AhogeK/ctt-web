@@ -168,7 +168,8 @@ test.describe('Landing page', () => {
         () => document.getElementById('source')?.matches('[data-testid="landing-open-source"]') ?? false,
       ),
     ).toBe(true)
-    await expect(page.locator('footer').getByRole('link')).toHaveCount(3)
+    // The ecosystem list plus the support channels (Ko-fi / Afdian / Solana).
+    await expect(page.locator('footer').getByRole('link')).toHaveCount(6)
 
     const source = page.getByTestId('landing-open-source')
     await expect(source.getByRole('link')).toHaveCount(3)
@@ -191,6 +192,39 @@ test.describe('Landing page', () => {
     // it simply sits at the end of the page.
     await page.locator('footer').scrollIntoViewIfNeeded()
     await expect(page.locator('footer')).toHaveCSS('opacity', '1')
+  })
+
+  test('states the price plainly and links the support channels', async ({ page }) => {
+    await page.setViewportSize({ width: 1440, height: 900 })
+    await page.goto('/')
+    await page.locator('h1').waitFor()
+
+    // The band under the stage: everything is free, so it leads with the statement rather than a
+    // price table, and the hosted entry cannot be started — it carries no control at all.
+    const band = page.getByTestId('landing-free')
+    await band.scrollIntoViewIfNeeded()
+    await expect(band.getByRole('heading', { name: 'Free, every part of it' })).toBeVisible()
+    await expect(band.getByText('no tiers, no trial, nothing to buy')).toBeVisible()
+    await expect(band.locator('article')).toHaveCount(2)
+
+    const selfHost = band.getByTestId('run-option-self-host')
+    await expect(selfHost.getByRole('link', { name: 'Read the quick start' })).toHaveAttribute('href', '#source')
+
+    const hosted = band.getByTestId('run-option-hosted')
+    await expect(hosted.getByText('Not offered today')).toBeVisible()
+    await expect(hosted.getByRole('link')).toHaveCount(0)
+    await expect(hosted.getByRole('button')).toHaveCount(0)
+
+    // Support is voluntary and lives in two quiet places — the band and the footer — with the same
+    // channels the plugin lists. Both sets must be real links to the right destinations.
+    const support = page.getByTestId('landing-support')
+    await expect(support.getByRole('link', { name: 'Ko-fi' })).toHaveAttribute('href', 'https://ko-fi.com/ahogek')
+    await expect(support.getByRole('link', { name: 'Afdian' })).toHaveAttribute('href', 'https://afdian.com/a/AhogeK')
+    await expect(support.getByRole('link', { name: 'Solana' })).toHaveAttribute('href', /solscan\.io\/account/)
+    await expect(page.locator('footer').getByRole('link', { name: 'Ko-fi' })).toHaveAttribute(
+      'href',
+      'https://ko-fi.com/ahogek',
+    )
   })
 
   test('stacks the pipeline into a readable column on a phone', async ({ page }) => {

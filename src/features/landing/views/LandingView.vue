@@ -13,7 +13,7 @@
  * The hero's content is the copy column, the product plane that tucks under it and the two calls to
  * action; the stage only changes the box it lives in.
  *
- * Below the stage the page returns to ordinary bands — capabilities, the pipeline, the pricing paths,
+ * Below the stage the page returns to ordinary bands — capabilities, the pipeline, the free band,
  * and the open-source block that carries the `#source` anchor the hero's "View source" falls back to.
  */
 import { computed, ref } from 'vue'
@@ -25,7 +25,7 @@ import LandingSection from '../components/LandingSection.vue'
 import LandingActivityBeat from '../components/LandingActivityBeat.vue'
 import LandingCapabilities from '../components/LandingCapabilities.vue'
 import LandingHowItWorks from '../components/LandingHowItWorks.vue'
-import LandingPricing from '../components/LandingPricing.vue'
+import LandingFree from '../components/LandingFree.vue'
 import LandingOpenSource from '../components/LandingOpenSource.vue'
 import { useRevealOnScroll } from '../composables/useRevealOnScroll'
 import { useScrollFade } from '../composables/useScrollFade'
@@ -144,10 +144,10 @@ useScrollFade(
       <LandingHowItWorks />
     </LandingSection>
 
-    <!-- The two ways to run the same software. No figures live in the markup: the band renders the
-         pricing-plans module, so a price change is a data edit. -->
-    <LandingSection data-testid="landing-pricing" data-reveal-band>
-      <LandingPricing />
+    <!-- The free band: what the system costs and the two ways to run it. No figures live in the
+         markup — the band renders the run-options module, so a copy change is a data edit. -->
+    <LandingSection data-testid="landing-free" data-reveal-band>
+      <LandingFree />
     </LandingSection>
 
     <!-- The `#source` destination: the hero's secondary action and the top bar's mark fall back here
