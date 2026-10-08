@@ -31,7 +31,7 @@ import ErrorBoundary from '@/components/app/ErrorBoundary.vue'
 import ThemeToggle from '@/components/app/ThemeToggle.vue'
 import { useAuthStore } from '@/stores/auth'
 import { RouteNames } from '@/router/route-names'
-import { ECOSYSTEM_REPOS } from '@/lib/site-links'
+import { ECOSYSTEM_REPOS, SUPPORT_CHANNELS } from '@/lib/site-links'
 import SourceReposDialog from '@/components/app/SourceReposDialog.vue'
 
 /** The current year for the copyright line — evaluated once, not per render. */
@@ -128,7 +128,21 @@ const cta = computed(() =>
         </ul>
 
         <div class="mt-6 border-t border-border/60 pt-6 sm:flex sm:items-center sm:justify-between sm:gap-6">
-          <p>Open source — deploy it yourself, or use the hosted sync service.</p>
+          <div>
+            <p>Free and open source — deploy it yourself.</p>
+            <p class="mt-2">
+              Support the project:
+              <template v-for="(channel, index) in SUPPORT_CHANNELS" :key="channel.id">
+                <a
+                  :href="channel.url"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  class="rounded-sm font-medium text-muted-foreground underline-offset-4 transition-colors hover:text-foreground hover:underline focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none"
+                  >{{ channel.label }}</a
+                ><span v-if="index < SUPPORT_CHANNELS.length - 1" aria-hidden="true"> · </span>
+              </template>
+            </p>
+          </div>
           <!-- No "All rights reserved": MIT already grants those rights to everyone. -->
           <p class="mt-2 shrink-0 sm:mt-0">© {{ currentYear }} AhogeK</p>
         </div>

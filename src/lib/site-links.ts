@@ -46,3 +46,35 @@ export const ECOSYSTEM_REPOS: readonly EcosystemRepo[] = [
  * → xmlId `com.ahogek.code-time-tracker`).
  */
 export const PLUGIN_INSTALL_URL = 'https://plugins.jetbrains.com/plugin/29379'
+
+/**
+ * The project's support channels — the same three the plugin's own settings screen lists,
+ * so the landing page and the footer cannot drift from the product. Donations are voluntary
+ * and carry no privileges; the software itself is free in every part.
+ */
+export interface SupportChannel {
+  /** Stable key for rendering and tests */
+  id: string
+  /** Link label */
+  label: string
+  /** Where the channel lives */
+  url: string
+}
+
+export const SUPPORT_CHANNELS: readonly SupportChannel[] = [
+  {
+    id: 'kofi',
+    label: 'Ko-fi',
+    url: 'https://ko-fi.com/ahogek',
+  },
+  {
+    id: 'afdian',
+    label: 'Afdian',
+    url: 'https://afdian.com/a/AhogeK',
+  },
+  {
+    id: 'solana',
+    label: 'Solana',
+    url: 'https://solscan.io/account/55XnqvGKwH6LamJB7tSwUbrmJikEU2zwP3k1FjsdyEys',
+  },
+]
