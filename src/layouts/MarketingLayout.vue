@@ -33,6 +33,7 @@ import { useAuthStore } from '@/stores/auth'
 import { RouteNames } from '@/router/route-names'
 import { ECOSYSTEM_REPOS, SUPPORT_CHANNELS } from '@/lib/site-links'
 import SourceReposDialog from '@/components/app/SourceReposDialog.vue'
+import LandingSection from '@/features/landing/components/LandingSection.vue'
 
 /** The current year for the copyright line — evaluated once, not per render. */
 const currentYear = new Date().getFullYear()
@@ -105,9 +106,10 @@ const cta = computed(() =>
 
     <!-- The footer deliberately carries no reveal state: it is the page's last block, so an animated
          entrance would only be one more thing to scroll past — it moves with the page like ordinary
-         content. -->
-    <footer class="border-t border-border/60">
-      <div class="mx-auto w-full max-w-[1200px] px-4 py-10 text-sm text-muted-foreground sm:px-6">
+         content. It shares the bands' shell (1200px content grid, same rail) so its text starts on
+         the same left edge as every band above it. -->
+    <LandingSection as="footer" spacing="none" class="border-t border-border/60 py-10">
+      <div class="text-sm text-muted-foreground">
         <!-- The ecosystem is more than one repository: listing them answers "what
              is this made of", which a single link to this dashboard cannot. The `#source` anchor
              itself lives on the landing page's open-source block; this list stays as the footer's
@@ -147,6 +149,6 @@ const cta = computed(() =>
           <p class="mt-2 shrink-0 sm:mt-0">© {{ currentYear }} AhogeK</p>
         </div>
       </div>
-    </footer>
+    </LandingSection>
   </div>
 </template>
