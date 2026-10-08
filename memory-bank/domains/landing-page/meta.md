@@ -25,10 +25,10 @@ and the reference research behind all of it.
 | `src/features/landing/**` | The implementation: `views/LandingView.vue`, `components/LandingSection.vue` |
 | `src/layouts/MarketingLayout.vue` | The marketing shell (header/footer, `--marketing-header-height` source) |
 
-**Status: P3–P5 complete (2026-10-08)** — P1 shipped the entry and routing shell; P2 the visual primitives; P3
-the staged hero, the value demo and the source dialog (v0.51.50–v0.53.17); P4 the closing bands — capabilities, the
-pipeline, the open-source block (v0.54.0); P5 the free band and the support channels (v0.55.11) — after the
-2026-10-08 free/donation decision there is no pricing phase. P6 tests/docs remain open. `/` is public
+**Status: P3–P5 complete; P6 nearly (2026-10-08)** — P1 shipped the entry and routing shell; P2 the visual
+primitives; P3 the staged hero, the value demo and the source dialog (v0.51.50–v0.53.17); P4 the closing bands
+(v0.54.0); P5 the free band, the support channels and one shell width (v0.55.11–v0.55.13) — after the 2026-10-08
+free/donation decision there is no pricing phase. P6 lacks only the real-screen screenshot baseline. `/` is public
 (`route-names.ts` `LANDING`, `router/modules/landing.ts`, `layouts/MarketingLayout.vue`) and the top-bar CTA
 switches on `authStore.isAuthenticated`. Sections that belong to later stages are **deliberately absent, not stubbed**.
 
