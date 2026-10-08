@@ -53,9 +53,14 @@ const cta = computed(() =>
 <template>
   <div
     data-surface-scope="marketing"
-    class="[--marketing-header-height:3.5rem] flex min-h-screen flex-col bg-background text-foreground"
+    class="[--marketing-header-height:3.5rem] flex min-h-screen flex-col bg-background pt-[calc(var(--marketing-header-height)_+_1px)] text-foreground"
   >
-    <header class="sticky top-0 z-30 border-b border-border/60 bg-background/80 backdrop-blur">
+    <!-- Fixed, not sticky: pinned by `sticky`, the bar's backdrop-filter pass is dropped as one unit
+         for a few frames whenever the page repaints hard — the tint rides inside that pass, so text
+         behind the bar flashed through at full strength (captured on screen). The fixed path ran the
+         same stress without a single dropped frame. The shell's padding-top keeps the in-flow space
+         the bar used to occupy, so nothing below it moves. -->
+    <header class="fixed inset-x-0 top-0 z-30 border-b border-border/60 bg-background/80 backdrop-blur">
       <div
         class="mx-auto flex h-[var(--marketing-header-height)] w-full max-w-[1440px] items-center justify-between gap-3 px-4 sm:px-6"
       >
