@@ -126,13 +126,22 @@ test.describe('Landing page', () => {
     }
     await expect(capabilities.locator('article')).toHaveCount(4)
 
-    // Below the fold the band waits hidden, then arrives with the page's 600ms state fade — the same
-    // mechanism the phone uses, extended to these bands on desktop (the observer runs at every width).
+    // Below the fold the band waits hidden — even with its box already on screen (it is pulled up
+    // into the stage's dead tail) — until the hand-off line at ~1.5 screens: the same line the year
+    // beat's dissolve is anchored to, read live from this band's box, so the lower hand-off is a
+    // cross-fade and the band never stands crisp while the beat is still painted (the observer keeps
+    // running this band on phones only; the stage takes it over above the breakpoint).
     // The footer deliberately does not join them: it is the page's last block and just scrolls.
     await expect(capabilities).toHaveCSS('opacity', '0')
+    await page.evaluate(() => window.scrollTo(0, window.innerHeight * 1.4))
+    await expect(capabilities).toHaveCSS('opacity', '0')
+    await page.evaluate(() => window.scrollTo(0, window.innerHeight * 1.7))
+    await expect
+      .poll(async () => Number(await capabilities.evaluate((el) => getComputedStyle(el).opacity)), {
+        message: 'the band never entered after the hand-off line',
+      })
+      .toBeGreaterThan(0.95)
     await expect(page.locator('footer')).toHaveCSS('opacity', '1')
-    await capabilities.scrollIntoViewIfNeeded()
-    await expect(capabilities).toHaveCSS('opacity', '1')
 
     // The pipeline: three ordered steps, side by side only when there is room (see the phone case).
     const pipeline = page.getByTestId('landing-how-it-works')
@@ -229,15 +238,17 @@ test.describe('Landing page', () => {
     // The entrance is a timed animation; wait for its end state rather than for a duration.
     await expect(page.locator('[data-testid="hero-preview"]').locator('..')).toHaveCSS('opacity', '1')
 
-    // The stage screens' fades are fixed clocks, and both hand-offs overlap so the stage is never
-    // empty: the year screen's entrance plays on the opening screen's exit trigger (1.2 screens), and
-    // the exit starts as the stage releases and the first closing band enters (3 screens). Neither
-    // fade depends on how far a gesture travels (a scrubbed fade would be crossed between two frames
-    // by a flick and never seen).
+    // The stage screens' fades are fixed clocks, and every hand-off is a cross-fade, so the stage is
+    // never empty and never shows two blocks crisp at once: the year screen's entrance and the
+    // opening screen's exit share one trigger (0.6 screens), and the year screen's exit dissolve is
+    // anchored to the first closing band's top crossing 60% of the viewport (1.5 screens at this
+    // height), where the band's own entrance reads the same line. None of the three depends on how
+    // far a gesture travels (a scrubbed fade would be crossed between two frames by a flick and
+    // never seen).
     const heroFade = page.locator('[data-testid="landing-beat-hero"] [data-scroll-fade]')
     const beatFade = page.locator('[data-testid="landing-beat-activity"] [data-scroll-fade]')
     const beatOpacity = () => beatFade.evaluate((el) => Number(getComputedStyle(el).opacity))
-    await page.evaluate(() => window.scrollTo(0, window.innerHeight * 1.0))
+    await page.evaluate(() => window.scrollTo(0, window.innerHeight * 0.2))
     await expect(heroFade).toHaveCSS('opacity', '1')
     await expect(beatFade).toHaveCSS('opacity', '0')
     await page.evaluate(() => window.scrollTo(0, window.innerHeight * 1.4))
@@ -248,15 +259,10 @@ test.describe('Landing page', () => {
     await page.evaluate(() => window.scrollTo(0, window.innerHeight * 2.4))
     await expect.poll(() => heroFade.evaluate((el) => Number(getComputedStyle(el).opacity))).toBeLessThanOrEqual(0.1)
 
-    // Beat 2 arrives at the centre of the viewport, not somewhere below the fold: the stage is pinned
-    // and the layer is translated to -50% of its own height from the middle. That is the whole
-    // mechanism, and this is the only place it can be checked.
-    // The beat parks from ~202svh and starts its own exit rise at ~231svh, so the check has to land
-    // inside that window: past the park point, before the rise — after the release the whole stage is
-    // dragged upward by the document and every rect moves with it.
-    await page.evaluate(() => window.scrollTo(0, window.innerHeight * 2.15))
-    // Poll instead of sleeping: the beat must actually arrive within ±4px of the centre, and a fixed
-    // wait would both slow the suite and hide a beat that never gets there.
+    // Beat 2 passes through the centre of the viewport: the stage is pinned and the layer is
+    // translated to -50% of its own height from the middle — one linear scrub across the release
+    // window, so the exact centre falls at ~1.01 screens (travel = 135% of the layer over the
+    // release line). It never parks: reaching the centre is a moment, not a stretch.
     const centred = async () =>
       page.evaluate(() => {
         const beat = document.querySelector('[data-testid="landing-beat-activity"]') as HTMLElement
@@ -265,24 +271,31 @@ test.describe('Landing page', () => {
         const centre = (window.innerHeight - rect.height) / 2
         return { offset: Math.round(rect.top - centre), opacity: Number(getComputedStyle(fade).opacity) }
       })
+    await page.evaluate(() => window.scrollTo(0, window.innerHeight * 1.01))
+    // Poll instead of sleeping: the beat must actually pass within ±4px of the centre. Scrolling up
+    // here also re-crosses the band anchor, so this doubles as the upward re-entry check — the
+    // entrance must be a real fade (state above 0.8 once settled), never a pop.
     await expect
-      .poll(async () => Math.abs((await centred()).offset), { message: 'beat never parked at the centre' })
+      .poll(async () => Math.abs((await centred()).offset), { message: 'beat never crossed the centre of the stage' })
       .toBeLessThanOrEqual(4)
-    expect((await centred()).opacity).toBeGreaterThan(0.8)
+    await expect
+      .poll(async () => (await centred()).opacity, { message: 'beat did not fade back in on the way up' })
+      .toBeGreaterThan(0.8)
 
-    // The park is sized against gestures: a further tenth of a viewport must still be the same parked
-    // screen — the settled stretch is a beat, not a freeze, and it ends where the screen starts its own
-    // visible exit rise. It is also still fully opaque: the dissolve waits for the release.
+    // And it keeps moving: a further tenth of a viewport must carry it off the centre line — the
+    // scrub is continuous (no frozen park; a park is what reads as dragging against the wheel), and
+    // the dissolve is still armed for the band anchor far below, so the beat is fully opaque here.
     await page.evaluate(() => window.scrollBy(0, window.innerHeight * 0.1))
     await expect
-      .poll(async () => Math.abs((await centred()).offset), { message: 'the beat left the centre too soon' })
-      .toBeLessThanOrEqual(4)
+      .poll(async () => (await centred()).offset, { message: 'the beat stayed frozen at the centre' })
+      .toBeLessThanOrEqual(-30)
     await expect(beatFade).toHaveCSS('opacity', '1')
 
-    // The exit dissolve plays on its own clock from 300svh — as the stage releases and the first
-    // closing band enters, so the two overlap — and by the end of the track it has completed: no
-    // scroll length is involved, so every visitor sees the same dissolve.
-    await page.evaluate(() => window.scrollTo(0, window.innerHeight * 3.1))
+    // The exit dissolve plays on its own 900ms clock from the band anchor (1.5 screens at this
+    // height) — overlapping the first closing band's rise into view, so the hand-off never shows a
+    // blank pinned screen — and by the end of the track it has completed: no scroll length is
+    // involved, so every visitor sees the same dissolve.
+    await page.evaluate(() => window.scrollTo(0, window.innerHeight * 3.2))
     await expect.poll(beatOpacity).toBeLessThan(0.95)
 
     // And the beat really is the product's artefact: a year of days plus the cabinet's ladders,
@@ -298,6 +311,23 @@ test.describe('Landing page', () => {
     await expect
       .poll(beatOpacity, { message: 'the beat never faded out before the closing bands' })
       .toBeLessThanOrEqual(0.1)
+  })
+
+  test('pins the frosted bar as fixed so a dropped filter pass can never show raw content', async ({ page }) => {
+    await page.setViewportSize({ width: 1440, height: 900 })
+    await page.goto('/')
+    // Pinned by `sticky`, the bar's backdrop-filter pass was dropped as one unit under repaint
+    // churn — tint included — and the raw page flashed through at full strength. The `fixed` path
+    // runs the same stress without a dropped frame, and the shell's padding-top carries the in-flow
+    // space the bar used to occupy. This pins both halves: the position and the compensation.
+    const st = await page.getByRole('banner').evaluate((el) => {
+      const cs = getComputedStyle(el)
+      const shell = el.parentElement as HTMLElement
+      return { position: cs.position, blur: cs.backdropFilter, shellPad: getComputedStyle(shell).paddingTop }
+    })
+    expect(st.position, 'the bar must be fixed to the viewport, not sticky').toBe('fixed')
+    expect(st.blur, 'the frosted look stays on the bar itself').toMatch(/blur/)
+    expect(st.shellPad, 'the shell keeps the bar’s in-flow space (content + its 1px rule)').toBe('57px')
   })
 
   test('keeps the stage inside a phone viewport', async ({ page }) => {

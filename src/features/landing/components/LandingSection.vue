@@ -8,7 +8,12 @@
  * - container 1200px · prose column ~730px (measured baseline)
  * - horizontal rail 24px → 32px (8px grid)
  * - section rhythm 80px desktop → 48px mobile
+ *
+ * The root element is exposed (`defineExpose`) so a parent can anchor scroll choreography to a
+ * band's real box (the landing stage's exit dissolve is anchored to the first band's position).
  */
+import { ref } from 'vue'
+
 interface Props {
   /** Semantic element. Bands that are not a section (footer/header) say so. */
   as?: 'section' | 'div' | 'footer' | 'header' | 'article'
@@ -23,6 +28,9 @@ const props = withDefaults(defineProps<Props>(), {
   spacing: 'lg',
   width: 'container',
 })
+
+const el = ref<HTMLElement | null>(null)
+defineExpose({ el })
 
 const rhythm = {
   none: '',
@@ -39,7 +47,7 @@ const measure = {
 </script>
 
 <template>
-  <component :is="props.as" :class="[rhythm[props.spacing], 'px-6 md:px-8']">
+  <component :is="props.as" ref="el" :class="[rhythm[props.spacing], 'px-6 md:px-8']">
     <div :class="measure[props.width]">
       <slot />
     </div>

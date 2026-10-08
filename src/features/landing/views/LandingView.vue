@@ -13,10 +13,10 @@
  * The hero's content is the copy column, the product plane that tucks under it and the two calls to
  * action; the stage only changes the box it lives in.
  *
- * Below the stage the page returns to ordinary bands — capabilities, the pipeline, and the
- * open-source block that carries the `#source` anchor the hero's "View source" falls back to.
+ * Below the stage the page returns to ordinary bands — capabilities, the pipeline, the pricing paths,
+ * and the open-source block that carries the `#source` anchor the hero's "View source" falls back to.
  */
-import { ref } from 'vue'
+import { computed, ref } from 'vue'
 import { Button } from '@/components/ui/button'
 import { PLUGIN_INSTALL_URL } from '@/lib/site-links'
 import SourceReposDialog from '@/components/app/SourceReposDialog.vue'
@@ -25,6 +25,7 @@ import LandingSection from '../components/LandingSection.vue'
 import LandingActivityBeat from '../components/LandingActivityBeat.vue'
 import LandingCapabilities from '../components/LandingCapabilities.vue'
 import LandingHowItWorks from '../components/LandingHowItWorks.vue'
+import LandingPricing from '../components/LandingPricing.vue'
 import LandingOpenSource from '../components/LandingOpenSource.vue'
 import { useRevealOnScroll } from '../composables/useRevealOnScroll'
 import { useScrollFade } from '../composables/useScrollFade'
@@ -32,6 +33,7 @@ import { useScrollFade } from '../composables/useScrollFade'
 const root = ref<HTMLElement | null>(null)
 const heroFade = ref<HTMLElement | null>(null)
 const beatFade = ref<HTMLElement | null>(null)
+const firstBand = ref<{ el: HTMLElement | null } | null>(null)
 
 // Phone pieces fade on a fixed clock rather than by scroll distance — see the composable.
 useRevealOnScroll(root, [
@@ -43,11 +45,19 @@ useRevealOnScroll(root, [
 ])
 
 // The stage screens' fades: fixed clocks that play at their scroll thresholds rather than fades
-// scrubbed by the scroll, and both hand-offs overlap so the stage is never left empty — the year beat
-// enters on the hero's exit trigger (120svh), and its own exit (300svh) starts as the stage releases
-// and the first closing band enters. See the composable.
-useScrollFade(heroFade, { leaveSvh: 120 })
-useScrollFade(beatFade, { enterSvh: 120, leaveSvh: 300 })
+// scrubbed by the scroll. Two shared triggers make every hand-off a cross-fade instead of two blocks
+// standing crisp side by side — the hero's exit and the year beat's entrance both fire at 60svh
+// (their 900ms/600ms clocks run over each other), and the anchor band's entrance and the beat's
+// dissolve both fire when that band's top crosses 60% of the viewport — one line, read live from the
+// band's box, so the pairing holds whatever the layout or screen height does. The band is pulled up
+// into the stage's dead tail so the line lands while the beat still fills the top of the screen. See
+// the composable.
+useScrollFade(heroFade, { leaveSvh: 60 })
+useScrollFade(beatFade, { enterSvh: 60, leaveOnBand: firstBand })
+useScrollFade(
+  computed(() => firstBand.value?.el ?? null),
+  { enterOnBand: firstBand },
+)
 </script>
 
 <template>
@@ -117,14 +127,27 @@ useScrollFade(beatFade, { enterSvh: 120, leaveSvh: 300 })
     </section>
 
     <!-- Below the stage the page returns to ordinary bands: what else the product does, how the data
-         travels, and what "open source" means in practice. They sit outside the pinned track — the
-         stage owns the scroll performance, these are simply read. -->
-    <LandingSection data-testid="landing-capabilities" data-reveal-band>
+         travels, the two ways to run it, and what "open source" means in practice. They sit outside
+         the pinned track — the stage owns the scroll performance, these are simply read. -->
+    <LandingSection
+      ref="firstBand"
+      data-band-anchor
+      data-scroll-fade="out"
+      data-testid="landing-capabilities"
+      data-reveal-band
+      spacing="sm"
+    >
       <LandingCapabilities />
     </LandingSection>
 
     <LandingSection data-testid="landing-how-it-works" data-reveal-band>
       <LandingHowItWorks />
+    </LandingSection>
+
+    <!-- The two ways to run the same software. No figures live in the markup: the band renders the
+         pricing-plans module, so a price change is a data edit. -->
+    <LandingSection data-testid="landing-pricing" data-reveal-band>
+      <LandingPricing />
     </LandingSection>
 
     <!-- The `#source` destination: the hero's secondary action and the top bar's mark fall back here

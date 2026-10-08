@@ -38,14 +38,31 @@ export function useRevealOnScroll(root: Ref<HTMLElement | null>, selectors: stri
     const pieces = root.value.querySelectorAll(selectors.join(', '))
     if (pieces.length === 0) return
 
+    // The anchor band is the stage's hand-off partner on desktop: its entrance runs on the stage's
+    // own scroll-fade clock (so the beat's dissolve and the band's fade-in share one trigger), and
+    // the observer must not pre-empt that with an early `in` — a band at full opacity while the beat
+    // is still crisp is the two-stacked-blocks failure. On phones the observer stays its driver, so
+    // the band keeps its fixed-clock fade there.
+    const stageAnchored = (piece: Element) =>
+      globalThis.matchMedia('(min-width: 1024px)').matches && piece.hasAttribute('data-band-anchor')
+
     const pending = new Set<HTMLElement>()
     const flush = () => {
       for (const piece of pending) {
-        // Only pieces that are properly on screen. A settle must not fade a piece that is still a sliver
-        // at the bottom edge — that fade would play almost entirely off screen and be wasted; it stays
-        // pending and is revealed by a later flush once it has risen.
+        // The stage-anchored band never reveals through the observer's machinery on desktop — its own
+        // scroll-fade clock owns that timing — so it must not linger in the pending set either.
+        if (stageAnchored(piece)) {
+          pending.delete(piece)
+          continue
+        }
+        // Anything intersecting the viewport is revealed. The old gate (`top < 85%` of the viewport)
+        // existed so a settle would not play a fade on a bottom-edge sliver — but it also stranded a
+        // piece in the pending set while the scroll rested *above* that line, which is exactly the
+        // window where the stage's outgoing beat has finished dissolving and the incoming band is
+        // still withheld: a fully blank screen until the visitor happened to scroll further. At a
+        // settled scroll position every intersecting piece is on screen for real, so it fades in.
         const rect = piece.getBoundingClientRect()
-        if (rect.top < globalThis.innerHeight * 0.85 && rect.bottom > 0) {
+        if (rect.top < globalThis.innerHeight && rect.bottom > 0) {
           piece.dataset.revealState = 'in'
           pending.delete(piece)
         }
@@ -85,6 +102,13 @@ export function useRevealOnScroll(root: Ref<HTMLElement | null>, selectors: stri
       (entries) => {
         for (const entry of entries) {
           const piece = entry.target as HTMLElement
+          // Desktop: the anchor band's entrance belongs to the stage's scroll-fade clock (and a stale
+          // state written while the window was narrow must not outlive the breakpoint). Clear it so
+          // the reveal rules stop matching and the scroll-fade rules govern alone.
+          if (stageAnchored(piece)) {
+            piece.removeAttribute('data-reveal-state')
+            continue
+          }
           if (entry.isIntersecting) {
             if (speed >= FAST_PX_PER_S) pending.add(piece)
             else piece.dataset.revealState = 'in'
