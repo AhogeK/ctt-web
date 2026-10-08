@@ -15,7 +15,9 @@ export interface TermsContent {
 
 export const termsContent: TermsContent = {
   language: 'en',
-  lastUpdated: '2026-05-02',
+  lastUpdated: '2026-10-09',
+  // The accepted-terms identifier is server-owned (`publicConfig.termsVersion`); this field mirrors
+  // it for display when that config is unavailable — it moves only together with the server value.
   version: '1.0.0',
   sections: [
     {
@@ -42,7 +44,7 @@ JetBrains IDE Plugin Integration: The Service operates through a JetBrains IDE p
 
 Cloud Data Synchronization: Your coding data is synchronized across devices through our cloud infrastructure, enabling you to access your analytics from any supported browser or device.
 
-The Service is provided on a subscription basis with tiered feature access. We reserve the right to modify, suspend, or discontinue any aspect of the Service at any time, with reasonable notice where practicable.`,
+The Service is provided free of charge, with all features included. We reserve the right to modify, suspend, or discontinue any aspect of the Service at any time, with reasonable notice where practicable.`,
     },
     {
       id: 'user-accounts',
@@ -136,7 +138,7 @@ Upon receipt of a valid DMCA notice, we will promptly remove or disable access t
       title: '6. Intellectual Property',
       content: `The Service, including all software, source code, algorithms, designs, user interfaces, graphics, documentation, trademarks, service marks, trade names, trade dress, and all other intellectual property rights therein ("Platform IP"), is and shall remain the exclusive property of the Company and its licensors.
 
-Limited License: Subject to your compliance with these Terms, the Company grants you a limited, non-exclusive, non-transferable, non-sublicensable, revocable license to access and use the Service for your personal or internal business purposes during the term of your subscription.
+Limited License: Subject to your compliance with these Terms, the Company grants you a limited, non-exclusive, non-transferable, non-sublicensable, revocable license to access and use the Service for your personal or internal business purposes, for as long as you use the Service.
 
 Restrictions: You shall not:
 
@@ -593,7 +595,7 @@ LIMITATION OF LIABILITY: TO THE FULLEST EXTENT PERMITTED BY APPLICABLE LAW, IN N
 
 WHETHER BASED ON WARRANTY, CONTRACT, TORT (INCLUDING NEGLIGENCE), OR ANY OTHER LEGAL THEORY, WHETHER OR NOT WE HAVE BEEN ADVISED OF THE POSSIBILITY OF SUCH DAMAGES.
 
-AGGREGATE LIABILITY CAP: NOTWITHSTANDING ANYTHING TO THE CONTRARY HEREIN, THE COMPANY'S TOTAL AGGREGATE LIABILITY ARISING OUT OF OR RELATED TO THESE TERMS OR THE SERVICE SHALL NOT EXCEED THE GREATER OF (A) THE TOTAL AMOUNT OF FEES PAID BY YOU TO THE COMPANY IN THE TWELVE (12) MONTHS PRECEDING THE EVENT GIVING RISE TO THE LIABILITY, OR (B) ONE HUNDRED UNITED STATES DOLLARS ($100.00 USD).
+AGGREGATE LIABILITY CAP: NOTWITHSTANDING ANYTHING TO THE CONTRARY HEREIN, THE COMPANY'S TOTAL AGGREGATE LIABILITY ARISING OUT OF OR RELATED TO THESE TERMS OR THE SERVICE SHALL NOT EXCEED ONE HUNDRED UNITED STATES DOLLARS ($100.00 USD).
 
 Some jurisdictions do not allow the exclusion or limitation of certain warranties or damages. In such jurisdictions, our liability shall be limited to the maximum extent permitted by law.`,
     },
@@ -630,8 +632,7 @@ User's Right to Terminate: You may terminate your account and delete your data a
 Effect of Termination: Upon termination of your account:
 (a) Your right to access and use the Service will immediately cease;
 (b) We will have no obligation to maintain or forward any data stored in your account;
-(c) Any outstanding fees will become immediately due and payable;
-(d) All provisions of these Terms that by their nature should survive termination shall survive, including but not limited to intellectual property provisions, disclaimers, indemnification, limitation of liability, and governing law.
+(c) All provisions of these Terms that by their nature should survive termination shall survive, including but not limited to intellectual property provisions, disclaimers, indemnification, limitation of liability, and governing law.
 
 Data Retention After Termination: We may retain certain data for a period of time after termination as required by applicable law, for legitimate business purposes, or to resolve disputes. Retained data will be handled in accordance with our Privacy Policy.`,
     },
