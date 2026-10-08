@@ -52,7 +52,8 @@ design against** — re-derive only if a source changes.
 
 ## Shipped so far (P4 — the closing bands, 2026-10-04)
 
-- Below the stage the page closes with three ordinary bands — capabilities, the pipeline, open source — and all
+- Below the stage the page closes with three ordinary bands — capabilities, the pipeline, open source (the free band
+  joined them in P5, below) — and all
   three carry the page's fade language, the phone's 600ms state fade extended to desktop (one `[data-reveal-band]`
   marker, looked up inside the view root; the footer deliberately stays plain — the page's last block needs no
   entrance; asserted); every figure is the product's own: 24 boards = the leaderboard contract's seven rankings ×
@@ -64,6 +65,22 @@ design against** — re-derive only if a source changes.
   block — an overlaying button covered the first line's tail at phone widths (measured) — and per-repo licences
   (Apache-2.0 plugin, MIT server & dashboard) sit beside the repos; the footer's blanket "under the MIT license"
   sentence was dropped because it flattened them — `LandingOpenSource.vue`
+
+## Shipped so far (P5 — the free band & support channels, 2026-10-08 · v0.55.11)
+
+- The pricing band became the **free band**: `LandingFree.vue` states "Free, every part of it" and renders
+  `run-options.ts` — self-host (`Free`, starts at `#source`) and hosted sync (`Not offered today`, no control at
+  all). The price-card shape was a paid-model artefact, and the hosted entry's "price published before it can be
+  bought" copy went stale under the free model.
+- **Nothing is ever for sale** stays the section's standing rule: a `status` entry renders its label where a
+  figure would sit; the unit test still forbids digits in the shipped entries.
+- Donation placement (researched against Blender, 2026-10-08): one calm block inside the free band plus a footer
+  line — never the hero, never the top bar, no banners. Channels are data in `site-links.ts`
+  (`SUPPORT_CHANNELS` — Ko-fi / Afdian / Solana, the same list the plugin uses).
+- The "data can be exported and moved out at any time" sentence was **dropped**: intended as no-lock-in, it read
+  as a data-risk hint (user review). Self-host keeps the positive form — "your data stays on hardware you control".
+- e2e: the `landing-free` test (statement, two options, hosted carries no control, support hrefs); the footer
+  link count is now 6 (3 repos + 3 channels).
 
 ## hero 动效实测与陷阱 → 已迁入 [`hero-composition.md`](hero-composition.md) ✓（同类实测只留一个家 ✓）
 

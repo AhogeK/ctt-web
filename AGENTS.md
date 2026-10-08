@@ -36,9 +36,11 @@
 
 **原子化 · 版本同步 · AI 独立 · 逐个 cherry-pick。**
 - 代码 → 版本号（独立提交、**晚于**代码）→ 文档；可跳过中途版本，只提最终描述
-- **AI 内容清单（禁入 master）**：`memory-bank/` · `AGENTS.md` · `.plans/` · **`DESIGN.md`**；非 AI（应进 master）：`src/` · `e2e/` · `package.json` · `README.md` · `docs/`
+- **AI 内容清单（禁入 master）**：`memory-bank/` · `AGENTS.md` · `.omp/` · `.plans/`（历史路径）· **`DESIGN.md`**；非 AI（应进 master）：`src/` · `e2e/` · `package.json` · `README.md` · `docs/`
 - `DESIGN.md` **从未上过 master**，属刻意为之，不得以"设计规范"为由推上去；**它是给 AI 看的基线文件，不是开发文档**
-- 优先完成 develop 再考虑 master；master **逐个** cherry-pick 非 AI 提交，**严禁整分支合并**、严禁 pick 旧提交污染
+- 优先完成 develop 再考虑 master；master **逐个** cherry-pick 非 AI 提交 —— **只 pick 本轮新建的 SHA**（pick 前先 `git log --oneline -n` 核对该批提交，**严禁把旧提交当对象** ✗）；**严禁整分支合并** ✗
+- **秘密禁入任何远端**（2026-10-08 用户指令 ✓）：key/令牌/密码/`.env` 及其快照一律不提交；提交前跑一次秘密扫描（`git diff | grep -inE "api[_-]?key|secret|passw|token"`）并逐条人工判真伪 ✓
+- **收尾状态**（2026-10-08 用户指令 ✓）：develop 与 master 都 clean、最后回到 `develop`、两分支均推送完成 ✓
 - **形状守卫（2026-10-01 事故）**：提交命令**不接管道** ✗（管道吃掉退出码 ⇒ `set -e` 不触发 ⇒ 下一笔 `git add` 会把**上一笔没提上去的文件**一起带走 ✗，实例：代码与版本混进 `chore(release)` ✗）；每笔提交后**必**用 `git show --name-only HEAD` 核对 ✓；多笔提交用**路径限定** `git commit -m … -- <paths>` ✓（`-m` 必须在 `--` **之前** ✗，不依赖索引残留 ✓）；未推送时改形状用 `git reset --soft <事故前>`（工作区与暂存**零丢失** ✓），并以 `git diff <事故前> HEAD` **必须为空** 自证 ✓
 
 ### R7: 技术决策确认

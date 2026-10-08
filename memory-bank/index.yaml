@@ -13,8 +13,8 @@ maintenance:
   - '索引只做定位，不写结论 —— 结论属于被指向的文件（避免两处重复，P6）'
 files:
   AGENTS.md: 243
-  memory-bank/activeContext.md: 64
-  memory-bank/progress.md: 195
+  memory-bank/activeContext.md: 70
+  memory-bank/progress.md: 199
   memory-bank/systemPatterns.md: 187
   memory-bank/techContext.md: 164
   memory-bank/projectbrief.md: 30
@@ -25,7 +25,7 @@ files:
   memory-bank/archives/2026-10-06-progress-trim.md: 8
   memory-bank/archives/2026-10-07-activeContext-trim.md: 39
   memory-bank/archives/2026-10-08-scroll-rounds-trim.md: 14
-  memory-bank/archives/2026-10-08-line-width-cleanup.md: 605
+  memory-bank/archives/2026-10-08-line-width-cleanup.md: 623
   memory-bank/domains/README.md: 155
 domains:
   achievements:
@@ -67,8 +67,8 @@ domains:
     memory-bank/domains/dashboard-visualization/rendering.md: 75
     memory-bank/domains/dashboard-visualization/scenarios.md: 127
   landing-page:
-    memory-bank/domains/landing-page/meta.md: 64
-    memory-bank/domains/landing-page/practices.md: 83
+    memory-bank/domains/landing-page/meta.md: 65
+    memory-bank/domains/landing-page/practices.md: 100
     memory-bank/domains/landing-page/hero-composition.md: 192
     memory-bank/domains/landing-page/principles.md: 54
     memory-bank/domains/landing-page/references.md: 57
