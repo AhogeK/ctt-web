@@ -19,15 +19,13 @@ states, and **panel a11y** (scroll-region reachability, tooltip reachability, th
 
 ## Owned paths
 
-| Path                                                       | Role                                                        |
-| ---------------------------------------------------------- | ----------------------------------------------------------- |
-| `src/features/dashboard/views/DashboardHome.vue`           | Panel composition + which query window each panel receives   |
-| `src/features/dashboard/composables/useDashboardFilters.ts` | URL filter state (period preset, device, IDE)                |
-| `src/features/dashboard/components/*.vue`                  | One file per panel (pure renderer or query-owning, see below)|
-| `src/features/dashboard/components/axis-scale.ts`          | Shared Y-axis scale helpers                                  |
-| `src/features/dashboard/components/heatmap-window.ts`      | Pure helpers for the heatmap render window                   |
-| `src/components/charts/echarts-setup.ts`                   | Tree-shaken ECharts registration (the only place to add one) |
-| `e2e/dashboard/*.spec.ts`                                  | Layout/chart contracts under test                            |
+- `src/features/dashboard/views/DashboardHome.vue` — Panel composition + which query window each panel receives
+- `src/features/dashboard/composables/useDashboardFilters.ts` — URL filter state (period preset, device, IDE)
+- `src/features/dashboard/components/*.vue` — One file per panel (pure renderer or query-owning, see below)
+- `src/features/dashboard/components/axis-scale.ts` — Shared Y-axis scale helpers
+- `src/features/dashboard/components/heatmap-window.ts` — Pure helpers for the heatmap render window
+- `src/components/charts/echarts-setup.ts` — Tree-shaken ECharts registration (the only place to add one)
+- `e2e/dashboard/*.spec.ts` — Layout/chart contracts under test
 
 ## Panel architecture (two shapes)
 
@@ -83,11 +81,16 @@ within the 200-line limit.
 
 ## Verification baseline
 
-| | |
-| --- | --- |
-| Checked against source | This repo's `src/` **and rendered output** · content last changed 2026-09-13 · **re-validated 2026-09-18** |
-| Coverage | Panel inventory and layout thresholds measured at the real widths; colour values and contrast read from the tokens and sampled from the render; ECharts traps reproduced |
-| Known drift | None. This domain's source is our own code, so it drifts only when we change it. **Re-validated 2026-09-18 without re-measuring**, because nothing had changed to measure: `git log --since=2026-09-13 -- src/features/dashboard/` is empty, and the layout assertions that encode the thresholds still pass (93/93 e2e). The only commits touching `src/components/app/` in that window were the leaderboard's nav entry and a formatting fix, neither of which moves the sidebar's width — which is what the thresholds actually key on |
+- Checked against source — This repo's `src/` **and rendered output** · content last changed 2026-09-13 ·
+  **re-validated 2026-09-18**
+- Coverage — Panel inventory and layout thresholds measured at the real widths; colour values and contrast read
+  from the tokens and sampled from the render; ECharts traps reproduced
+- Known drift — None. This domain's source is our own code, so it drifts only when we change it. **Re-validated
+  2026-09-18 without re-measuring**, because nothing had changed to measure:
+  `git log --since=2026-09-13 -- src/features/dashboard/` is empty, and the layout assertions that encode the
+  thresholds still pass (93/93 e2e). The only commits touching `src/components/app/` in that window were the
+  leaderboard's nav entry and a formatting fix, neither of which moves the sidebar's width — which is what the
+  thresholds actually key on
 
 Its facts are **rendered** facts, not declared ones: where this file and a stylesheet disagree, the
 render wins (R24 回源). Re-measure rather than re-read.

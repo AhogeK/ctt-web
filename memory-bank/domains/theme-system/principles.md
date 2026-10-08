@@ -4,10 +4,9 @@
 
 Two different jobs, two different cues:
 
-| Job | Cue | Threshold that reads |
-| --- | --- | --- |
-| Region separation (nav vs main) | **fill step** | ~1.2–1.4:1 — large areas read far below what a hairline needs |
-| Object quality (a card) | **directional light** — specular band, lit top edge, rim, sink | perception, not a single ratio; it needs *variation* across the face |
+- Region separation (nav vs main) — **fill step** — ~1.2–1.4:1 — large areas read far below what a hairline needs
+- Object quality (a card) — **directional light** — specular band, lit top edge, rim, sink — perception, not a
+  single ratio; it needs *variation* across the face
 
 Confusing the two is what produced both rejected versions: a hairline raised to 1.9:1 everywhere bought
 wireframe (region job done with an object cue), and a pale `#32333a` card bought "matte grey" (object job

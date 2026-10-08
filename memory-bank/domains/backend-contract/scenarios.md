@@ -57,13 +57,11 @@ Precedent: `/stats/distribution` gained `start`/`end` (inclusive, default full h
 
 ## S6. 401 / 403 / 429 arriving in the app
 
-| Status | Meaning here                                                       | Handling                                                       |
-| ------ | ------------------------------------------------------------------ | -------------------------------------------------------------- |
-| 401 `AUTH_002/003` | access token expired                                    | refresh flow; failure → logout                                 |
-| 401 `AUTH_010`     | BOLA — another user's resource                           | **never** log the user out; surface a generic message          |
-| 401 `USER_014`     | business check on an authenticated user (wrong password) | field-level error, no logout                                   |
-| 403                | CSRF token missing/stale                                 | toast + reload (see `practices.md`)                            |
-| 429 `RATE_LIMIT_001` | rate limited                                          | honour `Retry-After` header, else the body's timing, else static toast |
+- 401 `AUTH_002/003` — access token expired — refresh flow; failure → logout
+- 401 `AUTH_010` — BOLA — another user's resource — **never** log the user out; surface a generic message
+- 401 `USER_014` — business check on an authenticated user (wrong password) — field-level error, no logout
+- 403 — CSRF token missing/stale — toast + reload (see `practices.md`)
+- 429 `RATE_LIMIT_001` — rate limited — honour `Retry-After` header, else the body's timing, else static toast
 
 The distinction that matters: **resource-level 401 is not a session failure** — whitelist those
 codes explicitly (the `USER_014` incident logged users out until it was added).

@@ -13,10 +13,10 @@ maintenance:
   - '索引只做定位，不写结论 —— 结论属于被指向的文件（避免两处重复，P6）'
 files:
   AGENTS.md: 243
-  memory-bank/activeContext.md: 180
-  memory-bank/progress.md: 200
-  memory-bank/systemPatterns.md: 200
-  memory-bank/techContext.md: 104
+  memory-bank/activeContext.md: 64
+  memory-bank/progress.md: 195
+  memory-bank/systemPatterns.md: 187
+  memory-bank/techContext.md: 164
   memory-bank/projectbrief.md: 30
   memory-bank/archives/2026-09-20-activeContext-trim.md: 43
   memory-bank/archives/2026-09-22-activeContext-trim.md: 38
@@ -25,13 +25,14 @@ files:
   memory-bank/archives/2026-10-06-progress-trim.md: 8
   memory-bank/archives/2026-10-07-activeContext-trim.md: 39
   memory-bank/archives/2026-10-08-scroll-rounds-trim.md: 14
-  memory-bank/domains/README.md: 148
+  memory-bank/archives/2026-10-08-line-width-cleanup.md: 605
+  memory-bank/domains/README.md: 155
 domains:
   achievements:
-    memory-bank/domains/achievements/meta.md: 66
+    memory-bank/domains/achievements/meta.md: 69
     memory-bank/domains/achievements/practices.md: 193
     memory-bank/domains/achievements/principles.md: 133
-    memory-bank/domains/achievements/references.md: 186
+    memory-bank/domains/achievements/references.md: 184
     memory-bank/domains/achievements/scenarios.md: 80
     memory-bank/domains/achievements/trophy-geometry.md: 52
   auth-layout:
@@ -42,36 +43,36 @@ domains:
     memory-bank/domains/auth-layout/scenarios.md: 23
   ai-workflow:
     memory-bank/domains/ai-workflow/meta.md: 59
-    memory-bank/domains/ai-workflow/practices.md: 184
+    memory-bank/domains/ai-workflow/practices.md: 196
     memory-bank/domains/ai-workflow/principles.md: 200
-    memory-bank/domains/ai-workflow/references.md: 164
-    memory-bank/domains/ai-workflow/scenarios.md: 200
+    memory-bank/domains/ai-workflow/references.md: 174
+    memory-bank/domains/ai-workflow/scenarios.md: 199
   theme-system:
     memory-bank/domains/theme-system/meta.md: 12
-    memory-bank/domains/theme-system/practices.md: 145
-    memory-bank/domains/theme-system/principles.md: 32
-    memory-bank/domains/theme-system/references.md: 13
+    memory-bank/domains/theme-system/practices.md: 157
+    memory-bank/domains/theme-system/principles.md: 31
+    memory-bank/domains/theme-system/references.md: 14
     memory-bank/domains/theme-system/scenarios.md: 36
   backend-contract:
-    memory-bank/domains/backend-contract/meta.md: 87
-    memory-bank/domains/backend-contract/practices.md: 92
+    memory-bank/domains/backend-contract/meta.md: 91
+    memory-bank/domains/backend-contract/practices.md: 95
     memory-bank/domains/backend-contract/principles.md: 66
-    memory-bank/domains/backend-contract/references.md: 124
-    memory-bank/domains/backend-contract/scenarios.md: 75
+    memory-bank/domains/backend-contract/references.md: 126
+    memory-bank/domains/backend-contract/scenarios.md: 73
   dashboard-visualization:
-    memory-bank/domains/dashboard-visualization/meta.md: 93
+    memory-bank/domains/dashboard-visualization/meta.md: 96
     memory-bank/domains/dashboard-visualization/practices.md: 196
     memory-bank/domains/dashboard-visualization/principles.md: 107
-    memory-bank/domains/dashboard-visualization/references.md: 99
+    memory-bank/domains/dashboard-visualization/references.md: 97
     memory-bank/domains/dashboard-visualization/rendering.md: 75
-    memory-bank/domains/dashboard-visualization/scenarios.md: 128
+    memory-bank/domains/dashboard-visualization/scenarios.md: 127
   landing-page:
-    memory-bank/domains/landing-page/meta.md: 52
-    memory-bank/domains/landing-page/practices.md: 200
-    memory-bank/domains/landing-page/hero-composition.md: 115
+    memory-bank/domains/landing-page/meta.md: 64
+    memory-bank/domains/landing-page/practices.md: 83
+    memory-bank/domains/landing-page/hero-composition.md: 192
     memory-bank/domains/landing-page/principles.md: 54
-    memory-bank/domains/landing-page/references.md: 52
-    memory-bank/domains/landing-page/scenarios.md: 67
+    memory-bank/domains/landing-page/references.md: 57
+    memory-bank/domains/landing-page/scenarios.md: 68
 entries:
   - id: 'rules'
     path: 'AGENTS.md'

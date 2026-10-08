@@ -68,20 +68,21 @@ valid-looking nonsense (a `[, EMAIL]` sparse array; `{…}` rewritten as `[…]`
 3. Re-run the full verification — a silent structural change is what tests are for.
 4. For template-heavy files, prefer one whole-file write over many hunks in the first place.
 
-> **浏览器会话语料**（会话启动方式、CDP 用法、profile 清理等 39 行）已归档 → [`../../archives/2026-09-30-ai-workflow-browser-sessions.md`](../../archives/2026-09-30-ai-workflow-browser-sessions.md) ✓（R24 的 200 行上限；要点仍散见于本文件与 `.omp/README.md` ✓）
+> **浏览器会话语料**（会话启动方式、CDP 用法、profile 清理等 39 行）已归档 →
+  [`../../archives/2026-09-30-ai-workflow-browser-sessions.md`](../../archives/2026-09-30-ai-workflow-browser-sessio
+  ns.md) ✓（R24 的 200 行上限；要点仍散见于本文件与 `.omp/README.md` ✓）
 
 ## Test accounts: reuse a prefix, never invent one
 
 `.sisyphus/.test-account-<prefix>` is the account registry. **Pick an existing prefix** — a new one
 registers a real server account that needs seeding, and there is no delete-account endpoint.
 
-| Prefix     | Contents                                                        |
-| ---------- | --------------------------------------------------------------- |
-| `langtail` | Canonical. 33 languages incl. a sub-0.1% tail, 13 projects (one dominated, one 39-char name, one 1-second entry). |
-| `lang`     | 10 languages                                                     |
-| `repro`    | Error/edge repro seeding                                         |
-| `tdd`      | Local unit-test work                                             |
-| `proj`     | Stray — created in error; empty now (its API key was purged). Safe to reuse, do not add more. |
+- `langtail` — Canonical. 33 languages incl. a sub-0.1% tail, 13 projects (one dominated, one 39-char name, one
+  1-second entry).
+- `lang` — 10 languages
+- `repro` — Error/edge repro seeding
+- `tdd` — Local unit-test work
+- `proj` — Stray — created in error; empty now (its API key was purged). Safe to reuse, do not add more.
 
 Seeding writes need a SYNC-scoped API key on that account:
 
@@ -103,7 +104,8 @@ file instead of reporting. Two checks, in this order:
    the name or plugin is wrong).
 2. **Fix path proves it is wired into the normal flow** — after `vp lint`, the file is corrected.
 
-Both were needed for `vitest/prefer-to-have-length`: `--fix` reported nothing at all, which looked like "the rule is not working" until the assertion turned out to be already rewritten.
+Both were needed for `vitest/prefer-to-have-length`: `--fix` reported nothing at all, which looked like "the rule
+is not working" until the assertion turned out to be already rewritten.
 
 ## Proving a CSS change is broken: the SFC style sub-request
 
@@ -123,11 +125,17 @@ after the fact. A 500 here lands the route on the error boundary, so a CSS synta
 a render bug. Trap it already charged: regex-replacing a multi-line declaration swallowed the **next**
 declaration into the last value.
 
-**汇报必须以总结块收尾**（2026-09-21 用户反馈 ✗ "最后你的输出没啥总结就一句 git 未动"）：长汇报**结尾**不许只剩一行状态 ✗ —— 要用能独立读懂的总结块（做了什么 ✓ 证据 ✓ 还欠什么 ✓ 等谁决定 ✓）；用户常常只看到最后一段 ✓。
+**汇报必须以总结块收尾**（2026-09-21 用户反馈 ✗ "最后你的输出没啥总结就一句 git 未动"）：长汇报**结尾**不许只剩一行状态 ✗ —— 要用能独立读懂的总结块（做了什么 ✓ 证据 ✓ 还欠什么 ✓ 等谁决定
+✓）；用户常常只看到最后一段 ✓。
 ## 长操作不许静默阻塞（2026-09-21 用户反馈 ✗ "以为你会话卡了，差点停掉"）
 
-**超过 ~30 秒又无法自证进度的步骤：先挂后台 + 一句话告知**（"我挂后台 ✓ 好了贴结果 ✓"）✗ 否则他看到的就是"没动静" ✗ · `bash` 用 `async: true` ✓ · 服务用 `hub start` ✓ · `eval` 必设 `timeout` 且**自带上限** ✓。
-**嵌套 omp 探针能做通 ✓（实测 34s 跑完 ✓）：四件套缺一不可** —— scratch cwd ✓ · 项目级 `.omp/mcp.json` 把 MCP 全 `enabled:false` ✓（真凶是启动时 `npm exec chrome-devtools-mcp@latest` ✓ 拉 MCP 卡住 ✓）· **`timeout -k 5`（必须 `-k` ✗ 嵌套 omp 忽略 SIGTERM ✓ 只写 timeout 会永久挂 ✓）** · `stdin=/dev/null` ✓ · **`--no-session`（必须 ✗ 否则它会按 cwd 续上最近会话 ✓ 与本会话同时写同一个 jsonl ✓ → "Session file changed before rewrite" ✓）** ✓。 **验证前先确认「你测的就是新产物」** ✗✓（2026-09-21 两次假失败）：`pnpm preview` **不构建** ✗（吃旧 `dist/` ✓）→ 先 `vp build` ✓；长跑的 dev server 模块图会漂移 ✓ → `curl localhost:5173/src/…` 看它吐新码还是旧码 ✓。旧产物曾让我把已修好的东西判成「还坏着」✗。
+**超过 ~30 秒又无法自证进度的步骤：先挂后台 + 一句话告知**（"我挂后台 ✓ 好了贴结果 ✓"）✗ 否则他看到的就是"没动静" ✗ · `bash` 用 `async: true` ✓ · 服务用 `hub start`
+✓ · `eval` 必设 `timeout` 且**自带上限** ✓。
+**嵌套 omp 探针能做通 ✓（实测 34s 跑完 ✓）：四件套缺一不可** —— scratch cwd ✓ · 项目级 `.omp/mcp.json` 把 MCP 全 `enabled:false` ✓（真凶是启动时
+`npm exec chrome-devtools-mcp@latest` ✓ 拉 MCP 卡住 ✓）· **`timeout -k 5`（必须 `-k` ✗ 嵌套 omp 忽略 SIGTERM ✓ 只写 timeout 会永久挂
+✓）** · `stdin=/dev/null` ✓ · **`--no-session`（必须 ✗ 否则它会按 cwd 续上最近会话 ✓ 与本会话同时写同一个 jsonl ✓ → "Session file changed
+before rewrite" ✓）** ✓。 **验证前先确认「你测的就是新产物」** ✗✓（2026-09-21 两次假失败）：`pnpm preview` **不构建** ✗（吃旧 `dist/` ✓）→ 先
+`vp build` ✓；长跑的 dev server 模块图会漂移 ✓ → `curl localhost:5173/src/…` 看它吐新码还是旧码 ✓。旧产物曾让我把已修好的东西判成「还坏着」✗。
 ## Memory upkeep mechanics
 
 - Update **immediately** in the same round as the change (R2) — deferred updates are how the timeline
@@ -165,13 +173,17 @@ declaration into the last value.
 
 ## 测试与工具的两处坑（2026-10-02 ✗✓）
 
-- **jsdom 缺的 API 要补「可构造的 class」模拟** ✗：`ResizeObserver` / `IntersectionObserver` 在 `src/test/setup.ts` 里都必须能 `new` ✓ —— 用箭头函数或返回对象字面量的 `vi.fn()` ⇒ 调用点抛 "is not a constructor"，整组测试在断言之前就崩 ✓（同型两次：先 ResizeObserver，后 IntersectionObserver ✓）。
-- **测试里别解构 testing-library 的返回方法** ✗：`const { getByTestId } = render(...)` 会触发 `typescript(unbound-method)` ✗ ⇒ 改成持有对象 `const view = render(...)` 再 `view.getByTestId(...)` ✓（`unmount` 同理 ✓）。
+- **jsdom 缺的 API 要补「可构造的 class」模拟** ✗：`ResizeObserver` / `IntersectionObserver` 在 `src/test/setup.ts` 里都必须能 `new` ✓
+  —— 用箭头函数或返回对象字面量的 `vi.fn()` ⇒ 调用点抛 "is not a constructor"，整组测试在断言之前就崩 ✓（同型两次：先 ResizeObserver，后
+  IntersectionObserver ✓）。
+- **测试里别解构 testing-library 的返回方法** ✗：`const { getByTestId } = render(...)` 会触发 `typescript(unbound-method)` ✗ ⇒
+  改成持有对象 `const view = render(...)` 再 `view.getByTestId(...)` ✓（`unmount` 同理 ✓）。
 
 ## 自查截图与"给用户看的材料"（2026-10-02 ✗✓）
 
 - **截图 = 我自己的核对手段** ✗：给用户看的材料是**用户自己去看** ✓ —— 我只给"从哪进 / 看哪里 / 什么算不对"的指引，不拿自查截图当判据 ✓（用户明说 ✓）。
-- **截图必须等入场动画落定** ✗：入场动画在跑时停在自己的首帧（透明 ✗）⇒ 抢拍会得到"只剩标题"的假象 ✓（实例：一次自查因此误判为回归 ✗，探针实测各元素不透明度均为 1、页面完好 ✓）；做法：等**最后一件**入场（延迟最大的那件 ✓）不透明度为 1 ✓，再等两个 `requestAnimationFrame` 后拍 ✓。
+- **截图必须等入场动画落定** ✗：入场动画在跑时停在自己的首帧（透明 ✗）⇒ 抢拍会得到"只剩标题"的假象 ✓（实例：一次自查因此误判为回归 ✗，探针实测各元素不透明度均为 1、页面完好 ✓）；做法：
+  等**最后一件**入场（延迟最大的那件 ✓）不透明度为 1 ✓，再等两个 `requestAnimationFrame` 后拍 ✓。
 
 ## 提交被拦下后的三坑（2026-09-30 踩中两次 ✗）
 

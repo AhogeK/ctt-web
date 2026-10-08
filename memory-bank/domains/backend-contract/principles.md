@@ -18,10 +18,10 @@ unknown query params are silently ignored by Spring — so the frontend could ne
 
 ## P2. Know which statistic you are looking at (conservation vs accumulation)
 
-| Family        | Examples                                  | Overlap handling                        | Bucket sum                     | Total readout        |
-| ------------- | ----------------------------------------- | --------------------------------------- | ------------------------------ | -------------------- |
-| **Time-axis** | time-of-day, heatmap, trend, hourly        | merge/dedupe — concurrency is one activity | **== `summary.total`**         | Show it, as a cross-check |
-| **Categorical** | languages, projects, devices, IDEs       | raw accumulation — concurrency is real  | **≥ real activity** (super-linear) | Never show it        |
+- **Time-axis** — time-of-day, heatmap, trend, hourly — merge/dedupe — concurrency is one activity — **==
+  `summary.total`** — Show it, as a cross-check
+- **Categorical** — languages, projects, devices, IDEs — raw accumulation — concurrency is real — **≥ real
+  activity** (super-linear) — Never show it
 
 A categorical bucket sum printed as a "Total" invites a false bug report; a time-axis panel
 without conservation is a real bug. Decide the family **before** touching numbers.

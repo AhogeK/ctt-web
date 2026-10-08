@@ -2,8 +2,10 @@
 
 ## Component Architecture
 
-- Files: `PascalCase.vue` (components), `use`camelCase.ts` (composables), `kebab-case.schema.ts` (schemas); all code English, no Chinese/emoji
-- Always `<script setup lang="ts">`; Props via `defineProps<{...}>()`, Emits via `defineEmits<{...}>()`, two-way via `defineModel`; Options API forbidden
+- Files: `PascalCase.vue` (components),
+  `use`camelCase.ts` (composables), `kebab-case.schema.ts` (schemas); all code English, no Chinese/emoji
+- Always `<script setup lang="ts">`; Props via `defineProps<{...}>()`, Emits via `defineEmits<{...}>()`, two-way
+  via `defineModel`; Options API forbidden
 - Headless UI via Radix Vue (reka-ui); styling via Tailwind; route views wrapped in ErrorBoundary
 - Shadcn-vue components in `src/components/ui/` may be edited; no other UI libraries (AGENTS.md R9)
 
@@ -27,16 +29,20 @@ export const fetchStats = (params: StatsParams) =>
 
 - All API types = Zod schemas in `lib/schemas/` aligned with ctt-server DTOs; runtime `.parse()` at network boundary
 - Backend nullable fields MUST use `.nullable().default(null)` (ctt-server Jackson NON_NULL omits nulls → undefined)
-- Error codes via `error.data.code` (never `error.error`); `mutationFn` signatures drive TanStack `TVariables` — literal discriminators need explicit annotation (e.g. `(_action: 'bind') => ...`), no-arg → 0-arg form
+- Error codes via `error.data.code` (never `error.error`); `mutationFn` signatures drive TanStack `TVariables` —
+  literal discriminators need explicit annotation (e.g. `(_action: 'bind') => ...`), no-arg → 0-arg form
 
 ## Error Handling
 
 - ErrorBoundary: `onErrorCaptured` → fallback UI + retry, dev-only details, no white-screen
-- Query views: `<ErrorState v-if="isError"> <LoadingState v-else-if="isPending"> <template v-else>`; first-load skeleton ≥300ms anti-flicker (ApiKeysView precedent)
+- Query views: `<ErrorState v-if="isError"> <LoadingState v-else-if="isPending"> <template v-else>`; first-load
+  skeleton ≥300ms anti-flicker (ApiKeysView precedent)
 
 ## Composable Mutation Return Shape (v0.18.1)
 
-- Mutation composables return `{ mutation }` (e.g. `useRevokeApiKey`, `useRevokeDevice`) — call `mutation.mutate(...)`. Do NOT return the raw `useMutation(...)`; the wrapped shape is the project convention (v0.18.1 unified useRevokeDevice after drift was caught by a new test).
+- Mutation composables return `{ mutation }` (e.g. `useRevokeApiKey`, `useRevokeDevice`) — call
+  `mutation.mutate(...)`. Do NOT return the raw `useMutation(...)`; the wrapped shape is the project convention
+  (v0.18.1 unified useRevokeDevice after drift was caught by a new test).
 
 ## Value Formatters
 
@@ -62,7 +68,8 @@ loses contextual typing — annotate the param (`(name: string)`) to silence TS7
 ## Router Architecture
 
 ```
-src/router/ index.ts (core) + guard.ts (auth + NProgress) + modules/ (achievements|auth|dashboard|devices|leaderboard|settings|oauth)
+src/router/ index.ts (core) + guard.ts (auth + NProgress) + modules/
+  (achievements|auth|dashboard|devices|leaderboard|settings|oauth)
 ```
 
 - Route meta: `{ title, requiresAuth?, roles?, layout?, hideInMenu? }`; layouts via `meta.layout` (auth/app)
@@ -111,29 +118,33 @@ When auditing built CSS, `rm -rf dist` first — the build does not always purge
 
 ## Forbidden Patterns
 
-- ❌ `v-html` without sanitization, `any`, Options API, `console.log`, hardcoded strings (i18n), direct `ofetch` in components, `error.error` (use `error.data.code`), outer shadows for buttons in dark mode
-- ❌ `@vue-ignore` on `defineProps<Type>()` with circular type imports — Rolldown silently drops the whole props declaration (v0.15.4 sidebar-on-right incident)
+- ❌ `v-html` without sanitization, `any`, Options API, `console.log`, hardcoded strings (i18n), direct `ofetch` in
+  components, `error.error` (use `error.data.code`), outer shadows for buttons in dark mode
+- ❌ `@vue-ignore` on `defineProps<Type>()` with circular type imports — Rolldown silently drops the whole props
+  declaration (v0.15.4 sidebar-on-right incident)
 
 ## Button Variant System (Linear-style)
 
-| Variant | Purpose | Visual |
-| ------- | ------- | ------ |
-| `primary` | Brand CTA (submit/confirm) | `bg-[#5e6ad2]` indigo |
-| `secondary` | Container actions (cancel) | `bg-secondary` |
-| `ghost` | Secondary CTAs, toolbar | Invisible default; hover 1px inset shadow edge highlight (`transition-all duration-200`, light `rgba(0,0,0,0.1)` / dark `rgba(255,255,255,0.08)`) |
-| `default` | Minimal text-only | No bg/border |
+- `primary` — Brand CTA (submit/confirm) — `bg-[#5e6ad2]` indigo
+- `secondary` — Container actions (cancel) — `bg-secondary`
+- `ghost` — Secondary CTAs, toolbar — Invisible default; hover 1px inset shadow edge highlight
+  (`transition-all duration-200`, light `rgba(0,0,0,0.1)` / dark `rgba(255,255,255,0.08)`)
+- `default` — Minimal text-only — No bg/border
 
 ## E2E API Mocking (page.route)
 
-- Playwright `page.route()` (MSW browser worker is architecturally incompatible with Playwright's Node runner — removed v0.10.13)
-- All mocks use `RestApiResponse<T>` envelope matching `RestApiResponseSchema`; canonical fixtures in `e2e/fixtures/auth.ts`; contract reference in `e2e/mocks/handlers/auth.ts`
+- Playwright `page.route()` (MSW browser worker is architecturally incompatible with Playwright's Node runner —
+  removed v0.10.13)
+- All mocks use `RestApiResponse<T>` envelope matching `RestApiResponseSchema`; canonical fixtures in
+  `e2e/fixtures/auth.ts`; contract reference in `e2e/mocks/handlers/auth.ts`
 - `e2e/tsconfig.json`: `"dom"` lib (page.evaluate), `nodenext` resolution (explicit `.js` imports)
 
 ### Conventions learned from adding page specs
 
 - **Fixtures declare the wire shape locally; never import from `src/`.** The schema's *parsed* type
   is not the wire shape — `.default(null)` makes `windowStart`/`currentUserRank` required in the
-  output while the server omits the keys — so a fixture typed from `src/` cannot express the case it exists to reproduce.
+  output while the server omits the keys — so a fixture typed from `src/` cannot express the case it exists to
+  reproduce.
 - **One navigation per test** for specs whose auth harness seeds the session in memory: a fresh
   `page.goto()` re-runs the boot sequence and bounces to `/auth/login`. Specs that log in for real via
   `loginViaForm` *do* navigate afterwards (verified: `protected-routes.spec.ts`).
@@ -145,56 +156,32 @@ When auditing built CSS, `rm -rf dist` first — the build does not always purge
 - Assert collections, not per-item conditionals: `playwright/no-conditional-expect` is right that an
   `expect` inside `if` can skip silently. Build the filtered list, then assert on it (`toEqual([])`).
 
-## API Key View Pattern (v0.11.0)
-
-- Four-state query view: skeleton → error (Retry) → empty (CTA) → GitHub PAT-style table
-- Columns: Name | Key Prefix (mono) | Scopes (Badge) | Status (Badge: ACTIVE green / EXPIRED outline / REVOKED destructive) | Last Used | Created | Expires (italic "Never") | Actions
-- Custom Tailwind table (no shadcn Table); `formatRelativeTime()` handles past + future; `break-all` on all key-name displays (long-name overflow fix v0.16.11)
-
-## One-Time Secret Dialog Pattern (v0.12.0)
-
-RawKeyDialog is hard to dismiss (raw key unrecoverable): overlay/Escape/X blocked (`@pointer-down-outside.prevent`, `@escape-key-down.prevent`, `show-close-button=false`); close gated on copy success (`hasCopied`); three-tier clipboard fallback (`navigator.clipboard` → execCommand → manual hint); `role="alertdialog"`; raw key held only in component ref, never persisted
-
-## Create Form Dialog Pattern (v0.12.0+)
-
-- vee-validate `useForm` + `toTypedSchema`(Zod) — request schema doubles as form schema
-- Array field (`scopes`) driven via `form.values` + `form.setFieldValue`; mode toggles are local refs, not form fields
-- Custom date: native `<input type="date">` as end-of-local-day (`T23:59:59` → ISO); click anywhere opens picker via `showPicker()` + mousedown `preventDefault` suppresses segment selection; focus styling faked via ref (Chrome auto-selects first segment on real focus; segment highlight is UA-internal, CSS cannot hide it — v0.16.15)
-- **v0.16.13 lesson**: reka-ui Checkbox controlled API is `modelValue` + `update:modelValue` (NOT `checked`/`update:checked` — old listener never fires); checkbox must be wrapped in `<FormField name="scopes">` or payload falls back to initialValues
-- **v0.16.16 lesson**: vee-validate 4 unregisters a field when its FormField unmounts (default `unregister: true`) → `form.values.<field>` becomes `undefined`. Any v-if-gated FormField whose value is read at render time (e.g. `values.scopes.length` in `:disabled`) needs `keepValuesOnUnmount: true` on useForm, or a defensive `?? []` / `|| ''` guard (EmailChangeDialog password precedent)
-- 409 AUTH_014 renders inline banner without resetting form; other errors toast via `getErrorMessage`; FormMessage always renders its min-h wrapper (layout-shift-proof, v0.16.8-10)
-
-## Email Change Patterns (v0.9.0)
-
-- Shared dialog state via module-level `ref` in composable (not Pinia) — all consumers share one `isDialogOpen`
-- Dynamic password field: `USER_013` error → `requiresPassword = true` → schema includes password via `.optional()` + `.refine()` when required
-- Verification flow: change-request (+password) → email token → change-confirm; states unverified/pending/verified; atomic (old email active until confirm)
-
 ## Discriminated API Endpoints
 
-`mutationFn` signature drives `TVariables`: literal discriminator → 1-arg literal form; structured payload → 1-arg payload form; no args → 0-arg form. Without literal annotation TS infers `undefined` and `mutate('bind')` fails type-check.
+`mutationFn` signature drives `TVariables`: literal discriminator → 1-arg literal form; structured payload → 1-arg
+payload form; no args → 0-arg form. Without literal annotation TS infers `undefined` and `mutate('bind')` fails
+type-check.
 
 ## Distribution Semantics
 
 One owner: the conservation-vs-accumulation ruling →
 [`domains/backend-contract/principles.md`](./domains/backend-contract/principles.md) P2.
 
-## Session Ending
-
-`logout()` lands on the **login page**, not the landing page (sign-out ends a session; switching
-accounts is then zero clicks away). It always fires a **`Signed out` toast**, even when `logoutAll`
-failed — otherwise the page merely changes and a deliberate sign-out looks like a dropped session.
-
-## Router Convention: parent records redirect to their default child
-
-**A parent with an empty-path child must redirect to it.** Navigating to the parent **by name**
-resolves that record alone — the child is not appended — so the layout's inner `<router-view>`
-matches nothing and renders **blank (no error, correct URL)**. Every such parent carries a `redirect`
-to its default child. **Corollary: a URL assertion is not evidence the page rendered.**
-
 ## Interaction And Motion Conventions
 
-- **Hover is gated on capability**: Tailwind's `hover:` variant compiles into `@media (hover: hover)` by itself (verified in the served CSS) — the case that needed work was **hand-written** `:hover`, and as of **2026-09-20 all 16 of them in `src/` are wrapped** ✓ (proof: real browser — `hover: hover` changes the style, `hover: none` does not). New hand-written `:hover` must be wrapped in the same release it is added: it is invisible in jsdom and only reproduces on a touch device.
+- **Hover is gated on capability**: Tailwind's `hover:` variant compiles into `@media (hover: hover)` by itself
+  (verified in the served CSS) — the case that needed work was **hand-written** `:hover`, and as of **2026-09-20
+  all 16 of them in `src/` are wrapped** ✓ (proof: real browser — `hover: hover` changes the style, `hover: none`
+  does not). New hand-written `:hover` must be wrapped in the same release it is added: it is invisible in jsdom
+  and only reproduces on a touch device.
 - **Motion carries its counterpart**: `motion-reduce:transition-none` / `duration-0` / `animate-none`.
-- **Hover must not move the box, and a disabled control still needs a cursor** ✗: (a) `hover:scale`/`translate` moves the *hit* box with the hover state, so near an edge the pointer alternates inside/outside and the cursor and the scale flicker together — measurable as a **changing `getBoundingClientRect`** while the mouse moves 1px (measured, then reverted — the fix moved the flicker elsewhere); (b) `pointer-events: none` makes a disabled control invisible to the pointer, so a neighbouring `disabled:cursor-not-allowed` is dead code and the cursor falls through to the card — keep hit testing and gate hover with `enabled:` (v0.51.1). A rounded corner still shows the parent cursor; that is static, not a flicker.
-- **State as attribute**: reka-ui emits `data-state`/`data-side`/`data-orientation` — style `data-[state=open]:` rather than a class combination. Design values: [`domains/landing-page/practices.md`](./domains/landing-page/practices.md).
+- **Hover must not move the box, and a disabled control still needs a cursor** ✗: (a) `hover:scale`/`translate`
+  moves the *hit* box with the hover state, so near an edge the pointer alternates inside/outside and the cursor
+  and the scale flicker together — measurable as a **changing `getBoundingClientRect`** while the mouse moves 1px
+  (measured, then reverted — the fix moved the flicker elsewhere); (b) `pointer-events: none` makes a disabled
+  control invisible to the pointer, so a neighbouring `disabled:cursor-not-allowed` is dead code and the cursor
+  falls through to the card — keep hit testing and gate hover with `enabled:` (v0.51.1). A rounded corner still
+  shows the parent cursor; that is static, not a flicker.
+- **State as attribute**: reka-ui emits `data-state`/`data-side`/`data-orientation` — style `data-[state=open]:`
+  rather than a class combination. Design values:
+  [`domains/landing-page/practices.md`](./domains/landing-page/practices.md).

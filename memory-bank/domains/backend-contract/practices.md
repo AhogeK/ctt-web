@@ -5,7 +5,10 @@
 ```ts
 // lib/schemas/stats.schema.ts — optional field MUST default (P3)
 export const DistributionEntrySchema = z.object({ name: z.string(), seconds: z.number().int().nonnegative() })
-export const DistributionResponseSchema = z.object({ type: DistributionTypeSchema, entries: z.array(DistributionEntrySchema) })
+export const DistributionResponseSchema = z.object({
+  type: DistributionTypeSchema,
+  entries: z.array(DistributionEntrySchema),
+})
 
 // lib/api/stats.ts — the single HTTP boundary, parsed
 export async function getStatsDistribution(type: DistributionType, params: StatsFilterParams = {}) {

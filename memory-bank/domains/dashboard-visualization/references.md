@@ -4,17 +4,16 @@ Lookup facts. No judgement here — decisions live in `principles.md` / `scenari
 
 ## Panels and their data sources
 
-| Panel (card title)                 | Component                        | Data source (see backend-contract)                 | Window follows filter bar |
-| ---------------------------------- | -------------------------------- | -------------------------------------------------- | ------------------------- |
-| Coding heatmap                     | `HeatmapChart.vue`               | `stats/heatmap` + `stats/heatmap-years`            | No — year picker          |
-| Weekly coding activity by hour     | `WeekHourPanel.vue`              | `stats/week-hour`                                  | Yes                       |
-| Average hourly coding duration     | `HourlyPanel.vue`                | `stats/hourly`                                     | Yes                       |
-| Coding trend                       | `TrendChart.vue`                 | `stats/heatmap` (panel window)                     | No — month picker, else 30 days |
-| Time of day distribution           | `TimeOfDayPanel.vue`             | `stats/distribution?type=TIME_OF_DAY`              | Yes                       |
-| Language distribution              | `LanguageDistributionPanel.vue`  | `stats/distribution?type=LANGUAGES`                | Yes                       |
-| Project distribution               | `ProjectDistributionPanel.vue`   | `stats/distribution?type=PROJECTS`                 | Yes                       |
-| Recent sessions                    | `RecentSessionsPanel.vue`        | `stats/recent` (`limit=20`)                        | **No — endpoint has no date window**; origin filters yes |
-| Summary cards (6 fields)           | `SummaryCards.vue`               | `stats/summary`                                    | n/a — fixed windows       |
+- Coding heatmap — `HeatmapChart.vue` — `stats/heatmap` + `stats/heatmap-years` — No — year picker
+- Weekly coding activity by hour — `WeekHourPanel.vue` — `stats/week-hour` — Yes
+- Average hourly coding duration — `HourlyPanel.vue` — `stats/hourly` — Yes
+- Coding trend — `TrendChart.vue` — `stats/heatmap` (panel window) — No — month picker, else 30 days
+- Time of day distribution — `TimeOfDayPanel.vue` — `stats/distribution?type=TIME_OF_DAY` — Yes
+- Language distribution — `LanguageDistributionPanel.vue` — `stats/distribution?type=LANGUAGES` — Yes
+- Project distribution — `ProjectDistributionPanel.vue` — `stats/distribution?type=PROJECTS` — Yes
+- Recent sessions — `RecentSessionsPanel.vue` — `stats/recent` (`limit=20`) — **No — endpoint has no date window**;
+  origin filters yes
+- Summary cards (6 fields) — `SummaryCards.vue` — `stats/summary` — n/a — fixed windows
 
 Panels not yet built but available server-side: `WEEKDAY`, `DEVICES`, `IDES`. The `achievements`
 endpoint also has a contract layer (`useStatsAchievements`) with no panel yet.
@@ -70,27 +69,26 @@ Floors: panel card ≥830px (row ≥1684px), summary row ≥1430px.
 
 ## Interaction parameters
 
-| Parameter                | Value                                                          |
-| ------------------------ | -------------------------------------------------------------- |
-| Scroll viewport max-h    | `228px` (card lands at ~320px; chrome = 92px)                  |
-| Scrollbar width          | `thin` (Chrome renders an 11px lane)                           |
-| Thumb idle-hide delay    | ~900ms                                                         |
-| Edge fade depth          | ~18px top / ~26px bottom                                       |
-| Row stagger (entrance)   | 45–55ms per row, `IntersectionObserver` threshold .25           |
-| Segment seam width       | 1.5–2px, card-surface colour                                   |
-| Distribution row grid    | `7rem` label / `1fr` track / `4.5rem` percent / `6rem` duration (each lane sized for its widest possible value) |
-| Percent readout decimals | `2` (`0` for the TOD legend), floored by `min(6, ceil(-log10(v)) + 1)` below `0.01`; below the floor it reads `<0.000001` (P8) |
-| Distribution list files  | `RankedDistributionList.vue` (view) + `composables/useRankedDistribution.ts` (rows) + `@/lib/utils` `formatPercent` (readout, in `lib/utils/percent.ts`) |
+- Scroll viewport max-h — `228px` (card lands at ~320px; chrome = 92px)
+- Scrollbar width — `thin` (Chrome renders an 11px lane)
+- Thumb idle-hide delay — ~900ms
+- Edge fade depth — ~18px top / ~26px bottom
+- Row stagger (entrance) — 45–55ms per row, `IntersectionObserver` threshold .25
+- Segment seam width — 1.5–2px, card-surface colour
+- Distribution row grid — `7rem` label / `1fr` track / `4.5rem` percent / `6rem` duration (each lane sized for its
+  widest possible value)
+- Percent readout decimals — `2` (`0` for the TOD legend), floored by `min(6, ceil(-log10(v)) + 1)` below `0.01`;
+  below the floor it reads `<0.000001` (P8)
+- Distribution list files — `RankedDistributionList.vue` (view) + `composables/useRankedDistribution.ts` (rows) +
+  `@/lib/utils` `formatPercent` (readout, in `lib/utils/percent.ts`)
 
 ## Files worth knowing
 
-| Path                                                       | Why                                                       |
-| ---------------------------------------------------------- | --------------------------------------------------------- |
-| `src/components/charts/echarts-setup.ts`                   | Sole ECharts registration point (tree-shaken)             |
-| `src/features/dashboard/components/axis-scale.ts`          | Shared Y-scale helper used by trend + hourly               |
-| `src/features/dashboard/components/heatmap-window.ts`      | Pure helpers: 366-point leap handling, 53/54-column count   |
-| `e2e/dashboard/heatmap-layout.spec.ts`                     | Locks the layout threshold contract                        |
-| `DESIGN.md` (repo root)                                    | Authoritative visual spec                                  |
+- `src/components/charts/echarts-setup.ts` — Sole ECharts registration point (tree-shaken)
+- `src/features/dashboard/components/axis-scale.ts` — Shared Y-scale helper used by trend + hourly
+- `src/features/dashboard/components/heatmap-window.ts` — Pure helpers: 366-point leap handling, 53/54-column count
+- `e2e/dashboard/heatmap-layout.spec.ts` — Locks the layout threshold contract
+- `DESIGN.md` (repo root) — Authoritative visual spec
 
 ## Local verification addresses
 

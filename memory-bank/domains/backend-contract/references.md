@@ -6,17 +6,20 @@ Lookup facts. No judgement here.
 
 ### Stats — `lib/api/stats.ts`, `composables/useStats.ts`
 
-| Endpoint                   | Params                                                        | Returns                                    | Window support |
-| -------------------------- | ------------------------------------------------------------- | ------------------------------------------ | -------------- |
-| `GET /stats/summary`       | `timeRange` (`TODAY|WEEK|MONTH|YEAR|ALL`), `timezoneOffset`, origin filter | 6 fields at once: today / dailyAverage / thisWeek / thisMonth / thisYear / total | n/a (fixed windows) |
-| `GET /stats/heatmap`       | `start`, `end`, `timezoneOffset`, origin filter                | dense per-day points incl. zero days       | required (defaults to this year) |
-| `GET /stats/heatmap-years` | `timezoneOffset`                                              | `Integer[]` descending, years with real data | n/a            |
-| `GET /stats/heatmap-months`| `timezoneOffset`                                              | `String[]` (`yyyy-MM`) descending, months with real data | n/a  |
-| `GET /stats/week-hour`     | `start`, `end`, `timezoneOffset`, origin filter                | sparse points + weekday counts             | optional       |
-| `GET /stats/hourly`        | `start`, `end`, `timezoneOffset`, origin filter                | per-hour averages + active-day count       | optional       |
-| `GET /stats/distribution`  | `type`, `timezoneOffset`, `start`, `end`, origin filter        | `{ type, entries: [{ name, seconds }] }`   | optional (v0.66.0+) |
-| `GET /stats/recent`        | `limit` (1–100, default 20), origin filter                     | sessions by start time desc                | **none** — no date params |
-| `GET /stats/achievements`  | `timezoneOffset`                                               | 15 badges (7 families × 2–3 tiers)          | n/a — see `achievements` domain |
+- `GET /stats/summary` — `timeRange` (`TODAY — WEEK — MONTH — YEAR — ALL`), `timezoneOffset`, origin filter — 6
+  fields at once: today / dailyAverage / thisWeek / thisMonth / thisYear / total — n/a (fixed windows)
+- `GET /stats/heatmap` — `start`, `end`, `timezoneOffset`, origin filter — dense per-day points incl. zero days —
+  required (defaults to this year)
+- `GET /stats/heatmap-years` — `timezoneOffset` — `Integer[]` descending, years with real data — n/a
+- `GET /stats/heatmap-months` — `timezoneOffset` — `String[]` (`yyyy-MM`) descending, months with real data — n/a
+- `GET /stats/week-hour` — `start`, `end`, `timezoneOffset`, origin filter — sparse points + weekday counts — optional
+- `GET /stats/hourly` — `start`, `end`, `timezoneOffset`, origin filter — per-hour averages + active-day count —
+  optional
+- `GET /stats/distribution` — `type`, `timezoneOffset`, `start`, `end`, origin filter —
+  `{ type, entries: [{ name, seconds }] }` — optional (v0.66.0+)
+- `GET /stats/recent` — `limit` (1–100, default 20), origin filter — sessions by start time desc — **none** — no
+  date params
+- `GET /stats/achievements` — `timezoneOffset` — 15 badges (7 families × 2–3 tiers) — n/a — see `achievements` domain
 
 `type` values: `LANGUAGES`, `PROJECTS`, `TIME_OF_DAY`, `WEEKDAY`, `DEVICES`, `IDES` — entries are
 sorted by duration descending.
@@ -64,14 +67,13 @@ Two of these carry traps worth knowing before wiring a panel:
 
 ### Auth / account
 
-| Endpoint                                          | Notes                                                        |
-| ------------------------------------------------- | ------------------------------------------------------------ |
-| `POST /auth/login`, `/auth/register`              | hCaptcha token required (dev: official test keys)             |
-| `GET /users/me`                                   | displayName, email, emailVerified, hasPassword, timestamps    |
-| `POST /users/me/password/set`                     | OAuth users only; `USER_015` if already set                   |
-| `DELETE /users/me`                                | Body `{password?}` (**base64**). `USER_013` if a password is set and none sent; `USER_014` if it does not match; refuses an API-key session |
-| `GET /devices`, `POST /devices`, `DELETE /devices/{id}` | device registry; `revokedAt` marks revocation             |
-| `POST /sync/push`, `POST /sync/pull`              | body: `{ deviceId, sessions[] }`; device must exist first     |
+- `POST /auth/login`, `/auth/register` — hCaptcha token required (dev: official test keys)
+- `GET /users/me` — displayName, email, emailVerified, hasPassword, timestamps
+- `POST /users/me/password/set` — OAuth users only; `USER_015` if already set
+- `DELETE /users/me` — Body `{password?}` (**base64**). `USER_013` if a password is set and none sent; `USER_014`
+  if it does not match; refuses an API-key session
+- `GET /devices`, `POST /devices`, `DELETE /devices/{id}` — device registry; `revokedAt` marks revocation
+- `POST /sync/push`, `POST /sync/pull` — body: `{ deviceId, sessions[] }`; device must exist first
 
 ### API keys — `lib/api/api-keys.ts`
 
@@ -113,12 +115,12 @@ Two of these carry traps worth knowing before wiring a panel:
 
 ## Local test infrastructure
 
-| Thing                | Value                                                          |
-| -------------------- | -------------------------------------------------------------- |
-| API base             | `http://localhost:8080/ctt-server`                              |
-| Swagger              | `http://localhost:8080/ctt-server/swagger-ui`                   |
-| Mail capture         | `http://localhost:8025` (mailpit)                               |
-| Token helper         | `.sisyphus/get-token.sh <prefix>` prints the access token; `SESSION=1` also prints `REFRESH=` (needed to drive the app in a browser). Persists and reuses an account; `FRESH=1` re-registers. Pick an EXISTING prefix — see `ai-workflow` |
-| Device registration  | `POST /devices` requires `deviceId` as a UUID — a plain string returns `COMMON_001` |
-| hCaptcha (dev)       | dummy token `10000000-aaaa-bbbb-cccc-000000000001` always verifies |
-| CSRF                 | `XSRF-TOKEN` cookie → `X-XSRF-TOKEN` header (raw value, no masking) |
+- API base — `http://localhost:8080/ctt-server`
+- Swagger — `http://localhost:8080/ctt-server/swagger-ui`
+- Mail capture — `http://localhost:8025` (mailpit)
+- Token helper — `.sisyphus/get-token.sh <prefix>` prints the access token; `SESSION=1` also prints `REFRESH=`
+  (needed to drive the app in a browser). Persists and reuses an account; `FRESH=1` re-registers. Pick an EXISTING
+  prefix — see `ai-workflow`
+- Device registration — `POST /devices` requires `deviceId` as a UUID — a plain string returns `COMMON_001`
+- hCaptcha (dev) — dummy token `10000000-aaaa-bbbb-cccc-000000000001` always verifies
+- CSRF — `XSRF-TOKEN` cookie → `X-XSRF-TOKEN` header (raw value, no masking)

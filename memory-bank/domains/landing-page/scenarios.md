@@ -33,7 +33,8 @@ observation, not a decision.
 
 ## LS5. Recording what was learned
 
-The research is worthless if it lives only in `.plans/` (tracked, but AI content — never on `master`). Durable rules → this domain;
+The research is worthless if it lives only in `.plans/` (tracked, but AI content — never on `master`). Durable
+rules → this domain;
 the measured values → `practices.md`; which site taught what, with paths → `references.md`.
 
 ## LS6. Measuring this page's computed styles

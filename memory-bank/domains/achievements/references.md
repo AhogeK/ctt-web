@@ -17,21 +17,20 @@ Factual lookup. No judgement here — see `principles.md` / `scenarios.md`.
 13 components (v0.71.0). Jackson omits nulls, so the real payload shows **11 keys** for a LIFETIME
 badge and 13 for a windowed one — `windowStart`/`windowEnd` are absent rather than null.
 
-| Field | Type | Notes |
-| --- | --- | --- |
-| `code` | string | Stable id, e.g. `STREAK_7`. Irregular — see below. |
-| `type` | string | Family, e.g. `STREAK` / `TOTAL_SECONDS`. **Added v0.71.0.** |
-| `tier` | number | 1-based ordinal within the family **and window**, ascending by target. **Added v0.71.0.** |
-| `displayName` | string | Names the **tier** ("7-Day Streak"), not the family. |
-| `description` | string | What the tier rewards. |
-| `unlocked` | boolean | Server-set; written on first read where `progress >= target`. |
-| `unlockedAt` | string \| null | Real achievement instant, back-derived (v0.71.0). Absent while locked. |
-| `progress` | number | **Family-and-window scoped** — repeated across that ladder's tiers. Monotonic for LIFETIME (v0.71.0), resets for windowed. |
-| `target` | number | This tier's threshold. |
-| `unit` | string | `days` / `seconds` / `languages` / `percent`. |
-| `window` | string | `LIFETIME` / `DAY` / `WEEK` / `MONTH` / `YEAR`. **Added v0.71.0.** Defaults to `LIFETIME`. |
-| `windowStart` | string \| null | First local date of the current window; **key absent** for LIFETIME. |
-| `windowEnd` | string \| null | Last local date; **key absent** for LIFETIME. |
+- `code` — string — Stable id, e.g. `STREAK_7`. Irregular — see below.
+- `type` — string — Family, e.g. `STREAK` / `TOTAL_SECONDS`. **Added v0.71.0.**
+- `tier` — number — 1-based ordinal within the family **and window**, ascending by target. **Added v0.71.0.**
+- `displayName` — string — Names the **tier** ("7-Day Streak"), not the family.
+- `description` — string — What the tier rewards.
+- `unlocked` — boolean — Server-set; written on first read where `progress >= target`.
+- `unlockedAt` — string \ — null — Real achievement instant, back-derived (v0.71.0). Absent while locked.
+- `progress` — number — **Family-and-window scoped** — repeated across that ladder's tiers. Monotonic for LIFETIME
+  (v0.71.0), resets for windowed.
+- `target` — number — This tier's threshold.
+- `unit` — string — `days` / `seconds` / `languages` / `percent`.
+- `window` — string — `LIFETIME` / `DAY` / `WEEK` / `MONTH` / `YEAR`. **Added v0.71.0.** Defaults to `LIFETIME`.
+- `windowStart` — string \ — null — First local date of the current window; **key absent** for LIFETIME.
+- `windowEnd` — string \ — null — Last local date; **key absent** for LIFETIME.
 
 `unit` changed for `PERFECT_MONTH` in v0.71.0: `month` → **`percent`** (0–100, the best month's
 coverage). Its `progress` changed from binary `0/1` to that percentage.
@@ -65,12 +64,11 @@ truth: `ctt-server/.../stats/achievement/enums/Achievement.java` and `Achievemen
 
 `windowStart` / `windowEnd` are local `yyyy-MM-dd` strings. Each window's actual span:
 
-| Window | Measured | Note |
-| --- | --- | --- |
-| `DAY` | `2026-09-14` → `2026-09-14` | **Start equals end** — a day window is one date, so the range must collapse to `Sep 14`, not print a range |
-| `WEEK` | `2026-09-14` → `2026-09-20` | ISO week (Mon–Sun) |
-| `MONTH` | `2026-09-01` → `2026-09-30` | real month length, so February is 28/29 |
-| `YEAR` | `2026-01-01` → `2026-12-31` | |
+- `DAY` — `2026-09-14` → `2026-09-14` — **Start equals end** — a day window is one date, so the range must collapse
+  to `Sep 14`, not print a range
+- `WEEK` — `2026-09-14` → `2026-09-20` — ISO week (Mon–Sun)
+- `MONTH` — `2026-09-01` → `2026-09-30` — real month length, so February is 28/29
+- `YEAR` — `2026-01-01` → `2026-12-31`
 
 `windowEnd` is inclusive and is what the countdown counts to; a window ending today reads **0 days
 left** (`Ends today`), not 1. Both dates must be parsed as **local** dates — a UTC parse shifts the

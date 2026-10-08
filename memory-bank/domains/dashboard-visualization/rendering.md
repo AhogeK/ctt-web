@@ -35,14 +35,14 @@ placeholders: :style="{ minHeight: lastHeight || undefined }"
 
 ## ECharts specifics (traps hit in this project)
 
-| Trap                                              | Correct approach                                                                     |
-| ------------------------------------------------- | ------------------------------------------------------------------------------------ |
-| Stacked bars have **no** inter-segment gap         | Draw seams as an HTML overlay at cumulative-percent positions; `borderWidth`/`itemGap` do not work |
-| Tooltip shows `undefined` for the series name      | ECharts reads `params.name` from `data.name` or `series.name` — set one               |
-| Tooltip duration empty                             | The datum carries seconds under `value`; read `params.value`, not a custom field      |
-| Chart never renders / blank card                   | The container ref was null at init — the panel wrapped itself in `ChartSection`       |
-| Chart type is "unknown" at runtime                 | Register it in `components/charts/echarts-setup.ts` (tree-shaken registry)            |
-| Labels overlap in dense layouts                    | Drop the label (never shrink below the minimum size) and move detail into hover       |
+- Stacked bars have **no** inter-segment gap — Draw seams as an HTML overlay at cumulative-percent positions;
+  `borderWidth`/`itemGap` do not work
+- Tooltip shows `undefined` for the series name — ECharts reads `params.name` from `data.name` or `series.name` —
+  set one
+- Tooltip duration empty — The datum carries seconds under `value`; read `params.value`, not a custom field
+- Chart never renders / blank card — The container ref was null at init — the panel wrapped itself in `ChartSection`
+- Chart type is "unknown" at runtime — Register it in `components/charts/echarts-setup.ts` (tree-shaken registry)
+- Labels overlap in dense layouts — Drop the label (never shrink below the minimum size) and move detail into hover
 
 ## Entrance animation
 

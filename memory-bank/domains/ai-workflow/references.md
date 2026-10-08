@@ -4,40 +4,40 @@ Lookup facts about the working environment and project conventions. No judgement
 
 ## Memory & docs layout
 
-| Path                                          | Contents                                                    |
-| --------------------------------------------- | ----------------------------------------------------------- |
-| `AGENTS.md`                                   | Binding rules R1–R25 (agent-maintained)                      |
-| `memory-bank/projectbrief.md`                 | Goal and scope of the project                                |
-| `memory-bank/techContext.md`                  | Stack, versions, toolchain pins, API/auth basics             |
-| `memory-bank/systemPatterns.md`               | Cross-cutting conventions (components, state, errors, routing)|
-| `memory-bank/activeContext.md`                | Current status + recent rounds + cross-cutting lessons        |
-| `memory-bank/progress.md`                     | Milestone table + compressed version history                  |
-| `memory-bank/domains/`                        | Domain knowledge graph (see `domains/README.md`)              |
-| `memory-bank/archives/`                       | Frozen timeline history (dated files); **the one memory artifact exempt from the 200-line limit** |
-| `docs/`                                       | **User-facing project docs only** — `architecture.md`, `dev-handbook.md`. Never AI artifacts (R25) |
-| `.omp/`                                       | AI working directory (**gitignored** — nothing here is committed)                             |
-| `.omp/plans/`                                 | Implementation plans: `<feature>-plan.md` (no date — recency is mtime)                         |
-| `.omp/<category>/`                            | Category dirs: `plans/` · `report/` (diagnosis) · `delivery/` · `requirements/` · `design/` · `qa/` — root holds directory-level files only (`README.md` · `ai-planning-method.md`) |
-| `.sisyphus/`                                  | Local dev helpers (token bootstrap, verification scratch)      |
+- `AGENTS.md` — Binding rules R1–R25 (agent-maintained)
+- `memory-bank/projectbrief.md` — Goal and scope of the project
+- `memory-bank/techContext.md` — Stack, versions, toolchain pins, API/auth basics
+- `memory-bank/systemPatterns.md` — Cross-cutting conventions (components, state, errors, routing)
+- `memory-bank/activeContext.md` — Current status + recent rounds + cross-cutting lessons
+- `memory-bank/progress.md` — Milestone table + compressed version history
+- `memory-bank/domains/` — Domain knowledge graph (see `domains/README.md`)
+- `memory-bank/archives/` — Frozen timeline history (dated files); **the one memory artifact exempt from the
+  200-line limit**
+- `docs/` — **User-facing project docs only** — `architecture.md`, `dev-handbook.md`. Never AI artifacts (R25)
+- `.omp/` — AI working directory (**gitignored** — nothing here is committed)
+- `.omp/plans/` — Implementation plans: `<feature>-plan.md` (no date — recency is mtime)
+- `.omp/<category>/` — Category dirs: `plans/` · `report/` (diagnosis) · `delivery/` · `requirements/` · `design/` ·
+  `qa/` — root holds directory-level files only (`README.md` · `ai-planning-method.md`)
+- `.sisyphus/` — Local dev helpers (token bootstrap, verification scratch)
 
 ## Limits and formats
 
-| Rule                    | Value                                                      |
-| ----------------------- | ---------------------------------------------------------- |
-| Memory file size        | ≤200 lines each — `memory-bank/archives/` exempt (AGENTS.md 约束 2) |
-| Commit subject          | ≤72 characters (commitlint `subject-max-length`)            |
-| Commit body lines       | Must not **begin** with `word: ` — commitlint reads it as a footer (`footer-leading-blank`). Reflow causes it; reword rather than re-wrap |
-| Version location        | `package.json` → `version` (single source)                  |
-| Version bump semantics  | fix → PATCH, feature → MINOR, breaking → MAJOR               |
-| Todo threshold          | 3+ steps → todo list first (R10)                             |
+- Memory file size — ≤200 lines each — `memory-bank/archives/` exempt (AGENTS.md 约束 2)
+- Commit subject — ≤72 characters (commitlint `subject-max-length`)
+- Commit body lines — Must not **begin** with `word: ` — commitlint reads it as a footer (`footer-leading-blank`).
+  Reflow causes it; reword rather than re-wrap
+- Version location — `package.json` → `version` (single source)
+- Version bump semantics — fix → PATCH, feature → MINOR, breaking → MAJOR
+- Todo threshold — 3+ steps → todo list first (R10)
 
 ## Lint gates (two, and they are not identical)
 
-| Gate                  | Where            | Notes                                                                 |
-| --------------------- | ---------------- | --------------------------------------------------------------------- |
-| `pnpm lint`           | CLI / pre-commit | `vp lint . --fix` (oxlint + `plugins: [eslint, typescript, unicorn, oxc, vue, vitest]`); **auto-fixes**, so a violation never surfaces as an error |
-| `vp lint <path>`      | CLI, read-only   | Same rules without `--fix` — errors and exits 1. Use this to prove a rule is actually enabled |
-| SonarLint             | IDE (editor)     | A **different** rule set (SonarJS/SonarTS, e.g. `typescript:S5906`). It flags things the project lint does not, so an IDE squiggle is worth reading rather than assuming the CLI would have caught it |
+- `pnpm lint` — CLI / pre-commit — `vp lint . --fix` (oxlint +
+  `plugins: [eslint, typescript, unicorn, oxc, vue, vitest]`); **auto-fixes**, so a violation never surfaces as an error
+- `vp lint <path>` — CLI, read-only — Same rules without `--fix` — errors and exits 1. Use this to prove a rule is
+  actually enabled
+- SonarLint — IDE (editor) — A **different** rule set (SonarJS/SonarTS, e.g. `typescript:S5906`). It flags things
+  the project lint does not, so an IDE squiggle is worth reading rather than assuming the CLI would have caught it
 
 Both live in `vite.config.ts` (`lint.rules`); adding a rule is a one-line change but a config
 decision, so confirm before doing it.
@@ -94,15 +94,14 @@ Launch pattern used throughout this project:
 Decides the cherry-pick set for `master` (R6.5). Getting this wrong is how a document ends up on a
 branch it was deliberately kept off.
 
-| Path | AI content? | Evidence |
-| --- | --- | --- |
-| `memory-bank/**` | **Yes** | Agent memory, governed by R24 |
-| `AGENTS.md` | **Yes** | Agent rules, AI-maintained |
-| `.plans/**` | **Yes** | Working plans — develop only, by the user's instruction |
-| `DESIGN.md` | **Yes** | Design-system spec maintained by the agent. **Has never existed on `master`** — `git log master -- DESIGN.md` is empty, while develop carries it from `c2f5711`/`37a23ec`. Do not "fix" this. |
-| `src/**`, `e2e/**` | No | Shipped code |
-| `package.json` | No | Version/dependency manifest |
-| `README.md`, `docs/**` | No | User-facing project documentation |
+- `memory-bank/**` — **Yes** — Agent memory, governed by R24
+- `AGENTS.md` — **Yes** — Agent rules, AI-maintained
+- `.plans/**` — **Yes** — Working plans — develop only, by the user's instruction
+- `DESIGN.md` — **Yes** — Design-system spec maintained by the agent. **Has never existed on `master`** —
+  `git log master -- DESIGN.md` is empty, while develop carries it from `c2f5711`/`37a23ec`. Do not "fix" this.
+- `src/**`, `e2e/**` — No — Shipped code
+- `package.json` — No — Version/dependency manifest
+- `README.md`, `docs/**` — No — User-facing project documentation
 
 Consequence: a change to `DESIGN.md` rides in an AI commit and **is not cherry-picked**. A patch
 that only adds lines to `DESIGN.md` cannot be cherry-picked onto `master` at all — the file is
@@ -110,16 +109,27 @@ absent there, so the patch conflicts on its context (observed 2026-09-19).
 
 ## Driving the browser on this machine: the infobar facts (2026-09-24)
 
-| Claim | Truth |
-| --- | --- |
-| "CDP attach causes `Chrome is being controlled by automated test software`" | **Wrong** ✗ — attaching an external debugger does not show that bar. It appears **only** when Chrome is **launched with `--enable-automation`** (Chromium source), and ChromeDriver can force that flag back even with `excludeSwitches` configured. |
-| "`"<tool>" started debugging this browser`" | A **different** bar ✗ — different wording, different trigger (an extension/debugger session on that tab). Do not conflate the two. |
-| Reliable policy | **Tools must not launch their own Chrome**; only connect to an instance the user started themselves (external debugger). That is the only reliable way to never see the bar. |
-| Closing it without CDP | macOS GUI scripting works and needs no debug session: `osascript` → `System Events` → walk `windows` → `groups` → find the static text containing `automated test software` → click the button whose description is `Close`. Requires Accessibility permission for the host (verified granted on this machine 2026-09-24; the call returned `not found`, i.e. no live bar). |
-| Discriminator when someone reports "the bar is still there" | Ask them to **click the ×**: if it disappears it is a live infobar ✓; if nothing happens or it scales with an image, they are looking at a **screenshot** ✗ — no process work needed. |
-| Never do | Kill or relaunch the user's **daily** Chrome PID to "clear" the bar — its launch args have no automation flag, so it is the wrong target ✗. |
+- "CDP attach causes `Chrome is being controlled by automated test software`" — **Wrong** ✗ — attaching an external
+  debugger does not show that bar. It appears **only** when Chrome is **launched with `--enable-automation`**
+  (Chromium source), and ChromeDriver can force that flag back even with `excludeSwitches` configured.
+- "`"<tool>" started debugging this browser`" — A **different** bar ✗ — different wording, different trigger (an
+  extension/debugger session on that tab). Do not conflate the two.
+- Reliable policy — **Tools must not launch their own Chrome**; only connect to an instance the user started
+  themselves (external debugger). That is the only reliable way to never see the bar.
+- Closing it without CDP — macOS GUI scripting works and needs no debug session: `osascript` → `System Events` →
+  walk `windows` → `groups` → find the static text containing `automated test software` → click the button whose
+  description is `Close`. Requires Accessibility permission for the host (verified granted on this machine
+  2026-09-24; the call returned `not found`, i.e. no live bar).
+- Discriminator when someone reports "the bar is still there" — Ask them to **click the ×**: if it disappears it is
+  a live infobar ✓; if nothing happens or it scales with an image, they are looking at a **screenshot** ✗ — no
+  process work needed.
+- Never do — Kill or relaunch the user's **daily** Chrome PID to "clear" the bar — its launch args have no
+  automation flag, so it is the wrong target ✗.
 
-**Two mistakes that cost this session** ✗: (a) inventing a "tab-attached infobar" explanation for a bar whose wording is the `--enable-automation` one; (b) treating a **window title** as evidence — the title read was the **conversation page** that was discussing the bar, not the bar itself. Accessibility/window text is page content: it can be about the bug rather than being the bug.
+**Two mistakes that cost this session** ✗: (a) inventing a "tab-attached infobar" explanation for a bar whose
+wording is the `--enable-automation` one; (b) treating a **window title** as evidence — the title read was the
+**conversation page** that was discussing the bar, not the bar itself. Accessibility/window text is page content:
+it can be about the bug rather than being the bug.
 
 ## Playwright, in this shell
 

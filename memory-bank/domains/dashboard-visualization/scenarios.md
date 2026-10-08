@@ -38,12 +38,11 @@ right-hand column is what to do, not a suggestion to re-litigate.
 
 **Stop and identify the statistic family before touching any code** (P2):
 
-| Symptom                                                   | Likely truth                                                        |
-| --------------------------------------------------------- | ------------------------------------------------------------------- |
-| Distribution panel unchanged while summary cards move      | Panel is not receiving the date window → check the query params      |
-| `Others` sum looks larger than expected                    | Categorical accumulation with overlapping sessions — legal           |
-| Totals differ across two panels that should agree          | One is time-axis, the other categorical — different statistics       |
-| A panel reads zero / empty on a fresh account              | Seed that account; a fresh test account has no data by definition    |
+- Distribution panel unchanged while summary cards move — Panel is not receiving the date window → check the query
+  params
+- `Others` sum looks larger than expected — Categorical accumulation with overlapping sessions — legal
+- Totals differ across two panels that should agree — One is time-axis, the other categorical — different statistics
+- A panel reads zero / empty on a fresh account — Seed that account; a fresh test account has no data by definition
 
 Then verify with the real backend before touching the frontend: hit the endpoint directly with
 the same parameters the panel sends (including `timezoneOffset`), and compare the raw payload

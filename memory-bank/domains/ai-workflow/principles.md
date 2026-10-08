@@ -50,20 +50,19 @@ A knowledge file is either **true now** or factually wrong — there is no "draf
 
 - No placeholders, no `TODO: fill`, no empty sections. If it cannot be written truthfully, the
   knowledge does not exist yet; do not create the file.
-- No changelog voice ("v0.34.0 changed X to Y"). Record the *current* truth plus the reasoning
-  that makes it stable; version history belongs to `progress.md` and the git log.
-- No duplication:横切 conventions stay in `systemPatterns.md`, domain judgement in the domain file.
-  Two copies drift; the answer is a link, not a second copy.
+- No changelog voice; record the *current* truth plus the reasoning that keeps it stable —
+  version history belongs to `progress.md` and the git log.
+- No duplication: cross-cutting conventions stay in `systemPatterns.md`; the answer is a link,
+  not a second copy.
 
-**The file has no draft state; a claim may be marked.** The two are different granularities, and
-R24's `待确认` red line does not reopen the door this principle closes:
+**The file has no draft state; a claim may be marked.** R24's `待确认` red line does not reopen
+what this principle closes:
 
 - The *file* is always written in its final form — no half-filled sections.
 - A single *claim* whose authority has not been consulted is written **with** the marker plus what
   would settle it (`待确认 — 需读 ctt-server X 的 Y`), because recording "we looked, we could not
   confirm, this is what would confirm it" is itself the final form of that fact.
-- A marked claim is **not usable as a premise**: no code change is justified by it. It is a lead to
-  check, not a fact to build on.
+- A marked claim is **not usable as a premise**; it is a lead to check, never a fact to build on.
 
 What stays forbidden is the third thing: guessing, and writing the guess in the assertive voice
 without the marker. An unmarked claim asserts its authority; a marked one declares the gap.
@@ -149,18 +148,16 @@ The failure of 2026-09-20 came from one omission: **the file set was never check
 
 A hunk-splitting script (`split_pkg`) applied `package.json`'s dependency hunks on its first call, so
 the second call received an empty patch, `&&` broke the chain, and the *next* `git commit` — meant for
-AI content — swept the still-staged dependency change in with `memory-bank/`. Two commits were then
-wrong at once: one mixed AI content with code, and the dependency commit was missing its own
-`package.json`. Had it been pushed, `master` would have received a new `pnpm-lock.yaml` next to an old
-manifest (a real inconsistency), and the fix would have required rewriting **pushed** history.
+AI content — swept the still-staged dependency change in with `memory-bank/`. Two commits were wrong
+at once (mixed AI+code; dependency commit missing its `package.json`); pushed, fixing it would have
+required rewriting history.
 
 What follows:
 
 - **Assert the file set, then commit — and re-read it after.** `git show --stat` must equal the
   intended list exactly; a mismatch is fixed by rewriting *before* the first push, never after.
-- **Split by hunk only when the remainder is re-verified.** A file carrying three intents
-  (`package.json`: dependency bump + version + a config removal) is fine to split — but recompute the
-  diff after every partial apply instead of assuming the rest is untouched.
+- **Split by hunk only when the remainder is re-verified** — recompute the diff after every partial
+  apply instead of assuming the rest is untouched.
 - **Check AI/code separation mechanically.** Every commit's paths are either all AI content
   (`memory-bank/`, `.plans/`, `AGENTS.md`, `DESIGN.md`) or all code — the mix is the defect, and a
   one-line assertion catches it.
@@ -194,7 +191,10 @@ after narrowing to `transition-colors`, rest 696.5 → mid **758.6** (ratio **1.
 
 Always name the properties that change: `transition-colors` · `transition-[color,box-shadow]` ·
 `transition-[width]` (a 2026-09-20 sweep replaced the last 43 uses; Tailwind's `-colors/-opacity/
--transform` are already narrow — only `all` is the trap). **Measure it against the same end state** (mid-transition vs settled), never rest vs a state whose
+-transform` are already narrow — only `all` is the trap). **Measure it against the same end state** (mid-transition
+vs settled), never rest vs a state whose
 content also changed: the input's rest→mid read 0.882 ✗ only because focusing moved its border, while
 its mid vs settled read **1.000** ✓ — the real answer.
-**Assert the new form too, not only the old pattern's absence** — a bulk replacement can leave a valid-looking fake: `bg-amber-50 → bg-warning-surface` matched *inside* `bg-amber-500` and produced `bg-warning-surface0`, so the old pattern was gone ✓ while the class was garbage ✗. Grep the result shape as well.
+**Assert the new form too, not only the old pattern's absence** — a bulk replacement can leave a valid-looking
+fake: `bg-amber-50 → bg-warning-surface` matched *inside* `bg-amber-500` and produced `bg-warning-surface0`, so the
+old pattern was gone ✓ while the class was garbage ✗. Grep the result shape as well.

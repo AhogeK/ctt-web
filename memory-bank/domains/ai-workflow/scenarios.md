@@ -93,15 +93,12 @@ Precedent flow (used for `activeContext.md` 549 → 63 lines):
 ## S9. A tracked file shows as modified, with no edit by you
 
 Symptom: `git status` lists a file you never opened — typically `pnpm-workspace.yaml` carrying
-`<package>: set this to true or false` — and a later `git checkout` refuses to run because that
-file has local changes.
+`<package>: set this to true or false` — and a later `git checkout` refuses to run.
 
 That literal is **pnpm's placeholder**, not anyone's edit. `handleIgnoredBuilds()` writes it when an
 install meets a dependency whose build script has no entry in `allowBuilds`. pnpm 11 reaches that
-path from any `pnpm run`/`exec`, because `verifyDepsBeforeRun` defaults to `install` and implicitly
-installs whenever `node_modules` is out of sync — and running a script at a **detached historical
-commit** guarantees that mismatch, since `node_modules` is shared but the workspace config is
-per-commit.
+path from any `pnpm run`/`exec` (`verifyDepsBeforeRun` defaults to `install`), and a **detached
+historical commit** guarantees the mismatch — `node_modules` is shared, the config is per-commit.
 
 Do not "resolve" it by committing the file. Restore it and remove the cause:
 
@@ -112,9 +109,8 @@ Do not "resolve" it by committing the file. Restore it and remove the cause:
    routine release step is one someone turns off.
 3. For a genuinely new undecided build script, `pnpm approve-builds` and commit that decision — that
    one *is* a real config change, not noise.
-4. Never run package-manager scripts at a historical commit; verify the tip. Per-commit verification
-   needs a worktree **with its own install** — one that borrows the main `node_modules` reports
-   phantom `TS2307: Cannot find module 'vite-plus'`.
+4. Never run package-manager scripts at a historical commit; per-commit verification needs a
+   worktree with its own install (a borrowed `node_modules` reports phantom `TS2307`).
 
 ## S10. Before designing anything with an external reference
 
@@ -144,7 +140,8 @@ it and the report is the only place it can be verified.
 
 **Sweep, and show it.** Run `bash ~/.omp/packages/session-discipline/tools/sweep.sh` and put its output in the report;
 "clean ✓" is the only evidence of a clean round. It removes Playwright artifacts and scratch
-profiles/browsers, and flags untracked files. `bash ~/.omp/packages/session-discipline/tools/check-knowledge.sh` does the same for
+profiles/browsers, and flags untracked files. `bash ~/.omp/packages/session-discipline/tools/check-knowledge.sh`
+does the same for
 the knowledge base (index drift · size limits · dead links).
 
 After that, answer all five **with evidence**. An unanswered one is a finding, not a formality.
@@ -169,13 +166,12 @@ no index — it sends the next session to the wrong place.
 
 **为什么有序**：这些步骤各自都"做过"，但**跳过某一步时看不出来** —— 只有把顺序写死，跳步才会变成显性违规。
 
-| # | 动作 | 跳过的后果（真实事故） |
-|---|---|---|
-| 0 | **todo 对齐**：把已完成项标掉、把消失项删掉、把新发现补上 —— **必须是一次真实的 tool 调用** | 汇报里写"剩 3 项"但**列表还是旧的** → 用户看列表，等于没更新（被指出 3 次） |（实例 2026-09-29 ✗：提交与推送完成后列表仍留"0.51.36 / 等你投递"旧阻塞项 ⇒ 被当场指出 ✓）；**勾掉即结案** ✓"更正"是新事（`rm` 或新开一条 ✓），没有"重开旧条目" ✗ |
-| 1 | **停掉自起服务 / 杀进程** | 端口占着、日志继续长、用户以为页面坏了 |
-| 2 | **删 profile / 临时物** | 必须先杀后删：活着的 Chrome 会立刻重建目录，删完立刻查是**假干净**（被指出 1 次） |
-| 3 | 跑 `sweep.sh` + `check-knowledge.sh`，**把输出贴进汇报** | "我记得清了" ≠ 干净；索引漂移/超限/死链只能靠脚本发现 |
-| 4 | 汇报：todo 状态 + 上述输出 + 剩余项归属（我的 / 待用户的） | 用户无法验收会话状态 —— todo 是**唯一脚本读不到**的状态项 |
+- 0 — **todo 对齐**：把已完成项标掉、把消失项删掉、把新发现补上 —— **必须是一次真实的 tool 调用** — 汇报里写"剩 3 项"但**列表还是旧的** → 用户看列表，等于没更新（被指出 3 次） —
+  （实例 2026-09-29 ✗：提交与推送完成后列表仍留"0.51.36 / 等你投递"旧阻塞项 ⇒ 被当场指出 ✓）；**勾掉即结案** ✓"更正"是新事（`rm` 或新开一条 ✓），没有"重开旧条目" ✗
+- 1 — **停掉自起服务 / 杀进程** — 端口占着、日志继续长、用户以为页面坏了
+- 2 — **删 profile / 临时物** — 必须先杀后删：活着的 Chrome 会立刻重建目录，删完立刻查是**假干净**（被指出 1 次）
+- 3 — 跑 `sweep.sh` + `check-knowledge.sh`，**把输出贴进汇报** — "我记得清了" ≠ 干净；索引漂移/超限/死链只能靠脚本发现
+- 4 — 汇报：todo 状态 + 上述输出 + 剩余项归属（我的 / 待用户的） — 用户无法验收会话状态 —— todo 是**唯一脚本读不到**的状态项
 
 **红线**：**不得以"我在汇报里写了"代替"我更新了列表"** ✗ —— 两者是不同对象，用户看的是列表。
 
@@ -188,13 +184,16 @@ no index — it sends the next session to the wrong place.
 - 顺带发现的项目缺陷，**只作为该产物的证据** ✓（写进技能的反模式表、钩子的判定用例）；**不得升格为"要不要改业务"的决策去问用户** ✗ —— 那是**用户没提的需求** ✓
 - 需要动业务时：**先问"这在你现在的范围内吗"** ✓，得到明确指令再动 ✓（R8 讨论 ≠ 指令 · R23 无授权不改架构）
 
-**事故**：做动效 skill 时，评测跑出一个 `AuthLayout` 背景动效的真实缺陷，我把"背景漂移要不要回归 / 动效 token 要不要进 DESIGN"当成**待用户拍板的产品决定**报了上去 ✗ —— 用户根本没要动那个页面 ✓，那两条**是我发明的工单** ✓。
+**事故**：做动效 skill 时，评测跑出一个 `AuthLayout` 背景动效的真实缺陷，我把"背景漂移要不要回归 / 动效 token 要不要进 DESIGN"当成**待用户拍板的产品决定**报了上去 ✗ ——
+用户根本没要动那个页面 ✓，那两条**是我发明的工单** ✓。
 
 ## S14 · relay（用用户浏览器）的收尾纪律
 
-relay 标签**不产生** `/tmp` profile、**不产生** scratch 进程 → `sweep.sh` **看不见它** ✗，钩子也抓不到 ✗ —— "脚本报 clean"**不等于** relay 干净 ✗，这块只能靠自己 ✓。
+relay 标签**不产生** `/tmp` profile、**不产生** scratch 进程 → `sweep.sh` **看不见它** ✗，钩子也抓不到 ✗ —— "脚本报 clean"**不等于** relay 干净 ✗，
+这块只能靠自己 ✓。
 
-**做法**：研究类操作**复用一张标签** ✗；**`tab.close()` 只释放我的句柄** ✗（用户浏览器里的页面照旧开着 ✗✓）→ 真关闭 = 按 **`app.target`（URL 子串）认领** → **CDP `page.close()`** ✓；验证**不能看自己的句柄** ✗（会报假干净的 "not alive" ✗✓）→ **再认领一次，认不着才算真关** ✓✓；收尾**主动列出"我开过什么"** ✓。**桥进程**：`app.relay` 由**本会话**拉起 `browser-relay --port 9224` ✓ —— 归属用 `ps -o ppid=` 链证明（本例链回我的 omp 会话 ✓），**用完必须杀** ✓，它不是用户的常驻服务 ✓。
+**做法**：研究类操作**复用一张标签** ✗；**`tab.close()` 只释放我的句柄** ✗（用户浏览器里的页面照旧开着 ✗✓）→ 真关闭 = 按 **`app.target`（URL 子串）认领** → **CDP
+`page.close()`** ✓；验证**不能看自己的句柄** ✗（会报假干净的 "not alive" ✗✓）→ **再认领一次，认不着才算真关** ✓✓；收尾**主动列出"我开过什么"** ✓。**桥进程**：
+`app.relay` 由**本会话**拉起 `browser-relay --port 9224` ✓ —— 归属用 `ps -o ppid=` 链证明（本例链回我的 omp 会话 ✓），**用完必须杀** ✓，它不是用户的常驻服务 ✓。
 
 **教训（同类错）**：拿**别人的文档**推断能力 ✗；拿**自己的注册表**当被测对象 ✗。
-

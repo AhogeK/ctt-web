@@ -34,16 +34,14 @@ source of truth to be read, never edited. Capability gaps are raised as a requir
 
 ## Terminology
 
-| Term                      | Meaning                                                                     |
-| ------------------------- | --------------------------------------------------------------------------- |
-| Envelope                  | The `RestApiResponse<T>` wrapper every endpoint returns (`success/data/code/message`) |
-| Contract-first            | Read the controller + DTO before writing any schema or call                  |
-| Time-axis distribution    | Buckets are real time; overlapping sessions merge; sum must equal `summary.total` |
-| Categorical distribution  | Buckets are independent categories; concurrency accumulates; sum ≥ activity   |
-| Window                    | Inclusive `start`/`end` date range (`yyyy-MM-dd`); omitted = full history     |
-| `timezoneOffset`          | Minutes east of UTC, sent on stats requests so the server buckets in the user's local zone |
-| Origin filter             | `deviceId` or `ideName`, mutually exclusive (both → 400 `COMMON_003`)        |
-| BOLA                      | Broken-object-level-authorization case: another user's resource → `AUTH_010` |
+- Envelope — The `RestApiResponse<T>` wrapper every endpoint returns (`success/data/code/message`)
+- Contract-first — Read the controller + DTO before writing any schema or call
+- Time-axis distribution — Buckets are real time; overlapping sessions merge; sum must equal `summary.total`
+- Categorical distribution — Buckets are independent categories; concurrency accumulates; sum ≥ activity
+- Window — Inclusive `start`/`end` date range (`yyyy-MM-dd`); omitted = full history
+- `timezoneOffset` — Minutes east of UTC, sent on stats requests so the server buckets in the user's local zone
+- Origin filter — `deviceId` or `ideName`, mutually exclusive (both → 400 `COMMON_003`)
+- BOLA — Broken-object-level-authorization case: another user's resource → `AUTH_010`
 
 ## Where to start
 
@@ -53,11 +51,17 @@ source of truth to be read, never edited. Capability gaps are raised as a requir
 
 ## Verification baseline
 
-| | |
-| --- | --- |
-| Checked against source | Whole domain: `../ctt-server` **v0.72.0 – v0.73.0** · last full read 2026-09-14. Leaderboard contracts only: **re-read at v0.77.0 on 2026-09-18** |
-| Coverage | Endpoint map, error codes and payload shapes read from controllers and DTOs at v0.72.0–v0.73.0; the leaderboard contract was repaired against live responses at v0.73.0. On 2026-09-18 the leaderboard's seven dimensions, four periods, `LeaderboardResponse` (`totalParticipants`, `currentUserRank`), `LanguageBoardDto.hasMembers` and `LanguageBoardsResponse.languages` were compared against v0.77.0 — all match, no drift |
-| Known drift | **Two versions have been followed since the full read** — v0.75.0 (LANGUAGE dimension) and v0.76.1 (catalogue default), both recorded in `progress.md` and reflected in the code. **Everything outside the leaderboard has not been re-read since v0.73.0**: treat those entries as accurate to that version rather than to the running server. |
+- Checked against source — Whole domain: `../ctt-server` **v0.72.0 – v0.73.0** · last full read 2026-09-14.
+  Leaderboard contracts only: **re-read at v0.77.0 on 2026-09-18**
+- Coverage — Endpoint map, error codes and payload shapes read from controllers and DTOs at v0.72.0–v0.73.0; the
+  leaderboard contract was repaired against live responses at v0.73.0. On 2026-09-18 the leaderboard's seven
+  dimensions, four periods, `LeaderboardResponse` (`totalParticipants`, `currentUserRank`),
+  `LanguageBoardDto.hasMembers` and `LanguageBoardsResponse.languages` were compared against v0.77.0 — all match,
+  no drift
+- Known drift — **Two versions have been followed since the full read** — v0.75.0 (LANGUAGE dimension) and v0.76.1
+  (catalogue default), both recorded in `progress.md` and reflected in the code. **Everything outside the
+  leaderboard has not been re-read since v0.73.0**: treat those entries as accurate to that version rather than to
+  the running server.
 
 ### Leaderboard re-checked at v0.77.0 (2026-09-18) — no drift
 
