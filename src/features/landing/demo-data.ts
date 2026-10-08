@@ -205,7 +205,7 @@ export const EXAMPLE_TROPHIES: Trophy[] = buildTrophies([
  *
  * 52 weeks, not 12, because of what the reference pages measure: their product artefacts span the
  * container (Linear's app window bleeds past both edges, Supabase's four tiles fill the row), while a
- * 12-week grid is ~200px of indigo in a 1200px row — empty space where the product should be. Stated
+ * 12-week grid is ~200px of indigo in a 1440px row — empty space where the product should be. Stated
  * on the surface, because the window is not lifetime.
  */
 export const EXAMPLE_ACTIVITY_WEEKS = 52

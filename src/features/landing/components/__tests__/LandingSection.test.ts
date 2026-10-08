@@ -10,11 +10,11 @@ describe('LandingSection', () => {
     expect(view.getByText('A capability list')).toBeInTheDocument()
   })
 
-  it('defaults to a semantic section wrapping the 1200px marketing container', () => {
+  it('defaults to a semantic section wrapping the 1440px shell container', () => {
     const view = render(LandingSection, { slots: { default: 'x' } })
     const root = view.container.firstElementChild as HTMLElement
     expect(root.tagName.toLowerCase()).toBe('section')
-    expect(root.querySelector('div')?.className).toContain('max-w-[1200px]')
+    expect(root.querySelector('div')?.className).toContain('max-w-[1440px]')
   })
 
   it('lets a band change its element, measure and rhythm', () => {
@@ -25,7 +25,7 @@ describe('LandingSection', () => {
     const root = view.container.firstElementChild as HTMLElement
     expect(root.tagName.toLowerCase()).toBe('footer')
     expect(root.className).toContain('py-8')
-    expect(root.querySelector('div')?.className).toContain('max-w-[730px]')
+    expect(root.querySelector('div')?.className).toContain('max-w-[762px]')
   })
 
   it('drops the vertical rhythm when a nested band owns its own padding', () => {

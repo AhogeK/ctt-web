@@ -803,8 +803,8 @@
  *
  * Starts at 1280px because of a measured constraint: the projection magnifies the plane, so between 1024
  * and 1279 the painted right edge passes the viewport and raises a horizontal scrollbar (measured
- * +11px at 1024 and +29px at 1200). Clipping instead was tried and rejected — the section box is 1200px
- * wide, so a clip chops the card's right border and rounding. Below 1280 the hero stays axis-aligned.
+ * (+11px at 1024 and +29px at 1200). Clipping instead was tried and rejected — the box ends inside
+ * the painted plane, so a clip chops the card's right border and rounding. Below 1280 the hero stays axis-aligned.
  *
  * Crispness rule that must not be broken: NO width compensation. The old `width: calc(100% + 9.75rem)`
  * laid the plane out wider than it drew it (903 -> 719, a 0.80x downscale), and that resample, not the
