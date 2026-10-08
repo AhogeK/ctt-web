@@ -106,8 +106,8 @@ const cta = computed(() =>
 
     <!-- The footer deliberately carries no reveal state: it is the page's last block, so an animated
          entrance would only be one more thing to scroll past — it moves with the page like ordinary
-         content. It shares the bands' shell (1200px content grid, same rail) so its text starts on
-         the same left edge as every band above it. -->
+         content. It shares the shell's box and rail — the same 1440px recipe as the top bar and the
+         bands — so its text starts on the same left edge as everything above it. -->
     <LandingSection as="footer" spacing="none" class="border-t border-border/60 py-10">
       <div class="text-sm text-muted-foreground">
         <!-- The ecosystem is more than one repository: listing them answers "what

@@ -5,8 +5,10 @@
  * their own.
  *
  * Values, stated here so they can be checked in one place:
- * - container 1200px · prose column ~730px (measured baseline)
- * - horizontal rail 24px → 32px (8px grid)
+ * - container 1440px carrying the shell's own rail (16px, 24px from `sm`) — the same box and rail
+ *   the top bar and the hero use, so every content edge on the page starts on one line
+ * - prose column ~730px (measured baseline); its box folds the rail in, so the column itself
+ *   stays 730px
  * - section rhythm 80px desktop → 48px mobile
  *
  * The root element is exposed (`defineExpose`) so a parent can anchor scroll choreography to a
@@ -19,7 +21,7 @@ interface Props {
   as?: 'section' | 'div' | 'footer' | 'header' | 'article'
   /** Vertical rhythm step; `none` when a nested band owns its own padding. */
   spacing?: 'none' | 'sm' | 'md' | 'lg'
-  /** `container` = the 1200px marketing grid; `prose` = the reading column; `full` = edge to edge. */
+  /** `container` = the 1440px shell grid; `prose` = the reading column; `full` = edge to edge. */
   width?: 'container' | 'prose' | 'full'
 }
 
@@ -40,14 +42,14 @@ const rhythm = {
 } as const
 
 const measure = {
-  container: 'mx-auto w-full max-w-[1200px]',
-  prose: 'mx-auto w-full max-w-[730px]',
+  container: 'mx-auto w-full max-w-[1440px] px-4 sm:px-6',
+  prose: 'mx-auto w-full max-w-[762px] px-4 sm:max-w-[778px] sm:px-6',
   full: 'w-full',
 } as const
 </script>
 
 <template>
-  <component :is="props.as" ref="el" :class="[rhythm[props.spacing], 'px-6 md:px-8']">
+  <component :is="props.as" ref="el" :class="[rhythm[props.spacing]]">
     <div :class="measure[props.width]">
       <slot />
     </div>

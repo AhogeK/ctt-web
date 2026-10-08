@@ -171,13 +171,15 @@ test.describe('Landing page', () => {
     // The ecosystem list plus the support channels (Ko-fi / Afdian / Solana).
     await expect(page.locator('footer').getByRole('link')).toHaveCount(6)
 
-    // The footer shares the bands' 1200px content grid: its own content box starts on the same
-    // left edge as every band above it, instead of on a container with its own inset.
-    const [bandLeft, footerLeft] = await Promise.all([
+    // One shell box and rail for the whole page: the top bar, the bands and the footer all start
+    // on the same left edge (the same 1440px box), so nothing changes x between them.
+    const [bandLeft, footerLeft, headerLeft] = await Promise.all([
       capabilities.evaluate((el) => el.firstElementChild!.getBoundingClientRect().left),
       page.locator('footer > div').evaluate((el) => el.getBoundingClientRect().left),
+      page.locator('[data-surface-scope="marketing"] > header > div').evaluate((el) => el.getBoundingClientRect().left),
     ])
     expect(Math.abs(footerLeft - bandLeft)).toBeLessThan(1)
+    expect(Math.abs(headerLeft - bandLeft)).toBeLessThan(1)
 
     const source = page.getByTestId('landing-open-source')
     await expect(source.getByRole('link')).toHaveCount(3)
