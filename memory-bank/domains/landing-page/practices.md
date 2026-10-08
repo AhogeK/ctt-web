@@ -47,6 +47,9 @@ design against** — re-derive only if a source changes.
   absence was in `DESIGN.md`; `src/` implements both.
 - **Do not describe the mechanism from memory.** The accordion is driven by keyframe utilities, not
   by a CSS variable — the wrong version was nearly written as fact.
+- **A frosted bar must not be pinned by `sticky`.** A `backdrop-filter` pass is dropped as one unit
+  under repaint churn (tint included), so text flashes through a sticky bar at full strength; the
+  same glass on a `fixed` bar survived identical stress (measured 2026-10-08). Keep the glass.
 - **Screenshots are the weakest evidence.** Reading code, computed styles and source is what turned
   impressions into rules.
 
