@@ -181,10 +181,10 @@
 
 ## 工具链
 
-- [x] **依赖更新 (2026-09-12)** `vp update -L` — @lucide/vue 1.45.0、zod 4.6.2、@types/node 26.5.1、lint-staged 17.5.1、
-  eslint-plugin-oxlint 1.82.0、**vite-plus + vite 0.3.1**。`-L` 同时把 typescript 升到 7.0.2、vitest 升到 5.0.0，**均已回退**（TS7
-  被 @typescript-eslint 的 peer `>=4.8.4 <6.1.0` 拒绝且移除 vue-tsc 依赖的 programmatic API；vite-plus 0.3.1 仍硬钉 vitest 4.1.11）
-  。五项门禁全绿，未改版本号（用户指令）。
+- [x] **依赖更新（两轮：2026-09-12 / 2026-10-09）** `vp update -L`：两轮都把 typescript 升到 7.0.2、**均回退 6.0.3 精确版**（TS7 被
+  @typescript-eslint peer `>=4.8.4 <6.1.0` 拒、且 vue-tsc 依赖的 programmatic API 被移除）。
+  二轮：vite-plus/vite **1.1.0 出 rc**、vitest 5.0.3（随钉）、vue-tsc 3.3.12、@playwright/test 1.64.0（chromium 1248）、jsdom 30.1.2；
+  五道验证 + landing e2e 26/26 全绿、`a722184` 提交（master `8dccf39` ✓）；两轮均未改版本号（用户指令）。
 - [x] **v0.36.1 (2026-09-11)** 阻止 pnpm 隐式安装污染受控配置 — `pnpm-workspace.yaml` 设 `verifyDepsBeforeRun: warn`（v11 默认
   `install` 会让 `pnpm run` 隐式安装，遇未决策的构建脚本时把非布尔占位符写入该受控文件；`warn` 只报告不写入，且不像 `error` 那样被版本号变更误触发）。1266/1266。
 - [x] **session-discipline 1.1.0→1.1.2 (2026-10-07/08)** 汇报形状两处漏网修复（用户：「真有必要输出工具的内容吗」+「你还是会说出像是"门禁"这样的词」）：① 第四条判据按想当然的
