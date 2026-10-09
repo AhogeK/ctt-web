@@ -177,14 +177,14 @@
   "数据可搬走"句删除；`SUPPORT_CHANNELS` 单源；**托管定位已决（2026-10-09）：将部署，尽力而为/无可用性承诺**。**提交**：0.55.11 四笔 → develop；
   master pick `2ac952f`/`06289e4`/`c461e90` ✓。**页脚对齐 + 宽度统一（v0.55.12–13）**：页脚曾自带容器 + 24 内缩（180 vs 156）⇒ 改用版块
   外壳 ✓；用户裁定 1440 为唯一宽 ⇒ `LandingSection` 改顶栏/首屏同款（1440 盒 + 轨内置、prose 折入）⇒ 实测全轴一致（文字 60 · 盒 36..1476）✓、E2E 钉三缘相等 ✓。
+- **手机端间隙修复（v0.55.15）**：阶段末 32svh 留白是 P4 前"末块接页脚"的遗留 ⇒ 版块前 292px 空段（用户报 ✓）⇒ 删除后 72px ✓；单测 1481 · landing 26/26；S4666 ✓。
 - **P5 计划改写 ✓**：定价节改「免费与赞助」（v0.55.11–13；托管定位已决：将部署）；其余行同步；业务文档 6 处 ✓；**条款文案已修 v0.55.14 ✓**（版本标识不单边动 ✓、防回退测试）。
 
 ## 工具链
 
-- [x] **依赖更新（两轮：2026-09-12 / 2026-10-09）** `vp update -L`：两轮都把 typescript 升到 7.0.2、**均回退 6.0.3 精确版**（TS7 被
-  @typescript-eslint peer `>=4.8.4 <6.1.0` 拒、且 vue-tsc 依赖的 programmatic API 被移除）。
-  二轮：vite-plus/vite **1.1.0 出 rc**、vitest 5.0.3（随钉）、vue-tsc 3.3.12、@playwright/test 1.64.0（chromium 1248）、jsdom 30.1.2；
-  五道验证 + landing e2e 26/26 全绿、`a722184` 提交（master `8dccf39` ✓）；两轮均未改版本号（用户指令）。
+- [x] **依赖更新（两轮）** `vp update -L`：均升 typescript 7.0.2 → **回退 6.0.3 精确**（TS7 被 @typescript-eslint peer 拒、vue-tsc 的
+  programmatic API 被移除）；二轮 vite-plus/vite **1.1.0 出 rc**、vitest 5.0.3、Playwright 1.64（chromium 1248）、jsdom 30.1.2；
+  五道验证 + landing e2e 26/26 ✓、提交 `a722184`（master `8dccf39`）；两轮均未改版本号（用户指令）。
 - [x] **v0.36.1 (2026-09-11)** 阻止 pnpm 隐式安装污染受控配置 — `pnpm-workspace.yaml` 设 `verifyDepsBeforeRun: warn`（v11 默认
   `install` 会让 `pnpm run` 隐式安装，遇未决策的构建脚本时把非布尔占位符写入该受控文件；`warn` 只报告不写入，且不像 `error` 那样被版本号变更误触发）。1266/1266。
 - [x] **session-discipline 1.1.0→1.1.2 (2026-10-07/08)** 汇报形状两处漏网修复（用户：「真有必要输出工具的内容吗」+「你还是会说出像是"门禁"这样的词」）：① 第四条判据按想当然的

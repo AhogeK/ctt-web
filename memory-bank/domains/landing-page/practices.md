@@ -81,6 +81,8 @@ design against** — re-derive only if a source changes.
   as a data-risk hint (user review). Self-host keeps the positive form — "your data stays on hardware you control".
 - e2e: the `landing-free` test (statement, two options, hosted carries no control, support hrefs); the footer
   link count is now 6 (3 repos + 3 channels).
+- Mobile stage-end: the stage carries **no bottom spacer** — the bands follow it directly and each band's own
+  rhythm separates them (the pre-P4 `32svh` spacer read as a 292px empty screen on a phone; removed v0.55.15).
 - One shell recipe for the whole page (2026-10-08): every group — top bar, hero, bands, footer — renders the same
   1440px box with the shell's own rail (16px, 24px from `sm`). The rail sits *inside* the box; a rail on the outer
   element shifts the box itself, which is exactly what kept the edges apart. Measured at 1512: header text, h1, every
