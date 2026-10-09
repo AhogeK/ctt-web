@@ -333,15 +333,9 @@
    */
   @media (max-width: 1023px) {
     /*
-     * A phone (or a narrow desktop window) reads this page as a normal document, so the last block is
-     * followed straight by the footer — one scroll threw the year-and-ladders block off the bottom of
-     * the page while it was still being looked at. The spacer keeps the block on screen for another
-     * third of a viewport before the page ends; it is bottom padding, not a pinned frame, so nothing
-     * is held against the visitor's scrolling.
+     * No bottom spacer on the stage: the bands continue the page right after it, and each band's own
+     * rhythm supplies the separation — a stage-end spacer here would read as an empty screen on a phone.
      */
-    .stage {
-      padding-block-end: 32svh;
-    }
     /*
      * The phone intro keeps its natural height: headline, paragraph and buttons flow from under the
      * header, exactly as before the split. A one-screen box was tried two ways and rejected both times
@@ -646,11 +640,9 @@
  * Tailwind v4 silently drops `hover:shadow-[…rgba(…)]`, so the recipe lives here as plain CSS on the
  * Button's own `data-variant` attribute — one source for every `variant="default"` button app-wide.
  */
-:root {
+[data-slot='button'][data-variant='default'] {
   --btn-shadow-rest: 0 1px 2px rgba(0, 0, 0, 0.3);
   --btn-shadow-hover: 0 0 0 1px rgba(94, 106, 210, 0.6), 0 4px 12px rgba(0, 0, 0, 0.35);
-}
-[data-slot='button'][data-variant='default'] {
   box-shadow: var(--btn-shadow-rest);
   transition: box-shadow 180ms cubic-bezier(0.2, 0.8, 0.2, 1);
 }
