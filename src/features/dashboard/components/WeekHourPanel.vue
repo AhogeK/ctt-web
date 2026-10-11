@@ -123,10 +123,20 @@ function clamp(n: number, lo: number, hi: number): number {
   return Math.min(hi, Math.max(lo, n))
 }
 
+/**
+ * Phone-narrow mode: the panel drops the right-hand scale strip and thins the
+ * day labels, so the freed width goes to the cells instead of crowding them.
+ */
+const NARROW_WIDTH = 560
+const isNarrow = computed(() => (containerWidth.value || 700) < NARROW_WIDTH)
+
+/** Right band for the dynamic-scale strip — dropped when narrow. */
+const scaleBand = computed(() => (isNarrow.value ? 0 : SCALE_BAND))
+
 /** Square cell side length — derived from the container so cells stay squares. */
 const cell = computed(() => {
   const availW = containerWidth.value || 700
-  const usable = availW - LEFT_PAD - RIGHT_PAD - DAY_LABEL_BAND - SCALE_BAND - (COLS - 1) * CELL_GAP
+  const usable = availW - LEFT_PAD - RIGHT_PAD - DAY_LABEL_BAND - scaleBand.value - (COLS - 1) * CELL_GAP
   return clamp(Math.floor(usable / COLS), 8, 26)
 })
 
@@ -135,7 +145,7 @@ const cell = computed(() => {
  * over after the fixed bands + cells is split evenly around the layout.
  */
 const centering = computed(() => {
-  const used = LEFT_PAD + DAY_LABEL_BAND + COLS * cell.value + (COLS - 1) * CELL_GAP + SCALE_BAND + RIGHT_PAD
+  const used = LEFT_PAD + DAY_LABEL_BAND + COLS * cell.value + (COLS - 1) * CELL_GAP + scaleBand.value + RIGHT_PAD
   return Math.max(0, Math.floor(((containerWidth.value || 700) - used) / 2))
 })
 
@@ -205,6 +215,10 @@ function buildOption(cellsForOption: ReturnType<typeof buildWeekHourMatrix>, pal
     // vertical on the right, min 0 → max = window peak.
     visualMap: {
       type: 'continuous',
+      // Hidden on phone-narrow panels — the color mapping stays active
+      // (`show` only controls the component), the strip just stops eating
+      // the width the cells need. The header legend keeps stating 0 → peak.
+      show: !isNarrow.value,
       min: 0,
       max: maxSeconds.value,
       calculable: true,
@@ -253,6 +267,9 @@ function buildOption(cellsForOption: ReturnType<typeof buildWeekHourMatrix>, pal
         silent: true,
         renderItem: (params: { dataIndex: number }) => {
           const row = params.dataIndex
+          // Phone-narrow: Mon/Wed/Fri carry the rows without crowding; a wide
+          // panel keeps all seven.
+          if (isNarrow.value && row % 2 !== 0) return null
           const y = gridTop + row * pitch + cellSize / 2
           return {
             type: 'text',
