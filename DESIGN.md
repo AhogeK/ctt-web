@@ -365,6 +365,17 @@ Scope is deliberate — the global `.dark [data-surface='card']` recipe keeps it
 attribute also sits on nested surfaces (summary tiles) where a tinted shadow reads as stray glow. The 1px
 contact layer stays black; the white-rim rule above is unchanged.
 
+**Registered 2026-10-10 — the top bar's layer stack (z-index registry)**: the marketing top bar is two body-level fixed branches — a blur-only backdrop and the readable header (tint, border, content) — placed by `#marketing-header-root` just before the app root. Their stacking is registered so later overlays are checked against it rather than guessed:
+
+| Layer | z-index | Notes |
+| --- | --- | --- |
+| Marketing backdrop (blur branch) | `--marketing-backdrop-z` = 30 | Fixed, `pointer-events: none`; must stay a plain, effect-free container |
+| Marketing header (readable branch) | `--marketing-header-z` = 31 | Tint, border, brand and controls ride here; no filter on this branch |
+| App header (dashboard) | 40 (`z-40`) | Sticky, dashboard surface only |
+| Overlays (dialog, sheet, dropdown, popover, tooltip) | 50 (`z-50`) | Must cover both headers |
+
+Tokens live in `main.css`; do not add effects (transform, filter, containment) to the shared mount — they would re-couple the branches or change what the blur samples.
+
 ## 7. Do's and Don'ts
 
 ### Do

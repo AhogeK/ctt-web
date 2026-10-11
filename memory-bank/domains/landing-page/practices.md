@@ -101,7 +101,20 @@ design against** — re-derive only if a source changes.
 `matchMedia('(prefers-color-scheme: dark)')` ✓；并同步 `documentElement.style.colorScheme` ✓（原生滚动条/表单控件跟随）。判据：**拦掉应用
 bundle 后**仍能看到首帧 class 正确 ✓（无隔离则无法区分是谁设的 ✗）。
 
-**粘性偏移只有一个来源**：`--marketing-header-height`（定义在 `MarketingLayout.vue` 壳元素 ✓ 3.5rem）→ 任何需要吸在顶栏之下的元素写
+**粘性偏移只有一个来源**：`--marketing-header-height`（`main.css` 的 `:root` ✓ 3.5rem；v0.55.20 起两分支在 shell 之外 ⇒ 定义上移）→ 任何需要吸在顶栏之下的元素写
 `sticky top-[var(--marketing-header-height)]` ✓。参照物用 `top-[65px]` 是**它们自己的 header 高度** ✗，抄数值就是两条栏重叠的成因 ✓。验收判据：
-**变量解析值 == header 的 `getBoundingClientRect().height`** ✓（56px ✓ 已测），变量与类名一旦脱钩即红 ✓。
+**变量解析值 == 顶栏内容高** ✓（56px；v0.55.20 拆分后含边框总剪影 57px = `calc(token+1px)` ✓ 已测钉），变量与类名一旦脱钩即红 ✓。
+
+## 顶栏两固定分支（2026-10-11 · v0.55.20）
+
+- 结构：body 级 mount `#marketing-header-root`（在 `#app` 前）下两个 fixed 分支——`blur 支`（`.marketing-backdrop`，仅模糊，
+  `pointer-events:none`）与`可读支`（`.marketing-header`：80% tint + 边框 + 品牌/控件）；**tint/边框归可读支**（玻璃被跳过时，
+  可读面必须独立存在 ✓）；两支互不为祖先（契约用例钉 ✓）。
+- mount 保持无效果：无 transform/filter/containment（否则重耦合或改变 blur 采样 ✓ 已测钉）。
+- 令牌：`--marketing-header-height` 上移 `:root`；层序 30/31 登记 `DESIGN.md` §6。
+- **border-box 陷阱**：显式 `block-size` 连边框一起算 ⇒ 可读支须 `calc(token + 1px)`（57px 旧剪影）；漏掉即整条底边上移 1px
+  （像素比对抓出 ✓）。
+- 验收：像素比对 **threshold=0**（任何 1 单位色差即红）；覆盖 顶部+滚动位（背景过 blur 区）× 亮/暗 + 375；Tab 首个落点在栏内 ✓。
+- 拆分后仍现的推进序：缺失范围 → 关闭提示单变量（will-change/translateZ；**代码中无 clip-path**，前文系转述错误）→
+  reveal 有/无 → 并发 2。
 

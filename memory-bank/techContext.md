@@ -18,7 +18,7 @@
 | Icons         | @iconify/vue (migrated from lucide-vue-next v0.10.5) | ^5 |
 | i18n          | Vue I18n                               | ^11          |
 | Captcha       | @hcaptcha/vue3-hcaptcha                | ^1           |
-| Package Mgr   | pnpm (standalone `~/Library/pnpm`)     | 11.18.0      |
+| Package Mgr   | pnpm (standalone `~/Library/pnpm`)     | 12.10.1      |
 | Design System | DESIGN.md                              | Linear-style |
 
 ## Dev Toolchain (Vite+ Unified)
@@ -34,18 +34,13 @@
 | Remove | `vp remove <pkg>` |
 | Install everything | `vp install` (or `vp i`) |
 | Why is this dependency here | `vp why <pkg>` |
-- **The `enableGlobalVirtualStore` drift warning is a lockfile/toolchain version skew** (verified 2026-09-26,
-  unresolved): `pnpm-lock.yaml` is **pnpm-11-era** (`packageManagerDependencies: pnpm@11.18.0`) while installs run
-  **pnpm 12.6.0** (the version `vp` bundles). pnpm 12 compares that setting — absent from an 11-era tree — against
-  its own default on every `verifyDepsBeforeRun` check, so it warns on **every** `pnpm run`/`pnpm exec` that
-  `node_modules` are "out of sync". Three things were tried and measured: `vp install` (short-circuits as "Already
-  up to date"), `vp install --force` (real install, warning unchanged), and pinning
-  `enableGlobalVirtualStore: false` in `pnpm-workspace.yaml` + force install (also unchanged — the pin was reverted
-  so no ineffective setting stays tracked). Real fixes, both needing a decision: regenerate the lockfile under pnpm
-  12 (`chore(deps)`-scale diff ✗ needs the user's go-ahead), or run installs with the pnpm 11.18.0 the lockfile
-  declares. It is cosmetic: build, lint and the suite are unaffected.
+- **The `enableGlobalVirtualStore` drift warning was a lockfile/toolchain version skew** (root-caused 2026-09-26,
+  **resolved 2026-10-11**): the lockfile was pnpm-11-era (`packageManagerDependencies: pnpm@11.18.0`) while installs
+  ran pnpm 12, so pnpm 12 compared its `enableGlobalVirtualStore` default against a tree that never recorded it and
+  warned on every `pnpm run`/`pnpm exec`. Fix shipped in one `chore(deps)` change: the lockfile was regenerated and
+  `packageManager: pnpm@12.10.1` recorded in `package.json` — lockfile, README and this snapshot all read 12 now.
 
-- **`pnpm-workspace.yaml` is pnpm 11's settings file** — not `.npmrc`, which pnpm 11 ignores for
+- **`pnpm-workspace.yaml` is the settings file** — not `.npmrc`, which pnpm does not read for
   `verify-deps-before-run`. `allowBuilds` holds the build-script decisions (`msw`, `simple-git-hooks`, `vue-demi`);
   `verifyDepsBeforeRun: warn` stops `pnpm run`/`pnpm exec` from implicitly installing — the only path that could
   write a non-boolean placeholder into this tracked file — while still reporting genuine drift. `error` blocks the

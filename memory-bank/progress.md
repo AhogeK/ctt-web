@@ -179,21 +179,21 @@
   外壳 ✓；用户裁定 1440 为唯一宽 ⇒ `LandingSection` 改顶栏/首屏同款（1440 盒 + 轨内置、prose 折入）⇒ 实测全轴一致（文字 60 · 盒 36..1476）✓、E2E 钉三缘相等 ✓。
 - **手机端间隙修复（v0.55.15）**：阶段末 32svh 留白是 P4 前"末块接页脚"的遗留 ⇒ 版块前 292px 空段（用户报 ✓）⇒ 删除后 72px ✓；单测 1481 · landing 26/26；S4666 ✓。
 - **P5 计划改写 ✓**：定价节改「免费与赞助」（v0.55.11–13；托管定位已决：将部署）；其余行同步；业务文档 6 处 ✓；**条款文案已修 v0.55.14 ✓**（版本标识不单边动 ✓、防回退测试）。
+- **P6 收口（2026-10-10 · v0.55.16）** ✓：真机截图基线 **26 张**（首屏/窗口特写/能力/怎么工作/免费/开源/页脚 × 亮/暗 × 1440/390，生产构建实拍）存
+  `.omp/qa/p6-visual-2026-10-10/` ✓；亮色窄屏窗口阴影 `shadow-2xl`→`shadow-xl lg:shadow-2xl`（与浮板同档；桌面/暗色零变化）✓；待用户手机复看 ✓。
 
 ## 工具链
 
-- [x] **依赖更新（两轮）** `vp update -L`：均升 typescript 7.0.2 → **回退 6.0.3 精确**（TS7 被 @typescript-eslint peer 拒、vue-tsc 的
-  programmatic API 被移除）；二轮 vite-plus/vite **1.1.0 出 rc**、vitest 5.0.3、Playwright 1.64（chromium 1248）、jsdom 30.1.2；
-  五道验证 + landing e2e 26/26 ✓、提交 `a722184`（master `8dccf39`）；两轮均未改版本号（用户指令）。
+- [x] **依赖更新（两轮）** `vp update -L`：TS7 两轮均回退 6.0.3 精确（理由与回退法见 techContext 快照）；二轮 vite-plus/vite **1.1.0 出 rc**、
+  vitest 5.0.3、Playwright 1.64（chromium 1248）；五道验证 + e2e 26/26 ✓、`a722184`（master `8dccf39`）；两轮均未改版本号（用户指令）。
+- [x] **session-discipline 1.1.3→1.1.5** ①审查词表补「评审/看什么/算错」；②授权读对话：批准**含命令的计划**=授权（R6 ✓）；③6 条停机句全带"完整重发" ⇒ 契约 **60**。
 - [x] **v0.36.1 (2026-09-11)** 阻止 pnpm 隐式安装污染受控配置 — `pnpm-workspace.yaml` 设 `verifyDepsBeforeRun: warn`（v11 默认
   `install` 会让 `pnpm run` 隐式安装，遇未决策的构建脚本时把非布尔占位符写入该受控文件；`warn` 只报告不写入，且不像 `error` 那样被版本号变更误触发）。1266/1266。
-- [x] **session-discipline 1.1.0→1.1.2 (2026-10-07/08)** 汇报形状两处漏网修复（用户：「真有必要输出工具的内容吗」+「你还是会说出像是"门禁"这样的词」）：① 第四条判据按想当然的
-  形状写 ✗ ⇒ 新增 `RAW_OUTPUT` 输出签名（`=== sweep ===` 族 + 发现行族）并入 `DUMPS` ✓；② 第七条阈值 ≥4→**出现即拦**、词表补全 README 全量 ✓；
-  ③ 规则对账：R10 与 R18 曾互相矛盾 ⇒ R18 改「结果一句散文」✓。**1.1.2（用户：被拦后分不清该看哪一条）**：更正必须**完整重发**（两条 reason 共享
-  `RESEND_COMPLETE` ✓、自检 54→**56**（含"引用即使用" ✓）、R10 加同条 ✓）。三份 56/56 · 39/39 · 63/63 ✓；钩子新会话生效 ✓。
+- [x] **session-discipline 1.1.0→1.1.2 (2026-10-07/08)** 汇报形状两处漏网修复 + 拒绝后**完整重发**；三份 56/56·39/39·63/63 ✓（详见包 README）。
 
 ## Backlog
 
+- [ ] **顶栏闪烁（10-10）**：差分✓=去滤镜归零；v0.55.18/19 分层+提示；观察✓100% 亦现 ⇒ 125% 非必要；审查✓=tint/边框归可读支；v0.55.20 两分支实施+自证 ⇒ **目视✓暂未再遇**。
 - [ ] Auth: Token refresh + expiry handling
 - [ ] Dashboard: Weekday / IDE / Devices distribution panels（后端已就绪；Project 已随 v0.35.0 上线，其余复用共享排名列表）
 - [x] Leaderboard: Redis ZSet ranking display (v0.41.0 — contract rebuilt against `GET /leaderboard`)
