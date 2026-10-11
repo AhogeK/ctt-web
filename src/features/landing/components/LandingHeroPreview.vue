@@ -50,11 +50,13 @@ const languagesLabel = computed(
 
 <template>
   <div class="hero-plane relative">
-    <!-- Product plane. -->
+    <!-- Product plane. Both plates share one shadow ladder — xl below lg, 2xl at lg and up. On
+         narrow screens the window's shadow falls into the 20px gap that separates the stacked
+         pair, so a heavier stack there reads as a dark band instead of depth. -->
     <div
       data-testid="hero-preview"
       data-surface="card"
-      class="w-full min-w-0 overflow-hidden rounded-xl border border-border/60 bg-card shadow-2xl dark:border-border"
+      class="w-full min-w-0 overflow-hidden rounded-xl border border-border/60 bg-card shadow-xl lg:shadow-2xl dark:border-border"
     >
       <div class="flex items-center gap-1.5 border-b border-border/60 bg-muted/40 px-3 py-2">
         <span class="size-2 rounded-full bg-muted-foreground/30" />
