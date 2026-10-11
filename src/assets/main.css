@@ -882,3 +882,78 @@
     rgba(0, 0, 0, 0.07) 0 1px 1px,
     rgba(0, 0, 0, 0.08) 0 0 1px;
 }
+
+/*
+ * The top bar is two fixed branches under a plain body-level mount (`#marketing-header-root`):
+ *
+ * - `.marketing-backdrop` carries the blur alone. If that backdrop-filter surface is skipped for a
+ *   frame, only the blur of that frame is lost.
+ * - `.marketing-header` carries the tint, the border and everything readable — brand and controls.
+ *   The tint is deliberately paired with the readable branch, so a skipped surface can never take
+ *   the one part that must not blink off with it.
+ *
+ * Measured at 120fps in device mode, the previous single surface lost tint, blur, brand text and
+ * the Sign in button together for 3 consecutive frames. Keeping the branches apart means the two
+ * parts no longer share one composited surface. The mount stays free of transforms, filters and
+ * containment: any of those on a shared ancestor would re-couple the branches or change what the
+ * blur samples. The order keeps the blur's backdrop the page alone — the composite is
+ * `blur(page)` under an 80% tint, the previous rendering unchanged.
+ */
+:root {
+  --marketing-header-height: 3.5rem;
+  --marketing-backdrop-z: 30;
+  --marketing-header-z: 31;
+}
+
+.marketing-backdrop,
+.marketing-header {
+  position: fixed;
+  inset-inline: 0;
+  inset-block-start: 0;
+}
+
+.marketing-backdrop {
+  block-size: var(--marketing-header-height);
+  z-index: var(--marketing-backdrop-z);
+  pointer-events: none;
+}
+
+.marketing-header {
+  /* The bottom rule is part of the box (border-box), so the bar is one pixel taller than the
+     height token — the same 57px silhouette as when the bar was a single element. */
+  block-size: calc(var(--marketing-header-height) + 1px);
+  z-index: var(--marketing-header-z);
+}
+
+.marketing-glass,
+.marketing-glass-tint {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+}
+
+.marketing-glass {
+  -webkit-backdrop-filter: blur(8px);
+  backdrop-filter: blur(8px);
+  /* Compositor hints only: keep the filter's resources warm and pin the layer. No pixels change
+     (screenshot parity checked either way); the tint layer keeps the promotion if these are pulled. */
+  will-change: backdrop-filter;
+  transform: translateZ(0);
+}
+
+.marketing-glass-tint {
+  z-index: 0;
+  background-color: var(--background);
+  transform: translateZ(0);
+}
+
+.marketing-header-content {
+  position: relative;
+  z-index: 1;
+}
+
+@supports (color: color-mix(in lab, red, red)) {
+  .marketing-glass-tint {
+    background-color: color-mix(in oklab, var(--background) 80%, transparent);
+  }
+}

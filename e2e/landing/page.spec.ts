@@ -176,7 +176,7 @@ test.describe('Landing page', () => {
     const [bandLeft, footerLeft, headerLeft] = await Promise.all([
       capabilities.evaluate((el) => el.firstElementChild!.getBoundingClientRect().left),
       page.locator('footer > div').evaluate((el) => el.getBoundingClientRect().left),
-      page.locator('[data-surface-scope="marketing"] > header > div').evaluate((el) => el.getBoundingClientRect().left),
+      page.locator('.marketing-header-content').evaluate((el) => el.getBoundingClientRect().left),
     ])
     expect(Math.abs(footerLeft - bandLeft)).toBeLessThan(1)
     expect(Math.abs(headerLeft - bandLeft)).toBeLessThan(1)
@@ -357,21 +357,67 @@ test.describe('Landing page', () => {
       .toBeLessThanOrEqual(0.1)
   })
 
-  test('pins the frosted bar as fixed so a dropped filter pass can never show raw content', async ({ page }) => {
+  test('splits the frosted bar into fixed branches a skipped surface cannot take down together', async ({ page }) => {
     await page.setViewportSize({ width: 1440, height: 900 })
     await page.goto('/')
-    // Pinned by `sticky`, the bar's backdrop-filter pass was dropped as one unit under repaint
-    // churn — tint included — and the raw page flashed through at full strength. The `fixed` path
-    // runs the same stress without a dropped frame, and the shell's padding-top carries the in-flow
-    // space the bar used to occupy. This pins both halves: the position and the compensation.
-    const st = await page.getByRole('banner').evaluate((el) => {
-      const cs = getComputedStyle(el)
-      const shell = el.parentElement as HTMLElement
-      return { position: cs.position, blur: cs.backdropFilter, shellPad: getComputedStyle(shell).paddingTop }
+    // The bar teleports in with the app; wait for it before reading the mounted structure.
+    await expect(page.locator('#marketing-header-root header.marketing-header')).toBeVisible()
+    // A single composited surface once lost tint, blur, brand and the Sign in button together for
+    // three consecutive frames. The bar is now two fixed siblings under a plain body-level mount:
+    // the backdrop branch (blur only) and the readable branch (tint, border, brand, controls). This
+    // pins the split, the mount's placement and its effect-free state, and the padding compensation.
+    const st = await page.evaluate(() => {
+      const header = document.querySelector('header.marketing-header') as HTMLElement
+      const backdrop = document.querySelector('.marketing-backdrop') as HTMLElement
+      const mount = document.getElementById('marketing-header-root') as HTMLElement
+      const shell = document.querySelector('[data-surface-scope="marketing"]') as HTMLElement
+      const app = document.getElementById('app') as HTMLElement
+      const cs = (el: HTMLElement) => getComputedStyle(el)
+      const mountCs = cs(mount)
+      return {
+        headerFixed: cs(header).position,
+        backdropFixed: cs(backdrop).position,
+        headerFilter: cs(header).backdropFilter,
+        headerZ: cs(header).zIndex,
+        backdropZ: cs(backdrop).zIndex,
+        blurLayer: cs(backdrop.querySelector('.marketing-glass') as HTMLElement).backdropFilter,
+        tintInHeader: Boolean(header.querySelector('.marketing-glass-tint')),
+        tintInBackdrop: Boolean(backdrop.querySelector('.marketing-glass-tint')),
+        tintZ: cs(header.querySelector('.marketing-glass-tint') as HTMLElement).zIndex,
+        contentZ: cs(header.querySelector('.marketing-header-content') as HTMLElement).zIndex,
+        mutuallySeparate: !header.contains(backdrop) && !backdrop.contains(header),
+        mountFirst: document.body.firstElementChild === mount,
+        mountBeforeApp: Boolean(mount.compareDocumentPosition(app) & Node.DOCUMENT_POSITION_FOLLOWING),
+        mountEffectFree:
+          mountCs.transform === 'none' &&
+          mountCs.filter === 'none' &&
+          mountCs.backdropFilter === 'none' &&
+          mountCs.contain === 'none',
+        shellPad: cs(shell).paddingTop,
+      }
     })
-    expect(st.position, 'the bar must be fixed to the viewport, not sticky').toBe('fixed')
-    expect(st.blur, 'the frosted look stays on the bar itself').toMatch(/blur/)
+    expect(st.headerFixed, 'the readable branch is fixed to the viewport').toBe('fixed')
+    expect(st.backdropFixed, 'the blur branch is fixed to the viewport').toBe('fixed')
+    expect(st.mutuallySeparate, 'neither branch may contain the other — that is the whole split').toBe(true)
+    expect(
+      st.headerFilter,
+      'the readable branch carries no filter — the blur belongs to the backdrop branch alone',
+    ).toBe('none')
+    expect(st.blurLayer, 'the blur rides the backdrop branch').toMatch(/blur/)
+    expect(Number(st.backdropZ), 'the backdrop stacks under the readable branch').toBeLessThan(Number(st.headerZ))
+    expect(st.tintInHeader, 'the tint rides with the readable half').toBe(true)
+    expect(st.tintInBackdrop, 'the tint must never ride with the blur half').toBe(false)
+    expect(st.tintZ).toBe('0')
+    expect(st.contentZ).toBe('1')
+    expect(st.mountFirst, 'the mount leads the body so a tab reaches the bar before the content').toBe(true)
+    expect(st.mountBeforeApp).toBe(true)
+    expect(st.mountEffectFree, 'the mount stays free of transforms, filters and containment').toBe(true)
     expect(st.shellPad, 'the shell keeps the bar’s in-flow space (content + its 1px rule)').toBe('57px')
+
+    // Keyboard order: the first tab stop after the top must land in the bar, before the page.
+    await page.keyboard.press('Tab')
+    const firstStopInBar = await page.evaluate(() => Boolean(document.activeElement?.closest('.marketing-header')))
+    expect(firstStopInBar, 'the first tab stop is the bar — page content comes after it').toBe(true)
   })
 
   test('keeps the stage inside a phone viewport', async ({ page }) => {

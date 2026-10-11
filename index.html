@@ -25,6 +25,11 @@
     <title>Code Time Tracker</title>
   </head>
   <body>
+    <!-- Teleport target for the marketing top bar's two fixed branches. It must stay before the app
+         root so a tab from the top reaches the bar before the page content, and it must stay a plain
+         element: transforms, filters or containment here would re-couple the branches or change what
+         the blur samples. -->
+    <div id="marketing-header-root"></div>
     <div id="app"></div>
     <script type="module" src="/src/main.ts"></script>
   </body>
