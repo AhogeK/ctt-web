@@ -84,6 +84,9 @@
 - **顶栏两固定分支（2026-10-11 · v0.55.20 · 待现场复验）** ✓：body 级 mount（#app 前）+ 两 fixed 分支；**tint/边框归可读支**（按审查）——玻璃失效时可读面独立，
   blur 支仅模糊；mount 无效果（测钉）。自证=build ✓ · 单测 1481 ✓ · landing 26/26 ✓ · **像素比对 threshold=0 全过**（1440 亮/暗 × 顶部/滚动位 + 375）；
   border-box 陷阱（显式 block-size 连边框算 ⇒ `calc(token+1px)`）由比对抓出；**现场目视（初步）✓：暂未再遇**（"暂且"——继续观察；再遇即按推进序）。
+  **提交 ✓（2026-10-11）**：develop 六笔 —— 顶栏修复 `a8f5536` · 阴影 `4f0be0c` · pnpm12 `8cd6c24` · release `6cb3a30`；
+  README `40e22ad` · 记忆 `e14e130`；master 逐个 pick 五笔（`f88d80c`/`e020dab`/`1830a8d`/`ae8efab`/`3920c96`）✓；
+  非 AI 内容差=空、master AI 文件=0。
 - **落地页滚动编排（v0.55.1–0.55.7，逐轮全档 → `memory-bank/archives/2026-10-08-scroll-rounds-trim.md`）**：全空段双向（flush 门槛 +
   退场触发重做）· 上行回看渐入恢复（删瞬时恢复章）· 高视口退场锚定首块版块（`leaveOnBand`）· 上行对向交叉 · 滚动速率重做（轨道 **230svh** + `beat-arc` 单段线性，位移比无零速）·
   双块同屏禁令三处共钟（hero↔beat 同 60svh · 带进场同 60% 线 · 删对向簿记）—— 各轮 landing E2E / 单测 1478 / lint 全绿；
