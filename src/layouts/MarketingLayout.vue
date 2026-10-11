@@ -17,11 +17,11 @@
  * leaves the shell (and the way back) intact — same contract as AppLayout.
  *
  * Sticky offset contract: the header's height lives in exactly one place,
- * `--marketing-header-height` (set on the shell below, consumed by `h-[var(...)]`).
- * Any element that must stick *under* this bar reads that variable —
- * `sticky top-[var(--marketing-header-height)]` — instead of hard-coding a pixel
- * offset. Reference sites legitimately use values like `top-[65px]`; that number is
- * *their* header, not ours, and copying it is how two bars overlap.
+ * `--marketing-header-height` (set on `:root` in `assets/main.css` — the bar's branches
+ * live at body level, outside this shell). Any element that must stick *under* this
+ * bar reads that variable — `sticky top-[var(--marketing-header-height)]` — instead of
+ * hard-coding a pixel offset. Reference sites legitimately use values like `top-[65px]`;
+ * that number is *their* header, not ours, and copying it is how two bars overlap.
  */
 import { computed } from 'vue'
 import { RouterLink } from 'vue-router'
@@ -54,49 +54,58 @@ const cta = computed(() =>
 <template>
   <div
     data-surface-scope="marketing"
-    class="[--marketing-header-height:3.5rem] flex min-h-screen flex-col bg-background pt-[calc(var(--marketing-header-height)_+_1px)] text-foreground"
+    class="flex min-h-screen flex-col bg-background pt-[calc(var(--marketing-header-height)_+_1px)] text-foreground"
   >
-    <!-- Fixed, not sticky: pinned by `sticky`, the bar's backdrop-filter pass is dropped as one unit
-         for a few frames whenever the page repaints hard — the tint rides inside that pass, so text
-         behind the bar flashed through at full strength (captured on screen). The fixed path ran the
-         same stress without a single dropped frame. The shell's padding-top keeps the in-flow space
+    <!-- Fixed, not sticky: pinned by `sticky`, the bar's backdrop-filter pass was dropped as one
+         unit whenever the page repainted hard, and text behind the bar flashed through at full
+         strength. The bar is now two fixed branches under a plain body-level mount (the
+         `#marketing-header-root` div in the entry HTML, before the app root): the backdrop branch
+         carries the blur alone; the readable branch carries the tint, the border and everything
+         used — brand and controls — so a skipped surface cannot take the part that must not blink
+         off with it. See the module in `main.css`. The shell's padding-top keeps the in-flow space
          the bar used to occupy, so nothing below it moves. -->
-    <header class="fixed inset-x-0 top-0 z-30 border-b border-border/60 bg-background/80 backdrop-blur">
-      <div
-        class="mx-auto flex h-[var(--marketing-header-height)] w-full max-w-[1440px] items-center justify-between gap-3 px-4 sm:px-6"
-      >
-        <RouterLink
-          :to="{ name: RouteNames.LANDING }"
-          class="text-sm font-semibold tracking-tight focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
-        >
-          Code Time Tracker
-        </RouterLink>
-
-        <nav class="flex items-center gap-1 sm:gap-2">
-          <!-- The source shortcut. Every source entry on the page — this one and the hero's secondary
-               call to action — opens the same dialog, which answers "which repository" with one line
-               per repo instead of picking one. The anchor keeps working as the footer catalogue's
-               address when JavaScript is not running. -->
-          <SourceReposDialog>
-            <Button as-child variant="ghost" size="icon-sm">
-              <a
-                href="#source"
-                aria-label="Source repositories"
-                title="Source repositories"
-                data-testid="marketing-source"
-                @click.prevent
-              >
-                <Icon icon="mdi:github" class="size-[18px]" />
-              </a>
-            </Button>
-          </SourceReposDialog>
-          <ThemeToggle />
-          <Button as-child size="sm">
-            <RouterLink :to="cta.to" data-testid="marketing-cta">{{ cta.label }}</RouterLink>
-          </Button>
-        </nav>
+    <Teleport to="#marketing-header-root">
+      <div class="marketing-backdrop" aria-hidden="true">
+        <div class="marketing-glass" aria-hidden="true"></div>
       </div>
-    </header>
+      <header class="marketing-header border-b border-border/60">
+        <div class="marketing-glass-tint" aria-hidden="true"></div>
+        <div
+          class="marketing-header-content mx-auto flex h-full w-full max-w-[1440px] items-center justify-between gap-3 px-4 sm:px-6"
+        >
+          <RouterLink
+            :to="{ name: RouteNames.LANDING }"
+            class="text-sm font-semibold tracking-tight focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+          >
+            Code Time Tracker
+          </RouterLink>
+
+          <nav class="flex items-center gap-1 sm:gap-2">
+            <!-- The source shortcut. Every source entry on the page — this one and the hero's secondary
+                 call to action — opens the same dialog, which answers "which repository" with one line
+                 per repo instead of picking one. The anchor keeps working as the footer catalogue's
+                 address when JavaScript is not running. -->
+            <SourceReposDialog>
+              <Button as-child variant="ghost" size="icon-sm">
+                <a
+                  href="#source"
+                  aria-label="Source repositories"
+                  title="Source repositories"
+                  data-testid="marketing-source"
+                  @click.prevent
+                >
+                  <Icon icon="mdi:github" class="size-[18px]" />
+                </a>
+              </Button>
+            </SourceReposDialog>
+            <ThemeToggle />
+            <Button as-child size="sm">
+              <RouterLink :to="cta.to" data-testid="marketing-cta">{{ cta.label }}</RouterLink>
+            </Button>
+          </nav>
+        </div>
+      </header>
+    </Teleport>
 
     <main class="flex-1">
       <ErrorBoundary>
