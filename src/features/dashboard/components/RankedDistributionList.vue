@@ -160,7 +160,7 @@ function foldedBreakdown(row: RankedRow): { shown: { name: string; percent: numb
 </script>
 
 <template>
-  <div class="flex flex-col gap-2">
+  <div class="dist-panel flex flex-col gap-2">
     <!-- The card bounds the HEIGHT, not the data. Height budget: this card
          spends 92px on chrome (32 padding + 18 header + 16 header gap + 8 gap +
          18 footer), so a 228px viewport lands it at ~320px — the agreed ceiling
@@ -195,7 +195,9 @@ function foldedBreakdown(row: RankedRow): { shown: { name: string; percent: numb
                      - duration: "10000h 59m 59s" = 91.3px (5-digit hours, beyond
                        any real history, with minutes and seconds both non-zero);
                      - label: a realistic name prefix; longer names truncate and
-                       raise the full name on hover. -->
+                       raise the full name on hover.
+                     A phone-narrow panel restacks the row (scoped container rule):
+                     label and values on the first line, a full-width track below. -->
                 <span
                   class="dist-row-body grid grid-cols-[7rem_minmax(0,1fr)_4.5rem_6rem] items-center gap-2.5"
                   :tabindex="hasDetail(row) ? 0 : undefined"
@@ -306,5 +308,59 @@ function foldedBreakdown(row: RankedRow): { shown: { name: string; percent: numb
   background-size: 100cqw 100%;
   background-repeat: no-repeat;
   background-position: left center;
+}
+
+/**
+ * The panel is its own container: the lanes above are a four-column contract
+ * sized for a desktop card, so when the PANEL itself is phone-narrow — not
+ * merely the window; the landing hero mounts this list too — each row stacks:
+ * label · percent · duration on the first line, the track full-width beneath.
+ * A bar squeezed into the leftover lane of a phone-width row reads as noise
+ * (tens of pixels, ticks touching); a full-width track keeps its scale. The
+ * value lanes keep the same value space as the desktop row — the duration
+ * lane fits a full `hh mm ss` ("22h 51m 32s" measures 70px) — and anything
+ * longer ellipsizes inside its lane rather than sliding under the card clip.
+ * The track keeps `minmax(0, 1fr)` and yields first, so a narrower-than-lanes
+ * panel shrinks the bars instead of overflowing the card.
+ */
+.dist-panel {
+  container: dist / inline-size;
+}
+
+@container dist (max-width: 24rem) {
+  .dist-row-body {
+    grid-template-columns: minmax(0, 1fr) 2.875rem 5rem;
+    grid-template-rows: auto 0.5rem;
+    row-gap: 0.375rem;
+  }
+
+  /* The desktop row right-aligns the label against its track; stacked, the
+     label leads the line instead. */
+  .dist-row-body > :first-child {
+    grid-column: 1;
+    grid-row: 1;
+    text-align: left;
+  }
+
+  .dist-row-body > .dist-track {
+    grid-column: 1 / -1;
+    grid-row: 2;
+  }
+
+  .dist-row-body > :nth-child(3) {
+    grid-column: 2;
+    grid-row: 1;
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  .dist-row-body > :nth-child(4) {
+    grid-column: 3;
+    grid-row: 1;
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
 }
 </style>
