@@ -75,6 +75,9 @@ const rollingRange = computed(() => ({
 }))
 const heatmapRange = computed(() => {
   if (heatmapYear.value === null) return rollingRange.value
+  // A picked year is the full calendar frame (Jan–Dec), deliberately NOT
+  // clamped to today: the rolling default ends at today, a chosen year owns
+  // its own frame — the two windows must not collapse into one view.
   return { start: `${heatmapYear.value}-01-01`, end: `${heatmapYear.value}-12-31` }
 })
 const heatmap = useStatsHeatmap(computed(() => ({ ...heatmapRange.value, ...originFilter.value })))

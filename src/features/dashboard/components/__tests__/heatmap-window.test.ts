@@ -1,5 +1,12 @@
 import { describe, expect, it } from 'vite-plus/test'
-import { heatmapRenderWindow, countWeekColumns, MONDAY_BACKFILL } from '../heatmap-window'
+import {
+  heatmapRenderWindow,
+  countWeekColumns,
+  MONDAY_BACKFILL,
+  heatmapContentWidth,
+  needsHeatmapScroll,
+  MIN_PITCH,
+} from '../heatmap-window'
 
 /** Build dense yyyy-MM-dd points covering [start, end] with `seconds` each. */
 function densePoints(start: string, end: string, seconds = 3600): Array<{ date: string; seconds: number }> {
@@ -79,5 +86,20 @@ describe('MONDAY_BACKFILL', () => {
   it('exposes the Monday-backfill day count', () => {
     expect(MONDAY_BACKFILL).toBeGreaterThanOrEqual(0)
     expect(MONDAY_BACKFILL).toBeLessThanOrEqual(6)
+  })
+})
+
+describe('heatmap layout helpers', () => {
+  it('flags a phone-width viewport as scrolling instead of squeezing', () => {
+    // 53 week columns at the readable pitch floor (~690px) cannot fit a phone
+    // panel; the grid must scroll so its newest columns stay reachable.
+    const content = heatmapContentWidth(53, MIN_PITCH, 40, 12)
+    expect(content).toBeGreaterThan(650)
+    expect(needsHeatmapScroll(300, content)).toBe(true)
+  })
+
+  it('lets a wide card fit the same grid without scrolling', () => {
+    const content = heatmapContentWidth(53, MIN_PITCH, 40, 12)
+    expect(needsHeatmapScroll(830, content)).toBe(false)
   })
 })
