@@ -186,14 +186,14 @@
 
 - [x] **依赖更新（两轮）** `vp update -L`：TS7 两轮均回退 6.0.3 精确（理由与回退法见 techContext 快照）；二轮 vite-plus/vite **1.1.0 出 rc**、
   vitest 5.0.3、Playwright 1.64（chromium 1248）；五道验证 + e2e 26/26 ✓、`a722184`（master `8dccf39`）；两轮均未改版本号（用户指令）。
-- [x] **session-discipline 1.1.3→1.1.5** ①审查词表补「评审/看什么/算错」；②授权读对话：批准**含命令的计划**=授权（R6 ✓）；③6 条停机句全带"完整重发" ⇒ 契约 **60**。
+- [x] **session-discipline 1.1.0→1.1.5**：汇报形状两处漏网 + 拒绝后完整重发；词表补「评审/看什么/算错」；批准含命令的计划=授权（R6 ✓）；停机句全量重发 ⇒ 契约 **60**。
 - [x] **v0.36.1 (2026-09-11)** 阻止 pnpm 隐式安装污染受控配置 — `pnpm-workspace.yaml` 设 `verifyDepsBeforeRun: warn`（v11 默认
   `install` 会让 `pnpm run` 隐式安装，遇未决策的构建脚本时把非布尔占位符写入该受控文件；`warn` 只报告不写入，且不像 `error` 那样被版本号变更误触发）。1266/1266。
-- [x] **session-discipline 1.1.0→1.1.2 (2026-10-07/08)** 汇报形状两处漏网修复 + 拒绝后**完整重发**；三份 56/56·39/39·63/63 ✓（详见包 README）。
 
 ## Backlog
 
 - [ ] **顶栏闪烁（10-10）**：差分✓=去滤镜归零；v0.55.18/19 分层+提示；观察✓100% 亦现 ⇒ 125% 非必要；审查✓=tint/边框归可读支；v0.55.20 两分支实施+自证 ⇒ **目视✓暂未再遇**。
+- [ ] **统计页手机端（10-11 · v0.55.29 · 待评估）**：列表/过滤栏/时长✓；热力图 ⇒ 条带（锚今天/整年）；周时段/柱/时段 ⇒ 减负（条/线/2×2）；悬停片/点选 ⇒ 不出/可恢复；桌面零变化；验证 ✓。
 - [ ] Auth: Token refresh + expiry handling
 - [ ] Dashboard: Weekday / IDE / Devices distribution panels（后端已就绪；Project 已随 v0.35.0 上线，其余复用共享排名列表）
 - [x] Leaderboard: Redis ZSet ranking display (v0.41.0 — contract rebuilt against `GET /leaderboard`)
