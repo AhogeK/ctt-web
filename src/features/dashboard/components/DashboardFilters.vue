@@ -87,13 +87,13 @@ function onEndChange(event: Event): void {
 </script>
 
 <template>
-  <div class="flex flex-wrap items-end gap-4">
+  <div class="filter-bar flex flex-wrap items-end gap-4">
     <!-- Date range preset -->
-    <div class="flex flex-col gap-1.5">
-      <Label class="text-xs text-muted-foreground">Period</Label>
+    <div class="filter-block flex flex-col gap-1.5">
+      <Label class="filter-label text-xs text-muted-foreground">Period</Label>
       <Select :model-value="selectValue" @update:model-value="onPresetChange">
-        <SelectTrigger class="w-44">
-          <CalendarRange class="mr-2 h-4 w-4 text-muted-foreground" />
+        <SelectTrigger class="filter-trigger w-44">
+          <CalendarRange class="filter-leading-icon mr-2 h-4 w-4 text-muted-foreground" />
           <SelectValue />
         </SelectTrigger>
         <SelectContent>
@@ -118,7 +118,11 @@ function onEndChange(event: Event): void {
 
     <!-- Custom range date inputs (visible once Custom is chosen or the URL
          already encodes a non-preset range) -->
-    <div v-if="customMode || preset === 'custom'" class="flex flex-wrap items-end gap-4" data-testid="custom-range">
+    <div
+      v-if="customMode || preset === 'custom'"
+      class="filter-custom flex flex-wrap items-end gap-4"
+      data-testid="custom-range"
+    >
       <div class="flex flex-col gap-1.5">
         <Label class="text-xs text-muted-foreground" for="dash-start">Start</Label>
         <Input
@@ -154,10 +158,10 @@ function onEndChange(event: Event): void {
     </div>
 
     <!-- Device filter -->
-    <div class="flex flex-col gap-1.5">
-      <Label class="text-xs text-muted-foreground">Device</Label>
+    <div class="filter-block filter-block--device flex flex-col gap-1.5">
+      <Label class="filter-label text-xs text-muted-foreground">Device</Label>
       <Select :model-value="deviceValue" @update:model-value="onDeviceChange">
-        <SelectTrigger class="w-44">
+        <SelectTrigger class="filter-trigger w-44">
           <SelectValue />
         </SelectTrigger>
         <SelectContent>
@@ -173,10 +177,10 @@ function onEndChange(event: Event): void {
 
     <!-- IDE filter (mutually exclusive with the device filter server-side;
          the parent clears the other one on change) -->
-    <div class="flex flex-col gap-1.5">
-      <Label class="text-xs text-muted-foreground">IDE</Label>
+    <div class="filter-block flex flex-col gap-1.5">
+      <Label class="filter-label text-xs text-muted-foreground">IDE</Label>
       <Select :model-value="ideValue" @update:model-value="onIdeChange">
-        <SelectTrigger class="w-44">
+        <SelectTrigger class="filter-trigger w-44">
           <SelectValue />
         </SelectTrigger>
         <SelectContent>
@@ -191,3 +195,81 @@ function onEndChange(event: Event): void {
     </div>
   </div>
 </template>
+
+<style scoped>
+/**
+ * The filter bar answers its own width. Phone-narrow, the three selects share
+ * one line instead of stacking one control per row — the stack pushed every
+ * panel below the fold, which is the opposite of what a stats page owes its
+ * first screen. Each control shrinks evenly (`flex: 1 1 0`); the labels go
+ * visually hidden (still in the accessibility tree), since every value names
+ * its own dimension ("All devices", "All IDEs", "Last 30 days") and the
+ * leading calendar glyph only costs width the row can no longer spare. The
+ * custom-range inputs keep their labels and take a row of their own.
+ */
+.filter-bar {
+  container: dashfilters / inline-size;
+}
+
+@container dashfilters (max-width: 35rem) {
+  .filter-bar {
+    gap: 0.5rem;
+  }
+
+  .filter-block {
+    flex: 1 1 0;
+    min-width: 0;
+  }
+
+  /* "All devices" — and any real device name it becomes — is the longest of
+     the three values; a slightly larger share keeps it whole at the widths
+     where the other two still fit comfortably. */
+  .filter-block--device {
+    flex-grow: 1.25;
+  }
+
+  .filter-trigger {
+    width: 100%;
+    min-width: 0;
+    overflow: hidden;
+    padding-inline: 0.375rem;
+    font-size: 0.75rem;
+  }
+
+  /* The value text is the trigger's only flexible part: let it ellipsize
+     instead of running under the chevron. */
+  .filter-trigger > span {
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  /* A smaller chevron buys the value text a few more characters per lane. */
+  .filter-trigger :deep(svg) {
+    width: 0.75rem;
+    height: 0.75rem;
+  }
+
+  .filter-leading-icon {
+    display: none;
+  }
+
+  .filter-label {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    margin: -1px;
+    padding: 0;
+    overflow: hidden;
+    clip-path: inset(50%);
+    white-space: nowrap;
+    border: 0;
+  }
+
+  .filter-custom {
+    flex-basis: 100%;
+    gap: 0.5rem;
+  }
+}
+</style>
