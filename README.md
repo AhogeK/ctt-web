@@ -3,7 +3,7 @@
 [![License](https://img.shields.io/badge/license-MIT-green.svg)](LICENSE)
 [![Vue](https://img.shields.io/badge/Vue-3.5-42b883.svg)](https://vuejs.org/)
 [![Vite](https://img.shields.io/badge/Vite-8-646cff.svg)](https://vitejs.dev/)
-[![pnpm](https://img.shields.io/badge/pnpm-11.x-f69220.svg)](https://pnpm.io/)
+[![pnpm](https://img.shields.io/badge/pnpm-12.x-f69220.svg)](https://pnpm.io/)
 
 Web dashboard frontend for [CTT Server](https://github.com/AhogeK/ctt-server) — the cloud sync backend of
 the [Code Time Tracker](https://github.com/AhogeK/code-time-tracker) JetBrains plugin.
@@ -27,7 +27,7 @@ visualization.
 | Captcha        | hCaptcha (bot protection via @hcaptcha/vue3-hcaptcha)       |
 | Icons          | Iconify Vue                                                 |
 | i18n           | Vue I18n v11                                                |
-| Package Manger | pnpm v11 (standalone install)                                     |
+| Package Manager | pnpm 12 (standalone install)                                    |
 | Lint           | Oxlint v1 (primary) + ESLint                                |
 | Format         | Oxfmt (100% Prettier compatible)                            |
 | Git Hooks      | simple-git-hooks + lint-staged                              |
@@ -105,7 +105,7 @@ src/
 ### Prerequisites
 
 - **Node.js** `^20.19.0 || >=22.12.0`
-- **pnpm** `>=10` (v11 in use) — install standalone via `npm i -g pnpm` or
+- **pnpm** `12.10.1` (pinned via `packageManager`) — install standalone via `npm i -g pnpm` or
   `corepack enable && corepack prepare pnpm@latest --activate`
 
 ### Install
