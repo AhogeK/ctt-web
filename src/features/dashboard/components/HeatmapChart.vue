@@ -21,14 +21,21 @@
  * This component owns rendering + sizing only: data fetching and the
  * loading / error / empty wrapper live in the parent (ChartSection).
  */
-import { computed, onBeforeUnmount, onMounted, ref, watch } from 'vue'
+import { computed, nextTick, onBeforeUnmount, onMounted, ref, watch } from 'vue'
 import { init, type EChartsType } from 'echarts/core'
 import type { DailyStatPoint } from '@/lib/schemas/stats.schema'
 import { formatDuration } from '@/lib/utils'
 import { useStatsStreaks } from '@/composables/useStats'
 import { useThemeStore } from '@/stores/theme'
 import '@/components/charts/echarts-setup'
-import { heatmapRenderWindow, countWeekColumns } from './heatmap-window'
+import {
+  heatmapRenderWindow,
+  countWeekColumns,
+  heatmapContentWidth,
+  needsHeatmapScroll,
+  gridStartDate,
+  MIN_PITCH,
+} from './heatmap-window'
 
 const props = defineProps<{
   /** Dense daily points (date + seconds) in date order */
@@ -55,6 +62,7 @@ const streaks = useStatsStreaks(
 const activeDays = computed(() => props.points.filter((p) => p.seconds > 0).length)
 
 const container = ref<HTMLDivElement | null>(null)
+const scroller = ref<HTMLDivElement | null>(null)
 const containerWidth = ref(0)
 let chart: EChartsType | null = null
 let resizeObserver: ResizeObserver | null = null
@@ -116,10 +124,12 @@ const DOW_LABELS = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun']
 const renderedPoints = computed(() => heatmapRenderWindow(props.points))
 
 /**
- * Week columns for the geometry loop — derived from the real date span,
- * floored at 53 so a partial trailing window still fills a GitHub-like grid.
+ * Week columns for the geometry loop — derived from the real date span, never
+ * padded: a partial window (the current year up to today) ends at its newest
+ * column instead of trailing empty ones, so the grid's right edge is always
+ * the newest day.
  */
-const weekColumns = computed(() => Math.max(53, countWeekColumns(renderedPoints.value)))
+const weekColumns = computed(() => Math.max(1, countWeekColumns(renderedPoints.value)))
 
 // ── Geometry: one closed loop — cell → fonts → labelBand → pitch → cell ──
 const PAD = 12
@@ -146,11 +156,25 @@ const geometry = computed(() => {
 
   const weeks = weekColumns.value
   // Two passes break the pitch → cell → font → labelBand → pitch loop.
-  let g = derive(Math.max(12, Math.floor((availW - 40 - PAD) / weeks)))
-  g = derive(Math.max(12, Math.floor((availW - g.labelBand - PAD) / weeks)))
+  let g = derive(Math.max(MIN_PITCH, Math.floor((availW - 40 - PAD) / weeks)))
+  g = derive(Math.max(MIN_PITCH, Math.floor((availW - g.labelBand - PAD) / weeks)))
 
-  const gridLeft = g.labelBand + Math.round((availW - g.labelBand - PAD - weeks * g.pitch) / 2)
-  return { ...g, gridLeft }
+  if (!needsHeatmapScroll(availW, heatmapContentWidth(weeks, g.pitch, g.labelBand, PAD))) {
+    const gridLeft = g.labelBand + Math.round((availW - g.labelBand - PAD - weeks * g.pitch) / 2)
+    return { ...g, gridLeft, mode: 'fit' as const, contentWidth: availW }
+  }
+
+  // Too narrow to hold the grid at the readable pitch: the strip scrolls
+  // horizontally, drawn at full width and opening on its newest end (the right
+  // edge is the newest week — the calendar's home position). Squeezing instead
+  // would push the newest columns off-canvas; they are the ones worth showing.
+  const scrollG = derive(MIN_PITCH)
+  return {
+    ...scrollG,
+    gridLeft: scrollG.labelBand,
+    mode: 'scroll' as const,
+    contentWidth: heatmapContentWidth(weeks, scrollG.pitch, scrollG.labelBand, PAD),
+  }
 })
 
 const chartHeight = computed(() => {
@@ -308,22 +332,80 @@ function render(): void {
   chart.setOption(buildOption(renderedPoints.value, palette.value), true)
 }
 
+/**
+ * Home position of the strip: the newest day not in the future sits at the
+ * right edge — a rolling window ends at today, a past year at its last day,
+ * and the CURRENT year keeps its full frame while the future cells flow past
+ * the edge instead of leading the view. A reader parked here is left here
+ * when data grows; one browsing older weeks is left where they are.
+ */
+let anchorX = 0
+function pinToAnchorEnd(): void {
+  void nextTick(() => {
+    const el = scroller.value
+    if (!el || geometry.value.mode !== 'scroll') return
+    const pts = renderedPoints.value
+    const first = pts[0]?.date
+    const max = el.scrollWidth - el.clientWidth
+    if (first === undefined) {
+      anchorX = max
+      el.scrollLeft = max
+      return
+    }
+    const now = new Date()
+    const todayIso = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`
+    let anchor = 0
+    for (let i = pts.length - 1; i >= 0; i--) {
+      if (pts[i]!.date <= todayIso) {
+        anchor = i
+        break
+      }
+    }
+    if (anchor === pts.length - 1) {
+      // The window's newest day IS the anchor: the right edge is its own end.
+      anchorX = max
+    } else {
+      const days = Math.round(
+        (new Date(`${pts[anchor]!.date}T00:00:00`).getTime() - gridStartDate(first).getTime()) / 86_400_000,
+      )
+      const g = geometry.value
+      const columnEnd = g.gridLeft + (Math.floor(days / 7) + 1) * g.pitch
+      anchorX = Math.min(Math.max(columnEnd - el.clientWidth, 0), max)
+    }
+    el.scrollLeft = anchorX
+  })
+}
+
 function syncSize(): void {
-  const next = container.value?.clientWidth ?? 0
-  if (next !== containerWidth.value) {
-    containerWidth.value = next
-    render()
+  const next = scroller.value?.clientWidth ?? 0
+  if (next === containerWidth.value) {
+    chart?.resize()
+    return
   }
-  chart?.resize()
+  containerWidth.value = next
+  // The strip's drawn width follows the new mode; size the canvas and re-paint
+  // after the DOM width has applied, then re-open at the anchor end.
+  void nextTick(() => {
+    chart?.resize()
+    render()
+    pinToAnchorEnd()
+  })
 }
 
 onMounted(() => {
   if (container.value === null) return
-  containerWidth.value = container.value.clientWidth
+  containerWidth.value = scroller.value?.clientWidth ?? container.value.clientWidth
   chart = init(container.value)
   render()
   resizeObserver = new ResizeObserver(syncSize)
-  resizeObserver.observe(container.value)
+  resizeObserver.observe(scroller.value ?? container.value)
+  // The first pass runs before the strip has its drawn width: give the canvas
+  // its real size, re-paint, then land on the anchor end.
+  void nextTick(() => {
+    chart?.resize()
+    render()
+    pinToAnchorEnd()
+  })
 })
 
 onBeforeUnmount(() => {
@@ -334,7 +416,24 @@ onBeforeUnmount(() => {
 })
 
 // Data or palette change → update the existing instance (no re-init flicker).
-watch(() => props.points, render)
+// A window change (rolling default ⇄ a calendar year) re-opens at that
+// window's anchor end; grown data keeps a reader who is at the anchor there.
+watch(
+  () => props.windowLabel,
+  () => {
+    render()
+    pinToAnchorEnd()
+  },
+)
+watch(
+  () => props.points,
+  () => {
+    const el = scroller.value
+    const atAnchor = el === null || geometry.value.mode !== 'scroll' || Math.abs(el.scrollLeft - anchorX) <= 40
+    render()
+    if (atAnchor) pinToAnchorEnd()
+  },
+)
 watch(palette, render)
 </script>
 
@@ -359,13 +458,18 @@ watch(palette, render)
         />{{ label }}
       </span>
     </div>
-    <div
-      ref="container"
-      class="mx-auto w-full max-w-full"
-      :style="{ height: `${chartHeight}px` }"
-      role="img"
-      :aria-label="`Coding heatmap for ${props.windowLabel ?? 'the last 12 months'}, ${renderedPoints.length} days from ${renderedPoints[0]?.date ?? ''} to ${renderedPoints[renderedPoints.length - 1]?.date ?? ''}`"
-    />
+    <div ref="scroller" class="heatmap-scroll" :class="geometry.mode === 'scroll' ? 'is-scrollable' : ''">
+      <div
+        ref="container"
+        :class="geometry.mode === 'scroll' ? '' : 'mx-auto w-full max-w-full'"
+        :style="{
+          height: `${chartHeight}px`,
+          ...(geometry.mode === 'scroll' ? { width: `${geometry.contentWidth}px` } : {}),
+        }"
+        role="img"
+        :aria-label="`Coding heatmap for ${props.windowLabel ?? 'the last 12 months'}, ${renderedPoints.length} days from ${renderedPoints[0]?.date ?? ''} to ${renderedPoints[renderedPoints.length - 1]?.date ?? ''}`"
+      />
+    </div>
 
     <!-- Plugin-parity footer: activity totals + streak context (quiet metadata) -->
     <div
@@ -381,3 +485,30 @@ watch(palette, render)
     </div>
   </div>
 </template>
+
+<style scoped>
+/**
+ * The strip scrolls only when the grid cannot hold the readable pitch inside
+ * the panel (see the geometry in the script): squeezing instead would clip the
+ * newest columns off the canvas. It opens on its newest end — the right edge
+ * is the newest day, the calendar's home position — fades its left edge so
+ * older weeks read as "more to the left", and keeps the swipe from chaining
+ * into the page's own back gesture.
+ */
+.heatmap-scroll {
+  overflow-x: auto;
+  overflow-y: hidden;
+  overscroll-behavior-x: contain;
+  scrollbar-width: thin;
+}
+
+.heatmap-scroll.is-scrollable {
+  mask-image: linear-gradient(to right, transparent 0, #000 1.5rem);
+}
+
+.heatmap-scroll:focus-visible {
+  outline: none;
+  box-shadow: inset 0 0 0 2px color-mix(in oklab, var(--ring) 45%, transparent);
+  border-radius: 0.375rem;
+}
+</style>

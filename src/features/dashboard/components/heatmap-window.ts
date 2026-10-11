@@ -59,3 +59,25 @@ export function countWeekColumns(points: DailyStatPoint[]): number {
   const totalDays = Math.round((new Date(`${last.date}T00:00:00`).getTime() - gridStart.getTime()) / 86_400_000) + 1
   return Math.ceil(totalDays / 7)
 }
+
+/** Cell pitch (cell + gap) readability floor in px — below this a week column stops reading as a square. */
+export const MIN_PITCH = 12
+
+/**
+ * Full drawn width of a Monday-first week grid: weekday label band + week
+ * columns + right pad. The grid's own pixel geometry (fonts, borders) belongs
+ * to the chart; this is the width the grid occupies inside whatever shows it.
+ */
+export function heatmapContentWidth(weeks: number, pitch: number, labelBand: number, pad: number): number {
+  return labelBand + weeks * pitch + pad
+}
+
+/**
+ * Whether the grid overflows its viewport. Overflow must scroll, never
+ * squeeze: the pitch floor is a readability bound, and a grid drawn wider
+ * than its box clips the newest columns (the right end of the range) off
+ * the canvas instead of showing them.
+ */
+export function needsHeatmapScroll(viewportWidth: number, contentWidth: number): boolean {
+  return contentWidth > viewportWidth + 0.5
+}
