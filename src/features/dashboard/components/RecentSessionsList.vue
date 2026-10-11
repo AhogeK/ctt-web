@@ -47,7 +47,7 @@ const moreBelow = ref(false)
 </script>
 
 <template>
-  <div class="flex flex-col gap-2">
+  <div class="session-panel flex flex-col gap-2">
     <ScrollFadeList :a11y-label="ariaLabel" :class="maxHeightClass" @overflow="(s) => (moreBelow = s.moreBelow)">
       <template v-for="group in groups" :key="group.key">
         <!-- Day heading. The date is the group's identity, so it is not repeated on every row; the
@@ -69,7 +69,7 @@ const moreBelow = ref(false)
         <li
           v-for="row in group.rows"
           :key="row.id"
-          class="grid grid-cols-[2.75rem_minmax(0,1fr)_5.5rem_4.5rem] items-center gap-2.5 rounded-sm px-1 py-1 text-[11px] hover:bg-muted/40"
+          class="session-row grid grid-cols-[2.75rem_minmax(0,1fr)_5.5rem_4.5rem] items-center gap-2.5 rounded-sm px-1 py-1 text-[11px] hover:bg-muted/40"
           data-testid="session-row"
         >
           <span class="tabular-nums text-muted-foreground" :title="formatDateTime(row.startedAt)">
@@ -102,3 +102,31 @@ const moreBelow = ref(false)
     </p>
   </div>
 </template>
+
+<style scoped>
+/**
+ * The panel is its own container — the compact lanes below answer the panel's
+ * width, not the window's, so the list behaves the same wherever it is mounted.
+ * The project lane keeps `minmax(0, 1fr)` and yields first: on a narrow panel
+ * the fixed readout lanes tighten once and the project keeps as many readable
+ * characters as remain, instead of the row overflowing the card.
+ */
+.session-panel {
+  container: session / inline-size;
+}
+
+@container session (max-width: 24rem) {
+  .session-row {
+    grid-template-columns: 2.5rem minmax(0, 1fr) 4rem 4.25rem;
+    gap: 0.375rem;
+  }
+
+  /* Duration keeps room for a full hh mm ss ("2h 15m 30s"); anything beyond
+     ellipsizes inside its lane instead of sliding under the card clip. */
+  .session-row > :nth-child(4) {
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+}
+</style>
