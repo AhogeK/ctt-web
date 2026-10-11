@@ -187,6 +187,9 @@ export async function mockAuthApis(page: Page): Promise<void> {
  * app redirects to the dashboard.
  *
  * Assumes `mockAuthApis(page)` has been called in `beforeEach`.
+ * One sign-in per test: the login form is guest-only, so calling this again
+ * in an already-authenticated test is bounced back to the dashboard and the
+ * form never appears — split the spec instead.
  */
 export async function loginViaForm(page: Page): Promise<void> {
   await page.goto('/auth/login')
