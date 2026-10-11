@@ -186,11 +186,15 @@ const seams = computed(() => {
 })
 
 /**
- * Hover state: which segment is under the pointer (null = none). Drives the
- * fixed info chip above the capsule and the legend highlight — replaces the
- * ECharts floating tooltip, which drifted with the cursor and read as noise.
+ * Highlight state: which segment is under the pointer — or was last tapped
+ * (null = none). Drives the fixed info chip above the capsule and the legend
+ * highlight — replaces the ECharts floating tooltip, which drifted with the
+ * cursor and read as noise. A tap PINS it (touch has no pointer-leave), so the
+ * same segment tapped again — or any tap outside the panel — restores.
  */
 const activeSeg = ref<BucketKey | null>(null)
+/** The segment of the last tap — a second tap on it clears the pin. */
+let lastClick: BucketKey | null = null
 
 /** Center-x of each visible segment as a percent of the capsule width. */
 const segmentCenters = computed(() => {
@@ -218,6 +222,33 @@ function onSegEnter(name: BucketKey): void {
 
 function onSegLeave(): void {
   activeSeg.value = null
+}
+
+/**
+ * Tap/click toggle: a second tap on the same segment restores; a tap on a
+ * different segment moves the highlight. Works from the strip and from a
+ * legend entry.
+ */
+function onSegToggle(name: BucketKey): void {
+  if (lastClick === name && activeSeg.value === name) {
+    activeSeg.value = null
+    lastClick = null
+    return
+  }
+  activeSeg.value = name
+  lastClick = name
+}
+
+const root = ref<HTMLElement | null>(null)
+
+/** A tap outside the panel restores the default (all legend entries lit). */
+function onDocPointerDown(event: PointerEvent): void {
+  if (activeSeg.value === null) return
+  const target = event.target as Node | null
+  if (root.value !== null && target !== null && !root.value.contains(target)) {
+    activeSeg.value = null
+    lastClick = null
+  }
 }
 
 function buildOption(): Record<string, unknown> {
@@ -256,6 +287,10 @@ function bindHoverEvents(): void {
   chart.on('mouseout', () => {
     activeSeg.value = null
   })
+  chart.on('click', (params: { seriesName?: string }) => {
+    const name = params.seriesName as BucketKey | undefined
+    if (name && BUCKET_ORDER.includes(name)) onSegToggle(name)
+  })
 }
 
 function render(): void {
@@ -272,11 +307,13 @@ onMounted(() => {
   chart = init(container.value)
   render()
   bindHoverEvents()
+  document.addEventListener('pointerdown', onDocPointerDown)
   resizeObserver = new ResizeObserver(syncSize)
   resizeObserver.observe(container.value)
 })
 
 onBeforeUnmount(() => {
+  document.removeEventListener('pointerdown', onDocPointerDown)
   resizeObserver?.disconnect()
   resizeObserver = null
   chart?.dispose()
@@ -293,7 +330,7 @@ watch([buckets, () => theme.isDark], render)
        Other panels keep the default centring: a chart with a fixed plot height
        should not be stretched, but a stack of small blocks reads better
        distributed. -->
-  <div class="flex flex-1 flex-col justify-around gap-4">
+  <div ref="root" class="tod-panel flex flex-1 flex-col justify-around gap-4">
     <!-- Capsule strip — widths are the shares. An overlay draws the paper
          seams between buckets (ECharts stacked bars have no inter-segment
          gap; a border hack gets overpainted by the neighbour). Hovering a
@@ -301,8 +338,10 @@ watch([buckets, () => theme.isDark], render)
          segment center, not the cursor — and highlights its legend entry.
          `mt-10` reserves exactly the chip's height (32px) plus its 8px gap, so
          the chip always has somewhere to appear: without it, a short card puts
-         the strip at the top and the chip would land on the card header. -->
-    <div class="relative mt-10">
+         the strip at the top and the chip would land on the card header. Narrow
+         panels neither reserve nor paint the chip — see the scoped container
+         rules. -->
+    <div class="tod-strip relative mt-10">
       <!-- `role="img"` + `aria-label` on the chart container is ECharts' own ARIA
            pattern (its `visual/aria.js` sets exactly these two attributes when the
            `aria` option is enabled), and it is what every chart panel here uses.
@@ -329,7 +368,7 @@ watch([buckets, () => theme.isDark], render)
       >
         <div
           v-if="activeView && activeSeg"
-          class="pointer-events-none absolute bottom-full left-0 mb-2 flex items-center gap-2 whitespace-nowrap rounded-lg border border-border/60 bg-popover px-3 py-1.5 shadow-md"
+          class="tod-chip-float pointer-events-none absolute bottom-full left-0 mb-2 flex items-center gap-2 whitespace-nowrap rounded-lg border border-border/60 bg-popover px-3 py-1.5 shadow-md"
           :style="{ left: chipLeft + '%', transform: 'translateX(-50%)' }"
           data-testid="tod-info-chip"
         >
@@ -350,7 +389,7 @@ watch([buckets, () => theme.isDark], render)
 
     <!-- Legend: clock order, Lucide day-phase glyph, percent leads · duration
          follows; the hovered bucket's entry highlights in sync with the chip -->
-    <ul class="flex flex-wrap justify-around gap-y-2.5">
+    <ul class="tod-legend flex flex-wrap justify-around gap-y-2.5">
       <li
         v-for="bucket in buckets"
         :key="bucket.name"
@@ -358,9 +397,10 @@ watch([buckets, () => theme.isDark], render)
         :class="activeSeg && activeSeg !== bucket.name ? 'opacity-45' : ''"
         @mouseenter="onSegEnter(bucket.name)"
         @mouseleave="onSegLeave()"
+        @click="onSegToggle(bucket.name)"
       >
         <span
-          class="flex h-7 w-7 shrink-0 items-center justify-center rounded-md"
+          class="tod-chip flex h-7 w-7 shrink-0 items-center justify-center rounded-md"
           :style="{
             backgroundColor: theme.isDark
               ? 'color-mix(in srgb, ' + BUCKET_COLORS[bucket.name].dark + ' 30%, transparent)'
@@ -380,9 +420,9 @@ watch([buckets, () => theme.isDark], render)
             {{ BUCKET_LABEL[bucket.name] }}
             <span class="ml-1 text-[10px] tabular-nums text-muted-foreground/60">{{ BUCKET_RANGE[bucket.name] }}</span>
           </span>
-          <span class="text-sm font-semibold tabular-nums text-foreground">
+          <span class="tod-value tod-percent text-sm font-semibold tabular-nums text-foreground">
             {{ formatPercent(bucket.share, 0) }}%
-            <span class="ml-1.5 text-[11px] font-normal tabular-nums text-muted-foreground">
+            <span class="tod-duration ml-1.5 text-[11px] font-normal tabular-nums text-muted-foreground">
               <template v-if="bucket.seconds > 0">{{ formatDuration(bucket.seconds) }}</template>
               <template v-else>—</template>
             </span>
@@ -396,3 +436,61 @@ watch([buckets, () => theme.isDark], render)
     </p>
   </div>
 </template>
+
+<style scoped>
+/**
+ * Phone-narrow panels tighten the stack: the capsule's chip reserve drops to
+ * a plain gap (touch has no hover to raise the chip into it), the four stats
+ * align on a two-column grid instead of wrapping one ragged row each, and the
+ * icon chips shrink a notch. Wide panels keep the spread legend and full
+ * reserve.
+ */
+.tod-panel {
+  container: tod / inline-size;
+}
+
+@container tod (max-width: 30rem) {
+  /* The hover chip is a desktop affordance: at this width it has no room to
+     rise (it would overlap the title and clip on the card edges), and the
+     legend below already carries every value. The hover highlight on the
+     legend stays. */
+  .tod-chip-float {
+    display: none;
+  }
+
+  .tod-strip {
+    margin-top: 1rem;
+  }
+
+  .tod-legend {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+    column-gap: 0.75rem;
+    row-gap: 0.375rem;
+  }
+
+  .tod-legend li {
+    gap: 0.5rem;
+    padding-inline: 0.125rem;
+  }
+
+  .tod-chip {
+    height: 1.5rem;
+    width: 1.5rem;
+  }
+
+  /* The percent + duration line must stay one line: at grid-lane width the
+     longest bucket ("31% 21h 14m 47s") otherwise orphans its seconds. */
+  .tod-value {
+    white-space: nowrap;
+  }
+
+  .tod-percent {
+    font-size: 0.8125rem;
+  }
+
+  .tod-duration {
+    font-size: 0.625rem;
+  }
+}
+</style>
