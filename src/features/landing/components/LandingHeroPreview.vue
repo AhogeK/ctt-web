@@ -19,6 +19,7 @@ import RankedDistributionList from '@/features/dashboard/components/RankedDistri
 import RecentSessionsList from '@/features/dashboard/components/RecentSessionsList.vue'
 import { useRankedDistribution } from '@/features/dashboard/composables/useRankedDistribution'
 import {
+  EXAMPLE_COMPARISONS,
   EXAMPLE_DATA_BADGE,
   EXAMPLE_DATA_NOTE,
   EXAMPLE_LANGUAGES,
@@ -30,7 +31,9 @@ const items = computed<SummaryStatItem[]>(() =>
   SUMMARY_STAT_FIELDS.map((field) => ({
     label: field.label,
     icon: field.icon,
+    baseline: field.baseline,
     seconds: EXAMPLE_SUMMARY_SECONDS[field.key],
+    comparison: field.key === 'total' ? undefined : EXAMPLE_COMPARISONS[field.key],
   })),
 )
 

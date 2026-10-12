@@ -9,6 +9,23 @@ import { z } from 'zod'
 export const DistributionTypeSchema = z.enum(['LANGUAGES', 'PROJECTS', 'TIME_OF_DAY', 'WEEKDAY', 'DEVICES', 'IDES'])
 export type DistributionType = z.infer<typeof DistributionTypeSchema>
 
+/** One metric measured against its previous complete period (ctt-server v0.78.0). */
+export const SummaryComparisonSchema = z.object({
+  // Seconds coded in the previous complete period (seconds per day for dailyAverage)
+  previousSeconds: z.number().int().nonnegative(),
+  // Percent change against previousSeconds (two decimals); null = no baseline to compare against
+  changePercent: z.number().nullable(),
+})
+
+/** The five metrics that carry a comparison; `total` has no previous period by design. */
+export const StatsSummaryComparisonsSchema = z.object({
+  today: SummaryComparisonSchema,
+  dailyAverage: SummaryComparisonSchema,
+  thisWeek: SummaryComparisonSchema,
+  thisMonth: SummaryComparisonSchema,
+  thisYear: SummaryComparisonSchema,
+})
+
 /** Seconds coded today / this ISO week / this month / this year / lifetime (seconds). */
 export const StatsSummaryResponseSchema = z.object({
   // Seconds coded today
@@ -23,6 +40,8 @@ export const StatsSummaryResponseSchema = z.object({
   thisYear: z.number().int().nonnegative(),
   // Lifetime seconds (overlapping sessions merged)
   total: z.number().int().nonnegative(),
+  // Per-metric change against the previous complete period (absent on older servers)
+  comparisons: StatsSummaryComparisonsSchema.optional(),
 })
 
 /** One day of the coding heatmap (dense — includes zero-value days). */
@@ -195,6 +214,7 @@ export const HeatmapMonthsResponseSchema = z.array(z.string().regex(/^\d{4}-(0[1
 
 // Type exports (z.infer — never hand-write interfaces)
 export type StatsSummaryResponse = z.infer<typeof StatsSummaryResponseSchema>
+export type SummaryComparison = z.infer<typeof SummaryComparisonSchema>
 export type DailyStatPoint = z.infer<typeof DailyStatPointSchema>
 export type HeatmapResponse = z.infer<typeof HeatmapResponseSchema>
 export type RecentSession = z.infer<typeof RecentSessionSchema>

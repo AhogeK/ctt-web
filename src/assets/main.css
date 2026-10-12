@@ -80,6 +80,8 @@
   /* Emerald (#10b981) — secondary success, pill badges,
    * completion states". A palette entry that had no token; it appeared as `[#10b981]`. */
   --color-success: #10b981;
+  /* Success as TEXT ink — light mode needs a darker green for AA (see --success-ink in :root). */
+  --color-success-ink: var(--success-ink);
   /* The status palette defines green and emerald but no warning colour — the amber scale
    * (amber-50…900) had been typed by hand in 40 places across the auth/settings surfaces. These
    * three roles are the shades already in use, so adopting them is visually near-identical. */
@@ -114,6 +116,9 @@
   --accent: #7170ff;
   --accent-foreground: #ffffff;
   --destructive: oklch(0.577 0.245 27.325);
+  /* #10b981 scores only 2.54:1 on the white card — fine as a fill, failing as small text. Emerald-700
+   * keeps the hue and measures ≈5.5:1; the dark theme keeps #10b981 (7.7:1) and needs no fix. */
+  --success-ink: #047857;
   --border: #d0d6e0;
   --input: #d0d6e0;
   --ring: #7170ff;
@@ -156,6 +161,7 @@
   --accent: #7170ff;
   --accent-foreground: #ffffff;
   --destructive: oklch(0.704 0.191 22.216);
+  --success-ink: #10b981; /* unchanged on the dark card: 7.7:1 */
   --border: rgba(255, 255, 255, 0.09);
   --input: rgba(255, 255, 255, 0.09);
   --ring: #7170ff;
@@ -515,6 +521,15 @@
         .beat-hero {
           animation: beat-lead auto linear both;
           animation-timeline: scroll(root block);
+          /* The hero is the one beat whose content (copy + the tall product plane) can outgrow the
+             screen: centred at 50% with `translate: -50%`, an over-tall box bleeds upward and the
+             headline climbs under the header. The cap stops that climb — the box may not exceed
+             100svh − 44px, so its top never rises above 22px no matter the viewport. Above ~887px
+             tall viewports the content fits under the cap and nothing moves; below it the hero
+             parks slightly lower and the overflow runs under the fold, where it is clipped like
+             everything else past the pin. (`translate: -50%` is relative to the box, so the cap
+             also parks a capped box exactly 22px lower — that is the intended, one-line effect.) */
+          max-block-size: calc(100svh - 44px);
           /* Position only: the hero scrubs its rise across the SAME range as the arriving beat and
              ends exactly at the release line (stageTop + track − 100svh = 130svh + the sticky
              header) — one constant speed ≈0.65 of the scroll, no hold, no slow tail: a hold at the
