@@ -85,6 +85,8 @@ light or brand colour on cards (the accent budget belongs to CTAs and active sta
 - **Green** (`#27a644`): Primary success/active status. Used for "in progress" indicators.
 - **Emerald** (`#10b981`): Secondary success — pill badges, completion states.
 
+**Summary delta lines (v0.56.0)** — the change caption under a summary-card value: `↗ +12.4% vs yesterday` (lucide TrendingUp/Down at 12px, one-decimal percent, muted named baseline; the whole line sets muted at 0%). The up/down colour convention lives in one function — `deltaClass` in `src/features/dashboard/components/summary-comparison.ts`: international today (green = up, red = down); a future Chinese locale flips it to the A-share convention (red = up) there and nowhere else. The up colour runs through `text-success-ink`: dark keeps #10b981 (7.71:1 on the card), light deepens to emerald-700 #047857 (5.48:1) — measured on the real page 2026-10-12, both passing AA for small text. The same line ships in the landing hero preview; its composition baseline was re-recorded for it (see `e2e/landing/composition-snapshot.ts`).
+
 ### Border & Divider
 
 - **Border Primary** (`#23252a`): Solid dark border for prominent separations.

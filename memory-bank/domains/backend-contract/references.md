@@ -124,3 +124,16 @@ Two of these carry traps worth knowing before wiring a panel:
 - Device registration — `POST /devices` requires `deviceId` as a UUID — a plain string returns `COMMON_001`
 - hCaptcha (dev) — dummy token `10000000-aaaa-bbbb-cccc-000000000001` always verifies
 - CSRF — `XSRF-TOKEN` cookie → `X-XSRF-TOKEN` header (raw value, no masking)
+
+## Summary comparisons (ctt-server v0.78.0 · 2026-10-12)
+
+- `GET /stats/summary` gained an **always-present** five-key `comparisons` object:
+  `previousSeconds` (long; seconds per day for `dailyAverage`) + `changePercent`
+  (number, 2 dp, `null` when the baseline is 0 or `dailyAverage`'s first day;
+  `total` absent by design; keys never omitted — `@JsonInclude(ALWAYS)`).
+- The web client parses it as **optional**: an older backend omits the object and the
+  cards render without captions (zero change).
+- Live-verified: seeded yesterday 1h + today 1.5h → `+50 / +25 / +50 / null / null`.
+- **No server-side result cache exists on `/stats/*`** — the 60/min limit is a rate
+  window, not freshness; `useStats.ts`'s old "server's 60s cache" comment was fixed in
+  v0.56.0 (staleTime is purely a client-side choice).

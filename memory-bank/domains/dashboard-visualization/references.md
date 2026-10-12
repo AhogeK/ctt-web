@@ -95,3 +95,18 @@ Floors: panel card ≥830px (row ≥1684px), summary row ≥1430px.
 - Dev server `http://localhost:5173/` (dashboard at `/dashboard`)
 - Backend `http://localhost:8080/ctt-server` (swagger at `/swagger-ui`)
 - Mail capture `http://localhost:8025` (mailpit)
+
+## Summary delta lines (v0.56.0)
+
+- Change caption under each summary-card value: `↗ +12.4% vs yesterday` — lucide
+  TrendingUp/Down (12px) + one-decimal percent (half away from zero; `×10` floats land
+  on the wrong side of `.x5` ⇒ round to hundredths first) + muted named baseline;
+  hidden without a baseline; the whole line is muted at 0%. Logic + the single
+  colour-mapping point: `components/summary-comparison.ts` (`deltaClass`).
+- Must stay on ONE line at phone widths (`shrink-0 whitespace-nowrap`; e2e pins height
+  ≤20px). Shipped in the landing hero preview too (user-requested, 2026-10-12): its composition
+  baseline was re-recorded (`composition-snapshot.ts`, recording history inside) and `settleHero`
+  now waits for the entrance clocks before measuring. A `max-block-size` cap on `.beat-hero`
+  keeps the hero from climbing under the header on short screens.
+- Contrast (measured 2026-10-12, real page): up colour = `text-success-ink` — emerald-700
+  #047857 light (5.48:1) / #10b981 dark (7.71:1); destructive 4.77 / 6.77. All pass AA.
