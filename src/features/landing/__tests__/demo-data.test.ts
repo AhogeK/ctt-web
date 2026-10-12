@@ -1,5 +1,11 @@
 import { describe, expect, it } from 'vitest'
-import { EXAMPLE_ACTIVITY_WEEKS, EXAMPLE_LANGUAGES, EXAMPLE_SUMMARY_SECONDS, exampleActivityWeeks } from '../demo-data'
+import {
+  EXAMPLE_ACTIVITY_WEEKS,
+  EXAMPLE_COMPARISONS,
+  EXAMPLE_LANGUAGES,
+  EXAMPLE_SUMMARY_SECONDS,
+  exampleActivityWeeks,
+} from '../demo-data'
 
 /**
  * The example data has one job beyond looking plausible: it must not contradict itself. Two surfaces
@@ -56,5 +62,18 @@ describe('landing example data', () => {
 
     expect(first).toEqual(second)
     expect(first.filter((cell) => cell !== null).at(-1)?.date).toBe('2026-09-30')
+  })
+
+  it('keeps every example delta equal to the change between the periods it names', () => {
+    const keys = ['today', 'dailyAverage', 'thisWeek', 'thisMonth', 'thisYear'] as const
+
+    for (const key of keys) {
+      const { previousSeconds, changePercent } = EXAMPLE_COMPARISONS[key]
+      const recomputed = Math.round(((EXAMPLE_SUMMARY_SECONDS[key] - previousSeconds) / previousSeconds) * 10000) / 100
+      expect(changePercent).toBe(recomputed)
+    }
+
+    // The hero shows both directions: exactly one card steps down.
+    expect(keys.filter((key) => (EXAMPLE_COMPARISONS[key].changePercent ?? 0) < 0)).toEqual(['thisWeek'])
   })
 })

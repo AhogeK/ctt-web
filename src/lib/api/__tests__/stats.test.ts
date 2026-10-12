@@ -75,6 +75,36 @@ describe('getStatsSummary', () => {
     const query = mockApiFetch.mock.calls[0]![1]!.query as Record<string, unknown>
     expect(query.deviceId).toBeUndefined()
   })
+
+  it('parses comparisons when present and tolerates their absence (older servers)', async () => {
+    mockApiFetch.mockResolvedValue(
+      statsEnvelope({
+        today: 0,
+        dailyAverage: 1034,
+        thisWeek: 0,
+        thisMonth: 0,
+        thisYear: 248277,
+        total: 248277,
+        comparisons: {
+          today: { previousSeconds: 1234, changePercent: -100 },
+          dailyAverage: { previousSeconds: 1039, changePercent: null },
+          thisWeek: { previousSeconds: 5400, changePercent: -100 },
+          thisMonth: { previousSeconds: 12040, changePercent: -100 },
+          thisYear: { previousSeconds: 980000, changePercent: -74.67 },
+        },
+      }),
+    )
+
+    const withComparisons = await getStatsSummary()
+    expect(withComparisons.comparisons?.today).toEqual({ previousSeconds: 1234, changePercent: -100 })
+    expect(withComparisons.comparisons?.dailyAverage.changePercent).toBeNull()
+
+    mockApiFetch.mockResolvedValue(
+      statsEnvelope({ today: 0, dailyAverage: 0, thisWeek: 0, thisMonth: 0, thisYear: 0, total: 0 }),
+    )
+    const withoutComparisons = await getStatsSummary()
+    expect(withoutComparisons.comparisons).toBeUndefined()
+  })
 })
 
 describe('getStatsHeatmap', () => {
