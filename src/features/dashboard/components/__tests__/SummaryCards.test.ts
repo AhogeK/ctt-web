@@ -1,20 +1,14 @@
 import { beforeEach, describe, expect, it, vi } from 'vite-plus/test'
 import { mount } from '@vue/test-utils'
 import { ref } from 'vue'
+import type { StatsSummaryResponse } from '@/lib/schemas/stats.schema'
 import SummaryCards from '../SummaryCards.vue'
 
 vi.mock('@/components/ui/skeleton', () => ({
   Skeleton: { template: '<div data-testid="skeleton" />' },
 }))
 
-const summaryData = ref<{
-  today: number
-  dailyAverage: number
-  thisWeek: number
-  thisMonth: number
-  thisYear: number
-  total: number
-} | null>(null)
+const summaryData = ref<StatsSummaryResponse | null>(null)
 const summaryPending = ref(true)
 const summaryError = ref(false)
 const refetchMock = vi.fn<() => void>()
@@ -70,5 +64,54 @@ describe('SummaryCards', () => {
     const first = retries[0]!
     await first.trigger('click')
     expect(refetchMock).toHaveBeenCalledTimes(1)
+  })
+
+  it('renders one change line per comparable metric and never on the lifetime Total', () => {
+    summaryData.value = {
+      today: 3600,
+      dailyAverage: 7200,
+      thisWeek: 5400,
+      thisMonth: 86400,
+      thisYear: 241959,
+      total: 90000,
+      comparisons: {
+        today: { previousSeconds: 7200, changePercent: -50 },
+        dailyAverage: { previousSeconds: 0, changePercent: null },
+        thisWeek: { previousSeconds: 7200, changePercent: 25 },
+        thisMonth: { previousSeconds: 108000, changePercent: 0 },
+        thisYear: { previousSeconds: 1200000, changePercent: 8.55 },
+      },
+    }
+    summaryPending.value = false
+
+    const wrapper = mount(SummaryCards, { props: { deviceId: null, ideName: null } })
+    const lines = wrapper.findAll('[data-testid="summary-comparison"]')
+    // dailyAverage has no baseline (null percent), so four of the five lines render.
+    expect(lines).toHaveLength(4)
+    expect(lines.map((node) => node.text())).toEqual([
+      '-50% vs yesterday',
+      '+25% vs last week',
+      '0% vs last month',
+      '+8.6% vs last year',
+    ])
+    // The direction icon follows the rounded value: flat carries none.
+    expect(lines[0]!.find('svg').exists()).toBe(true)
+    expect(lines[2]!.find('svg').exists()).toBe(false)
+    expect(lines[1]!.attributes('title')).toBe('Last week · 2h')
+  })
+
+  it('renders no change line when the server sends no comparisons (older backend)', () => {
+    summaryData.value = {
+      today: 5400,
+      dailyAverage: 1217,
+      thisWeek: 7200,
+      thisMonth: 86400,
+      thisYear: 241959,
+      total: 90000,
+    }
+    summaryPending.value = false
+
+    const wrapper = mount(SummaryCards, { props: { deviceId: null, ideName: null } })
+    expect(wrapper.findAll('[data-testid="summary-comparison"]')).toHaveLength(0)
   })
 })

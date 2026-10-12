@@ -16,11 +16,17 @@ import { SNAPSHOT_DESKTOP } from './composition-snapshot.js'
  */
 const VIEWPORT_PHONE = { width: 440, height: 956 }
 
-/** Waits for the hero's entrance to finish. The session panel is animated on phones, so it is not used
- *  as a signal that the page has loaded. */
+/** Waits for the hero's entrance to finish. The old signal — the plane wrapper's opacity — reads
+ *  `1` the moment the app mounts (that wrapper carries no animation), so measurements used to land
+ *  mid-entrance and slid ~26px with load latency; this waits for every time-based entrance clock
+ *  instead (scroll-driven animations report a percentage currentTime and are exempt). The pinned
+ *  baseline below was re-recorded at this state on 2026-10-12, together with the summary delta lines. */
 async function settleHero(page: Page) {
   await page.goto('/')
-  await expect(page.locator('[data-testid="hero-preview"]').locator('..')).toHaveCSS('opacity', '1')
+  await page.locator('[data-testid="hero-recent-panel"]').waitFor({ state: 'attached' })
+  await page.waitForFunction(() =>
+    document.getAnimations().every((a) => a.playState === 'finished' || typeof a.currentTime !== 'number'),
+  )
 }
 
 const selectorRect = (page: Page, selector: string) =>
