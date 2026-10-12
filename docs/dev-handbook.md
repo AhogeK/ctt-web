@@ -694,7 +694,7 @@ e2e/
 │   ├── logout.spec.ts
 │   ├── protected-routes.spec.ts
 │   └── guest-guard.spec.ts
-├── dashboard/               # 布局契约（heatmap-layout.spec.ts）
+├── dashboard/               # 布局契约（heatmap-layout.spec.ts · summary-comparison.spec.ts）
 ├── devices/                 # 设备管理与撤销
 ├── leaderboard/             # 排行榜 spec + 本地 fixture/helper
 ├── fixtures/                # 共享测试数据（跨 feature）
