@@ -10,7 +10,7 @@
  */
 import type { SummaryStatKey } from '@/features/dashboard/components/summary-stat-fields'
 import type { RankedEntry } from '@/features/dashboard/composables/useRankedDistribution'
-import type { RecentSession } from '@/lib/schemas/stats.schema'
+import type { RecentSession, SummaryComparison } from '@/lib/schemas/stats.schema'
 import { groupSessions, type SessionDayGroup } from '@/features/dashboard/components/session-groups'
 import { buildTrophies, type Trophy } from '@/features/achievements/composables/trophy-model'
 import type { Achievement, AchievementWindow } from '@/lib/schemas/stats.schema'
@@ -50,6 +50,20 @@ export const EXAMPLE_SUMMARY_SECONDS: Record<SummaryStatKey, number> = {
   thisMonth: 41 * 3600 + 15 * 60,
   thisYear: 74 * 3600 + 30 * 60,
   total: EXAMPLE_LANGUAGES.reduce((sum, entry) => sum + entry.seconds, 0),
+}
+
+/**
+ * Previous-complete-period values behind the example deltas, keyed like the summary fields
+ * (`total` has none — a lifetime figure has no previous period). The percent is the change between
+ * each pair above; `demo-data.test.ts` asserts that arithmetic rather than trusting it. `thisWeek`
+ * is deliberately the one negative so the hero shows both directions of the delta line.
+ */
+export const EXAMPLE_COMPARISONS: Record<Exclude<SummaryStatKey, 'total'>, SummaryComparison> = {
+  today: { previousSeconds: 2 * 3600 + 50 * 60, changePercent: 20.59 },
+  dailyAverage: { previousSeconds: 4 * 3600, changePercent: 2.08 },
+  thisWeek: { previousSeconds: 22 * 3600, changePercent: -15.15 },
+  thisMonth: { previousSeconds: 38 * 3600, changePercent: 8.55 },
+  thisYear: { previousSeconds: 66 * 3600, changePercent: 12.88 },
 }
 
 /**

@@ -31,7 +31,9 @@ const items = computed<SummaryStatItem[]>(() =>
   SUMMARY_STAT_FIELDS.map((field) => ({
     label: field.label,
     icon: field.icon,
+    baseline: field.baseline,
     seconds: data.value?.[field.key] ?? 0,
+    comparison: field.key === 'total' ? undefined : data.value?.comparisons?.[field.key],
   })),
 )
 

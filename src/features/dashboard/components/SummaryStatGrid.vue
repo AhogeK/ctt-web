@@ -7,9 +7,12 @@
  * from its own data: one implementation, two consumers. The testids stay on this element, so the
  * dashboard's unit test and the heatmap E2E keep asserting the real node.
  */
+import { computed } from 'vue'
+import { TrendingDown, TrendingUp } from '@lucide/vue'
 import { Skeleton } from '@/components/ui/skeleton'
 import { formatDuration } from '@/lib/utils'
 import { SUMMARY_ACCENT_ICONS, type SummaryStatItem } from './summary-stat-fields'
+import { deltaView } from './summary-comparison'
 
 const props = withDefaults(
   defineProps<{
@@ -24,6 +27,9 @@ const props = withDefaults(
 )
 
 const emit = defineEmits<{ retry: [] }>()
+
+/** Items plus their resolved delta lines — a null view means "render no line". */
+const rows = computed(() => props.items.map((item) => ({ ...item, delta: deltaView(item) })))
 </script>
 
 <template>
@@ -32,18 +38,18 @@ const emit = defineEmits<{ retry: [] }>()
   <div class="@container/sc">
     <div class="grid grid-cols-2 gap-4 md:grid-cols-3 @[1430px]/sc:grid-cols-6" data-testid="summary-cards">
       <div
-        v-for="item in props.items"
-        :key="item.label"
+        v-for="row in rows"
+        :key="row.label"
         data-surface="card"
         class="group rounded-xl border border-border/50 dark:border-border bg-gradient-to-b from-card to-muted/40 dark:bg-none dark:bg-card p-4 transition-[border-color,box-shadow] duration-200 hover:border-border hover:shadow-sm"
       >
         <div class="flex items-center justify-between gap-2">
-          <p class="text-[11px] font-medium uppercase tracking-wider text-muted-foreground/90">{{ item.label }}</p>
+          <p class="text-[11px] font-medium uppercase tracking-wider text-muted-foreground/90">{{ row.label }}</p>
           <component
-            :is="item.icon"
+            :is="row.icon"
             class="h-3.5 w-3.5 transition-colors"
             :class="
-              SUMMARY_ACCENT_ICONS.has(item.icon)
+              SUMMARY_ACCENT_ICONS.has(row.icon)
                 ? 'text-primary/70'
                 : 'text-muted-foreground/50 group-hover:text-muted-foreground'
             "
@@ -56,7 +62,31 @@ const emit = defineEmits<{ retry: [] }>()
           class="mt-1.5 text-[26px] font-semibold leading-none tracking-tight tabular-nums text-foreground"
           data-testid="summary-value"
         >
-          {{ formatDuration(item.seconds) }}
+          {{ formatDuration(row.seconds) }}
+        </p>
+        <p
+          v-if="!props.placeholder && row.delta"
+          class="mt-1.5 flex items-center gap-1 text-[11px] leading-4 tabular-nums"
+          data-testid="summary-comparison"
+          :title="row.delta?.title"
+        >
+          <TrendingUp
+            v-if="row.delta?.direction === 'up'"
+            class="h-3 w-3"
+            :class="row.delta?.className"
+            aria-hidden="true"
+          />
+          <TrendingDown
+            v-else-if="row.delta?.direction === 'down'"
+            class="h-3 w-3"
+            :class="row.delta?.className"
+            aria-hidden="true"
+          />
+          <span class="shrink-0 font-medium whitespace-nowrap" :class="row.delta?.className">{{
+            row.delta?.text
+          }}</span>
+          <!-- The leading space lives in the expression: adjacent elements add none -->
+          <span class="shrink-0 whitespace-nowrap text-muted-foreground">{{ ' ' + (row.baseline ?? '') }}</span>
         </p>
         <button
           v-if="props.error"

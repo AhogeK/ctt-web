@@ -52,7 +52,11 @@ function filterKey(filter?: StatsFilterParams): string {
   return filter?.deviceId ?? filter?.ideName ?? 'all'
 }
 
-/** Cache window for summary / heatmap / achievements — aligns with the server's 60s cache. */
+/**
+ * Freshness window for summary / heatmap / achievements. Client-side only: the server keeps no
+ * result cache (its 60/min limit is a rate window), so this is how long a refetch may skip the
+ * network.
+ */
 const STATS_LONG_STALE_TIME = 1000 * 60
 /**
  * Coding activity summary (today / daily average / week / month / year /
