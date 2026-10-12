@@ -128,6 +128,8 @@
   **对比度修正 ✓**：`--success-ink`（亮 #047857 / 暗 #10b981）——实测 7.71 / **5.48**（红 6.77 / 4.77）全过 AA。
   **真后端实核 ✓** + 截图全套（hero/cards × 亮暗 × 宽/手机）在 `.omp/qa/summary-comparison-2026-10-12/`。
   单测 1494 ✓ · build ✓ · landing 26/26 ✓ · dashboard 14/14 ✓。等用户目视 + 提交授权。
+  **提交 ✓（2026-10-13）**：develop 五笔 —— 功能 `2502f9f` · 测试 `128be75` · release `907834b` · 文档 `0db8892` · 记忆 `d09f215`；
+  master 逐个 pick 四笔（`db5ccfc`/`03714ec`/`fd0ea6d`/`ab6903c`）✓；非 AI 内容差 = 空、master AI 文件 = 0。
 - **落地页滚动编排（v0.55.1–0.55.7，逐轮全档 → `memory-bank/archives/2026-10-08-scroll-rounds-trim.md`）**：全空段双向（flush 门槛 +
   退场触发重做）· 上行回看渐入恢复（删瞬时恢复章）· 高视口退场锚定首块版块（`leaveOnBand`）· 上行对向交叉 · 滚动速率重做（轨道 **230svh** + `beat-arc` 单段线性，位移比无零速）·
   双块同屏禁令三处共钟（hero↔beat 同 60svh · 带进场同 60% 线 · 删对向簿记）—— 各轮 landing E2E / 单测 1478 / lint 全绿；
