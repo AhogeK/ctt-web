@@ -18,7 +18,7 @@
 | Icons         | @iconify/vue (migrated from lucide-vue-next v0.10.5) | ^5 |
 | i18n          | Vue I18n                               | ^11          |
 | Captcha       | @hcaptcha/vue3-hcaptcha                | ^1           |
-| Package Mgr   | pnpm (standalone `~/Library/pnpm`)     | 12.10.1      |
+| Package Mgr   | pnpm (standalone `~/Library/pnpm`)     | 12.11.2      |
 | Design System | DESIGN.md                              | Linear-style |
 
 ## Dev Toolchain (Vite+ Unified)
@@ -39,6 +39,9 @@
   ran pnpm 12, so pnpm 12 compared its `enableGlobalVirtualStore` default against a tree that never recorded it and
   warned on every `pnpm run`/`pnpm exec`. Fix shipped in one `chore(deps)` change: the lockfile was regenerated and
   `packageManager: pnpm@12.10.1` recorded in `package.json` — lockfile, README and this snapshot all read 12 now.
+
+- **pnpm 跟随最新，不是"固定"（2026-10-13 用户澄清 ✓）**：`packageManager` 的版本与 lockfile 的对应记录随**用户自行升级**推进
+  （12.10.1 → 12.11.2，2026-10-13）；提交与汇报的措辞用"升级到 X / 保持最新"，**不要写成"固定 / pin"** ✗。
 
 - **`pnpm-workspace.yaml` is the settings file** — not `.npmrc`, which pnpm does not read for
   `verify-deps-before-run`. `allowBuilds` holds the build-script decisions (`msw`, `simple-git-hooks`, `vue-demi`);

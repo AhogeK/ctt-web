@@ -130,6 +130,11 @@
   单测 1494 ✓ · build ✓ · landing 26/26 ✓ · dashboard 14/14 ✓。等用户目视 + 提交授权。
   **提交 ✓（2026-10-13）**：develop 五笔 —— 功能 `2502f9f` · 测试 `128be75` · release `907834b` · 文档 `0db8892` · 记忆 `d09f215`；
   master 逐个 pick 四笔（`db5ccfc`/`03714ec`/`fd0ea6d`/`ab6903c`）✓；非 AI 内容差 = 空、master AI 文件 = 0。
+- **技能库同步 + pnpm 升级（2026-10-13 · v0.56.1 · develop 已推 · master 进行中）**：技能库 604 文件仅进 develop `869a99e`；
+  pnpm **升级到 12.11.2**（含 lock）`c14e730` · 版本 `0.56.1` `1365d29`（均已推 develop）。
+  **接手清单**：master 逐个 pick `c14e730`（消息改为 "chore: update pnpm to 12.11.2" + cherry-pick 行）与 `1365d29` → push master →
+  核对（AI 路径 = 0、非 AI 内容差 = 空）→ 切回 develop → 本文件补提交记录 → `chore(memory): record the skills & pnpm round` 提交并推 develop →
+  sweep + check-knowledge。session-discipline 已升 **1.1.9**（计划审批读对话：展示+征求过 ⇒ 任何非拒绝回复都算；词表类即时生效、逻辑类新会话生效）。
 - **落地页滚动编排（v0.55.1–0.55.7，逐轮全档 → `memory-bank/archives/2026-10-08-scroll-rounds-trim.md`）**：全空段双向（flush 门槛 +
   退场触发重做）· 上行回看渐入恢复（删瞬时恢复章）· 高视口退场锚定首块版块（`leaveOnBand`）· 上行对向交叉 · 滚动速率重做（轨道 **230svh** + `beat-arc` 单段线性，位移比无零速）·
   双块同屏禁令三处共钟（hero↔beat 同 60svh · 带进场同 60% 线 · 删对向簿记）—— 各轮 landing E2E / 单测 1478 / lint 全绿；
