@@ -144,7 +144,8 @@
   后用户裁定**加与热力图同款下拉** ⇒ 共享 `YearSelect`（第二消费方提取、旧文件删除）、`longTermYear` 本地 ref 不进 URL、基线名随窗口（'2025 average'）、**当年截到今天**。
   验证：单测 **1531** 全绿 · 布局 e2e **15/15**（含 3 新例）· build/type/lint 0 · 目视材料 `.omp/qa/long-term-trend/`
   （含 mid 两张与 year-2025-dark）+ `.omp/qa/tooltip-surface-2026-10-13/` 5 张 + visual-qa 待判登记。
-  **已提交推送**：develop `d0a6909`（浮层修复）· `3aaacfa`（卡片+选年）· `cd8d268`（0.57.0）· `ac6bf17`（README）+ 本记忆笔；master 按规程**逐笔 pick 同四笔**（见 git log master）。
+  **已提交推送**：develop `d0a6909`（浮层修复）· `3aaacfa`（卡片+选年）· `cd8d268`（0.57.0）· `ac6bf17`（README）+ 本记忆笔；
+  master 按规程**逐笔 pick 同四笔**（见 git log master）。
 - **落地页滚动编排（v0.55.1–0.55.7，逐轮全档 → `memory-bank/archives/2026-10-08-scroll-rounds-trim.md`）**：全空段双向（flush 门槛 +
   退场触发重做）· 上行回看渐入恢复（删瞬时恢复章）· 高视口退场锚定首块版块（`leaveOnBand`）· 上行对向交叉 · 滚动速率重做（轨道 **230svh** + `beat-arc` 单段线性，位移比无零速）·
   双块同屏禁令三处共钟（hero↔beat 同 60svh · 带进场同 60% 线 · 删对向簿记）—— 各轮 landing E2E / 单测 1478 / lint 全绿；
