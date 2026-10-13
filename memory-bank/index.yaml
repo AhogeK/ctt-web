@@ -12,8 +12,8 @@ maintenance:
   - '每轮收尾校验：files/domains 的键是相对路径、值是 wc -l 语义的行数；与实际不符即索引漂移'
   - '索引只做定位，不写结论 —— 结论属于被指向的文件（避免两处重复，P6）'
 files:
-  AGENTS.md: 256
-  memory-bank/activeContext.md: 174
+  AGENTS.md: 262
+  memory-bank/activeContext.md: 185
   memory-bank/progress.md: 200
   memory-bank/systemPatterns.md: 187
   memory-bank/techContext.md: 164
@@ -61,10 +61,10 @@ domains:
     memory-bank/domains/backend-contract/scenarios.md: 73
   dashboard-visualization:
     memory-bank/domains/dashboard-visualization/meta.md: 96
-    memory-bank/domains/dashboard-visualization/practices.md: 196
-    memory-bank/domains/dashboard-visualization/principles.md: 107
-    memory-bank/domains/dashboard-visualization/references.md: 112
-    memory-bank/domains/dashboard-visualization/rendering.md: 75
+    memory-bank/domains/dashboard-visualization/practices.md: 198
+    memory-bank/domains/dashboard-visualization/principles.md: 142
+    memory-bank/domains/dashboard-visualization/references.md: 113
+    memory-bank/domains/dashboard-visualization/rendering.md: 84
     memory-bank/domains/dashboard-visualization/scenarios.md: 127
   landing-page:
     memory-bank/domains/landing-page/meta.md: 65

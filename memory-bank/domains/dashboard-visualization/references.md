@@ -19,7 +19,8 @@ Panels not yet built but available server-side: `WEEKDAY`, `DEVICES`, `IDES`. Th
 endpoint also has a contract layer (`useStatsAchievements`) with no panel yet.
 
 Panel-scoped window controls (independent of the filter bar, and **not** URL params):
-`HeatmapYearSelect` (heatmap) and `TrendMonthSelect` (trend). Both bound their options to what the
+`YearSelect` (heatmap + long-term trend; extracted at the second consumer) and `TrendMonthSelect`
+(trend). Both bound their options to what the
 backend reports as populated (`heatmap-years` / `heatmap-months`).
 
 Both categorical panels render through one shared list (`RankedDistributionList.vue`) fed by

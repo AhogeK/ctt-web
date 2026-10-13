@@ -165,21 +165,23 @@ summary row:  @container/sc          grid: @[1430px]/sc:grid-cols-6
   emitted CSS, so a same-specificity `lg:` rule overrides it. Prefer real container queries here;
   if an arbitrary breakpoint is unavoidable, verify the computed value, not the class name.
 
-## Panel order is the template (v0.35.1)
+## Panel order is the template (v0.57.0)
 
-Panels are grouped by row, and the grouping **is** the DOM order in `DashboardHome.vue` — one grid,
-no span special cases, so reordering means reordering the template:
+Panels are grouped by row, and the grouping **is** the DOM order in `DashboardHome.vue` —
+the long-term trend card spans the full row once the grid is two columns
+(`@[1684px]/page:col-span-2`):
 
 | Row | Panels |
 | --- | ------ |
 | 1 | Language / Project distribution (the two categorical shares) |
 | 2 | Coding heatmap / Coding trend (calendar + trend) |
+| 2b | Long-term trend (full width: 12-month dots · weekly average · window mean) |
 | 3 | Weekly by hour / Average hourly |
-| 4 | Time of day (the seventh card, alone) |
+| 4 | Time of day / Recent sessions |
 
 `e2e/dashboard/heatmap-layout.spec.ts` pins this: `TITLES` must be in **render order** (the
-y-monotonicity assertion depends on it), and the two-column case asserts rows 1–3 pair up with
-time-of-day last. Reordering the template without updating that list fails the suite — the point.
+y-monotonicity assertion depends on it), and the two-column case asserts the pairs plus the
+full-width row. Reordering the template without updating that list fails the suite — the point.
 
 ## Truncation is measured, never predicted
 

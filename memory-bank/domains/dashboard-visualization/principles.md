@@ -105,3 +105,38 @@ so an unrelated query change cannot propagate into it.
 *Measurement*: component-instance render counts plus per-canvas `toDataURL()` fingerprints — not
 screenshots, whose noise made the first attempt inconclusive. Regression guard: the filter store's
 `setHeatmapYear`/`setTrendMonth` assert `router.replace` is never called.
+
+## P10. One daily dataset may deserve two charts — with different reading tasks
+
+The same dense daily points feed two cards on purpose: the 30-day trend reads **shape** (smooth
+line + gradient area, plugin-parity), the long-term trend reads **level** (daily dots, a centered
+7-day average, and the window mean as the single dashed reference). The differences are deliberate,
+not drift:
+
+- no gradient area on the long-term card — its dots live below the average line and a fill washes
+  out the lower half of the cloud;
+- one baseline, not two: the recent-30-day-vs-window comparison is **DOM text** (the badge above
+  the chart, the caption's values) — readable by screen readers and honest to the summary cards'
+  single colour-convention helpers (`summary-comparison.ts`);
+- the caption names the layers and prints the baseline value with two-digit seconds
+  (`4h 32m 08s`; the field drops at :00). Minute-rounding proved too coarse (user ruling,
+  2026-10-13) — values round to whole seconds first, since `formatDuration` takes whole seconds.
+
+Do not "restore consistency" by copying one card's treatment onto the other. The shared language
+is the stroke palette, the axis recipe and the panel shell — not identical layers.
+
+**Window and width are part of the same call** (evaluated 2026-10-13; the window gained a picker
+by user ruling the same day):
+
+- **Default rolling 12 months + the heatmap's year picker** (shared `YearSelect`, window held in a
+  local ref like the other panel windows). A 30-day option stays rejected: it would duplicate the
+  Coding trend card — same data, same window, two cards telling one story. A picked year shows its
+  calendar frame, **clamped to today for the current year**: future zero days would poison every
+  average the card prints (the heatmap keeps its future cells because a calendar strip and a trend
+  chart read differently — do not "unify" them).
+- **Full row, not a half card** — nine panels mean one card spans anyway, and this is the one that
+  gains: measured dot pitch ≈ 5px at the full row (a readable cloud), ≈ 3px at a 996px card
+  (still reads), ≈ 1.6px at 596px (sand — which is why the dots drop at phone widths).
+
+Revisit the width if a tenth panel ever gives the page even pairings, or if the 30-day card
+adopts the dots + baseline itself — then this card would be the duplicate.
