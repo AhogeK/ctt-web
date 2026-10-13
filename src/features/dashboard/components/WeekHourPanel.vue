@@ -34,7 +34,7 @@ import { init, type EChartsType } from 'echarts/core'
 import { useStatsWeekHour } from '@/composables/useStats'
 import { formatDuration } from '@/lib/utils'
 import { useThemeStore } from '@/stores/theme'
-import { buildWeekHourMatrix, WEEKDAY_LABELS } from './week-hour-matrix'
+import { buildWeekHourMatrix, WEEKDAY_LABELS, WEEKDAY_NAMES } from './week-hour-matrix'
 import { tooltipSurface } from './chart-tooltip'
 import '@/components/charts/echarts-setup'
 
@@ -159,6 +159,12 @@ function formatHoursLabel(hours: number): string {
   return `${Number(hours.toFixed(precision))} h`
 }
 
+/** 'Monday' / 'Mondays' — the divisor phrase names the weekday it counts. */
+function weekdayName(count: number, row: number): string {
+  const name = WEEKDAY_NAMES[row] ?? ''
+  return count === 1 ? name : `${name}s`
+}
+
 /** Dynamic scale readout for the legend / scroll bar. */
 const maxHoursLabel = computed(() => formatHoursLabel(maxSeconds.value / 3600))
 
@@ -169,6 +175,8 @@ interface CellData {
   col: number
   hour: number
   seconds: number
+  /** Weekday appearances in the window — the averaging divisor */
+  weekdayCount: number
 }
 
 function buildOption(cellsForOption: ReturnType<typeof buildWeekHourMatrix>, pal: Palette) {
@@ -186,6 +194,7 @@ function buildOption(cellsForOption: ReturnType<typeof buildWeekHourMatrix>, pal
     col: c.hour,
     hour: c.hour,
     seconds: c.averageSeconds,
+    weekdayCount: c.weekdayCount,
   }))
 
   return {
@@ -197,7 +206,15 @@ function buildOption(cellsForOption: ReturnType<typeof buildWeekHourMatrix>, pal
         const d = params.data
         if (!d) return ''
         const day = WEEKDAY_LABELS[d.row] ?? ''
-        return `<b>${day} ${String(d.hour).padStart(2, '0')}:00</b><br/>${formatDuration(d.seconds)} coded`
+        // Silent cells use the legend's state name: "0s coded" claims a
+        // measured zero where the grid shows the quiet "No coding" tile.
+        // Measured cells state that the value is an AVERAGE and name the
+        // divisor — the per-row weekday count, which no footer note can carry.
+        const reading =
+          d.seconds <= 0
+            ? 'No coding'
+            : `avg ${formatDuration(d.seconds)} across ${d.weekdayCount} ${weekdayName(d.weekdayCount, d.row)}`
+        return `<b>${day} ${String(d.hour).padStart(2, '0')}:00</b><br/>${reading}`
       },
     },
     // Explicit empty axes so ECharts does not require a coordinate system.
@@ -218,7 +235,9 @@ function buildOption(cellsForOption: ReturnType<typeof buildWeekHourMatrix>, pal
       right: 4,
       top: 'middle',
       dimension: 2,
-      text: [maxHoursLabel.value, '0'],
+      // Handle labels and the hover indicator read the same hours as the
+      // legend — without a formatter they print raw seconds ("118").
+      formatter: (value: number) => formatHoursLabel(value / 3600),
       textStyle: { color: pal.axisLabel, fontSize: 9, fontFamily: 'Inter, sans-serif' },
       inRange: { color: [pal.dataLow, pal.dataMid, pal.dataHigh] },
       seriesIndex: 0,
@@ -351,15 +370,17 @@ watch(palette, render)
         <span class="inline-block h-3 w-3 rounded-[3px]" :style="{ background: palette.quiet }" aria-hidden="true" />No
         coding
       </span>
-      <span class="flex items-center gap-1.5">
-        <span class="inline-block h-3 w-3 rounded-[3px]" :style="{ background: palette.dataLow }" aria-hidden="true" />0
-      </span>
+      <!-- One chip for the continuous ramp: a gradient reads as a scale,
+           while a flat swatch labelled "0" read as a fourth cell state that
+           the grid can never show (0-value cells render as the quiet tile). -->
       <span class="flex items-center gap-1.5">
         <span
-          class="inline-block h-3 w-3 rounded-[3px]"
-          :style="{ background: palette.dataHigh }"
+          class="inline-block h-3 w-6 rounded-[3px]"
+          :style="{
+            background: `linear-gradient(90deg, ${palette.dataLow}, ${palette.dataMid}, ${palette.dataHigh})`,
+          }"
           aria-hidden="true"
-        />{{ maxHoursLabel }}
+        />0 – {{ maxHoursLabel }}
       </span>
       <span class="text-muted-foreground/70 normal-case">· shade scales with the window's peak</span>
     </div>
@@ -368,7 +389,7 @@ watch(palette, render)
       class="mx-auto w-full max-w-full"
       :style="{ height: `${chartHeight}px` }"
       role="img"
-      :aria-label="`Weekly coding activity by hour, ${cells.length} cells across ${WEEKDAY_LABELS.length} weekdays and 24 hours`"
+      :aria-label="`Weekly coding activity by hour, ${cells.length} cells of average coding time across ${WEEKDAY_LABELS.length} weekdays and 24 hours`"
     />
   </div>
 </template>
