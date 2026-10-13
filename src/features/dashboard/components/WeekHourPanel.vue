@@ -35,6 +35,7 @@ import { useStatsWeekHour } from '@/composables/useStats'
 import { formatDuration } from '@/lib/utils'
 import { useThemeStore } from '@/stores/theme'
 import { buildWeekHourMatrix, WEEKDAY_LABELS } from './week-hour-matrix'
+import { tooltipSurface } from './chart-tooltip'
 import '@/components/charts/echarts-setup'
 
 const props = defineProps<{
@@ -72,8 +73,6 @@ interface Palette {
   axisLabel: string
   /** Hover/3D-lift shadow for emphasized cells (plugin's shadowBlur effect) */
   cellShadow: string
-  tooltipBg: string
-  tooltipText: string
 }
 
 const palette = computed<Palette>(() => {
@@ -86,8 +85,6 @@ const palette = computed<Palette>(() => {
         dataHigh: '#bcc2f4',
         axisLabel: '#8a8f98',
         cellShadow: 'rgba(0, 0, 0, 0.55)',
-        tooltipBg: '#f7f8f8',
-        tooltipText: '#08090a',
       }
     : {
         quiet: '#e9ebf0',
@@ -96,8 +93,6 @@ const palette = computed<Palette>(() => {
         dataHigh: '#2f3a9e',
         axisLabel: '#62666d',
         cellShadow: 'rgba(0, 0, 0, 0.28)',
-        tooltipBg: '#08090a',
-        tooltipText: '#f7f8f8',
       }
 })
 
@@ -196,11 +191,8 @@ function buildOption(cellsForOption: ReturnType<typeof buildWeekHourMatrix>, pal
   return {
     backgroundColor: 'transparent',
     tooltip: {
+      ...tooltipSurface(theme.isDark),
       confine: true,
-      backgroundColor: pal.tooltipBg,
-      borderWidth: 0,
-      padding: [8, 12],
-      textStyle: { color: pal.tooltipText, fontFamily: 'Inter, sans-serif', fontSize: 12 },
       formatter: (params: { data?: CellData }) => {
         const d = params.data
         if (!d) return ''

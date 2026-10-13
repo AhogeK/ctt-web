@@ -28,6 +28,7 @@ import { formatDuration } from '@/lib/utils'
 import { useStatsStreaks } from '@/composables/useStats'
 import { useThemeStore } from '@/stores/theme'
 import '@/components/charts/echarts-setup'
+import { tooltipSurface } from './chart-tooltip'
 import {
   heatmapRenderWindow,
   countWeekColumns,
@@ -72,8 +73,6 @@ interface Palette {
   buckets: string[]
   labelText: string
   labelStrong: string
-  tooltipBg: string
-  tooltipText: string
 }
 
 const LEGEND_LABELS = ['< 15 min', '15–60 min', '1–2 h', '2–5 h', '5–8 h', '> 8 h'] as const
@@ -88,16 +87,12 @@ const palette = computed<Palette>(() => {
         buckets: ['#313a5c', '#3d4a75', '#5e6ad2', '#7b85e0', '#9aa2ec', '#bcc2f4'],
         labelText: '#8a8f98',
         labelStrong: '#f7f8f8',
-        tooltipBg: '#f7f8f8',
-        tooltipText: '#08090a',
       }
     : {
         quietCell: '#e9ebf0',
         buckets: ['#d9ddf2', '#b7bfec', '#939fe4', '#5e6ad2', '#4a54c4', '#2f3a9e'],
         labelText: '#62666d',
         labelStrong: '#08090a',
-        tooltipBg: '#08090a',
-        tooltipText: '#f7f8f8',
       }
 })
 
@@ -240,11 +235,8 @@ function buildOption(points: DailyStatPoint[], pal: Palette) {
   return {
     backgroundColor: 'transparent',
     tooltip: {
+      ...tooltipSurface(theme.isDark),
       confine: true,
-      backgroundColor: pal.tooltipBg,
-      borderWidth: 0,
-      padding: [8, 12],
-      textStyle: { color: pal.tooltipText, fontFamily: 'Inter, sans-serif', fontSize: 12 },
       formatter: (params: { data: { date?: string; seconds?: number } }) => {
         if (!params.data?.date) return ''
         const d = new Date(`${params.data.date}T00:00:00`)

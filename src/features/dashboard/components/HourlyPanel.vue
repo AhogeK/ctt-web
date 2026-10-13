@@ -28,6 +28,7 @@ import { useStatsHourly } from '@/composables/useStats'
 import { formatDuration } from '@/lib/utils'
 import { useThemeStore } from '@/stores/theme'
 import { formatHourLabel, getHourAxisScale } from './axis-scale'
+import { tooltipSurface } from './chart-tooltip'
 import '@/components/charts/echarts-setup'
 
 const props = defineProps<{
@@ -64,8 +65,8 @@ interface Palette {
   axisLabel: string
   splitLine: string
   noteText: string
-  tooltipBg: string
-  tooltipText: string
+  /** Hover-dot ring — max contrast against the surface, not the tooltip's */
+  pointHalo: string
 }
 
 const palette = computed<Palette>(() => {
@@ -81,8 +82,7 @@ const palette = computed<Palette>(() => {
         axisLabel: '#8a8f98',
         splitLine: 'rgba(255, 255, 255, 0.06)',
         noteText: 'rgba(138, 143, 152, 0.7)',
-        tooltipBg: '#f7f8f8',
-        tooltipText: '#08090a',
+        pointHalo: '#f7f8f8',
       }
     : {
         barTop: '#5e6ad2',
@@ -94,8 +94,7 @@ const palette = computed<Palette>(() => {
         axisLabel: '#62666d',
         splitLine: 'rgba(0, 0, 0, 0.06)',
         noteText: 'rgba(98, 102, 109, 0.7)',
-        tooltipBg: '#08090a',
-        tooltipText: '#f7f8f8',
+        pointHalo: '#08090a',
       }
 })
 
@@ -129,13 +128,10 @@ function buildOption(pal: Palette) {
     backgroundColor: 'transparent',
     grid: { left: 8, right: 8, top: 12, bottom: 4, containLabel: true },
     tooltip: {
+      ...tooltipSurface(theme.isDark),
       trigger: 'axis',
       confine: true,
       axisPointer: { type: isNarrow.value ? 'line' : 'shadow', shadowStyle: { color: pal.splitLine } },
-      backgroundColor: pal.tooltipBg,
-      borderWidth: 0,
-      padding: [8, 12],
-      textStyle: { color: pal.tooltipText, fontFamily: 'Inter, sans-serif', fontSize: 12 },
       formatter: (params: Array<{ axisValue: string; value: number }>) => {
         const p = params[0]
         if (!p) return ''
@@ -202,7 +198,7 @@ function buildOption(pal: Palette) {
               },
             },
             emphasis: {
-              itemStyle: { color: pal.lineTop, borderColor: pal.tooltipBg, borderWidth: 2 },
+              itemStyle: { color: pal.lineTop, borderColor: pal.pointHalo, borderWidth: 2 },
             },
           }
         : {
