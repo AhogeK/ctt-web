@@ -22,6 +22,7 @@ import { computed, onBeforeUnmount, onMounted, ref, watch } from 'vue'
 import { graphic, init, type EChartsType } from 'echarts/core'
 import type { DailyStatPoint } from '@/lib/schemas/stats.schema'
 import { formatHourLabel, getHourAxisScale } from './axis-scale'
+import { tooltipSurface } from './chart-tooltip'
 import { formatDuration } from '@/lib/utils'
 import { useThemeStore } from '@/stores/theme'
 import '@/components/charts/echarts-setup'
@@ -44,8 +45,8 @@ interface Palette {
   /** Grid-line ramp endpoints — hue AND alpha both shift bottom → top. */
   gridLineBottom: string
   gridLineTop: string
-  tooltipBg: string
-  tooltipText: string
+  /** Hover-dot ring — max contrast against the surface, not the tooltip's */
+  pointHalo: string
 }
 
 const palette = computed<Palette>(() => {
@@ -61,8 +62,7 @@ const palette = computed<Palette>(() => {
         axisLabel: '#8a8f98',
         gridLineBottom: 'rgba(83, 92, 150, 0.16)',
         gridLineTop: 'rgba(133, 145, 245, 0.42)',
-        tooltipBg: '#f7f8f8',
-        tooltipText: '#08090a',
+        pointHalo: '#f7f8f8',
       }
     : {
         lineTop: '#8a97f2',
@@ -72,8 +72,7 @@ const palette = computed<Palette>(() => {
         axisLabel: '#62666d',
         gridLineBottom: 'rgba(94, 106, 210, 0.08)',
         gridLineTop: 'rgba(94, 106, 210, 0.28)',
-        tooltipBg: '#08090a',
-        tooltipText: '#f7f8f8',
+        pointHalo: '#08090a',
       }
 })
 
@@ -137,15 +136,13 @@ function buildOption(points: DailyStatPoint[], pal: Palette) {
     backgroundColor: 'transparent',
     grid: { left: 8, right: 8, top: 12, bottom: 4, containLabel: true },
     tooltip: {
+      ...tooltipSurface(theme.isDark),
       trigger: 'axis',
+      confine: true,
       axisPointer: {
         type: 'line',
         lineStyle: { color: pal.gridLineTop, width: 1 },
       },
-      backgroundColor: pal.tooltipBg,
-      borderWidth: 0,
-      padding: [8, 12],
-      textStyle: { color: pal.tooltipText, fontFamily: 'Inter, sans-serif', fontSize: 12 },
       formatter: (params: Array<{ dataIndex: number }>) => {
         const p = params[0]
         const point = p === undefined ? undefined : points[p.dataIndex]
@@ -214,7 +211,7 @@ function buildOption(points: DailyStatPoint[], pal: Palette) {
           itemStyle: {
             // Hover dot is a single shape — reuse the bright top ink.
             color: pal.lineTop,
-            borderColor: pal.tooltipBg,
+            borderColor: pal.pointHalo,
             borderWidth: 2,
           },
         },
