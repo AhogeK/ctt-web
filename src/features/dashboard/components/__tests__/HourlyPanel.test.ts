@@ -112,6 +112,15 @@ describe('HourlyPanel', () => {
     expect(option.yAxis.max).toBe(4500)
   })
 
+  it('reads the tooltip value as an average, not a total', () => {
+    pointsFor([[9, 5400]])
+    mount(HourlyPanel, { props: { deviceId: null, ideName: null } })
+    const option = mockChart.setOption.mock.calls[0]![0] as {
+      tooltip: { formatter: (params: Array<{ axisValue: string; value: number }>) => string }
+    }
+    expect(option.tooltip.formatter([{ axisValue: '09:00', value: 5400 }])).toBe('<b>09:00</b><br/>avg 1h 30m')
+  })
+
   it('exposes an a11y label with the active-day count', () => {
     pointsFor([[9, 3600]])
     const wrapper = mount(HourlyPanel, { props: { deviceId: null, ideName: null } })

@@ -135,7 +135,9 @@ function buildOption(pal: Palette) {
       formatter: (params: Array<{ axisValue: string; value: number }>) => {
         const p = params[0]
         if (!p) return ''
-        return `<b>${p.axisValue}</b><br/>${formatDuration(p.value)} coded`
+        // The bucket value is the average across the window's active days
+        // (the footer states the divisor) — "coded" alone would read as a total.
+        return `<b>${p.axisValue}</b><br/>avg ${formatDuration(p.value)}`
       },
     },
     xAxis: {

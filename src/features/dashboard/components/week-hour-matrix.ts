@@ -13,6 +13,9 @@ import type { WeekHourResponse } from '@/lib/schemas/stats.schema'
 /** ISO weekday labels, index 0 = Monday (1) .. 6 = Sunday (7). */
 export const WEEKDAY_LABELS = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'] as const
 
+/** Full weekday names — tooltip copy that names the divisor ('across 4 Mondays'). */
+export const WEEKDAY_NAMES = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'] as const
+
 /** Total cells in the full matrix. */
 export const WEEK_HOUR_CELLS = 7 * 24
 
