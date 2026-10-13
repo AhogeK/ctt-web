@@ -48,3 +48,14 @@ class IntersectionObserverMock {
   takeRecords = vi.fn<() => []>(() => [])
 }
 globalThis.IntersectionObserver = IntersectionObserverMock as unknown as typeof IntersectionObserver
+
+/**
+ * Pointer capture — jsdom does not implement it, and reka-ui's
+ * `SelectTrigger` calls `hasPointerCapture` inside its pointerdown handler,
+ * so any test that drives a Select through a real open crashes without these.
+ * Plain assignments because the methods are absent entirely; the setup file
+ * is where the environment's missing browser APIs belong.
+ */
+Element.prototype.hasPointerCapture = vi.fn<() => boolean>(() => false)
+Element.prototype.setPointerCapture = vi.fn<() => void>()
+Element.prototype.releasePointerCapture = vi.fn<() => void>()

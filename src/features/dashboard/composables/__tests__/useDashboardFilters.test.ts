@@ -188,11 +188,25 @@ describe('useDashboardFilters', () => {
     expect(mockReplace).not.toHaveBeenCalled()
   })
 
+  it('setLongTermYear holds the year locally and never touches the URL', () => {
+    const { longTermYear, setLongTermYear } = useDashboardFilters()
+
+    setLongTermYear(2025)
+    expect(longTermYear.value).toBe(2025)
+
+    setLongTermYear(null)
+    expect(longTermYear.value).toBeNull()
+
+    expect(mockReplace).not.toHaveBeenCalled()
+  })
+
   it('keeps panel windows independent of the filter-bar range', () => {
-    const { trendMonth, heatmapYear, setTrendMonth, setHeatmapYear, setDateRange } = useDashboardFilters()
+    const { trendMonth, heatmapYear, longTermYear, setTrendMonth, setHeatmapYear, setLongTermYear, setDateRange } =
+      useDashboardFilters()
 
     setTrendMonth('2026-08')
     setHeatmapYear(2025)
+    setLongTermYear(2024)
     setDateRange('2026-01-01', '2026-03-31')
 
     // Range changes go to the URL (page-level); the panel windows do not, and
@@ -200,14 +214,16 @@ describe('useDashboardFilters', () => {
     expect(mockReplace).toHaveBeenLastCalledWith({ query: { start: '2026-01-01', end: '2026-03-31' } })
     expect(trendMonth.value).toBe('2026-08')
     expect(heatmapYear.value).toBe(2025)
+    expect(longTermYear.value).toBe(2024)
   })
 
-  it('defaults both panel windows to their rolling views', () => {
-    const { heatmapYear, trendMonth } = useDashboardFilters()
+  it('defaults every panel window to its rolling view', () => {
+    const { heatmapYear, trendMonth, longTermYear } = useDashboardFilters()
 
     // null = "no panel window chosen": the heatmap shows 12 months, the trend
-    // 30 days.
+    // 30 days, the long-term trend 12 months.
     expect(heatmapYear.value).toBeNull()
     expect(trendMonth.value).toBeNull()
+    expect(longTermYear.value).toBeNull()
   })
 })

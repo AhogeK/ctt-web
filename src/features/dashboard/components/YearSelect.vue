@@ -1,20 +1,26 @@
 <script setup lang="ts">
 /**
- * HeatmapYearSelect — GitHub-style year picker for the heatmap panel header.
+ * YearSelect — the year picker shared by the heatmap and the long-term trend
+ * panels (extracted from HeatmapYearSelect when the second consumer
+ * appeared).
  *
- * Options: the fixed "Last 12 months" item (value null → rolling window
+ * Options: the fixed "Last 12 months" item (value null → the panel's rolling
  * default) plus every year the backend reports as containing valid coding
  * sessions (newest first). The value is `number | null`, matching
- * useDashboardFilters.setHeatmapYear.
+ * useDashboardFilters' panel-window setters.
  */
 import { computed } from 'vue'
 import { Select, SelectContent, SelectItem, SelectItemText, SelectTrigger, SelectValue } from '@/components/ui/select'
 
 const props = defineProps<{
-  /** Selected heatmap year, or null for the rolling 12-month default */
+  /** Selected year, or null for the rolling 12-month default */
   year: number | null
   /** Years with valid sessions, newest first (backend heatmap-years) */
   years: number[]
+  /** The trigger's accessible name ('Heatmap year' / 'Long-term trend year') */
+  label: string
+  /** The trigger's data-testid — one per consumer */
+  testid: string
 }>()
 
 const emit = defineEmits<{
@@ -35,7 +41,7 @@ function onChange(value: unknown): void {
 
 <template>
   <Select :model-value="modelValue" @update:model-value="onChange">
-    <SelectTrigger class="h-7 w-36 text-xs" data-testid="heatmap-year-select" aria-label="Heatmap year">
+    <SelectTrigger class="h-7 w-36 text-xs" :data-testid="testid" :aria-label="label">
       <SelectValue />
     </SelectTrigger>
     <SelectContent>

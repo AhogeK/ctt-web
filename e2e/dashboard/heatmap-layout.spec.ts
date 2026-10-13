@@ -21,6 +21,7 @@ const TITLES = [
   'Project distribution',
   'Coding heatmap',
   'Coding trend',
+  'Long-term trend',
   'Weekly coding activity by hour',
   'Average hourly coding duration',
   'Time of day distribution',
@@ -68,11 +69,15 @@ test('panels pair two-across once a card keeps ≥830px', async ({ page }) => {
   expect(Math.abs(c['Language distribution'].y - c['Project distribution'].y)).toBeLessThan(4)
   // Row 2 — the calendar and the trend.
   expect(Math.abs(c['Coding heatmap'].y - c['Coding trend'].y)).toBeLessThan(4)
+  // Row 2b — the long-term trend card owns a full row to itself.
+  expect(c['Long-term trend'].width).toBeGreaterThan(c['Coding heatmap'].width * 1.8)
+  expect(c['Long-term trend'].y).toBeGreaterThan(c['Coding trend'].y)
+  expect(c['Weekly coding activity by hour'].y).toBeGreaterThan(c['Long-term trend'].y)
   // Row 3 — the two rhythm views.
   expect(Math.abs(c['Weekly coding activity by hour'].y - c['Average hourly coding duration'].y)).toBeLessThan(4)
-  // Row 4 — the time-of-day split and the session log. With eight panels every
-  // row is a pair; this pairing is the assertion that catches a panel being
-  // appended out of order.
+  // Row 4 — the time-of-day split and the session log. The full-width
+  // long-term card splits the pairs into rows 2 and 3; these assertions
+  // catch a panel being appended out of order.
   expect(Math.abs(c['Time of day distribution'].y - c['Recent sessions'].y)).toBeLessThan(4)
 })
 
@@ -328,4 +333,79 @@ test('tapping a segment pins it; tapping it again restores', async ({ page }) =>
 
   await page.mouse.click(x, y)
   await expect.poll(dimmed, { message: 'a second tap on the same segment restores' }).toBe(0)
+})
+
+test('long-term trend card carries the baseline story in DOM and aria', async ({ page }) => {
+  await gotoHeatmap(page, 2100)
+  const card = page
+    .locator('main section')
+    .filter({ has: page.getByRole('heading', { name: 'Long-term trend', exact: true }) })
+  await card.scrollIntoViewIfNeeded()
+  await expect(card.locator('canvas')).toBeVisible()
+  // The mocked days alternate 5,400s and 0s, so the window mean is a real
+  // baseline: the badge, the caption and the aria label must all carry it.
+  await expect(card.getByTestId('long-term-delta')).toContainText('vs 12-month average')
+  await expect(card.getByTestId('long-term-note')).toContainText('12-month average')
+  await expect(card.locator('[role="img"]')).toHaveAttribute('aria-label', /12-month average/)
+  await expect(card.locator('[role="img"]')).toHaveAttribute('aria-label', /Last \d+ days average/)
+})
+
+test('long-term trend card stays inside the phone panel', async ({ page }) => {
+  await gotoHeatmap(page, 390)
+  const card = page
+    .locator('main section')
+    .filter({ has: page.getByRole('heading', { name: 'Long-term trend', exact: true }) })
+  await card.scrollIntoViewIfNeeded()
+  await expect(card.locator('canvas')).toBeVisible()
+  await expect(card.getByTestId('long-term-note')).toBeVisible()
+  const box = await card.boundingBox()
+  expect(box!.x + box!.width).toBeLessThanOrEqual(390 + 1)
+})
+
+test('the long-term trend card picks its own year window', async ({ page }) => {
+  await page.setViewportSize({ width: 2100, height: 1080 })
+  await mockAuthApis(page)
+  const seen: string[] = []
+  await page.route('**/api/v1/stats/**', async (route) => {
+    const url = new URL(route.request().url())
+    const path = url.pathname
+    let data: unknown = null
+    if (path.endsWith('/stats/heatmap')) {
+      seen.push(url.search)
+      data = { points: denseDays(371) }
+    } else if (path.endsWith('/stats/heatmap-years')) {
+      data = [2026, 2025]
+    } else if (path.endsWith('/stats/streaks')) {
+      data = { current: 3, max: 12 }
+    }
+    await route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify(okEnvelope(data)) })
+  })
+  await loginViaForm(page)
+  await page.goto('/dashboard')
+
+  const card = page
+    .locator('main section')
+    .filter({ has: page.getByRole('heading', { name: 'Long-term trend', exact: true }) })
+  await card.scrollIntoViewIfNeeded()
+
+  // A past year: the full calendar frame, and the baseline renames itself.
+  await card.getByTestId('long-term-year-select').click()
+  await page.getByRole('option', { name: '2025', exact: true }).click()
+  await expect
+    .poll(() => seen.filter((s) => s.includes('start=2025-01-01') && s.includes('end=2025-12-31')).length, {
+      message: 'the picked year asks for its full Jan–Dec frame',
+    })
+    .toBe(1)
+  await expect(card.getByTestId('long-term-note')).toContainText('2025 average')
+  // The heatmap never followed — the two windows are independent.
+  expect(seen.filter((s) => s.includes('start=2025-01-01'))).toHaveLength(1)
+
+  // The current year is clamped to today: future zero days would poison the
+  // averages the card prints.
+  const now = new Date()
+  const todayIso = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`
+  await card.getByTestId('long-term-year-select').click()
+  await page.getByRole('option', { name: '2026', exact: true }).click()
+  await expect.poll(() => seen.some((s) => s.includes('start=2026-01-01') && s.includes(`end=${todayIso}`))).toBe(true)
+  await expect(card.getByTestId('long-term-note')).toContainText('2026 average')
 })
