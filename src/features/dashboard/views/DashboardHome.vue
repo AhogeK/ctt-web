@@ -29,7 +29,8 @@ import ChartSection from '../components/ChartSection.vue'
 import HeatmapChart from '../components/HeatmapChart.vue'
 import TrendChart from '../components/TrendChart.vue'
 import TrendMonthSelect from '../components/TrendMonthSelect.vue'
-import HeatmapYearSelect from '../components/HeatmapYearSelect.vue'
+import LongTermTrendPanel from '../components/LongTermTrendPanel.vue'
+import YearSelect from '../components/YearSelect.vue'
 import HourlyPanel from '../components/HourlyPanel.vue'
 import TimeOfDayPanel from '../components/TimeOfDayPanel.vue'
 import LanguageDistributionPanel from '../components/LanguageDistributionPanel.vue'
@@ -45,6 +46,7 @@ const {
   ideName: ideNameOrNull,
   heatmapYear,
   trendMonth,
+  longTermYear,
   preset,
   setDateRange,
   applyPreset,
@@ -52,6 +54,7 @@ const {
   setIde,
   setHeatmapYear,
   setTrendMonth,
+  setLongTermYear,
 } = useDashboardFilters()
 const heatmapYears = useStatsHeatmapYears()
 const heatmapMonths = useStatsHeatmapMonths()
@@ -95,6 +98,23 @@ const trendRange = computed(() => {
   return { start: `${trendMonth.value}-01`, end: `${trendMonth.value}-${String(lastDay).padStart(2, '0')}` }
 })
 const trend = useStatsHeatmap(computed(() => ({ ...trendRange.value, ...originFilter.value })))
+
+// Long-term trend: rolling 12 months by default — the SAME range and filter
+// as the heatmap's rolling default, so while both stay on their defaults the
+// two panels share ONE cache entry (one request). The card's own year picker
+// re-keys only this card; picking the same PAST year on both panels shares
+// the entry again. Unlike the heatmap's year view (a calendar strip that
+// keeps its future cells), the CURRENT year is clamped to today: future
+// zero days would poison every average this card prints.
+const longTermRange = computed(() => {
+  if (longTermYear.value === null) return rollingRange.value
+  const year = longTermYear.value
+  return {
+    start: `${year}-01-01`,
+    end: year === today.getFullYear() ? formatDate(today) : `${year}-12-31`,
+  }
+})
+const longTermTrend = useStatsHeatmap(computed(() => ({ ...longTermRange.value, ...originFilter.value })))
 
 // Weekly activity by hour follows the filter bar: window = the resolved
 // range (All time → full history), origin filters applied. Changing the
@@ -167,11 +187,14 @@ const projects = useStatsDistribution(
          half width — heatmap included (its cell renderer clamps to the
          available width).
 
-         Order is deliberate, in row pairs: the two categorical shares lead
-         (language, project), then the two calendar/time-series reads (heatmap,
-         trend), then the two rhythm views (week-hour, hourly), then the
-         time-of-day split beside the session log. All four rows are pairs, and
-         the e2e layout spec pins them, so reordering means updating it too. -->
+         Order is deliberate, in row pairs with one full-width row: the two
+         categorical shares lead (language, project), then the two
+         calendar/time-series reads (heatmap, trend), then the long-term
+         trend's full-width row (the 12-month level read; col-span-2 once the
+         grid is two columns), then the two rhythm views (week-hour, hourly),
+         then the time-of-day split beside the session log. The e2e layout
+         spec pins the pairs and the full-width row, so reordering means
+         updating it too. -->
     <div class="grid grid-cols-1 gap-6 @[1684px]/page:grid-cols-2">
       <ChartSection
         title="Language distribution"
@@ -209,7 +232,13 @@ const projects = useStatsDistribution(
         @retry="() => heatmap.refetch()"
       >
         <template #actions>
-          <HeatmapYearSelect :year="heatmapYear" :years="heatmapYears.data.value ?? []" @update:year="setHeatmapYear" />
+          <YearSelect
+            :year="heatmapYear"
+            :years="heatmapYears.data.value ?? []"
+            label="Heatmap year"
+            testid="heatmap-year-select"
+            @update:year="setHeatmapYear"
+          />
         </template>
         <HeatmapChart
           :points="heatmap.data.value?.points ?? []"
@@ -235,6 +264,33 @@ const projects = useStatsDistribution(
         <!-- Chart body: smooth line + gradient area over the panel's own window
              (30-day rolling by default, a calendar month when one is picked) -->
         <TrendChart :points="trend.data.value?.points ?? []" />
+      </ChartSection>
+      <ChartSection
+        title="Long-term trend"
+        class="@[1684px]/page:col-span-2"
+        :loading="longTermTrend.isPending.value"
+        :error="longTermTrend.isError.value"
+        :empty="!!longTermTrend.data.value && longTermTrend.data.value.points.length === 0"
+        @retry="() => longTermTrend.refetch()"
+      >
+        <template #actions>
+          <YearSelect
+            :year="longTermYear"
+            :years="heatmapYears.data.value ?? []"
+            label="Long-term trend year"
+            testid="long-term-year-select"
+            @update:year="setLongTermYear"
+          />
+        </template>
+        <!-- Chart body: daily dots + a centered 7-day average line over the
+             card's window (rolling 12 months, or a picked calendar year), the
+             window mean as a dashed reference level, and the recent-vs-window
+             delta as DOM text (badge + the caption that names the layers and
+             the baseline value) -->
+        <LongTermTrendPanel
+          :points="longTermTrend.data.value?.points ?? []"
+          :window-label="longTermYear === null ? undefined : String(longTermYear)"
+        />
       </ChartSection>
       <ChartSection
         title="Weekly coding activity by hour"

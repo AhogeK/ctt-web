@@ -89,8 +89,8 @@ export function useDashboardFilters() {
   /** Exact IDE-name filter, or undefined for all IDEs. */
   const ideName = computed(() => queryString(route.query.ideName))
   /**
-   * Panel-scoped selections (`heatmapYear`, `trendMonth`) are **local state**,
-   * deliberately not part of the URL.
+   * Panel-scoped selections (`heatmapYear`, `trendMonth`, `longTermYear`) are
+   * **local state**, deliberately not part of the URL.
    *
    * Putting them in the query makes every change a route update, and vue-router
    * replaces its route object wholesale: `RouterView` re-renders, which drags
@@ -105,6 +105,7 @@ export function useDashboardFilters() {
    */
   const heatmapYear = ref<number | null>(null)
   const trendMonth = ref<string | null>(null)
+  const longTermYear = ref<number | null>(null)
   /** Preset the current range maps to ('custom' when it matches none). */
   const preset = computed(() => inferPreset(start.value, end.value))
 
@@ -173,6 +174,14 @@ export function useDashboardFilters() {
   }
 
   /**
+   * Select the long-term trend year view (yyyy) or clear it (null → the
+   * rolling 12-month default). Panel-scoped, exactly like the two above.
+   */
+  function setLongTermYear(year: number | null): void {
+    longTermYear.value = year
+  }
+
+  /**
    * Origin filter in API params shape (undefined = unfiltered), shared by
    * every stats consumer so the null/undefined conversion lives in one place.
    */
@@ -189,6 +198,7 @@ export function useDashboardFilters() {
     ideName: ideNameOrNull,
     heatmapYear,
     trendMonth,
+    longTermYear,
     originFilter,
     preset,
     setDateRange,
@@ -197,5 +207,6 @@ export function useDashboardFilters() {
     setIde,
     setHeatmapYear,
     setTrendMonth,
+    setLongTermYear,
   }
 }
