@@ -41,6 +41,16 @@ placeholders: :style="{ minHeight: lastHeight || undefined }"
   2026-10-13. Verify with computed styles on the tooltip element, not by reading the option.
   Hover-point HALOS are the opposite case and stay per-panel palette values: a ring must contrast
   with the surface, so it must not ride the tooltip's surface token.
+- Readout wording: one state, one name, and averages say "avg". The week-hour legend's quiet tile
+  says "No coding", so its tooltip says "No coding" too — a "0s coded" reading claims a measured
+  zero the grid cannot show (the backend sends non-zero cells only, and `≤0` renders as the quiet
+  tile, so a flat "0" swatch is a state that never occurs). Measured cells read `avg 1m 58s across
+  4 Mondays` — the divisor is the per-row weekday count, which no footer note can carry; the
+  hourly panel reads `avg 1h 30m` with its divisor in the footer, and its zero buckets stay
+  `avg 0s` (no named quiet state exists there — never import a state name a panel does not use).
+  State the continuous ramp as ONE gradient chip with its range (`0 – 0.033 h`), never as endpoint
+  swatches that read as extra states. The visualMap `formatter` keeps handle labels and the hover
+  indicator in the legend's unit — without it raw seconds leak ("118" beside "0.033 h").
 - Stacked bars have **no** inter-segment gap — Draw seams as an HTML overlay at cumulative-percent positions;
   `borderWidth`/`itemGap` do not work
 - Tooltip shows `undefined` for the series name — ECharts reads `params.name` from `data.name` or `series.name` —

@@ -146,6 +146,12 @@
   （含 mid 两张与 year-2025-dark）+ `.omp/qa/tooltip-surface-2026-10-13/` 5 张 + visual-qa 待判登记。
   **已提交推送**：develop `d0a6909`（浮层修复）· `3aaacfa`（卡片+选年）· `cd8d268`（0.57.0）· `ac6bf17`（README）+ 本记忆笔；
   master 按规程**逐笔 pick 同四笔**（见 git log master）。
+- **周时段读数语义（2026-10-14 · 已提交推送 · v0.57.1）**：用户指"图例 NO CODING 与 0 难分"+"静默格悬停 0s coded"。定性：后端契约只发非零格
+  ⇒ "0" 色块 = 渐变底端、网格上**永不出现**的伪状态；悬停文案又与图例状态名互相矛盾。修法：两条离散色块 ⇒ 一条**渐变区间芯片**（`0 – 0.033 h`）；
+  静默格悬停改 `No coding`（与图例同名）；非零格改 `avg X across N <星期几>s`（除数进悬停——每行不同、页脚放不下）；HourlyPanel 同步 `avg X`（零桶保持 `avg 0s`：该图无
+  "No coding" 状态名，不引入新词）；右侧标尺把手/悬停指示器加 formatter 走小时（原先漏裸秒 "118"）并去重端点文字。
+  验证：单测 **1536**（+5）· 亮暗+悬停实拍 `.omp/qa/week-hour-readouts/` 4 张。**已提交推送**：develop `c864f87`（代码）· `6eddfb2`（0.57.1）·
+  `56e4ab2`（README）+ 本记忆笔；master 按规程**逐笔 pick 同三笔**（见 git log master）。
 - **落地页滚动编排（v0.55.1–0.55.7，逐轮全档 → `memory-bank/archives/2026-10-08-scroll-rounds-trim.md`）**：全空段双向（flush 门槛 +
   退场触发重做）· 上行回看渐入恢复（删瞬时恢复章）· 高视口退场锚定首块版块（`leaveOnBand`）· 上行对向交叉 · 滚动速率重做（轨道 **230svh** + `beat-arc` 单段线性，位移比无零速）·
   双块同屏禁令三处共钟（hero↔beat 同 60svh · 带进场同 60% 线 · 删对向簿记）—— 各轮 landing E2E / 单测 1478 / lint 全绿；
