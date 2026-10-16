@@ -7,6 +7,7 @@ import {
   getStatsHeatmapMonths,
   getStatsHeatmapYears,
   getStatsHourly,
+  getStatsHourlyDays,
   getStatsIdeFilters,
   getStatsRecent,
   getStatsStreaks,
@@ -38,6 +39,8 @@ export const STATS_QUERY_KEYS = {
     ['stats', 'distribution', type, filter?.start ?? 'auto', filter?.end ?? 'auto', filterKey(filter)] as const,
   hourly: (start?: string, end?: string, filter?: StatsFilterParams) =>
     ['stats', 'hourly', start ?? 'auto', end ?? 'auto', filterKey(filter)] as const,
+  hourlyDays: (start?: string, end?: string, filter?: StatsFilterParams) =>
+    ['stats', 'hourly-days', start ?? 'auto', end ?? 'auto', filterKey(filter)] as const,
   recent: (limit: number, filter?: StatsFilterParams) => ['stats', 'recent', limit, filterKey(filter)] as const,
   achievements: () => ['stats', 'achievements'] as const,
   heatmapYears: () => ['stats', 'heatmap-years'] as const,
@@ -127,6 +130,27 @@ export function useStatsHourly(params: MaybeRefOrGetter<{ start?: string; end?: 
     queryFn: () => {
       const p = toValue(params)
       return getStatsHourly(p)
+    },
+    staleTime: 1000 * 30,
+  })
+}
+
+/**
+ * Per-day hourly seconds across the window's active days — the series behind
+ * the hourly panel's faint day curves (same accumulation as `useStatsHourly`,
+ * so summing a day reproduces the average's numerator).
+ */
+export function useStatsHourlyDays(
+  params: MaybeRefOrGetter<{ start?: string; end?: string } & StatsFilterParams> = {},
+) {
+  return useQuery({
+    queryKey: computed(() => {
+      const p = toValue(params)
+      return STATS_QUERY_KEYS.hourlyDays(p.start, p.end, p)
+    }),
+    queryFn: () => {
+      const p = toValue(params)
+      return getStatsHourlyDays(p)
     },
     staleTime: 1000 * 30,
   })
