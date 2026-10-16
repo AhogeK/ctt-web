@@ -111,6 +111,19 @@ async function installLoginOverrides(page: Page): Promise<{
 }
 
 test.describe('Login flow', () => {
+  test('lands on the dashboard even when the login URL carries a public redirect', async ({ page }) => {
+    await installLoginOverrides(page)
+
+    await page.goto(`${LOGIN_PATH}?redirect=/`)
+
+    await page.getByPlaceholder('you@example.com').fill(TEST_USER_CREDENTIALS.email)
+    await page.getByPlaceholder('Enter your password').fill(TEST_USER_CREDENTIALS.password)
+    await page.getByRole('button', { name: 'Sign in' }).click()
+
+    await page.waitForURL(DASHBOARD_PATH)
+    await expect(page).toHaveURL(DASHBOARD_PATH)
+  })
+
   test('completes login with valid credentials and redirects to dashboard', async ({ page }) => {
     const { getLoginCalls, getUserProfileCalls } = await installLoginOverrides(page)
 

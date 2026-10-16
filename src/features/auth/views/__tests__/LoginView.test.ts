@@ -8,6 +8,14 @@ import LoginView from '../LoginView.vue'
 // ==========================================
 
 const mockPush = vi.hoisted(() => vi.fn<(...args: unknown[]) => unknown>())
+const mockResolve = vi.hoisted(() =>
+  vi.fn<(raw: string) => { meta: { requiresAuth: boolean } }>((raw) => ({
+    // Unit-boundary stub: the resolver only reads meta.requiresAuth; the real
+    // route table is exercised by the login/OAuth e2e specs.
+    meta: { requiresAuth: !raw.startsWith('/auth') && raw !== '/' },
+  })),
+)
+const routeQueryState = vi.hoisted(() => ({ value: {} as Record<string, unknown> }))
 const mockToastError = vi.hoisted(() => vi.fn<(...args: unknown[]) => unknown>())
 const mockMutate = vi.hoisted(() => vi.fn<(...args: unknown[]) => unknown>())
 const mockStart = vi.hoisted(() => vi.fn<(...args: unknown[]) => unknown>())
@@ -37,11 +45,12 @@ const mutations = vi.hoisted(
 // ==========================================
 
 vi.mock('vue-router', () => ({
-  useRouter: vi.fn<() => { push: (...args: unknown[]) => unknown }>(() => ({
+  useRouter: vi.fn<() => { push: (...args: unknown[]) => unknown; resolve: (raw: string) => unknown }>(() => ({
     push: mockPush,
+    resolve: mockResolve,
   })),
   useRoute: vi.fn<() => { query: Record<string, unknown> }>(() => ({
-    query: {},
+    query: routeQueryState.value,
   })),
   RouterLink: vi.fn<
     (_: unknown, ctx: { slots: { default?: () => unknown }; attrs: Record<string, unknown> }) => unknown
@@ -198,6 +207,7 @@ function resetMocks() {
   mockMutate.mockClear()
   mockPush.mockClear()
   mockToastError.mockClear()
+  routeQueryState.value = {}
   mockStart.mockClear()
   mockCaptchaReset.mockClear()
   mockIsApiError.mockReset()
@@ -265,6 +275,35 @@ describe('LoginView - hCaptcha integration', () => {
       loginMutation.onError!(new Error('test error'))
 
       expect(mockCaptchaReset).toHaveBeenCalledOnce()
+    })
+  })
+
+  describe('Post-login navigation', () => {
+    it('lands on the dashboard when no redirect is present', () => {
+      mount(LoginView, {
+        global: { stubs: { LoginForm: createLoginFormStub() } },
+      })
+      mutations[0]!.onSuccess!()
+      expect(mockPush).toHaveBeenCalledWith({ name: 'dashboard' })
+    })
+
+    it('honours a redirect that points at an in-app page', () => {
+      routeQueryState.value = { redirect: '/settings/profile' }
+      mount(LoginView, {
+        global: { stubs: { LoginForm: createLoginFormStub() } },
+      })
+      mutations[0]!.onSuccess!()
+      expect(mockPush).toHaveBeenCalledWith('/settings/profile')
+    })
+
+    it('falls back to the dashboard when the redirect points at a public page', () => {
+      routeQueryState.value = { redirect: '/' }
+      mount(LoginView, {
+        global: { stubs: { LoginForm: createLoginFormStub() } },
+      })
+      mutations[0]!.onSuccess!()
+      expect(mockPush).toHaveBeenCalledWith({ name: 'dashboard' })
+      expect(mockPush).not.toHaveBeenCalledWith('/')
     })
   })
 

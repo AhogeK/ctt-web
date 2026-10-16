@@ -16,6 +16,7 @@ import { useAuthStore } from '@/stores/auth'
 import { TERMS_EXPIRED_EVENT, resolveTermsQueue, rejectTermsQueue } from '@/lib/api/instance'
 import TermsDialog from '@/features/auth/components/TermsDialog.vue'
 import { RouteNames } from '@/router/route-names'
+import { resolvePostAuthTarget } from '@/router/post-auth-redirect'
 
 const router = useRouter()
 const authStore = useAuthStore()
@@ -37,8 +38,9 @@ function handleTermsAccepted() {
   // Navigate to dashboard if terms expired during login
   if (isLoginTimeTermsExpired.value) {
     isLoginTimeTermsExpired.value = false
-    const redirect = router.currentRoute.value.query.redirect as string
-    router.push(redirect || { name: RouteNames.DASHBOARD })
+    router.push(
+      resolvePostAuthTarget(router, router.currentRoute.value.query.redirect) ?? { name: RouteNames.DASHBOARD },
+    )
   }
 }
 
