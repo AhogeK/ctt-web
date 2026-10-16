@@ -18,8 +18,11 @@ unknown query params are silently ignored by Spring — so the frontend could ne
 
 ## P2. Know which statistic you are looking at (conservation vs accumulation)
 
-- **Time-axis** — time-of-day, heatmap, trend, hourly — merge/dedupe — concurrency is one activity — **==
+- **Time-axis** — time-of-day, heatmap, trend, week-hour — merge/dedupe — concurrency is one activity — **==
   `summary.total`** — Show it, as a cross-check
+- **`hourly` is the time-axis exception** — raw per-session accumulation (clip only, no merge; class Javadoc
+  "Raw accumulation"; plugin parity) ⇒ concurrent sessions double-count, so it is **not** conservation-safe and
+  must not be cross-checked against `summary.total`. `hourly-days` (if built) stays raw to match it (2026-10-14).
 - **Categorical** — languages, projects, devices, IDEs — raw accumulation — concurrency is real — **≥ real
   activity** (super-linear) — Never show it
 

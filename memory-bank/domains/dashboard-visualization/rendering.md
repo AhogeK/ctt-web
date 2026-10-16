@@ -92,3 +92,19 @@ this (`Web:S6819`, "use <img>/<svg>") and are wrong here:
 
 Charts that also expose their values as DOM text (the time-of-day legend) are readable either way;
 that is the pattern to prefer when the data is small enough to show.
+
+## Screenshots must wait out the update animation
+
+ECharts morphs every series between option updates (~1s by default). A capture taken right after
+the data lands reads a **mid-morph frame** — a curve at a height its data never has (an average
+line was read as "drawn several times too high" this way). Before believing a rendered position,
+read the option back (`getOption()` / `convertToPixel()`) and capture only after the animation
+settles (~1.5s); the same applies to pixel-diff baselines.
+
+## Time readings are sampled per evaluation, never cached in a computed
+
+A dependency-free `computed(() => formatDate(new Date()))` never re-evaluates — a session that
+crosses midnight and then refetches keeps yesterday's "today", silently dropping the current-hour
+marker and drawing the new day's unwritten hours as zeros. Sample `new Date()` **inside** the
+computation that consumes it (it re-evaluates when its data changes); `HeatmapChart` already
+follows this pattern.

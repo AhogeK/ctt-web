@@ -15,6 +15,13 @@ Lookup facts. No judgement here.
 - `GET /stats/week-hour` — `start`, `end`, `timezoneOffset`, origin filter — sparse points + weekday counts — optional
 - `GET /stats/hourly` — `start`, `end`, `timezoneOffset`, origin filter — per-hour averages + active-day count —
   optional
+- **2026-10-14 修正 `hourly.activeDays`**：按「当天有编码即计一天」（跨本地午夜的会话计两天）——深夜用户数值变小属
+  修正、非回归；`hourly-days` 与它恒等。
+- `GET /stats/hourly-days` — `start`, `end`, `timezoneOffset`, origin filter — `{ days: [{ date, hourlySeconds[24] }],
+  activeDays }`；最多最近 31 个活跃日、升序；`activeDays` 不受截断影响 — 新端点（2026-10-14 上线；前端 0.58.0 起接入淡灰日曲线）
+- **两套分母口径不同（2026-10-14 回源核对）**：`hourly` ÷ 窗口内**活跃天数**（有编码的天）；`week-hour` ÷ 该星期几的
+  **日历出现次数**（"该格本可被使用的次数"）⇒ 两个端点的曲线**不可直接叠画**（会把"每天平均"与"每个星期几平均"两个
+  问题混在一张图上）；若做叠加需统一口径或新端点形状（需求草稿已出，2026-10-14）。
 - `GET /stats/distribution` — `type`, `timezoneOffset`, `start`, `end`, origin filter —
   `{ type, entries: [{ name, seconds }] }` — optional (v0.66.0+)
 - `GET /stats/recent` — `limit` (1–100, default 20), origin filter — sessions by start time desc — **none** — no

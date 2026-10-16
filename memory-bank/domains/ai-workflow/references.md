@@ -172,3 +172,11 @@ that had been read through `sed 's/^/  /'` (the two added spaces were read as fi
 that end it: derive the anchors from the file itself (`t.index('<section class="…')`, then slice to the
 tag's own `>`), and rebuild after **every** template edit — a missing `grid` class or a class attribute
 pasted outside its quotes compiles silently until the build runs.
+
+## Vue Test Utils mounts must be unmounted between tests
+
+The global setup only runs Testing Library `cleanup()` — VTU `mount()` wrappers stay alive. Once a
+component's composable stub is a reactive ref, those older mounts keep reacting to every reset and
+their renders land in the shared chart mock's call record, so `setOption.mock.calls[0]` is no longer
+the test's own mount (nine tests failed this way). Fix: `enableAutoUnmount(afterEach)` in the spec
+file; reactive stubs are what make post-mount refetch paths testable in the first place.

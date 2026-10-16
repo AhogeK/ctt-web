@@ -16,7 +16,7 @@
 | CSRF Protection                   | ✅ Complete | 0.10.2         |
 | API Key Management                | ✅ Complete | 0.16.0         |
 | Device Management                 | ✅ Complete | 0.18.3         |
-| Dashboard (框架 + 面板迭代)       | ✅ Complete | 0.57.0         |
+| Dashboard (框架 + 面板迭代)       | ✅ Complete | 0.58.0         |
 | Achievements (奖杯系统)           | ✅ Complete | 0.42.0         |
 | Leaderboard                       | ✅ Complete | 0.41.0         |
 | Landing Page (P1–P4 交付：基元 / hero / 演示 / 收口三区) | ✅ Complete (P1–P4) · P5–P6 待做 | 0.54.0 |
