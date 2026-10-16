@@ -98,6 +98,26 @@ export const HourlyDistributionResponseSchema = z.object({
   activeDays: z.number().int().nonnegative(),
 })
 
+/** One active day's per-hour seconds (raw accumulation, index 0-23). */
+export const HourlyDayPointSchema = z.object({
+  // Local day (yyyy-MM-dd in the requested timezone)
+  date: z.string(),
+  // Seconds coded in each hour of that day, index 0-23 (always 24 entries)
+  hourlySeconds: z.array(z.number().int().nonnegative()).length(24),
+})
+
+/**
+ * Per-day hourly seconds for a window's active days — the same accumulation
+ * as the hourly average, so summing a day's 24 values reproduces the
+ * average's numerator. At most the 31 most recent active days.
+ */
+export const HourlyDaysResponseSchema = z.object({
+  // Active days in ascending date order, capped at the 31 most recent
+  days: z.array(HourlyDayPointSchema),
+  // Days with any coding activity; not reduced by the day cap
+  activeDays: z.number().int().nonnegative(),
+})
+
 /** A recent coding session. */
 export const RecentSessionSchema = z.object({
   // Server primary key
@@ -224,6 +244,8 @@ export type DistributionEntry = z.infer<typeof DistributionEntrySchema>
 export type DistributionResponse = z.infer<typeof DistributionResponseSchema>
 export type HourlyStatPoint = z.infer<typeof HourlyStatPointSchema>
 export type HourlyDistributionResponse = z.infer<typeof HourlyDistributionResponseSchema>
+export type HourlyDayPoint = z.infer<typeof HourlyDayPointSchema>
+export type HourlyDaysResponse = z.infer<typeof HourlyDaysResponseSchema>
 export type HeatmapYearsResponse = z.infer<typeof HeatmapYearsResponseSchema>
 export type HeatmapMonthsResponse = z.infer<typeof HeatmapMonthsResponseSchema>
 export type WeekHourStatPoint = z.infer<typeof WeekHourStatPointSchema>

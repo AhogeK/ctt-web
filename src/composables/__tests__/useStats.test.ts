@@ -6,6 +6,7 @@ import {
   useStatsHeatmap,
   useStatsHeatmapYears,
   useStatsHourly,
+  useStatsHourlyDays,
   useStatsRecent,
   useStatsStreaks,
   useStatsSummary,
@@ -21,6 +22,7 @@ vi.mock('@/lib/api/stats', () => ({
   getStatsStreaks: vi.fn<() => Promise<unknown>>(() => Promise.resolve({ current: 0, max: 0 })),
   getStatsDistribution: vi.fn<() => Promise<unknown>>(() => Promise.resolve({ type: 'LANGUAGES', entries: [] })),
   getStatsHourly: vi.fn<() => Promise<unknown>>(() => Promise.resolve({ points: [], activeDays: 0 })),
+  getStatsHourlyDays: vi.fn<() => Promise<unknown>>(() => Promise.resolve({ days: [], activeDays: 0 })),
   getStatsRecent: vi.fn<() => Promise<unknown>>(() => Promise.resolve([])),
   getStatsAchievements: vi.fn<() => Promise<unknown>>(() => Promise.resolve([])),
   DEFAULT_RECENT_LIMIT: 20,
@@ -118,6 +120,21 @@ describe('staleTime by endpoint', () => {
     useStatsAchievements()
     expect(queryConfig?.staleTime).toBe(60_000)
     expect(toValue(queryConfig?.queryKey)).toEqual(['stats', 'achievements'])
+  })
+})
+
+describe('useStatsHourlyDays', () => {
+  it('keys by range and origin filter with 30s staleTime', () => {
+    useStatsHourlyDays({ start: '2026-09-01', end: '2026-09-15', deviceId: 'dev-1' })
+    expect(toValue(queryConfig?.queryKey)).toEqual(['stats', 'hourly-days', '2026-09-01', '2026-09-15', 'dev-1'])
+    expect(queryConfig?.staleTime).toBe(30_000)
+  })
+
+  it('never collides with the hourly key for the same window', () => {
+    useStatsHourly({ start: '2026-09-01', end: '2026-09-15' })
+    const hourlyKey = toValue(queryConfig?.queryKey)
+    useStatsHourlyDays({ start: '2026-09-01', end: '2026-09-15' })
+    expect(toValue(queryConfig?.queryKey)).not.toEqual(hourlyKey)
   })
 })
 

@@ -132,6 +132,16 @@ function denseDays(days: number): { date: string; seconds: number }[] {
   return out
 }
 
+/** Seven past active days with distinct hourly peaks — exercises the five-curve cap. */
+function hourlyDayCurves(): { date: string; hourlySeconds: number[] }[] {
+  return ['2026-09-24', '2026-09-25', '2026-09-26', '2026-09-27', '2026-09-28', '2026-09-29', '2026-09-30'].map(
+    (date, i) => ({
+      date,
+      hourlySeconds: Array.from({ length: 24 }, (_, hour) => (hour === 9 + (i % 3) ? 3600 : 0)),
+    }),
+  )
+}
+
 async function gotoHeatmap(page: import('@playwright/test').Page, width: number) {
   await page.setViewportSize({ width, height: 1080 })
   await mockAuthApis(page)
@@ -139,7 +149,17 @@ async function gotoHeatmap(page: import('@playwright/test').Page, width: number)
     const path = new URL(route.request().url()).pathname
     let data: unknown = null
     if (path.endsWith('/stats/heatmap')) data = { points: denseDays(371) }
-    else if (path.endsWith('/stats/streaks')) data = { current: 3, max: 12 }
+    else if (path.endsWith('/stats/hourly')) {
+      data = {
+        points: [
+          { hour: 9, averageSeconds: 3600 },
+          { hour: 14, averageSeconds: 1800 },
+        ],
+        activeDays: 7,
+      }
+    } else if (path.endsWith('/stats/hourly-days')) {
+      data = { days: hourlyDayCurves(), activeDays: 7 }
+    } else if (path.endsWith('/stats/streaks')) data = { current: 3, max: 12 }
     else if (path.endsWith('/stats/distribution')) {
       data = {
         type: 'TIME_OF_DAY',
@@ -159,6 +179,28 @@ async function gotoHeatmap(page: import('@playwright/test').Page, width: number)
   await page.locator('.heatmap-scroll').scrollIntoViewIfNeeded()
   await expect(page.locator('.heatmap-scroll canvas')).toBeVisible()
 }
+
+test('the hourly card draws the day curves and names them', async ({ page }) => {
+  await gotoHeatmap(page, 1920)
+  const card = page
+    .locator('main section')
+    .filter({ has: page.getByRole('heading', { name: 'Average hourly coding duration' }) })
+  await card.scrollIntoViewIfNeeded()
+  await expect(card.locator('canvas')).toBeVisible()
+  await expect(card.getByText('based on 7 active days')).toBeVisible()
+  await expect(card.getByText('faint lines: the last 5 days')).toBeVisible()
+})
+
+test('the hourly card sheds the day-curve note on phone panels', async ({ page }) => {
+  await gotoHeatmap(page, 390)
+  const card = page
+    .locator('main section')
+    .filter({ has: page.getByRole('heading', { name: 'Average hourly coding duration' }) })
+  await card.scrollIntoViewIfNeeded()
+  await expect(card.locator('canvas')).toBeVisible()
+  await expect(card.getByText('based on 7 active days')).toBeVisible()
+  await expect(card.getByText('faint lines')).toHaveCount(0)
+})
 
 test('opens the heatmap strip on its newest end at phone widths', async ({ page }) => {
   await gotoHeatmap(page, 390)

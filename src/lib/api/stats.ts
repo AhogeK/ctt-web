@@ -7,6 +7,7 @@ import {
   HeatmapResponseSchema,
   HeatmapMonthsResponseSchema,
   HeatmapYearsResponseSchema,
+  HourlyDaysResponseSchema,
   HourlyDistributionResponseSchema,
   RecentSessionSchema,
   StatsSummaryResponseSchema,
@@ -19,6 +20,7 @@ import {
   type StatsSummaryResponse,
   type StreakStatsResponse,
   type DistributionResponse,
+  type HourlyDaysResponse,
   type HourlyDistributionResponse,
   type WeekHourResponse,
   type RecentSession,
@@ -250,6 +252,37 @@ export async function getStatsHourly(params: StatsFilterParams = {}): Promise<Ho
 
   const wrapped = RestApiResponseSchema.parse(response)
   return HourlyDistributionResponseSchema.parse(wrapped.data)
+}
+
+/**
+ * Fetches per-day hourly seconds for the window's active days — one series
+ * per day, the raw per-hour accumulation behind the hourly average. At most
+ * the 31 most recent active days; `activeDays` still counts all of them.
+ *
+ * Endpoint: GET /api/v1/stats/hourly-days?timezoneOffset=…[&start=…&end=…][&deviceId=…]
+ *
+ * @param params - Optional range and origin filters
+ * @param params.start - Range start (yyyy-MM-dd, inclusive); omitted = all history
+ * @param params.end - Range end (yyyy-MM-dd, inclusive); omitted = all history
+ * @param params.deviceId - Origin-device filter (unknown/foreign devices 404)
+ * @param params.ideName - Exact IDE-name filter (unregistered names 404)
+ * @returns Active days (ascending) with 24 per-hour second buckets each
+ */
+export async function getStatsHourlyDays(
+  params: { start?: string; end?: string } & StatsFilterParams = {},
+): Promise<HourlyDaysResponse> {
+  const response = await apiFetch<unknown>('/api/v1/stats/hourly-days', {
+    method: 'GET',
+    query: {
+      timezoneOffset: timezoneOffset(),
+      ...(params.start ? { start: params.start } : {}),
+      ...(params.end ? { end: params.end } : {}),
+      ...filterQuery(params),
+    },
+  })
+
+  const wrapped = RestApiResponseSchema.parse(response)
+  return HourlyDaysResponseSchema.parse(wrapped.data)
 }
 
 /**
