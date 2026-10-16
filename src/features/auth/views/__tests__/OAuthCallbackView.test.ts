@@ -7,6 +7,13 @@ import OAuthCallbackView from '../OAuthCallbackView.vue'
 // ==========================================
 
 const mockReplace = vi.hoisted(() => vi.fn<(...args: unknown[]) => unknown>())
+const mockResolve = vi.hoisted(() =>
+  vi.fn<(raw: string) => { meta: { requiresAuth: boolean } }>((raw) => ({
+    // Unit-boundary stub: the resolver only reads meta.requiresAuth; the real
+    // route table is exercised by the login/OAuth e2e specs.
+    meta: { requiresAuth: !raw.startsWith('/auth') && raw !== '/' },
+  })),
+)
 const mockToastError = vi.hoisted(() => vi.fn<(...args: unknown[]) => unknown>())
 const mockLoginWithOAuth = vi.hoisted(() => vi.fn<(...args: unknown[]) => unknown>())
 const mockHistoryReplaceState = vi.hoisted(() =>
@@ -22,8 +29,9 @@ const routePathState = vi.hoisted(() => ({ value: '/oauth/callback' }))
 // ==========================================
 
 vi.mock('vue-router', () => ({
-  useRouter: vi.fn<() => { replace: (...args: unknown[]) => unknown }>(() => ({
+  useRouter: vi.fn<() => { replace: (...args: unknown[]) => unknown; resolve: (raw: string) => unknown }>(() => ({
     replace: mockReplace,
+    resolve: mockResolve,
   })),
   useRoute: vi.fn<() => { query: Record<string, unknown>; path: string }>(() => ({
     query: routeQueryState.value,
@@ -227,6 +235,20 @@ describe('OAuthCallbackView', () => {
       await wrapper.vm.$nextTick()
 
       expect(mockReplace).toHaveBeenCalledWith('/devices/123')
+    })
+
+    it('falls back to the dashboard when the redirect points at a public page', async () => {
+      setQuery({
+        accessToken: 'access-123',
+        refreshToken: 'refresh-456',
+        redirect: '/',
+      })
+
+      const wrapper = mount(OAuthCallbackView)
+      await wrapper.vm.$nextTick()
+
+      expect(mockReplace).toHaveBeenCalledWith({ name: 'dashboard' })
+      expect(mockReplace).not.toHaveBeenCalledWith('/')
     })
   })
 

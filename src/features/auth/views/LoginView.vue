@@ -5,6 +5,7 @@ import { toast } from 'vue-sonner'
 import { useMutation } from '@tanstack/vue-query'
 import { useAuthStore } from '@/stores/auth'
 import { RouteNames } from '@/router/route-names'
+import { resolvePostAuthTarget } from '@/router/post-auth-redirect'
 import { isApiError, mapApiErrorCode } from '@/lib/utils/api-error'
 import { useCooldown } from '@/composables/useCooldown'
 import { useResendVerification } from '../composables/useResendVerification'
@@ -47,8 +48,7 @@ const mutation = useMutation({
   mutationFn: authStore.login,
   onSuccess: () => {
     loginFormRef.value?.captchaRef?.reset()
-    const redirect = route.query.redirect as string
-    router.push(redirect || { name: RouteNames.DASHBOARD })
+    router.push(resolvePostAuthTarget(router, route.query.redirect) ?? { name: RouteNames.DASHBOARD })
   },
   onError: (error: unknown) => {
     loginFormRef.value?.captchaRef?.reset()
