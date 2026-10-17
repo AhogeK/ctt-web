@@ -108,3 +108,30 @@ crosses midnight and then refetches keeps yesterday's "today", silently dropping
 marker and drawing the new day's unwritten hours as zeros. Sample `new Date()` **inside** the
 computation that consumes it (it re-evaluates when its data changes); `HeatmapChart` already
 follows this pattern.
+
+## Fixed-size glyphs in flex rows need shrink-0
+
+A `h-3 w-3` icon or legend chip inside a `flex items-center` row is a flex item with default
+`flex-shrink: 1`: when the row runs out of room, the glyph — the one item with no min-content floor —
+is squeezed flat (measured 8.8×12 on a phone card whose class said 12×12, so the trend arrow read as
+a cramped scribble). The row-level assertions could not see it: the row still stayed inside its card
+because the glyph absorbed the overflow. Protect the glyph (`shrink-0`) and make the LABEL the
+flexible item (`min-w-0 truncate`) — the metric and its direction stay whole, and only the trailing
+wording ellipsises on the narrowest cards.
+
+## Axis labels: pick the kept set, never leave it to the overlap rule
+
+A dense day axis with month-boundary ticks had its label set left to ECharts' `hideOverlap`: the drop
+pattern depends on the card width, so a phone card showed December and March missing while ten other
+months stayed — indistinguishable from missing data (user report). Choose the kept dates in the
+component — wide cards label every month; narrow ones fall back to a stride counted back from the
+newest, so the current month always stays labelled — and drop `hideOverlap`; the same set then holds
+at every width instead of a pattern that changes with it.
+
+## The y-scale follows the layers actually drawn
+
+Scaling a chart to its raw maximum is only honest when that maximum is visible: with the daily dots
+dropped at phone widths, a lone tall day (6h among 1h days) stretched the axis to 7h while the drawn
+7-day average hugged the bottom third (user report). On narrow panels scale to what is drawn — the
+average line and the reference mean — and keep the raw maximum for wide panels, where the dots show
+it.
