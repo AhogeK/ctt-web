@@ -367,15 +367,18 @@ watch(palette, render)
       class="mb-3 flex flex-wrap items-center justify-center gap-x-4 gap-y-1 text-[10px] font-medium uppercase tracking-wider text-muted-foreground"
     >
       <span class="flex items-center gap-1.5">
-        <span class="inline-block h-3 w-3 rounded-[3px]" :style="{ background: palette.quiet }" aria-hidden="true" />No
-        coding
+        <span
+          class="inline-block h-3 w-3 shrink-0 rounded-[3px]"
+          :style="{ background: palette.quiet }"
+          aria-hidden="true"
+        />No coding
       </span>
       <!-- One chip for the continuous ramp: a gradient reads as a scale,
            while a flat swatch labelled "0" read as a fourth cell state that
            the grid can never show (0-value cells render as the quiet tile). -->
       <span class="flex items-center gap-1.5">
         <span
-          class="inline-block h-3 w-6 rounded-[3px]"
+          class="inline-block h-3 w-6 shrink-0 rounded-[3px]"
           :style="{
             background: `linear-gradient(90deg, ${palette.dataLow}, ${palette.dataMid}, ${palette.dataHigh})`,
           }"

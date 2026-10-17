@@ -66,4 +66,20 @@ test('change lines stay inside the cards at phone widths', async ({ page }) => {
     expect(row.scrollWidth, 'the delta line stays inside its card').toBeLessThanOrEqual(row.width + 1)
     expect(row.height, 'the delta line stays on one line').toBeLessThanOrEqual(20)
   }
+
+  // The trend icon is a fixed-size glyph: as the row's only shrinkable item it
+  // used to be squeezed flat on narrow cards (8.8×12 measured), which is what
+  // the arrow must never do — direction is the whole point of the glyph.
+  const icons = await page.getByTestId('summary-comparison').evaluateAll((els) =>
+    els.flatMap((el) => {
+      const svg = el.querySelector('svg')
+      if (!svg) return []
+      const box = svg.getBoundingClientRect()
+      return [{ w: +box.width.toFixed(1), h: +box.height.toFixed(1) }]
+    }),
+  )
+  expect(icons.length, 'at least one delta line carries an icon').toBeGreaterThan(0)
+  for (const icon of icons) {
+    expect(Math.abs(icon.w - icon.h), 'the delta icon keeps a square box').toBeLessThanOrEqual(0.5)
+  }
 })
