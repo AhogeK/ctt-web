@@ -404,6 +404,34 @@ test('long-term trend card stays inside the phone panel', async ({ page }) => {
   expect(box!.x + box!.width).toBeLessThanOrEqual(390 + 1)
 })
 
+test('the long-term delta icon keeps its square box at phone widths', async ({ page }) => {
+  await page.setViewportSize({ width: 390, height: 1080 })
+  await mockAuthApis(page)
+  await page.route('**/api/v1/stats/**', async (route) => {
+    const path = new URL(route.request().url()).pathname
+    let data: unknown = null
+    if (path.endsWith('/stats/heatmap')) {
+      // A lower recent 30 forces a downward delta (and therefore the icon).
+      const points = denseDays(371).map((p, i, all) => ({ ...p, seconds: i >= all.length - 30 ? 600 : p.seconds }))
+      data = { points }
+    } else if (path.endsWith('/stats/streaks')) data = { current: 3, max: 12 }
+    await route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify(okEnvelope(data)) })
+  })
+  await loginViaForm(page)
+  await page.goto('/dashboard')
+  const card = page
+    .locator('main section')
+    .filter({ has: page.getByRole('heading', { name: 'Long-term trend', exact: true }) })
+  await card.scrollIntoViewIfNeeded()
+  await expect(card.getByTestId('long-term-delta')).toBeVisible()
+  const box = await card.getByTestId('long-term-delta').evaluate((el) => {
+    const svg = el.querySelector('svg')!
+    const rect = svg.getBoundingClientRect()
+    return { w: +rect.width.toFixed(1), h: +rect.height.toFixed(1) }
+  })
+  expect(Math.abs(box.w - box.h), 'the delta icon keeps a square box').toBeLessThanOrEqual(0.5)
+})
+
 test('the long-term trend card picks its own year window', async ({ page }) => {
   await page.setViewportSize({ width: 2100, height: 1080 })
   await mockAuthApis(page)

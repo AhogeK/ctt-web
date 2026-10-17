@@ -47,7 +47,7 @@ const rows = computed(() => props.items.map((item) => ({ ...item, delta: deltaVi
           <p class="text-[11px] font-medium uppercase tracking-wider text-muted-foreground/90">{{ row.label }}</p>
           <component
             :is="row.icon"
-            class="h-3.5 w-3.5 transition-colors"
+            class="h-3.5 w-3.5 shrink-0 transition-colors"
             :class="
               SUMMARY_ACCENT_ICONS.has(row.icon)
                 ? 'text-primary/70'
@@ -72,21 +72,23 @@ const rows = computed(() => props.items.map((item) => ({ ...item, delta: deltaVi
         >
           <TrendingUp
             v-if="row.delta?.direction === 'up'"
-            class="h-3 w-3"
+            class="h-3 w-3 shrink-0"
             :class="row.delta?.className"
             aria-hidden="true"
           />
           <TrendingDown
             v-else-if="row.delta?.direction === 'down'"
-            class="h-3 w-3"
+            class="h-3 w-3 shrink-0"
             :class="row.delta?.className"
             aria-hidden="true"
           />
           <span class="shrink-0 font-medium whitespace-nowrap" :class="row.delta?.className">{{
             row.delta?.text
           }}</span>
-          <!-- The leading space lives in the expression: adjacent elements add none -->
-          <span class="shrink-0 whitespace-nowrap text-muted-foreground">{{ ' ' + (row.baseline ?? '') }}</span>
+          <!-- The baseline label is the row's only flexible item: the metric,
+               the percent and the trend glyph stay whole, and the label ellipsises
+               on the narrowest cards rather than pushing the row past its box. -->
+          <span class="min-w-0 truncate text-muted-foreground">{{ ' ' + (row.baseline ?? '') }}</span>
         </p>
         <button
           v-if="props.error"

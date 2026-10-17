@@ -437,14 +437,14 @@ watch(palette, render)
     >
       <span class="flex items-center gap-1.5">
         <span
-          class="inline-block h-3 w-3 rounded-[3px]"
+          class="inline-block h-3 w-3 shrink-0 rounded-[3px]"
           :style="{ background: palette.quietCell }"
           aria-hidden="true"
         />No coding
       </span>
       <span v-for="(label, i) in LEGEND_LABELS" :key="label" class="flex items-center gap-1.5">
         <span
-          class="inline-block h-3 w-3 rounded-[3px]"
+          class="inline-block h-3 w-3 shrink-0 rounded-[3px]"
           :style="{ background: palette.buckets[i] ?? palette.buckets[0] }"
           aria-hidden="true"
         />{{ label }}

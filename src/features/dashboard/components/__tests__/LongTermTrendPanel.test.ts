@@ -54,7 +54,8 @@ interface SeriesShape {
 }
 
 interface OptionShape {
-  xAxis: { data: string[] }
+  xAxis: { data: string[]; axisLabel: { interval: (index: number, value: string) => boolean } }
+  yAxis: { max: number }
   series: SeriesShape[]
 }
 
@@ -166,6 +167,39 @@ describe('LongTermTrendPanel', () => {
     const note = wrapper.get('[data-testid="long-term-note"]').text()
     expect(note).not.toContain('daily')
     expect(note).toContain('7-day average')
+  })
+
+  it('labels every month when the card has room, every other month on narrow cards', () => {
+    // A full year of dense days: twelve month starts, the newest = December.
+    const year = points(Array.from({ length: 365 }, () => 3600))
+    const allStarts = year.filter((p) => p.date.endsWith('-01')).map((p) => p.date)
+    expect(allStarts).toHaveLength(12)
+
+    mount(LongTermTrendPanel, { props: { points: year } })
+    expect(year.filter((p) => lastOption().xAxis.axisLabel.interval(0, p.date))).toHaveLength(12)
+
+    // A phone card: every other month, counted back from the newest — the
+    // current month always stays labelled and the rhythm is width-stable.
+    vi.spyOn(Element.prototype, 'clientWidth', 'get').mockReturnValue(400)
+    mount(LongTermTrendPanel, { props: { points: year } })
+    const narrowInterval = lastOption().xAxis.axisLabel.interval
+    const kept = year.filter((p) => narrowInterval(0, p.date)).map((p) => p.date)
+    expect(kept).toEqual(['2026-02-01', '2026-04-01', '2026-06-01', '2026-08-01', '2026-10-01', '2026-12-01'])
+  })
+
+  it('scales the y-axis to the drawn layers: raw days wide, the average on a phone', () => {
+    // One tall day (6h) among flat 1h days — the spike a phone never draws.
+    const spike = points([...Array.from({ length: 30 }, () => 3600), 21600, ...Array.from({ length: 30 }, () => 3600)])
+
+    mount(LongTermTrendPanel, { props: { points: spike } })
+    const wideMax = lastOption().yAxis.max
+    expect(wideMax).toBeGreaterThanOrEqual(21600)
+
+    vi.spyOn(Element.prototype, 'clientWidth', 'get').mockReturnValue(400)
+    mount(LongTermTrendPanel, { props: { points: spike } })
+    const narrowMax = lastOption().yAxis.max
+    expect(narrowMax).toBeLessThan(wideMax)
+    expect(narrowMax).toBeGreaterThanOrEqual(3600)
   })
 
   it('re-renders on new points without re-initializing', async () => {

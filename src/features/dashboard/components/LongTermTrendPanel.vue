@@ -104,6 +104,26 @@ const CHART_HEIGHT = 200
 
 /** Picks the daily seconds out of the points, in range order. */
 const seconds = computed(() => props.points.map((point) => point.seconds))
+
+/**
+ * Month-start dates the axis labels: every month when the card has room, every
+ * other month on narrow cards — counted back from the newest, so the current
+ * month always stays labelled and the window's first month keeps its label at
+ * wide widths. The set is chosen here rather than left to ECharts' overlap
+ * rule, whose width-dependent drop pattern left arbitrary months unlabelled (a
+ * phone card showed December and March missing while ten others stayed, which
+ * reads as missing data rather than a layout choice).
+ */
+const labelDates = computed(() => {
+  const starts = props.points.map((point) => point.date).filter((date) => date.endsWith('-01'))
+  const stride = isNarrow.value ? 2 : 1
+  const dates = new Set<string>()
+  for (let i = starts.length - 1; i >= 0; i -= stride) {
+    const date = starts[i]
+    if (date !== undefined) dates.add(date)
+  }
+  return dates
+})
 const weeklyAverage = computed(() => centeredWeeklyAverage(seconds.value))
 const windowMean = computed(() => windowMeanSeconds(seconds.value))
 const recentMean = computed(() => recentMeanSeconds(seconds.value))
@@ -182,7 +202,12 @@ function createLineGradient(pal: Palette) {
 }
 
 function buildOption(points: DailyStatPoint[], weekly: number[], mean: number | null, pal: Palette) {
-  const maxSeconds = Math.max(...points.map((p) => p.seconds), 0)
+  // On a phone the raw daily spikes are not drawn (the dots drop), so scaling
+  // to them would leave the top of the chart empty while the visible 7-day
+  // average hugs the bottom — the scale follows the layers actually drawn: the
+  // raw days when the dots are visible, the average and the window mean when
+  // they are not.
+  const maxSeconds = isNarrow.value ? Math.max(...weekly, mean ?? 0, 0) : Math.max(...points.map((p) => p.seconds), 0)
   const yScale = getHourAxisScale(maxSeconds)
 
   const dots = {
@@ -248,11 +273,10 @@ function buildOption(points: DailyStatPoint[], weekly: number[], mean: number | 
         color: pal.axisLabel,
         fontSize: 10,
         fontFamily: 'Inter, sans-serif',
-        // A 366-day axis cannot carry day labels: tick on month boundaries,
-        // label with the short month name, and drop colliding ones at narrow
-        // widths (13 labels do not fit a phone card).
-        interval: (_index: number, value: string) => value.endsWith('-01'),
-        hideOverlap: true,
+        // A 366-day axis cannot carry day labels: tick on month boundaries and
+        // label with the short month name, from the set `labelDates` chose —
+        // never ECharts' overlap rule (see that computed's note).
+        interval: (_index: number, value: string) => labelDates.value.has(value),
         formatter: (date: string) => new Date(`${date}T00:00:00`).toLocaleString('en-US', { month: 'short' }),
       },
     },
@@ -323,16 +347,21 @@ watch(palette, render)
       data-testid="long-term-delta"
       :title="delta.title"
     >
-      <TrendingUp v-if="delta.direction === 'up'" class="h-3 w-3" :class="delta.className" aria-hidden="true" />
+      <TrendingUp
+        v-if="delta.direction === 'up'"
+        class="h-3 w-3 shrink-0"
+        :class="delta.className"
+        aria-hidden="true"
+      />
       <TrendingDown
         v-else-if="delta.direction === 'down'"
-        class="h-3 w-3"
+        class="h-3 w-3 shrink-0"
         :class="delta.className"
         aria-hidden="true"
       />
       <span class="shrink-0 font-medium whitespace-nowrap" :class="delta.className">{{ delta.text }}</span>
-      <!-- The leading space lives in the expression: adjacent elements add none -->
-      <span class="shrink-0 whitespace-nowrap text-muted-foreground">{{ ' vs ' + averageLabel }}</span>
+      <!-- The label is the row's only flexible item — see the summary row's note. -->
+      <span class="min-w-0 truncate text-muted-foreground">{{ ' vs ' + averageLabel }}</span>
     </p>
     <div
       ref="container"
