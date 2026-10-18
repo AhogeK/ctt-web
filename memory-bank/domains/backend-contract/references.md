@@ -82,6 +82,39 @@ Two of these carry traps worth knowing before wiring a panel:
 - `GET /devices`, `POST /devices`, `DELETE /devices/{id}` — device registry; `revokedAt` marks revocation
 - `POST /sync/push`, `POST /sync/pull` — body: `{ deviceId, sessions[] }`; device must exist first
 
+### Auth / account — 规划中（后端答复 2026-10-18 · **尚未实现**）
+
+R1–R3 answered by ctt-server on 2026-10-18 (their plan finalized, code not started). **Do not wire
+before their「端点已可用」notice.** Final contracts as answered:
+
+- `PATCH /users/me` — body `{ displayName }` → 200 `UserProfileResponse` (same shape as `GET /users/me`).
+  Validation = registration rule (2–50; CJK/kana/hangul/latin/digit/`_`/`-`); **same name = success (no
+  write)**; errors `400 COMMON_003` / `403 AUTH_022` / `403 AUTH_020` (API-key caller) / `401`; rate 10/hr;
+  **no uniqueness on displayName**. Sync local state from the response — no second `GET /users/me`.
+- `GET /users/me/sessions?limit=20` (max 100) → `{ sessions: [{ id, kind, deviceName, ideName, userAgent,
+  createdAt, lastUsedAt, expiresAt, current }] }`, **sorted by `lastUsedAt` desc**; `kind` = `WEB` |
+  `PLUGIN` (deviceName/ideName only on PLUGIN; `userAgent` is on both — ignore it for PLUGIN rows);
+  `userAgent` = raw header, nullable, truncated to 512, **not parsed server-side** (the web client derives
+  the display label itself), stable across refresh rotation; `createdAt` = first login of the session,
+  `lastUsedAt` = last refresh; **`current` is server-decided — never send a refresh token to compare**;
+  rows carry **no `deviceId`** (a future session→device link would add it, no migration).
+- `DELETE /users/me/sessions/{id}` → 204; `404 COMMON_002` when not yours/absent. Deleting the current
+  session = logout (clear tokens, go to login). A kicked client gets `401 AUTH_008` on its next refresh;
+  already-issued access tokens keep a ≤15-minute window (same tradeoff as logout).
+- `GET /users/me/export` → `200 application/x-ndjson`, **no envelope** (the file stream starts with the
+  `{"type":"header",…}` line itself; every other endpoint keeps its `data.*` wrapper): one JSON object per
+  line, each carries `type` (`account`/`device`/`codingSession`/`dailyStat`/`achievement`/
+  `achievementProgress`/`oauthAccount`/`apiKey`); soft-deleted coding sessions are included with
+  `isDeleted: true`; `Content-Disposition` filename `ctt-export-<userId>-<yyyyMMdd>.ndjson`;
+  **never `JSON.parse` the whole body** (can reach tens of MB); no password/key-hash/token/IP; rate 3/hr;
+  upgrades to an async task + download link if p99 > 30 s or > 100 MB.
+- Login sessions and `/devices` stay separate endpoints (devices = sync subjects, sessions = credentials).
+- Refresh vs revoke are **serialized per session** server-side ("kicked = dead" even if a kick races a
+  refresh; the existing logout endpoint is covered too). JWT covers all three endpoints; with an API key
+  they need WRITE (display name) / READ (sessions, export) — the web client uses JWT.
+- Backend-found defect, fixed with R2: plugin sessions were recorded as web sessions with a 30-day expiry
+  (the configured 14-day plugin TTL was never used).
+
 ### API keys — `lib/api/api-keys.ts`
 
 | Endpoint                        | Notes                                          |

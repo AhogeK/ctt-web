@@ -62,6 +62,9 @@ source of truth to be read, never edited. Capability gaps are raised as a requir
   (catalogue default), both recorded in `progress.md` and reflected in the code. **Everything outside the
   leaderboard has not been re-read since v0.73.0**: treat those entries as accurate to that version rather than to
   the running server.
+- Planned endpoints — **R1–R3** (display-name `PATCH`, login sessions, NDJSON export) were **answered by the
+  backend on 2026-10-18 and are not implemented yet**; contracts recorded in `references.md`. Wire only after
+  their「端点已可用」notice.
 
 ### Leaderboard re-checked at v0.77.0 (2026-09-18) — no drift
 
