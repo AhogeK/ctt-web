@@ -243,7 +243,10 @@ test.describe('account deletion', () => {
 
     const dialog = page.getByRole('alertdialog')
     await expect(dialog).toBeVisible()
-    await expect(dialog.getByText('Type your email to confirm')).toBeVisible()
+    // The copy appears twice in the dialog — as the field label and as the
+    // validation message — so match the alert itself: that both disambiguates
+    // the locator and pins that the message is exposed as one.
+    await expect(dialog.getByRole('alert')).toHaveText('Type your email to confirm')
 
     // The regression this pins: an untouched field used to fail validation with Zod's own wording
     // ("expected string, received undefined"), which is an internal message, not a sentence.
