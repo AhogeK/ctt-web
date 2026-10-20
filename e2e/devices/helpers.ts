@@ -11,7 +11,8 @@ export interface DevicesPageSetup {
 
 /**
  * Seed the auth mocks, mock the devices endpoints with mutable state, log in
- * and navigate to /devices.
+ * and navigate to /settings/devices (device management lives under the
+ * settings group; the legacy /devices URL redirects there).
  *
  * The GET /api/v1/devices handler reads the mutable `devices` array by
  * closure, so tests can mutate it and the next refetch (triggered by query
@@ -49,7 +50,7 @@ export async function setupDevicesPage(page: Page, initialDevices: DeviceFixture
   })
 
   await loginViaForm(page)
-  await page.goto('/devices')
+  await page.goto('/settings/devices')
   await expect(page.getByRole('heading', { name: 'Device Management' })).toBeVisible()
 
   return {

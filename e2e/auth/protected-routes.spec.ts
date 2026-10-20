@@ -23,7 +23,7 @@ import { loginViaForm, mockAuthApis } from '../utils/auth-helpers.js'
  *   - Login:       /auth/login
  *   - Dashboard:   /dashboard
  *   - Profile:     /settings/profile
- *   - Devices:     /devices
+ *   - Devices:     /settings/devices (/devices redirects there)
  *   - Leaderboard: /leaderboard
  *
  * (The task brief uses `/login` as a shorthand for the login page — the
@@ -55,10 +55,12 @@ test.describe('Protected route redirects (unauthenticated)', () => {
     await expect(page).toHaveURL(/\/auth\/login\?redirect=\/settings\/profile$/)
   })
 
-  test('navigate to /devices without login → redirect to /auth/login?redirect=/devices', async ({ page }) => {
+  test('navigate to the legacy /devices URL without login → redirect lands on /settings/devices', async ({ page }) => {
     await page.goto('/devices')
 
-    await expect(page).toHaveURL(/\/auth\/login\?redirect=\/devices$/)
+    // The route redirects into the settings group before the guard runs, so
+    // the login redirect carries the canonical path, not the legacy one.
+    await expect(page).toHaveURL(/\/auth\/login\?redirect=\/settings\/devices$/)
   })
 
   test('navigate to /leaderboard without login → redirect to /auth/login?redirect=/leaderboard', async ({ page }) => {
