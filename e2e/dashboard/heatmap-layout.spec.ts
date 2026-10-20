@@ -325,8 +325,11 @@ test('a year view anchors at its newest non-future day', async ({ page }) => {
       { message: 'the strip re-anchors with the future tail beyond the right edge' },
     )
     .toBeGreaterThan(60)
-  const s = await stripMetrics()
-  expect(s.sl, 'the strip opens at today, not at an edge').toBeGreaterThan(60)
+  // A fresh read here raced the re-anchor: the poll above can settle while the
+  // strip is still scrolling. Poll the final position too — same threshold.
+  await expect
+    .poll(async () => (await stripMetrics()).sl, { message: 'the strip opens at today, not at an edge' })
+    .toBeGreaterThan(60)
 })
 
 test('narrow panels drop the time-of-day hover chip', async ({ page }) => {
