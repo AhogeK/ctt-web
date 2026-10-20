@@ -56,10 +56,10 @@ src/
 │       ├── achievements.ts # /achievements
 │       ├── auth.ts     # /auth/login, /auth/register
 │       ├── dashboard.ts # /dashboard
-│       ├── devices.ts  # /devices
+│       ├── devices.ts  # /devices → redirects into the settings group
 │       ├── landing.ts  # / (public landing + MarketingLayout)
 │       ├── leaderboard.ts # /leaderboard
-│       └── settings.ts # /settings/profile, /settings/api-keys
+│       └── settings.ts # /settings/{profile,devices,preferences,api-keys}; /settings → profile
 └── views/              # Top-level views (exception pages only;
     └── Exception/      # feature views live under features/)
                         #   404View
@@ -240,7 +240,7 @@ build: {
 | `feature-auth`        | Auth views, components, logic      | Navigate to `/auth`        |
 | `feature-dashboard`   | Dashboard views, charts, analytics | Navigate to `/dashboard`   |
 | `feature-settings`    | Settings views, forms, API key UI  | Navigate to `/settings`    |
-| `feature-devices`     | Device list, device management     | Navigate to `/devices`     |
+| `feature-devices`     | Device list, device management     | Navigate to `/settings/devices` |
 | `feature-leaderboard` | Leaderboard rankings, composables  | Navigate to `/leaderboard` |
 
 ## State Management
