@@ -76,7 +76,12 @@ src/router/ index.ts (core) + guard.ts (auth + NProgress) + modules/
 - Auto-import modules via `import.meta.glob('./modules/*.ts', { eager: true })`
 - Lazy loading all views; `manualChunks`: vendor/feature-auth/feature-dashboard/feature-settings
 - Stale chunk auto-reload: `router.onError` + `?retried=1` query guard against reload loops
-- `isPathActive(path)` exact-match helper for sidebar active state (prefix bleed across /settings siblings)
+- The settings group is a **nested shell**: `/settings` → `SettingsShell.vue` (a pathless record that renders the
+  section rail and the active section) → `profile | devices | preferences | api-keys`; the `devices` module is now
+  a **redirect-only** record (`/devices` → `/settings/devices`) so old links keep working without a second page
+- Sidebar active state has two helpers: `isPathActive(path)` (exact) for leaf entries, `isSectionActive(prefix)`
+  for the single Settings entry. Exact alone left the group unhighlighted on every section; prefix alone would
+  highlight on lookalikes (`/settings-archive`) — both behaviours are unit-tested
 
 ## Test File Naming
 

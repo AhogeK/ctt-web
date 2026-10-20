@@ -82,32 +82,45 @@ Two of these carry traps worth knowing before wiring a panel:
 - `GET /devices`, `POST /devices`, `DELETE /devices/{id}` — device registry; `revokedAt` marks revocation
 - `POST /sync/push`, `POST /sync/pull` — body: `{ deviceId, sessions[] }`; device must exist first
 
-### Auth / account — 规划中（后端答复 2026-10-18 · **尚未实现**）
+### Auth / account — 阶段六（最终契约 2026-10-19 · ctt-server **v0.83.0 已实现**，部署待通知）
 
-R1–R3 answered by ctt-server on 2026-10-18 (their plan finalized, code not started). **Do not wire
-before their「端点已可用」notice.** Final contracts as answered:
+R1–R3 implemented and merged in ctt-server v0.83.0 (2026-10-19); **deployment pending — wire only after
+their「端点已可用」notice.** This section is the final, current wording (it supersedes every earlier
+round's export-shape / `timezoneOffset` / error-code notes).
 
 - `PATCH /users/me` — body `{ displayName }` → 200 `UserProfileResponse` (same shape as `GET /users/me`).
   Validation = registration rule (2–50; CJK/kana/hangul/latin/digit/`_`/`-`); **same name = success (no
   write)**; errors `400 COMMON_003` / `403 AUTH_022` / `403 AUTH_020` (API-key caller) / `401`; rate 10/hr;
   **no uniqueness on displayName**. Sync local state from the response — no second `GET /users/me`.
-- `GET /users/me/sessions?limit=20` (max 100) → `{ sessions: [{ id, kind, deviceName, ideName, userAgent,
-  createdAt, lastUsedAt, expiresAt, current }] }`, **sorted by `lastUsedAt` desc**; `kind` = `WEB` |
-  `PLUGIN` (deviceName/ideName only on PLUGIN; `userAgent` is on both — ignore it for PLUGIN rows);
+- `GET /users/me/sessions?limit=20` (max 100, rate 60/hr) → `{ sessions: [{ id, kind, deviceName, ideName,
+  userAgent, createdAt, lastUsedAt, expiresAt, current }] }`, **sorted by `lastUsedAt` desc**; `kind` =
+  `WEB` | `PLUGIN` (deviceName/ideName only on PLUGIN; `userAgent` is on both — ignore it for PLUGIN rows);
   `userAgent` = raw header, nullable, truncated to 512, **not parsed server-side** (the web client derives
   the display label itself), stable across refresh rotation; `createdAt` = first login of the session,
-  `lastUsedAt` = last refresh; **`current` is server-decided — never send a refresh token to compare**;
-  rows carry **no `deviceId`** (a future session→device link would add it, no migration).
-- `DELETE /users/me/sessions/{id}` → 204; `404 COMMON_002` when not yours/absent. Deleting the current
-  session = logout (clear tokens, go to login). A kicked client gets `401 AUTH_008` on its next refresh;
-  already-issued access tokens keep a ≤15-minute window (same tradeoff as logout).
-- `GET /users/me/export` → `200 application/x-ndjson`, **no envelope** (the file stream starts with the
-  `{"type":"header",…}` line itself; every other endpoint keeps its `data.*` wrapper): one JSON object per
-  line, each carries `type` (`account`/`device`/`codingSession`/`dailyStat`/`achievement`/
-  `achievementProgress`/`oauthAccount`/`apiKey`); soft-deleted coding sessions are included with
-  `isDeleted: true`; `Content-Disposition` filename `ctt-export-<userId>-<yyyyMMdd>.ndjson`;
-  **never `JSON.parse` the whole body** (can reach tens of MB); no password/key-hash/token/IP; rate 3/hr;
-  upgrades to an async task + download link if p99 > 30 s or > 100 MB.
+  `lastUsedAt` = last refresh, **nullable (`null` = never refreshed)**; nullable keys are **always present**
+  (value `null`) — that distinguishes "no device" from "unknown field"; **`current` is server-decided** —
+  never send a refresh token to compare, and it is always `false` for an API-key caller; one login = one
+  row (refresh/rotation does not add rows); rows carry **no `deviceId`** (a future session→device link
+  would add it, no migration).
+- `DELETE /users/me/sessions/{id}` (rate 10/hr) → 204; `404 COMMON_002` when not yours/absent (does not
+  reveal whether someone else's session exists). Deleting the current session = logout (clear tokens, go
+  to login). A kicked client gets **`401 AUTH_003`** on its next refresh (the earlier `AUTH_008` wording
+  is void), other sessions of the account stay unaffected; already-issued access tokens keep a
+  ≤15-minute window (same tradeoff as logout). **Wording trap:** the general message map uses `AUTH_003`
+  for "reset link invalid" — the session flow must go through the terminal path (clear + redirect), never
+  that map's copy.
+- `GET /users/me/export?timezoneOffset=<minutes>` — **`timezoneOffset` is mandatory** (range ±720; missing
+  or out of range → `400 COMMON_003`; value = `-new Date().getTimezoneOffset()`, UTC+8 → `480`), rate
+  3/hr. Returns `200 application/json;charset=UTF-8` — **one JSON document** (not NDJSON, no
+  `RestApiResponse` envelope), `Content-Disposition: attachment; filename="ctt-export-<yyyyMMdd>.json"`;
+  **save the bytes as-is** (no `JSON.parse` → re-serialize, never drop `sessions`). Top level:
+  `exportVersion` ("1.0") / `exportTime` / `totalSessions` / `sessions[]` (the plugin's import format,
+  field-for-field) / `serverExport{}` (account, devices, dailyStats, achievements, achievementProgress,
+  oauthAccounts, loginSessions, apiKeys — metadata only, no credentials). **All timestamps are local
+  time with no zone** (the plugin parses them as local; a `Z` makes its whole import fail); the only
+  exception is `serverExport.generatedAt` (UTC). **Soft-deleted sessions are NOT exported** (including
+  them would "resurrect" deleted rows on plugin import). Empty values are **`""`, not `null`**. No async
+  task (whole DB ≈ 707 kB); upgrade trigger = >10 MB per user or p95 >5 s.
 - Login sessions and `/devices` stay separate endpoints (devices = sync subjects, sessions = credentials).
 - Refresh vs revoke are **serialized per session** server-side ("kicked = dead" even if a kick races a
   refresh; the existing logout endpoint is covered too). JWT covers all three endpoints; with an API key

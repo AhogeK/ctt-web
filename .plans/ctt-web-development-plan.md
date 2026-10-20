@@ -58,7 +58,7 @@ flowchart TB
 | 第三阶段 Dashboard 统计看板 | ✅ 已完成 | 成就独立成页而非面板（已定案） |
 | 第四阶段 设备管理 | ✅ 已完成 | — |
 | 第五阶段 排行榜 | ✅ 已完成 | 显式分页与「Find me」均已交付（旧记录的缺口行已于 2026-10-02 核实并纠正 ✓） |
-| 第六阶段 个人设置 | ⬜ 未开始（**计划定稿 2026-10-18**）| 已交付面：邮箱变更/密码/OAuth/删号/条款/API Key/设备；缺口：**i18n**（依赖已装未接线）· 设置 IA · 后端 R1–R3 **已答复**（等端点上线）+ R4–R5 缓提；**决策全部落定**（IA 四段 / i18n 分批 / 默认跟随浏览器，见该节台账）|
+| 第六阶段 个人设置 | 🟡 进行中（**S1 ✅ 2026-10-19**）| 已交付面：邮箱变更/密码/OAuth/删号/条款/API Key/设备；缺口：**i18n**（依赖已装未接线）· 设置 IA **已落地** · 后端 R1–R3 **已实现 v0.83.0**（等部署通知）+ R4–R5 缓提；**决策全部落定**（IA 四段 / i18n 分批 / 默认跟随浏览器，见该节台账）|
 | 第七阶段 工程质量与生产化 | 未开始 | 首屏预算、i18n 等 |
 | 第八阶段 产品首页（落地页） | ✅ 已完成 | P1–P6 全交付（v0.47.0 → v0.55.19，2026-10-17 记账收口）；唯一外挂待办：托管实例开通后更新落地页卡片（等后端/运维侧，见 P5） |
 
@@ -1033,10 +1033,20 @@ flowchart TB
 
 #### 子任务
 
-**S1：设置板块骨架与导航修正**
+**S1：设置骨架与导航修正 ✅ 已完成（2026-10-19）**
 - 目标：把设置从"两页并列"整理为 `/settings/*` 四段分组；清掉已证实的悬空项与错指向。
-- 交付：`SettingsLayout.vue`（侧栏四段，窄屏收为横向页签）· 路由 `/settings/{profile,devices,preferences,api-keys}`；`/settings` → redirect profile；`/devices` → **保留旧路径重定向**（书签/E2E 兼容）· `SETTINGS_DEVICES` 悬空常量**落实为真路由**（对齐其声明意图 ✓）· 头像菜单 "Settings" 指向 profile（修现错 ✗）· E2E 同轮更新（`protected-routes` 对 `/settings/*` 与 `/devices` 的断言）。
-- 验收：侧栏与头像菜单可达全部设置页且指向正确；`/settings`、`/devices` 重定向生效；`route-names` 常量与路由表一一对应（无悬空）；设备/设置相关 E2E 全绿。
+- 交付（实际）：`SettingsShell.vue`（四段导航 = Profile / Devices / Preferences / API Keys；桌面竖排、窄屏横滑；命名 `<nav>` + `aria-current`）·
+  路由 `/settings/{profile,devices,preferences,api-keys}`（pathless 壳层统一渲染）· `/settings` 与 `/devices` 双双重定向（旧路径保留 ✓）·
+  `SETTINGS_DEVICES` 常量成为真路由、`DEVICES` / `DEVICES_LIST` 死常量删除 ✓ · 头像菜单 Settings → 设置组（父记录重定向到默认段）✓ ·
+  **Preferences 页的主题段随本段落地**（复用 theme store；S5 余下：减少动效 + 语言）· AppSidebar 收敛为单个 Settings 入口
+  （组内前缀高亮，`/settings-archive` 这类近似路径不误亮 ✓）· E2E 更新（`protected-routes` 的 `/devices` 断言、devices helper 路径）+
+  新增 `e2e/settings/navigation.spec.ts`（默认段 / 四段导航 / 旧路径重定向 / 头像菜单四例）。
+- 验收：✅ 单测 **1563/1563**（新增 SettingsShell 3 + PreferencesView 4）· 受影响 E2E **51/51** · type-check / build / lint exit 0；
+  `/settings`、`/devices` 重定向实测生效；`route-names` 无悬空常量。
+- 审查轮修正（同轮）：组件命名改为 `SettingsShell`（仓库内 `*Layout` 只属于 `src/layouts/`）· 删除 PreferencesView 里多余的 computed ·
+  README 的 "absolute child paths" 按代码实际更正为 **relative child paths** 并补上设置分组与 `/devices` 重定向说明 · 设备页补路径 ·
+  OAuth 回调测试的示例路径换成真实路由 · **两处既有 E2E 缺陷**修复：热力图年度锚点的滚动竞态改为轮询断言（原为动画中途的一次性读取）、
+  删号校验文案的定位器收敛到 `role="alert"`（同一文案同时是字段标签与校验消息，`getByText` 会命中两个）
 
 **S2：i18n 基建（本阶段主体）**
 - 目标：装好机制、立好规矩，之后每批迁移都有守卫兜底。
@@ -1079,8 +1089,8 @@ sequenceDiagram
 - 目标：已交付的账号面（邮箱/密码/OAuth/条款/删号）在设置里**读起来是一个整体**；R1–R3 的接入设计随本页落地（**等端点通知后接线** ✓）。
 - 交付：account 与 security 分组的页面组织（沿用现有组件，不重写逻辑 ✓）· 展示**已接受的条款版本**（`publicConfig.termsVersion` + 用户值；store 补 `termsVersion`/`emailChangePending` 字段 ✗→✓）· 凭证状态说明（与 `AUTH_018` 一致）·
   **改显示名**（R1：`PATCH` 成功后用响应体同步 auth store 与头像/初始字；同名提交也走成功路径，无需特判）·
-  **登录会话卡**（R2：一次 `limit=100` 拉取不分页、**按服务端倒序直接渲染**（不重排）；行 = kind + deviceName/ideName + createdAt/lastUsedAt/expiresAt + `current` 标记；**WEB 行显示 `userAgent` 派生的友好名**（新增纯函数 + 单测，覆盖主流浏览器/系统；识别不了时回退原文截断或"未知"；PLUGIN 行仍用 deviceName/ideName ✓）；删除当前会话 = 走登出流程；被踢提示复用现有 `AUTH_008` 文案）·
-  **数据导出卡**（R3：经 `apiFetch.raw` + `responseType: 'blob'` 的**独立请求**（保留 401 刷新拦截，但**不走 JSON 解析**——导出无外壳）；文件名取 `Content-Disposition`；不做预览与解析；429 复用现有重试提示）·
+  **登录会话卡**（R2：一次 `limit=100` 拉取不分页、**按服务端倒序直接渲染**（不重排）；行 = kind + deviceName/ideName + createdAt/lastUsedAt（**`null` = 从未刷新**）+ expiresAt + `current` 标记；**WEB 行显示 `userAgent` 派生的友好名**（新增纯函数 + 单测，覆盖主流浏览器/系统；识别不了时回退原文截断或"未知"；PLUGIN 行仍用 deviceName/ideName ✓）；删除当前会话 = 走登出流程；被踢会话刷新得 `401 AUTH_003` → 走终态路径（清令牌 + 跳登录；**通用文案表里的 AUTH_003 是重置链接语义，不借用** ✓））·
+  **数据导出卡**（R3：**独立请求按 blob 下载**——带**必填 `timezoneOffset`**（`-new Date().getTimezoneOffset()`）、保留 401 刷新拦截、**原样落盘不解析**；文件名取 `Content-Disposition`（兜底 `ctt-export-<yyyyMMdd>.json`）；单 JSON 文档，`sessions[]` 不可丢 ✓；429 复用现有重试提示）·
   三项的**接线**均在收到后端「端点已可用」通知后进行（就绪设计先随本页落地 ✓）· 接线时顺手补 `AUTH_020` / `AUTH_022` 的错误码映射（两码不在现表、会落到原始码串 ✗；网页端本不可达，但 R1 契约会带出 `AUTH_022`）✓。
 - 验收：两分组在窄屏/宽屏可读；条款版本显示与 `GET /users/me` 一致；凭证互斥规则有单测；导出下载**不触发整段 JSON 解析**（代码审查点）；删当前会话 → 本地登出且无中间态；R1 同步后无需二次拉取 ✓。
 
@@ -1108,9 +1118,9 @@ stateDiagram-v2
 - 交付：设备页路由迁入 + `/devices` 重定向（与 S1 同轮）· 页内说明"插件用 API Key / 同步用设备"的关系（一图或一段 ✓）· 两页互链（按需）。
 - 验收：入口可达、互链正确；旧路径重定向不破坏既有 E2E/书签 ✓。
 
-**S7：后端跟进（已答复 · 等端点上线）**
+**S7：后端跟进（已实现 v0.83.0 · 等部署通知）**
 - 目标：跟踪 R1–R3 的落地，按「端点已可用」通知逐项接入（接入设计已并入 S4 ✓）。
-- 交付：需求文本与答复归档（见 §后端答复）· 收到通知后按 R1 → R2 → R3 接线 · 上线后按契约回归三个边界（同名提交 / 删当前会话 / 流式下载）。
+- 交付：需求文本与答复归档（见 §后端答复）· 收到通知后按 R1 → R2 → R3 接线 · 上线后按契约回归三个边界（同名提交 / 删当前会话 / JSON 原样落盘）。
 - 验收：三项端点上线后，S4 的对应卡片按契约工作；契约若有差异，在收到通知时同轮记录 ✓。
 
 #### 后端缺口 → 需求文本清单（现状 · 期望 · 理由 · 影响面）
@@ -1125,22 +1135,38 @@ stateDiagram-v2
 
 #### 后端答复（2026-10-18 · 三项全接受）
 
-**状态**：R1–R3 **全部接受**，两处反提案（都改后端实现，不改我们的使用方式）：R2 新增 `session_id`（数据库迁移 + 访问令牌带会话标识，客户端透明）；
-R3 改为 **NDJSON 流式**（非一次性 JSON）。**错误码零新增**；交付顺序 **R1 → R2 → R3**（可重排）；后端计划已定稿、**代码尚未开工** ⇒
-**现在不需要任何前端改动，等「端点已可用」通知再接入**（`dev-docs/user/frontend-integration.md` 的「规划中的端点」章节仅供参考，不按它写实现）。
+**状态**：R1–R3 **已实现并合并（ctt-server v0.83.0，2026-10-19）**，上线时间随部署节奏；完整最终契约见下方「最终契约」块
+（它**取代**此前各轮答复中与「导出形态 / `timezoneOffset` / 错误码」相关的描述 ✓）。**接入仍等后端的「端点已可用」通知**（部署后）；
+`dev-docs/user/frontend-integration.md` 的「规划中的端点」章节只作设计参考，不按它写实现 ✓。
 
 | 项 | 最终契约 | 要点 |
 |---|---|---|
 | R1 | `PATCH /api/v1/users/me` `{displayName}` → 200 `UserProfileResponse`（与 `GET /users/me` 完全一致）| 校验同注册（2–50）；**同名提交 = 成功**（无需前端特判）· 用响应体直接同步本地状态，**不必再拉一次** `GET /users/me` · 错误 `400 COMMON_003` / `403 AUTH_022` / `403 AUTH_020`（API key 场景）/ `401` · 限流 10 次/小时 · 不做显示名唯一性（昵称非身份标识）|
-| R2 | `GET /users/me/sessions?limit=20`（上限 100）→ `{sessions:[{id,kind,deviceName,ideName,userAgent,createdAt,lastUsedAt,expiresAt,current}]}`；`DELETE /users/me/sessions/{id}` → 204 / `404 COMMON_002` | **按 `lastUsedAt` 倒序**（前端不重排）· `kind` = `WEB` / `PLUGIN`（后者才有 `deviceName`/`ideName`；**`userAgent` 两类都有、PLUGIN 可忽略**）· `userAgent` = 原文、可空、写入前截断 512、**服务端不解析**（显示名由我们派生，见 S4）、轮换后沿用创建值 · `createdAt` = 首次登录、`lastUsedAt` = 最近刷新 · **`current` 由后端判定**（前端不传 refresh token）· **删当前会话 = 登出**（清本地令牌 + 跳登录）· 被踢的客户端下次刷新得 `401 AUTH_008` · 已签发访问令牌有 **≤15 分钟**残余窗口（已知取舍）· **行内无 `deviceId`**（只 `deviceName`/`ideName`；将来要从会话卡跳设备页再加，无迁移成本）|
-| R3 | `GET /users/me/export` → `200 application/x-ndjson`（**无统一 JSON 外壳**——文件流，第一行即 `{"type":"header",…}`；其余端点仍是 `data.*`）· 行含 `type`：account/device/codingSession/dailyStat/achievement/achievementProgress/oauthAccount/apiKey · `Content-Disposition` 带文件名 | **逐行解析或直接落盘，禁整段 `JSON.parse`**（可达数十 MB）· 前端只做**下载**（不经 JSON 管线）· 含**软删除**编码会话（标 `isDeleted: true`）——我们只落盘不解析 ✓ · 不含密码/密钥哈希/令牌/IP · 限流 3 次/小时 · 升级触发：p99 > 30s 或单用户 > 100MB → 后台任务 + 下载链接（届时通知）|
+| R2 | `GET /users/me/sessions?limit=20`（上限 100）→ `{sessions:[{id,kind,deviceName,ideName,userAgent,createdAt,lastUsedAt,expiresAt,current}]}`；`DELETE /users/me/sessions/{id}` → 204 / `404 COMMON_002` | **按 `lastUsedAt` 倒序**（前端不重排）· `kind` = `WEB` / `PLUGIN`（后者才有 `deviceName`/`ideName`；**`userAgent` 两类都有、PLUGIN 可忽略**）· `userAgent` = 原文、可空、写入前截断 512、**服务端不解析**（显示名由我们派生，见 S4）、轮换后沿用创建值 · `createdAt` = 首次登录、`lastUsedAt` = 最近刷新（**可空**：从未刷新为 `null`）· 可空字段的**键始终存在**（值 `null`，便于区分"没有设备"与"不认识该字段"）· **`current` 由后端判定**（前端不传 refresh token；API key 调用时恒 `false`）· **删当前会话 = 登出**（清本地令牌 + 跳登录）· 被踢的客户端刷新得 **`401 AUTH_003`**（早期口径的 `AUTH_008` 已作废 ✗）· 已签发访问令牌有 **≤15 分钟**残余窗口（已知取舍）· **行内无 `deviceId`**（只 `deviceName`/`ideName`；将来要从会话卡跳设备页再加，无迁移成本）· 限流 **60 次/小时**（列表）/ 10 次/小时（吊销）|
+| R3 | `GET /users/me/export?timezoneOffset=<分钟>`（**必填**，±720）→ `200 application/json;charset=UTF-8`，**单一 JSON 文档**（非 NDJSON、非外壳）· 文件名 `ctt-export-<yyyyMMdd>.json` | **原样存为 `.json`**（不 `JSON.parse` 后再序列化、不丢 `sessions`）· `timezoneOffset` = `-new Date().getTimezoneOffset()`（UTC+8 → 480）；缺失/越界 → `400 COMMON_003` · 文件内时间**本地时间、无 `Z`**（唯一例外 `serverExport.generatedAt`，UTC）· 顶层 = `exportVersion`（"1.0"）/ `exportTime` / `totalSessions` / `sessions[]`（插件端导入格式，逐字一致）/ `serverExport{}`（账号/设备/统计/成就/OAuth/登录会话/API key 元数据）· **不含软删会话**（插件端导入按"未删除"落库，导出会"复活" ✗）· **空值为空字符串而非 `null`** · 不含任何凭据 · 限流 3 次/小时 · 不做异步任务（实测全库 707 kB；升级触发：单用户 >10 MB 或 p95 >5 s）|
 
-**后端同步事项（2026-10-18）**：① 只出计划、线上零变化 ② 会话 `current` 由后端判定、导出流式——我们的功能设计不用改 ③ 错误码零新增（`AUTH_008` 复用为"该会话已被登出"）
+**后端同步事项（2026-10-18）**：① 只出计划、线上零变化 ② 会话 `current` 由后端判定、导出流式——我们的功能设计不用改 ③ 错误码零新增（`AUTH_008` 复用为"该会话已被登出"
+——**此条已被最终契约取代：被踢 → `AUTH_003`** ✗→✓）
 ④ 交付顺序 R1→R2→R3 ⑤ 规划章节未实现前不照写 ⑥ 他们的计划文件已按代码改正（此前 `AUTH_013–018` 语义记录错位；**我们的映射表是对的**）。
 
 **第二轮同步（同日 · 只含新信息）**：`userAgent` **采纳**（8→9 字段；原文、可空、≤512、不解析、轮换不变；与 `session_id` 同一迁移、**不影响排期**）·
 导出**无外壳**（首行即 `header`）· 会话**按 `lastUsedAt` 倒序** · 行内**无 `deviceId`**（将来可加、无迁移）· 导出含软删除会话（`isDeleted`）·
 刷新与吊销**按会话串行化**（"踢了就一定失效"；既有登出接口一并覆盖）· 凭据：JWT 三端点全通，API key 分别 WRITE / READ（我们走 JWT，无需配置）。
+
+**最终契约（2026-10-19 · ctt-server v0.83.0 · 取代此前口径）**：端点总览 = `PATCH /users/me`（10 次/小时）· `GET /users/me/sessions`（60 次/小时）· `DELETE /users/me/sessions/{id}`（10 次/小时）· `GET /users/me/export`（3 次/小时）；
+鉴权：JWT 或对应 scope 的 API key（我们走 JWT ✓）；错误码零新增（`COMMON_002` 404 / `COMMON_003` 400 / `AUTH_003` 401 / `AUTH_020` 403 / `AUTH_022` 403 / `RATE_LIMIT_001` 429）。与我们早前口径的差异：
+
+| # | 早前口径 | 现在 | 我们的动作 |
+|---|---|---|---|
+| 1 | 导出为 `application/x-ndjson`、逐行 `type` | **单一 JSON 文档**（`.json`）| 接入按 JSON 下载；计划里"逐行解析"的说法作废 ✗（**尚未写代码，无需返工** ✓）|
+| 2 | 导出无参数 | `timezoneOffset` **必填**（±720）；缺失/越界 = `400 COMMON_003` | 导出按钮带参数（`-new Date().getTimezoneOffset()`）✓ |
+| 3 | 被踢会话刷新 → `AUTH_008` | **`401 AUTH_003`** | 无需新映射：`AUTH_003` 已是终态码（清令牌 + 跳登录）✓；但**通用文案表里的 AUTH_003 是"重置链接无效"** ✗ ⇒ 会话场景只走终态路径、不借用通用文案 ✓ |
+| 4 | 文件名含 `<userId>`、`.ndjson` | `ctt-export-<yyyyMMdd>.json` | 仅命名 ✓ |
+| 5 | 会话列表 / 吊销 / 显示名 | 不变 | 无 ✓ |
+
+会话列表补充（最终口径）：`lastUsedAt` 可空（从未刷新 = `null`）、可空字段**键始终存在**（值为 `null`）、`limit` 默认 20 / 上限 100、限流 **60 次/小时**（早前口径 20 ✗）、API key 调用时 `current` 恒 `false` ✓。
+
+另有一处反转：第二轮所说的"导出含软删会话（`isDeleted`）"**已作废**——最终契约**不含软删会话**（否则插件端导入会"复活"已删记录 ✓）。
 
 **后端两处顺带发现**：① 插件会话刷新时被误记为网页会话、有效期被续成 30 天（配置中"插件端 14 天"从未生效）——**随 R2 一并修**，修前列表里插件会话会显示成网页登录 ✓
 ② 他们计划文件的 OAuth 错误码清单与代码不符，已改正 ✓。
@@ -1149,13 +1175,13 @@ R3 改为 **NDJSON 流式**（非一次性 JSON）。**错误码零新增**；�
 
 | 子任务 | 核心产出 | 状态 |
 |---|---|---|
-| S1 设置骨架与导航修正 | 分组 IA + 悬空常量清理 + 菜单指向修正 | ⬜ 未开工（IA 已定稿）|
+| S1 设置骨架与导航修正 | SettingsShell 四段 + `/devices` 重定向 + 菜单指向修正 | ✅ 已完成（2026-10-19）|
 | S2 i18n 基建 | i18n 实例 + 词条包 + 切换器 + 格式统一 + check-i18n | ⬜ 未开工 |
 | S3 词条迁移 | 183 文件分批迁移（六批已排定）| ⬜ 未开工 |
 | S4 账号与安全整合 | 分组页 + 条款版本 + store 字段 + R1/R2/R3 接入设计 | ⬜ 未开工（就绪设计已随契约更新）|
-| S5 偏好页 | 主题入口 + 减少动效 + 语言 | ⬜ 未开工 |
+| S5 偏好页 | 减少动效 + 语言（**主题段已随 S1 落地** ✓）| 🟡 部分（S1 交付了主题段）|
 | S6 设备与 API Keys 归属 | 设备迁入 + 旧路径重定向 + 互链 | ⬜ 未开工（IA 已定稿）|
-| S7 后端跟进 | 需求已答复（2026-10-18）· 接入设计并入 S4 | ✅ 已答复 · 等端点上线 |
+| S7 后端跟进 | 契约最终版（v0.83.0 已实现）· 接入设计并入 S4 | ✅ 已实现 · 等部署通知 |
 
 #### 风险与开放问题
 
@@ -1169,15 +1195,16 @@ R3 改为 **NDJSON 流式**（非一次性 JSON）。**错误码零新增**；�
 | 主题/动效偏好与既有机制打架 | `public/theme.js` 首帧只认 `vueuse-color-scheme` | 新增偏好不改既有键；减少动效用独立属性 ✓ |
 | 双语并存期观感不统一 | 已迁移页中文、未迁移页英文（同屏可能混排）| 批次按"外壳 → 认证 → 设置"优先（高频路径先统一）；内测期接受 ✓ |
 | 端点未上线前误按规划文档实现 | `dev-docs/user/frontend-integration.md` 已加「规划中的端点（尚未实现）」章节 | 接线等待后端「端点已可用」通知；规划章节只作设计参考 ✓ |
+| E2E 冷启动 + 并行时 api-keys 组首例失败（2026-10-19 观察到一次） | 同命令预热后 **51/51**、单 worker **22/22**；未能复现 | 判定为测试环境时序（共享 dev server 冷编译 + 并行登录），非应用回归；CI 走预览构建路径 ⇒ 若 CI 仍复现再查登录时序 ✓ |
 
 #### 整体验收标准
 
-- [ ] 设置板块：全部设置页从侧栏与头像菜单**可达且指向正确**；无悬空路由常量
+- [x] 设置板块：全部设置页从侧栏与头像菜单**可达且指向正确**；无悬空路由常量（2026-10-19 S1 ✓）
 - [ ] i18n：切换 zh-CN 后已迁移范围全中文、刷新保持、`<html lang>` 同步；两词条包键集合相等（脚本断言）
 - [ ] 账号与安全：条款版本展示与 `/users/me` 一致；最后凭证不可解绑有提示（与 `AUTH_018` 对齐）
 - [ ] 外观：主题三档即时生效；减少动效开启后动画时长 ~0（`getAnimations()` 断言）
 - [ ] 门禁：单测 / E2E / lint / type-check / build 全绿且计入全量基线；`check-i18n` 接入收尾检查
-- [x] 需求文本：R1–R3 已投递并获答复（2026-10-18，三项全接受）；R4–R5 存档缓提 —— 验收转为：端点上线后按契约接入（同名提交 / 删当前会话 / 流式下载三个边界）
+- [x] 需求文本：R1–R3 已实现（2026-10-19 · v0.83.0 最终契约：导出 = 单一 JSON + `timezoneOffset` 必填；被踢 = `AUTH_003`；会话 `lastUsedAt` 可空）；R4–R5 存档缓提 —— 验收转为：部署后按契约接入（同名提交 / 删当前会话 / JSON 落盘三个边界）
 
 #### 明确不做
 
