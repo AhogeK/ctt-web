@@ -224,17 +224,17 @@ describe('OAuthCallbackView', () => {
       expect(mockReplace).toHaveBeenCalledWith('/settings')
     })
 
-    it('redirects to nested safe path (e.g. /devices/123)', async () => {
+    it('redirects to nested safe path (e.g. /settings/devices)', async () => {
       setQuery({
         accessToken: 'access-123',
         refreshToken: 'refresh-456',
-        redirect: '/devices/123',
+        redirect: '/settings/devices',
       })
 
       const wrapper = mount(OAuthCallbackView)
       await wrapper.vm.$nextTick()
 
-      expect(mockReplace).toHaveBeenCalledWith('/devices/123')
+      expect(mockReplace).toHaveBeenCalledWith('/settings/devices')
     })
 
     it('falls back to the dashboard when the redirect points at a public page', async () => {
