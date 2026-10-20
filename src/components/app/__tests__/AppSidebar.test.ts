@@ -57,9 +57,6 @@ vi.mock('@/components/ui/sidebar', () => ({
 vi.mock('@lucide/vue', () => ({
   LayoutDashboard: { name: 'LayoutDashboard', template: '<span data-icon="layout-dashboard" />' },
   Settings: { name: 'Settings', template: '<span data-icon="settings" />' },
-  Monitor: { name: 'Monitor', template: '<span data-icon="monitor" />' },
-  User: { name: 'User', template: '<span data-icon="user" />' },
-  KeyRound: { name: 'KeyRound', template: '<span data-icon="key-round" />' },
   Trophy: { name: 'Trophy', template: '<span data-icon="trophy" />' },
   ListOrdered: { name: 'ListOrdered', template: '<span data-icon="list-ordered" />' },
 }))
@@ -69,11 +66,14 @@ const createTestRouter = () => {
     history: createMemoryHistory(),
     routes: [
       { path: '/dashboard', name: 'dashboard', component: { template: '<div>Dashboard</div>' } },
-      { path: '/devices', name: 'devices', component: { template: '<div>Devices</div>' } },
       { path: '/achievements', name: 'achievements', component: { template: '<div>Achievements</div>' } },
       { path: '/leaderboard', name: 'leaderboard', component: { template: '<div>Leaderboard</div>' } },
       { path: '/settings/profile', name: 'settings-profile', component: { template: '<div>Settings</div>' } },
+      { path: '/settings/devices', name: 'settings-devices', component: { template: '<div>Devices</div>' } },
+      { path: '/settings/preferences', name: 'settings-preferences', component: { template: '<div>Prefs</div>' } },
       { path: '/settings/api-keys', name: 'settings-api-keys', component: { template: '<div>API Keys</div>' } },
+      // Lookalike that must NOT count as the settings group.
+      { path: '/settings-archive', name: 'settings-archive', component: { template: '<div>Archive</div>' } },
     ],
   })
 }
@@ -120,51 +120,51 @@ describe('AppSidebar', () => {
       expect(dashboardLink.exists()).toBe(true)
       expect(dashboardLink.text()).toContain('Dashboard')
 
-      const devicesLink = wrapper.find('a[href="/devices"]')
-      expect(devicesLink.exists()).toBe(true)
-      expect(devicesLink.text()).toContain('Devices')
+      // Devices moved under the settings group — no top-level link remains.
+      expect(wrapper.find('a[href="/devices"]').exists()).toBe(false)
 
       // Listed so the page is reachable without knowing its URL.
       const leaderboardLink = wrapper.find('a[href="/leaderboard"]')
       expect(leaderboardLink.exists()).toBe(true)
       expect(leaderboardLink.text()).toContain('Leaderboard')
 
-      const settingsLink = wrapper.find('a[href="/settings/profile"]')
+      // One Settings entry owns every section; the sub-navigation lives inside the group.
+      const settingsLink = wrapper.find('a[href="/settings"]')
       expect(settingsLink.exists()).toBe(true)
-      expect(settingsLink.text()).toContain('Profile')
-
-      const apiKeysLink = wrapper.find('a[href="/settings/api-keys"]')
-      expect(apiKeysLink.exists()).toBe(true)
-      expect(apiKeysLink.text()).toContain('API Keys')
+      expect(settingsLink.text()).toContain('Settings')
+      expect(wrapper.find('a[href="/settings/profile"]').exists()).toBe(false)
+      expect(wrapper.find('a[href="/settings/api-keys"]').exists()).toBe(false)
 
       wrapper.unmount()
     })
 
-    it('highlights the menu item of the active route', async () => {
+    it('keeps the settings item highlighted for every section inside the group', async () => {
       const { wrapper, router } = createWrapper()
+      const menuButtonFor = (href: string) =>
+        wrapper.findAll('[data-slot="sidebar-menu-button"]').find((li) => li.find(`a[href="${href}"]`).exists())!
+
       await router.push('/settings/api-keys')
       await nextTick()
-
-      const menuButtonFor = (href: string) =>
-        wrapper.findAll('[data-slot="sidebar-menu-button"]').find((li) => li.find(`a[href="${href}"]`).exists())!
-
-      expect(menuButtonFor('/settings/api-keys').attributes('data-active')).toBeDefined()
+      expect(menuButtonFor('/settings').attributes('data-active')).toBeDefined()
       expect(menuButtonFor('/dashboard').attributes('data-active')).toBeUndefined()
-      expect(menuButtonFor('/settings/profile').attributes('data-active')).toBeUndefined()
+
+      await router.push('/settings/profile')
+      await nextTick()
+      expect(menuButtonFor('/settings').attributes('data-active')).toBeDefined()
 
       wrapper.unmount()
     })
 
-    it('does not bleed active state across /settings sibling routes', async () => {
+    it('does not treat a lookalike path as the settings group', async () => {
+      // isSectionActive matches /settings and /settings/<x> — /settings-archive is neither.
       const { wrapper, router } = createWrapper()
-      await router.push('/settings/profile')
+      await router.push('/settings-archive')
       await nextTick()
 
       const menuButtonFor = (href: string) =>
         wrapper.findAll('[data-slot="sidebar-menu-button"]').find((li) => li.find(`a[href="${href}"]`).exists())!
 
-      expect(menuButtonFor('/settings/profile').attributes('data-active')).toBeDefined()
-      expect(menuButtonFor('/settings/api-keys').attributes('data-active')).toBeUndefined()
+      expect(menuButtonFor('/settings').attributes('data-active')).toBeUndefined()
 
       wrapper.unmount()
     })

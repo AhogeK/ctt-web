@@ -24,15 +24,12 @@ export const RouteNames = {
   DASHBOARD: 'dashboard',
   DASHBOARD_HOME: 'dashboard-home',
 
-  // Devices
-  DEVICES: 'devices',
-  DEVICES_LIST: 'devices-list',
-
   // Settings
   SETTINGS: 'settings',
   SETTINGS_PROFILE: 'settings-profile',
-  SETTINGS_API_KEYS: 'settings-api-keys',
   SETTINGS_DEVICES: 'settings-devices',
+  SETTINGS_PREFERENCES: 'settings-preferences',
+  SETTINGS_API_KEYS: 'settings-api-keys',
 
   // Leaderboard
   LEADERBOARD: 'leaderboard',

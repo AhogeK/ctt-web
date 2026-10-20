@@ -15,7 +15,7 @@ import {
   useSidebar,
 } from '@/components/ui/sidebar'
 import { RouterLink, useRoute } from 'vue-router'
-import { LayoutDashboard, Monitor, User, KeyRound, Trophy, ListOrdered } from '@lucide/vue'
+import { LayoutDashboard, Trophy, ListOrdered, Settings } from '@lucide/vue'
 import PluginIcon from './PluginIcon.vue'
 
 /**
@@ -51,6 +51,17 @@ const activePath = computed(() => route.path)
  */
 function isPathActive(path: string): boolean {
   return activePath.value === path
+}
+
+/**
+ * Whether the current route is inside a section (prefix match).
+ *
+ * The settings item navigates to the settings group, whose pages all share the
+ * /settings prefix — an exact match would leave it unhighlighted on every
+ * section. Leaf pages above keep the exact rule.
+ */
+function isSectionActive(prefix: string): boolean {
+  return activePath.value === prefix || activePath.value.startsWith(`${prefix}/`)
 }
 
 /**
@@ -125,20 +136,6 @@ function handleNavigate() {
             <SidebarMenuItem>
               <SidebarMenuButton
                 as-child
-                tooltip="Devices"
-                class="h-9 text-[15px] [&>svg]:size-[18px] [&>svg]:mr-0.5"
-                @click="handleNavigate"
-                :is-active="isPathActive('/devices')"
-              >
-                <RouterLink to="/devices">
-                  <Monitor />
-                  <span>Devices</span>
-                </RouterLink>
-              </SidebarMenuButton>
-            </SidebarMenuItem>
-            <SidebarMenuItem>
-              <SidebarMenuButton
-                as-child
                 tooltip="Achievements"
                 class="h-9 text-[15px] [&>svg]:size-[18px] [&>svg]:mr-0.5"
                 @click="handleNavigate"
@@ -177,28 +174,14 @@ function handleNavigate() {
             <SidebarMenuItem>
               <SidebarMenuButton
                 as-child
-                tooltip="Profile"
+                tooltip="Settings"
                 class="h-9 text-[15px] [&>svg]:size-[18px] [&>svg]:mr-0.5"
                 @click="handleNavigate"
-                :is-active="isPathActive('/settings/profile')"
+                :is-active="isSectionActive('/settings')"
               >
-                <RouterLink to="/settings/profile">
-                  <User />
-                  <span>Profile</span>
-                </RouterLink>
-              </SidebarMenuButton>
-            </SidebarMenuItem>
-            <SidebarMenuItem>
-              <SidebarMenuButton
-                as-child
-                tooltip="API Keys"
-                class="h-9 text-[15px] [&>svg]:size-[18px] [&>svg]:mr-0.5"
-                @click="handleNavigate"
-                :is-active="isPathActive('/settings/api-keys')"
-              >
-                <RouterLink to="/settings/api-keys">
-                  <KeyRound />
-                  <span>API Keys</span>
+                <RouterLink to="/settings">
+                  <Settings />
+                  <span>Settings</span>
                 </RouterLink>
               </SidebarMenuButton>
             </SidebarMenuItem>

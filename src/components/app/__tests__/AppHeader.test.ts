@@ -324,7 +324,7 @@ describe('AppHeader', () => {
     wrapper.unmount()
   })
 
-  it('navigates to the API keys settings route when the Settings item is selected', async () => {
+  it('navigates to the settings group when the Settings item is selected', async () => {
     const wrapper = mountAppHeader({
       stubs: {
         DropdownMenuItem: {
@@ -342,7 +342,7 @@ describe('AppHeader', () => {
     await settingsItem!.trigger('click')
 
     expect(mockRouterPush).toHaveBeenCalledTimes(1)
-    expect(mockRouterPush).toHaveBeenCalledWith({ name: RouteNames.SETTINGS_API_KEYS })
+    expect(mockRouterPush).toHaveBeenCalledWith({ name: RouteNames.SETTINGS })
 
     wrapper.unmount()
   })

@@ -125,7 +125,10 @@ function handleThemeChange(value: unknown): void {
 }
 
 function navigateToSettings(): void {
-  router.push({ name: RouteNames.SETTINGS_API_KEYS })
+  // The settings group's parent record redirects to its default section
+  // (Profile), so navigating by the group name lands on the first section
+  // without this menu hard-coding one.
+  router.push({ name: RouteNames.SETTINGS })
 }
 
 async function handleLogout(): Promise<void> {
