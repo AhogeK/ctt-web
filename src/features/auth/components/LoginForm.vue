@@ -12,6 +12,10 @@ import { Button } from '@/components/ui/button'
 import { cn } from '@/lib/utils'
 import { Eye, EyeOff } from '@lucide/vue'
 import { useThemeStore } from '@/stores/theme'
+import { i18n } from '@/i18n'
+
+/** The Zod schema below runs outside setup, so validation copy resolves through the global instance. */
+const t = i18n.global.t
 import CaptchaWidget from '@/components/CaptchaWidget.vue'
 
 const emit = defineEmits<{
@@ -36,7 +40,7 @@ const props = defineProps<{
  * is applied at the API layer.
  */
 const LoginFormSchema = z.object({
-  email: z.email('Invalid email format').min(1, 'Email is required'),
+  email: z.email(t('auth.validation.invalidEmail')).min(1, t('auth.validation.emailRequired')),
   password: StrongPasswordSchema,
 })
 
@@ -98,12 +102,12 @@ defineExpose({
         <FormLabel
           class="text-sm font-emphasis text-foreground/80 dark:text-muted-foreground"
           style="font-feature-settings: 'cv01', 'ss03'"
-          >Email</FormLabel
+          >{{ t('auth.common.email') }}</FormLabel
         >
         <FormControl>
           <Input
             type="email"
-            placeholder="you@example.com"
+            :placeholder="t('auth.common.emailPlaceholder')"
             autocomplete="email"
             :class="
               cn(
@@ -127,21 +131,21 @@ defineExpose({
           <FormLabel
             class="text-sm font-emphasis text-foreground/80 dark:text-muted-foreground"
             style="font-feature-settings: 'cv01', 'ss03'"
-            >Password</FormLabel
+            >{{ t('auth.common.password') }}</FormLabel
           >
           <RouterLink
             :to="{ name: RouteNames.FORGOT_PASSWORD }"
             class="text-sm font-emphasis text-primary underline-offset-4 hover:text-accent hover:underline dark:text-accent dark:hover:text-accent-hover"
             style="font-feature-settings: 'cv01', 'ss03'"
           >
-            Forgot password?
+            {{ t('auth.login.forgotPassword') }}
           </RouterLink>
         </div>
         <FormControl>
           <div class="relative">
             <Input
               :type="showPassword ? 'text' : 'password'"
-              placeholder="Enter your password"
+              :placeholder="t('auth.common.passwordPlaceholder')"
               autocomplete="current-password"
               :class="
                 cn(
@@ -184,7 +188,7 @@ defineExpose({
         class="text-sm text-destructive transition-opacity duration-200"
         :class="captchaError ? 'opacity-100' : 'opacity-0'"
       >
-        Please complete the captcha verification
+        {{ t('auth.common.captchaRequired') }}
       </p>
     </div>
 
@@ -211,7 +215,7 @@ defineExpose({
         <circle cx="12" cy="12" r="10" stroke-opacity="0.25" />
         <path d="M12 2a10 10 0 0 1 10 10" stroke-linecap="round" />
       </svg>
-      <span class="relative z-10">{{ loading ? 'Signing in...' : 'Sign in' }}</span>
+      <span class="relative z-10">{{ loading ? t('auth.login.signingIn') : t('auth.login.signIn') }}</span>
     </Button>
 
     <div class="relative my-2">
@@ -219,7 +223,9 @@ defineExpose({
         <div class="w-full border-t border-border dark:border-white/8" />
       </div>
       <div class="relative flex justify-center text-xs">
-        <span class="bg-secondary px-2 text-muted-foreground dark:bg-white/2 dark:text-muted-foreground">or</span>
+        <span class="bg-secondary px-2 text-muted-foreground dark:bg-white/2 dark:text-muted-foreground">{{
+          t('auth.common.or')
+        }}</span>
       </div>
     </div>
 
@@ -256,7 +262,7 @@ defineExpose({
           d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.013 8.013 0 0016 8c0-4.42-3.58-8-8-8z"
         />
       </svg>
-      {{ isGithubLoading ? 'Connecting to GitHub...' : 'Continue with GitHub' }}
+      {{ isGithubLoading ? t('auth.login.connectingToGithub') : t('auth.login.continueWithGithub') }}
     </Button>
   </form>
 </template>

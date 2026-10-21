@@ -1,4 +1,6 @@
 import '@testing-library/jest-dom/vitest'
+import { config } from '@vue/test-utils'
+import { i18n } from '@/i18n'
 import { cleanup } from '@testing-library/vue'
 import { afterEach, vi } from 'vite-plus/test'
 
@@ -59,3 +61,13 @@ globalThis.IntersectionObserver = IntersectionObserverMock as unknown as typeof 
 Element.prototype.hasPointerCapture = vi.fn<() => boolean>(() => false)
 Element.prototype.setPointerCapture = vi.fn<() => void>()
 Element.prototype.releasePointerCapture = vi.fn<() => void>()
+
+/**
+ * Every component mounts with the application i18n instance.
+ *
+ * The interface renders through `t()`; a mount without an i18n plugin fails
+ * before any assertion. Mounting the singleton (rather than a throwaway
+ * instance) is also what lets a test switch the locale and assert that the
+ * interface actually follows — the switcher publishes to this instance.
+ */
+config.global.plugins = [i18n]
