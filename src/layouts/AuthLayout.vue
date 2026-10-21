@@ -3,6 +3,7 @@ import type { HTMLAttributes } from 'vue'
 import { RouterView } from 'vue-router'
 import { cn } from '@/lib/utils'
 import ThemeToggle from '@/components/app/ThemeToggle.vue'
+import LanguageMenu from '@/components/app/LanguageMenu.vue'
 import AuthBackground from './components/AuthBackground.vue'
 import AuthDashboard from './components/AuthDashboard.vue'
 import AuthMetricsCard from './components/AuthMetricsCard.vue'
@@ -43,6 +44,7 @@ const props = defineProps<{
         <!-- Right Panel: Form Area -->
         <div class="auth-form">
           <div class="auth-form__header">
+            <LanguageMenu />
             <ThemeToggle />
           </div>
           <RouterView />

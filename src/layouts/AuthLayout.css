@@ -1341,6 +1341,7 @@
 
 .auth-form__header {
   display: flex;
+  gap: 0.5rem;
   justify-content: flex-end;
   margin-bottom: 1rem;
 }

@@ -24,11 +24,13 @@
  * that number is *their* header, not ours, and copying it is how two bars overlap.
  */
 import { computed } from 'vue'
+import { useI18n } from 'vue-i18n'
 import { RouterLink } from 'vue-router'
 import { Icon } from '@iconify/vue'
 import { Button } from '@/components/ui/button'
 import ErrorBoundary from '@/components/app/ErrorBoundary.vue'
 import ThemeToggle from '@/components/app/ThemeToggle.vue'
+import LanguageMenu from '@/components/app/LanguageMenu.vue'
 import { useAuthStore } from '@/stores/auth'
 import { RouteNames } from '@/router/route-names'
 import { ECOSYSTEM_REPOS, SUPPORT_CHANNELS } from '@/lib/site-links'
@@ -38,16 +40,19 @@ import LandingSection from '@/features/landing/components/LandingSection.vue'
 /** The current year for the copyright line — evaluated once, not per render. */
 const currentYear = new Date().getFullYear()
 
+const { t } = useI18n()
+
 const authStore = useAuthStore()
 
 /**
  * The top-bar call to action. Authenticated visitors are already customers of
  * the free product, so the register link would be a dead end for them.
+ * The label is carried as a key so the bar re-renders when the language changes.
  */
 const cta = computed(() =>
   authStore.isAuthenticated
-    ? { to: { name: RouteNames.DASHBOARD }, label: 'Open dashboard' }
-    : { to: { name: RouteNames.LOGIN }, label: 'Sign in' },
+    ? { to: { name: RouteNames.DASHBOARD }, labelKey: 'marketing.openDashboard' }
+    : { to: { name: RouteNames.LOGIN }, labelKey: 'marketing.signIn' },
 )
 </script>
 
@@ -89,8 +94,8 @@ const cta = computed(() =>
               <Button as-child variant="ghost" size="icon-sm">
                 <a
                   href="#source"
-                  aria-label="Source repositories"
-                  title="Source repositories"
+                  :aria-label="t('marketing.sourceRepos')"
+                  :title="t('marketing.sourceRepos')"
                   data-testid="marketing-source"
                   @click.prevent
                 >
@@ -98,9 +103,15 @@ const cta = computed(() =>
                 </a>
               </Button>
             </SourceReposDialog>
+            <LanguageMenu />
             <ThemeToggle />
             <Button as-child size="sm">
-              <RouterLink :to="cta.to" data-testid="marketing-cta">{{ cta.label }}</RouterLink>
+              <RouterLink
+                :to="cta.to"
+                class="inline-flex min-w-[5.5rem] items-center justify-center"
+                data-testid="marketing-cta"
+                >{{ t(cta.labelKey) }}</RouterLink
+              >
             </Button>
           </nav>
         </div>

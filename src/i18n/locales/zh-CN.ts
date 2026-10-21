@@ -28,6 +28,11 @@ const zhCN: Messages = {
     english: 'English',
     chineseSimplified: '简体中文',
   },
+  marketing: {
+    signIn: '登录',
+    openDashboard: '打开看板',
+    sourceRepos: '源代码仓库',
+  },
   theme: {
     light: '浅色',
     dark: '深色',

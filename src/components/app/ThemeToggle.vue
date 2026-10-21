@@ -51,7 +51,7 @@ function cycleTheme(): void {
 <template>
   <button
     type="button"
-    class="inline-flex cursor-pointer items-center justify-center rounded-sm border border-border bg-transparent p-2 text-muted-foreground transition-colors hover:bg-secondary hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+    class="inline-flex size-8 shrink-0 cursor-pointer items-center justify-center rounded-sm border border-border bg-transparent text-muted-foreground transition-colors hover:bg-secondary hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
     :aria-label="`Current theme: ${themeStore.mode}. Click to change.`"
     @click="cycleTheme"
   >

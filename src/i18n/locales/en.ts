@@ -28,6 +28,11 @@ const en = {
     english: 'English',
     chineseSimplified: '简体中文',
   },
+  marketing: {
+    signIn: 'Sign in',
+    openDashboard: 'Open dashboard',
+    sourceRepos: 'Source repositories',
+  },
   theme: {
     light: 'Light',
     dark: 'Dark',
