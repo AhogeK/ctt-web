@@ -248,8 +248,10 @@ brief 模板与**已命中的范例** → `~/.agents/skills/problem-report/`（�
 **陷阱（词条解析）**：裸 `@` / `|` 是 vue-i18n 的链接/复数语法，写错会让**整个词条包解析失败**
 （`Invalid linked format`，表现为页面报错/空白而非一句显示不对）⇒ 用 `{'@'}`。
 **模块级代码**（Zod schema、字段表、常量表）拿不到 `useI18n` ⇒ 用 `i18n.global.t`，且
-`const t = …` 必须声明在 schema **之前**（`const` 不提升）。组件测试**不要**再造实例 ——
-`src/test/setup.ts` 已给每次挂载装好应用实例。
+`const t = …` 必须声明在 schema **之前**（`const` 不提升）。**校验文案必须惰性求值**
+（`{ error: () => t('…') }`）—— 写成 `t('…')` 的返回值会在模块加载时固定成当时的语言，切换语言后
+消息不跟随。法务正文经 `content/index.ts` 按当前语言取，禁止直接引 `terms-en`。
+组件测试**不要**再造实例 —— `src/test/setup.ts` 已给每次挂载装好应用实例。
 批次与流程 → `.omp/plans/i18n-full-coverage-plan.md`；知识 → `memory-bank/domains/i18n/`。
 
 ## 执行流程

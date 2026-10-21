@@ -22,13 +22,35 @@
 
 ## 模块级代码的词条
 
-`defineComponent` 之外的 Zod schema、字段表、常量数组在模块加载时求值，拿不到 `useI18n`。
-写法：模块顶部 `const t = i18n.global.t`，schema 里用 `t('…')`。顺序上 **`t` 必须在
-schema 之前声明**（`const` 不提升，反过来会 TS2448 并让运行期抛错）。
+`defineComponent` 之外的 Zod schema、字段表、常量数组在模块加载时求值，拿不到 `useI18n`。写法：
 
-校验消息若要随语言切换而更新，schema 需要包成函数或在 `computed` 里构造；当前登录表单
-的 schema 是模块级常量，**校验消息在页面生命周期内不跟随切换**（已知取舍，迁移到需要
-跟随的页面时再改成工厂）。
+```ts
+const t = (key: string) => i18n.global.t(key)   // declared above the schemas
+
+z.string().min(1, { error: () => t('auth.validation.passwordRequired') })
+```
+
+两条要求：
+
+1. `const t = …` **声明在 schema 之前**（`const` 不提升，反过来 TS2448 且运行期抛错）。
+2. 校验文案用 **`error: () => t(…)` 惰性求值**，不要直接写成 `t(…)` 的返回值 —— 后者在模块加载时
+   就固定成当时的语言，切换语言后校验消息仍是旧语言。Zod 4 在每次解析时调用该函数，所以惰性写法的
+   消息（以及随后重新校验产生的消息）都跟随当前语言。
+
+已知残留：`LoginForm` 的 schema 仍取模块加载时的文案，切换语言后不会更新；迁移该视图时一并改成
+惰性写法。
+
+## 条款正文随语言切换
+
+`src/features/auth/content/index.ts` 按当前语言返回 `terms-en` 或 `terms-zh`（`computed`），
+`TermsDialog` 用 `termsContent` 时模板自动解包。**不要**直接 import `terms-en` —— 那会让中文用户
+读到整篇英文法务文本。两份正文的结构由 `TermsContent` 类型约束，缺字段即编译错。
+
+## 删除前先确认没有第二个消费方
+
+`ResetPasswordForm.vue` 曾在迁移后被保留在词条体系里，但没有任何模块导入它 —— 真实页面是
+`ResetPasswordView.vue` 的内联表单。净效果是新词条不可达、真实页面仍英文。改动一个"看起来在用"的
+组件前，先 `grep -rn "<ComponentName>" src e2e`：只有 schema 共享不算消费方。
 
 ## 测试约定
 
