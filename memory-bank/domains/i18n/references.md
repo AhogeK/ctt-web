@@ -21,12 +21,15 @@ pnpm test:unit --run src/i18n
 pnpm exec playwright test e2e/settings/language.spec.ts --project=chromium
 ```
 
-## 已迁移面（0.60.0）
+## 已迁移面（0.60.2）
 
 `AppHeader` · `AppSidebar` · `PreferencesView` · `SettingsShell` · `ChoiceRadioGroup` ·
-`LoginForm` · `HeatmapChart` / `TrendChart` / `LongTermTrendPanel`（日期标签）
+`LoginForm` · `LoginView`（含账号锁定 / 邮箱未验证对话框与重发倒计时）·
+`HeatmapChart` / `TrendChart` / `LongTermTrendPanel`（日期标签）· 认证表单层（注册 / 忘记 / 重置表单、
+强度计、条款对话框与正文、重置页、Zod 校验文案）
 
 ## 未迁移面（批次见计划件）
 
-认证其余页面 · 设置其余页面 · 统计面板文案 · 落地页 · 成就/排行榜/设备 · 错误码文案表 ·
-`lib/schemas` 校验文案 · `components/ui` 默认文案
+认证其余视图（Verify / ChangeEmail / OAuth 回调与错误页 / Forgot / Register / ForgotSuccess、重发验证组合式）·
+设置各视图与对话框 · 统计面板文案 · 落地页 · 成就 / 排行榜 / 设备 · 错误码文案表 ·
+`lib/schemas` 校验文案 · `components/ui` 默认文案 · 路由文档标题
