@@ -882,6 +882,21 @@ Playwright E2E 测试使用 `page.route()` 进行 API mock（Playwright 官方�
 3. 组件里用 `const { t } = useI18n()`，模板写 `{{ t('settings.preferences.title') }}`。
 4. 不要在组件里写中文字面量；测试可以（断言用），应用源码不行。
 
+**校验文案（模块级 schema）**：schema 在模块加载时求值，拿不到 `useI18n` —— 用全局实例，
+且文案要**惰性解析**，否则切语言后消息停在旧语言：
+
+```ts
+const t = (key: string) => i18n.global.t(key)
+
+z.string().min(1, { error: () => t('auth.validation.passwordRequired') })
+```
+
+`t` 必须声明在 schema 之前；`error` 传函数（Zod 4 在每次解析时调用），不要传 `t(…)` 的结果。
+已知残留：`LoginForm` 的 schema 仍取加载时文案，迁移该视图时一并改惰性写法。
+
+**法务正文**：`src/features/auth/content/index.ts` 按当前语言返回英文或中文条款；不要直接引
+`terms-en`，否则中文用户读到整篇英文。
+
 ### 7.3 日期与数字
 
 不要直接调用 `toLocaleString('en-US', …)`：那会把界面钉死在英文。日期走
