@@ -27,7 +27,7 @@ import { computed, onBeforeUnmount, onMounted, ref, watch } from 'vue'
 import { graphic, init, type EChartsType } from 'echarts/core'
 import { TrendingDown, TrendingUp } from '@lucide/vue'
 import type { DailyStatPoint } from '@/lib/schemas/stats.schema'
-import { formatDuration } from '@/lib/utils'
+import { formatDuration, formatMonthShort, formatWeekdayShort } from '@/lib/utils'
 import { useThemeStore } from '@/stores/theme'
 import { formatHourLabel, getHourAxisScale } from './axis-scale'
 import { tooltipSurface } from './chart-tooltip'
@@ -256,7 +256,7 @@ function buildOption(points: DailyStatPoint[], weekly: number[], mean: number | 
         const point = index === undefined ? undefined : points[index]
         if (index === undefined || point === undefined) return ''
         const d = new Date(`${point.date}T00:00:00`)
-        const weekday = d.toLocaleString('en-US', { weekday: 'short' })
+        const weekday = formatWeekdayShort(d)
         const lines = [`<b>${weekday}, ${point.date}</b>`, `${formatDuration(point.seconds)} coded`]
         const average = weekly[index]
         if (average !== undefined) lines.push(`7-day average ${formatAverageDuration(average)}`)
@@ -277,7 +277,7 @@ function buildOption(points: DailyStatPoint[], weekly: number[], mean: number | 
         // label with the short month name, from the set `labelDates` chose —
         // never ECharts' overlap rule (see that computed's note).
         interval: (_index: number, value: string) => labelDates.value.has(value),
-        formatter: (date: string) => new Date(`${date}T00:00:00`).toLocaleString('en-US', { month: 'short' }),
+        formatter: (date: string) => formatMonthShort(new Date(`${date}T00:00:00`)),
       },
     },
     yAxis: {
