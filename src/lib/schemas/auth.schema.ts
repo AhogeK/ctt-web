@@ -1,4 +1,12 @@
 import { z } from 'zod'
+import { i18n } from '@/i18n'
+
+/**
+ * Validation copy resolves through the global instance at validation time —
+ * module-level schemas cannot use `useI18n`, and a message captured once at
+ * import time would not follow a language switch.
+ */
+const t = (key: string) => i18n.global.t(key)
 
 // ==========================================
 // Shared Schemas
@@ -16,10 +24,10 @@ import { z } from 'zod'
  */
 export const StrongPasswordSchema = z
   .string()
-  .min(1, 'Password is required')
-  .refine((val) => /^[!-~]+$/.test(val), 'Password contains invalid characters')
-  .refine((val) => val.length >= 8, 'Password must be at least 8 characters')
-  .refine((val) => val.length <= 64, 'Password must not exceed 64 characters')
+  .min(1, { error: () => t('auth.validation.passwordRequired') })
+  .refine((val) => /^[!-~]+$/.test(val), { error: () => t('auth.validation.passwordInvalidChars') })
+  .refine((val) => val.length >= 8, { error: () => t('auth.validation.passwordMinLength') })
+  .refine((val) => val.length <= 64, { error: () => t('auth.validation.passwordMaxLength') })
 
 // ==========================================
 // Login Schemas
@@ -35,7 +43,9 @@ export const StrongPasswordSchema = z
  */
 export const LoginRequestSchema = z.object({
   // Email is validated as proper format and normalized to lowercase by server
-  email: z.email('Invalid email format').min(1, 'Email is required'),
+  email: z
+    .email({ error: () => t('auth.validation.invalidEmail') })
+    .min(1, { error: () => t('auth.validation.emailRequired') }),
   // Strong password policy: min 8, max 32, uppercase, lowercase, digit, special char (@$!%*?&), allowed chars only
   password: StrongPasswordSchema,
   // Device ID is required for device binding - server uses @NotBlank validation
@@ -110,13 +120,15 @@ export const REGEX_DISPLAY_NAME = /^[\u4e00-\u9fa5\u3040-\u309f\u30a0-\u30ff\uac
  */
 export const RegisterRequestSchema = z.object({
   // Email validated as proper format, server normalizes to lowercase
-  email: z.email('Invalid email format').min(1, 'Email is required'),
+  email: z
+    .email({ error: () => t('auth.validation.invalidEmail') })
+    .min(1, { error: () => t('auth.validation.emailRequired') }),
   // Display name matching server @Pattern regex exactly
   displayName: z
     .string()
     .trim()
-    .min(1, 'Display name is required')
-    .regex(REGEX_DISPLAY_NAME, 'Invalid display name format'),
+    .min(1, { error: () => t('auth.validation.displayNameRequired') })
+    .regex(REGEX_DISPLAY_NAME, { error: () => t('auth.validation.displayNameInvalid') }),
   // Strong password policy enforced by server's @StrongPassword annotation
   password: StrongPasswordSchema,
   // Terms version accepted by user — must match server's current version
@@ -139,13 +151,13 @@ export const RegisterRequestSchema = z.object({
 export const RegisterFormSchema = RegisterRequestSchema.omit({ termsVersion: true })
   .extend({
     // Confirm password for frontend UX — not sent to API
-    confirmPassword: z.string().min(1, 'Please confirm your password'),
+    confirmPassword: z.string().min(1, { error: () => t('auth.validation.confirmPasswordRequired') }),
     agreedToTerms: z.boolean().refine((val) => val === true, {
-      message: 'You must agree to the Terms of Service',
+      error: () => t('auth.validation.termsRequired'),
     }),
   })
   .refine((data) => data.password === data.confirmPassword, {
-    message: 'Passwords do not match',
+    error: () => t('auth.validation.passwordMismatch'),
     path: ['confirmPassword'],
   })
 
@@ -190,7 +202,9 @@ export type VerifyEmailParam = z.infer<typeof VerifyEmailParamSchema>
  */
 export const ResendVerificationRequestSchema = z.object({
   // Email address to resend verification to, server normalizes to lowercase
-  email: z.email('Invalid email format').min(1, 'Email is required'),
+  email: z
+    .email({ error: () => t('auth.validation.invalidEmail') })
+    .min(1, { error: () => t('auth.validation.emailRequired') }),
 })
 
 export type ResendVerificationRequest = z.infer<typeof ResendVerificationRequestSchema>
@@ -211,7 +225,9 @@ export type ResendVerificationRequest = z.infer<typeof ResendVerificationRequest
  */
 export const ForgotPasswordRequestSchema = z.object({
   // Email address to send reset link to, server normalizes to lowercase
-  email: z.email('Invalid email format').min(1, 'Email is required'),
+  email: z
+    .email({ error: () => t('auth.validation.invalidEmail') })
+    .min(1, { error: () => t('auth.validation.emailRequired') }),
   // hCaptcha token — optional because captcha may be disabled server-side
   captchaToken: z.string().optional(),
 })
@@ -259,10 +275,10 @@ export const ResetPasswordFormSchema = z
   .object({
     newPassword: StrongPasswordSchema,
     // Confirm password for frontend UX — not sent to API
-    confirmPassword: z.string().min(1, 'Please confirm your password'),
+    confirmPassword: z.string().min(1, { error: () => t('auth.validation.confirmPasswordRequired') }),
   })
   .refine((data) => data.newPassword === data.confirmPassword, {
-    message: 'Passwords do not match',
+    error: () => t('auth.validation.passwordMismatch'),
     path: ['confirmPassword'],
   })
 

@@ -9,6 +9,7 @@ import { cn } from '@/lib/utils'
 import { ForgotPasswordFormSchema } from '@/lib/schemas/auth.schema'
 import { useThemeStore } from '@/stores/theme'
 import CaptchaWidget from '@/components/CaptchaWidget.vue'
+import { useI18n } from 'vue-i18n'
 
 const emit = defineEmits<{
   /** Emitted when form validation passes with the email address */
@@ -27,6 +28,7 @@ const form = useForm({
 })
 
 const themeStore = useThemeStore()
+const { t } = useI18n()
 const captchaTheme = computed(() => (themeStore.isDark ? 'dark' : 'light'))
 const captchaRef = ref<InstanceType<typeof CaptchaWidget> | null>(null)
 const captchaToken = ref<string | null>(null)
@@ -62,12 +64,12 @@ defineExpose({
         <FormLabel
           class="text-sm font-emphasis text-foreground/80 dark:text-muted-foreground"
           style="font-feature-settings: 'cv01', 'ss03'"
-          >Email</FormLabel
+          >{{ t('auth.common.email') }}</FormLabel
         >
         <FormControl>
           <Input
             type="email"
-            placeholder="you@example.com"
+            :placeholder="t('auth.common.emailPlaceholder')"
             autocomplete="email"
             :class="
               cn(
@@ -99,7 +101,7 @@ defineExpose({
         class="text-sm text-destructive transition-opacity duration-200"
         :class="captchaError ? 'opacity-100' : 'opacity-0'"
       >
-        Please complete the captcha verification
+        {{ t('auth.common.captchaRequired') }}
       </p>
     </div>
 
@@ -126,7 +128,7 @@ defineExpose({
         <circle cx="12" cy="12" r="10" stroke-opacity="0.25" />
         <path d="M12 2a10 10 0 0 1 10 10" stroke-linecap="round" />
       </svg>
-      <span class="relative z-10">{{ loading ? 'Sending...' : 'Send reset link' }}</span>
+      <span class="relative z-10">{{ loading ? t('auth.forgot.sending') : t('auth.forgot.sendResetLink') }}</span>
     </Button>
   </form>
 </template>

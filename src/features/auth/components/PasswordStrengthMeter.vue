@@ -1,6 +1,9 @@
 <script setup lang="ts">
 import { computed } from 'vue'
 import { Check, X } from '@lucide/vue'
+import { useI18n } from 'vue-i18n'
+
+const { t } = useI18n()
 
 const props = defineProps<{
   /** Password string to evaluate against length tiers and character type rules */
@@ -34,11 +37,11 @@ function calculateScore(pwd: string): number {
 
 /** Get length tier label based on password length */
 function getLengthTier(pwd: string): { label: string; passed: boolean } {
-  if (!pwd) return { label: '8+ characters required', passed: false }
-  if (pwd.length >= 16) return { label: '16+ characters (strong)', passed: true }
-  if (pwd.length >= 12) return { label: '12-15 characters (medium)', passed: true }
-  if (pwd.length >= 8) return { label: '8-11 characters (basic)', passed: true }
-  return { label: '8+ characters required', passed: false }
+  if (!pwd) return { label: t('auth.strength.lengthRequired'), passed: false }
+  if (pwd.length >= 16) return { label: t('auth.strength.lengthStrong'), passed: true }
+  if (pwd.length >= 12) return { label: t('auth.strength.lengthMedium'), passed: true }
+  if (pwd.length >= 8) return { label: t('auth.strength.lengthBasic'), passed: true }
+  return { label: t('auth.strength.lengthRequired'), passed: false }
 }
 
 const rules = computed<Rule[]>(() => {
@@ -46,10 +49,10 @@ const rules = computed<Rule[]>(() => {
   const lengthTier = getLengthTier(pwd)
   return [
     lengthTier,
-    { label: 'Contains uppercase letter', passed: /[A-Z]/.test(pwd) },
-    { label: 'Contains lowercase letter', passed: /[a-z]/.test(pwd) },
-    { label: 'Contains a number', passed: /\d/.test(pwd) },
-    { label: 'Contains special character', passed: /[^A-Za-z0-9]/.test(pwd) },
+    { label: t('auth.strength.uppercase'), passed: /[A-Z]/.test(pwd) },
+    { label: t('auth.strength.lowercase'), passed: /[a-z]/.test(pwd) },
+    { label: t('auth.strength.number'), passed: /\d/.test(pwd) },
+    { label: t('auth.strength.special'), passed: /[^A-Za-z0-9]/.test(pwd) },
   ]
 })
 
@@ -110,7 +113,7 @@ function textColor(rule: Rule): string {
       class="text-[11px] text-muted-foreground dark:text-muted-foreground transition-opacity duration-200"
       :style="{ opacity: hasPassword ? 1 : 0 }"
     >
-      Strength: {{ score }}/7
+      {{ t('auth.strength.score', { score }) }}
     </div>
 
     <!-- Rules list: icons always rendered, only colors change between empty/active states -->
