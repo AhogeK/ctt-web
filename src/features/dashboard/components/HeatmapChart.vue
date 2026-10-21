@@ -24,7 +24,7 @@
 import { computed, nextTick, onBeforeUnmount, onMounted, ref, watch } from 'vue'
 import { init, type EChartsType } from 'echarts/core'
 import type { DailyStatPoint } from '@/lib/schemas/stats.schema'
-import { formatDuration } from '@/lib/utils'
+import { formatDuration, formatMonthShort } from '@/lib/utils'
 import { useStatsStreaks } from '@/composables/useStats'
 import { useThemeStore } from '@/stores/theme'
 import '@/components/charts/echarts-setup'
@@ -227,7 +227,7 @@ function buildOption(points: DailyStatPoint[], pal: Palette) {
     if (day.getDate() === 1 || (d === 0 && day.getDate() <= 7)) {
       if (day.getMonth() !== lastMonth) {
         lastMonth = day.getMonth()
-        monthLabels.push({ col, name: day.toLocaleString('en-US', { month: 'short' }) })
+        monthLabels.push({ col, name: formatMonthShort(day) })
       }
     }
   }

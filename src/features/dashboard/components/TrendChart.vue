@@ -23,7 +23,7 @@ import { graphic, init, type EChartsType } from 'echarts/core'
 import type { DailyStatPoint } from '@/lib/schemas/stats.schema'
 import { formatHourLabel, getHourAxisScale } from './axis-scale'
 import { tooltipSurface } from './chart-tooltip'
-import { formatDuration } from '@/lib/utils'
+import { formatDuration, formatWeekdayShort } from '@/lib/utils'
 import { useThemeStore } from '@/stores/theme'
 import '@/components/charts/echarts-setup'
 
@@ -148,7 +148,7 @@ function buildOption(points: DailyStatPoint[], pal: Palette) {
         const point = p === undefined ? undefined : points[p.dataIndex]
         if (!point) return ''
         const d = new Date(`${point.date}T00:00:00`)
-        const weekday = d.toLocaleString('en-US', { weekday: 'short' })
+        const weekday = formatWeekdayShort(d)
         return `<b>${weekday}, ${point.date}</b><br/>${formatDuration(point.seconds)} coded`
       },
     },
