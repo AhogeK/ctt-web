@@ -657,6 +657,27 @@ const errorCode = error.error
 - Unknown API errors → fixed "Please try again later" (never leak technical details)
 - Never display HTTP methods, paths, or status codes in toasts
 
+## Interface Language (i18n)
+
+Vue I18n v11 (`11.4.14`) with two catalogues: `en` bundled as the source language and fallback,
+`zh-CN` as its own chunk loaded the first time it is selected.
+
+- **Resolution**: stored preference (`ctt.locale`) > browser language > English; region variants
+  (`zh-TW`, `zh-Hans`) collapse onto the one Chinese catalogue. `setLocale` is the only writer —
+  instance, formatters, `<html lang>` and storage update together, and a `storage` listener follows
+  other tabs.
+- **First paint**: `main.ts` awaits `initI18n()` before mounting, so the first frame is already in
+  the resolved language (no flash of the wrong one).
+- **Formatters**: `formatWeekdayShort` / `formatMonthShort` / `formatDateTime` in `lib/utils` read
+  the active locale; chart axis labels and tooltips use them too. Direct
+  `toLocale*String('en-US')` is forbidden.
+- **Module-level copy**: Zod schemas and constant tables run outside setup — they use
+  `i18n.global.t` (declared above the schema).
+- **Guard**: `pnpm check:i18n` (`scripts/check-i18n.mjs`) rejects Chinese literals in app source,
+  catalogue key drift and hard-coded `en-US` formatting.
+- **Escaping**: `@` and `|` are link/plural syntax in messages — an unescaped one fails the whole
+  catalogue at load (`Invalid linked format`); write `{'@'}`.
+
 ## Navigation Guards
 
 ```typescript

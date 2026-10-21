@@ -862,3 +862,47 @@ Playwright E2E 测试使用 `page.route()` 进行 API mock（Playwright 官方�
 - **顶栏与内容同色** ✓（横贯全宽的亮带会挡在内容前 ✗）；**卡片不加 hover 光** ✓（静态容器没有"为什么动"，且品牌强调色的预算归 CTA 与激活态 ✓）。
 
 > **已定稿的视觉不要顺手改** ✗ —— 已接受即冻结：重新量到同样的数字、再问"要不要改"，是在重复已经拒绝过的工作 ✗。
+
+## 7. 国际化（i18n）
+
+### 7.1 结构
+
+| 位置 | 职责 |
+|---|---|
+| `src/i18n/locales/en.ts` | **源语言**词条（英文）。结构即类型：其他语言的包按它做类型约束 |
+| `src/i18n/locales/zh-CN.ts` | 简体中文词条，类型为 `Messages`；英文新增键而这里没跟上 = **编译错误** |
+| `src/i18n/locale.ts` | 当前 locale 的响应式状态、存储键 `ctt.locale`、启动解析（存储偏好 > 浏览器语言 > 英文）、`<html lang>` 同步 |
+| `src/i18n/index.ts` | i18n 实例、词条包按需加载（英文常驻、中文单独 chunk）、`initI18n` / `setLocale`、跨标签同步 |
+| `src/lib/utils/time.ts` | 与语言相关的日期格式化入口：`formatWeekdayShort` / `formatMonthShort` / `formatDateTime` |
+
+### 7.2 新增一条界面文案
+
+1. 先在 `en.ts` 加键（按页面/部位分组，如 `settings.preferences.title`）。
+2. `zh-CN.ts` 会因类型缺失报错——补上对应中文即可；键集合由类型与 `pnpm check:i18n` 双重保证。
+3. 组件里用 `const { t } = useI18n()`，模板写 `{{ t('settings.preferences.title') }}`。
+4. 不要在组件里写中文字面量；测试可以（断言用），应用源码不行。
+
+### 7.3 日期与数字
+
+不要直接调用 `toLocaleString('en-US', …)`：那会把界面钉死在英文。日期走
+`formatWeekdayShort` / `formatMonthShort` / `formatDateTime`（都在 `@/lib/utils`），它们读当前 locale，
+切换语言后自动重渲染。
+
+### 7.4 切换语言与持久化
+
+入口有两处：**偏好设置页**与**头像菜单 → 语言**。两者都调用 `setLocale()`（唯一写入方）：
+加载词条包 → 发布到实例/格式化层/`<html lang>` → 写入 `ctt.locale`。跨标签页通过 `storage` 事件跟随。
+
+### 7.5 守卫
+
+```sh
+pnpm check:i18n
+```
+
+三条规则：① `src/` 内非词条文件禁止中文字面量（测试、`src/i18n/locales/`、中文条款内容除外）；
+② 英文与中文词条键集合必须一致；③ 禁止 `toLocale*String('en-US')` 直调。每批文案迁移后跑一次。
+
+### 7.6 文案里的特殊字符
+
+vue-i18n 把 `@` 当作「链接消息」语法、`|` 当作复数分隔符 —— 邮箱占位符这类文案要用字面量语法：
+`you{'@'}example.com`。写错时整个词条包解析失败，组件一挂载就抛 `Invalid linked format`（不是渲染出乱码）。
