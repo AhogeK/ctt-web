@@ -7,6 +7,7 @@ import { VueQueryPlugin } from '@tanstack/vue-query'
 
 import App from './App.vue'
 import router from './router'
+import { i18n, initI18n, syncLocaleAcrossTabs } from './i18n'
 import { Toaster } from '@/components/ui/sonner'
 import { UNAUTHORIZED_EVENT } from '@/lib/api/instance'
 import { vueQueryOptions } from '@/lib/query'
@@ -78,7 +79,14 @@ const app = createApp(App)
 
 app.config.errorHandler = handleVueError
 
+// The catalogue for the resolved locale must be in place before the first
+// mount: a visitor whose preference is Chinese would otherwise see one frame of
+// English. `initI18n` awaits the lazily loaded chunk itself.
+await initI18n()
+syncLocaleAcrossTabs()
+
 app.use(createPinia())
+app.use(i18n)
 app.use(router)
 app.use(VueQueryPlugin, vueQueryOptions)
 app.component('Toaster', Toaster)

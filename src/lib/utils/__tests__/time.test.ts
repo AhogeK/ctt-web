@@ -5,7 +5,8 @@
  * deterministic without fake timers.
  */
 import { describe, it, expect } from 'vite-plus/test'
-import { formatRelativeTime, formatDateTime, formatDuration } from '@/lib/utils'
+import { formatRelativeTime, formatDateTime, formatDuration, formatMonthShort, formatWeekdayShort } from '@/lib/utils'
+import { currentLocale } from '@/i18n/locale'
 
 const minutesAgo = (m: number) => new Date(Date.now() - m * 60000).toISOString()
 const hoursAgo = (h: number) => new Date(Date.now() - h * 3600000).toISOString()
@@ -66,7 +67,7 @@ describe('formatRelativeTime', () => {
 describe('formatDateTime', () => {
   it('formats an ISO string to locale datetime', () => {
     const iso = '2026-08-29T12:00:00.000Z'
-    expect(formatDateTime(iso)).toBe(new Date(iso).toLocaleString())
+    expect(formatDateTime(iso)).toBe(new Date(iso).toLocaleString('en'))
   })
 })
 
@@ -94,5 +95,34 @@ describe('formatDuration', () => {
     expect(formatDuration(194400)).toBe('54h')
     expect(formatDuration(86461)).toBe('24h 1m 1s')
     expect(formatDuration(86500)).toBe('24h 1m 40s')
+  })
+})
+
+describe('locale-aware date parts', () => {
+  /** Monday, 5 Jan 2026 — a fixed date so neither weekday nor month can drift with the clock. */
+  const monday = new Date(2026, 0, 5)
+
+  it('formats weekday and month short names in the active locale', () => {
+    currentLocale.value = 'en'
+    expect(formatWeekdayShort(monday)).toBe('Mon')
+    expect(formatMonthShort(monday)).toBe('Jan')
+
+    currentLocale.value = 'zh-CN'
+    expect(formatWeekdayShort(monday)).toBe('周一')
+    expect(formatMonthShort(monday)).toBe('1月')
+
+    currentLocale.value = 'en'
+  })
+
+  it('formatDateTime follows the active locale', () => {
+    const iso = '2026-01-05T12:00:00'
+
+    currentLocale.value = 'en'
+    expect(formatDateTime(iso)).toBe(new Date(iso).toLocaleString('en'))
+
+    currentLocale.value = 'zh-CN'
+    expect(formatDateTime(iso)).toBe(new Date(iso).toLocaleString('zh-CN'))
+
+    currentLocale.value = 'en'
   })
 })
