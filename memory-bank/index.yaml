@@ -15,8 +15,8 @@ files:
   AGENTS.md: 264
   memory-bank/activeContext.md: 200
   memory-bank/progress.md: 200
-  memory-bank/systemPatterns.md: 192
-  memory-bank/techContext.md: 167
+  memory-bank/systemPatterns.md: 200
+  memory-bank/techContext.md: 169
   memory-bank/projectbrief.md: 30
   memory-bank/archives/2026-09-20-activeContext-trim.md: 43
   memory-bank/archives/2026-09-22-activeContext-trim.md: 38
@@ -74,6 +74,12 @@ domains:
     memory-bank/domains/landing-page/principles.md: 54
     memory-bank/domains/landing-page/references.md: 57
     memory-bank/domains/landing-page/scenarios.md: 68
+  i18n:
+    memory-bank/domains/i18n/meta.md: 31
+    memory-bank/domains/i18n/practices.md: 50
+    memory-bank/domains/i18n/principles.md: 37
+    memory-bank/domains/i18n/references.md: 32
+    memory-bank/domains/i18n/scenarios.md: 37
 entries:
   - id: 'rules'
     path: 'AGENTS.md'
@@ -183,6 +189,16 @@ entries:
       - 'history 字段含义'
     read_when: '改成就页'
     source_of_truth: '../ctt-server 的 DTO/服务 + 实测几何'
+
+  - id: 'domain.i18n'
+    path: 'memory-bank/domains/i18n/'
+    answers:
+      - '文案怎么写、怎么迁移、检查器拦什么'
+      - '语言解析顺序与存储键'
+      - '词条包解析失败（Invalid linked format）的典型原因'
+      - '新增一种界面语言要动哪些文件'
+    read_when: '任何界面文案改动 · 语言相关缺陷 · 迁移批次'
+    source_of_truth: 'src/i18n/* + scripts/check-i18n.mjs（记忆不是事实）'
 
   - id: 'domain.landing-page'
     path: 'memory-bank/domains/landing-page/'

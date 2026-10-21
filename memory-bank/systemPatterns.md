@@ -83,6 +83,14 @@ src/router/ index.ts (core) + guard.ts (auth + NProgress) + modules/
   for the single Settings entry. Exact alone left the group unhighlighted on every section; prefix alone would
   highlight on lookalikes (`/settings-archive`) — both behaviours are unit-tested
 
+## Internationalization
+
+- `en.ts` is the source catalogue and fallback; `zh-CN.ts` is typed by it (a missing translation is a
+  build error). Locale = stored `ctt.locale` > browser > English; `setLocale` is the only writer
+  (instance → formatters → `<html lang>` → storage) and a `storage` listener follows other tabs.
+- Dates go through `formatWeekdayShort` / `formatMonthShort` / `formatDateTime`; `pnpm check:i18n`
+  guards Chinese literals, catalogue drift and hard-coded `en-US` dates.
+
 ## Test File Naming
 
 Test files mirror the source file they exercise — `<source-name>.test.ts` in a sibling

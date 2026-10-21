@@ -21,8 +21,8 @@
 | Leaderboard                       | ✅ Complete | 0.41.0         |
 | Landing Page (P1–P4 交付：基元 / hero / 演示 / 收口三区) | ✅ Complete (P1–P4) · P5–P6 待做 | 0.54.0 |
 | AuthLayout 展示面板 (指针光/3D)   | ✅ Complete | 0.51.0         |
-| Settings                          | ⏳ Pending  | 1.0.0          |
-| i18n (zh/en)                      | ⏳ Pending  | 1.0.0          |
+| Settings                          | 🚧 In progress (shell + 4 sections) | 1.0.0     |
+| Interface Language (zh/en)        | 🚧 In progress (0.60.0: mechanism + shell + login; batches remain) | 1.0.0 |
 | E2E Test Coverage                 | 🚧 Partial  | 1.0.0          |
 | Production Deploy                 | ⏳ Pending  | 1.0.0          |
 
@@ -197,4 +197,4 @@
 - [ ] Auth: Token refresh + expiry handling
 - [ ] Dashboard: Weekday / IDE / Devices distribution panels（后端已就绪；Project 已随 v0.35.0 上线，其余复用共享排名列表）
 - [x] Leaderboard: Redis ZSet ranking display (v0.41.0 — contract rebuilt against `GET /leaderboard`)
-- [ ] Settings: Language switch (zh-CN / en-US)
+- [x] Settings: Language switch (v0.60.0 — Preferences radio group + avatar menu; batches remain)

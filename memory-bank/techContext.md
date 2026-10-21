@@ -34,6 +34,8 @@
 | Remove | `vp remove <pkg>` |
 | Install everything | `vp install` (or `vp i`) |
 | Why is this dependency here | `vp why <pkg>` |
+- **`pnpm check:i18n`** — scans app source for Chinese literals, compares the en/zh catalogue key sets and
+  rejects hard-coded `en-US` date formatting (`scripts/check-i18n.mjs`); run it after every migration batch.
 - **The `enableGlobalVirtualStore` drift warning was a lockfile/toolchain version skew** (root-caused 2026-09-26,
   **resolved 2026-10-11**): the lockfile was pnpm-11-era (`packageManagerDependencies: pnpm@11.18.0`) while installs
   ran pnpm 12, so pnpm 12 compared its `enableGlobalVirtualStore` default against a tree that never recorded it and
