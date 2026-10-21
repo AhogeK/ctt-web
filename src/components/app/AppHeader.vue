@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { ref, computed } from 'vue'
+import { useI18n } from 'vue-i18n'
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip'
 import {
   DropdownMenu,
@@ -15,12 +16,13 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu'
 import { SidebarTrigger, useSidebar } from '@/components/ui/sidebar'
-import { LogOut, Loader2, Sun, Moon, Monitor, Settings } from '@lucide/vue'
+import { Languages, LogOut, Loader2, Sun, Moon, Monitor, Settings } from '@lucide/vue'
 import { useRouter } from 'vue-router'
 import { useAuthStore } from '@/stores/auth'
 import { useThemeStore, type ThemeMode } from '@/stores/theme'
 import { RouteNames } from '@/router/route-names'
 import UserAvatar from './UserAvatar.vue'
+import { currentLocale, setLocale } from '@/i18n'
 
 /**
  * AppHeader - Sticky header with user avatar menu
@@ -44,6 +46,7 @@ const authStore = useAuthStore()
 const themeStore = useThemeStore()
 const router = useRouter()
 const { isMobile } = useSidebar()
+const { t } = useI18n()
 const isLoggingOut = ref(false)
 
 /**
@@ -56,7 +59,7 @@ const isLoggingOut = ref(false)
  * - email → hidden when empty (v-if on the span below) so the layout
  *   collapses cleanly for accounts without an email on file
  */
-const displayName = computed(() => authStore.displayName ?? 'User')
+const displayName = computed(() => authStore.displayName ?? t('header.fallbackUser'))
 const displayEmail = computed(() => authStore.email ?? '')
 
 /** Icon component for the current theme mode (used in Appearance submenu trigger) */
@@ -102,9 +105,9 @@ const ThemeIcon = computed(() => {
 const currentThemeLabel = computed(() => {
   const mode = themeStore.mode
   if (mode === 'auto') {
-    return themeStore.isDark ? 'System (Dark)' : 'System (Light)'
+    return themeStore.isDark ? t('theme.systemDark') : t('theme.systemLight')
   }
-  return mode === 'dark' ? 'Dark' : 'Light'
+  return mode === 'dark' ? t('theme.dark') : t('theme.light')
 })
 
 /**
@@ -122,6 +125,23 @@ function handleThemeChange(value: unknown): void {
   if (value === 'light' || value === 'dark' || value === 'auto') {
     themeStore.setTheme(value as ThemeMode)
   }
+}
+
+/** Subtitle on the Language submenu trigger — the active language's own name. */
+const currentLanguageLabel = computed(() =>
+  currentLocale.value === 'zh-CN' ? t('language.chineseSimplified') : t('language.english'),
+)
+
+/**
+ * Two-way binding for the Language radio group.
+ *
+ * `setLocale` is the single mutator: it loads the catalogue (Chinese ships as a
+ * separate chunk), publishes the locale to the i18n instance, the formatters
+ * and `<html lang>`, then persists the choice. The header never writes storage
+ * or the DOM attribute itself.
+ */
+function handleLanguageChange(value: unknown): void {
+  if (value === 'en' || value === 'zh-CN') void setLocale(value)
 }
 
 function navigateToSettings(): void {
@@ -153,7 +173,7 @@ async function handleLogout(): Promise<void> {
               <DropdownMenuTrigger as-child>
                 <button
                   type="button"
-                  :aria-label="`Open user menu`"
+                  :aria-label="t('header.openUserMenu')"
                   class="rounded-full cursor-pointer focus:outline-none focus-visible:ring-2 focus-visible:ring-ring"
                 >
                   <UserAvatar />
@@ -171,7 +191,7 @@ async function handleLogout(): Promise<void> {
                   <DropdownMenuSubTrigger class="group">
                     <component :is="ThemeIcon" class="mr-2 h-4 w-4" />
                     <div class="flex flex-col gap-1">
-                      <span>Appearance</span>
+                      <span>{{ t('header.appearance') }}</span>
                       <span
                         data-testid="appearance-current"
                         class="text-xs text-muted-foreground group-focus:!text-accent-foreground/80 group-data-[state=open]:!text-accent-foreground/80"
@@ -183,15 +203,38 @@ async function handleLogout(): Promise<void> {
                     <DropdownMenuRadioGroup :model-value="themeStore.mode" @update:model-value="handleThemeChange">
                       <DropdownMenuRadioItem value="light">
                         <Sun class="mr-2 h-4 w-4" />
-                        <span>Light</span>
+                        <span>{{ t('theme.light') }}</span>
                       </DropdownMenuRadioItem>
                       <DropdownMenuRadioItem value="dark">
                         <Moon class="mr-2 h-4 w-4" />
-                        <span>Dark</span>
+                        <span>{{ t('theme.dark') }}</span>
                       </DropdownMenuRadioItem>
                       <DropdownMenuRadioItem value="auto">
                         <Monitor class="mr-2 h-4 w-4" />
-                        <span>System</span>
+                        <span>{{ t('theme.system') }}</span>
+                      </DropdownMenuRadioItem>
+                    </DropdownMenuRadioGroup>
+                  </DropdownMenuSubContent>
+                </DropdownMenuSub>
+                <DropdownMenuSub>
+                  <DropdownMenuSubTrigger class="group">
+                    <Languages class="mr-2 h-4 w-4" />
+                    <div class="flex flex-col gap-1">
+                      <span>{{ t('header.language') }}</span>
+                      <span
+                        data-testid="language-current"
+                        class="text-xs text-muted-foreground group-focus:!text-accent-foreground/80 group-data-[state=open]:!text-accent-foreground/80"
+                        >{{ currentLanguageLabel }}</span
+                      >
+                    </div>
+                  </DropdownMenuSubTrigger>
+                  <DropdownMenuSubContent>
+                    <DropdownMenuRadioGroup :model-value="currentLocale" @update:model-value="handleLanguageChange">
+                      <DropdownMenuRadioItem value="en">
+                        <span>{{ t('language.english') }}</span>
+                      </DropdownMenuRadioItem>
+                      <DropdownMenuRadioItem value="zh-CN">
+                        <span>{{ t('language.chineseSimplified') }}</span>
                       </DropdownMenuRadioItem>
                     </DropdownMenuRadioGroup>
                   </DropdownMenuSubContent>
@@ -199,13 +242,13 @@ async function handleLogout(): Promise<void> {
                 <DropdownMenuSeparator />
                 <DropdownMenuItem @select="navigateToSettings">
                   <Settings class="mr-2 h-4 w-4" />
-                  <span>Settings</span>
+                  <span>{{ t('header.settings') }}</span>
                 </DropdownMenuItem>
                 <DropdownMenuSeparator />
                 <DropdownMenuItem :disabled="isLoggingOut" @select="handleLogout">
                   <Loader2 v-if="isLoggingOut" class="mr-2 h-4 w-4 animate-spin" />
                   <LogOut v-else class="mr-2 h-4 w-4" />
-                  <span>{{ isLoggingOut ? 'Logging out...' : 'Logout' }}</span>
+                  <span>{{ isLoggingOut ? t('header.loggingOut') : t('header.logout') }}</span>
                 </DropdownMenuItem>
               </DropdownMenuContent>
             </DropdownMenu>

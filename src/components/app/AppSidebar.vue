@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { computed } from 'vue'
+import { useI18n } from 'vue-i18n'
 import {
   Sidebar,
   SidebarContent,
@@ -32,6 +33,7 @@ import PluginIcon from './PluginIcon.vue'
  */
 const route = useRoute()
 const { state, isMobile, setOpenMobile } = useSidebar()
+const { t } = useI18n()
 
 /**
  * The current path, read through a computed so the sidebar only re-renders when
@@ -114,50 +116,50 @@ function handleNavigate() {
 
     <SidebarContent>
       <SidebarGroup>
-        <SidebarGroupLabel class="text-[11px] tracking-wider uppercase text-muted-foreground/70"
-          >Navigation</SidebarGroupLabel
-        >
+        <SidebarGroupLabel class="text-[11px] tracking-wider uppercase text-muted-foreground/70">{{
+          t('nav.groupNavigation')
+        }}</SidebarGroupLabel>
         <SidebarGroupContent>
           <SidebarMenu>
             <SidebarMenuItem>
               <SidebarMenuButton
                 as-child
-                tooltip="Dashboard"
+                :tooltip="t('nav.dashboard')"
                 class="h-9 text-[15px] [&>svg]:size-[18px] [&>svg]:mr-0.5"
                 @click="handleNavigate"
                 :is-active="isPathActive('/dashboard')"
               >
                 <RouterLink to="/dashboard">
                   <LayoutDashboard />
-                  <span>Dashboard</span>
+                  <span>{{ t('nav.dashboard') }}</span>
                 </RouterLink>
               </SidebarMenuButton>
             </SidebarMenuItem>
             <SidebarMenuItem>
               <SidebarMenuButton
                 as-child
-                tooltip="Achievements"
+                :tooltip="t('nav.achievements')"
                 class="h-9 text-[15px] [&>svg]:size-[18px] [&>svg]:mr-0.5"
                 @click="handleNavigate"
                 :is-active="isPathActive('/achievements')"
               >
                 <RouterLink to="/achievements">
                   <Trophy />
-                  <span>Achievements</span>
+                  <span>{{ t('nav.achievements') }}</span>
                 </RouterLink>
               </SidebarMenuButton>
             </SidebarMenuItem>
             <SidebarMenuItem>
               <SidebarMenuButton
                 as-child
-                tooltip="Leaderboard"
+                :tooltip="t('nav.leaderboard')"
                 class="h-9 text-[15px] [&>svg]:size-[18px] [&>svg]:mr-0.5"
                 @click="handleNavigate"
                 :is-active="isPathActive('/leaderboard')"
               >
                 <RouterLink to="/leaderboard">
                   <ListOrdered />
-                  <span>Leaderboard</span>
+                  <span>{{ t('nav.leaderboard') }}</span>
                 </RouterLink>
               </SidebarMenuButton>
             </SidebarMenuItem>
@@ -166,22 +168,22 @@ function handleNavigate() {
       </SidebarGroup>
 
       <SidebarGroup>
-        <SidebarGroupLabel class="text-[11px] tracking-wider uppercase text-muted-foreground/70"
-          >Settings</SidebarGroupLabel
-        >
+        <SidebarGroupLabel class="text-[11px] tracking-wider uppercase text-muted-foreground/70">{{
+          t('nav.groupSettings')
+        }}</SidebarGroupLabel>
         <SidebarGroupContent>
           <SidebarMenu>
             <SidebarMenuItem>
               <SidebarMenuButton
                 as-child
-                tooltip="Settings"
+                :tooltip="t('nav.settings')"
                 class="h-9 text-[15px] [&>svg]:size-[18px] [&>svg]:mr-0.5"
                 @click="handleNavigate"
                 :is-active="isSectionActive('/settings')"
               >
                 <RouterLink to="/settings">
                   <Settings />
-                  <span>Settings</span>
+                  <span>{{ t('nav.settings') }}</span>
                 </RouterLink>
               </SidebarMenuButton>
             </SidebarMenuItem>

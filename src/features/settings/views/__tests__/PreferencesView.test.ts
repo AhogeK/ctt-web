@@ -4,6 +4,8 @@ import { ref } from 'vue'
 import { createPinia } from 'pinia'
 import PreferencesView from '../PreferencesView.vue'
 import { useThemeStore } from '@/stores/theme'
+import { currentLocale, setLocale } from '@/i18n'
+import { flushPromises } from '@vue/test-utils'
 
 /**
  * The theme store reads both VueUse primitives; plain refs keep jsdom's
@@ -21,6 +23,9 @@ vi.mock('@vueuse/core', async (importOriginal) => {
 })
 
 function mountView() {
+  // The singleton, not a fresh instance: `setLocale` publishes to the application
+  // instance, and a component mounted against another one would keep rendering
+  // the old language — exactly what these tests exist to prevent.
   const wrapper = mount(PreferencesView, { global: { plugins: [createPinia()] } })
   const store = useThemeStore()
   return { wrapper, store }
@@ -75,6 +80,35 @@ describe('PreferencesView', () => {
     expect(store.mode).toBe('auto')
     expect(wrapper.text()).toContain('Current: System (Light)')
 
+    wrapper.unmount()
+  })
+
+  it('renders the language section as its own labelled group', () => {
+    const { wrapper } = mountView()
+
+    const fieldsets = wrapper.findAll('fieldset')
+    expect(fieldsets).toHaveLength(2)
+    expect(fieldsets[1]!.find('legend').text()).toBe('Language')
+    expect(wrapper.findAll('input[name="language"]')).toHaveLength(2)
+
+    wrapper.unmount()
+  })
+
+  it('switches the interface language through the locale module', async () => {
+    const { wrapper } = mountView()
+
+    await wrapper.findAll('input[name="language"]')[1]!.setValue(true)
+
+    // `setLocale` awaits the lazily imported catalogue, so the ref settles on a
+    // later task than the change event itself.
+    await vi.waitFor(() => expect(currentLocale.value).toBe('zh-CN'))
+    await flushPromises()
+
+    expect(document.documentElement.lang).toBe('zh-CN')
+    expect(wrapper.text()).toContain('偏好设置')
+    expect(wrapper.text()).toContain('简体中文')
+
+    await setLocale('en')
     wrapper.unmount()
   })
 })
