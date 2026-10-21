@@ -25,6 +25,7 @@ import {
 import en from './locales/en'
 
 export { currentLocale, SUPPORTED_LOCALES } from './locale'
+export { LANGUAGE_CODES, LANGUAGE_NAMES } from './locales/language-names'
 export type { AppLocale } from './locale'
 
 const loaders: Record<Exclude<AppLocale, 'en'>, () => Promise<{ default: Record<string, unknown> }>> = {
