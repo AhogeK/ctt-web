@@ -82,6 +82,13 @@ test.describe('Landing page', () => {
     // performance this entry should not replay, and an instant jump loses the sense of travel.
     await page.goto('/')
     await page.locator('h1').waitFor()
+    // Settle fonts and one layout frame before measuring: the hero's scroll-driven
+    // measurements run after mount, and a parallel full-suite run could otherwise
+    // attribute that shift to the click this test is about.
+    await page.evaluate(async () => {
+      await document.fonts.ready
+      await new Promise<void>((resolve) => requestAnimationFrame(() => requestAnimationFrame(() => resolve())))
+    })
 
     // The footer keeps the ecosystem list; the anchor's no-JavaScript destination is now the
     // open-source section at the page's end.
@@ -98,8 +105,12 @@ test.describe('Landing page', () => {
       'href',
       'https://github.com/AhogeK/code-time-tracker',
     )
-    // The point of the dialog: the page itself must not move.
-    expect(await page.evaluate(() => window.scrollY)).toBe(before)
+    // The point of the dialog: the page itself must not move, and the anchor's
+    // default action must not fire even as a fallback.
+    expect(await page.evaluate(() => ({ scrollY: window.scrollY, hash: window.location.hash }))).toEqual({
+      scrollY: before,
+      hash: '',
+    })
 
     await page.keyboard.press('Escape')
     await expect(dialog).toBeHidden()
