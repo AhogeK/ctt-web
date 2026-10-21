@@ -343,8 +343,8 @@ describe('ResetPasswordView', () => {
       mount(ResetPasswordView)
       const onSubmitHandler = mockHandleSubmit.mock.results[0]?.value
       if (onSubmitHandler) onSubmitHandler()
-      expect(mockToastError).toHaveBeenCalledWith('Invalid reset link', {
-        description: 'Please request a new password reset email.',
+      expect(mockToastError).toHaveBeenCalledWith('Invalid Reset Link', {
+        description: 'This password reset link is invalid or has expired. Please request a new one.',
       })
       expect(mockMutate).not.toHaveBeenCalled()
     })

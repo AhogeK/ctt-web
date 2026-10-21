@@ -15,6 +15,9 @@ import { Button } from '@/components/ui/button'
 import { cn } from '@/lib/utils'
 import { useCooldown } from '@/composables/useCooldown'
 import PasswordStrengthMeter from '../components/PasswordStrengthMeter.vue'
+import { useI18n } from 'vue-i18n'
+
+const { t } = useI18n()
 
 const { countdown, start } = useCooldown()
 
@@ -33,12 +36,12 @@ const mutation = useMutation({
   mutationFn: (data: { token: string; newPassword: string }) =>
     confirmPasswordReset({ token: data.token, newPassword: data.newPassword }),
   onSuccess: () => {
-    toast.success('Password reset successful. All devices have been logged out.')
+    toast.success(t('auth.reset.success'))
     router.push({ name: RouteNames.LOGIN })
   },
   onError: (error: unknown) => {
     if (!isApiError(error)) {
-      toast.error('Password reset failed. Please try again later.')
+      toast.error(t('auth.reset.failed'))
       return
     }
 
@@ -51,19 +54,19 @@ const mutation = useMutation({
       form.setFieldError('newPassword', mapApiErrorCode('PASSWORD_SAME_AS_OLD'))
     } else if (error.statusCode === 429) {
       start()
-      toast.error('Too many requests', {
-        description: `Try again in ${countdown.value}s`,
+      toast.error(t('auth.reset.tooMany'), {
+        description: t('auth.reset.retryIn', { seconds: countdown.value }),
       })
     } else {
-      toast.error('Password reset failed. Please try again later.')
+      toast.error(t('auth.reset.failed'))
     }
   },
 })
 
 const onSubmit = form.handleSubmit((values) => {
   if (!token.value) {
-    toast.error('Invalid reset link', {
-      description: 'Please request a new password reset email.',
+    toast.error(t('auth.reset.invalidLinkTitle'), {
+      description: t('auth.reset.invalidLinkHint'),
     })
     return
   }
@@ -111,13 +114,13 @@ const showConfirmPassword = ref(false)
         class="text-3xl font-emphasis text-foreground dark:text-foreground"
         style="font-feature-settings: 'cv01', 'ss03'; letter-spacing: -0.704px"
       >
-        Reset password
+        {{ t('auth.reset.resetPassword') }}
       </h1>
       <p
         class="text-base text-muted-foreground dark:text-muted-foreground"
         style="font-feature-settings: 'cv01', 'ss03'"
       >
-        Enter your new password below.
+        {{ t('auth.reset.subtitle') }}
       </p>
     </div>
 
@@ -150,13 +153,13 @@ const showConfirmPassword = ref(false)
           class="text-2xl font-emphasis text-foreground dark:text-foreground sm:text-3xl"
           style="font-feature-settings: 'cv01', 'ss03'; letter-spacing: -0.704px"
         >
-          Invalid Reset Link
+          {{ t('auth.reset.invalidLinkTitle') }}
         </h1>
         <p
           class="text-base text-muted-foreground dark:text-muted-foreground"
           style="font-feature-settings: 'cv01', 'ss03'"
         >
-          This password reset link is invalid or has expired. Please request a new one.
+          {{ t('auth.reset.invalidLinkHint') }}
         </p>
       </div>
       <Button
@@ -170,7 +173,7 @@ const showConfirmPassword = ref(false)
         @click="router.push({ name: RouteNames.FORGOT_PASSWORD })"
         style="font-feature-settings: 'cv01', 'ss03'"
       >
-        Request New Reset Link
+        {{ t('auth.reset.requestNewLink') }}
       </Button>
     </div>
 
@@ -181,13 +184,13 @@ const showConfirmPassword = ref(false)
           <FormLabel
             class="text-sm font-emphasis text-foreground/80 dark:text-muted-foreground"
             style="font-feature-settings: 'cv01', 'ss03'"
-            >New Password</FormLabel
+            >{{ t('auth.reset.newPassword') }}</FormLabel
           >
           <FormControl>
             <div class="relative">
               <Input
                 :type="showNewPassword ? 'text' : 'password'"
-                placeholder="Enter new password"
+                :placeholder="t('auth.reset.newPasswordPlaceholder')"
                 :class="
                   cn(
                     'h-11 rounded-md border border-border bg-secondary text-foreground',
@@ -234,13 +237,13 @@ const showConfirmPassword = ref(false)
           <FormLabel
             class="text-sm font-emphasis text-foreground/80 dark:text-muted-foreground"
             style="font-feature-settings: 'cv01', 'ss03'"
-            >Confirm Password</FormLabel
+            >{{ t('auth.common.confirmPassword') }}</FormLabel
           >
           <FormControl>
             <div class="relative">
               <Input
                 :type="showConfirmPassword ? 'text' : 'password'"
-                placeholder="Confirm new password"
+                :placeholder="t('auth.reset.confirmPasswordPlaceholder')"
                 :class="
                   cn(
                     'h-11 rounded-md border border-border bg-secondary text-foreground',
@@ -304,7 +307,9 @@ const showConfirmPassword = ref(false)
           <circle cx="12" cy="12" r="10" stroke-opacity="0.25" />
           <path d="M12 2a10 10 0 0 1 10 10" stroke-linecap="round" />
         </svg>
-        <span class="relative z-10">{{ isSubmitting ? 'Resetting...' : 'Reset password' }}</span>
+        <span class="relative z-10">{{
+          isSubmitting ? t('auth.reset.resetting') : t('auth.reset.resetPassword')
+        }}</span>
       </Button>
     </form>
 
@@ -314,7 +319,7 @@ const showConfirmPassword = ref(false)
       @click="router.push({ name: RouteNames.LOGIN })"
       style="font-feature-settings: 'cv01', 'ss03'"
     >
-      Back to sign in
+      {{ t('auth.common.backToSignIn') }}
     </Button>
   </div>
 </template>

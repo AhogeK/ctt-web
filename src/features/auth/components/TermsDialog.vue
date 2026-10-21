@@ -14,6 +14,9 @@ import { acceptTerms } from '@/lib/api/auth'
 import { termsContent, type TermsSection } from '@/features/auth/content'
 import { useAuthStore } from '@/stores/auth'
 import { usePublicConfig } from '@/composables/usePublicConfig'
+import { useI18n } from 'vue-i18n'
+
+const { t } = useI18n()
 
 const props = withDefaults(
   defineProps<{
@@ -53,11 +56,11 @@ async function handleAccept() {
     const response = await acceptTerms()
     // Store new tokens from terms acceptance
     authStore.setAuthFromTermsAcceptance(response)
-    toast.success('Terms accepted successfully')
+    toast.success(t('auth.terms.accepted'))
     emit('accepted')
     open.value = false
   } catch (error) {
-    toast.error('Failed to accept terms. Please try again.')
+    toast.error(t('auth.terms.acceptFailed'))
     console.error('Terms acceptance failed:', error)
   } finally {
     isLoading.value = false
@@ -78,9 +81,14 @@ function handleClose() {
   <Dialog v-model:open="open">
     <DialogContent class="sm:max-w-3xl max-h-[80vh] flex flex-col">
       <DialogHeader class="shrink-0">
-        <DialogTitle>Terms of Service</DialogTitle>
+        <DialogTitle>{{ t('auth.terms.title') }}</DialogTitle>
         <DialogDescription>
-          Last updated: {{ termsContent.lastUpdated }} &middot; Version {{ currentVersion || termsContent.version }}
+          {{
+            t('auth.terms.lastUpdated', {
+              date: termsContent.lastUpdated,
+              version: currentVersion || termsContent.version,
+            })
+          }}
         </DialogDescription>
       </DialogHeader>
 
@@ -129,12 +137,12 @@ function handleClose() {
 
       <DialogFooter class="shrink-0">
         <template v-if="props.readOnly">
-          <Button variant="outline" @click="handleClose"> Close </Button>
+          <Button variant="outline" @click="handleClose"> {{ t('auth.common.close') }} </Button>
         </template>
         <template v-else>
-          <Button variant="outline" @click="handleReject"> Decline </Button>
+          <Button variant="outline" @click="handleReject"> {{ t('auth.terms.decline') }} </Button>
           <Button :disabled="isLoading" @click="handleAccept">
-            {{ isLoading ? 'Accepting...' : 'Accept' }}
+            {{ isLoading ? t('auth.terms.accepting') : t('auth.terms.accept') }}
           </Button>
         </template>
       </DialogFooter>

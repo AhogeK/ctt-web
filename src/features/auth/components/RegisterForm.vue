@@ -13,6 +13,7 @@ import TermsDialog from './TermsDialog.vue'
 import { Eye, EyeOff } from '@lucide/vue'
 import { useThemeStore } from '@/stores/theme'
 import CaptchaWidget from '@/components/CaptchaWidget.vue'
+import { useI18n } from 'vue-i18n'
 
 const props = defineProps<{
   /** Server-side field errors mapped to field names */
@@ -36,6 +37,7 @@ const form = useForm({
 const showPassword = shallowRef(false)
 const showConfirmPassword = shallowRef(false)
 const showTerms = shallowRef(false)
+const { t } = useI18n()
 const themeStore = useThemeStore()
 const captchaTheme = computed(() => (themeStore.isDark ? 'dark' : 'light'))
 const captchaRef = ref<InstanceType<typeof CaptchaWidget> | null>(null)
@@ -96,12 +98,12 @@ defineExpose({
         <FormLabel
           class="text-sm font-emphasis text-foreground/80 dark:text-muted-foreground"
           style="font-feature-settings: 'cv01', 'ss03'"
-          >Email</FormLabel
+          >{{ t('auth.common.email') }}</FormLabel
         >
         <FormControl>
           <Input
             type="email"
-            placeholder="you@example.com"
+            :placeholder="t('auth.common.emailPlaceholder')"
             autocomplete="email"
             :class="
               cn(
@@ -124,11 +126,11 @@ defineExpose({
         <FormLabel
           class="text-sm font-emphasis text-foreground/80 dark:text-muted-foreground"
           style="font-feature-settings: 'cv01', 'ss03'"
-          >Display Name</FormLabel
+          >{{ t('auth.register.displayName') }}</FormLabel
         >
         <FormControl>
           <Input
-            placeholder="Your name"
+            :placeholder="t('auth.register.displayNamePlaceholder')"
             :class="
               cn(
                 'h-10 rounded-md border border-border bg-secondary text-foreground',
@@ -150,13 +152,13 @@ defineExpose({
         <FormLabel
           class="text-sm font-emphasis text-foreground/80 dark:text-muted-foreground"
           style="font-feature-settings: 'cv01', 'ss03'"
-          >Password</FormLabel
+          >{{ t('auth.common.password') }}</FormLabel
         >
         <FormControl>
           <div class="relative">
             <Input
               :type="showPassword ? 'text' : 'password'"
-              placeholder="Create a strong password"
+              :placeholder="t('auth.register.passwordPlaceholder')"
               autocomplete="new-password"
               :class="
                 cn(
@@ -191,13 +193,13 @@ defineExpose({
         <FormLabel
           class="text-sm font-emphasis text-foreground/80 dark:text-muted-foreground"
           style="font-feature-settings: 'cv01', 'ss03'"
-          >Confirm Password</FormLabel
+          >{{ t('auth.common.confirmPassword') }}</FormLabel
         >
         <FormControl>
           <div class="relative">
             <Input
               :type="showConfirmPassword ? 'text' : 'password'"
-              placeholder="Repeat your password"
+              :placeholder="t('auth.register.confirmPasswordPlaceholder')"
               autocomplete="new-password"
               :class="
                 cn(
@@ -233,13 +235,13 @@ defineExpose({
             <Checkbox :checked="value" @update:model-value="handleChange" class="mt-0.5 cursor-pointer" />
             <div class="grid gap-1.5 leading-tight">
               <FormLabel class="text-sm font-normal text-foreground/80 dark:text-muted-foreground">
-                I agree to the
+                {{ t('auth.register.termsPrefix') }}
                 <button
                   type="button"
                   class="cursor-pointer text-primary hover:text-accent underline transition-colors"
                   @click="showTerms = true"
                 >
-                  Terms of Service
+                  {{ t('auth.terms.title') }}
                 </button>
               </FormLabel>
             </div>
@@ -263,7 +265,7 @@ defineExpose({
         class="text-sm text-destructive transition-opacity duration-200"
         :class="captchaError ? 'opacity-100' : 'opacity-0'"
       >
-        Please complete the captcha verification
+        {{ t('auth.common.captchaRequired') }}
       </p>
     </div>
 
@@ -278,7 +280,7 @@ defineExpose({
       "
       style="font-feature-settings: 'cv01', 'ss03'"
     >
-      <span class="relative z-10">Create account</span>
+      <span class="relative z-10">{{ t('auth.register.createAccount') }}</span>
     </Button>
   </form>
   <TermsDialog v-if="showTerms" v-model:open="showTerms" :read-only="true" />
