@@ -24,6 +24,8 @@ pnpm exec playwright test e2e/settings/language.spec.ts --project=chromium
 ## 已迁移面（0.60.2）
 
 `AppHeader` · `AppSidebar` · `PreferencesView` · `SettingsShell` · `ChoiceRadioGroup` ·
+`LanguageMenu`（公共壳：营销顶栏 + 登录卡片；32px 方形按钮显示语言代码，菜单列全部语言）·
+`MarketingLayout`（CTA 与源码链接文案）·
 `LoginForm` · `LoginView`（含账号锁定 / 邮箱未验证对话框与重发倒计时）·
 `HeatmapChart` / `TrendChart` / `LongTermTrendPanel`（日期标签）· 认证表单层（注册 / 忘记 / 重置表单、
 强度计、条款对话框与正文、重置页、Zod 校验文案）
