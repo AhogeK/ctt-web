@@ -23,6 +23,9 @@ import {
   DialogTitle,
 } from '@/components/ui/dialog'
 import { Button } from '@/components/ui/button'
+import { useI18n } from 'vue-i18n'
+
+const { t } = useI18n()
 
 const router = useRouter()
 const route = useRoute()
@@ -53,7 +56,7 @@ const mutation = useMutation({
   onError: (error: unknown) => {
     loginFormRef.value?.captchaRef?.reset()
     if (!isApiError(error)) {
-      toast.error('Login failed', { description: 'An unexpected error occurred' })
+      toast.error(t('auth.errors.loginFailed'), { description: t('auth.errors.unexpected') })
       return
     }
 
@@ -112,7 +115,7 @@ const mutation = useMutation({
           })
         } else {
           // Generic error fallback — never leak HTTP method/path/status
-          toast.error('Login failed', { description: 'Please try again later' })
+          toast.error(t('auth.errors.loginFailed'), { description: t('auth.errors.tryAgainLater') })
         }
     }
   },
@@ -138,7 +141,7 @@ const githubMutation = useMutation({
     globalThis.location.href = data.authUrl
   },
   onError: () => {
-    toast.error('GitHub login failed', { description: 'Unable to start GitHub authorization. Please try again.' })
+    toast.error(t('auth.errors.githubLoginFailed'), { description: t('auth.errors.githubAuthorizeFailed') })
   },
 })
 
@@ -149,7 +152,7 @@ const handleGitHubLogin = () => {
 const handleResendVerification = async () => {
   await resend(pendingEmail.value)
   if (resendCountdown.value === 0) {
-    toast.success('Verification email sent', { description: 'Please check your inbox' })
+    toast.success(t('auth.errors.verificationEmailSent'), { description: t('auth.errors.checkInbox') })
   }
 }
 </script>
@@ -222,18 +225,19 @@ const handleResendVerification = async () => {
     <Dialog v-model:open="showLockedDialog">
       <DialogContent class="sm:max-w-md">
         <DialogHeader>
-          <DialogTitle>Account Locked</DialogTitle>
+          <DialogTitle>{{ t('auth.locked.title') }}</DialogTitle>
           <DialogDescription>
-            Too many failed login attempts. Your account has been temporarily locked for security.
+            {{ t('auth.locked.description') }}
             <br />
             <span v-if="lockCountdown > 0">
-              Please try again in <strong>{{ lockCountdown }}</strong> seconds.
+              {{ t('auth.locked.retryInPrefix') }} <strong>{{ lockCountdown }}</strong>
+              {{ t('auth.locked.retryInSuffix') }}
             </span>
-            <span v-else> You may now attempt to sign in again. </span>
+            <span v-else> {{ t('auth.locked.body') }} </span>
           </DialogDescription>
         </DialogHeader>
         <DialogFooter>
-          <Button variant="outline" @click="showLockedDialog = false"> Close </Button>
+          <Button variant="outline" @click="showLockedDialog = false"> {{ t('auth.common.close') }} </Button>
         </DialogFooter>
       </DialogContent>
     </Dialog>
@@ -242,16 +246,22 @@ const handleResendVerification = async () => {
     <Dialog v-model:open="showVerificationDialog">
       <DialogContent class="sm:max-w-md">
         <DialogHeader>
-          <DialogTitle>Email Not Verified</DialogTitle>
+          <DialogTitle>{{ t('auth.unverified.title') }}</DialogTitle>
           <DialogDescription>
-            Your account <strong>{{ pendingEmail }}</strong> has not been verified yet. Please check your inbox and
-            click the verification link.
+            {{ t('auth.unverified.prefix') }} <strong>{{ pendingEmail }}</strong>
+            {{ t('auth.unverified.suffix') }}
           </DialogDescription>
         </DialogHeader>
         <DialogFooter>
-          <Button variant="outline" @click="showVerificationDialog = false"> Close </Button>
+          <Button variant="outline" @click="showVerificationDialog = false"> {{ t('auth.common.close') }} </Button>
           <Button :disabled="isResending || resendCountdown > 0" @click="handleResendVerification">
-            {{ isResending ? 'Sending...' : resendCountdown > 0 ? `Resend in ${resendCountdown}s` : 'Resend Email' }}
+            {{
+              isResending
+                ? t('auth.resendEmail.sending')
+                : resendCountdown > 0
+                  ? t('auth.resendEmail.in', { seconds: resendCountdown })
+                  : t('auth.resendEmail.send')
+            }}
           </Button>
         </DialogFooter>
       </DialogContent>
