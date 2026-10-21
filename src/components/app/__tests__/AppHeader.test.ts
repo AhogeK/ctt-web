@@ -81,6 +81,7 @@ vi.mock('@lucide/vue', () => ({
   Sun: { name: 'Sun', template: '<svg data-testid="icon-sun" />' },
   Moon: { name: 'Moon', template: '<svg data-testid="icon-moon" />' },
   Monitor: { name: 'Monitor', template: '<svg data-testid="icon-monitor" />' },
+  Languages: { name: 'Languages', template: '<svg data-testid="icon-languages" />' },
   Settings: { name: 'Settings', template: '<svg data-testid="icon-settings" />' },
   LogOut: { name: 'LogOut', template: '<svg data-testid="icon-logout" />' },
   Loader2: { name: 'Loader2', template: '<svg data-testid="icon-loader" />' },
@@ -252,9 +253,13 @@ describe('AppHeader', () => {
   it('renders Light/Dark/System radio items inside the Appearance submenu', () => {
     const wrapper = mountAppHeader()
 
+    // The menu holds two radio groups now (Appearance and Language); assert both
+    // sets instead of one exact list so a new group cannot silently shrink this
+    // one's coverage.
     const items = wrapper.findAll('[data-testid="dropdown-radio-item"]')
-    const values = items.map((el) => el.attributes('data-value')).sort((a, b) => String(a).localeCompare(String(b)))
-    expect(values).toEqual(['auto', 'dark', 'light'])
+    const values = items.map((el) => el.attributes('data-value'))
+    expect(values).toEqual(expect.arrayContaining(['auto', 'dark', 'light']))
+    expect(values).toEqual(expect.arrayContaining(['en', 'zh-CN']))
 
     const subContent = wrapper.find('[data-testid="dropdown-sub-content"]')
     expect(subContent.text()).toContain('Light')
@@ -264,6 +269,22 @@ describe('AppHeader', () => {
     expect(subContent.find('[data-testid="icon-sun"]').exists()).toBe(true)
     expect(subContent.find('[data-testid="icon-moon"]').exists()).toBe(true)
     expect(subContent.find('[data-testid="icon-monitor"]').exists()).toBe(true)
+
+    wrapper.unmount()
+  })
+
+  it('renders the language submenu beside the appearance submenu', () => {
+    const wrapper = mountAppHeader()
+
+    const triggers = wrapper.findAll('[data-testid="dropdown-sub-trigger"]')
+    expect(triggers).toHaveLength(2)
+
+    const languageTrigger = triggers[1]
+    expect(languageTrigger).toBeDefined()
+    expect(languageTrigger!.text()).toContain('Language')
+    expect(languageTrigger!.find('[data-testid="icon-languages"]').exists()).toBe(true)
+    // The default locale is English, so the trigger names it without opening the submenu.
+    expect(languageTrigger!.find('[data-testid="language-current"]').text()).toBe('English')
 
     wrapper.unmount()
   })

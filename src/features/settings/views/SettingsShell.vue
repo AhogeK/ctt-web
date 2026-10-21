@@ -12,24 +12,44 @@
  * app sidebar follows.
  */
 import { computed } from 'vue'
+import { useI18n } from 'vue-i18n'
 import { RouterLink, RouterView, useRoute } from 'vue-router'
 import { RouteNames, type RouteName } from '@/router/route-names'
 
 interface SettingsSection {
   name: RouteName
-  label: string
-  description: string
+  /** Message key for the section label. */
+  labelKey: string
+  /** Message key for the one-line description shown beside the label on desktop. */
+  descriptionKey: string
 }
 
 /** Sections in IA order — the single source the rail and the mobile tabs share. */
 const SECTIONS: SettingsSection[] = [
-  { name: RouteNames.SETTINGS_PROFILE, label: 'Profile', description: 'Account, email and sign-in methods' },
-  { name: RouteNames.SETTINGS_DEVICES, label: 'Devices', description: 'Machines syncing your coding time' },
-  { name: RouteNames.SETTINGS_PREFERENCES, label: 'Preferences', description: 'Appearance and language' },
-  { name: RouteNames.SETTINGS_API_KEYS, label: 'API Keys', description: 'Credentials for the plugin and API' },
+  {
+    name: RouteNames.SETTINGS_PROFILE,
+    labelKey: 'settings.sections.profile',
+    descriptionKey: 'settings.sections.profileDescription',
+  },
+  {
+    name: RouteNames.SETTINGS_DEVICES,
+    labelKey: 'settings.sections.devices',
+    descriptionKey: 'settings.sections.devicesDescription',
+  },
+  {
+    name: RouteNames.SETTINGS_PREFERENCES,
+    labelKey: 'settings.sections.preferences',
+    descriptionKey: 'settings.sections.preferencesDescription',
+  },
+  {
+    name: RouteNames.SETTINGS_API_KEYS,
+    labelKey: 'settings.sections.apiKeys',
+    descriptionKey: 'settings.sections.apiKeysDescription',
+  },
 ]
 
 const route = useRoute()
+const { t } = useI18n()
 
 /**
  * Read through a computed so the rail only re-renders when the section
@@ -41,7 +61,10 @@ const activeName = computed(() => route.name)
 
 <template>
   <div class="md:grid md:grid-cols-[220px_minmax(0,1fr)] md:items-start md:gap-6">
-    <nav aria-label="Settings sections" class="border-b px-4 py-3 md:border-b-0 md:border-r md:px-0 md:py-6 md:pr-4">
+    <nav
+      :aria-label="t('settings.sections.navLabel')"
+      class="border-b px-4 py-3 md:border-b-0 md:border-r md:px-0 md:py-6 md:pr-4"
+    >
       <ul class="flex gap-1 overflow-x-auto md:flex-col md:gap-0.5">
         <li v-for="section in SECTIONS" :key="section.name" class="shrink-0 md:shrink">
           <RouterLink
@@ -54,8 +77,10 @@ const activeName = computed(() => route.name)
                 : 'text-muted-foreground hover:bg-accent/50 hover:text-foreground'
             "
           >
-            <span class="block">{{ section.label }}</span>
-            <span class="hidden text-xs font-normal text-muted-foreground md:block">{{ section.description }}</span>
+            <span class="block">{{ t(section.labelKey) }}</span>
+            <span class="hidden text-xs font-normal text-muted-foreground md:block">{{
+              t(section.descriptionKey)
+            }}</span>
           </RouterLink>
         </li>
       </ul>
