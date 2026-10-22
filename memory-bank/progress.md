@@ -22,7 +22,7 @@
 | Landing Page (P1–P4 交付：基元 / hero / 演示 / 收口三区) | ✅ Complete (P1–P4) · P5–P6 待做 | 0.54.0 |
 | AuthLayout 展示面板 (指针光/3D)   | ✅ Complete | 0.51.0         |
 | Settings                          | 🚧 In progress (shell + 4 sections) | 1.0.0     |
-| Interface Language (zh/en)        | 🚧 In progress (0.60.1: shell, login, auth form layer) | 1.0.0 |
+| Interface Language (zh/en)        | 🚧 In progress (0.62.0: shell, landing, auth pages, shared error copy) | 1.0.0 |
 | E2E Test Coverage                 | 🚧 Partial  | 1.0.0          |
 | Production Deploy                 | ⏳ Pending  | 1.0.0          |
 
@@ -181,6 +181,10 @@
 - **P5 计划改写 ✓**：定价节改「免费与赞助」（v0.55.11–13；托管定位已决：将部署）；其余行同步；业务文档 6 处 ✓；**条款文案已修 v0.55.14 ✓**（版本标识不单边动 ✓、防回退测试）。
 - **P6 收口（2026-10-10 · v0.55.16）** ✓：真机截图基线 **26 张**（首屏/窗口特写/能力/怎么工作/免费/开源/页脚 × 亮/暗 × 1440/390，生产构建实拍）存
   `.omp/qa/p6-visual-2026-10-10/` ✓；亮色窄屏窗口阴影 `shadow-2xl`→`shadow-xl lg:shadow-2xl`（与浮板同档；桌面/暗色零变化）✓；待用户手机复看 ✓。
+## 界面语言 · 认证页（2026-10-22 · v0.62.0）
+
+- 九页文案迁移 + 重发验证提示 + 共享 `api.errors.*`（42 码）；hCaptcha 按界面语言传 `hl`。
+- OAuth 错误页不显示原始错误码；验证页失败态面板加 12px 间距、列宽 448px；截图分上下两段（整页长图会吞掉跨域验证码框）。
 
 ## 工具链
 
@@ -194,7 +198,3 @@
 
 - [ ] **顶栏闪烁（10-10）**：差分✓=去滤镜归零；v0.55.18/19 分层+提示；观察✓100% 亦现 ⇒ 125% 非必要；审查✓=tint/边框归可读支；v0.55.20 两分支实施+自证 ⇒ **目视✓暂未再遇**。
 - [ ] **统计页手机端（10-11 · v0.55.29 · 待评估）**：列表/过滤栏/时长✓；热力图 ⇒ 条带（锚今天/整年）；周时段/柱/时段 ⇒ 减负（条/线/2×2）；悬停片/点选 ⇒ 不出/可恢复；桌面零变化；验证 ✓。
-- [ ] Auth: Token refresh + expiry handling
-- [ ] Dashboard: Weekday / IDE / Devices distribution panels（后端已就绪；Project 已随 v0.35.0 上线，其余复用共享排名列表）
-- [x] Leaderboard: Redis ZSet ranking display (v0.41.0 — contract rebuilt against `GET /leaderboard`)
-- [x] Settings: Language switch (v0.60.0 — Preferences radio group + avatar menu; batches remain)

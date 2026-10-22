@@ -21,7 +21,7 @@ pnpm test:unit --run src/i18n
 pnpm exec playwright test e2e/settings/language.spec.ts --project=chromium
 ```
 
-## 已迁移面（0.61.0）
+## 已迁移面（0.62.0）
 
 `AppHeader` · `AppSidebar` · `PreferencesView` · `SettingsShell` · `ChoiceRadioGroup` ·
 `LanguageMenu`（公共壳：营销顶栏 + 登录卡片；32px 方形按钮显示语言代码，菜单列全部语言）·
@@ -30,10 +30,12 @@ pnpm exec playwright test e2e/settings/language.spec.ts --project=chromium
 `HeatmapChart` / `TrendChart` / `LongTermTrendPanel`（日期标签）· 认证表单层（注册 / 忘记 / 重置表单、
 强度计、条款对话框与正文、重置页、Zod 校验文案）·
 落地页全页（首屏 / 年历 / 奖杯卡 / 能力 / 工作方式 / 免费与运行方式 / 开源 / 页脚 / 源码对话框）·
-看板共享层（汇总字段与涨跌、最近会话与分组、奖杯卡家族与窗口）
+看板共享层（汇总字段与涨跌、最近会话与分组、奖杯卡家族与窗口）·
+认证页全套（登录 / 注册 / 忘记 / 两个成功页 / 验证邮箱 / 变更邮箱 / OAuth 回调与错误页 / 重发验证提示）·
+共享错误码表 `api.errors.*`（`mapApiErrorCode` 与 `getErrorMessage`）·
+`CaptchaWidget`（hCaptcha `hl` 跟随界面语言：`en` / `zh-CN`）
 
 ## 未迁移面（批次见计划件）
 
-认证其余视图（Verify / ChangeEmail / OAuth 回调与错误页 / Forgot / Register / ForgotSuccess、重发验证组合式）·
-设置各视图与对话框 · 统计面板文案 · 成就页自身文案 · 排行榜 / 设备 · 错误码文案表 ·
+设置各视图与对话框 · 统计面板文案 · 成就页自身文案 · 排行榜 / 设备 ·
 `lib/schemas` 校验文案 · `components/ui` 默认文案 · 路由文档标题

@@ -17,7 +17,7 @@
 | Validation    | Vee-Validate + Zod                     | ^4 / ^4.3.6  |
 | Icons         | @iconify/vue (migrated from lucide-vue-next v0.10.5) | ^5 |
 | i18n          | Vue I18n                               | ^11          |
-| Captcha       | @hcaptcha/vue3-hcaptcha                | ^1           |
+| Captcha       | @hcaptcha/vue3-hcaptcha (`hl` follows UI) | ^1        |
 | Package Mgr   | pnpm (standalone `~/Library/pnpm`)     | 12.11.2      |
 | Design System | DESIGN.md                              | Linear-style |
 

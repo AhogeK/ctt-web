@@ -64,6 +64,21 @@ z.string().min(1, { error: () => t('auth.validation.passwordRequired') })
 `ResetPasswordView.vue` 的内联表单。净效果是新词条不可达、真实页面仍英文。改动一个"看起来在用"的
 组件前，先 `grep -rn "<ComponentName>" src e2e`：只有 schema 共享不算消费方。
 
+## 共享错误码表也要本地化
+
+页面文案中文化了、错误体却仍是英文，是这套迁移里最常见的**半个修复**：`lib/utils/api-error.ts` 的
+`mapApiErrorCode` 被认证页、设置页与对话框共用，它的表一旦保留英文字符串，toast 与卡片正文就永远英文。
+做法：表里的值改成词条键（`api.errors.*`），函数用 `i18n.global.t` 解析；未映射的码原样返回。
+
+词条键路径的守卫：每段必须**以小写字母开头、只用字母数字**（`messages.test.ts`）——
+`api.errors.auth_001` ✗，`api.errors.auth001` ✓。
+
+## 面向用户的错误信息
+
+错误码是给你排障的，不是给用户读的：页面只展示按码映射后的人话，原始码最多留在地址栏。
+认证页的 OAuth 错误页曾把 `Error code: AUTH_005` 印给用户，属于把内部标识当文案。断言要反过来写：
+页面上**不应出现**码本身。
+
 ## 测试约定
 
 - `src/test/setup.ts` 给每个挂载装好了应用 i18n 实例 —— **组件测试不要再自己创建实例**
