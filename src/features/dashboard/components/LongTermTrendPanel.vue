@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import { useI18n } from 'vue-i18n'
 /**
  * LongTermTrendPanel — "Long-term trend": daily coded time as dots over the
  * card's window (rolling 12 months, or a picked calendar year), a centered
@@ -41,6 +42,8 @@ import {
 } from './trend-baseline'
 import { comparisonDirection, deltaClass, formatChangePercent, type DeltaView } from './summary-comparison'
 import '@/components/charts/echarts-setup'
+
+const { t } = useI18n()
 
 const props = defineProps<{
   /** Dense daily points (date + seconds) in date order — the card's window */
@@ -129,12 +132,14 @@ const windowMean = computed(() => windowMeanSeconds(seconds.value))
 const recentMean = computed(() => recentMeanSeconds(seconds.value))
 /** Days the recent figure actually covers — the full window unless history is shorter. */
 const recentSpanDays = computed(() => Math.min(RECENT_DAYS, props.points.length))
-const recentLabel = computed(() => `Last ${recentSpanDays.value} days`)
+const recentLabel = computed(() => t('dashboard.longTerm.lastDays', { days: recentSpanDays.value }))
 const recentDelta = computed(() => changePercent(recentMean.value, windowMean.value))
 
 /** What the dashed level is the mean OF — the named baseline. */
 const averageLabel = computed(() =>
-  props.windowLabel === undefined ? '12-month average' : `${props.windowLabel} average`,
+  props.windowLabel === undefined
+    ? t('dashboard.longTerm.twelveMonthAverage')
+    : t('dashboard.longTerm.averageLabel', { window: props.windowLabel }),
 )
 
 /**
@@ -164,12 +169,14 @@ const delta = computed<DeltaView | null>(() => {
 const ariaLabel = computed(() => {
   const first = props.points[0]?.date ?? ''
   const last = props.points[props.points.length - 1]?.date ?? ''
-  const parts = [`Long-term trend, ${props.points.length} days from ${first} to ${last}`]
+  const parts = [t('dashboard.longTerm.aria', { days: props.points.length, first, last })]
   const mean = windowMean.value
-  if (mean !== null) parts.push(`${averageLabel.value} ${formatAverageDuration(mean)}`)
+  if (mean !== null)
+    parts.push(t('dashboard.longTerm.ariaAverage', { label: averageLabel.value, value: formatAverageDuration(mean) }))
   const recent = recentMean.value
-  if (recent !== null) parts.push(`${recentLabel.value} average ${formatAverageDuration(recent)}`)
-  if (delta.value) parts.push(`${delta.value.text} against the ${averageLabel.value}`)
+  if (recent !== null)
+    parts.push(t('dashboard.longTerm.ariaRecent', { days: recentSpanDays.value, value: formatAverageDuration(recent) }))
+  if (delta.value) parts.push(t('dashboard.longTerm.ariaDelta', { text: delta.value.text, label: averageLabel.value }))
   return parts.join(' · ')
 })
 
@@ -211,7 +218,7 @@ function buildOption(points: DailyStatPoint[], weekly: number[], mean: number | 
   const yScale = getHourAxisScale(maxSeconds)
 
   const dots = {
-    name: 'Daily',
+    name: t('dashboard.common.daily'),
     type: 'scatter',
     symbolSize: 3,
     data: points.map((p) => p.seconds),
@@ -257,9 +264,13 @@ function buildOption(points: DailyStatPoint[], weekly: number[], mean: number | 
         if (index === undefined || point === undefined) return ''
         const d = new Date(`${point.date}T00:00:00`)
         const weekday = formatWeekdayShort(d)
-        const lines = [`<b>${weekday}, ${point.date}</b>`, `${formatDuration(point.seconds)} coded`]
+        const lines = [
+          `<b>${weekday}, ${point.date}</b>`,
+          `${t('dashboard.common.coded', { value: formatDuration(point.seconds) })}`,
+        ]
         const average = weekly[index]
-        if (average !== undefined) lines.push(`7-day average ${formatAverageDuration(average)}`)
+        if (average !== undefined)
+          lines.push(`${t('dashboard.longTerm.sevenDayAverage')} ${formatAverageDuration(average)}`)
         return lines.join('<br/>')
       },
     },

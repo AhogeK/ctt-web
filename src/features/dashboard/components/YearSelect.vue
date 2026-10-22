@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import { useI18n } from 'vue-i18n'
 /**
  * YearSelect — the year picker shared by the heatmap and the long-term trend
  * panels (extracted from HeatmapYearSelect when the second consumer
@@ -11,6 +12,8 @@
  */
 import { computed } from 'vue'
 import { Select, SelectContent, SelectItem, SelectItemText, SelectTrigger, SelectValue } from '@/components/ui/select'
+
+const { t } = useI18n()
 
 const props = defineProps<{
   /** Selected year, or null for the rolling 12-month default */
@@ -46,7 +49,7 @@ function onChange(value: unknown): void {
     </SelectTrigger>
     <SelectContent>
       <SelectItem value="rolling">
-        <SelectItemText>Last 12 months</SelectItemText>
+        <SelectItemText>{{ t('dashboard.year.lastTwelve') }}</SelectItemText>
       </SelectItem>
       <SelectItem v-for="y in years" :key="y" :value="String(y)">
         <SelectItemText>{{ y }}</SelectItemText>

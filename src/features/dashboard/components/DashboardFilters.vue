@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import { useI18n } from 'vue-i18n'
 /**
  * DashboardFilters — the filter bar for the dashboard.
  *
@@ -17,6 +18,8 @@ import { cn } from '@/lib/utils'
 import { useDevices } from '@/composables/useDevices'
 import { useStatsIdeFilters } from '@/composables/useStats'
 import type { DateRangePreset } from '../composables/useDashboardFilters'
+
+const { t } = useI18n()
 
 const props = defineProps<{
   /** Current preset (derived from the URL range) */
@@ -90,7 +93,7 @@ function onEndChange(event: Event): void {
   <div class="filter-bar flex flex-wrap items-end gap-4">
     <!-- Date range preset -->
     <div class="filter-block flex flex-col gap-1.5">
-      <Label class="filter-label text-xs text-muted-foreground">Period</Label>
+      <Label class="filter-label text-xs text-muted-foreground">{{ t('dashboard.filters.period') }}</Label>
       <Select :model-value="selectValue" @update:model-value="onPresetChange">
         <SelectTrigger class="filter-trigger w-44">
           <CalendarRange class="filter-leading-icon mr-2 h-4 w-4 text-muted-foreground" />
@@ -98,19 +101,19 @@ function onEndChange(event: Event): void {
         </SelectTrigger>
         <SelectContent>
           <SelectItem value="all">
-            <SelectItemText>All time</SelectItemText>
+            <SelectItemText>{{ t('dashboard.filters.allTime') }}</SelectItemText>
           </SelectItem>
           <SelectItem value="month">
-            <SelectItemText>This month</SelectItemText>
+            <SelectItemText>{{ t('dashboard.filters.thisMonth') }}</SelectItemText>
           </SelectItem>
           <SelectItem value="90d">
-            <SelectItemText>Last 90 days</SelectItemText>
+            <SelectItemText>{{ t('dashboard.filters.last90') }}</SelectItemText>
           </SelectItem>
           <SelectItem value="year">
-            <SelectItemText>This year</SelectItemText>
+            <SelectItemText>{{ t('dashboard.filters.thisYear') }}</SelectItemText>
           </SelectItem>
           <SelectItem value="custom">
-            <SelectItemText>Custom range</SelectItemText>
+            <SelectItemText>{{ t('dashboard.filters.customRange') }}</SelectItemText>
           </SelectItem>
         </SelectContent>
       </Select>
@@ -124,7 +127,7 @@ function onEndChange(event: Event): void {
       data-testid="custom-range"
     >
       <div class="flex flex-col gap-1.5">
-        <Label class="text-xs text-muted-foreground" for="dash-start">Start</Label>
+        <Label class="text-xs text-muted-foreground" for="dash-start">{{ t('dashboard.filters.start') }}</Label>
         <Input
           id="dash-start"
           type="date"
@@ -140,7 +143,7 @@ function onEndChange(event: Event): void {
         />
       </div>
       <div class="flex flex-col gap-1.5">
-        <Label class="text-xs text-muted-foreground" for="dash-end">End</Label>
+        <Label class="text-xs text-muted-foreground" for="dash-end">{{ t('dashboard.filters.end') }}</Label>
         <Input
           id="dash-end"
           type="date"
@@ -159,17 +162,19 @@ function onEndChange(event: Event): void {
 
     <!-- Device filter -->
     <div class="filter-block filter-block--device flex flex-col gap-1.5">
-      <Label class="filter-label text-xs text-muted-foreground">Device</Label>
+      <Label class="filter-label text-xs text-muted-foreground">{{ t('dashboard.filters.device') }}</Label>
       <Select :model-value="deviceValue" @update:model-value="onDeviceChange">
         <SelectTrigger class="filter-trigger w-44">
           <SelectValue />
         </SelectTrigger>
         <SelectContent>
           <SelectItem value="all">
-            <SelectItemText>All devices</SelectItemText>
+            <SelectItemText>{{ t('dashboard.filters.allDevices') }}</SelectItemText>
           </SelectItem>
           <SelectItem v-for="device in devices ?? []" :key="device.id" :value="device.id">
-            <SelectItemText>{{ device.deviceName ?? device.ideName ?? 'Unknown Device' }}</SelectItemText>
+            <SelectItemText>{{
+              device.deviceName ?? device.ideName ?? t('dashboard.filters.unknownDevice')
+            }}</SelectItemText>
           </SelectItem>
         </SelectContent>
       </Select>
@@ -178,14 +183,14 @@ function onEndChange(event: Event): void {
     <!-- IDE filter (mutually exclusive with the device filter server-side;
          the parent clears the other one on change) -->
     <div class="filter-block flex flex-col gap-1.5">
-      <Label class="filter-label text-xs text-muted-foreground">IDE</Label>
+      <Label class="filter-label text-xs text-muted-foreground">{{ t('dashboard.filters.ide') }}</Label>
       <Select :model-value="ideValue" @update:model-value="onIdeChange">
         <SelectTrigger class="filter-trigger w-44">
           <SelectValue />
         </SelectTrigger>
         <SelectContent>
           <SelectItem value="all">
-            <SelectItemText>All IDEs</SelectItemText>
+            <SelectItemText>{{ t('dashboard.filters.allIdes') }}</SelectItemText>
           </SelectItem>
           <SelectItem v-for="ide in ideNames ?? []" :key="ide" :value="ide">
             <SelectItemText>{{ ide }}</SelectItemText>

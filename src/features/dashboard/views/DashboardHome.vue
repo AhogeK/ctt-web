@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import { useI18n } from 'vue-i18n'
 /**
  * Dashboard home view — the stats dashboard container.
  *
@@ -37,6 +38,8 @@ import LanguageDistributionPanel from '../components/LanguageDistributionPanel.v
 import ProjectDistributionPanel from '../components/ProjectDistributionPanel.vue'
 import WeekHourPanel from '../components/WeekHourPanel.vue'
 import RecentSessionsPanel from '../components/RecentSessionsPanel.vue'
+
+const { t } = useI18n()
 
 const {
   start,
@@ -160,8 +163,8 @@ const projects = useStatsDistribution(
   <div class="@container/page flex flex-col gap-6 p-6">
     <!-- Page header -->
     <div class="flex flex-col gap-2">
-      <h1 class="text-2xl font-semibold">Dashboard Overview</h1>
-      <p class="text-sm text-muted-foreground">Your coding statistics and analytics</p>
+      <h1 class="text-2xl font-semibold">{{ t('dashboard.header.title') }}</h1>
+      <p class="text-sm text-muted-foreground">{{ t('dashboard.header.subtitle') }}</p>
     </div>
 
     <!-- Filter bar -->
@@ -197,7 +200,7 @@ const projects = useStatsDistribution(
          updating it too. -->
     <div class="grid grid-cols-1 gap-6 @[1684px]/page:grid-cols-2">
       <ChartSection
-        title="Language distribution"
+        :title="t('dashboard.panels.language')"
         :loading="languages.isPending.value"
         :error="languages.isError.value"
         :empty="!!languages.data.value && languages.data.value.entries.length === 0"
@@ -211,7 +214,7 @@ const projects = useStatsDistribution(
         />
       </ChartSection>
       <ChartSection
-        title="Project distribution"
+        :title="t('dashboard.panels.project')"
         :loading="projects.isPending.value"
         :error="projects.isError.value"
         :empty="!!projects.data.value && projects.data.value.entries.length === 0"
@@ -225,7 +228,7 @@ const projects = useStatsDistribution(
         />
       </ChartSection>
       <ChartSection
-        title="Coding heatmap"
+        :title="t('dashboard.panels.heatmap')"
         :loading="heatmap.isPending.value"
         :error="heatmap.isError.value"
         :empty="!!heatmap.data.value && heatmap.data.value.points.length === 0"
@@ -235,7 +238,7 @@ const projects = useStatsDistribution(
           <YearSelect
             :year="heatmapYear"
             :years="heatmapYears.data.value ?? []"
-            label="Heatmap year"
+            :label="t('dashboard.year.heatmapLabel')"
             testid="heatmap-year-select"
             @update:year="setHeatmapYear"
           />
@@ -248,7 +251,7 @@ const projects = useStatsDistribution(
         />
       </ChartSection>
       <ChartSection
-        title="Coding trend"
+        :title="t('dashboard.panels.trend')"
         :loading="trend.isPending.value"
         :error="trend.isError.value"
         :empty="!!trend.data.value && trend.data.value.points.length === 0"
@@ -266,7 +269,7 @@ const projects = useStatsDistribution(
         <TrendChart :points="trend.data.value?.points ?? []" />
       </ChartSection>
       <ChartSection
-        title="Long-term trend"
+        :title="t('dashboard.panels.longTerm')"
         class="@[1684px]/page:col-span-2"
         :loading="longTermTrend.isPending.value"
         :error="longTermTrend.isError.value"
@@ -277,7 +280,7 @@ const projects = useStatsDistribution(
           <YearSelect
             :year="longTermYear"
             :years="heatmapYears.data.value ?? []"
-            label="Long-term trend year"
+            :label="t('dashboard.year.longTermLabel')"
             testid="long-term-year-select"
             @update:year="setLongTermYear"
           />
@@ -293,7 +296,7 @@ const projects = useStatsDistribution(
         />
       </ChartSection>
       <ChartSection
-        title="Weekly coding activity by hour"
+        :title="t('dashboard.panels.weekHour')"
         :loading="weekHour.isPending.value"
         :error="weekHour.isError.value"
         :empty="!!weekHour.data.value && weekHour.data.value.points.length === 0"
@@ -307,7 +310,7 @@ const projects = useStatsDistribution(
         />
       </ChartSection>
       <ChartSection
-        title="Average hourly coding duration"
+        :title="t('dashboard.panels.hourly')"
         :loading="hourly.isPending.value"
         :error="hourly.isError.value"
         :empty="!!hourly.data.value && hourly.data.value.points.length === 0"
@@ -321,7 +324,7 @@ const projects = useStatsDistribution(
         />
       </ChartSection>
       <ChartSection
-        title="Time of day distribution"
+        :title="t('dashboard.panels.timeOfDay')"
         :loading="timeOfDay.isPending.value"
         :error="timeOfDay.isError.value"
         :empty="!!timeOfDay.data.value && timeOfDay.data.value.entries.length === 0"
@@ -332,7 +335,7 @@ const projects = useStatsDistribution(
       <!-- The endpoint has no date window, so this panel intentionally ignores
            the filter bar's period and follows only the origin filters. -->
       <ChartSection
-        title="Recent sessions"
+        :title="t('dashboard.panels.recent')"
         :loading="recent.isPending.value"
         :error="recent.isError.value"
         :empty="!!recent.data.value && recent.data.value.length === 0"
