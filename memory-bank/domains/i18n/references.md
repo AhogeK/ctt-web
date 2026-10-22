@@ -21,17 +21,19 @@ pnpm test:unit --run src/i18n
 pnpm exec playwright test e2e/settings/language.spec.ts --project=chromium
 ```
 
-## 已迁移面（0.60.2）
+## 已迁移面（0.61.0）
 
 `AppHeader` · `AppSidebar` · `PreferencesView` · `SettingsShell` · `ChoiceRadioGroup` ·
 `LanguageMenu`（公共壳：营销顶栏 + 登录卡片；32px 方形按钮显示语言代码，菜单列全部语言）·
 `MarketingLayout`（CTA 与源码链接文案）·
 `LoginForm` · `LoginView`（含账号锁定 / 邮箱未验证对话框与重发倒计时）·
 `HeatmapChart` / `TrendChart` / `LongTermTrendPanel`（日期标签）· 认证表单层（注册 / 忘记 / 重置表单、
-强度计、条款对话框与正文、重置页、Zod 校验文案）
+强度计、条款对话框与正文、重置页、Zod 校验文案）·
+落地页全页（首屏 / 年历 / 奖杯卡 / 能力 / 工作方式 / 免费与运行方式 / 开源 / 页脚 / 源码对话框）·
+看板共享层（汇总字段与涨跌、最近会话与分组、奖杯卡家族与窗口）
 
 ## 未迁移面（批次见计划件）
 
 认证其余视图（Verify / ChangeEmail / OAuth 回调与错误页 / Forgot / Register / ForgotSuccess、重发验证组合式）·
-设置各视图与对话框 · 统计面板文案 · 落地页 · 成就 / 排行榜 / 设备 · 错误码文案表 ·
+设置各视图与对话框 · 统计面板文案 · 成就页自身文案 · 排行榜 / 设备 · 错误码文案表 ·
 `lib/schemas` 校验文案 · `components/ui` 默认文案 · 路由文档标题

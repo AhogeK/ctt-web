@@ -14,11 +14,11 @@ Web dashboard frontend for the Code Time Tracker ecosystem.
 ## Business Model
 
 - **`ctt-web` and `ctt-server` are fully open source and free** — the whole product, not a free tier.
-- **Paid offering = the hosted sync service plus the surrounding system.** Pricing is **not decided**;
-  the commercial plan has **not been written**.
-- The site therefore presents **two paths**: deploy it yourself for free, or subscribe to the hosted
-  service — not a free-tier-vs-paid-tier funnel. The repository link is a first-class navigation
-  entry, not a footer afterthought.
+- **The hosted sync service will be deployed by the project and is free as well** — best effort,
+  with no uptime promise. There is no paid tier and nothing is for sale; donations are voluntary
+  and carry no privileges.
+- The site therefore presents **two paths**: run it yourself, or use the hosted instance once it
+  opens — both free. The repository link is a first-class navigation entry, not a footer afterthought.
 
 ## Related Projects
 
