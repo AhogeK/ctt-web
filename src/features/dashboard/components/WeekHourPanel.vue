@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import { useI18n } from 'vue-i18n'
 /**
  * WeekHourPanel — "Weekly Coding Activity by Hour": a 7×24 heatmap
  * (rows = ISO weekday Mon→Sun, columns = hour 0–23) of average coding
@@ -34,9 +35,11 @@ import { init, type EChartsType } from 'echarts/core'
 import { useStatsWeekHour } from '@/composables/useStats'
 import { formatDuration } from '@/lib/utils'
 import { useThemeStore } from '@/stores/theme'
-import { buildWeekHourMatrix, WEEKDAY_LABELS, WEEKDAY_NAMES } from './week-hour-matrix'
+import { buildWeekHourMatrix, WEEKDAY_LABELS } from './week-hour-matrix'
 import { tooltipSurface } from './chart-tooltip'
 import '@/components/charts/echarts-setup'
+
+const { t } = useI18n()
 
 const props = defineProps<{
   /** Inclusive window start (yyyy-MM-dd); omitted = all history */
@@ -159,10 +162,11 @@ function formatHoursLabel(hours: number): string {
   return `${Number(hours.toFixed(precision))} h`
 }
 
-/** 'Monday' / 'Mondays' — the divisor phrase names the weekday it counts. */
-function weekdayName(count: number, row: number): string {
-  const name = WEEKDAY_NAMES[row] ?? ''
-  return count === 1 ? name : `${name}s`
+/** Localized weekday name the divisor phrase counts, pluralized per language. */
+const WEEKDAY_KEYS = ['mon', 'tue', 'wed', 'thu', 'fri', 'sat', 'sun'] as const
+function weekdayName(row: number, count: number): string {
+  const name = t(`dashboard.weekdaysLong.${WEEKDAY_KEYS[row] ?? 'mon'}`)
+  return count === 1 ? name : t('dashboard.weekHour.weekdayPlural', { name })
 }
 
 /** Dynamic scale readout for the legend / scroll bar. */
@@ -212,8 +216,12 @@ function buildOption(cellsForOption: ReturnType<typeof buildWeekHourMatrix>, pal
         // divisor — the per-row weekday count, which no footer note can carry.
         const reading =
           d.seconds <= 0
-            ? 'No coding'
-            : `avg ${formatDuration(d.seconds)} across ${d.weekdayCount} ${weekdayName(d.weekdayCount, d.row)}`
+            ? t('dashboard.common.noCoding')
+            : t('dashboard.weekHour.avgAcross', {
+                value: formatDuration(d.seconds),
+                count: d.weekdayCount,
+                weekday: weekdayName(d.row, d.weekdayCount),
+              })
         return `<b>${day} ${String(d.hour).padStart(2, '0')}:00</b><br/>${reading}`
       },
     },
@@ -371,7 +379,7 @@ watch(palette, render)
           class="inline-block h-3 w-3 shrink-0 rounded-[3px]"
           :style="{ background: palette.quiet }"
           aria-hidden="true"
-        />No coding
+        />{{ t('dashboard.common.noCoding') }}
       </span>
       <!-- One chip for the continuous ramp: a gradient reads as a scale,
            while a flat swatch labelled "0" read as a fourth cell state that
@@ -385,14 +393,14 @@ watch(palette, render)
           aria-hidden="true"
         />0 – {{ maxHoursLabel }}
       </span>
-      <span class="text-muted-foreground/70 normal-case">· shade scales with the window's peak</span>
+      <span class="text-muted-foreground/70 normal-case">{{ t('dashboard.common.shadeHint') }}</span>
     </div>
     <div
       ref="container"
       class="mx-auto w-full max-w-full"
       :style="{ height: `${chartHeight}px` }"
       role="img"
-      :aria-label="`Weekly coding activity by hour, ${cells.length} cells of average coding time across ${WEEKDAY_LABELS.length} weekdays and 24 hours`"
+      :aria-label="t('dashboard.weekHour.aria', { cells: cells.length, weekdays: WEEKDAY_LABELS.length })"
     />
   </div>
 </template>

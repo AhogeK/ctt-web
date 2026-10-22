@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import { useI18n } from 'vue-i18n'
 /**
  * RankedDistributionList — the shared presentational list behind the ranked
  * categorical distribution panels (language, project, and any dimension with
@@ -32,6 +33,8 @@ import { formatDuration, formatPercent } from '@/lib/utils'
 import { useThemeStore } from '@/stores/theme'
 import type { RankedRow } from '../composables/useRankedDistribution'
 import ScrollFadeList from './ScrollFadeList.vue'
+
+const { t } = useI18n()
 
 const props = withDefaults(
   defineProps<{
@@ -277,7 +280,7 @@ function foldedBreakdown(row: RankedRow): { shown: { name: string; percent: numb
 
     <p class="text-right text-[11px] tracking-wide text-muted-foreground">
       <slot name="footer" :more-below="moreBelow" />
-      <span v-if="moreBelow" class="text-muted-foreground/70"> · scroll for more</span>
+      <span v-if="moreBelow" class="text-muted-foreground/70"> · {{ t('dashboard.common.scrollMore') }}</span>
     </p>
   </div>
 </template>

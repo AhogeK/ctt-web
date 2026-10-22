@@ -1,4 +1,6 @@
 <script setup lang="ts">
+import { useI18n } from 'vue-i18n'
+import { formatMonthShort } from '@/lib/utils'
 /**
  * TrendMonthSelect — window picker for the trend panel header.
  *
@@ -21,6 +23,8 @@
 import { computed, ref, watch } from 'vue'
 import { Button } from '@/components/ui/button'
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover'
+
+const { t } = useI18n()
 
 const props = defineProps<{
   /** Selected month (`yyyy-MM`), or null for the rolling 30-day default */
@@ -81,13 +85,18 @@ function stepYear(delta: number): void {
   if (next !== undefined) browsedYear.value = next
 }
 
+/** Localized short month name for the grid of the displayed year. */
+function monthName(index: number): string {
+  return formatMonthShort(new Date(Number(gridYear.value), index, 1))
+}
+
 /** `2026-08` → `August 2026` for the trigger and the a11y label. */
 const monthLabel = computed(() => {
-  if (props.month === null) return 'Last 30 days'
+  if (props.month === null) return t('dashboard.trendMonth.last30')
   const [year, month] = props.month.split('-')
   const index = Number(month) - 1
-  const name = MONTH_LABELS[index]
-  return name === undefined ? props.month : `${name} ${year}`
+  if (MONTH_LABELS[index] === undefined) return props.month
+  return t('dashboard.trendMonth.option', { label: monthName(index), year })
 })
 
 /** Whether the given month of the displayed year can be selected. */
@@ -122,7 +131,7 @@ function pickRolling(): void {
         size="sm"
         class="h-7 gap-1.5 px-2 text-xs font-normal"
         data-testid="trend-month-trigger"
-        :aria-label="`Trend window: ${monthLabel}`"
+        :aria-label="t('dashboard.trendMonth.window', { label: monthLabel })"
       >
         {{ monthLabel }}
         <span class="text-muted-foreground" aria-hidden="true">▾</span>
@@ -137,7 +146,7 @@ function pickRolling(): void {
         data-testid="trend-month-rolling"
         @click="pickRolling"
       >
-        Last 30 days
+        {{ t('dashboard.trendMonth.last30') }}
       </button>
 
       <div class="mb-1.5 flex items-center justify-between">
@@ -146,7 +155,7 @@ function pickRolling(): void {
           size="sm"
           class="h-6 w-6 p-0 text-xs disabled:opacity-30"
           :disabled="!canGoOlder"
-          :aria-label="`Older year`"
+          :aria-label="t('dashboard.trendMonth.older')"
           data-testid="trend-month-prev-year"
           @click="stepYear(1)"
         >
@@ -158,7 +167,7 @@ function pickRolling(): void {
           size="sm"
           class="h-6 w-6 p-0 text-xs disabled:opacity-30"
           :disabled="!canGoNewer"
-          :aria-label="`Newer year`"
+          :aria-label="t('dashboard.trendMonth.newer')"
           data-testid="trend-month-next-year"
           @click="stepYear(-1)"
         >
@@ -166,7 +175,11 @@ function pickRolling(): void {
         </Button>
       </div>
 
-      <div class="grid grid-cols-3 gap-1" role="group" :aria-label="`Months in ${gridYear}`">
+      <div
+        class="grid grid-cols-3 gap-1"
+        role="group"
+        :aria-label="t('dashboard.trendMonth.monthsIn', { year: gridYear })"
+      >
         <button
           v-for="(label, index) in MONTH_LABELS"
           :key="label"
@@ -179,11 +192,11 @@ function pickRolling(): void {
           "
           :disabled="!isAvailable(index)"
           :aria-pressed="isSelected(index)"
-          :aria-label="`${label} ${gridYear}`"
+          :aria-label="t('dashboard.trendMonth.option', { label: monthName(index), year: gridYear })"
           :data-testid="`trend-month-${String(index + 1).padStart(2, '0')}`"
           @click="pick(index)"
         >
-          {{ label }}
+          {{ monthName(index) }}
         </button>
       </div>
     </PopoverContent>

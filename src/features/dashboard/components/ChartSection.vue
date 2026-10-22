@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import { useI18n } from 'vue-i18n'
 /**
  * ChartSection — a titled chart panel with explicit loading / error / empty
  * states. Each dashboard chart renders inside one of these so a slow or
@@ -14,6 +15,8 @@ import { computed, onBeforeUnmount, ref, watch } from 'vue'
 import { AlertTriangle } from '@lucide/vue'
 import { Button } from '@/components/ui/button'
 import { Skeleton } from '@/components/ui/skeleton'
+
+const { t } = useI18n()
 
 const props = defineProps<{
   /** Section heading shown above the chart area */
@@ -121,8 +124,8 @@ onBeforeUnmount(() => {
       data-testid="chart-error"
     >
       <AlertTriangle class="h-8 w-8 text-destructive" />
-      <p class="text-sm text-muted-foreground">Failed to load data</p>
-      <Button variant="outline" size="sm" @click="$emit('retry')"> Retry </Button>
+      <p class="text-sm text-muted-foreground">{{ t('dashboard.state.failed') }}</p>
+      <Button variant="outline" size="sm" @click="$emit('retry')"> {{ t('dashboard.state.retry') }} </Button>
     </div>
 
     <!-- Empty: flex-1 + centered so a sparse panel matches its row sibling's height -->
@@ -132,7 +135,7 @@ onBeforeUnmount(() => {
       :style="placeholderStyle"
       data-testid="chart-empty"
     >
-      No data for the selected range
+      {{ t('dashboard.state.empty') }}
     </div>
 
     <!-- Data — measured so the states above can match its height -->

@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import { useI18n } from 'vue-i18n'
 /**
  * HeatmapChart — GitHub-style calendar heatmap for coding activity.
  *
@@ -37,6 +38,8 @@ import {
   gridStartDate,
   MIN_PITCH,
 } from './heatmap-window'
+
+const { t } = useI18n()
 
 const props = defineProps<{
   /** Dense daily points (date + seconds) in date order */
@@ -107,9 +110,9 @@ function bucketIndex(seconds: number): number {
   return idx
 }
 
-const WEEKDAY_NAMES = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat']
+const WEEKDAY_KEYS = ['sun', 'mon', 'tue', 'wed', 'thu', 'fri', 'sat'] as const
 /** Category rows for the heatmap grid (Mon-first). */
-const DOW_LABELS = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun']
+const DOW_KEYS = ['mon', 'tue', 'wed', 'thu', 'fri', 'sat', 'sun'] as const
 
 /**
  * Render window: dense points trimmed to the trailing 366-day span (see
@@ -240,8 +243,8 @@ function buildOption(points: DailyStatPoint[], pal: Palette) {
       formatter: (params: { data: { date?: string; seconds?: number } }) => {
         if (!params.data?.date) return ''
         const d = new Date(`${params.data.date}T00:00:00`)
-        const weekday = WEEKDAY_NAMES[d.getDay()]
-        return `<b>${weekday}, ${params.data.date}</b><br/>${formatDuration(params.data.seconds ?? 0)} coded`
+        const weekday = t(`dashboard.weekdays.${WEEKDAY_KEYS[d.getDay()]}`)
+        return `<b>${weekday}, ${params.data.date}</b><br/>${t('dashboard.common.coded', { value: formatDuration(params.data.seconds ?? 0) })}`
       },
     },
     // Explicit empty axes so ECharts does not require a coordinate system.
@@ -298,7 +301,7 @@ function buildOption(points: DailyStatPoint[], pal: Palette) {
         renderItem: (params: { dataIndex: number }) => {
           const row = [0, 2, 4, 6][params.dataIndex]
           if (row === undefined) return null
-          const label = DOW_LABELS[row] ?? ''
+          const label = t(`dashboard.weekdays.${DOW_KEYS[row] ?? 'mon'}`)
           const rowCenterY = labelTop + monthBand + row * pitch
           return {
             type: 'text',
@@ -440,7 +443,7 @@ watch(palette, render)
           class="inline-block h-3 w-3 shrink-0 rounded-[3px]"
           :style="{ background: palette.quietCell }"
           aria-hidden="true"
-        />No coding
+        />{{ t('dashboard.common.noCoding') }}
       </span>
       <span v-for="(label, i) in LEGEND_LABELS" :key="label" class="flex items-center gap-1.5">
         <span
@@ -459,7 +462,14 @@ watch(palette, render)
           ...(geometry.mode === 'scroll' ? { width: `${geometry.contentWidth}px` } : {}),
         }"
         role="img"
-        :aria-label="`Coding heatmap for ${props.windowLabel ?? 'the last 12 months'}, ${renderedPoints.length} days from ${renderedPoints[0]?.date ?? ''} to ${renderedPoints[renderedPoints.length - 1]?.date ?? ''}`"
+        :aria-label="
+          t('dashboard.heatmap.aria', {
+            window: props.windowLabel ?? t('dashboard.heatmap.lastTwelve'),
+            days: renderedPoints.length,
+            first: renderedPoints[0]?.date ?? '',
+            last: renderedPoints[renderedPoints.length - 1]?.date ?? '',
+          })
+        "
       />
     </div>
 
@@ -468,10 +478,11 @@ watch(palette, render)
       class="mt-2 flex flex-wrap items-center justify-between gap-x-4 gap-y-1 text-[10px] tracking-wide text-muted-foreground/90"
     >
       <span
-        >Total active days: <span class="tabular-nums">{{ activeDays }}</span></span
+        >{{ t('dashboard.heatmap.activeDays') }} <span class="tabular-nums">{{ activeDays }}</span></span
       >
       <span v-if="streaks.data.value">
-        Max streak: <span class="tabular-nums">{{ streaks.data.value.max }}d</span> · Current streak:
+        {{ t('dashboard.heatmap.maxStreak') }} <span class="tabular-nums">{{ streaks.data.value.max }}d</span> ·
+        {{ t('dashboard.heatmap.currentStreak') }}:
         <span class="tabular-nums">{{ streaks.data.value.current }}d</span>
       </span>
     </div>

@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import { useI18n } from 'vue-i18n'
 /**
  * TrendChart — 30-day coding activity trend (smooth line + gradient area).
  *
@@ -26,6 +27,8 @@ import { tooltipSurface } from './chart-tooltip'
 import { formatDuration, formatWeekdayShort } from '@/lib/utils'
 import { useThemeStore } from '@/stores/theme'
 import '@/components/charts/echarts-setup'
+
+const { t } = useI18n()
 
 const props = defineProps<{
   /** Dense daily points (date + seconds) in date order, ≤31 days */
@@ -149,7 +152,7 @@ function buildOption(points: DailyStatPoint[], pal: Palette) {
         if (!point) return ''
         const d = new Date(`${point.date}T00:00:00`)
         const weekday = formatWeekdayShort(d)
-        return `<b>${weekday}, ${point.date}</b><br/>${formatDuration(point.seconds)} coded`
+        return `<b>${weekday}, ${point.date}</b><br/>${t('dashboard.common.coded', { value: formatDuration(point.seconds) })}`
       },
     },
     xAxis: {
@@ -186,7 +189,7 @@ function buildOption(points: DailyStatPoint[], pal: Palette) {
     },
     series: [
       {
-        name: 'Coding time',
+        name: t('dashboard.trend.seriesName'),
         type: 'line',
         smooth: 0.4,
         symbol: 'circle',
@@ -325,7 +328,13 @@ watch(palette, render)
       class="mx-auto w-full max-w-full"
       :style="{ height: `${CHART_HEIGHT}px` }"
       role="img"
-      :aria-label="`Coding trend, ${points.length} days from ${points[0]?.date ?? ''} to ${points[points.length - 1]?.date ?? ''}`"
+      :aria-label="
+        t('dashboard.trend.aria', {
+          days: points.length,
+          first: points[0]?.date ?? '',
+          last: points[points.length - 1]?.date ?? '',
+        })
+      "
     />
   </div>
 </template>

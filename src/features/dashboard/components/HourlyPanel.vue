@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import { useI18n } from 'vue-i18n'
 /**
  * HourlyPanel — "Average Hourly Coding Duration": the window's per-hour
  * averages (hour 00–23) as one smooth line over a soft indigo area, with
@@ -35,6 +36,8 @@ import { useThemeStore } from '@/stores/theme'
 import { formatHourLabel, getHourAxisScale } from './axis-scale'
 import { tooltipSurface } from './chart-tooltip'
 import '@/components/charts/echarts-setup'
+
+const { t } = useI18n()
 
 const props = defineProps<{
   /** Origin-device filter (null → all devices) */
@@ -157,11 +160,11 @@ const hasToday = computed(() => days.value.at(-1)?.date === formatDate(new Date(
 
 /** Screen-reader label — states the layers the chart actually drew. */
 const ariaLabel = computed(() => {
-  const parts = [`Average hourly coding duration, 24 hours, ${activeDays.value} active days`]
+  const parts = [t('dashboard.hourly.aria', { days: activeDays.value })]
   if (!isNarrow.value && dayLines.value.length > 0) {
-    parts.push(`faint lines show the last ${dayLines.value.length} days`)
+    parts.push(t('dashboard.hourly.linesNote', { days: dayLines.value.length }))
   }
-  if (!isNarrow.value && hasToday.value) parts.push('a dashed line marks the current hour')
+  if (!isNarrow.value && hasToday.value) parts.push(t('dashboard.hourly.markerNote'))
   return parts.join(', ')
 })
 
@@ -188,7 +191,7 @@ function buildOption(pal: Palette) {
         if (!p) return ''
         // The bucket value is the average across the window's active days
         // (the footer states the divisor) — "coded" alone would read as a total.
-        return `<b>${p.axisValue}</b><br/>avg ${formatDuration(p.value)}`
+        return `<b>${p.axisValue}</b><br/>${t('dashboard.common.avg', { value: formatDuration(p.value) })}`
       },
     },
     xAxis: {

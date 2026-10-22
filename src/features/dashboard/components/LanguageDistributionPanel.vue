@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import { useI18n } from 'vue-i18n'
 /**
  * LanguageDistributionPanel — "Language distribution": every language coded in
  * the selected window, ranked by time.
@@ -26,6 +27,8 @@ import { useRankedDistribution } from '../composables/useRankedDistribution'
 import RankedDistributionList from './RankedDistributionList.vue'
 import { formatPercent } from '@/lib/utils'
 
+const { t } = useI18n()
+
 const props = defineProps<{
   /** Inclusive window start (yyyy-MM-dd); omitted = full history */
   start?: string
@@ -48,18 +51,24 @@ const distribution = useStatsDistribution(
 )
 
 const entries = computed(() => distribution.data.value?.entries ?? [])
-const { rows } = useRankedDistribution(entries, { aggregateLabel: 'Others' })
+const { rows } = useRankedDistribution(entries, { aggregateLabel: t('dashboard.common.others') })
 
 const languageCount = computed(() => rows.value.length)
 
 const ariaLabel = computed(() => {
   const parts = rows.value.map((r) => `${r.name} ${formatPercent(r.percent)}%`).join(', ')
-  return `Language distribution, bar length is coding time: ${parts}`
+  return t('dashboard.language.aria', { parts })
 })
 </script>
 
 <template>
   <RankedDistributionList :rows="rows" :a11y-label="ariaLabel" fold-noun="languages">
-    <template #footer> {{ languageCount }} {{ languageCount === 1 ? 'language' : 'languages' }} </template>
+    <template #footer>
+      {{
+        t(languageCount === 1 ? 'dashboard.language.footerOne' : 'dashboard.language.footerMany', {
+          count: languageCount,
+        })
+      }}
+    </template>
   </RankedDistributionList>
 </template>

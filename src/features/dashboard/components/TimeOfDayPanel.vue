@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import { useI18n } from 'vue-i18n'
 /**
  * TimeOfDayPanel — "Time of day distribution" over the backend's
  * plugin-aligned buckets (Night 00-06 / Morning 06-12 / Daytime 12-18 /
@@ -27,6 +28,8 @@ import { formatDuration, formatPercent } from '@/lib/utils'
 import { useThemeStore } from '@/stores/theme'
 import '@/components/charts/echarts-setup'
 
+const { t } = useI18n()
+
 const props = defineProps<{
   /** Origin-device filter (null → all devices) */
   deviceId: string | null
@@ -52,11 +55,11 @@ const distribution = useStatsDistribution(
 const BUCKET_ORDER = ['NIGHT', 'MORNING', 'DAYTIME', 'EVENING'] as const
 type BucketKey = (typeof BUCKET_ORDER)[number]
 
-const BUCKET_LABEL: Record<BucketKey, string> = {
-  NIGHT: 'Night',
-  MORNING: 'Morning',
-  DAYTIME: 'Daytime',
-  EVENING: 'Evening',
+const BUCKET_KEY: Record<BucketKey, string> = {
+  NIGHT: 'dashboard.timeOfDay.night',
+  MORNING: 'dashboard.timeOfDay.morning',
+  DAYTIME: 'dashboard.timeOfDay.daytime',
+  EVENING: 'dashboard.timeOfDay.evening',
 }
 
 /** Day-phase glyph per bucket — Lucide parity with the plugin's emoji legend. */
@@ -116,8 +119,8 @@ const buckets = computed<BucketView[]>(() => {
 const totalLabel = computed(() => formatDuration(totalSeconds.value))
 
 const ariaLabel = computed(() => {
-  const parts = buckets.value.map((b) => `${BUCKET_LABEL[b.name]} ${formatPercent(b.share, 0)}%`).join(', ')
-  return `Time of day: ${parts}. Total ${totalLabel.value}`
+  const parts = buckets.value.map((b) => `${t(BUCKET_KEY[b.name])} ${formatPercent(b.share, 0)}%`).join(', ')
+  return t('dashboard.timeOfDay.aria', { parts, total: totalLabel.value })
 })
 
 const container = ref<HTMLDivElement | null>(null)
@@ -377,7 +380,7 @@ watch([buckets, () => theme.isDark], render)
             class="h-3.5 w-3.5"
             :style="{ color: theme.isDark ? BUCKET_COLORS[activeSeg].dark : BUCKET_COLORS[activeSeg].light }"
           />
-          <span class="text-xs font-semibold text-popover-foreground">{{ BUCKET_LABEL[activeSeg] }}</span>
+          <span class="text-xs font-semibold text-popover-foreground">{{ t(BUCKET_KEY[activeSeg]) }}</span>
           <span class="text-[10px] tabular-nums text-muted-foreground">{{ BUCKET_RANGE[activeSeg] }}</span>
           <span class="text-xs font-semibold tabular-nums text-popover-foreground"
             >{{ formatPercent(activeView.share, 0) }}%</span
@@ -417,7 +420,7 @@ watch([buckets, () => theme.isDark], render)
         </span>
         <span class="flex min-w-0 flex-col leading-tight">
           <span class="text-xs font-medium tracking-wide">
-            {{ BUCKET_LABEL[bucket.name] }}
+            {{ t(BUCKET_KEY[bucket.name]) }}
             <span class="ml-1 text-[10px] tabular-nums text-muted-foreground/60">{{ BUCKET_RANGE[bucket.name] }}</span>
           </span>
           <span class="tod-value tod-percent text-sm font-semibold tabular-nums text-foreground">
@@ -432,7 +435,7 @@ watch([buckets, () => theme.isDark], render)
     </ul>
 
     <p class="text-right text-[11px] tracking-wide text-muted-foreground">
-      Total <span class="font-medium text-foreground">{{ totalLabel }}</span>
+      {{ t('dashboard.common.total') }} <span class="font-medium text-foreground">{{ totalLabel }}</span>
     </p>
   </div>
 </template>

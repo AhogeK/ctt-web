@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import { useI18n } from 'vue-i18n'
 /**
  * ProjectDistributionPanel — "Project distribution": every project coded in the
  * selected window, ranked by time (plugin parity: the JetBrains plugin's
@@ -27,6 +28,8 @@ import { useRankedDistribution } from '../composables/useRankedDistribution'
 import RankedDistributionList from './RankedDistributionList.vue'
 import { formatPercent } from '@/lib/utils'
 
+const { t } = useI18n()
+
 const props = defineProps<{
   /** Inclusive window start (yyyy-MM-dd); omitted = full history */
   start?: string
@@ -49,7 +52,7 @@ const distribution = useStatsDistribution(
 )
 
 const entries = computed(() => distribution.data.value?.entries ?? [])
-const { rows } = useRankedDistribution(entries, { aggregateLabel: 'Others' })
+const { rows } = useRankedDistribution(entries, { aggregateLabel: t('dashboard.common.others') })
 
 const projectCount = computed(() => rows.value.length)
 
@@ -61,6 +64,10 @@ const ariaLabel = computed(() => {
 
 <template>
   <RankedDistributionList :rows="rows" :a11y-label="ariaLabel" fold-noun="projects">
-    <template #footer> {{ projectCount }} {{ projectCount === 1 ? 'project' : 'projects' }} </template>
+    <template #footer>
+      {{
+        t(projectCount === 1 ? 'dashboard.project.footerOne' : 'dashboard.project.footerMany', { count: projectCount })
+      }}
+    </template>
   </RankedDistributionList>
 </template>
