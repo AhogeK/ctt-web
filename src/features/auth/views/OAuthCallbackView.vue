@@ -1,10 +1,13 @@
 <script setup lang="ts">
+import { useI18n } from 'vue-i18n'
 import { onMounted } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
 import { toast } from 'vue-sonner'
 import { useAuthStore } from '@/stores/auth'
 import { RouteNames } from '@/router/route-names'
 import { resolvePostAuthTarget } from '@/router/post-auth-redirect'
+
+const { t } = useI18n()
 
 const router = useRouter()
 const route = useRoute()
@@ -16,7 +19,7 @@ onMounted(() => {
   const termsExpired = route.query.termsExpired === 'true'
 
   if (!accessToken || !refreshToken) {
-    toast.error('OAuth login failed', { description: 'Missing authentication tokens' })
+    toast.error(t('auth.errors.oauthLoginFailed'), { description: t('auth.errors.missingTokens') })
     void router.replace({ name: RouteNames.LOGIN })
     return
   }
@@ -45,7 +48,7 @@ onMounted(() => {
       <div
         class="h-8 w-8 animate-spin rounded-full border-2 border-border border-t-primary dark:border-white/20 dark:border-t-accent"
       />
-      <p class="text-sm text-muted-foreground dark:text-muted-foreground">Completing sign in...</p>
+      <p class="text-sm text-muted-foreground dark:text-muted-foreground">{{ t('auth.oauthErrors.completing') }}</p>
     </div>
   </div>
 </template>

@@ -3,6 +3,8 @@
  *
  * ofetch throws an object with these properties when the server returns a non-2xx status.
  */
+import { i18n } from '@/i18n'
+
 export interface ApiError {
   statusCode: number
   statusMessage?: string
@@ -69,93 +71,56 @@ export function extractErrorCode(error: unknown): string | undefined {
  * Falls back to the code itself for unmapped codes.
  *
  * @param code - Backend error code (e.g. "USER_001", "invalid_credentials")
- * @returns Human-readable message in English
+ * @returns Localized user-facing message
  */
 export function mapApiErrorCode(code: string): string {
   const messages: Record<string, string> = {
-    // Auth errors (backend error codes)
-    AUTH_001: 'Invalid email or password. Please check your credentials.',
-    AUTH_002: 'Session expired. Please sign in again.',
-    AUTH_003: 'This reset link is invalid or has expired. Please request a new one.',
-    AUTH_004: 'Account locked due to too many failed attempts.',
-    AUTH_005: 'Account suspended. Please contact support.',
-    AUTH_006: 'Please verify your email before signing in.',
-    AUTH_007: 'Refresh token expired. Please sign in again.',
-    AUTH_008: 'Refresh token revoked. Please sign in again.',
-    AUTH_009: 'Refresh token reuse detected. Please sign in again.',
-    AUTH_010: 'API key not found or no longer accessible.',
-    AUTH_019: 'Terms of service have been updated. Please review and accept the new terms to continue.',
-    AUTH_024: 'You have reached the maximum of 20 API keys. Revoke an unused key before creating a new one.',
-    AUTH_023: 'Active API keys must be revoked before they can be deleted.',
-
-    // CSRF errors
-    CSRF_001: 'Your session has expired. The page will refresh automatically.',
-
-    // Security / CAPTCHA errors
-    SECURITY_006: 'Captcha verification failed. Please try again.',
-    SECURITY_007: 'Please complete the captcha verification.',
-
-    MAIL_005: 'Verification link has expired. Please request a new one.',
-    MAIL_006: 'Invalid verification link. Please check your email for the correct link.',
-
-    // Auth errors (legacy string keys for backward compatibility)
-    invalid_credentials: 'Invalid email or password. Please check your credentials.',
-    user_not_found: 'No account found with this email address.',
-    email_not_verified: 'Please verify your email before signing in.',
-    token_expired: 'This link has expired. Please request a new one.',
-    token_invalid: 'This link is invalid or has already been used.',
-
-    // User errors (USER_XXX from ctt-server)
-    USER_001: 'This email is already registered. Please sign in or use a different email.',
-    USER_002: 'This email has already been verified. Please proceed to login.',
-    USER_007: 'This email has already been verified. Please proceed to login.',
-    USER_008: 'Terms of service have been updated. Please review and accept the new terms to continue.',
-    USER_009: 'An email change request is already pending. Please check your email or cancel the existing request.',
-    USER_010: 'The email change request has expired. Please request a new one.',
-    USER_011: 'Invalid email change request. Please try again.',
-    USER_013: 'Password verification required. Please provide your current password.',
-    USER_014: 'Incorrect password. Please try again.',
-
-    // Account deletion is web-session only: a credential sitting on disk in the plugin must not
-    // be able to destroy the account it was issued for. Unreachable from this client (it always
-    // sends a session), so the wording states the requirement rather than guessing a cause.
-    AUTH_025: 'This action requires a signed-in web session.',
-    USER_015: 'You already have a password set. Please use the change password option instead.',
-
-    // COMMON_002 = 404 Resource not found (ctt-server ErrorCode.java official
-    // definition). Formerly mapped to a rate-limit message — that was a stale
-    // legacy mapping: the real 429 path returns RATE_LIMIT_001 (verified
-    // against live backend), and COMMON_002 surfaces on 404s such as a device
-    // that does not exist or is not owned by the user. BOLA-style wording so
-    // the message does not reveal whether a resource exists.
-    COMMON_002: 'The requested resource was not found or you do not have access to it.',
-    COMMON_003: 'Invalid input. Please check your entries and try again.',
-
-    // Device errors (DEVICE_XXX from ctt-server)
-    DEVICE_001: 'Device already registered to another user.',
-
-    // Rate limiting
-    RATE_LIMIT_001: 'Too many requests. Please wait a moment before trying again.',
-    rate_limit_exceeded: 'Too many requests. Please wait a moment before trying again.',
-
-    // Leaderboard errors (LEADERBOARD_XXX from ctt-server)
-    //
-    // Both are registered in the server's ErrorCode enum but **never thrown** — verified
-    // across its sources, which reference neither outside the declaration — so neither
-    // reaches a user today. They are kept because an unmapped code falls through to the raw
-    // code string, which is worse than a stale sentence if that ever changes.
-    //
-    // LEADERBOARD_002's wording is deliberately a statement rather than a prompt: the server
-    // models "not ranked" as a **null `currentUserRank`**, not as this error, and a message
-    // telling the reader to start tracking would invent a cause it cannot know.
-    LEADERBOARD_001: 'The leaderboard is currently unavailable. Please try again later.',
-    LEADERBOARD_002: 'You are not on this leaderboard.',
-
-    // Generic
-    internal_error: 'An unexpected error occurred. Please try again later.',
+    AUTH_001: 'api.errors.auth001',
+    AUTH_002: 'api.errors.auth002',
+    AUTH_003: 'api.errors.auth003',
+    AUTH_004: 'api.errors.auth004',
+    AUTH_005: 'api.errors.auth005',
+    AUTH_006: 'api.errors.auth006',
+    AUTH_007: 'api.errors.auth007',
+    AUTH_008: 'api.errors.auth008',
+    AUTH_009: 'api.errors.auth009',
+    AUTH_010: 'api.errors.auth010',
+    AUTH_019: 'api.errors.auth019',
+    AUTH_024: 'api.errors.auth024',
+    AUTH_023: 'api.errors.auth023',
+    CSRF_001: 'api.errors.csrf001',
+    SECURITY_006: 'api.errors.security006',
+    SECURITY_007: 'api.errors.security007',
+    MAIL_005: 'api.errors.mail005',
+    MAIL_006: 'api.errors.mail006',
+    invalid_credentials: 'api.errors.invalidcredentials',
+    user_not_found: 'api.errors.usernotfound',
+    email_not_verified: 'api.errors.emailnotverified',
+    token_expired: 'api.errors.tokenexpired',
+    token_invalid: 'api.errors.tokeninvalid',
+    USER_001: 'api.errors.user001',
+    USER_002: 'api.errors.user002',
+    USER_007: 'api.errors.user007',
+    USER_008: 'api.errors.user008',
+    USER_009: 'api.errors.user009',
+    USER_010: 'api.errors.user010',
+    USER_011: 'api.errors.user011',
+    USER_013: 'api.errors.user013',
+    USER_014: 'api.errors.user014',
+    AUTH_025: 'api.errors.auth025',
+    USER_015: 'api.errors.user015',
+    COMMON_002: 'api.errors.common002',
+    COMMON_003: 'api.errors.common003',
+    DEVICE_001: 'api.errors.device001',
+    RATE_LIMIT_001: 'api.errors.ratelimit001',
+    rate_limit_exceeded: 'api.errors.ratelimitexceeded',
+    LEADERBOARD_001: 'api.errors.leaderboard001',
+    LEADERBOARD_002: 'api.errors.leaderboard002',
+    internal_error: 'api.errors.internalerror',
   }
 
-  return messages[code] ?? code
+  const key = messages[code]
+  return key ? i18n.global.t(key) : code
 }
 
 /**
@@ -178,7 +143,7 @@ export function getErrorMessage(error: unknown): string {
     if (data?.message) {
       return data.message
     }
-    return 'An unexpected error occurred. Please try again later.'
+    return i18n.global.t('api.errors.internalerror')
   }
 
   if (error instanceof Error) {

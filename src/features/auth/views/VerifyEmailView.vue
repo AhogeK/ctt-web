@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import { useI18n } from 'vue-i18n'
 import { ref, onMounted, onUnmounted } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { CheckCircle2, AlertTriangle, Loader2 } from '@lucide/vue'
@@ -9,6 +10,8 @@ import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { cn } from '@/lib/utils'
 import { useResendVerification } from '../composables/useResendVerification'
+
+const { t } = useI18n()
 
 type Status = 'loading' | 'success' | 'error'
 
@@ -31,7 +34,7 @@ const handleResend = () => {
 onMounted(async () => {
   if (!token) {
     status.value = 'error'
-    errorMessage.value = 'Invalid verification link. Please ensure you copied the complete URL.'
+    errorMessage.value = t('auth.verify.invalidLink')
     return
   }
   try {
@@ -44,9 +47,9 @@ onMounted(async () => {
     status.value = 'error'
     if (isApiError(error)) {
       const code = (error.data as { code?: string })?.code
-      errorMessage.value = code ? mapApiErrorCode(code) : 'Verification failed. Please try again.'
+      errorMessage.value = code ? mapApiErrorCode(code) : t('auth.verify.failed')
     } else {
-      errorMessage.value = 'Verification failed. Please try again.'
+      errorMessage.value = t('auth.verify.failed')
     }
   }
 })
@@ -57,7 +60,7 @@ onUnmounted(() => {
 </script>
 
 <template>
-  <div class="mx-auto w-full max-w-sm space-y-10">
+  <div class="mx-auto w-full max-w-md space-y-10">
     <!-- Loading State -->
     <template v-if="status === 'loading'">
       <div class="relative flex h-16 w-16 items-center justify-center">
@@ -69,13 +72,13 @@ onUnmounted(() => {
           class="text-2xl font-emphasis text-foreground dark:text-foreground sm:text-3xl"
           style="font-feature-settings: 'cv01', 'ss03'; letter-spacing: -0.704px"
         >
-          Verifying your email
+          {{ t('auth.verify.title') }}
         </h1>
         <p
           class="text-base text-muted-foreground dark:text-muted-foreground"
           style="font-feature-settings: 'cv01', 'ss03'"
         >
-          Please wait while we confirm your email address...
+          {{ t('auth.verify.checking') }}
         </p>
       </div>
     </template>
@@ -94,13 +97,13 @@ onUnmounted(() => {
           class="text-2xl font-emphasis text-success sm:text-3xl"
           style="font-feature-settings: 'cv01', 'ss03'; letter-spacing: -0.704px"
         >
-          Email verified!
+          {{ t('auth.verify.verified') }}
         </h1>
         <p
           class="text-base text-muted-foreground dark:text-muted-foreground"
           style="font-feature-settings: 'cv01', 'ss03'"
         >
-          Your account is ready. Redirecting to login...
+          {{ t('auth.verify.redirecting') }}
         </p>
       </div>
       <Button
@@ -114,7 +117,7 @@ onUnmounted(() => {
         @click="router.push({ name: RouteNames.LOGIN })"
         style="font-feature-settings: 'cv01', 'ss03'"
       >
-        Go to sign in
+        {{ t('auth.verify.goToSignIn') }}
       </Button>
     </template>
 
@@ -135,7 +138,7 @@ onUnmounted(() => {
           class="text-2xl font-emphasis text-destructive sm:text-3xl"
           style="font-feature-settings: 'cv01', 'ss03'; letter-spacing: -0.704px"
         >
-          Verification failed
+          {{ t('auth.verify.failedTitle') }}
         </h1>
         <p
           class="text-base text-muted-foreground dark:text-muted-foreground"
@@ -147,7 +150,7 @@ onUnmounted(() => {
       <div
         :class="
           cn(
-            'rounded-xl border border-border bg-muted/80 p-5',
+            'space-y-3 rounded-xl border border-border bg-muted/80 p-5',
             'backdrop-blur-sm dark:border-white/8 dark:bg-white/3 dark:backdrop-blur-md',
           )
         "
@@ -156,7 +159,7 @@ onUnmounted(() => {
           class="text-sm font-emphasis text-foreground/90 dark:text-secondary-foreground"
           style="font-feature-settings: 'cv01', 'ss03'"
         >
-          Need a new verification link?
+          {{ t('auth.verify.needNewLink') }}
         </p>
         <Input
           :class="
@@ -171,7 +174,7 @@ onUnmounted(() => {
           "
           v-model="resendEmail"
           type="email"
-          placeholder="Enter your email address"
+          :placeholder="t('auth.verify.emailPlaceholder')"
         />
         <button
           :class="
@@ -186,7 +189,7 @@ onUnmounted(() => {
           @click="handleResend"
           style="font-feature-settings: 'cv01', 'ss03'"
         >
-          {{ countdown > 0 ? `Resend in ${countdown}s` : 'Resend verification email' }}
+          {{ countdown > 0 ? t('auth.resendEmail.in', { seconds: countdown }) : t('auth.resendEmail.verification') }}
         </button>
       </div>
       <Button
@@ -195,7 +198,7 @@ onUnmounted(() => {
         @click="router.push({ name: RouteNames.LOGIN })"
         style="font-feature-settings: 'cv01', 'ss03'"
       >
-        Back to sign in
+        {{ t('auth.common.backToSignIn') }}
       </Button>
     </template>
   </div>

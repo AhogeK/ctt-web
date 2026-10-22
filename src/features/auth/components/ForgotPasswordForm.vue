@@ -28,8 +28,9 @@ const form = useForm({
 })
 
 const themeStore = useThemeStore()
-const { t } = useI18n()
+const { t, locale } = useI18n()
 const captchaTheme = computed(() => (themeStore.isDark ? 'dark' : 'light'))
+const captchaLanguage = computed(() => (locale.value === 'zh-CN' ? 'zh-CN' : 'en'))
 const captchaRef = ref<InstanceType<typeof CaptchaWidget> | null>(null)
 const captchaToken = ref<string | null>(null)
 const captchaError = ref(false)
@@ -93,6 +94,7 @@ defineExpose({
       v-model="captchaToken"
       :sitekey="captchaSiteKey"
       :theme="captchaTheme"
+      :language="captchaLanguage"
       @verify="onCaptchaVerify"
       @expired="onCaptchaExpire"
     />

@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import { useI18n } from 'vue-i18n'
 import { computed, onUnmounted } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
 import { MailOpen, AlertCircle, Copy, Check } from '@lucide/vue'
@@ -9,6 +10,8 @@ import { Button } from '@/components/ui/button'
 import { cn } from '@/lib/utils'
 import { useResendVerification } from '../composables/useResendVerification'
 import { SESSION_STORAGE_KEYS } from '@/stores/auth'
+
+const { t } = useI18n()
 
 const router = useRouter()
 const route = useRoute()
@@ -39,7 +42,7 @@ const emailRef = computed(() => email || '')
 const { copied, copy } = useClipboard({ source: emailRef })
 const handleCopyEmail = () => {
   copy()
-  toast.success('Email address copied!')
+  toast.success(t('auth.registerDone.copied'))
 }
 
 const handleResend = () => {
@@ -68,13 +71,13 @@ const handleResend = () => {
           class="text-2xl font-emphasis text-foreground dark:text-foreground sm:text-3xl"
           style="font-feature-settings: 'cv01', 'ss03'; letter-spacing: -0.704px"
         >
-          Registration data lost
+          {{ t('auth.registerDone.dataLostTitle') }}
         </h1>
         <p
           class="text-base text-muted-foreground dark:text-muted-foreground"
           style="font-feature-settings: 'cv01', 'ss03'"
         >
-          Your registration information was not preserved. Please try registering again.
+          {{ t('auth.registerDone.dataLostBody') }}
         </p>
       </div>
       <Button
@@ -88,7 +91,7 @@ const handleResend = () => {
         @click="router.push({ name: RouteNames.REGISTER })"
         style="font-feature-settings: 'cv01', 'ss03'"
       >
-        Go to registration
+        {{ t('auth.registerDone.goRegister') }}
       </Button>
     </div>
 
@@ -109,14 +112,14 @@ const handleResend = () => {
           class="text-2xl font-emphasis text-foreground dark:text-foreground sm:text-3xl"
           style="font-feature-settings: 'cv01', 'ss03'; letter-spacing: -0.704px"
         >
-          Check your email
+          {{ t('auth.forgotDone.title') }}
         </h1>
         <div class="space-y-2">
           <p
             class="text-base text-muted-foreground dark:text-muted-foreground"
             style="font-feature-settings: 'cv01', 'ss03'"
           >
-            We've sent a verification link to
+            {{ t('auth.registerDone.sentLink') }}
           </p>
           <div class="flex items-center gap-2">
             <p
@@ -146,7 +149,7 @@ const handleResend = () => {
             class="text-base text-muted-foreground dark:text-muted-foreground"
             style="font-feature-settings: 'cv01', 'ss03'"
           >
-            Click the link to activate your account.
+            {{ t('auth.registerDone.clickActivate') }}
           </p>
         </div>
       </div>
@@ -165,7 +168,7 @@ const handleResend = () => {
           class="text-sm font-emphasis text-foreground/90 dark:text-secondary-foreground"
           style="font-feature-settings: 'cv01', 'ss03'"
         >
-          Didn't receive the email?
+          {{ t('auth.forgotDone.noEmail') }}
         </p>
         <button
           :class="
@@ -180,7 +183,7 @@ const handleResend = () => {
           @click="handleResend"
           style="font-feature-settings: 'cv01', 'ss03'"
         >
-          {{ countdown > 0 ? `Resend in ${countdown}s` : 'Resend verification email' }}
+          {{ countdown > 0 ? t('auth.resendEmail.in', { seconds: countdown }) : t('auth.resendEmail.verification') }}
         </button>
       </div>
 
@@ -191,7 +194,7 @@ const handleResend = () => {
         @click="router.push({ name: RouteNames.LOGIN })"
         style="font-feature-settings: 'cv01', 'ss03'"
       >
-        Back to sign in
+        {{ t('auth.common.backToSignIn') }}
       </Button>
     </div>
   </div>

@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import { useI18n } from 'vue-i18n'
 /**
  * Email change confirmation view.
  *
@@ -15,6 +16,8 @@ import { Button } from '@/components/ui/button'
 import { RouteNames } from '@/router/route-names'
 import { cn } from '@/lib/utils'
 
+const { t } = useI18n()
+
 /** Delay in milliseconds before redirecting after successful email change. */
 const REDIRECT_DELAY_MS = 3000
 
@@ -28,8 +31,8 @@ const confirmMutation = useMutation({
   mutationFn: (token: string) => confirmEmailChange({ token }),
   onSuccess: () => {
     status.value = 'success'
-    toast.success('Email changed successfully', {
-      description: 'Your email address has been updated.',
+    toast.success(t('auth.changeEmail.toastChanged'), {
+      description: t('auth.changeEmail.toastBody'),
     })
     // Redirect to profile after delay
     setTimeout(() => {
@@ -42,9 +45,9 @@ const confirmMutation = useMutation({
     if (code) {
       errorMessage.value = mapApiErrorCode(code)
     } else {
-      errorMessage.value = 'Failed to verify email change. The link may have expired or is invalid.'
+      errorMessage.value = t('auth.changeEmail.verifyFailed')
     }
-    toast.error('Email change failed', { description: errorMessage.value })
+    toast.error(t('auth.changeEmail.toastFailed'), { description: errorMessage.value })
   },
 })
 
@@ -52,7 +55,7 @@ onMounted(() => {
   const token = route.query.token as string | undefined
   if (!token) {
     status.value = 'error'
-    errorMessage.value = 'No verification token found in the URL.'
+    errorMessage.value = t('auth.changeEmail.noToken')
     return
   }
   confirmMutation.mutate(token)
@@ -77,7 +80,7 @@ onMounted(() => {
           <circle cx="12" cy="12" r="10" stroke-opacity="0.25" />
           <path d="M12 2a10 10 0 0 1 10 10" stroke-linecap="round" />
         </svg>
-        <p class="text-sm text-muted-foreground dark:text-muted-foreground">Verifying your email change...</p>
+        <p class="text-sm text-muted-foreground dark:text-muted-foreground">{{ t('auth.changeEmail.verifying') }}</p>
       </div>
 
       <!-- Success state -->
@@ -93,11 +96,15 @@ onMounted(() => {
             <path d="M20 6L9 17l-5-5" stroke-linecap="round" stroke-linejoin="round" />
           </svg>
         </div>
-        <h2 class="text-lg font-medium text-foreground dark:text-foreground">Email Changed Successfully</h2>
+        <h2 class="text-lg font-medium text-foreground dark:text-foreground">
+          {{ t('auth.changeEmail.successTitle') }}
+        </h2>
         <p class="text-sm text-muted-foreground dark:text-muted-foreground">
-          Your email address has been updated. You will be redirected to your profile shortly.
+          {{ t('auth.changeEmail.successBody') }}
         </p>
-        <Button variant="outline" @click="router.push({ name: RouteNames.SETTINGS_PROFILE })"> Go to Profile </Button>
+        <Button variant="outline" @click="router.push({ name: RouteNames.SETTINGS_PROFILE })">
+          {{ t('auth.changeEmail.goToProfile') }}
+        </Button>
       </div>
 
       <!-- Error state -->
@@ -119,14 +126,18 @@ onMounted(() => {
             <line x1="9" y1="9" x2="15" y2="15" />
           </svg>
         </div>
-        <h2 class="text-lg font-medium text-foreground dark:text-foreground">Verification Failed</h2>
+        <h2 class="text-lg font-medium text-foreground dark:text-foreground">
+          {{ t('auth.changeEmail.failedTitle') }}
+        </h2>
         <p class="text-sm text-muted-foreground dark:text-muted-foreground">
           {{ errorMessage }}
         </p>
         <div class="flex gap-3">
-          <Button variant="outline" @click="router.push({ name: RouteNames.SETTINGS_PROFILE })"> Go to Profile </Button>
+          <Button variant="outline" @click="router.push({ name: RouteNames.SETTINGS_PROFILE })">
+            {{ t('auth.changeEmail.goToProfile') }}
+          </Button>
           <Button :class="cn('bg-primary text-white', '')" @click="router.push({ name: RouteNames.LOGIN })">
-            Sign In
+            {{ t('auth.common.backToSignIn') }}
           </Button>
         </div>
       </div>
