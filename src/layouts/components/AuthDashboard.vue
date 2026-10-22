@@ -1,6 +1,9 @@
 <script setup lang="ts">
+import { useI18n } from 'vue-i18n'
 import { computed } from 'vue'
 import { useCardTilt } from '@/composables/useCardTilt'
+
+const { t } = useI18n()
 
 const tilt = useCardTilt({
   tilt: true,
@@ -119,15 +122,17 @@ function heatmapLevel(row: number, col: number): number {
       <div class="auth-dashboard__stats">
         <div class="auth-dashboard__stat">
           <span class="auth-dashboard__stat-value">342h</span>
-          <span class="auth-dashboard__stat-label">Total Time</span>
+          <span class="auth-dashboard__stat-label">{{ t('auth.showcase.totalTime') }}</span>
         </div>
         <div class="auth-dashboard__stat">
           <span class="auth-dashboard__stat-value auth-dashboard__stat-value--accent">TS 68%</span>
-          <span class="auth-dashboard__stat-label">Top Language</span>
+          <span class="auth-dashboard__stat-label">{{ t('auth.showcase.topLanguage') }}</span>
         </div>
         <div class="auth-dashboard__stat">
-          <span class="auth-dashboard__stat-value auth-dashboard__stat-value--green">12 days</span>
-          <span class="auth-dashboard__stat-label">Streak</span>
+          <span class="auth-dashboard__stat-value auth-dashboard__stat-value--green">{{
+            t('auth.showcase.days', { days: 12 })
+          }}</span>
+          <span class="auth-dashboard__stat-label">{{ t('auth.showcase.streak') }}</span>
         </div>
       </div>
     </div>
