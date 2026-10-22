@@ -16,10 +16,13 @@ import { buildTrophies, type Trophy } from '@/features/achievements/composables/
 import type { Achievement, AchievementWindow } from '@/lib/schemas/stats.schema'
 
 /** Badge text shown wherever example data appears. */
-export const EXAMPLE_DATA_BADGE = 'Example data'
+import { i18n } from '@/i18n'
+
+/** Resolved lazily, so the label follows a language switch (see `i18n.global`). */
+export const exampleDataBadge = () => i18n.global.t('landing.activity.exampleBadge')
 
 /** One line explaining what the example is, in plain language. */
-export const EXAMPLE_DATA_NOTE = 'Sample figures from a pretend week — not a real account.'
+export const exampleDataNote = () => i18n.global.t('landing.activity.exampleNote')
 
 /**
  * Languages as the distribution model takes them: ordered by seconds descending. Share, bar length

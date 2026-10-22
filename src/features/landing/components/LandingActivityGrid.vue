@@ -1,4 +1,6 @@
 <script setup lang="ts">
+import { useI18n } from 'vue-i18n'
+
 /**
  * LandingActivityGrid — the last twelve weeks, painted one cell per day.
  *
@@ -19,6 +21,8 @@
 import { computed } from 'vue'
 import { formatDuration } from '@/lib/utils'
 import type { ActivityWeek } from '../demo-data'
+
+const { t } = useI18n()
 
 const props = defineProps<{
   /** Week columns, Sunday first; `null` marks a slot outside the window. */
@@ -63,9 +67,9 @@ const paint: Record<number, string> = {
  * "Mon" on the Sunday row — measured, off by one.
  */
 const WEEKDAY_LABELS: { row: number; label: string }[] = [
-  { row: 2, label: 'Mon' },
-  { row: 4, label: 'Wed' },
-  { row: 6, label: 'Fri' },
+  { row: 2, label: t('landing.activity.weekdayMon') },
+  { row: 4, label: t('landing.activity.weekdayWed') },
+  { row: 6, label: t('landing.activity.weekdayFri') },
 ]
 
 const totals = computed(() => {
@@ -82,10 +86,13 @@ const totals = computed(() => {
   }
 })
 
-const summary = computed(
-  () =>
-    `Daily coding time for the last ${totals.value.windowWeeks} weeks: ${totals.value.activeDays} of ` +
-    `${totals.value.days} days had coding, the busiest day was ${formatDuration(totals.value.busiestSeconds)}.`,
+const summary = computed(() =>
+  t('landing.activity.summaryAria', {
+    weeks: totals.value.windowWeeks,
+    active: totals.value.activeDays,
+    days: totals.value.days,
+    duration: formatDuration(totals.value.busiestSeconds),
+  }),
 )
 </script>
 
@@ -128,13 +135,18 @@ const summary = computed(
     <div class="flex flex-wrap items-center gap-x-4 gap-y-2">
       <!-- Legend: without it a colour scale is a decoration. -->
       <div class="flex items-center gap-1.5 text-[11px] text-muted-foreground">
-        <span>Less</span>
+        {{ t('landing.activity.less') }}
         <span v-for="l in [0, 1, 2, 3, 4, 5, 6]" :key="l" class="size-3 rounded-[2px]" :class="paint[l]" />
-        <span>More</span>
+        {{ t('landing.activity.more') }}
       </div>
       <p class="text-sm text-muted-foreground">
-        {{ totals.activeDays }} of {{ totals.days }} days had coding · busiest day
-        {{ formatDuration(totals.busiestSeconds) }}
+        {{
+          t('landing.activity.summary', {
+            active: totals.activeDays,
+            days: totals.days,
+            duration: formatDuration(totals.busiestSeconds),
+          })
+        }}
       </p>
     </div>
   </div>

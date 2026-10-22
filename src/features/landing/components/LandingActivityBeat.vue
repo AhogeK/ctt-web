@@ -1,4 +1,6 @@
 <script setup lang="ts">
+import { useI18n } from 'vue-i18n'
+
 /**
  * The year beat — the one arriving stage beat after the hero.
  *
@@ -15,9 +17,10 @@
  */
 import LandingActivityGrid from './LandingActivityGrid.vue'
 import TrophyCard from '@/features/achievements/components/TrophyCard.vue'
-import { EXAMPLE_DATA_BADGE, EXAMPLE_ACTIVITY_WEEKS, EXAMPLE_TROPHIES, exampleActivityWeeks } from '../demo-data'
+import { EXAMPLE_ACTIVITY_WEEKS, EXAMPLE_TROPHIES, exampleActivityWeeks, exampleDataBadge } from '../demo-data'
 
 const weeks = exampleActivityWeeks()
+const { t } = useI18n()
 </script>
 
 <template>
@@ -25,16 +28,15 @@ const weeks = exampleActivityWeeks()
     <section class="flex flex-col gap-5">
       <header class="flex flex-col gap-3">
         <div class="flex flex-wrap items-center gap-3">
-          <h2 class="text-heading-2">A year of coding, one cell a day</h2>
+          <h2 class="text-heading-2">{{ t('landing.activity.yearTitle') }}</h2>
           <span
             class="rounded-full border border-border/60 px-2 py-0.5 text-[10px] font-medium tracking-wider text-muted-foreground"
           >
-            {{ EXAMPLE_DATA_BADGE }}
+            {{ exampleDataBadge() }}
           </span>
         </div>
         <p class="max-w-[52rem] text-sm leading-relaxed text-muted-foreground">
-          Every day the plugin is running lands here, coloured by how much you coded — darker means longer. The window
-          is the last {{ EXAMPLE_ACTIVITY_WEEKS }} weeks, not all time.
+          {{ t('landing.activity.yearBodyLead') }} {{ EXAMPLE_ACTIVITY_WEEKS }} {{ t('landing.activity.yearBodyTail') }}
         </p>
       </header>
 
@@ -47,10 +49,9 @@ const weeks = exampleActivityWeeks()
              of the same beat, so they take the same level. An `h3` here was my own invention and it
              read as a hierarchy that does not exist (and, from the ladder's weights, as *bolder* than
              the heading above it). -->
-        <h2 class="text-heading-2">The ladders those days feed</h2>
+        <h2 class="text-heading-2">{{ t('landing.activity.laddersTitle') }}</h2>
         <p class="max-w-[52rem] text-sm leading-relaxed text-muted-foreground">
-          Each achievement is a ladder rather than a single badge: the whole shape is visible, a finished one gains a
-          ring, and resetting ladders report how many periods they have been reached in.
+          {{ t('landing.activity.laddersBody') }}
         </p>
       </header>
 

@@ -6,8 +6,8 @@
  * sit instead of inventing one. A change of wording is a data edit here; no component changes.
  *
  * A standing rule for this section: nothing here is ever for sale. The hosted entry must never be
- * replaced by a "contact sales" prompt, and while it is not offered it shows its status instead
- * of a button.
+ * replaced by a "contact sales" prompt; until it opens it shows its status instead of a button, and
+ * once it runs it stays free with best-effort availability rather than an uptime promise.
  */
 
 /** How an entry presents its cost — a deliberate state, never a placeholder figure. */
@@ -26,27 +26,26 @@ export interface RunOption {
   cta?: { label: string; href: string }
 }
 
-export const RUN_OPTIONS: readonly RunOption[] = [
-  {
-    id: 'self-host',
-    name: 'Self-host',
-    tagline: 'The whole system on your own machine or server.',
-    cost: { kind: 'free', label: 'Free' },
-    features: [
-      'The full system — plugin, sync server and this dashboard — with every feature included',
-      'Your data stays on hardware you control; the server talks only to your own devices',
-      'A documented Docker Compose quick start, and the source of all three repositories',
-    ],
-    cta: { label: 'Read the quick start', href: '#source' },
-  },
-  {
-    id: 'hosted',
-    name: 'Hosted sync',
-    tagline: 'The same system, run by the project instead of by you.',
-    cost: { kind: 'status', label: 'Not offered today' },
-    features: [
-      'The project does not operate a hosted instance today — this page will say so if that changes',
-      'If one ever opens, it stays free, runs this same open source code, and is best effort — no uptime promises',
-    ],
-  },
-] as const
+export function buildRunOptions(t: (key: string) => string): readonly RunOption[] {
+  return [
+    {
+      id: 'self-host',
+      name: t('landing.runOptions.selfHostName'),
+      tagline: t('landing.runOptions.selfHostTagline'),
+      cost: { kind: 'free', label: t('landing.runOptions.free') },
+      features: [
+        t('landing.runOptions.selfHostFeature1'),
+        t('landing.runOptions.selfHostFeature2'),
+        t('landing.runOptions.selfHostFeature3'),
+      ],
+      cta: { label: t('landing.runOptions.selfHostCta'), href: '#source' },
+    },
+    {
+      id: 'hosted',
+      name: t('landing.runOptions.hostedName'),
+      tagline: t('landing.runOptions.hostedTagline'),
+      cost: { kind: 'status', label: t('landing.runOptions.hostedStatus') },
+      features: [t('landing.runOptions.hostedFeature1'), t('landing.runOptions.hostedFeature2')],
+    },
+  ]
+}

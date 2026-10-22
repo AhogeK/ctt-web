@@ -17,6 +17,7 @@
  * and the open-source block that carries the `#source` anchor the hero's "View source" falls back to.
  */
 import { computed, ref } from 'vue'
+import { useI18n } from 'vue-i18n'
 import { Button } from '@/components/ui/button'
 import { PLUGIN_INSTALL_URL } from '@/lib/site-links'
 import SourceReposDialog from '@/components/app/SourceReposDialog.vue'
@@ -29,6 +30,8 @@ import LandingFree from '../components/LandingFree.vue'
 import LandingOpenSource from '../components/LandingOpenSource.vue'
 import { useRevealOnScroll } from '../composables/useRevealOnScroll'
 import { useScrollFade } from '../composables/useScrollFade'
+
+const { t } = useI18n()
 
 const root = ref<HTMLElement | null>(null)
 const heroFade = ref<HTMLElement | null>(null)
@@ -71,13 +74,12 @@ useScrollFade(
             <div class="mx-auto flex w-full max-w-[1440px] flex-col px-4 py-14 sm:px-6 lg:pt-12 lg:pb-20">
               <!-- Copy column. 42rem is the measure that keeps the headline to two lines. -->
               <div class="hero-copy min-w-0 lg:max-w-[42rem]">
-                <h1 class="hero-rise text-display-lg">Know where your coding time actually goes.</h1>
+                <h1 class="hero-rise text-display-lg">{{ t('landing.hero.title') }}</h1>
 
                 <p
                   class="hero-fade-rise mt-6 max-w-[22rem] text-base text-muted-foreground [animation-delay:70ms] sm:text-lg"
                 >
-                  Track time by language, project and IDE from your JetBrains IDE — then read it back in a dashboard you
-                  own. Open source, and self-hostable if you would rather keep the data on your own server.
+                  {{ t('landing.hero.lead') }}
                 </p>
 
                 <div
@@ -90,12 +92,12 @@ useScrollFade(
                       rel="noopener noreferrer"
                       data-testid="landing-primary-cta"
                     >
-                      Install the plugin
+                      {{ t('landing.hero.install') }}
                     </a>
                   </Button>
                   <SourceReposDialog>
                     <Button as-child size="lg" variant="outline">
-                      <a href="#source" @click.prevent>View source</a>
+                      <a href="#source" @click.prevent>{{ t('landing.hero.viewSource') }}</a>
                     </Button>
                   </SourceReposDialog>
                 </div>
