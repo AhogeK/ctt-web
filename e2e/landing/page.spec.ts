@@ -45,7 +45,8 @@ test.describe('Landing page', () => {
     await expect(page.getByRole('heading', { level: 1 })).toBeInViewport()
     await expect(page.getByTestId('landing-primary-cta')).toBeInViewport()
     await expect(page.getByTestId('hero-preview')).toBeInViewport()
-    await expect(page.getByTestId('hero-preview').getByText('Example data')).toBeVisible()
+    await expect(page.getByTestId('hero-preview').getByText('Example data', { exact: true })).toBeVisible()
+    await expect(page.getByTestId('hero-preview').getByText('Example data — not a real account.')).toBeVisible()
     await expect(page.getByTestId('hero-preview').getByText(/total/i)).toBeVisible()
     await expect(page.locator('[data-testid="hero-preview"] img, [data-testid="hero-preview"] canvas')).toHaveCount(0)
   })
@@ -221,7 +222,7 @@ test.describe('Landing page', () => {
     await page.locator('h1').waitFor()
 
     // The band under the stage: everything is free, so it leads with the statement rather than a
-    // price table, and the hosted entry cannot be started — it carries no control at all.
+    // price table, and the hosted entry is not open yet — it shows its status and carries no control.
     const band = page.getByTestId('landing-free')
     await band.scrollIntoViewIfNeeded()
     await expect(band.getByRole('heading', { name: 'Free, every part of it' })).toBeVisible()
@@ -232,7 +233,7 @@ test.describe('Landing page', () => {
     await expect(selfHost.getByRole('link', { name: 'Read the quick start' })).toHaveAttribute('href', '#source')
 
     const hosted = band.getByTestId('run-option-hosted')
-    await expect(hosted.getByText('Not offered today')).toBeVisible()
+    await expect(hosted.getByText('In preparation')).toBeVisible()
     await expect(hosted.getByRole('link')).toHaveCount(0)
     await expect(hosted.getByRole('button')).toHaveCount(0)
 

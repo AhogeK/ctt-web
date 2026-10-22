@@ -1,33 +1,28 @@
 <script setup lang="ts">
+import { computed } from 'vue'
+import { useI18n } from 'vue-i18n'
+
 /**
  * The pipeline in the order the data travels — record on the machine, push to a server you host,
  * read it back here. The order is the information, so the list is numbered; each step is replaceable
  * on its own (the plugin tracks locally with no account, and the server is what makes this dashboard
  * possible).
  */
-const STEPS = [
-  {
-    title: 'Record.',
-    body: 'The JetBrains plugin catches keyboard and mouse activity with idle detection and writes each session to a local SQLite file. Nothing leaves the machine until you switch sync on.',
-  },
-  {
-    title: 'Sync.',
-    body: 'Bind the machine with an API key and it pushes to a ctt-server you host — PostgreSQL for the sessions, Redis for the boards. Conflicts resolve last-write-wins.',
-  },
-  {
-    title: 'Read.',
-    body: 'This dashboard queries that server for the stats, boards and trophies. The examples above render the same components over sample data.',
-  },
-] as const
+const { t } = useI18n()
+
+const STEPS = computed(() => [
+  { title: t('landing.howItWorks.recordTitle'), body: t('landing.howItWorks.recordBody') },
+  { title: t('landing.howItWorks.syncTitle'), body: t('landing.howItWorks.syncBody') },
+  { title: t('landing.howItWorks.readTitle'), body: t('landing.howItWorks.readBody') },
+])
 </script>
 
 <template>
   <div class="flex flex-col gap-8">
     <header class="flex flex-col gap-3">
-      <h2 class="text-heading-2">How it works</h2>
+      <h2 class="text-heading-2">{{ t('landing.howItWorks.title') }}</h2>
       <p class="max-w-[52rem] text-sm leading-relaxed text-muted-foreground">
-        Three pieces in a straight line. Each is replaceable on its own — start with the plugin alone, and add the
-        server when you want this dashboard.
+        {{ t('landing.howItWorks.lead') }}
       </p>
     </header>
 

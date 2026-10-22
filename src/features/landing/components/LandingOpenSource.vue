@@ -1,4 +1,6 @@
 <script setup lang="ts">
+import { useI18n } from 'vue-i18n'
+
 /**
  * The open-source block — the page's answer to "where does my data live".
  *
@@ -20,14 +22,15 @@ const { copied, copy } = useCopyToClipboard()
 async function handleCopy() {
   await copy(DEPLOY_COMMAND)
 }
+const { t } = useI18n()
 </script>
 
 <template>
   <div class="flex flex-col gap-8">
     <header class="flex flex-col gap-3">
-      <h2 class="text-heading-2">Open source, end to end</h2>
+      <h2 class="text-heading-2">{{ t('landing.openSource.title') }}</h2>
       <p class="max-w-[52rem] text-sm leading-relaxed text-muted-foreground">
-        Your sessions live on a server you run. The whole stack is public — read it, fork it, or host it yourself.
+        {{ t('landing.openSource.lead') }}
       </p>
     </header>
 
@@ -41,7 +44,7 @@ async function handleCopy() {
         >
           {{ repo.name }}
         </a>
-        <p class="text-sm leading-relaxed text-muted-foreground">{{ repo.role }}</p>
+        <p class="text-sm leading-relaxed text-muted-foreground">{{ t(repo.roleKey) }}</p>
         <p class="font-mono text-xs text-muted-foreground">{{ repo.licence }}</p>
       </li>
     </ul>
@@ -57,13 +60,12 @@ async function handleCopy() {
           <Button type="button" variant="ghost" size="sm" @click="handleCopy">
             <Check v-if="copied" />
             <Copy v-else />
-            {{ copied ? 'Copied' : 'Copy' }}
+            {{ copied ? t('landing.openSource.copied') : t('landing.openSource.copy') }}
           </Button>
         </div>
       </div>
       <p class="text-sm leading-relaxed text-muted-foreground">
-        Brings the server up with PostgreSQL, Redis and a local mail sandbox. Then create an API key and paste it into
-        the plugin's sync settings.
+        {{ t('landing.openSource.quickStart') }}
       </p>
     </div>
   </div>

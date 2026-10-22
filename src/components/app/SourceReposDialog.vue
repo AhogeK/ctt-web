@@ -1,4 +1,6 @@
 <script setup lang="ts">
+import { useI18n } from 'vue-i18n'
+
 import { ref } from 'vue'
 import {
   Dialog,
@@ -19,6 +21,8 @@ import { ECOSYSTEM_REPOS } from '@/lib/site-links'
  * anchor to it, so the entry still works without JavaScript.
  */
 const open = ref(false)
+
+const { t } = useI18n()
 </script>
 
 <template>
@@ -29,10 +33,9 @@ const open = ref(false)
 
     <DialogContent class="sm:max-w-lg">
       <DialogHeader>
-        <DialogTitle>Source repositories</DialogTitle>
+        <DialogTitle>{{ t('landing.sourceDialog.title') }}</DialogTitle>
         <DialogDescription>
-          Three repositories make up the tracker: the plugin that records, the backend that stores, and this dashboard
-          that reads.
+          {{ t('landing.sourceDialog.description') }}
         </DialogDescription>
       </DialogHeader>
 
@@ -45,7 +48,7 @@ const open = ref(false)
             class="flex flex-col gap-0.5 rounded-md px-3 py-2.5 transition-colors hover:bg-muted focus-visible:ring-[3px] focus-visible:ring-ring/50 focus-visible:outline-none"
           >
             <span class="font-medium">{{ repo.name }}</span>
-            <span class="text-sm text-muted-foreground">{{ repo.role }}</span>
+            <span class="text-sm text-muted-foreground">{{ t(repo.roleKey) }}</span>
           </a>
         </li>
       </ul>

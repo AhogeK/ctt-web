@@ -144,16 +144,16 @@ const cta = computed(() =>
             >
               <Icon icon="mdi:github" class="size-4 shrink-0" />
               <span class="font-medium text-foreground/90 group-hover:text-foreground">{{ repo.name }}</span>
-              <span class="hidden text-muted-foreground lg:inline">— {{ repo.role }}</span>
+              <span class="hidden text-muted-foreground lg:inline">— {{ t(repo.roleKey) }}</span>
             </a>
           </li>
         </ul>
 
         <div class="mt-6 border-t border-border/60 pt-6 sm:flex sm:items-center sm:justify-between sm:gap-6">
           <div>
-            <p>Free and open source — deploy it yourself.</p>
+            <p>{{ t('landing.openSource.footerClaim') }}</p>
             <p class="mt-2">
-              Support the project:
+              {{ t('landing.openSource.footerSupport') }}
               <template v-for="(channel, index) in SUPPORT_CHANNELS" :key="channel.id">
                 <a
                   :href="channel.url"

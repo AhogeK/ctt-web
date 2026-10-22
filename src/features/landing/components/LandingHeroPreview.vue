@@ -1,4 +1,6 @@
 <script setup lang="ts">
+import { useI18n } from 'vue-i18n'
+
 /**
  * LandingHeroPreview — the hero's evidence that this is a real product.
  *
@@ -20,8 +22,8 @@ import RecentSessionsList from '@/features/dashboard/components/RecentSessionsLi
 import { useRankedDistribution } from '@/features/dashboard/composables/useRankedDistribution'
 import {
   EXAMPLE_COMPARISONS,
-  EXAMPLE_DATA_BADGE,
-  EXAMPLE_DATA_NOTE,
+  exampleDataBadge,
+  exampleDataNote,
   EXAMPLE_LANGUAGES,
   EXAMPLE_SUMMARY_SECONDS,
   exampleSessionGroups,
@@ -49,6 +51,7 @@ const languagesLabel = computed(
   () =>
     `Language distribution, bar length is coding time: ${rows.value.map((r) => `${r.name} ${r.percent}%`).join(', ')}`,
 )
+const { t } = useI18n()
 </script>
 
 <template>
@@ -68,18 +71,20 @@ const languagesLabel = computed(
         <span
           class="ml-2 shrink-0 whitespace-nowrap rounded-full border border-border/60 px-2 py-0.5 text-[10px] font-medium tracking-wider text-muted-foreground"
         >
-          {{ EXAMPLE_DATA_BADGE }}
+          {{ exampleDataBadge() }}
         </span>
-        <span class="ml-1 min-w-0 flex-1 truncate text-[11px] text-muted-foreground">dashboard</span>
+        <span class="ml-1 min-w-0 flex-1 truncate text-[11px] text-muted-foreground">{{
+          t('landing.preview.windowTitle')
+        }}</span>
       </div>
 
       <div class="flex min-w-0 flex-col gap-2.5 p-3">
-        <p class="text-[11px] leading-relaxed text-muted-foreground">{{ EXAMPLE_DATA_NOTE }}</p>
+        <p class="text-[11px] leading-relaxed text-muted-foreground">{{ exampleDataNote() }}</p>
         <SummaryStatGrid :items="items" />
 
         <div class="rounded-lg border border-border/50 p-3 dark:border-border/70">
           <p class="mb-2 text-[11px] font-medium uppercase tracking-wider text-muted-foreground/90">
-            By language · all time
+            {{ t('landing.preview.languagePanel') }}
           </p>
           <RankedDistributionList :rows="rows" :a11y-label="languagesLabel" fold-noun="languages" />
         </div>
@@ -94,7 +99,9 @@ const languagesLabel = computed(
       data-surface="card"
       class="hero-panel mt-5 rounded-xl border border-border/60 bg-card p-3 shadow-xl [animation-delay:440ms] dark:border-border lg:shadow-2xl"
     >
-      <p class="mb-2 text-[11px] font-medium uppercase tracking-wider text-muted-foreground/90">Recent sessions</p>
+      <p class="mb-2 text-[11px] font-medium uppercase tracking-wider text-muted-foreground/90">
+        {{ t('landing.preview.sessionsPanel') }}
+      </p>
       <RecentSessionsList :groups="sessionGroups" max-height-class="max-h-44" />
     </div>
   </div>

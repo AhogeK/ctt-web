@@ -1,18 +1,23 @@
 import { render, screen, within } from '@testing-library/vue'
 import { describe, expect, it } from 'vitest'
 import RunOptions from '../RunOptions.vue'
-import { RUN_OPTIONS, type RunOption } from '../run-options'
+import { buildRunOptions, type RunOption } from '../run-options'
+import en from '@/i18n/locales/en'
+
+/** Resolve a dotted key against the English catalogue, so the assertions run on shipped copy. */
+const translate = (key: string): string =>
+  key.split('.').reduce<unknown>((node, part) => (node as Record<string, unknown> | undefined)?.[part], en) as string
 
 describe('landing run options', () => {
   it('ships both ways to run it, with the hosted entry deliberately status-only and unstartable', () => {
-    expect(RUN_OPTIONS.map((option) => option.id)).toEqual(['self-host', 'hosted'])
-    const hosted = RUN_OPTIONS.find((option) => option.id === 'hosted')
+    expect(buildRunOptions(translate).map((option) => option.id)).toEqual(['self-host', 'hosted'])
+    const hosted = buildRunOptions(translate).find((option) => option.id === 'hosted')
     expect(hosted?.cost.kind).toBe('status')
     expect(hosted?.cta).toBeUndefined()
   })
 
   it('puts no figure anywhere in the shipped entries — free is the only cost the page states', () => {
-    const { container } = render(RunOptions, { props: { options: RUN_OPTIONS } })
+    const { container } = render(RunOptions, { props: { options: buildRunOptions(translate) } })
     expect(container.textContent ?? '').not.toMatch(/[\d$€£]/)
   })
 
@@ -47,7 +52,7 @@ describe('landing run options', () => {
   })
 
   it('grows no purchase control on an entry that cannot be started', () => {
-    render(RunOptions, { props: { options: RUN_OPTIONS } })
+    render(RunOptions, { props: { options: buildRunOptions(translate) } })
     const hosted = screen.getByTestId('run-option-hosted')
     expect(within(hosted).queryByRole('link')).not.toBeInTheDocument()
     expect(within(hosted).queryByRole('button')).not.toBeInTheDocument()
