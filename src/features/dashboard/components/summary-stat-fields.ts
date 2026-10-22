@@ -30,12 +30,27 @@ export interface SummaryStatItem {
 }
 
 export const SUMMARY_STAT_FIELDS = [
-  { key: 'today', label: 'Today', icon: Activity, baseline: 'vs yesterday' },
-  { key: 'dailyAverage', label: 'Daily avg', icon: CalendarCheck, baseline: 'vs yesterday' },
-  { key: 'thisWeek', label: 'This week', icon: CalendarDays, baseline: 'vs last week' },
-  { key: 'thisMonth', label: 'This month', icon: CalendarRange, baseline: 'vs last month' },
-  { key: 'thisYear', label: 'This year', icon: CalendarClock, baseline: 'vs last year' },
-  { key: 'total', label: 'Total', icon: Timer, baseline: null },
+  { key: 'today', label: 'dashboard.summary.today', icon: Activity, baseline: 'dashboard.baseline.today' },
+  {
+    key: 'dailyAverage',
+    label: 'dashboard.summary.dailyAverage',
+    icon: CalendarCheck,
+    baseline: 'dashboard.baseline.dailyAverage',
+  },
+  { key: 'thisWeek', label: 'dashboard.summary.thisWeek', icon: CalendarDays, baseline: 'dashboard.baseline.thisWeek' },
+  {
+    key: 'thisMonth',
+    label: 'dashboard.summary.thisMonth',
+    icon: CalendarRange,
+    baseline: 'dashboard.baseline.thisMonth',
+  },
+  {
+    key: 'thisYear',
+    label: 'dashboard.summary.thisYear',
+    icon: CalendarClock,
+    baseline: 'dashboard.baseline.thisYear',
+  },
+  { key: 'total', label: 'dashboard.summary.total', icon: Timer, baseline: null },
 ] as const
 
 export type SummaryStatKey = (typeof SUMMARY_STAT_FIELDS)[number]['key']

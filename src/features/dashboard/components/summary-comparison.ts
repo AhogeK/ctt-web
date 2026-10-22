@@ -69,15 +69,19 @@ export function deltaClass(direction: ComparisonDirection): string {
   return 'text-muted-foreground'
 }
 
-/** Tooltip baseline name: 'vs yesterday' → 'Yesterday'. */
+/**
+ * Tooltip baseline name. The caller passes the already-localized baseline ("vs yesterday" /
+ * "对比昨天"), so only the English form needs the prefix stripped and capitalised.
+ */
 function baselineName(baseline: string): string {
-  const name = baseline.replace(/^vs\s+/, '')
+  const name = baseline.replace(/^vs\s+/i, '')
   return name.charAt(0).toUpperCase() + name.slice(1)
 }
 
 /** Everything the delta line needs, or null when it must not render. */
-export function deltaView(item: SummaryStatItem): DeltaView | null {
+export function deltaView(item: SummaryStatItem, translate: (key: string) => string): DeltaView | null {
   const { comparison, baseline } = item
+  const localized = baseline ? translate(baseline) : ''
   if (!comparison || comparison.changePercent === null || !baseline) return null
   const direction = comparisonDirection(comparison)
   if (!direction) return null
@@ -85,6 +89,6 @@ export function deltaView(item: SummaryStatItem): DeltaView | null {
     direction,
     text: formatChangePercent(comparison.changePercent),
     className: deltaClass(direction),
-    title: `${baselineName(baseline)} · ${formatDuration(comparison.previousSeconds)}`,
+    title: `${baselineName(localized)} · ${formatDuration(comparison.previousSeconds)}`,
   }
 }
