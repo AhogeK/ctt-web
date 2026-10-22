@@ -33,7 +33,8 @@ pnpm exec playwright test e2e/settings/language.spec.ts --project=chromium
 看板共享层（汇总字段与涨跌、最近会话与分组、奖杯卡家族与窗口）·
 认证页全套（登录 / 注册 / 忘记 / 两个成功页 / 验证邮箱 / 变更邮箱 / OAuth 回调与错误页 / 重发验证提示）·
 共享错误码表 `api.errors.*`（`mapApiErrorCode` 与 `getErrorMessage`）·
-`CaptchaWidget`（hCaptcha `hl` 跟随界面语言：`en` / `zh-CN`）
+`CaptchaWidget`（hCaptcha `hl` 跟随界面语言：`en` / `zh-CN`）·
+认证卡片展示层 `AuthDashboard` / `AuthMetricsCard` / `AuthTerminalCard`（品牌名、URL、语言名、终端标题保留英文）
 
 ## 未迁移面（批次见计划件）
 

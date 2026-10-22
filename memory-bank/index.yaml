@@ -78,7 +78,7 @@ domains:
     memory-bank/domains/i18n/meta.md: 31
     memory-bank/domains/i18n/practices.md: 99
     memory-bank/domains/i18n/principles.md: 37
-    memory-bank/domains/i18n/references.md: 41
+    memory-bank/domains/i18n/references.md: 42
     memory-bank/domains/i18n/scenarios.md: 37
 entries:
   - id: 'rules'
