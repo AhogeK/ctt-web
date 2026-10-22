@@ -2,6 +2,7 @@ import { describe, expect, it, vi, beforeEach } from 'vite-plus/test'
 import { mount } from '@vue/test-utils'
 import { computed } from 'vue'
 import RecentSessionsPanel from '../RecentSessionsPanel.vue'
+import { initI18n, setLocale } from '@/i18n'
 import type { RecentSession } from '@/lib/schemas/stats.schema'
 
 /** Sessions returned by the mocked composable, per test. */
@@ -63,6 +64,11 @@ function mountPanel() {
 beforeEach(() => {
   mockData.value = []
   recentSpy.mockClear()
+})
+
+beforeAll(async () => {
+  await initI18n()
+  await setLocale('en')
 })
 
 describe('RecentSessionsPanel', () => {

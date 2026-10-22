@@ -1,4 +1,6 @@
 <script setup lang="ts">
+import { useI18n } from 'vue-i18n'
+
 /**
  * SummaryStatGrid — the presentational half of the dashboard's overview row.
  *
@@ -29,7 +31,9 @@ const props = withDefaults(
 const emit = defineEmits<{ retry: [] }>()
 
 /** Items plus their resolved delta lines — a null view means "render no line". */
-const rows = computed(() => props.items.map((item) => ({ ...item, delta: deltaView(item) })))
+const rows = computed(() => props.items.map((item) => ({ ...item, delta: deltaView(item, t) })))
+
+const { t } = useI18n()
 </script>
 
 <template>
@@ -44,7 +48,7 @@ const rows = computed(() => props.items.map((item) => ({ ...item, delta: deltaVi
         class="group rounded-xl border border-border/50 dark:border-border bg-gradient-to-b from-card to-muted/40 dark:bg-none dark:bg-card p-4 transition-[border-color,box-shadow] duration-200 hover:border-border hover:shadow-sm"
       >
         <div class="flex items-center justify-between gap-2">
-          <p class="text-[11px] font-medium uppercase tracking-wider text-muted-foreground/90">{{ row.label }}</p>
+          <p class="text-[11px] font-medium uppercase tracking-wider text-muted-foreground/90">{{ t(row.label) }}</p>
           <component
             :is="row.icon"
             class="h-3.5 w-3.5 shrink-0 transition-colors"
@@ -88,7 +92,7 @@ const rows = computed(() => props.items.map((item) => ({ ...item, delta: deltaVi
           <!-- The baseline label is the row's only flexible item: the metric,
                the percent and the trend glyph stay whole, and the label ellipsises
                on the narrowest cards rather than pushing the row past its box. -->
-          <span class="min-w-0 truncate text-muted-foreground">{{ ' ' + (row.baseline ?? '') }}</span>
+          <span class="min-w-0 truncate text-muted-foreground">{{ row.baseline ? ' ' + t(row.baseline) : '' }}</span>
         </p>
         <button
           v-if="props.error"
@@ -97,7 +101,7 @@ const rows = computed(() => props.items.map((item) => ({ ...item, delta: deltaVi
           data-testid="summary-retry"
           @click="emit('retry')"
         >
-          Failed to load — retry
+          {{ t('dashboard.error.loadFailed') }}
         </button>
       </div>
     </div>

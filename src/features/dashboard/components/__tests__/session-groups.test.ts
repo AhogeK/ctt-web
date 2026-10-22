@@ -1,3 +1,4 @@
+import { initI18n, setLocale } from '@/i18n'
 import { afterAll, describe, expect, it } from 'vite-plus/test'
 import type { RecentSession } from '@/lib/schemas/stats.schema'
 import { dayLabel, groupSessions, localDayKey, sessionsAriaLabel } from '../session-groups'
@@ -36,6 +37,12 @@ const ORIGINAL_TZ = process.env.TZ
 process.env.TZ = 'Asia/Shanghai'
 afterAll(() => {
   process.env.TZ = ORIGINAL_TZ
+})
+
+beforeAll(async () => {
+  // `dayLabel` resolves today/yesterday through the global catalogue.
+  await initI18n()
+  await setLocale('en')
 })
 
 describe('localDayKey', () => {

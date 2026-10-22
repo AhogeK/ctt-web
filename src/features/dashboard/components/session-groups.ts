@@ -18,6 +18,8 @@
  *    panels' "super-linear" totals.
  */
 
+import { currentLocale, i18n } from '@/i18n'
+import { formatMonthShort } from '@/lib/utils'
 import type { RecentSession } from '@/lib/schemas/stats.schema'
 
 /** One rendered row: a session plus the local time it started. */
@@ -53,7 +55,6 @@ export interface SessionDayGroup {
  * English panel copy, so a non-English host locale would change the UI and break
  * those assertions.
  */
-const LOCALE = 'en-US'
 
 function pad(value: number): string {
   return String(value).padStart(2, '0')
@@ -73,14 +74,14 @@ export function localDayKey(date: Date): string {
  */
 export function dayLabel(date: Date, now: Date): string {
   const key = localDayKey(date)
-  if (key === localDayKey(now)) return 'Today'
+  if (key === localDayKey(now)) return i18n.global.t('dashboard.sessions.today')
 
   const yesterday = new Date(now)
   yesterday.setDate(yesterday.getDate() - 1)
-  if (key === localDayKey(yesterday)) return 'Yesterday'
+  if (key === localDayKey(yesterday)) return i18n.global.t('dashboard.sessions.yesterday')
 
   const sameYear = date.getFullYear() === now.getFullYear()
-  const month = date.toLocaleDateString(LOCALE, { month: 'short' })
+  const month = formatMonthShort(date)
   return sameYear ? `${month} ${date.getDate()}` : `${month} ${date.getDate()}, ${date.getFullYear()}`
 }
 
@@ -121,7 +122,7 @@ export function groupSessions(sessions: RecentSession[], now: Date = new Date())
       group = {
         key,
         label: dayLabel(startedAt, now),
-        fullLabel: startedAt.toLocaleDateString(LOCALE, {
+        fullLabel: startedAt.toLocaleDateString(currentLocale.value, {
           weekday: 'long',
           year: 'numeric',
           month: 'long',
@@ -152,12 +153,17 @@ export function groupSessions(sessions: RecentSession[], now: Date = new Date())
  * that a screen reader cannot infer from a flat list of rows.
  */
 export function sessionsAriaLabel(groups: SessionDayGroup[]): string {
-  if (groups.length === 0) return 'Recent coding sessions: none'
+  if (groups.length === 0) return i18n.global.t('dashboard.sessions.ariaNone')
   const total = groups.reduce((sum, group) => sum + group.rows.length, 0)
   const days = groups
     .map(
-      (group) => `${group.label}: ${group.rows.map((r) => `${r.time} ${r.projectName} in ${r.language}`).join(', ')}`,
+      (group) =>
+        `${group.label}: ${group.rows
+          .map((r) =>
+            i18n.global.t('dashboard.sessions.ariaRow', { time: r.time, project: r.projectName, language: r.language }),
+          )
+          .join(', ')}`,
     )
     .join('. ')
-  return `Recent coding sessions, ${total} across ${groups.length} ${groups.length === 1 ? 'day' : 'days'}. ${days}`
+  return `${i18n.global.t('dashboard.sessions.ariaHeader', { total, days: groups.length })} ${days}`
 }

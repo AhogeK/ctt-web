@@ -1,10 +1,11 @@
 import { describe, expect, it } from 'vite-plus/test'
+import { i18n } from '@/i18n'
 import { Activity } from '@lucide/vue'
 import type { SummaryStatItem } from '../summary-stat-fields'
 import { comparisonDirection, deltaClass, deltaView, formatChangePercent } from '../summary-comparison'
 
 function item(overrides: Partial<SummaryStatItem> = {}): SummaryStatItem {
-  return { label: 'Today', seconds: 3600, icon: Activity, baseline: 'vs yesterday', ...overrides }
+  return { label: 'Today', seconds: 3600, icon: Activity, baseline: 'dashboard.baseline.today', ...overrides }
 }
 
 describe('comparisonDirection', () => {
@@ -47,20 +48,28 @@ describe('deltaClass', () => {
 
 describe('deltaView', () => {
   it('is null without a comparison, without a percent, or on the lifetime Total', () => {
-    expect(deltaView(item())).toBeNull()
-    expect(deltaView(item({ comparison: { previousSeconds: 0, changePercent: null } }))).toBeNull()
-    expect(deltaView(item({ baseline: null, comparison: { previousSeconds: 7200, changePercent: -50 } }))).toBeNull()
+    expect(deltaView(item(), i18n.global.t)).toBeNull()
+    expect(deltaView(item({ comparison: { previousSeconds: 0, changePercent: null } }), i18n.global.t)).toBeNull()
+    expect(
+      deltaView(item({ baseline: null, comparison: { previousSeconds: 7200, changePercent: -50 } }), i18n.global.t),
+    ).toBeNull()
   })
 
   it('carries direction, display text, colour and a named-baseline tooltip', () => {
-    expect(deltaView(item({ comparison: { previousSeconds: 10200, changePercent: 20.59 } }))).toEqual({
+    expect(deltaView(item({ comparison: { previousSeconds: 10200, changePercent: 20.59 } }), i18n.global.t)).toEqual({
       direction: 'up',
       text: '+20.6%',
       className: 'text-success-ink',
       title: 'Yesterday · 2h 50m',
     })
     expect(
-      deltaView(item({ baseline: 'vs last week', comparison: { previousSeconds: 79200, changePercent: -15.15 } })),
+      deltaView(
+        item({
+          baseline: 'dashboard.baseline.thisWeek',
+          comparison: { previousSeconds: 79200, changePercent: -15.15 },
+        }),
+        i18n.global.t,
+      ),
     ).toEqual({
       direction: 'down',
       text: '-15.2%',

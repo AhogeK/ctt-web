@@ -1,7 +1,8 @@
-import { describe, expect, it, vi, afterEach, beforeEach } from 'vite-plus/test'
+import { beforeAll, describe, expect, it, vi, afterEach, beforeEach } from 'vite-plus/test'
 import { mount } from '@vue/test-utils'
 import { computed, ref } from 'vue'
 import AchievementsView from '../AchievementsView.vue'
+import { initI18n, setLocale } from '@/i18n'
 import type { Achievement } from '@/lib/schemas/stats.schema'
 import { achievement, windowed } from '../../__tests__/fixtures'
 
@@ -141,6 +142,11 @@ beforeEach(() => {
 afterEach(() => {
   for (const wrapper of wrappers) wrapper.unmount()
   wrappers.length = 0
+})
+
+beforeAll(async () => {
+  await initI18n()
+  await setLocale('en')
 })
 
 describe('AchievementsView', () => {

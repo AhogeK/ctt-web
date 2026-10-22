@@ -12,6 +12,12 @@ import { formatDateTime, formatDuration } from '@/lib/utils'
 import TrophyMedal from './TrophyMedal.vue'
 import type { Trophy } from '../composables/trophy-model'
 import { periodUnit, tierProgress } from '../composables/trophy-model'
+import { useI18n } from 'vue-i18n'
+
+const { t } = useI18n()
+
+/** Catalogue key for a family/tier code: `TOTAL_SECONDS` -> `achievements.family.totalseconds`. */
+const codeKey = (scope: string, code: string) => `achievements.${scope}.${code.toLowerCase().replace(/_/g, '')}`
 
 const props = defineProps<{
   /** The trophy to draw: its ladder, measured value and unit. */
@@ -50,7 +56,7 @@ const progress = computed(() => tierProgress(props.trophy))
 function formatValue(value: number, unit: string): string {
   if (unit === 'seconds') return formatDuration(value)
   if (unit === 'percent') return `${value}%`
-  return `${value} ${unit}`
+  return `${value} ${t(`achievements.units.${unit}`, unit)}`
 }
 
 const progressLabel = computed(() => {
@@ -63,7 +69,7 @@ const progressLabel = computed(() => {
 const tierLabel = computed(() => {
   const current = props.trophy.currentTier
   if (current === null) return null
-  return current.displayName
+  return t(codeKey('tiers', current.code), current.displayName)
 })
 
 /** Exact instant the current tier unlocked, for the row's hover title. */
@@ -83,8 +89,9 @@ const unlockedTitle = computed(() => {
  * how often it has been reached.
  */
 const reachedLabel = computed(() => {
-  const unit = periodUnit(props.trophy.window, props.trophy.periodsReached)
-  return `${props.trophy.periodsReached} ${unit} reached`
+  const raw = periodUnit(props.trophy.window, props.trophy.periodsReached)
+  const unit = t(`achievements.units.${raw}`, raw)
+  return t('achievements.reached', { count: props.trophy.periodsReached, unit })
 })
 
 /**
@@ -93,7 +100,7 @@ const reachedLabel = computed(() => {
  */
 const streakAriaLabel = computed(() => {
   const unit = periodUnit(props.trophy.window, props.trophy.periodStreak)
-  return `Reached ${props.trophy.periodStreak} ${unit} in a row`
+  return t('achievements.streakAria', { count: props.trophy.periodStreak, unit: t(`achievements.units.${unit}`, unit) })
 })
 </script>
 
@@ -111,8 +118,11 @@ const streakAriaLabel = computed(() => {
 
       <div class="min-w-0 flex-1">
         <div class="flex items-center gap-1.5">
-          <h3 class="truncate text-[13px] font-semibold text-foreground" :title="trophy.label">
-            {{ trophy.label }}
+          <h3
+            class="truncate text-[13px] font-semibold text-foreground"
+            :title="t(codeKey('family', trophy.type), trophy.label)"
+          >
+            {{ t(codeKey('family', trophy.type), trophy.label) }}
           </h3>
           <!-- The window noun. Five `TOTAL_SECONDS` ladders share one family name,
                so without it five cards read as duplicates of "Total time". A
@@ -122,10 +132,12 @@ const streakAriaLabel = computed(() => {
             class="shrink-0 rounded-sm bg-muted px-1 py-px text-[10px] font-medium text-muted-foreground"
             data-testid="trophy-window"
           >
-            {{ trophy.windowLabel }}
+            {{ t(`achievements.window.${trophy.window.toLowerCase()}`, trophy.windowLabel ?? '') }}
           </span>
         </div>
-        <p class="truncate text-[11px] text-muted-foreground" :title="trophy.blurb">{{ trophy.blurb }}</p>
+        <p class="truncate text-[11px] text-muted-foreground" :title="t(codeKey('blurbs', trophy.type), trophy.blurb)">
+          {{ t(codeKey('blurbs', trophy.type), trophy.blurb) }}
+        </p>
       </div>
 
       <!-- Tier count is the trophy's own score: earned rungs over total rungs. -->
@@ -140,21 +152,25 @@ const streakAriaLabel = computed(() => {
 
     <!-- Ladder: one pip per rung, filled up to the tiers earned. Reads the
          ladder's shape at a glance, which a single bar cannot. -->
-    <div class="flex items-center gap-1" role="img" :aria-label="`${trophy.earned} of ${trophy.total} tiers earned`">
+    <div
+      class="flex items-center gap-1"
+      role="img"
+      :aria-label="t('achievements.earned', { earned: trophy.earned, total: trophy.total })"
+    >
       <span
         v-for="(tier, i) in trophy.tiers"
         :key="tier.code"
         class="h-1 flex-1 rounded-full"
         :class="i < trophy.earned ? 'bg-primary' : 'bg-muted'"
         :data-earned="i < trophy.earned"
-        :title="tier.displayName"
+        :title="t(codeKey('tiers', tier.code), tier.displayName)"
       />
     </div>
 
     <div class="flex flex-col gap-1.5">
       <div class="flex items-baseline justify-between gap-2 text-[11px]">
         <span class="truncate text-muted-foreground" :title="tierLabel ?? undefined" data-testid="trophy-tier-label">
-          {{ tierLabel ?? 'Locked' }}
+          {{ tierLabel ?? t('achievements.locked') }}
         </span>
         <span class="shrink-0 tabular-nums text-muted-foreground" data-testid="trophy-progress">
           {{ progressLabel }}
@@ -170,9 +186,9 @@ const streakAriaLabel = computed(() => {
           data-testid="trophy-progress-bar"
         />
       </div>
-      <span v-else class="text-[11px] text-muted-foreground" :title="unlockedTitle" data-testid="trophy-complete"
-        >Complete</span
-      >
+      <span v-else class="text-[11px] text-muted-foreground" :title="unlockedTitle" data-testid="trophy-complete">{{
+        t('achievements.complete')
+      }}</span>
 
       <!--
         History for every resetting trophy, zeros included. The rule is uniform on

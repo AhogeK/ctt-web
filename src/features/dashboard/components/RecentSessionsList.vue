@@ -1,4 +1,6 @@
 <script setup lang="ts">
+import { useI18n } from 'vue-i18n'
+
 /**
  * RecentSessionsList — the presentational half of "Recent sessions".
  *
@@ -44,6 +46,8 @@ const ariaLabel = computed(() => sessionsAriaLabel(props.groups))
  * groups look like the whole list.
  */
 const moreBelow = ref(false)
+
+const { t } = useI18n()
 </script>
 
 <template>
@@ -61,7 +65,7 @@ const moreBelow = ref(false)
           >
             <span>{{ group.label }}</span>
             <span class="font-normal text-muted-foreground">
-              {{ group.rows.length }} {{ group.rows.length === 1 ? 'session' : 'sessions' }}
+              {{ t('dashboard.sessions.count', { count: group.rows.length }) }}
             </span>
           </span>
         </li>
@@ -95,10 +99,8 @@ const moreBelow = ref(false)
     </ScrollFadeList>
 
     <p class="text-right text-[11px] tracking-wide text-muted-foreground" data-testid="session-footer">
-      Latest {{ sessionCount }}
-      {{ sessionCount === 1 ? 'session' : 'sessions' }}
-      <template v-if="dayCount > 0"> across {{ dayCount }} {{ dayCount === 1 ? 'day' : 'days' }}</template>
-      <span v-if="moreBelow" class="text-muted-foreground/70"> · scroll for more</span>
+      {{ t('dashboard.sessions.footer', { count: sessionCount, days: dayCount }, sessionCount) }}
+      <span v-if="moreBelow" class="text-muted-foreground/70"> {{ t('dashboard.sessions.scrollHint') }}</span>
     </p>
   </div>
 </template>
