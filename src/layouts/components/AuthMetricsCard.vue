@@ -1,7 +1,10 @@
 <script setup lang="ts">
+import { useI18n } from 'vue-i18n'
 import { computed, onMounted, ref } from 'vue'
 import { useTransition } from '@vueuse/core'
 import { useCardTilt } from '@/composables/useCardTilt'
+
+const { t } = useI18n()
 
 const tilt = useCardTilt({
   tilt: true,
@@ -105,10 +108,10 @@ onMounted(() => {
     <div class="auth-card-3d__sheen" />
     <div class="auth-card-3d__inner auth-card-3d__metrics-inner">
       <div class="auth-card-3d__header">
-        <span class="auth-card-3d__title">Live Metrics</span>
+        <span class="auth-card-3d__title">{{ t('auth.showcase.liveMetrics') }}</span>
         <span class="auth-card-3d__badge auth-card-3d__badge--live">
           <span class="auth-card-3d__badge-dot" />
-          Live
+          {{ t('auth.showcase.live') }}
         </span>
       </div>
 
@@ -116,21 +119,23 @@ onMounted(() => {
       <div class="auth-metrics__counters">
         <div class="auth-metrics__counter">
           <span class="auth-metrics__counter-value">{{ animatedHours }}h</span>
-          <span class="auth-metrics__counter-label">Total Hours</span>
+          <span class="auth-metrics__counter-label">{{ t('auth.showcase.totalHours') }}</span>
         </div>
         <div class="auth-metrics__counter">
           <span class="auth-metrics__counter-value auth-metrics__counter-value--accent">{{ animatedProjects }}</span>
-          <span class="auth-metrics__counter-label">Projects</span>
+          <span class="auth-metrics__counter-label">{{ t('auth.showcase.projects') }}</span>
         </div>
         <div class="auth-metrics__counter">
-          <span class="auth-metrics__counter-value auth-metrics__counter-value--green">{{ animatedStreak }}d</span>
-          <span class="auth-metrics__counter-label">Streak</span>
+          <span class="auth-metrics__counter-value auth-metrics__counter-value--green">{{
+            t('auth.showcase.daysShort', { days: animatedStreak })
+          }}</span>
+          <span class="auth-metrics__counter-label">{{ t('auth.showcase.streak') }}</span>
         </div>
       </div>
 
       <!-- Sparkline: Weekly Activity -->
       <div class="auth-metrics__sparkline">
-        <span class="auth-metrics__sparkline-label">Weekly Activity</span>
+        <span class="auth-metrics__sparkline-label">{{ t('auth.showcase.weeklyActivity') }}</span>
         <div class="auth-metrics__sparkline-bars">
           <div
             v-for="(level, i) in sparklineData"

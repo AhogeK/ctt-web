@@ -1,6 +1,9 @@
 <script setup lang="ts">
+import { useI18n } from 'vue-i18n'
 import { computed } from 'vue'
 import { useCardTilt } from '@/composables/useCardTilt'
+
+const { t } = useI18n()
 
 const tilt = useCardTilt({
   tilt: true,
@@ -68,25 +71,35 @@ const rawSheenY = computed(() => parseFloat(tilt.sheenY.value) || 0)
       <div class="auth-terminal__body">
         <div class="auth-terminal__line">
           <span class="auth-terminal__prompt">&gt;</span>
-          <span class="auth-terminal__text">Total coding time: <span class="auth-terminal__value">342h 15m</span></span>
-        </div>
-        <div class="auth-terminal__line">
-          <span class="auth-terminal__prompt">&gt;</span>
           <span class="auth-terminal__text"
-            >Top language: <span class="auth-terminal__value--accent">TypeScript (68%)</span></span
+            >{{ t('auth.showcase.terminalTotalTime') }} <span class="auth-terminal__value">342h 15m</span></span
           >
         </div>
         <div class="auth-terminal__line">
           <span class="auth-terminal__prompt">&gt;</span>
-          <span class="auth-terminal__text">Longest session: <span class="auth-terminal__value">4h 23m</span></span>
+          <span class="auth-terminal__text"
+            >{{ t('auth.showcase.terminalTopLanguage') }}
+            <span class="auth-terminal__value--accent">TypeScript (68%)</span></span
+          >
         </div>
         <div class="auth-terminal__line">
           <span class="auth-terminal__prompt">&gt;</span>
-          <span class="auth-terminal__text">Active days: <span class="auth-terminal__value">89/90</span></span>
+          <span class="auth-terminal__text"
+            >{{ t('auth.showcase.terminalLongestSession') }} <span class="auth-terminal__value">4h 23m</span></span
+          >
         </div>
         <div class="auth-terminal__line">
           <span class="auth-terminal__prompt">&gt;</span>
-          <span class="auth-terminal__text">Current streak: <span class="auth-terminal__streak">12 days</span></span>
+          <span class="auth-terminal__text"
+            >{{ t('auth.showcase.terminalActiveDays') }} <span class="auth-terminal__value">89/90</span></span
+          >
+        </div>
+        <div class="auth-terminal__line">
+          <span class="auth-terminal__prompt">&gt;</span>
+          <span class="auth-terminal__text"
+            >{{ t('auth.showcase.terminalCurrentStreak') }}
+            <span class="auth-terminal__streak">{{ t('auth.showcase.days', { days: 12 }) }}</span></span
+          >
           <span class="auth-terminal__cursor" />
         </div>
       </div>
