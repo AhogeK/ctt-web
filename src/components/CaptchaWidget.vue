@@ -76,7 +76,7 @@ defineExpose({
     <VueHcaptcha
       v-if="!modelValue"
       ref="hcaptchaRef"
-      :key="theme"
+      :key="`${theme}-${language ?? 'auto'}`"
       :sitekey="sitekey"
       :theme="theme"
       :size="size"

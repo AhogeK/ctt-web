@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import { useI18n } from 'vue-i18n'
 import { ref, computed, toValue } from 'vue'
 import { useRouter } from 'vue-router'
 import { toast } from 'vue-sonner'
@@ -12,6 +13,8 @@ import { Button } from '@/components/ui/button'
 import { cn } from '@/lib/utils'
 import ForgotPasswordForm from '../components/ForgotPasswordForm.vue'
 import type CaptchaWidget from '@/components/CaptchaWidget.vue'
+
+const { t } = useI18n()
 
 const router = useRouter()
 const { countdown, start } = useCooldown()
@@ -33,15 +36,15 @@ const mutation = useMutation({
     isIdempotent.value = response.idempotentSkip === true
 
     if (response.idempotentSkip) {
-      toast.info('Reset password email already sent', {
-        description: 'Please check your inbox or spam folder',
+      toast.info(t('auth.errors.resetEmailAlreadySent'), {
+        description: t('auth.errors.checkInboxOrSpam'),
       })
     }
   },
   onError: (error: unknown) => {
     forgotPasswordFormRef.value?.captchaRef?.reset()
     if (!isApiError(error)) {
-      toast.error('Request failed', { description: 'An unexpected error occurred' })
+      toast.error(t('auth.errors.requestFailed'), { description: t('auth.errors.unexpected') })
       return
     }
 
@@ -57,7 +60,7 @@ const mutation = useMutation({
     } else if (data?.code === 'SECURITY_006' || data?.code === 'SECURITY_007') {
       toast.error(mapApiErrorCode(data.code))
     } else {
-      toast.error('Request failed', { description: 'Please try again later' })
+      toast.error('Request failed', { description: t('auth.errors.tryAgainLater') })
     }
   },
 })
@@ -100,14 +103,14 @@ const isSubmitting = computed(() => toValue(mutation.isPending))
         class="text-3xl font-emphasis text-foreground dark:text-foreground"
         style="font-feature-settings: 'cv01', 'ss03'; letter-spacing: -0.704px"
       >
-        Reset your password
+        {{ t('auth.forgot.title') }}
       </h1>
       <p
         v-if="!isSubmitted"
         class="text-base text-muted-foreground dark:text-muted-foreground"
         style="font-feature-settings: 'cv01', 'ss03'"
       >
-        Enter your email address and we'll send you a link to reset your password.
+        {{ t('auth.forgot.subtitle') }}
       </p>
     </div>
 
@@ -142,28 +145,27 @@ const isSubmitting = computed(() => toValue(mutation.isPending))
           class="text-xl font-emphasis text-foreground dark:text-foreground"
           style="font-feature-settings: 'cv01', 'ss03'"
         >
-          {{ isIdempotent ? 'Email already sent' : 'Check your email' }}
+          {{ isIdempotent ? t('auth.forgot.alreadySent') : t('auth.forgot.checkEmail') }}
         </h2>
         <p
           class="text-base text-muted-foreground dark:text-muted-foreground"
           style="font-feature-settings: 'cv01', 'ss03'"
         >
           <template v-if="isIdempotent">
-            We already sent a reset link to
+            {{ t('auth.forgot.alreadySentPrefix') }}
             <code
               class="px-2 py-0.5 rounded-md bg-muted dark:bg-card font-mono text-sm font-medium text-foreground/90 dark:text-muted-foreground"
               >{{ submittedEmail }}</code
             >
-            recently. Please check your inbox or spam folder. If you didn't receive it, please wait a few minutes before
-            trying again.
+            {{ t('auth.forgot.alreadySentSuffix') }}
           </template>
           <template v-else>
-            If
+            {{ t('auth.forgot.neutralPrefix') }}
             <code
               class="px-2 py-0.5 rounded-md bg-muted dark:bg-card font-mono text-sm font-medium text-foreground/90 dark:text-muted-foreground"
               >{{ submittedEmail }}</code
             >
-            exists in our database, you will receive a password recovery link shortly.
+            {{ t('auth.forgot.neutralSuffix') }}
           </template>
         </p>
       </div>
@@ -178,14 +180,14 @@ const isSubmitting = computed(() => toValue(mutation.isPending))
       @submit="handleSubmit"
     />
 
-    <!-- Back to sign in -->
+    <!-- Back to Login -->
     <Button
       variant="ghost"
       :class="cn('w-full h-11 font-emphasis text-muted-foreground')"
       @click="router.push({ name: RouteNames.LOGIN })"
       style="font-feature-settings: 'cv01', 'ss03'"
     >
-      Back to sign in
+      {{ t('auth.common.backToSignIn') }}
     </Button>
   </div>
 </template>

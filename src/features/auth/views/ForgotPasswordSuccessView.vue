@@ -1,9 +1,12 @@
 <script setup lang="ts">
+import { useI18n } from 'vue-i18n'
 import { useRouter } from 'vue-router'
 import { MailOpen } from '@lucide/vue'
 import { RouteNames } from '@/router/route-names'
 import { Button } from '@/components/ui/button'
 import { cn } from '@/lib/utils'
+
+const { t } = useI18n()
 
 const router = useRouter()
 </script>
@@ -25,20 +28,20 @@ const router = useRouter()
         class="text-2xl font-emphasis text-foreground dark:text-foreground sm:text-3xl"
         style="font-feature-settings: 'cv01', 'ss03'; letter-spacing: -0.704px"
       >
-        Check your email
+        {{ t('auth.forgotDone.title') }}
       </h1>
       <div class="space-y-2">
         <p
           class="text-base text-muted-foreground dark:text-muted-foreground"
           style="font-feature-settings: 'cv01', 'ss03'"
         >
-          We've sent a password reset link to your email address.
+          {{ t('auth.forgotDone.sent') }}
         </p>
         <p
           class="text-base text-muted-foreground dark:text-muted-foreground"
           style="font-feature-settings: 'cv01', 'ss03'"
         >
-          Click the link to reset your password.
+          {{ t('auth.forgotDone.click') }}
         </p>
       </div>
     </div>
@@ -57,7 +60,7 @@ const router = useRouter()
         class="text-sm font-emphasis text-foreground/90 dark:text-secondary-foreground"
         style="font-feature-settings: 'cv01', 'ss03'"
       >
-        Didn't receive the email?
+        {{ t('auth.forgotDone.noEmail') }}
       </p>
       <button
         :class="
@@ -71,7 +74,7 @@ const router = useRouter()
         @click="router.push({ name: RouteNames.FORGOT_PASSWORD })"
         style="font-feature-settings: 'cv01', 'ss03'"
       >
-        Try another email
+        {{ t('auth.forgotDone.tryAnother') }}
       </button>
     </div>
 
@@ -82,7 +85,7 @@ const router = useRouter()
       @click="router.push({ name: RouteNames.LOGIN })"
       style="font-feature-settings: 'cv01', 'ss03'"
     >
-      Back to sign in
+      {{ t('auth.common.backToSignIn') }}
     </Button>
   </div>
 </template>

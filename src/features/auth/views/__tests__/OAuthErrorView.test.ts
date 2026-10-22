@@ -113,16 +113,17 @@ describe('OAuthErrorView', () => {
       expect(wrapper.text()).toContain('An unexpected error occurred. Please try again.')
     })
 
-    it('renders the error code in the UI', () => {
+    it('does not expose the raw error code to the reader', () => {
       const wrapper = mountWithQuery({ code: 'AUTH_013' })
 
-      expect(wrapper.text()).toContain('Error code: AUTH_013')
+      expect(wrapper.text()).not.toContain('AUTH_013')
+      expect(wrapper.text()).not.toContain('Error code')
     })
 
-    it('renders UNKNOWN_ERROR when code query param is missing', () => {
+    it('does not expose UNKNOWN_ERROR when code query param is missing', () => {
       const wrapper = mountWithQuery({})
 
-      expect(wrapper.text()).toContain('Error code: UNKNOWN_ERROR')
+      expect(wrapper.text()).not.toContain('UNKNOWN_ERROR')
     })
   })
 

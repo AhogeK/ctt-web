@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import { useI18n } from 'vue-i18n'
 import { ref, computed } from 'vue'
 import { useRouter } from 'vue-router'
 import { toast } from 'vue-sonner'
@@ -13,6 +14,8 @@ import { SESSION_STORAGE_KEYS } from '@/stores/auth'
 import { type RegisterFormData } from '@/lib/schemas/auth.schema'
 import RegisterForm from '../components/RegisterForm.vue'
 import type CaptchaWidget from '@/components/CaptchaWidget.vue'
+
+const { t } = useI18n()
 
 const router = useRouter()
 const { countdown, start } = useCooldown()
@@ -49,15 +52,15 @@ const mutation = useMutation({
         })
       } else if (error.statusCode === 400 && data?.code === 'USER_008') {
         toast.error(mapApiErrorCode('USER_008'), {
-          description: 'Please refresh the page and try again.',
+          description: t('auth.errors.refreshPage'),
         })
       } else if (data?.code === 'SECURITY_006' || data?.code === 'SECURITY_007') {
         toast.error(mapApiErrorCode(data.code))
       } else {
-        toast.error('Registration failed', { description: 'Please try again later' })
+        toast.error(t('auth.errors.registrationFailed'), { description: t('auth.errors.tryAgainLater') })
       }
     } else {
-      toast.error('Registration failed', { description: 'An unexpected error occurred' })
+      toast.error(t('auth.errors.registrationFailed'), { description: t('auth.errors.unexpected') })
     }
   },
 })
@@ -99,13 +102,13 @@ const handleSubmit = (data: RegisterFormData) => {
         class="text-3xl font-emphasis text-foreground dark:text-foreground"
         style="font-feature-settings: 'cv01', 'ss03'; letter-spacing: -0.704px"
       >
-        Create your account
+        {{ t('auth.register.title') }}
       </h1>
       <p
         class="text-base text-muted-foreground dark:text-muted-foreground"
         style="font-feature-settings: 'cv01', 'ss03'"
       >
-        Start tracking your coding time across all devices.
+        {{ t('auth.register.subtitle') }}
       </p>
     </div>
 
@@ -120,13 +123,13 @@ const handleSubmit = (data: RegisterFormData) => {
     <!-- Sign In Link -->
     <div class="pt-2 text-center">
       <p class="text-sm text-muted-foreground dark:text-muted-foreground" style="font-feature-settings: 'cv01', 'ss03'">
-        Already have an account?
+        {{ t('auth.register.haveAccount') }}
         <RouterLink
           :to="{ name: RouteNames.LOGIN }"
           class="ml-1 font-emphasis text-primary underline-offset-4 hover:text-accent hover:underline dark:text-accent dark:hover:text-accent-hover"
           style="font-feature-settings: 'cv01', 'ss03'"
         >
-          Sign in
+          {{ t('auth.register.signInLink') }}
         </RouterLink>
       </p>
     </div>

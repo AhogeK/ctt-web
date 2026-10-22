@@ -1,9 +1,12 @@
 <script setup lang="ts">
+import { useI18n } from 'vue-i18n'
 import { computed } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
 import { RouteNames } from '@/router/route-names'
 import { Button } from '@/components/ui/button'
 import { cn } from '@/lib/utils'
+
+const { t } = useI18n()
 
 const router = useRouter()
 const route = useRoute()
@@ -11,22 +14,22 @@ const route = useRoute()
 const errorCode = computed(() => (route.query.code as string) || 'UNKNOWN_ERROR')
 
 const errorMessages: Record<string, string> = {
-  AUTH_013: 'Authorization session expired. Please try again.',
-  AUTH_015: 'GitHub authorization failed. Please try again.',
-  AUTH_016: 'This GitHub account is already linked to another user.',
-  AUTH_017: 'This GitHub account is not linked to any user.',
-  AUTH_018: 'Cannot unlink the last login method.',
-  AUTH_004: 'Account is temporarily locked. Please try again later.',
-  AUTH_005: 'Account has been disabled. Please contact support.',
-  AUTH_006: 'Please verify your email address first.',
-  AUTH_019: 'Terms of service need to be accepted.',
-  OAUTH_PROVIDER_ERROR: 'GitHub authorization was cancelled or failed.',
-  MISSING_OAUTH_PARAMS: 'Invalid authorization request. Please try again.',
-  INVALID_STATE_ACTION: 'Invalid authorization request. Please try again.',
-  OAUTH_INTERNAL_ERROR: 'Service error. Please try again later.',
+  AUTH_013: 'auth.oauthErrors.sessionExpired',
+  AUTH_015: 'auth.oauthErrors.githubFailed',
+  AUTH_016: 'auth.oauthErrors.linkedOther',
+  AUTH_017: 'auth.oauthErrors.notLinked',
+  AUTH_018: 'auth.oauthErrors.lastMethod',
+  AUTH_004: 'auth.oauthErrors.locked',
+  AUTH_005: 'auth.oauthErrors.disabled',
+  AUTH_006: 'auth.oauthErrors.emailFirst',
+  AUTH_019: 'auth.oauthErrors.termsRequired',
+  OAUTH_PROVIDER_ERROR: 'auth.oauthErrors.cancelled',
+  MISSING_OAUTH_PARAMS: 'auth.oauthErrors.invalidRequest',
+  INVALID_STATE_ACTION: 'auth.oauthErrors.invalidRequest',
+  OAUTH_INTERNAL_ERROR: 'auth.oauthErrors.service',
 }
 
-const errorMessage = computed(() => errorMessages[errorCode.value] || 'An unexpected error occurred. Please try again.')
+const errorMessage = computed(() => t(errorMessages[errorCode.value] ?? 'auth.oauthErrors.fallback'))
 
 function handleRetry() {
   void router.replace({ name: RouteNames.LOGIN })
@@ -45,7 +48,7 @@ function handleGoHome() {
           class="text-2xl font-emphasis text-foreground dark:text-foreground"
           style="font-feature-settings: 'cv01', 'ss03'"
         >
-          Sign in failed
+          {{ t('auth.oauthErrors.title') }}
         </h1>
         <p
           class="text-sm text-muted-foreground dark:text-muted-foreground"
@@ -67,7 +70,7 @@ function handleGoHome() {
           style="font-feature-settings: 'cv01', 'ss03'"
           @click="handleRetry"
         >
-          Try again
+          {{ t('auth.common.tryAgain') }}
         </Button>
         <Button
           variant="ghost"
@@ -75,11 +78,9 @@ function handleGoHome() {
           style="font-feature-settings: 'cv01', 'ss03'"
           @click="handleGoHome"
         >
-          Back to home
+          {{ t('auth.oauthErrors.home') }}
         </Button>
       </div>
-
-      <p class="text-xs text-muted-foreground dark:text-muted-foreground">Error code: {{ errorCode }}</p>
     </div>
   </div>
 </template>

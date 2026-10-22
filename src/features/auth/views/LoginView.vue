@@ -188,13 +188,13 @@ const handleResendVerification = async () => {
         class="text-3xl font-emphasis text-foreground dark:text-foreground"
         style="font-feature-settings: 'cv01', 'ss03'; letter-spacing: -0.704px"
       >
-        Welcome back
+        {{ t('auth.login.title') }}
       </h1>
       <p
         class="text-base text-muted-foreground dark:text-muted-foreground"
         style="font-feature-settings: 'cv01', 'ss03'"
       >
-        Sign in to access your coding analytics dashboard.
+        {{ t('auth.login.subtitle') }}
       </p>
     </div>
 
@@ -210,13 +210,13 @@ const handleResendVerification = async () => {
     <!-- Create Account Link -->
     <div class="pt-2 text-center">
       <p class="text-sm text-muted-foreground dark:text-muted-foreground" style="font-feature-settings: 'cv01', 'ss03'">
-        Don't have an account?
+        {{ t('auth.login.noAccount') }}
         <RouterLink
           :to="{ name: RouteNames.REGISTER }"
           class="ml-1 font-emphasis text-primary underline-offset-4 hover:text-accent hover:underline dark:text-accent dark:hover:text-accent-hover"
           style="font-feature-settings: 'cv01', 'ss03'"
         >
-          Create account
+          {{ t('auth.login.createAccountLink') }}
         </RouterLink>
       </p>
     </div>
