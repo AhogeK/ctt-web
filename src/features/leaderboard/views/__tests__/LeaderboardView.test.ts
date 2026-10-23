@@ -272,6 +272,15 @@ describe('LeaderboardView', () => {
     expect(wrapper.find('[data-testid="period-fixed"]').exists()).toBe(false)
   })
 
+  it('states what the signed GROWTH score means, and only on that dimension', async () => {
+    const wrapper = mountView()
+    // No other dimension prints a signed delta, so the sentence would be noise elsewhere.
+    expect(wrapper.find('[data-testid="growth-hint"]').exists()).toBe(false)
+
+    await wrapper.get('[data-testid="dimension-GROWTH"]').trigger('click')
+    expect(wrapper.get('[data-testid="growth-hint"]').text()).toContain('this period minus the previous one')
+  })
+
   it('ranks ACTIVE_DAYS over every period, like the other measurements', async () => {
     const wrapper = mountView()
     await wrapper.get('[data-testid="dimension-ACTIVE_DAYS"]').trigger('click')

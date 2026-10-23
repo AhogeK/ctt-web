@@ -26,6 +26,7 @@
  * query and needs no second request to a `/me` endpoint.
  */
 import { computed, nextTick, ref, watch } from 'vue'
+import { useI18n } from 'vue-i18n'
 import { AlertCircle, ArrowLeft, ArrowRight, RefreshCw, Trophy as TrophyIcon } from '@lucide/vue'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
@@ -47,6 +48,8 @@ import {
   type LeaderboardDimension,
   type LeaderboardPeriod,
 } from '@/lib/schemas/leaderboard.schema'
+
+const { t } = useI18n()
 
 const dimension = ref<LeaderboardDimension>('TOTAL')
 const period = ref<LeaderboardPeriod>('ALL')
@@ -268,9 +271,9 @@ watch(entries, () => {
   <div class="flex flex-col gap-6 p-6">
     <header class="flex flex-wrap items-end justify-between gap-4">
       <div class="flex flex-col gap-2">
-        <h1 class="text-2xl font-semibold">Leaderboard</h1>
+        <h1 class="text-2xl font-semibold">{{ t('leaderboard.title') }}</h1>
         <p class="text-sm text-muted-foreground">
-          {{ DIMENSION_LABELS[dimension] }} rankings across all tracked coders
+          {{ t('leaderboard.subtitle', { dimension: t(DIMENSION_LABELS[dimension]) }) }}
         </p>
       </div>
 
@@ -289,9 +292,13 @@ watch(entries, () => {
             :class="currentUserRank === null ? 'text-muted-foreground' : 'text-foreground'"
             data-testid="own-rank-value"
           >
-            {{ currentUserRank === null ? 'Not ranked' : `#${currentUserRank} of ${totalParticipants}` }}
+            {{
+              currentUserRank === null
+                ? t('leaderboard.notRanked')
+                : t('leaderboard.rankOf', { rank: currentUserRank, total: totalParticipants })
+            }}
           </span>
-          <span class="text-[11px] text-muted-foreground">your rank</span>
+          <span class="text-[11px] text-muted-foreground">{{ t('leaderboard.yourRank') }}</span>
         </div>
 
         <!-- Only while a rank exists. On a board the reader has not appeared on there is nowhere
@@ -306,7 +313,7 @@ watch(entries, () => {
           @click="jumpToOwnRank"
         >
           <TrophyIcon class="h-4 w-4" aria-hidden="true" />
-          {{ ownRowIsHere ? 'Back to me' : 'Find me' }}
+          {{ ownRowIsHere ? t('leaderboard.backToMe') : t('leaderboard.findMe') }}
         </Button>
       </div>
     </header>
@@ -315,7 +322,7 @@ watch(entries, () => {
          `TrendMonthSelect`, rather than a tablist: there is no tabpanel here, and a
          tablist owes the user arrow-key navigation this row does not implement — an
          affordance that is announced but does not exist is worse than none. -->
-    <div class="flex flex-wrap gap-2" role="group" aria-label="Ranking dimension">
+    <div class="flex flex-wrap gap-2" role="group" :aria-label="t('leaderboard.dimensionGroup')">
       <Button
         v-for="d in dimensions"
         :key="d"
@@ -325,29 +332,37 @@ watch(entries, () => {
         :data-testid="`dimension-${d}`"
         @click="dimension = d"
       >
-        {{ DIMENSION_LABELS[d] }}
+        {{ t(DIMENSION_LABELS[d]) }}
       </Button>
     </div>
 
+    <!-- GROWTH is a signed delta, which no other dimension is: without the sentence, a bare
+         negative number reads as an error rather than "less than the previous period". -->
+    <p v-if="dimension === 'GROWTH'" class="text-xs text-muted-foreground" data-testid="growth-hint">
+      {{ t('leaderboard.growthHint') }}
+    </p>
+
     <!-- Period selector, restricted to what this dimension can actually rank.
          A single legal period renders as a statement, not a one-item menu. -->
-    <div class="flex flex-wrap items-center gap-2" role="group" aria-label="Time period">
-      <span class="text-[11px] text-muted-foreground" aria-hidden="true">Period</span>
+    <div class="flex flex-wrap items-center gap-2" role="group" :aria-label="t('leaderboard.periodGroup')">
+      <span class="text-[11px] text-muted-foreground" aria-hidden="true">{{ t('leaderboard.period') }}</span>
       <template v-if="periodsFor(dimension).length > 1">
         <Button
           v-for="p in periodsFor(dimension)"
           :key="p"
-          :variant="p === effectivePeriod ? 'secondary' : 'ghost'"
+          :variant="p === effectivePeriod ? 'default' : 'ghost'"
           size="sm"
           :aria-pressed="p === effectivePeriod"
           :data-testid="`period-${p}`"
           @click="period = p"
         >
-          {{ PERIOD_LABELS[p] }}
+          {{ t(PERIOD_LABELS[p]) }}
         </Button>
       </template>
       <!-- The one legal period is stated, so it needs no pressed state. -->
-      <Badge v-else variant="outline" data-testid="period-fixed">{{ PERIOD_LABELS[periodsFor(dimension)[0]!] }}</Badge>
+      <Badge v-else variant="outline" data-testid="period-fixed">{{
+        t(PERIOD_LABELS[periodsFor(dimension)[0]!])
+      }}</Badge>
     </div>
 
     <!-- Which board, for the dimension that is partitioned by language. Guarded on a
@@ -365,12 +380,12 @@ watch(entries, () => {
     >
       <AlertCircle class="h-12 w-12 text-destructive" />
       <div class="text-center">
-        <p class="font-medium text-destructive">Failed to load leaderboard</p>
-        <p class="mt-1 text-sm text-muted-foreground">The rankings could not be retrieved.</p>
+        <p class="font-medium text-destructive">{{ t('leaderboard.failedTitle') }}</p>
+        <p class="mt-1 text-sm text-muted-foreground">{{ t('leaderboard.failedBody') }}</p>
       </div>
       <Button variant="outline" size="sm" @click="() => refetch()">
         <RefreshCw class="h-4 w-4" />
-        Retry
+        {{ t('leaderboard.retry') }}
       </Button>
     </div>
 
@@ -387,7 +402,7 @@ watch(entries, () => {
 
     <div v-else-if="isEmpty" class="flex flex-col items-center gap-3 rounded-lg border p-12 text-center">
       <TrophyIcon class="h-12 w-12 text-muted-foreground" aria-hidden="true" />
-      <p class="font-medium">{{ isFirstPage ? 'No one is ranked yet' : 'Nothing more to show' }}</p>
+      <p class="font-medium">{{ isFirstPage ? t('leaderboard.noOne') : t('leaderboard.nothingMore') }}</p>
       <!--
         Two different situations, and saying "no one is ranked" for both would be
         false: either this ranking genuinely has no data, or the reader is past the end
@@ -398,17 +413,21 @@ watch(entries, () => {
       -->
       <p class="max-w-sm text-sm text-muted-foreground">
         <template v-if="isFirstPage">
-          {{ PERIOD_LABELS[effectivePeriod] }} has no {{ DIMENSION_LABELS[dimension].toLowerCase() }} activity. Track
-          coding time to appear here.
+          {{
+            t('leaderboard.emptyRange', {
+              period: t(PERIOD_LABELS[effectivePeriod]),
+              dimension: t(DIMENSION_LABELS[dimension]),
+            })
+          }}
         </template>
-        <template v-else>You have reached the end of this ranking.</template>
+        <template v-else>{{ t('leaderboard.endOfRanking') }}</template>
       </p>
 
       <!-- The way back: without it, that extra click strands the reader on an empty
            list, because the pager itself lives in the non-empty branch below. -->
       <Button v-if="!isFirstPage" variant="outline" size="sm" data-testid="prev-page-empty" @click="prevPage">
         <ArrowLeft class="h-4 w-4" />
-        Back to results
+        {{ t('leaderboard.backToResults') }}
       </Button>
     </div>
 
@@ -463,14 +482,14 @@ watch(entries, () => {
       <div class="flex items-center justify-between gap-3">
         <Button variant="outline" size="sm" :disabled="isFirstPage" data-testid="prev-page" @click="prevPage">
           <ArrowLeft class="h-4 w-4" />
-          Previous
+          {{ t('leaderboard.previous') }}
         </Button>
         <span class="text-[11px] tabular-nums text-muted-foreground" data-testid="page-range">
           {{ offset + 1 }}–{{ offset + entries.length }}
-          <span class="sr-only">ranked coders shown</span>
+          <span class="sr-only">{{ t('leaderboard.shownSr') }}</span>
         </span>
         <Button variant="outline" size="sm" :disabled="!mayHaveNextPage" data-testid="next-page" @click="nextPage">
-          Next
+          {{ t('leaderboard.next') }}
           <ArrowRight class="h-4 w-4" />
         </Button>
       </div>

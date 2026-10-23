@@ -190,20 +190,20 @@ export function requiresLanguage(dimension: LeaderboardDimension): boolean {
  * for a dimension lives in one place.
  */
 export const DIMENSION_LABELS: Record<LeaderboardDimension, string> = {
-  TOTAL: 'Total time',
-  STREAK: 'Streak',
-  NIGHT_OWL: 'Night owl',
-  EARLY_BIRD: 'Early bird',
-  GROWTH: 'Growth',
-  ACTIVE_DAYS: 'Active days',
-  LANGUAGE: 'Language',
+  TOTAL: 'leaderboard.dimensions.total',
+  STREAK: 'leaderboard.dimensions.streak',
+  NIGHT_OWL: 'leaderboard.dimensions.nightOwl',
+  EARLY_BIRD: 'leaderboard.dimensions.earlyBird',
+  GROWTH: 'leaderboard.dimensions.growth',
+  ACTIVE_DAYS: 'leaderboard.dimensions.activeDays',
+  LANGUAGE: 'leaderboard.dimensions.language',
 }
 
 export const PERIOD_LABELS: Record<LeaderboardPeriod, string> = {
-  ALL: 'All time',
-  WEEK: 'This week',
-  MONTH: 'This month',
-  YEAR: 'This year',
+  ALL: 'leaderboard.periods.all',
+  WEEK: 'leaderboard.periods.week',
+  MONTH: 'leaderboard.periods.month',
+  YEAR: 'leaderboard.periods.year',
 }
 
 /**
@@ -218,9 +218,9 @@ export const LANGUAGE_TYPE_ORDER = ['PROGRAMMING', 'MARKUP', 'DATA', 'PROSE', 'O
  * category from silently rendering unlabelled.
  */
 export const LANGUAGE_TYPE_LABELS: Record<LanguageType, string> = {
-  PROGRAMMING: 'Programming languages',
-  MARKUP: 'Markup & styling',
-  DATA: 'Data & config',
-  PROSE: 'Prose & docs',
-  OTHER: 'Other',
+  PROGRAMMING: 'leaderboard.languageTypes.programming',
+  MARKUP: 'leaderboard.languageTypes.markup',
+  DATA: 'leaderboard.languageTypes.data',
+  PROSE: 'leaderboard.languageTypes.prose',
+  OTHER: 'leaderboard.languageTypes.other',
 }
