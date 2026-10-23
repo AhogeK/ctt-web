@@ -17,6 +17,13 @@ export { mapApiErrorCode, getErrorMessage, isApiError, getRetryAfterSeconds } fr
 export type { ApiError, ApiErrorResponse } from './api-error'
 export { encodeBase64, decodeBase64 } from './codec'
 export { getCsrfToken, injectCsrfHeader } from './csrf'
-export { formatRelativeTime, formatDateTime, formatDuration, formatMonthShort, formatWeekdayShort } from './time'
+export {
+  formatRelativeTime,
+  formatDateTime,
+  formatDuration,
+  formatMonthDay,
+  formatMonthShort,
+  formatWeekdayShort,
+} from './time'
 export { formatPercent } from './percent'
 export { formatScore } from './score'

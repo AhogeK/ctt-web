@@ -13,7 +13,7 @@
  */
 import { currentLocale } from '@/i18n/locale'
 
-type DatePart = 'weekdayShort' | 'monthShort'
+type DatePart = 'weekdayShort' | 'monthShort' | 'monthDay'
 
 /** One formatter per (part, locale): constructing Intl formatters is not cheap. */
 const datePartFormatters = new Map<string, Intl.DateTimeFormat>()
@@ -22,7 +22,12 @@ function datePartFormatter(part: DatePart, locale: string): Intl.DateTimeFormat 
   const key = `${part}:${locale}`
   const cached = datePartFormatters.get(key)
   if (cached) return cached
-  const options: Intl.DateTimeFormatOptions = part === 'weekdayShort' ? { weekday: 'short' } : { month: 'short' }
+  const options: Intl.DateTimeFormatOptions =
+    part === 'weekdayShort'
+      ? { weekday: 'short' }
+      : part === 'monthDay'
+        ? { month: 'short', day: 'numeric' }
+        : { month: 'short' }
   const created = new Intl.DateTimeFormat(locale, options)
   datePartFormatters.set(key, created)
   return created
@@ -46,6 +51,16 @@ export function formatWeekdayShort(date: Date): string {
  */
 export function formatMonthShort(date: Date): string {
   return datePartFormatter('monthShort', currentLocale.value).format(date)
+}
+
+/**
+ * Short month and day in the active interface language ("Oct 22" / "10月22日").
+ *
+ * @param date - The day to label
+ * @returns Localized month-and-day label
+ */
+export function formatMonthDay(date: Date): string {
+  return datePartFormatter('monthDay', currentLocale.value).format(date)
 }
 
 /**

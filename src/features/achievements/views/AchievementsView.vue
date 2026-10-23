@@ -18,6 +18,8 @@
  * which is exactly the confusion the split removes.
  */
 import { computed, watch } from 'vue'
+import { useI18n } from 'vue-i18n'
+import { formatMonthDay } from '@/lib/utils'
 import { useIntervalFn, useNow } from '@vueuse/core'
 import { AlertCircle, CalendarClock, RefreshCw, Trophy as TrophyIcon } from '@lucide/vue'
 import { Button } from '@/components/ui/button'
@@ -27,12 +29,13 @@ import TrophyCard from '../components/TrophyCard.vue'
 import {
   buildTrophies,
   byNextWin,
-  formatDaysLeft,
   groupByWindow,
   isClosing,
   splitByWindow,
   trophyTotals,
 } from '../composables/trophy-model'
+
+const { t } = useI18n()
 
 const { data, isPending, isError, refetch } = useStatsAchievements()
 
@@ -77,7 +80,17 @@ const lifetimeTrophies = computed(() => byNextWin(split.value.lifetime))
  * members share, so the range and countdown are stated once per window rather than
  * repeated on every card in it.
  */
-const windowGroups = computed(() => groupByWindow(split.value.active, now.value))
+/** Countdown sentence for the window; null when the response carries no deadline. */
+function daysLeftLabel(daysLeft: number | null): string | null {
+  if (daysLeft === null) return null
+  if (daysLeft === 0) return t('achievements.countdown.endsToday')
+  if (daysLeft === 1) return t('achievements.countdown.oneDay')
+  return t('achievements.countdown.daysLeft', { days: daysLeft })
+}
+
+const windowGroups = computed(() =>
+  groupByWindow(split.value.active, now.value, (month, day) => formatMonthDay(new Date(2020, month, day))),
+)
 
 const totals = computed(() => trophyTotals([...split.value.lifetime, ...split.value.active]))
 
@@ -93,9 +106,9 @@ const isEmpty = computed(() => !isPending.value && !isError.value && totals.valu
   <div class="flex flex-col gap-6 p-6">
     <header class="flex flex-wrap items-end justify-between gap-4">
       <div class="flex flex-col gap-2">
-        <h1 class="text-2xl font-semibold">Achievements</h1>
+        <h1 class="text-2xl font-semibold">{{ t('achievements.page.title') }}</h1>
         <p class="text-sm text-muted-foreground">
-          Trophy families with tiered goals, earned from your tracked coding history
+          {{ t('achievements.page.subtitle') }}
         </p>
       </div>
 
@@ -111,7 +124,9 @@ const isEmpty = computed(() => !isPending.value && !isError.value && totals.valu
           <span class="text-[15px] font-semibold tabular-nums text-foreground">
             {{ totals.earned }} <span class="text-muted-foreground">/ {{ totals.total }}</span>
           </span>
-          <span class="text-[11px] text-muted-foreground">tiers earned · {{ overall }}%</span>
+          <span class="text-[11px] text-muted-foreground">{{
+            t('achievements.page.tiersEarned', { percent: overall })
+          }}</span>
         </div>
       </div>
     </header>
@@ -122,12 +137,12 @@ const isEmpty = computed(() => !isPending.value && !isError.value && totals.valu
     >
       <AlertCircle class="h-12 w-12 text-destructive" />
       <div class="text-center">
-        <p class="font-medium text-destructive">Failed to load achievements</p>
-        <p class="mt-1 text-sm text-muted-foreground">Your trophies could not be retrieved.</p>
+        <p class="font-medium text-destructive">{{ t('achievements.page.errorTitle') }}</p>
+        <p class="mt-1 text-sm text-muted-foreground">{{ t('achievements.page.errorBody') }}</p>
       </div>
       <Button variant="outline" size="sm" @click="() => refetch()">
         <RefreshCw class="h-4 w-4" />
-        Retry
+        {{ t('achievements.page.retry') }}
       </Button>
     </div>
 
@@ -137,9 +152,9 @@ const isEmpty = computed(() => !isPending.value && !isError.value && totals.valu
 
     <div v-else-if="isEmpty" class="flex flex-col items-center gap-3 rounded-lg border p-10 text-center">
       <TrophyIcon class="h-10 w-10 text-muted-foreground/60" aria-hidden="true" />
-      <p class="font-medium">No achievements yet</p>
+      <p class="font-medium">{{ t('achievements.page.emptyTitle') }}</p>
       <p class="max-w-sm text-sm text-muted-foreground">
-        Trophies unlock as you track coding time. Install the editor plugin and start coding to begin earning them.
+        {{ t('achievements.page.emptyBody') }}
       </p>
     </div>
 
@@ -147,8 +162,8 @@ const isEmpty = computed(() => !isPending.value && !isError.value && totals.valu
       <!-- Lifetime: the all-time record. These never reset. -->
       <section v-if="lifetimeTrophies.length > 0" class="flex flex-col gap-3" data-testid="section-lifetime">
         <div class="flex flex-wrap items-baseline justify-between gap-x-3 gap-y-1">
-          <h2 class="text-[15px] font-semibold text-foreground">Lifetime</h2>
-          <p class="text-[11px] text-muted-foreground">Never resets — your all-time record</p>
+          <h2 class="text-[15px] font-semibold text-foreground">{{ t('achievements.page.lifetime') }}</h2>
+          <p class="text-[11px] text-muted-foreground">{{ t('achievements.page.lifetimeHint') }}</p>
         </div>
 
         <div class="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-3">
@@ -162,8 +177,8 @@ const isEmpty = computed(() => !isPending.value && !isError.value && totals.valu
            group — belongs to the window, not to any one trophy in it. -->
       <section v-if="windowGroups.length > 0" class="flex flex-col gap-5" data-testid="section-active">
         <div class="flex flex-col gap-1">
-          <h2 class="text-[15px] font-semibold text-foreground">Current period</h2>
-          <p class="text-[11px] text-muted-foreground">Resets when each period ends — progress starts over</p>
+          <h2 class="text-[15px] font-semibold text-foreground">{{ t('achievements.page.currentPeriod') }}</h2>
+          <p class="text-[11px] text-muted-foreground">{{ t('achievements.page.currentHint') }}</p>
         </div>
 
         <div
@@ -172,7 +187,7 @@ const isEmpty = computed(() => !isPending.value && !isError.value && totals.valu
           class="flex flex-col gap-3"
           :data-window-group="group.window"
           role="group"
-          :aria-label="group.label"
+          :aria-label="t(`achievements.window.${group.window.toLowerCase()}`)"
         >
           <div class="flex flex-wrap items-center gap-x-2.5 gap-y-1">
             <CalendarClock class="h-3.5 w-3.5 shrink-0 text-muted-foreground" aria-hidden="true" />
@@ -185,7 +200,9 @@ const isEmpty = computed(() => !isPending.value && !isError.value && totals.valu
               `role="group"` + `aria-label` conveys the grouping (screen readers
               announce "This week, group") without disturbing h1 → h2 → h3.
             -->
-            <span class="text-[13px] font-semibold text-foreground">{{ group.label }}</span>
+            <span class="text-[13px] font-semibold text-foreground">{{
+              t(`achievements.window.${group.window.toLowerCase()}`)
+            }}</span>
             <!-- The concrete dates being measured. Stated on the group because
                  every trophy inside resets at the same instant. -->
             <span v-if="group.range" class="text-[11px] tabular-nums text-muted-foreground" data-testid="window-range">
@@ -207,7 +224,7 @@ const isEmpty = computed(() => !isPending.value && !isError.value && totals.valu
                  (decoration, rendered by the text engine, mode-independent), which
                  survives greyscale and is not colour-dependent. -->
             <span
-              v-if="formatDaysLeft(group.daysLeft)"
+              v-if="daysLeftLabel(group.daysLeft)"
               class="text-[11px] tabular-nums"
               :class="
                 isClosing(group.daysLeft)
@@ -216,7 +233,7 @@ const isEmpty = computed(() => !isPending.value && !isError.value && totals.valu
               "
               data-testid="window-countdown"
             >
-              {{ formatDaysLeft(group.daysLeft) }}
+              {{ daysLeftLabel(group.daysLeft) }}
             </span>
           </div>
 

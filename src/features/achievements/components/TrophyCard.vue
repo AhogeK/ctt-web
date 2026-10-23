@@ -65,11 +65,21 @@ const progressLabel = computed(() => {
   return next === null ? current : `${current} / ${formatValue(next.target, props.trophy.unit)}`
 })
 
-/** The highest tier earned, named by the server (`7-Day Streak`); null when none. */
+/**
+ * The rung the card's numbers refer to.
+ *
+ * Not the earned tier: the progress figure measures the climb to the **next** rung, so
+ * naming the earned one beside it read as a contradiction ("Three-Day Week · 4 / 5").
+ * The earned tiers stay visible in the header count and the rung strip's tooltips.
+ */
 const tierLabel = computed(() => {
-  const current = props.trophy.currentTier
-  if (current === null) return null
-  return t(codeKey('tiers', current.code), current.displayName)
+  if (props.trophy.maxed) {
+    const current = props.trophy.currentTier
+    return current === null ? null : t(codeKey('tiers', current.code), current.displayName)
+  }
+  const next = props.trophy.nextTier
+  if (next === null) return null
+  return t('achievements.nextTier', { name: t(codeKey('tiers', next.code), next.displayName) })
 })
 
 /** Exact instant the current tier unlocked, for the row's hover title. */
@@ -145,8 +155,9 @@ const streakAriaLabel = computed(() => {
         class="shrink-0 text-[11px] font-semibold tabular-nums"
         :class="trophy.maxed ? 'text-foreground' : 'text-muted-foreground'"
         data-testid="trophy-tier-count"
+        :aria-label="t('achievements.tierCount', { earned: trophy.earned, total: trophy.total })"
       >
-        {{ trophy.earned }}/{{ trophy.total }}
+        {{ t('achievements.tierCount', { earned: trophy.earned, total: trophy.total }) }}
       </span>
     </header>
 

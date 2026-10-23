@@ -366,19 +366,19 @@ describe('formatDaysLeft', () => {
 })
 
 describe('tierProgress', () => {
-  it('measures between the current and next threshold, not against the next alone', () => {
-    // 7 days with tiers 3/7/30: just cleared 7, so 0% into the 7→30 leg.
+  it('measures against the next threshold, matching the printed fraction', () => {
+    // 7 days with tiers 3/7/30: the row prints "7 days / 30 days", so the bar reads 7/30.
     const streak = buildTrophies(payload()).find((t) => t.key === 'STREAK:LIFETIME')!
-    expect(tierProgress(streak)).toBe(0)
+    expect(tierProgress(streak)).toBeCloseTo(7 / 30, 5)
   })
 
-  it('reports partial travel through the current span', () => {
+  it('reports the fraction of the next target reached', () => {
     const streak = buildTrophies([
       badge({ code: 'S1', type: 'STREAK', tier: 1, target: 3, progress: 18, unlocked: true }),
       badge({ code: 'S2', type: 'STREAK', tier: 2, target: 7, progress: 18, unlocked: true }),
       badge({ code: 'S3', type: 'STREAK', tier: 3, target: 30, progress: 18 }),
     ])[0]!
-    expect(tierProgress(streak)).toBeCloseTo(11 / 23, 5)
+    expect(tierProgress(streak)).toBeCloseTo(18 / 30, 5)
   })
 
   it('measures the first tier from zero', () => {
