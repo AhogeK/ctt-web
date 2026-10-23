@@ -186,8 +186,8 @@ const ariaLabel = computed(() => {
  */
 const noteText = computed(() => {
   const parts: string[] = []
-  if (!isNarrow.value) parts.push('\u25cf daily')
-  parts.push('\u2500 7-day average')
+  if (!isNarrow.value) parts.push(`\u25cf ${t('dashboard.longTerm.captionDaily')}`)
+  parts.push(`\u2500 ${t('dashboard.longTerm.sevenDayAverage')}`)
   const mean = windowMean.value
   const level = `\u2504 ${averageLabel.value}`
   parts.push(mean === null ? level : `${level} ${formatAverageDuration(mean)}`)
@@ -218,7 +218,7 @@ function buildOption(points: DailyStatPoint[], weekly: number[], mean: number | 
   const yScale = getHourAxisScale(maxSeconds)
 
   const dots = {
-    name: t('dashboard.common.daily'),
+    name: t('dashboard.longTerm.captionDaily'),
     type: 'scatter',
     symbolSize: 3,
     data: points.map((p) => p.seconds),
@@ -372,7 +372,9 @@ watch(palette, render)
       />
       <span class="shrink-0 font-medium whitespace-nowrap" :class="delta.className">{{ delta.text }}</span>
       <!-- The label is the row's only flexible item — see the summary row's note. -->
-      <span class="min-w-0 truncate text-muted-foreground">{{ ' vs ' + averageLabel }}</span>
+      <span class="min-w-0 truncate text-muted-foreground">{{
+        ' ' + t('dashboard.common.vs') + ' ' + averageLabel
+      }}</span>
     </p>
     <div
       ref="container"
