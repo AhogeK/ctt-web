@@ -34,7 +34,7 @@ pnpm exec playwright test e2e/settings/language.spec.ts --project=chromium
 认证页全套（登录 / 注册 / 忘记 / 两个成功页 / 验证邮箱 / 变更邮箱 / OAuth 回调与错误页 / 重发验证提示）·
 共享错误码表 `api.errors.*`（`mapApiErrorCode` 与 `getErrorMessage`）·
 `CaptchaWidget`（hCaptcha `hl` 跟随界面语言：`en` / `zh-CN`）·
-统计面板（页头 / 筛选器 / 九个面板标题 / 图表提示与无障碍摘要 / 年月选择器）·
+统计面板（页头 / 筛选器 / 九个面板标题 / 图表提示与无障碍摘要 / 年月选择器 / 图例单位词 / 时段命名）·
 成就页（页头 / 汇总 / 分区 / 倒计时 / 67 个阶梯名按代码映射）·
 认证卡片展示层 `AuthDashboard` / `AuthMetricsCard` / `AuthTerminalCard`（品牌名、URL、语言名、终端标题保留英文）
 
