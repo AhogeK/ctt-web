@@ -78,7 +78,9 @@ interface Palette {
   labelStrong: string
 }
 
-const LEGEND_LABELS = ['< 15 min', '15–60 min', '1–2 h', '2–5 h', '5–8 h', '> 8 h'] as const
+const LEGEND_KEYS = ['legend1', 'legend2', 'legend3', 'legend4', 'legend5', 'legend6'] as const
+/** Duration bands for the legend, in the reader's language. */
+const legendLabels = computed(() => LEGEND_KEYS.map((k) => t(`dashboard.heatmap.${k}`)))
 
 const palette = computed<Palette>(() => {
   const dark = theme.isDark
@@ -445,7 +447,7 @@ watch(palette, render)
           aria-hidden="true"
         />{{ t('dashboard.common.noCoding') }}
       </span>
-      <span v-for="(label, i) in LEGEND_LABELS" :key="label" class="flex items-center gap-1.5">
+      <span v-for="(label, i) in legendLabels" :key="label" class="flex items-center gap-1.5">
         <span
           class="inline-block h-3 w-3 shrink-0 rounded-[3px]"
           :style="{ background: palette.buckets[i] ?? palette.buckets[0] }"
@@ -481,9 +483,10 @@ watch(palette, render)
         >{{ t('dashboard.heatmap.activeDays') }} <span class="tabular-nums">{{ activeDays }}</span></span
       >
       <span v-if="streaks.data.value">
-        {{ t('dashboard.heatmap.maxStreak') }} <span class="tabular-nums">{{ streaks.data.value.max }}d</span> ·
+        {{ t('dashboard.heatmap.maxStreak') }}
+        <span class="tabular-nums">{{ t('dashboard.heatmap.days', { days: streaks.data.value.max }) }}</span> ·
         {{ t('dashboard.heatmap.currentStreak') }}:
-        <span class="tabular-nums">{{ streaks.data.value.current }}d</span>
+        <span class="tabular-nums">{{ t('dashboard.heatmap.days', { days: streaks.data.value.current }) }}</span>
       </span>
     </div>
   </div>

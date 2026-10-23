@@ -331,8 +331,13 @@ watch(palette, render)
       :aria-label="ariaLabel"
     />
     <p class="mt-1 text-center text-[10px] tracking-wide" :style="{ color: palette.noteText }">
-      based on {{ activeDays }} active day{{ activeDays === 1 ? '' : 's'
-      }}<template v-if="!isNarrow && dayLines.length"> · faint lines: the last {{ dayLines.length }} days</template>
+      {{
+        t(activeDays === 1 ? 'dashboard.hourly.byActiveDaysOne' : 'dashboard.hourly.byActiveDaysMany', {
+          days: activeDays,
+        })
+      }}<template v-if="!isNarrow && dayLines.length">
+        · {{ t('dashboard.hourly.footerLines', { days: dayLines.length }) }}</template
+      >
     </p>
   </div>
 </template>
