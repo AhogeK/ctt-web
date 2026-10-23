@@ -426,14 +426,14 @@ describe('AchievementsView', () => {
     expect(polyglot.find('[data-testid="trophy-progress-bar"]').exists()).toBe(false)
   })
 
-  it('measures progress toward the next tier, not the current one', () => {
+  it('draws the same fraction the row prints', () => {
     data = serverPayload()
     const wrapper = mountView()
 
-    // Streak is at 7 days having cleared 3 and 7; the next rung is 30, and the
-    // bar is anchored at 7, so it sits at 0% — not 23% (7/30) and not 100% (7/7).
+    // Streak is at 7 days, next rung 30: the row prints "7 days / 30 days", so the
+    // bar must read 23% — a bar that disagreed with its own numbers was the bug.
     const bar = wrapper.get('[data-trophy="STREAK:LIFETIME"] [data-testid="trophy-progress-bar"]')
-    expect(bar.attributes('style')).toContain('width: 0%')
+    expect(bar.attributes('style')).toContain('width: 23%')
   })
 
   it('formats a seconds-based measurement through the duration formatter', () => {
@@ -492,7 +492,7 @@ describe('AchievementsView', () => {
     expect(daily.attributes('data-window')).toBe('DAY')
     // Its own ladder only: two daily rungs, not the lifetime ladder's three plus
     // these appended as tiers 4-5 (which is what grouping by `type` alone did).
-    expect(daily.get('[data-testid="trophy-tier-count"]').text()).toBe('0/2')
+    expect(daily.get('[data-testid="trophy-tier-count"]').text()).toBe('0/2 tiers')
   })
 
   it('shows the empty state when the account has no badges', () => {

@@ -516,7 +516,11 @@ export interface WindowGroup {
  * with no timer would leave a page open across midnight showing yesterday's
  * countdown.
  */
-export function groupByWindow(trophies: Trophy[], now: Date = new Date()): WindowGroup[] {
+export function groupByWindow(
+  trophies: Trophy[],
+  now: Date = new Date(),
+  dayLabel: (monthIndex: number, day: number) => string = (m, d) => `${MONTH_ABBR[m] ?? ''} ${d}`,
+): WindowGroup[] {
   const groups = new Map<AchievementWindow, Trophy[]>()
   for (const trophy of trophies) {
     const bucket = groups.get(trophy.window)
@@ -541,7 +545,7 @@ export function groupByWindow(trophies: Trophy[], now: Date = new Date()): Windo
       return {
         window,
         label: WINDOW_PRESENTATION[window].label,
-        range: formatWindowRange(start, end),
+        range: formatWindowRange(start, end, dayLabel),
         daysLeft,
         trophies: byNextWin(items),
       }
@@ -583,16 +587,20 @@ function parseLocalDate(iso: string | null): { y: number; m: number; d: number }
  * begins), and keeps both years only when the range crosses one — which an ISO week
  * at a year boundary does (`Dec 29, 2025 – Jan 4, 2026`).
  */
-export function formatWindowRange(start: string | null, end: string | null): string | null {
+export function formatWindowRange(
+  start: string | null,
+  end: string | null,
+  dayLabel: (monthIndex: number, day: number) => string = (m, d) => `${MONTH_ABBR[m] ?? ''} ${d}`,
+): string | null {
   const from = parseLocalDate(start)
   const to = parseLocalDate(end)
   if (from === null || to === null) return null
 
   const sameYear = from.y === to.y
   const suffix = (part: { y: number }) => (sameYear ? '' : `, ${part.y}`)
-  const left = `${MONTH_ABBR[from.m - 1]} ${from.d}${suffix(from)}`
+  const left = `${dayLabel(from.m - 1, from.d)}${suffix(from)}`
   if (sameYear && from.m === to.m && from.d === to.d) return left
-  return `${left} – ${MONTH_ABBR[to.m - 1]} ${to.d}${suffix(to)}`
+  return `${left} – ${dayLabel(to.m - 1, to.d)}${suffix(to)}`
 }
 
 /**
@@ -652,10 +660,11 @@ export function formatDaysLeft(daysLeft: number | null): string | null {
 export function tierProgress(trophy: Trophy): number {
   const next = trophy.nextTier
   if (next === null) return 1
-  const floor = trophy.currentTier?.target ?? 0
-  const span = next.target - floor
-  if (span <= 0) return 1
-  return Math.min(1, Math.max(0, (trophy.progress - floor) / span))
+  if (next.target <= 0) return 1
+  // The bar draws the same fraction the row prints (`4 days / 5 days` → 80%).
+  // Measuring between rungs instead made a 4/5 row render at 50%, which read as a
+  // contradiction: the number and the bar have to describe one distance.
+  return Math.min(1, Math.max(0, trophy.progress / next.target))
 }
 
 /** Totals for the page header. */
@@ -670,7 +679,7 @@ export function trophyTotals(trophies: Trophy[]): { earned: number; total: numbe
  * Trophies ordered for display: closest to its next rung first, ties alphabetical,
  * completed ladders last.
  *
- * Closeness is measured as **fraction of the current span travelled**
+ * Closeness is measured as the **fraction of the next rung's target reached**
  * (`tierProgress`), never as `next.target - progress`. The latter compares raw
  * values across families whose units differ — one *month* short and two *days*
  * short are not comparable quantities, and sorting on them put a barely-started

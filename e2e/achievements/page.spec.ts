@@ -20,7 +20,7 @@ test.describe('Achievements page', () => {
     // one ladder each. One card per ladder, never one per badge.
     await expect(page.getByTestId('trophy-card')).toHaveCount(5)
     await expect(page.getByTestId('trophy-card').filter({ hasText: 'Streak' })).toHaveCount(1)
-    await expect(page.getByText('2/2')).toBeVisible()
+    await expect(page.getByTestId('trophy-tier-count').filter({ hasText: '2/2 tiers' }).first()).toBeVisible()
   })
 
   test('mounts inside the app shell, not as a bare view', async ({ page }) => {
@@ -164,7 +164,7 @@ test.describe('Achievements page', () => {
 
     await expect(page.getByTestId('trophy-card')).toHaveCount(1)
     await expect(page.getByTestId('trophy-history')).toBeVisible()
-    await expect(page.getByTestId('trophy-tier-count')).toHaveText('0/1')
+    await expect(page.getByTestId('trophy-tier-count')).toHaveText('0/1 tiers')
   })
 
   test('keeps the trophy grid free of overflow', async ({ page }) => {
