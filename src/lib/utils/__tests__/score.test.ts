@@ -1,4 +1,5 @@
 import { describe, expect, it } from 'vitest'
+import { currentLocale, setLocale } from '@/i18n'
 import { formatScore } from '../score'
 
 describe('formatScore', () => {
@@ -40,4 +41,16 @@ describe('formatScore', () => {
     // exists to remove in the first place.
     expect(formatScore(0, 'GROWTH')).toBe('0s')
   })
+})
+
+it('uses Chinese unit words when the interface language is Chinese', async () => {
+  const previous = currentLocale.value
+  await setLocale('zh-CN')
+  try {
+    expect(formatScore(2_484_000, 'TOTAL')).toBe('690 小时')
+    expect(formatScore(33, 'STREAK')).toBe('33 天')
+    expect(formatScore(5400, 'GROWTH')).toBe('+1 小时 30 分')
+  } finally {
+    await setLocale(previous)
+  }
 })

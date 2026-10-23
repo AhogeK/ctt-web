@@ -21,6 +21,7 @@
  * The selected board is the parent's state, via `v-model:language`.
  */
 import { computed } from 'vue'
+import { useI18n } from 'vue-i18n'
 import {
   Select,
   SelectContent,
@@ -33,6 +34,8 @@ import {
   SelectValue,
 } from '@/components/ui/select'
 import { LANGUAGE_TYPE_LABELS, type LanguageBoardGroup } from '../composables/useLeaderboard'
+
+const { t } = useI18n()
 
 const props = defineProps<{
   /** Selected board name, or null while none is chosen */
@@ -63,10 +66,12 @@ const model = computed({
   <div class="flex items-center gap-2">
     <!-- Decorative: the trigger carries the accessible name, and repeating it would make
          screen readers announce "Language" twice. Same arrangement as the period row. -->
-    <span class="text-[11px] text-muted-foreground" aria-hidden="true">Language</span>
+    <span class="text-[11px] text-muted-foreground" aria-hidden="true">{{
+      t('leaderboard.languageSelect.label')
+    }}</span>
     <Select v-model="model">
-      <SelectTrigger class="w-56" aria-label="Language board" data-testid="language-select">
-        <SelectValue placeholder="Select a language" />
+      <SelectTrigger class="w-56" :aria-label="t('leaderboard.languageSelect.board')" data-testid="language-select">
+        <SelectValue :placeholder="t('leaderboard.languageSelect.placeholder')" />
       </SelectTrigger>
       <!--
         Bounded height, and scrollable: the catalogue is the whole vocabulary — around 842
@@ -80,7 +85,7 @@ const model = computed({
       -->
       <SelectContent class="max-h-72">
         <SelectGroup v-for="group in props.groups" :key="group.type">
-          <SelectLabel>{{ LANGUAGE_TYPE_LABELS[group.type] }}</SelectLabel>
+          <SelectLabel>{{ t(LANGUAGE_TYPE_LABELS[group.type]) }}</SelectLabel>
           <SelectItem
             v-for="board in group.withMembers"
             :key="board.name"
