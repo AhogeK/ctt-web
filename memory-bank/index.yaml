@@ -58,7 +58,7 @@ domains:
     memory-bank/domains/backend-contract/meta.md: 95
     memory-bank/domains/backend-contract/practices.md: 95
     memory-bank/domains/backend-contract/principles.md: 69
-    memory-bank/domains/backend-contract/references.md: 192
+    memory-bank/domains/backend-contract/references.md: 195
     memory-bank/domains/backend-contract/scenarios.md: 73
   dashboard-visualization:
     memory-bank/domains/dashboard-visualization/meta.md: 96

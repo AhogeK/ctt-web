@@ -165,7 +165,7 @@ brief 模板与**已命中的范例** → `~/.agents/skills/problem-report/`（�
 
 ### R25: AI 产物位置（强制）
 
-`docs/` 只放**面向用户**文档；AI 产物放 `.omp/`（**根目录只留目录级文件** ✓ 分类归子目录 ✓）：计划 `.omp/plans/<feature>-plan.md`（不带日期）· 问题报告 `.omp/report/<YYYY-MM-DD>/`（按日期归档 ✓ 索引 `.omp/report/README.md` ✓） · 交付报告 `.omp/delivery/` · 需求草稿 `.omp/requirements/` · 设计草稿 `.omp/design/` · 目视 QA `.omp/qa/`（权威与新旧对照 → `.omp/README.md` ✓）· 记忆 `memory-bank/`（**需提交**）· **工具脚本在公共包 `~/.omp/packages/session-discipline/tools/`（本仓库不再有）**。
+`docs/` 只放**面向用户**文档；AI 产物放 `.omp/`（**根目录只留目录级文件** ✓ 分类归子目录 ✓）：计划 `.omp/plans/<feature>-plan.md`（不带日期）· 问题报告 `.omp/report/<YYYY-MM-DD>/`（按日期归档 ✓ 索引 `.omp/report/README.md` ✓） · 交付报告 `.omp/delivery/` · 需求草稿 `.omp/requirements/<YYYY-MM-DD>/`（**按天归档、正文中文、一份新需求一个新文件**，不得在旧文件上反复追加） · 设计草稿 `.omp/design/` · 目视 QA `.omp/qa/`（权威与新旧对照 → `.omp/README.md` ✓）· 记忆 `memory-bank/`（**需提交**）· **工具脚本在公共包 `~/.omp/packages/session-discipline/tools/`（本仓库不再有）**。
 **红线**：禁止把实施计划写进 `docs/plans/`。
 
 ### R26: AI 索引（强制）
