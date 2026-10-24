@@ -403,7 +403,6 @@ const zhCN: Messages = {
     backToMe: '回到我',
     notRanked: '未上榜',
     rankOf: '第 {rank} 名 / 共 {total} 人',
-    growthHint: '成长排行按「本期时长 − 上期时长」计算：正数表示比上一期多，负数表示比上一期少。',
     dimensionGroup: '排行维度',
     periodGroup: '时间范围',
     period: '时间范围',
@@ -429,6 +428,8 @@ const zhCN: Messages = {
     periods: {
       all: '全部时间',
       week: '本周',
+      quarter: '本季',
+      halfYear: '半年',
       month: '本月',
       year: '今年',
     },

@@ -65,14 +65,13 @@ test.describe('Leaderboard page', () => {
     const setup = await setupLeaderboardPage(page)
     await expectLeaderboardRendered(page)
 
-    // Each dimension is locked to a single period where the server only allows one.
+    // Every chip the selector offers must be legal for the active dimension.
     for (const [dimension, allowed] of [
-      ['STREAK', ['ALL']],
-      ['NIGHT_OWL', ['ALL', 'WEEK', 'MONTH', 'YEAR']],
-      ['EARLY_BIRD', ['ALL', 'WEEK', 'MONTH', 'YEAR']],
-      ['GROWTH', ['WEEK', 'MONTH', 'YEAR']],
-      ['ACTIVE_DAYS', ['ALL', 'WEEK', 'MONTH', 'YEAR']],
-      ['TOTAL', ['ALL', 'WEEK', 'MONTH', 'YEAR']],
+      ['STREAK', ['ALL', 'WEEK', 'MONTH', 'QUARTER', 'HALF_YEAR', 'YEAR']],
+      ['NIGHT_OWL', ['ALL', 'WEEK', 'MONTH', 'QUARTER', 'HALF_YEAR', 'YEAR']],
+      ['EARLY_BIRD', ['ALL', 'WEEK', 'MONTH', 'QUARTER', 'HALF_YEAR', 'YEAR']],
+      ['ACTIVE_DAYS', ['ALL', 'MONTH', 'QUARTER', 'HALF_YEAR', 'YEAR']],
+      ['TOTAL', ['ALL', 'WEEK', 'MONTH', 'QUARTER', 'HALF_YEAR', 'YEAR']],
     ] as const) {
       setup.setPayload(TEST_LEADERBOARD_PAGE)
       await page.getByTestId(`dimension-${dimension}`).click()
@@ -94,13 +93,12 @@ test.describe('Leaderboard page', () => {
       const params = sent.at(-1)!
 
       /*
-       * A single-period dimension states the period instead of offering buttons; a
-       * dimension with a real choice shows the buttons. Both are asserted as counts
-       * rather than in an if/else, so neither case can be skipped silently.
+       * Every dimension the page offers has more than one period, so the selector must
+       * be present and the chosen period must be the pressed chip. Asserted as counts
+       * rather than by visibility, so a missing control cannot pass silently.
        */
-      const expectsSelector = allowed.length > 1
-      await expect(page.getByTestId('period-fixed')).toHaveCount(expectsSelector ? 0 : 1)
-      await expect(page.getByTestId(`period-${params.get('period')}`)).toHaveCount(expectsSelector ? 1 : 0)
+      await expect(page.getByTestId('period-fixed')).toHaveCount(0)
+      await expect(page.getByTestId(`period-${params.get('period')}`)).toHaveCount(1)
     }
   })
 
@@ -444,16 +442,19 @@ test.describe('Leaderboard page', () => {
     await expect(page.getByTestId('period-WEEK')).toBeVisible()
     await expect(page.getByTestId('period-fixed')).toBeHidden()
 
-    // GROWTH has windows but never ALL — an unbounded history is meaningless for a
-    // period-over-period delta, and the pair would be a 400.
-    await page.getByTestId('dimension-GROWTH').click()
-    await expect(page.getByTestId('period-ALL')).toBeHidden()
-    await expect(page.getByTestId('period-WEEK')).toBeVisible()
+    // ACTIVE_DAYS drops the week: a weekly active-days board saturates at 7/7 once the
+    // ranking has engaged users. Month, year and all time remain.
+    await page.getByTestId('dimension-ACTIVE_DAYS').click()
+    await expect(page.getByTestId('period-WEEK')).toBeHidden()
+    await expect(page.getByTestId('period-MONTH')).toBeVisible()
+    await expect(page.getByTestId('period-ALL')).toBeVisible()
 
-    // STREAK is the single-period dimension: stated, not offered.
+    // STREAK gained windowed scores; WEEK stays out of the page because a seven-day
+    // window ties every engaged user at 7.
     await page.getByTestId('dimension-STREAK').click()
     await expect(page.getByTestId('period-WEEK')).toBeHidden()
-    await expect(page.getByTestId('period-fixed')).toHaveText('All time')
+    await expect(page.getByTestId('period-MONTH')).toBeVisible()
+    await expect(page.getByTestId('period-fixed')).toBeHidden()
   })
 
   test('keeps the row list free of overflow', async ({ page }) => {
@@ -492,7 +493,7 @@ test.describe('Leaderboard page', () => {
       })
     })
 
-    await page.getByTestId('dimension-GROWTH').click()
+    await page.getByTestId('dimension-NIGHT_OWL').click()
 
     // The previous board is still on screen, marked as not-yet-current rather than removed.
     await expect(page.getByTestId('leaderboard-entry').first()).toBeVisible()
