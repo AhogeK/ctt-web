@@ -9,9 +9,10 @@
  * comes from that single response; the endpoints and the fields an earlier draft assumed
  * (`totalMinutes`, `totalUsers`, `updatedAt`, `avatarUrl`) do not exist.
  *
- * Dimensions are not interchangeable: `STREAK` is only ranked over all time, and
- * `GROWTH` only over a bounded window. The period selector is therefore built from
- * `periodsFor(dimension)` rather than offering the full cross-product, which would let
+ * Dimensions are not interchangeable: `GROWTH` is only ranked over a bounded window and
+ * `LANGUAGE` needs a board, and the page withholds `WEEK` for `ACTIVE_DAYS` and `STREAK`
+ * because a seven-day board saturates at 7/7. The period selector is therefore built from
+ * `uiPeriodsFor(dimension)` rather than offering the full cross-product, which would let
  * the user request a pair the server rejects with HTTP 400 (`COMMON_003`).
  *
  * `LANGUAGE` is the one dimension partitioned by language: it needs a board name, and
@@ -36,15 +37,16 @@ import { formatScore } from '@/lib/utils'
 import LanguageSelect from '../components/LanguageSelect.vue'
 import {
   DIMENSION_LABELS,
+  UI_DIMENSIONS,
   PERIOD_LABELS,
-  periodsFor,
+  uiPeriodsFor,
+  uiDefaultPeriodFor,
   requiresLanguage,
   useLeaderboard,
   useLeaderboardLanguages,
 } from '../composables/useLeaderboard'
 import {
   LEADERBOARD_PAGE_SIZE,
-  defaultPeriodFor,
   type LeaderboardDimension,
   type LeaderboardPeriod,
 } from '@/lib/schemas/leaderboard.schema'
@@ -86,9 +88,7 @@ const { boards: languageBoards, grouped: languageGroups } = useLeaderboardLangua
  * a supplementary selector is not worth an error state of its own.
  */
 const dimensions = computed<LeaderboardDimension[]>(() =>
-  (Object.keys(DIMENSION_LABELS) as LeaderboardDimension[]).filter(
-    (candidate) => !requiresLanguage(candidate) || languageBoards.value.length > 0,
-  ),
+  UI_DIMENSIONS.filter((candidate) => !requiresLanguage(candidate) || languageBoards.value.length > 0),
 )
 
 /**
@@ -99,9 +99,9 @@ const dimensions = computed<LeaderboardDimension[]>(() =>
  * that does not have them.
  */
 watch(dimension, () => {
-  // `defaultPeriodFor` rather than indexing the legal list here: the reset and the
+  // `uiDefaultPeriodFor` rather than indexing the offered list here: the reset and the
   // composable's fallback must agree on which period wins, so there is one definition.
-  period.value = defaultPeriodFor(dimension.value)
+  period.value = uiDefaultPeriodFor(dimension.value)
   offset.value = 0
 })
 watch(period, () => {
@@ -280,41 +280,52 @@ watch(entries, () => {
       <!-- The caller's own rank. Null means this board has no activity for them, which is
            ordinary rather than a failure — so it is stated. Rendering nothing left the reader
            unable to tell "you are not on this board" from "this did not load". -->
-      <div class="flex items-center gap-3" data-testid="own-rank">
-        <TrophyIcon
-          class="h-5 w-5 text-muted-foreground"
-          :class="currentUserRank === null ? 'opacity-40' : ''"
-          aria-hidden="true"
-        />
-        <div class="flex flex-col">
-          <span
-            class="text-[15px] font-semibold tabular-nums"
-            :class="currentUserRank === null ? 'text-muted-foreground' : 'text-foreground'"
-            data-testid="own-rank-value"
-          >
-            {{
-              currentUserRank === null
-                ? t('leaderboard.notRanked')
-                : t('leaderboard.rankOf', { rank: currentUserRank, total: totalParticipants })
-            }}
-          </span>
-          <span class="text-[11px] text-muted-foreground">{{ t('leaderboard.yourRank') }}</span>
+      <div
+        class="flex flex-wrap items-center gap-x-4 gap-y-2 rounded-lg border border-border/60 bg-muted/30 px-3 py-2"
+        data-testid="own-rank"
+      >
+        <div class="flex items-center gap-2.5">
+          <TrophyIcon
+            class="h-5 w-5 text-muted-foreground"
+            :class="currentUserRank === null ? 'opacity-40' : ''"
+            aria-hidden="true"
+          />
+          <div class="flex flex-col leading-tight">
+            <span class="text-[10px] uppercase tracking-wider text-muted-foreground">
+              {{ t('leaderboard.yourRank') }}
+            </span>
+            <span
+              class="text-[15px] font-semibold tabular-nums"
+              :class="currentUserRank === null ? 'text-muted-foreground' : 'text-foreground'"
+              data-testid="own-rank-value"
+            >
+              {{
+                currentUserRank === null
+                  ? t('leaderboard.notRanked')
+                  : t('leaderboard.rankOf', { rank: currentUserRank, total: totalParticipants })
+              }}
+            </span>
+          </div>
         </div>
 
         <!-- Only while a rank exists. On a board the reader has not appeared on there is nowhere
              to jump, and a disabled control would pose a question with no answer — the panel
-             beside it already states "Not ranked". -->
-        <Button
-          v-if="currentUserRank !== null"
-          variant="outline"
-          size="sm"
-          :disabled="isPlaceholderData"
-          data-testid="jump-to-my-rank"
-          @click="jumpToOwnRank"
-        >
-          <TrophyIcon class="h-4 w-4" aria-hidden="true" />
-          {{ ownRowIsHere ? t('leaderboard.backToMe') : t('leaderboard.findMe') }}
-        </Button>
+             beside it already states "Not ranked". The control is a text action, not a second
+             badge: the trophy belongs to the rank, not to the button. -->
+        <template v-if="currentUserRank !== null">
+          <span class="hidden h-8 w-px bg-border sm:block" aria-hidden="true" />
+          <Button
+            variant="ghost"
+            size="sm"
+            class="gap-1.5 text-muted-foreground hover:text-foreground"
+            :disabled="isPlaceholderData"
+            data-testid="jump-to-my-rank"
+            @click="jumpToOwnRank"
+          >
+            {{ ownRowIsHere ? t('leaderboard.backToMe') : t('leaderboard.findMe') }}
+            <ArrowRight class="h-3.5 w-3.5" aria-hidden="true" />
+          </Button>
+        </template>
       </div>
     </header>
 
@@ -336,19 +347,13 @@ watch(entries, () => {
       </Button>
     </div>
 
-    <!-- GROWTH is a signed delta, which no other dimension is: without the sentence, a bare
-         negative number reads as an error rather than "less than the previous period". -->
-    <p v-if="dimension === 'GROWTH'" class="text-xs text-muted-foreground" data-testid="growth-hint">
-      {{ t('leaderboard.growthHint') }}
-    </p>
-
     <!-- Period selector, restricted to what this dimension can actually rank.
          A single legal period renders as a statement, not a one-item menu. -->
     <div class="flex flex-wrap items-center gap-2" role="group" :aria-label="t('leaderboard.periodGroup')">
       <span class="text-[11px] text-muted-foreground" aria-hidden="true">{{ t('leaderboard.period') }}</span>
-      <template v-if="periodsFor(dimension).length > 1">
+      <template v-if="uiPeriodsFor(dimension).length > 1">
         <Button
-          v-for="p in periodsFor(dimension)"
+          v-for="p in uiPeriodsFor(dimension)"
           :key="p"
           :variant="p === effectivePeriod ? 'default' : 'ghost'"
           size="sm"
@@ -361,7 +366,7 @@ watch(entries, () => {
       </template>
       <!-- The one legal period is stated, so it needs no pressed state. -->
       <Badge v-else variant="outline" data-testid="period-fixed">{{
-        t(PERIOD_LABELS[periodsFor(dimension)[0]!])
+        t(PERIOD_LABELS[uiPeriodsFor(dimension)[0]!])
       }}</Badge>
     </div>
 

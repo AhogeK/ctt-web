@@ -15,7 +15,6 @@ import { leaderboardKeys } from '@/lib/query-keys'
 import {
   DIMENSION_PERIODS,
   LEADERBOARD_PAGE_SIZE,
-  defaultPeriodFor,
   type LanguageBoard,
   type LanguageType,
   type LeaderboardDimension,
@@ -69,7 +68,7 @@ export function useLeaderboard(
 ) {
   const effectivePeriod = computed<LeaderboardPeriod>(() => {
     const legal = DIMENSION_PERIODS[dimension.value]
-    return legal.includes(period.value) ? period.value : defaultPeriodFor(dimension.value)
+    return legal.includes(period.value) ? period.value : uiDefaultPeriodFor(dimension.value)
   })
 
   /**
@@ -168,11 +167,52 @@ export function groupLanguageBoards(boards: readonly LanguageBoard[]): LanguageB
 }
 
 /**
- * Legal periods for a dimension — drives the period selector so it can never offer a
- * choice the server would reject.
+ * Dimensions this page offers.
+ *
+ * GROWTH is deliberately absent. Its score is the **absolute** net change against the
+ * immediately preceding period, so a 1% rise on a heavy user's history outranks a
+ * doubling from a small one — it ranks prior volume, not improvement — and a board
+ * dominated by negative rows needs a sentence of explanation before it means anything.
+ * The endpoint keeps serving it for API consumers; the page does not present it.
  */
-export function periodsFor(dimension: LeaderboardDimension): readonly LeaderboardPeriod[] {
-  return DIMENSION_PERIODS[dimension]
+export const UI_DIMENSIONS: readonly LeaderboardDimension[] = [
+  'TOTAL',
+  'STREAK',
+  'NIGHT_OWL',
+  'EARLY_BIRD',
+  'ACTIVE_DAYS',
+  'LANGUAGE',
+]
+
+/**
+ * Periods the page offers per dimension — the server's legal set with two product
+ * adjustments. ACTIVE_DAYS drops WEEK because a weekly board saturates at 7/7 as soon
+ * as a ranking has engaged users, and orders MONTH first so the default is a window
+ * that still separates people.
+ */
+const UI_PERIODS: Record<LeaderboardDimension, readonly LeaderboardPeriod[]> = {
+  ...DIMENSION_PERIODS,
+  // ALL first, like every other dimension: the order is the reading order, and a list whose
+  // first chip differs from the rest reads as a different kind of control.
+  ACTIVE_DAYS: ['ALL', 'MONTH', 'QUARTER', 'HALF_YEAR', 'YEAR'],
+  // The server supports WEEK for streaks, but a seven-day window caps every engaged user at 7
+  // and the board becomes a tie list: the page offers the longer windows only.
+  STREAK: ['ALL', 'MONTH', 'QUARTER', 'HALF_YEAR', 'YEAR'],
+}
+
+/** Dimensions whose default is not the first chip — stated once, not implied by order. */
+const UI_DEFAULT_PERIODS: Partial<Record<LeaderboardDimension, LeaderboardPeriod>> = {
+  ACTIVE_DAYS: 'MONTH',
+}
+
+/** Periods offered for a dimension (UI policy, always a subset of the server's legal set). */
+export function uiPeriodsFor(dimension: LeaderboardDimension): readonly LeaderboardPeriod[] {
+  return UI_PERIODS[dimension]
+}
+
+/** Default period for a dimension: the stated default, else the first chip. */
+export function uiDefaultPeriodFor(dimension: LeaderboardDimension): LeaderboardPeriod {
+  return UI_DEFAULT_PERIODS[dimension] ?? UI_PERIODS[dimension][0]!
 }
 
 /**
@@ -203,6 +243,8 @@ export const PERIOD_LABELS: Record<LeaderboardPeriod, string> = {
   ALL: 'leaderboard.periods.all',
   WEEK: 'leaderboard.periods.week',
   MONTH: 'leaderboard.periods.month',
+  QUARTER: 'leaderboard.periods.quarter',
+  HALF_YEAR: 'leaderboard.periods.halfYear',
   YEAR: 'leaderboard.periods.year',
 }
 

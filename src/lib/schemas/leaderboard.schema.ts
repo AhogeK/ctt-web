@@ -26,40 +26,31 @@ export const LeaderboardDimensionSchema = z.enum([
 export type LeaderboardDimension = z.infer<typeof LeaderboardDimensionSchema>
 
 /** Time window the ranking covers. */
-export const LeaderboardPeriodSchema = z.enum(['ALL', 'WEEK', 'MONTH', 'YEAR'])
+export const LeaderboardPeriodSchema = z.enum(['ALL', 'WEEK', 'MONTH', 'QUARTER', 'HALF_YEAR', 'YEAR'])
 export type LeaderboardPeriod = z.infer<typeof LeaderboardPeriodSchema>
 
 /**
  * Periods each dimension can actually be ranked over.
  *
  * Not a free cross-product: the server rejects illegal pairs with **HTTP 400
- * `COMMON_003`** ("Dimension STREAK does not support period WEEK", measured). These
+ * `COMMON_003`** ("Dimension GROWTH does not support period ALL", measured). These
  * are the server's own `LeaderboardDimension.supports` rules, encoded here so the
  * UI cannot construct a request the server will refuse — a disabled selector is
  * better than an error the user cannot act on.
  */
 export const DIMENSION_PERIODS: Record<LeaderboardDimension, readonly LeaderboardPeriod[]> = {
-  TOTAL: ['ALL', 'WEEK', 'MONTH', 'YEAR'],
-  STREAK: ['ALL'],
-  NIGHT_OWL: ['ALL', 'WEEK', 'MONTH', 'YEAR'],
-  EARLY_BIRD: ['ALL', 'WEEK', 'MONTH', 'YEAR'],
+  TOTAL: ['ALL', 'WEEK', 'MONTH', 'QUARTER', 'HALF_YEAR', 'YEAR'],
+  STREAK: ['ALL', 'WEEK', 'MONTH', 'QUARTER', 'HALF_YEAR', 'YEAR'],
+  NIGHT_OWL: ['ALL', 'WEEK', 'MONTH', 'QUARTER', 'HALF_YEAR', 'YEAR'],
+  EARLY_BIRD: ['ALL', 'WEEK', 'MONTH', 'QUARTER', 'HALF_YEAR', 'YEAR'],
   // Any non-ALL window: GROWTH compares a period against the one before it, which an
-  // unbounded history cannot do. `supports()` reads `period != ALL`, and WEEK is the
-  // server's default — so it must stay first for `defaultPeriodFor` to agree.
-  GROWTH: ['WEEK', 'MONTH', 'YEAR'],
-  ACTIVE_DAYS: ['ALL', 'WEEK', 'MONTH', 'YEAR'],
+  // unbounded history cannot do. `supports()` reads `period != ALL`; WEEK is first
+  // because it is the shortest window the server accepts.
+  GROWTH: ['WEEK', 'MONTH', 'QUARTER', 'HALF_YEAR', 'YEAR'],
+  ACTIVE_DAYS: ['ALL', 'WEEK', 'MONTH', 'QUARTER', 'HALF_YEAR', 'YEAR'],
   // One language's merged time (seconds). Partitioned: the dimension alone does not
   // identify a board, which is why the request type below is a discriminated union.
-  LANGUAGE: ['ALL', 'WEEK', 'MONTH', 'YEAR'],
-}
-
-/**
- * Default period for a dimension — mirrors the server's own defaulting
- * (`GROWTH` defaults to `WEEK`, everything else to `ALL`) so the first request
- * matches what the server would have chosen anyway.
- */
-export function defaultPeriodFor(dimension: LeaderboardDimension): LeaderboardPeriod {
-  return DIMENSION_PERIODS[dimension][0]!
+  LANGUAGE: ['ALL', 'WEEK', 'MONTH', 'QUARTER', 'HALF_YEAR', 'YEAR'],
 }
 
 /** One ranked user. */

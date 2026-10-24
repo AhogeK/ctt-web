@@ -4,7 +4,6 @@ import {
   LanguageBoardsResponseSchema,
   LeaderboardEntrySchema,
   LeaderboardResponseSchema,
-  defaultPeriodFor,
 } from '../leaderboard.schema'
 
 /** A real entry as the server sends it (taken from the live endpoint). */
@@ -96,19 +95,19 @@ describe('LeaderboardResponseSchema', () => {
 describe('DIMENSION_PERIODS', () => {
   it('mirrors the server so an illegal pair cannot be built', () => {
     // The server rejects unsupported pairs with HTTP 400 COMMON_003 (measured:
-    // "Dimension STREAK does not support period WEEK"), so these lists are a
+    // "Dimension GROWTH does not support period ALL"), so these lists are a
     // contract, not a preference.
-    // ctt-server v0.73.0 widened this: only STREAK is all-time-only, GROWTH takes any
-    // bounded window, and ACTIVE_DAYS joined as a sixth dimension.
-    expect(DIMENSION_PERIODS.TOTAL).toEqual(['ALL', 'WEEK', 'MONTH', 'YEAR'])
-    expect(DIMENSION_PERIODS.STREAK).toEqual(['ALL'])
-    expect(DIMENSION_PERIODS.NIGHT_OWL).toEqual(['ALL', 'WEEK', 'MONTH', 'YEAR'])
-    expect(DIMENSION_PERIODS.EARLY_BIRD).toEqual(['ALL', 'WEEK', 'MONTH', 'YEAR'])
-    expect(DIMENSION_PERIODS.GROWTH).toEqual(['WEEK', 'MONTH', 'YEAR'])
-    expect(DIMENSION_PERIODS.ACTIVE_DAYS).toEqual(['ALL', 'WEEK', 'MONTH', 'YEAR'])
+    // ctt-server v0.84.0 added QUARTER/HALF_YEAR; v0.85.0 gave STREAK its windowed
+    // score, leaving GROWTH+ALL as the only illegal pair.
+    expect(DIMENSION_PERIODS.TOTAL).toEqual(['ALL', 'WEEK', 'MONTH', 'QUARTER', 'HALF_YEAR', 'YEAR'])
+    expect(DIMENSION_PERIODS.STREAK).toEqual(['ALL', 'WEEK', 'MONTH', 'QUARTER', 'HALF_YEAR', 'YEAR'])
+    expect(DIMENSION_PERIODS.NIGHT_OWL).toEqual(['ALL', 'WEEK', 'MONTH', 'QUARTER', 'HALF_YEAR', 'YEAR'])
+    expect(DIMENSION_PERIODS.EARLY_BIRD).toEqual(['ALL', 'WEEK', 'MONTH', 'QUARTER', 'HALF_YEAR', 'YEAR'])
+    expect(DIMENSION_PERIODS.GROWTH).toEqual(['WEEK', 'MONTH', 'QUARTER', 'HALF_YEAR', 'YEAR'])
+    expect(DIMENSION_PERIODS.ACTIVE_DAYS).toEqual(['ALL', 'WEEK', 'MONTH', 'QUARTER', 'HALF_YEAR', 'YEAR'])
     // The partitioned dimension ranks over every window; the language is a separate
     // parameter, not a period.
-    expect(DIMENSION_PERIODS.LANGUAGE).toEqual(['ALL', 'WEEK', 'MONTH', 'YEAR'])
+    expect(DIMENSION_PERIODS.LANGUAGE).toEqual(['ALL', 'WEEK', 'MONTH', 'QUARTER', 'HALF_YEAR', 'YEAR'])
   })
 
   it('covers every dimension', () => {
@@ -121,20 +120,6 @@ describe('DIMENSION_PERIODS', () => {
       'STREAK',
       'TOTAL',
     ])
-  })
-
-  it('has a default that is always itself legal', () => {
-    for (const dimension of Object.keys(DIMENSION_PERIODS) as (keyof typeof DIMENSION_PERIODS)[]) {
-      const fallback = defaultPeriodFor(dimension)
-      expect(DIMENSION_PERIODS[dimension]).toContain(fallback)
-    }
-  })
-
-  it('matches the server default for GROWTH, which is WEEK not ALL', () => {
-    // The server defaults GROWTH to WEEK and everything else to ALL; the client's
-    // first request should be what the server would have chosen anyway.
-    expect(defaultPeriodFor('GROWTH')).toBe('WEEK')
-    expect(defaultPeriodFor('TOTAL')).toBe('ALL')
   })
 })
 

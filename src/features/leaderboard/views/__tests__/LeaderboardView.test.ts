@@ -1,6 +1,6 @@
 import { describe, expect, it, vi, beforeEach } from 'vite-plus/test'
 import { mount } from '@vue/test-utils'
-import { computed, ref } from 'vue'
+import { computed, nextTick, ref } from 'vue'
 import LanguageSelect from '../../components/LanguageSelect.vue'
 import type { LanguageBoardGroup } from '../../composables/useLeaderboard'
 import LeaderboardView from '../LeaderboardView.vue'
@@ -57,7 +57,9 @@ vi.mock('@/features/leaderboard/composables/useLeaderboard', async (importOrigin
         isPending: computed(() => pending),
         isError: computed(() => failed),
         refetch: refetchSpy,
-        effectivePeriod: ref('ALL'),
+        // Mirrors the real composable closely enough for the pressed state: the period the
+        // view holds is the one it renders.
+        effectivePeriod: computed(() => (_period as { value: string }).value),
       }
     },
     // `groupLanguageBoards` comes from `actual`, deliberately: a mock that reimplemented
@@ -241,52 +243,39 @@ describe('LeaderboardView', () => {
     expect(wrapper.find('[data-testid="period-YEAR"]').exists()).toBe(true)
     expect(wrapper.find('[data-testid="period-fixed"]').exists()).toBe(false)
 
-    // STREAK is the single-period dimension: its periods must be withdrawn, otherwise
-    // the user could request a pair the server rejects with HTTP 400.
+    // STREAK has windowed scores now; the page still withholds WEEK, where every engaged
+    // user ties at 7 and the board stops separating people.
     await wrapper.get('[data-testid="dimension-STREAK"]').trigger('click')
+    await nextTick()
     expect(wrapper.find('[data-testid="period-WEEK"]').exists()).toBe(false)
-    expect(wrapper.find('[data-testid="period-MONTH"]').exists()).toBe(false)
-    expect(wrapper.get('[data-testid="period-fixed"]').text()).toBe('All time')
-  })
-
-  it('restricts the period selector once a single-period dimension is chosen', async () => {
-    const wrapper = mountView()
-    await wrapper.get('[data-testid="dimension-STREAK"]').trigger('click')
-
-    // No period buttons at all — the one legal period is stated instead.
-    expect(wrapper.find('[data-testid="period-WEEK"]').exists()).toBe(false)
-    expect(wrapper.get('[data-testid="period-fixed"]').text()).toBe('All time')
-  })
-
-  it('offers GROWTH its windows but never ALL, which it cannot rank', async () => {
-    // GROWTH compares a period against the one before it, so an unbounded history is
-    // meaningless for it — and an illegal pair is a 400, not a fallback.
-    const wrapper = mountView()
-    await wrapper.get('[data-testid="dimension-GROWTH"]').trigger('click')
-
-    expect(wrapper.find('[data-testid="period-ALL"]').exists()).toBe(false)
-    expect(wrapper.find('[data-testid="period-WEEK"]').exists()).toBe(true)
     expect(wrapper.find('[data-testid="period-MONTH"]').exists()).toBe(true)
+    expect(wrapper.find('[data-testid="period-QUARTER"]').exists()).toBe(true)
+    expect(wrapper.find('[data-testid="period-HALF_YEAR"]').exists()).toBe(true)
     expect(wrapper.find('[data-testid="period-YEAR"]').exists()).toBe(true)
-    // A real choice, so it is not stated as a fixed period.
-    expect(wrapper.find('[data-testid="period-fixed"]').exists()).toBe(false)
+    expect(wrapper.get('[data-testid="period-ALL"]').attributes('aria-pressed')).toBe('true')
   })
 
-  it('states what the signed GROWTH score means, and only on that dimension', async () => {
+  it('does not offer the GROWTH dimension', () => {
+    // Its score is an absolute period-over-period delta, which ranks prior volume rather
+    // than improvement and needs a sentence of explanation to read at all.
     const wrapper = mountView()
-    // No other dimension prints a signed delta, so the sentence would be noise elsewhere.
-    expect(wrapper.find('[data-testid="growth-hint"]').exists()).toBe(false)
-
-    await wrapper.get('[data-testid="dimension-GROWTH"]').trigger('click')
-    expect(wrapper.get('[data-testid="growth-hint"]').text()).toContain('this period minus the previous one')
+    expect(wrapper.find('[data-testid="dimension-GROWTH"]').exists()).toBe(false)
   })
 
-  it('ranks ACTIVE_DAYS over every period, like the other measurements', async () => {
+  it('narrows ACTIVE_DAYS to month, year and all time, defaulting to the month', async () => {
+    // A weekly active-days board saturates at 7/7 once the ranking has engaged users, so
+    // the page does not offer it; the month is the default because it still separates people.
     const wrapper = mountView()
     await wrapper.get('[data-testid="dimension-ACTIVE_DAYS"]').trigger('click')
+    await nextTick()
 
+    expect(wrapper.find('[data-testid="period-WEEK"]').exists()).toBe(false)
+    expect(wrapper.find('[data-testid="period-MONTH"]').exists()).toBe(true)
+    expect(wrapper.find('[data-testid="period-QUARTER"]').exists()).toBe(true)
+    expect(wrapper.find('[data-testid="period-HALF_YEAR"]').exists()).toBe(true)
+    expect(wrapper.find('[data-testid="period-YEAR"]').exists()).toBe(true)
     expect(wrapper.find('[data-testid="period-ALL"]').exists()).toBe(true)
-    expect(wrapper.find('[data-testid="period-WEEK"]').exists()).toBe(true)
+    expect(wrapper.get('[data-testid="period-MONTH"]').attributes('aria-pressed')).toBe('true')
   })
 
   it('offers the LANGUAGE dimension only once a board exists', async () => {

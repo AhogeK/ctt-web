@@ -410,8 +410,6 @@ const en = {
     backToMe: 'Back to me',
     notRanked: 'Not ranked',
     rankOf: '#{rank} of {total}',
-    growthHint:
-      'Growth ranks this period against the one before it: the score is this period minus the previous one, so a negative value means less coding than before.',
     dimensionGroup: 'Ranking dimension',
     periodGroup: 'Time period',
     period: 'Period',
@@ -437,6 +435,8 @@ const en = {
     periods: {
       all: 'All time',
       week: 'This week',
+      quarter: 'This quarter',
+      halfYear: 'Half year',
       month: 'This month',
       year: 'This year',
     },
