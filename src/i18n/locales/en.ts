@@ -405,6 +405,7 @@ const en = {
   leaderboard: {
     title: 'Leaderboard',
     subtitle: '{dimension} rankings across all tracked coders',
+    activeDaysScope: 'defaults to this month; all time is your lifetime count',
     yourRank: 'your rank',
     findMe: 'Find me',
     backToMe: 'Back to me',

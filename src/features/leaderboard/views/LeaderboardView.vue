@@ -273,7 +273,10 @@ watch(entries, () => {
       <div class="flex flex-col gap-2">
         <h1 class="text-2xl font-semibold">{{ t('leaderboard.title') }}</h1>
         <p class="text-sm text-muted-foreground">
-          {{ t('leaderboard.subtitle', { dimension: t(DIMENSION_LABELS[dimension]) }) }}
+          {{ t('leaderboard.subtitle', { dimension: t(DIMENSION_LABELS[dimension]) })
+          }}<span v-if="dimension === 'ACTIVE_DAYS'" data-testid="active-days-scope">
+            · {{ t('leaderboard.activeDaysScope') }}</span
+          >
         </p>
       </div>
 

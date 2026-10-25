@@ -504,11 +504,12 @@ test.describe('Leaderboard page', () => {
     await expect(page.getByTestId('period-WEEK')).toBeVisible()
     await expect(page.getByTestId('period-fixed')).toBeHidden()
 
-    // ACTIVE_DAYS drops the week: a weekly active-days board saturates at 7/7 once the
-    // ranking has engaged users. Month, year and all time remain.
+    // ACTIVE_DAYS drops the week and defaults to month; the chip order still starts with ALL.
     await page.getByTestId('dimension-ACTIVE_DAYS').click()
     await expect(page.getByTestId('period-WEEK')).toBeHidden()
-    await expect(page.getByTestId('period-MONTH')).toBeVisible()
+    await expect(page.locator('[data-testid^="period-"]').first()).toHaveAttribute('data-testid', 'period-ALL')
+    await expect(page.getByTestId('period-MONTH')).toHaveAttribute('aria-pressed', 'true')
+    await expect(page.getByTestId('active-days-scope')).toBeVisible()
     await expect(page.getByTestId('period-ALL')).toBeVisible()
 
     // STREAK gained windowed scores; WEEK stays out of the page because a seven-day
