@@ -15,7 +15,7 @@ export const buttonVariants = cva(
           'border bg-background shadow-xs hover:shadow-sm hover:text-foreground dark:bg-input/30 dark:border-input',
         secondary: 'bg-secondary text-secondary-foreground hover:bg-secondary/80',
         ghost:
-          'hover:text-accent dark:hover:text-accent-hover hover:[text-shadow:0_0_8px_color-mix(in_oklab,var(--accent)_25%,transparent),0_0_2px_color-mix(in_oklab,var(--accent)_15%,transparent)] dark:hover:[text-shadow:0_0_12px_color-mix(in_oklab,var(--accent-hover)_40%,transparent),0_0_4px_color-mix(in_oklab,var(--accent-hover)_20%,transparent)] transition-[color,text-shadow] duration-200',
+          'hover:text-accent dark:hover:text-accent-hover hover:[text-shadow:0_0_8px_color-mix(in_oklab,var(--accent)_25%,transparent),0_0_2px_color-mix(in_oklab,var(--accent)_15%,transparent)] dark:hover:[text-shadow:0_0_12px_color-mix(in_oklab,var(--accent-hover)_40%,transparent),0_0_4px_color-mix(in_oklab,var(--accent-hover)_20%,transparent)]',
         link: 'text-primary underline-offset-4 hover:underline',
       },
       size: {

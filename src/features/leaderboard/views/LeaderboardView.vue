@@ -338,6 +338,7 @@ watch(entries, () => {
         v-for="d in dimensions"
         :key="d"
         :variant="d === dimension ? 'default' : 'outline'"
+        :class="d === dimension ? 'border border-transparent' : ''"
         size="sm"
         :aria-pressed="d === dimension"
         :data-testid="`dimension-${d}`"

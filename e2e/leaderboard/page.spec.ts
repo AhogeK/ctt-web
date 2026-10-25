@@ -102,6 +102,68 @@ test.describe('Leaderboard page', () => {
     }
   })
 
+  test('swaps the period chip fill instantly while the glow fades', async ({ page }) => {
+    await setupLeaderboardPage(page)
+    await expectLeaderboardRendered(page)
+
+    /*
+     * A background-color transition on either state leaves the deselected chip filled for a few
+     * frames, which reads as a flash of the selected state. Only the ghost glow animates; the
+     * fill and label swap in the same frame. Assert the computed transition set, the only
+     * deterministic way to catch this from a test.
+     */
+    const transitions = await page.evaluate(() => {
+      const read = (testId: string) => {
+        const el = document.querySelector(`[data-testid="${testId}"]`) as HTMLElement
+        const style = getComputedStyle(el)
+        return {
+          properties: style.transitionProperty,
+          seconds: style.transitionDuration.split(',').map((part) => Number.parseFloat(part)),
+        }
+      }
+      return { selected: read('period-ALL'), ghost: read('period-MONTH') }
+    })
+
+    expect(transitions.ghost.properties).toContain('text-shadow')
+    expect(transitions.ghost.properties).not.toContain('background-color')
+    expect(transitions.selected.properties).not.toContain('background-color')
+    expect(transitions.ghost.seconds.every((value) => value > 0)).toBe(true)
+    expect(transitions.selected.seconds.every((value) => value > 0)).toBe(true)
+  })
+
+  test('swaps dimension chip fills without a width jump', async ({ page }) => {
+    await setupLeaderboardPage(page)
+    await expectLeaderboardRendered(page)
+
+    const selected = page.getByTestId('dimension-TOTAL')
+    const next = page.getByTestId('dimension-STREAK')
+    const before = {
+      selected: await selected.evaluate((el) => el.getBoundingClientRect().width),
+      next: await next.evaluate((el) => el.getBoundingClientRect().width),
+    }
+
+    await next.click()
+
+    const after = {
+      selected: await selected.evaluate((el) => el.getBoundingClientRect().width),
+      next: await next.evaluate((el) => el.getBoundingClientRect().width),
+    }
+    // Outline carries a 1px border; the filled state must reserve the same width.
+    expect(Math.abs(after.selected - before.selected)).toBeLessThan(0.5)
+    expect(Math.abs(after.next - before.next)).toBeLessThan(0.5)
+
+    const outline = await selected.evaluate((el) => {
+      const style = getComputedStyle(el)
+      return {
+        properties: style.transitionProperty,
+        seconds: style.transitionDuration.split(',').map((part) => Number.parseFloat(part)),
+      }
+    })
+    expect(outline.properties).toContain('box-shadow')
+    expect(outline.properties).not.toContain('background-color')
+    expect(outline.seconds.every((value) => value > 0)).toBe(true)
+  })
+
   test('formats the score per dimension rather than as one unit', async ({ page }) => {
     const setup = await setupLeaderboardPage(page)
     await expectLeaderboardRendered(page)

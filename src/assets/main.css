@@ -666,6 +666,25 @@
 }
 
 /*
+ * Ghost hover glow. The variant's own `transition-[color,text-shadow]` loses to the base
+ * `transition-colors` in the utility cascade, so without this rule the glow snaps on/off in a
+ * single frame. Only text-shadow is animated: the fill and label must swap instantly when a
+ * chip loses selection, otherwise the old selected fill lingers for 200ms and reads as a flash.
+ */
+[data-slot='button'][data-variant='ghost'] {
+  transition: text-shadow 200ms ease-out;
+}
+
+/*
+ * Outline chips are the dimension selector. Background, label and border must swap in the
+ * same frame when selection moves; only the hover shadow animates. A background-color
+ * transition here leaves the deselected chip filled for 200ms, which reads as a flash.
+ */
+[data-slot='button'][data-variant='outline'] {
+  transition: box-shadow 180ms cubic-bezier(0.2, 0.8, 0.2, 1);
+}
+
+/*
  * Dark cards are near-black plates, keyed on the semantic attribute (never on a utility class — a rule
  * keyed on `bg-card` stops matching the moment the class is spelled differently).
  */
