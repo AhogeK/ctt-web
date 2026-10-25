@@ -262,20 +262,27 @@ describe('LeaderboardView', () => {
     expect(wrapper.find('[data-testid="dimension-GROWTH"]').exists()).toBe(false)
   })
 
-  it('narrows ACTIVE_DAYS to month, year and all time, defaulting to the month', async () => {
+  it('keeps ALL first for ACTIVE_DAYS while defaulting to the month', async () => {
     // A weekly active-days board saturates at 7/7 once the ranking has engaged users, so
-    // the page does not offer it; the month is the default because it still separates people.
+    // the page does not offer it; month is the default because it measures current frequency,
+    // while all time is a lifetime count. The chip order stays ALL-first for every dimension.
     const wrapper = mountView()
     await wrapper.get('[data-testid="dimension-ACTIVE_DAYS"]').trigger('click')
     await nextTick()
 
+    const chips = wrapper.findAll('[data-testid^="period-"]').map((chip) => chip.attributes('data-testid'))
+    expect(chips).toEqual(['period-ALL', 'period-MONTH', 'period-QUARTER', 'period-HALF_YEAR', 'period-YEAR'])
     expect(wrapper.find('[data-testid="period-WEEK"]').exists()).toBe(false)
-    expect(wrapper.find('[data-testid="period-MONTH"]').exists()).toBe(true)
-    expect(wrapper.find('[data-testid="period-QUARTER"]').exists()).toBe(true)
-    expect(wrapper.find('[data-testid="period-HALF_YEAR"]').exists()).toBe(true)
-    expect(wrapper.find('[data-testid="period-YEAR"]').exists()).toBe(true)
-    expect(wrapper.find('[data-testid="period-ALL"]').exists()).toBe(true)
     expect(wrapper.get('[data-testid="period-MONTH"]').attributes('aria-pressed')).toBe('true')
+  })
+
+  it('states the active-days default only on its own dimension', async () => {
+    const wrapper = mountView()
+    expect(wrapper.find('[data-testid="active-days-scope"]').exists()).toBe(false)
+
+    await wrapper.get('[data-testid="dimension-ACTIVE_DAYS"]').trigger('click')
+    await nextTick()
+    expect(wrapper.find('[data-testid="active-days-scope"]').exists()).toBe(true)
   })
 
   it('offers the LANGUAGE dimension only once a board exists', async () => {

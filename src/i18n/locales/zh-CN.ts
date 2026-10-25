@@ -398,6 +398,7 @@ const zhCN: Messages = {
   leaderboard: {
     title: '排行榜',
     subtitle: '{dimension}排行，覆盖所有记录的编码者',
+    activeDaysScope: '默认本月；全部时间为终身累计天数',
     yourRank: '你的排名',
     findMe: '找到我',
     backToMe: '回到我',

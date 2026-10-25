@@ -186,21 +186,22 @@ export const UI_DIMENSIONS: readonly LeaderboardDimension[] = [
 
 /**
  * Periods the page offers per dimension — the server's legal set with two product
- * adjustments. ACTIVE_DAYS drops WEEK because a weekly board saturates at 7/7 as soon
- * as a ranking has engaged users, and orders MONTH first so the default is a window
- * that still separates people.
+ * adjustments. ALL stays first on every dimension so its position never moves.
+ *
+ * ACTIVE_DAYS drops WEEK (a weekly board saturates at 7/7) and defaults to MONTH: it measures
+ * frequency inside a window, while a lifetime count mostly tracks how long the account has
+ * existed. The subtitle states that default; the chip order does not move.
  */
 const UI_PERIODS: Record<LeaderboardDimension, readonly LeaderboardPeriod[]> = {
   ...DIMENSION_PERIODS,
-  // ALL first, like every other dimension: the order is the reading order, and a list whose
-  // first chip differs from the rest reads as a different kind of control.
+  // ALL first on every dimension; this dimension's default is stated separately below.
   ACTIVE_DAYS: ['ALL', 'MONTH', 'QUARTER', 'HALF_YEAR', 'YEAR'],
   // The server supports WEEK for streaks, but a seven-day window caps every engaged user at 7
   // and the board becomes a tie list: the page offers the longer windows only.
   STREAK: ['ALL', 'MONTH', 'QUARTER', 'HALF_YEAR', 'YEAR'],
 }
 
-/** Dimensions whose default is not the first chip — stated once, not implied by order. */
+/** Dimensions whose default is not the first chip — stated in the subtitle. */
 const UI_DEFAULT_PERIODS: Partial<Record<LeaderboardDimension, LeaderboardPeriod>> = {
   ACTIVE_DAYS: 'MONTH',
 }
