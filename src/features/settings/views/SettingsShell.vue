@@ -73,14 +73,12 @@ const activeName = computed(() => route.name)
             class="block rounded-md px-3 py-2 text-sm transition-colors focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none"
             :class="
               activeName === section.name
-                ? 'bg-accent font-medium text-accent-foreground'
+                ? 'bg-primary font-medium text-primary-foreground'
                 : 'text-muted-foreground hover:bg-accent/50 hover:text-foreground'
             "
           >
             <span class="block">{{ t(section.labelKey) }}</span>
-            <span class="hidden text-xs font-normal text-muted-foreground md:block">{{
-              t(section.descriptionKey)
-            }}</span>
+            <span class="hidden text-xs font-normal md:block">{{ t(section.descriptionKey) }}</span>
           </RouterLink>
         </li>
       </ul>
