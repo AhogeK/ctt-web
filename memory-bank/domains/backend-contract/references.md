@@ -43,12 +43,17 @@ Two of these carry traps worth knowing before wiring a panel:
   which rejects `ALL` (a period-over-period delta cannot rank an unbounded history) — that is now the
   **only** illegal pair, still HTTP 400 `COMMON_003`. `STREAK`'s windowed score is the longest run
   **fully inside** the window (v0.85.0; `ALL` keeps the lifetime key and semantics).
+- **Leaderboard backfill (v0.85.1)**: the marker is now
+  `leaderboard:recompute:g{generation}:cov{fingerprint}:vocab{version}`; the fingerprint is derived
+  from dimension × supported periods, so a new dimension or opened period invalidates it
+  automatically. A formula change still needs a manual generation bump.
 - `/leaderboard` **scores**: seconds for `TOTAL`/`NIGHT_OWL`/`EARLY_BIRD`, a **count of days** for
   `STREAK` (run length) and `ACTIVE_DAYS` (distinct days with time — `activeDaysIn` counts entries in
   `secondsByDay`, so it is not a duration), and a **signed absolute** delta for `GROWTH`
   (`this period − previous period`, seconds). Because it is absolute, a small relative improvement on
   a heavy history outranks a doubling from a tiny one: it ranks prior volume, so the page does not
   offer it (decision 2026-10-23; the endpoint is unchanged).
+- Activity dimensions exclude score <= 0 at write (v0.86.0); GROWTH keeps 0/negative.
 - **`/leaderboard/languages`** lists the language boards. The **default returns only boards that have
   members** (v0.76.1 — v0.76.0 briefly returned everything, which made a selector of ~842 rows);
   `?includeEmpty=true` returns the whole vocabulary of 842, where `hasMembers` finally distinguishes
