@@ -138,11 +138,11 @@ When auditing built CSS, `rm -rf dist` first — the build does not always purge
 
 ## Button Variant System (Linear-style)
 
-- `primary` — Brand CTA (submit/confirm) — `bg-[#5e6ad2]` indigo
-- `secondary` — Container actions (cancel) — `bg-secondary`
-- `ghost` — Secondary CTAs, toolbar — Invisible default; hover 1px inset shadow edge highlight
-  (`transition-all duration-200`, light `rgba(0,0,0,0.1)` / dark `rgba(255,255,255,0.08)`)
-- `default` — Minimal text-only — No bg/border
+- `default` is the filled CTA (`bg-primary #5e6ad2`); `outline` bordered selector; `ghost` text/toolbar;
+  `secondary` container action; `destructive` destructive; `link` inline text. There is no `primary` variant.
+- State-swapping chips reserve a transparent 1px border and swap fill/label in one frame; only glow/shadow animates.
+- Selected text needs 4.5:1 (white on `#7170ff` 3.84, on `#5e6ad2` 4.7); group labels use
+  `sidebar-foreground/70`, never `muted/70` (2.88).
 
 ## E2E API Mocking (page.route)
 
