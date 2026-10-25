@@ -116,7 +116,7 @@ function handleNavigate() {
 
     <SidebarContent>
       <SidebarGroup>
-        <SidebarGroupLabel class="text-[11px] tracking-wider uppercase text-muted-foreground/70">{{
+        <SidebarGroupLabel class="text-[11px] tracking-wider uppercase">{{
           t('nav.groupNavigation')
         }}</SidebarGroupLabel>
         <SidebarGroupContent>
@@ -168,9 +168,7 @@ function handleNavigate() {
       </SidebarGroup>
 
       <SidebarGroup>
-        <SidebarGroupLabel class="text-[11px] tracking-wider uppercase text-muted-foreground/70">{{
-          t('nav.groupSettings')
-        }}</SidebarGroupLabel>
+        <SidebarGroupLabel class="text-[11px] tracking-wider uppercase">{{ t('nav.groupSettings') }}</SidebarGroupLabel>
         <SidebarGroupContent>
           <SidebarMenu>
             <SidebarMenuItem>
