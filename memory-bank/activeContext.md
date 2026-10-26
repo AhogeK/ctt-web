@@ -1,7 +1,7 @@
 ### README 文档轮（2026-10-27 · docs-only · v0.67.0）
 - README：居中式首屏 + dashboard WebP（1600×1000, 76K）+ 能力矩阵/Mermaid；Support/License 居中。
 - 校验：README audit ✓ · `git diff --check` ✓ · 本地链接 ✓；docs commit `5a19822`；计划已完成。
-- 非 AI 变更仅 README + `docs/assets/readme/`；未改版本号；master pick 待补；旧工具条目已归档。
+- 非 AI 变更仅 README + `docs/assets/readme/`；未改版本号；master pick `2b877cc`；旧工具条目已归档。
 
 ### 偏好设置页重设计（2026-10-26 · v0.66.1 · 已提交 1cd4a38 / b17c21d）
 - 主题三瓦片（System 分屏 / Light / Dark 固定色）+ 语言双卡（EN/中）；1120px 7/5 分栏；样片固定色（不能读主题变量，否则深色页选 Light 会变黑）；焦点 2px、375 无溢出。
