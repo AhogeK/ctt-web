@@ -15,7 +15,7 @@
  * textarea + execCommand, then a manual-copy hint returned by the composable.
  */
 import { nextTick, ref, watch } from 'vue'
-import { AlertTriangle, Check, Copy } from '@lucide/vue'
+import { useI18n } from 'vue-i18n'
 import { Button } from '@/components/ui/button'
 import {
   Dialog,
@@ -40,6 +40,7 @@ const emit = defineEmits<{
   'update:open': [value: boolean]
 }>()
 
+const { t } = useI18n()
 const { copied, copy } = useCopyToClipboard()
 /** True once a copy attempt succeeded; gates the close button (strong constraint) */
 const hasCopied = ref(false)
@@ -101,15 +102,15 @@ watch(
       @interact-outside="blockDismiss"
     >
       <DialogHeader>
-        <DialogTitle>API Key created</DialogTitle>
-        <DialogDescription> Copy the key now. You will not be able to view it again. </DialogDescription>
+        <DialogTitle>{{ t('settings.apiKeys.rawDialog.title') }}</DialogTitle>
+        <DialogDescription>{{ t('settings.apiKeys.rawDialog.description') }}</DialogDescription>
       </DialogHeader>
 
       <!-- Warning banner -->
       <div class="flex items-start gap-2 rounded-md border border-destructive/50 bg-destructive/10 p-3">
         <AlertTriangle class="mt-0.5 h-4 w-4 shrink-0 text-destructive" />
         <p class="text-sm font-medium text-destructive">
-          This key is shown only once. Closing this dialog means it cannot be viewed again.
+          {{ t('settings.apiKeys.rawDialog.warning') }}
         </p>
       </div>
 
@@ -120,20 +121,20 @@ watch(
           type="text"
           :value="props.rawKey"
           readonly
-          aria-label="API key"
+          :aria-label="t('settings.apiKeys.rawDialog.keyAria')"
           class="w-full cursor-text bg-transparent font-mono text-[16px] leading-relaxed text-foreground focus:outline-none"
           @focus="selectAll"
           @click="selectAll"
         />
       </div>
 
-      <p class="text-xs text-muted-foreground">Paste the key into the Login section of the JetBrains plugin.</p>
+      <p class="text-xs text-muted-foreground">{{ t('settings.apiKeys.rawDialog.helper') }}</p>
 
       <DialogFooter class="gap-2">
         <Button type="button" variant="outline" :disabled="copied" @click="handleCopy">
           <Check v-if="copied" class="mr-2 h-4 w-4" />
           <Copy v-else class="mr-2 h-4 w-4" />
-          {{ copied ? 'Copied' : 'Copy key' }}
+          {{ copied ? t('settings.apiKeys.rawDialog.copied') : t('settings.apiKeys.rawDialog.copy') }}
         </Button>
         <Button
           type="button"
@@ -148,7 +149,7 @@ watch(
           "
           @click="handleClose"
         >
-          {{ hasCopied ? 'Copied, close' : 'Copy the key to close' }}
+          {{ hasCopied ? t('settings.apiKeys.rawDialog.copiedClose') : t('settings.apiKeys.rawDialog.copyToClose') }}
         </Button>
       </DialogFooter>
     </DialogContent>

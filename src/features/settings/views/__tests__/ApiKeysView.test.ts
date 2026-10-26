@@ -3,6 +3,7 @@ import { mount } from '@vue/test-utils'
 import { ref, defineComponent, type Ref } from 'vue'
 import ApiKeysView from '../ApiKeysView.vue'
 import type { ApiKey } from '@/lib/schemas/api-key.schema'
+import { setLocale } from '@/i18n'
 import type * as Utils from '@/lib/utils'
 
 // ==========================================
@@ -572,5 +573,28 @@ describe('ApiKeysView', () => {
       expect(titles).toContain(new Date(key.lastUsedAt!).toLocaleString())
       expect(titles).toContain(new Date(key.expiresAt!).toLocaleString())
     })
+  })
+
+  it('renders the API keys page in Chinese', async () => {
+    setKeys([activeKey, expiredKey, revokedKey])
+    await setLocale('zh-CN')
+    const wrapper = mount(ApiKeysView)
+
+    expect(wrapper.text()).toContain('API 密钥')
+    expect(wrapper.text()).toContain('创建 API 密钥')
+    expect(wrapper.text()).toContain('名称')
+    expect(wrapper.text()).toContain('密钥前缀')
+    expect(wrapper.text()).toContain('权限')
+    expect(wrapper.text()).toContain('状态')
+    expect(wrapper.text()).toContain('最近使用')
+    expect(wrapper.text()).toContain('创建时间')
+    expect(wrapper.text()).toContain('过期时间')
+    expect(wrapper.text()).toContain('活跃')
+    expect(wrapper.text()).toContain('已过期')
+    expect(wrapper.text()).toContain('已撤销')
+    expect(wrapper.text()).toContain('读取')
+    expect(wrapper.text()).toContain('永不过期')
+
+    await setLocale('en')
   })
 })

@@ -1,4 +1,5 @@
 import { z } from 'zod'
+import { i18n } from '@/i18n'
 
 /**
  * Enum schema for API key scopes — matches ctt-server ApiKeyScope enum.
@@ -57,13 +58,18 @@ export const ApiKeysPayloadSchema = z.object({
  * - expiresAt: Optional Future timestamp (ISO 8601 with offset), enforced server-side via @Future.
  *   Frontend validates format and future-only as UX; server remains the authority.
  */
+
+const t = (key: string) => i18n.global.t(key)
 export const CreateApiKeyRequestSchema = z.object({
-  name: z.string().min(1, 'Name is required').max(100, 'Name must not exceed 100 characters'),
-  scopes: z.array(ApiKeyScopeEnum).min(1, 'At least one scope is required'),
+  name: z
+    .string()
+    .min(1, { error: () => t('settings.apiKeys.validation.nameRequired') })
+    .max(100, { error: () => t('settings.apiKeys.validation.nameMax') }),
+  scopes: z.array(ApiKeyScopeEnum).min(1, { error: () => t('settings.apiKeys.validation.scopeRequired') }),
   expiresAt: z.iso
-    .datetime({ message: 'Expiration must be a valid date and time' })
+    .datetime({ error: () => t('settings.apiKeys.validation.expiresInvalid') })
     .refine((value) => new Date(value).getTime() > Date.now(), {
-      message: 'Expiration must be in the future',
+      error: () => t('settings.apiKeys.validation.expiresFuture'),
     })
     .optional(),
 })
