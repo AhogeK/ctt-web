@@ -11,7 +11,8 @@
  *   keeps the form values intact.
  * - 429 RATE_LIMIT_001 and other failures surface as a toast.
  */
-import { onUnmounted, ref, watch } from 'vue'
+import { computed, onUnmounted, ref, watch } from 'vue'
+import { useI18n } from 'vue-i18n'
 import { toTypedSchema } from '@vee-validate/zod'
 import { useForm } from 'vee-validate'
 import { toast } from 'vue-sonner'
@@ -52,6 +53,7 @@ const emit = defineEmits<{
 }>()
 
 const { mutation } = useCreateApiKey()
+const { t } = useI18n()
 
 const API_KEY_LIMIT_REACHED = 'AUTH_024'
 
@@ -88,11 +90,11 @@ const dateFieldActive = ref(false)
 /** Inline banner for the per-user key limit error */
 const limitError = ref<string | null>(null)
 
-const PRESET_EXPIRATION_DAYS = [
-  { days: 30, label: '30 days' },
-  { days: 90, label: '90 days' },
-  { days: 365, label: '1 year' },
-] as const
+const presetExpirationDays = computed(() => [
+  { days: 30, label: t('settings.apiKeys.createDialog.days30') },
+  { days: 90, label: t('settings.apiKeys.createDialog.days90') },
+  { days: 365, label: t('settings.apiKeys.createDialog.year1') },
+])
 
 const ALL_SCOPES = ApiKeyScopeEnum.options
 
@@ -101,11 +103,15 @@ const ALL_SCOPES = ApiKeyScopeEnum.options
  * ApiKeyScope semantics (READ = read-only queries, WRITE = managing API keys
  * and devices, SYNC = bidirectional sync engine, ADMIN = superset).
  */
-const SCOPE_DESCRIPTIONS: Record<ApiKeyScope, string> = {
-  READ: 'Read-only access',
-  WRITE: 'Manage API keys & devices',
-  SYNC: 'Bidirectional data sync',
-  ADMIN: 'Full admin access (supersedes all)',
+const scopeDescriptions = computed<Record<ApiKeyScope, string>>(() => ({
+  READ: t('settings.apiKeys.scopeDescriptions.read'),
+  WRITE: t('settings.apiKeys.scopeDescriptions.write'),
+  SYNC: t('settings.apiKeys.scopeDescriptions.sync'),
+  ADMIN: t('settings.apiKeys.scopeDescriptions.admin'),
+}))
+
+function scopeLabel(scope: ApiKeyScope): string {
+  return t(`settings.apiKeys.scopes.${scope.toLowerCase()}`)
 }
 
 function selectScopeMode(mode: 'recommended' | 'custom') {
@@ -243,8 +249,7 @@ const onSubmit = form.handleSubmit((values) => {
     onError: (error: unknown) => {
       const code = extractErrorCode(error)
       if (code === API_KEY_LIMIT_REACHED) {
-        limitError.value =
-          'You have reached the maximum of 20 API keys. Revoke an unused key before creating a new one.'
+        limitError.value = t('settings.apiKeys.createDialog.limitReached')
       } else {
         // 429 RATE_LIMIT_001: show a countdown when timing info is available
         // (HTTP Retry-After header OR a retryAfter Instant in the body), else
@@ -254,13 +259,13 @@ const onSubmit = form.handleSubmit((values) => {
         if (code === 'RATE_LIMIT_001') {
           const seconds = getRetryAfterSeconds(error)
           if (seconds !== null) {
-            toast.error('Failed to create API key', {
-              description: `Please try again in ${seconds}s.`,
+            toast.error(t('settings.apiKeys.createDialog.failed'), {
+              description: t('settings.apiKeys.createDialog.retryIn', { seconds }),
             })
             return
           }
         }
-        toast.error('Failed to create API key', {
+        toast.error(t('settings.apiKeys.createDialog.failed'), {
           description: getErrorMessage(error),
         })
       }
@@ -299,9 +304,9 @@ watch(
   <Dialog :open="props.open" @update:open="handleClose">
     <DialogContent class="sm:max-w-md">
       <DialogHeader>
-        <DialogTitle>Create API Key</DialogTitle>
+        <DialogTitle>{{ t('settings.apiKeys.createDialog.title') }}</DialogTitle>
         <DialogDescription>
-          Create a key to authenticate the JetBrains plugin. The full key is shown only once.
+          {{ t('settings.apiKeys.createDialog.description') }}
         </DialogDescription>
       </DialogHeader>
 
@@ -321,7 +326,7 @@ watch(
           <FormItem>
             <div class="flex items-center justify-between">
               <FormLabel class="text-sm font-emphasis text-muted-foreground [font-feature-settings:'cv01'_'ss03']">
-                Name
+                {{ t('settings.apiKeys.createDialog.name') }}
               </FormLabel>
               <!-- Live counter: maxlength silently truncates pasted text, so the
                    counter makes the 100-char limit visible to the user -->
@@ -337,7 +342,7 @@ watch(
                 id="api-key-name"
                 type="text"
                 maxlength="100"
-                placeholder="e.g. MacBook Pro - IntelliJ IDEA"
+                :placeholder="t('settings.apiKeys.createDialog.namePlaceholder')"
                 :class="
                   cn(
                     'h-10 rounded-md border border-input bg-muted text-foreground',
@@ -360,7 +365,7 @@ watch(
         <!-- Scopes -->
         <div class="flex flex-col gap-2">
           <Label class="text-sm font-emphasis text-muted-foreground [font-feature-settings:'cv01'_'ss03']">
-            Permissions
+            {{ t('settings.apiKeys.createDialog.permissions') }}
           </Label>
           <div class="flex gap-2">
             <Button
@@ -369,7 +374,7 @@ watch(
               :variant="scopeMode === 'recommended' ? 'default' : 'outline'"
               @click="selectScopeMode('recommended')"
             >
-              JetBrains plugin (READ + SYNC)
+              {{ t('settings.apiKeys.createDialog.recommended') }}
             </Button>
             <Button
               type="button"
@@ -377,7 +382,7 @@ watch(
               :variant="scopeMode === 'custom' ? 'default' : 'outline'"
               @click="selectScopeMode('custom')"
             >
-              Custom
+              {{ t('settings.apiKeys.createDialog.custom') }}
             </Button>
           </div>
 
@@ -387,7 +392,7 @@ watch(
               :key="scope"
               class="rounded bg-muted px-2 py-1 text-xs font-medium text-muted-foreground"
             >
-              {{ scope }}
+              {{ scopeLabel(scope) }}
             </span>
           </div>
 
@@ -411,11 +416,11 @@ watch(
                     "
                   />
                   <span class="flex min-w-0 flex-col">
-                    <span>{{ scope }}</span>
+                    <span>{{ scopeLabel(scope) }}</span>
                     <!-- Always-visible description (GitHub PAT style): the purpose
                          of each scope is decision-critical at checkbox time, and
                          hover-only tooltips vanish on touch devices. -->
-                    <span class="text-xs leading-snug text-muted-foreground">{{ SCOPE_DESCRIPTIONS[scope] }}</span>
+                    <span class="text-xs leading-snug text-muted-foreground">{{ scopeDescriptions[scope] }}</span>
                   </span>
                 </label>
               </template>
@@ -429,11 +434,11 @@ watch(
         <!-- Expiration -->
         <div class="flex flex-col gap-2">
           <Label class="text-sm font-emphasis text-muted-foreground [font-feature-settings:'cv01'_'ss03']">
-            Expiration
+            {{ t('settings.apiKeys.createDialog.expiration') }}
           </Label>
           <div class="flex flex-wrap gap-2">
             <Button
-              v-for="preset in PRESET_EXPIRATION_DAYS"
+              v-for="preset in presetExpirationDays"
               :key="preset.days"
               type="button"
               size="sm"
@@ -452,7 +457,7 @@ watch(
               :class="expiresMode === 'preset' && selectedPresetDays === null ? 'border-primary text-primary' : ''"
               @click="selectNeverExpires()"
             >
-              Never expires
+              {{ t('settings.apiKeys.createDialog.never') }}
             </Button>
             <Button
               type="button"
@@ -461,7 +466,7 @@ watch(
               :class="expiresMode === 'custom' ? 'border-primary text-primary' : ''"
               @click="selectCustomExpiration()"
             >
-              Custom date
+              {{ t('settings.apiKeys.createDialog.customDate') }}
             </Button>
           </div>
 
@@ -492,7 +497,7 @@ watch(
 
         <DialogFooter class="gap-2">
           <Button type="button" variant="ghost" :disabled="mutation.isPending.value" @click="handleClose">
-            Cancel
+            {{ t('settings.common.cancel') }}
           </Button>
           <Button
             type="submit"
@@ -508,7 +513,11 @@ watch(
           >
             <Loader2 v-if="mutation.isPending.value" class="mr-2 h-4 w-4 animate-spin" />
             <Plus v-else class="mr-2 h-4 w-4" />
-            {{ mutation.isPending.value ? 'Creating...' : 'Create API Key' }}
+            {{
+              mutation.isPending.value
+                ? t('settings.apiKeys.createDialog.creating')
+                : t('settings.apiKeys.createDialog.submit')
+            }}
           </Button>
         </DialogFooter>
       </form>

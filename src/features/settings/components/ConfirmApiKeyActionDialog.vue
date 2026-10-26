@@ -14,6 +14,7 @@
  * defence (e.g. 409 AUTH_023).
  */
 import { Loader2 } from '@lucide/vue'
+import { useI18n } from 'vue-i18n'
 import { Button } from '@/components/ui/button'
 import {
   AlertDialog,
@@ -28,6 +29,7 @@ import type { ApiKey } from '@/lib/schemas/api-key.schema'
 import { getErrorMessage } from '@/lib/utils/api-error'
 import { toast } from 'vue-sonner'
 
+const { t } = useI18n()
 /** Shape of the mutation the caller passes in (TanStack Query mutation). */
 interface ActionMutation {
   mutate: (id: string, options: { onSuccess?: () => void; onError?: (error: unknown) => void }) => void
@@ -132,7 +134,9 @@ function handleOpenAutoFocus(event: Event) {
       </div>
 
       <AlertDialogFooter>
-        <AlertDialogCancel :disabled="props.mutation.isPending.value"> Cancel </AlertDialogCancel>
+        <AlertDialogCancel :disabled="props.mutation.isPending.value">
+          {{ t('settings.common.cancel') }}
+        </AlertDialogCancel>
         <Button type="button" variant="destructive" :disabled="props.mutation.isPending.value" @click="handleConfirm">
           <Loader2 v-if="props.mutation.isPending.value" class="mr-2 h-4 w-4 animate-spin" />
           {{ props.mutation.isPending.value ? props.pendingLabel : props.confirmLabel }}

@@ -38,4 +38,35 @@ test.describe('API keys list', () => {
     await expect(rows.nth(1).getByRole('button', { name: /Revoke/i })).toHaveCount(0)
     await expect(rows.nth(2).getByRole('button', { name: `Delete ${TEST_REVOKED_KEY.name}` })).toBeVisible()
   })
+
+  test('renders the page and create dialog in Chinese', async ({ page }) => {
+    await setupApiKeysPage(page, TEST_KEYS)
+
+    await page.goto('/settings/preferences')
+    await page.getByText('简体中文', { exact: true }).click()
+    await page.getByRole('heading', { name: '偏好设置' }).waitFor()
+
+    await page.goto('/settings/api-keys')
+    await expect(page.getByRole('heading', { name: 'API 密钥' })).toBeVisible()
+    const rows = page.getByTestId('api-key-table').locator('tbody tr')
+    await expect(rows.nth(0)).toContainText('活跃')
+    await expect(rows.nth(1)).toContainText('已过期')
+    await expect(rows.nth(2)).toContainText('已撤销')
+    await expect(page.getByTestId('api-key-table')).toContainText('名称')
+    await expect(page.getByTestId('api-key-table')).toContainText('最近使用')
+
+    await page.getByRole('button', { name: '创建 API 密钥' }).first().click()
+    const dialog = page.getByRole('dialog')
+    await expect(dialog).toContainText('创建 API 密钥')
+    await expect(dialog).toContainText('名称')
+    await expect(dialog).toContainText('权限')
+    await expect(dialog).toContainText('过期时间')
+    await expect(dialog.getByRole('button', { name: '取消' })).toBeVisible()
+    await expect(dialog.getByRole('button', { name: '创建 API 密钥' })).toBeVisible()
+    await dialog.getByRole('button', { name: '取消' }).click()
+
+    await page.goto('/settings/preferences')
+    await page.getByText('English', { exact: true }).click()
+    await page.getByRole('heading', { name: 'Preferences' }).waitFor()
+  })
 })

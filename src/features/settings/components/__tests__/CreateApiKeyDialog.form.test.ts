@@ -1,6 +1,7 @@
 import { beforeEach, describe, expect, it, vi } from 'vite-plus/test'
 import { mount, flushPromises } from '@vue/test-utils'
 import CreateApiKeyDialog from '../CreateApiKeyDialog.vue'
+import { setLocale } from '@/i18n'
 
 /**
  * Integration test: real vee-validate + real ui/form + real ui/input chain.
@@ -130,6 +131,23 @@ describe('CreateApiKeyDialog (real form integration)', () => {
 
     expect(mockMutate).not.toHaveBeenCalled()
     expect(wrapper.text()).toContain('Name is required')
+    wrapper.unmount()
+  })
+
+  it('renders the schema error in Chinese', async () => {
+    await setLocale('zh-CN')
+    const wrapper = mount(CreateApiKeyDialog, {
+      props: { open: true },
+      attachTo: document.body,
+    })
+    await flushPromises()
+
+    await submitViaSetupState(wrapper)
+
+    expect(mockMutate).not.toHaveBeenCalled()
+    expect(wrapper.text()).toContain('请输入名称')
+
+    await setLocale('en')
     wrapper.unmount()
   })
 

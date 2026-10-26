@@ -13,7 +13,8 @@
  * Route: /settings/api-keys
  * API:  GET /api/v1/auth/api-keys, POST /api/v1/auth/api-keys
  */
-import { ref, watch, onUnmounted } from 'vue'
+import { computed, ref, watch, onUnmounted } from 'vue'
+import { useI18n } from 'vue-i18n'
 import { KeyRound, Plus, AlertTriangle, Loader2 } from '@lucide/vue'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
@@ -24,10 +25,19 @@ import CreateApiKeyDialog from '@/features/settings/components/CreateApiKeyDialo
 import RawKeyDialog from '@/features/settings/components/RawKeyDialog.vue'
 import ConfirmApiKeyActionDialog from '@/features/settings/components/ConfirmApiKeyActionDialog.vue'
 import { formatRelativeTime, formatDateTime } from '@/lib/utils'
+import { extractErrorCode, getErrorMessage } from '@/lib/utils/api-error'
 
 const { data: keys, isPending, isError, error, refetch } = useApiKeys()
 const { mutation: revokeMutation } = useRevokeApiKey()
 const { mutation: deleteMutation } = useDeleteApiKey()
+
+const { t } = useI18n()
+
+/** API codes keep their mapped sentence; a raw network error gets the page's own copy. */
+const errorDetail = computed(() => {
+  if (!error.value) return t('settings.apiKeys.loadFailedBody')
+  return extractErrorCode(error.value) ? getErrorMessage(error.value) : t('settings.apiKeys.loadFailedBody')
+})
 
 const createDialogOpen = ref(false)
 const rawKeyDialogOpen = ref(false)
@@ -148,12 +158,26 @@ function handleDeleteDialogClose(value: boolean) {
   }
 }
 
-/**
- * Maps a scope enum value to a display label.
- * Currently a pass-through; will return localised labels once i18n is in place.
- */
+/** Enum values stay the API contract; the catalogue keys are display-only. */
+const SCOPE_KEYS: Record<ApiKeyScope, string> = {
+  READ: 'read',
+  WRITE: 'write',
+  SYNC: 'sync',
+  ADMIN: 'admin',
+}
+
+const STATUS_KEYS: Record<ApiKeyStatus, string> = {
+  ACTIVE: 'active',
+  EXPIRED: 'expired',
+  REVOKED: 'revoked',
+}
+
 function scopeLabel(scope: ApiKeyScope): string {
-  return scope
+  return t(`settings.apiKeys.scopes.${SCOPE_KEYS[scope]}`)
+}
+
+function statusLabel(status: ApiKeyStatus): string {
+  return t(`settings.apiKeys.status.${STATUS_KEYS[status]}`)
 }
 
 /**
@@ -193,14 +217,14 @@ function statusClass(status: ApiKeyStatus): string {
     <!-- Page Header -->
     <div class="flex items-center justify-between">
       <div class="flex flex-col gap-1">
-        <h1 class="text-2xl font-semibold">API Keys</h1>
+        <h1 class="text-2xl font-semibold">{{ t('settings.apiKeys.title') }}</h1>
         <p class="text-sm text-muted-foreground">
-          Manage API keys used for JetBrains plugin authentication. Keys are shown only once at creation.
+          {{ t('settings.apiKeys.subtitle') }}
         </p>
       </div>
       <Button variant="default" size="sm" class="shrink-0 gap-1.5" @click="openCreateDialog">
         <Plus class="h-4 w-4" />
-        Create API Key
+        {{ t('settings.apiKeys.create') }}
       </Button>
     </div>
 
@@ -224,14 +248,14 @@ function statusClass(status: ApiKeyStatus): string {
     >
       <AlertTriangle class="h-12 w-12 text-destructive" />
       <div class="text-center">
-        <p class="font-medium text-destructive">Failed to load API keys</p>
+        <p class="font-medium text-destructive">{{ t('settings.apiKeys.loadFailedTitle') }}</p>
         <p class="mt-1 text-sm text-muted-foreground">
-          {{ error?.message ?? 'An unexpected error occurred' }}
+          {{ errorDetail }}
         </p>
       </div>
       <Button variant="outline" size="sm" @click="() => refetch()">
         <Loader2 v-if="isPending" class="h-4 w-4 animate-spin" />
-        Retry
+        {{ t('settings.common.retry') }}
       </Button>
     </div>
 
@@ -239,14 +263,14 @@ function statusClass(status: ApiKeyStatus): string {
     <div v-else-if="!keys || keys.length === 0" class="flex flex-col items-center gap-4 rounded-lg border p-12">
       <KeyRound class="h-12 w-12 text-muted-foreground" />
       <div class="text-center">
-        <p class="font-medium">No API keys yet</p>
+        <p class="font-medium">{{ t('settings.apiKeys.emptyTitle') }}</p>
         <p class="mt-1 text-sm text-muted-foreground">
-          Create an API key to use with the JetBrains plugin for secure authentication.
+          {{ t('settings.apiKeys.emptyBody') }}
         </p>
       </div>
       <Button variant="default" size="sm" class="gap-1.5" @click="openCreateDialog">
         <Plus class="h-4 w-4" />
-        Create API Key
+        {{ t('settings.apiKeys.create') }}
       </Button>
     </div>
 
@@ -256,20 +280,24 @@ function statusClass(status: ApiKeyStatus): string {
       <div class="hidden md:block overflow-hidden rounded-lg border" data-testid="api-key-table">
         <table class="w-full">
           <caption class="sr-only">
-            API keys
+            {{
+              t('settings.apiKeys.tableCaption')
+            }}
           </caption>
           <thead>
             <tr
               class="border-b bg-muted/50 text-left text-xs font-medium uppercase tracking-wider text-muted-foreground"
             >
-              <th class="px-4 py-3">Name</th>
-              <th class="px-4 py-3">Key Prefix</th>
-              <th class="px-4 py-3">Scopes</th>
-              <th class="px-4 py-3">Status</th>
-              <th class="px-4 py-3">Last Used</th>
-              <th class="px-4 py-3">Created</th>
-              <th class="px-4 py-3">Expires</th>
-              <th class="px-4 py-3"><span class="sr-only">Actions</span></th>
+              <th class="px-4 py-3">{{ t('settings.apiKeys.columns.name') }}</th>
+              <th class="px-4 py-3">{{ t('settings.apiKeys.columns.keyPrefix') }}</th>
+              <th class="px-4 py-3">{{ t('settings.apiKeys.columns.scopes') }}</th>
+              <th class="px-4 py-3">{{ t('settings.apiKeys.columns.status') }}</th>
+              <th class="px-4 py-3">{{ t('settings.apiKeys.columns.lastUsed') }}</th>
+              <th class="px-4 py-3">{{ t('settings.apiKeys.columns.created') }}</th>
+              <th class="px-4 py-3">{{ t('settings.apiKeys.columns.expires') }}</th>
+              <th class="px-4 py-3">
+                <span class="sr-only">{{ t('settings.apiKeys.actions') }}</span>
+              </th>
             </tr>
           </thead>
           <tbody class="divide-y">
@@ -297,7 +325,7 @@ function statusClass(status: ApiKeyStatus): string {
               <!-- Status -->
               <td class="px-4 py-3">
                 <Badge :variant="statusVariant(key.status)" :class="statusClass(key.status)" class="text-[11px]">
-                  {{ key.status }}
+                  {{ statusLabel(key.status) }}
                 </Badge>
               </td>
               <!-- Last Used -->
@@ -317,7 +345,7 @@ function statusClass(status: ApiKeyStatus): string {
                 <span v-if="key.expiresAt" :title="formatDateTime(key.expiresAt)">
                   {{ formatRelativeTime(key.expiresAt) }}
                 </span>
-                <span v-else class="italic">Never</span>
+                <span v-else class="italic">{{ t('settings.apiKeys.never') }}</span>
               </td>
               <!-- Actions -->
               <td class="px-4 py-3 text-right">
@@ -326,20 +354,20 @@ function statusClass(status: ApiKeyStatus): string {
                   variant="outline"
                   size="sm"
                   class="text-destructive hover:bg-destructive/10 hover:text-destructive"
-                  :aria-label="'Revoke ' + key.name"
+                  :aria-label="t('settings.apiKeys.revokeAria', { name: key.name })"
                   @click="openRevokeDialog(key)"
                 >
-                  Revoke
+                  {{ t('settings.apiKeys.revoke') }}
                 </Button>
                 <Button
                   v-else-if="key.status === 'REVOKED' || key.status === 'EXPIRED'"
                   variant="outline"
                   size="sm"
                   class="text-destructive hover:bg-destructive/10 hover:text-destructive"
-                  :aria-label="'Delete ' + key.name"
+                  :aria-label="t('settings.apiKeys.deleteAria', { name: key.name })"
                   @click="openDeleteDialog(key)"
                 >
-                  Delete
+                  {{ t('settings.apiKeys.delete') }}
                 </Button>
               </td>
             </tr>
@@ -361,7 +389,7 @@ function statusClass(status: ApiKeyStatus): string {
                  pushing the status badge out of the card -->
             <span class="font-medium min-w-0 break-all">{{ key.name }}</span>
             <Badge :variant="statusVariant(key.status)" :class="statusClass(key.status)" class="text-[11px]">
-              {{ key.status }}
+              {{ statusLabel(key.status) }}
             </Badge>
           </div>
 
@@ -380,23 +408,23 @@ function statusClass(status: ApiKeyStatus): string {
           <!-- Metadata -->
           <div class="flex flex-col gap-1 text-sm text-muted-foreground">
             <div class="flex items-center justify-between">
-              <span>Last used</span>
+              <span>{{ t('settings.apiKeys.lastUsed') }}</span>
               <span :title="key.lastUsedAt ? formatDateTime(key.lastUsedAt) : undefined">
                 {{ formatRelativeTime(key.lastUsedAt) }}
               </span>
             </div>
             <div class="flex items-center justify-between">
-              <span>Created</span>
+              <span>{{ t('settings.apiKeys.created') }}</span>
               <span :title="formatDateTime(key.createdAt)">
                 {{ formatRelativeTime(key.createdAt) }}
               </span>
             </div>
             <div class="flex items-center justify-between">
-              <span>Expires</span>
+              <span>{{ t('settings.apiKeys.expires') }}</span>
               <span v-if="key.expiresAt" :title="formatDateTime(key.expiresAt)">
                 {{ formatRelativeTime(key.expiresAt) }}
               </span>
-              <span v-else class="italic">Never</span>
+              <span v-else class="italic">{{ t('settings.apiKeys.never') }}</span>
             </div>
           </div>
 
@@ -406,10 +434,10 @@ function statusClass(status: ApiKeyStatus): string {
               variant="outline"
               size="sm"
               class="text-destructive hover:bg-destructive/10 hover:text-destructive"
-              :aria-label="'Revoke ' + key.name"
+              :aria-label="t('settings.apiKeys.revokeAria', { name: key.name })"
               @click="openRevokeDialog(key)"
             >
-              Revoke
+              {{ t('settings.apiKeys.revoke') }}
             </Button>
           </div>
           <div v-else-if="key.status === 'REVOKED' || key.status === 'EXPIRED'" class="flex justify-end">
@@ -417,10 +445,10 @@ function statusClass(status: ApiKeyStatus): string {
               variant="outline"
               size="sm"
               class="text-destructive hover:bg-destructive/10 hover:text-destructive"
-              :aria-label="'Delete ' + key.name"
+              :aria-label="t('settings.apiKeys.deleteAria', { name: key.name })"
               @click="openDeleteDialog(key)"
             >
-              Delete
+              {{ t('settings.apiKeys.delete') }}
             </Button>
           </div>
         </div>
@@ -435,13 +463,13 @@ function statusClass(status: ApiKeyStatus): string {
       :open="revokeDialogOpen"
       :api-key="selectedKeyForRevoke"
       :mutation="revokeMutation"
-      title="Revoke API Key"
-      description="After revocation, devices using this key can no longer sync data. This action cannot be undone."
-      confirm-label="Revoke"
-      pending-label="Revoking..."
-      success-title="API Key revoked"
-      :success-description="(name: string) => `${name} can no longer be used to authenticate.`"
-      error-title="Failed to revoke API key"
+      :title="t('settings.apiKeys.revokeTitle')"
+      :description="t('settings.apiKeys.revokeDescription')"
+      :confirm-label="t('settings.apiKeys.revokeConfirm')"
+      :pending-label="t('settings.apiKeys.revokePending')"
+      :success-title="t('settings.apiKeys.revokeSuccess')"
+      :success-description="(name: string) => t('settings.apiKeys.revokeSuccessBody', { name })"
+      :error-title="t('settings.apiKeys.revokeError')"
       @update:open="handleRevokeDialogClose"
     />
     <ConfirmApiKeyActionDialog
@@ -449,13 +477,13 @@ function statusClass(status: ApiKeyStatus): string {
       :open="deleteDialogOpen"
       :api-key="selectedKeyForDelete"
       :mutation="deleteMutation"
-      title="Delete API Key"
-      description="This permanently deletes the key. It cannot be recovered, and any audit references to it are removed."
-      confirm-label="Delete permanently"
-      pending-label="Deleting..."
-      success-title="API Key deleted"
-      :success-description="(name: string) => `${name} has been permanently removed.`"
-      error-title="Failed to delete API key"
+      :title="t('settings.apiKeys.deleteTitle')"
+      :description="t('settings.apiKeys.deleteDescription')"
+      :confirm-label="t('settings.apiKeys.deleteConfirm')"
+      :pending-label="t('settings.apiKeys.deletePending')"
+      :success-title="t('settings.apiKeys.deleteSuccess')"
+      :success-description="(name: string) => t('settings.apiKeys.deleteSuccessBody', { name })"
+      :error-title="t('settings.apiKeys.deleteError')"
       @update:open="handleDeleteDialogClose"
     />
   </div>
