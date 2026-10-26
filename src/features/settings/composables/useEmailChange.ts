@@ -1,6 +1,7 @@
 import { ref } from 'vue'
 import { useMutation, useQueryClient } from '@tanstack/vue-query'
 import { toast } from 'vue-sonner'
+import { i18n } from '@/i18n'
 import {
   requestEmailChange,
   confirmEmailChange,
@@ -45,6 +46,7 @@ const EMAIL_CHANGE_ERROR_CODES = {
 const isDialogOpen = ref(false)
 
 export function useEmailChange() {
+  const t = i18n.global.t
   const queryClient = useQueryClient()
 
   /**
@@ -63,7 +65,7 @@ export function useEmailChange() {
     if (code) {
       return mapApiErrorCode(code)
     }
-    return 'An unexpected error occurred. Please try again later.'
+    return t('settings.errors.unexpected')
   }
 
   /**
@@ -77,8 +79,8 @@ export function useEmailChange() {
   const requestMutation = useMutation({
     mutationFn: (params: { newEmail: string; password: string }) => requestEmailChange(params),
     onSuccess: () => {
-      toast.success('Verification email sent', {
-        description: 'Please check your new email inbox to confirm the change.',
+      toast.success(t('settings.toasts.emailChangeSent'), {
+        description: t('settings.toasts.emailChangeSentBody'),
       })
       isDialogOpen.value = false
       invalidateUserQuery()
@@ -87,7 +89,7 @@ export function useEmailChange() {
       const code = extractErrorCode(error)
       if (code === EMAIL_CHANGE_ERROR_CODES.ALREADY_PENDING) {
         toast.error(getErrorMessage(error), {
-          description: 'Cancel the existing request or wait for it to expire.',
+          description: t('settings.toasts.emailChangePendingBody'),
         })
       } else if (
         code === EMAIL_CHANGE_ERROR_CODES.PASSWORD_REQUIRED ||
@@ -95,7 +97,7 @@ export function useEmailChange() {
       ) {
         toast.error(getErrorMessage(error))
       } else {
-        toast.error('Failed to request email change', {
+        toast.error(t('settings.toasts.emailChangeRequestFailed'), {
           description: getErrorMessage(error),
         })
       }
@@ -110,8 +112,8 @@ export function useEmailChange() {
   const confirmMutation = useMutation({
     mutationFn: (params: { token: string }) => confirmEmailChange(params),
     onSuccess: () => {
-      toast.success('Email changed successfully', {
-        description: 'Your email address has been updated.',
+      toast.success(t('settings.toasts.emailChanged'), {
+        description: t('settings.toasts.emailChangedBody'),
       })
       invalidateUserQuery()
     },
@@ -119,14 +121,14 @@ export function useEmailChange() {
       const code = extractErrorCode(error)
       if (code === EMAIL_CHANGE_ERROR_CODES.EXPIRED) {
         toast.error(getErrorMessage(error), {
-          description: 'Please request a new email change.',
+          description: t('settings.toasts.requestNewEmailChange'),
         })
       } else if (code === EMAIL_CHANGE_ERROR_CODES.INVALID) {
         toast.error(getErrorMessage(error), {
-          description: 'Please check the link from your email.',
+          description: t('settings.toasts.checkEmailLink'),
         })
       } else {
-        toast.error('Failed to confirm email change', {
+        toast.error(t('settings.toasts.emailChangeConfirmFailed'), {
           description: getErrorMessage(error),
         })
       }
@@ -141,11 +143,11 @@ export function useEmailChange() {
   const cancelMutation = useMutation({
     mutationFn: () => cancelEmailChange(),
     onSuccess: () => {
-      toast.success('Email change request cancelled')
+      toast.success(t('settings.toasts.emailChangeCancelled'))
       invalidateUserQuery()
     },
     onError: (error: unknown) => {
-      toast.error('Failed to cancel email change', {
+      toast.error(t('settings.toasts.emailChangeCancelFailed'), {
         description: getErrorMessage(error),
       })
     },
@@ -159,12 +161,12 @@ export function useEmailChange() {
   const resendMutation = useMutation({
     mutationFn: () => resendEmailChangeVerification(),
     onSuccess: () => {
-      toast.success('Verification email resent', {
-        description: 'Please check your inbox.',
+      toast.success(t('settings.toasts.verificationResent'), {
+        description: t('settings.toasts.verificationResentBody'),
       })
     },
     onError: (error: unknown) => {
-      toast.error('Failed to resend verification email', {
+      toast.error(t('settings.toasts.verificationResendFailed'), {
         description: getErrorMessage(error),
       })
     },

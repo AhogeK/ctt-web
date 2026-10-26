@@ -1,6 +1,7 @@
 import { ref } from 'vue'
 import { useMutation, useQueryClient } from '@tanstack/vue-query'
 import { toast } from 'vue-sonner'
+import { i18n } from '@/i18n'
 import { setPassword, changePassword } from '@/lib/api/user'
 import { extractErrorCode, mapApiErrorCode } from '@/lib/utils/api-error'
 import { userKeys } from '@/lib/query-keys'
@@ -32,6 +33,7 @@ const isDialogOpen = ref(false)
  * @returns Object with mutations, dialog state, and error code constants
  */
 export function useSetPassword() {
+  const t = i18n.global.t
   const queryClient = useQueryClient()
 
   /**
@@ -50,7 +52,7 @@ export function useSetPassword() {
     if (code) {
       return mapApiErrorCode(code)
     }
-    return 'An unexpected error occurred. Please try again later.'
+    return t('settings.errors.unexpected')
   }
 
   /**
@@ -61,8 +63,8 @@ export function useSetPassword() {
   const mutation = useMutation({
     mutationFn: (newPassword: string) => setPassword(newPassword),
     onSuccess: () => {
-      toast.success('Password set successfully', {
-        description: 'You can now sign in with your email and password.',
+      toast.success(t('settings.toasts.passwordSet'), {
+        description: t('settings.toasts.passwordSetBody'),
       })
       isDialogOpen.value = false
       invalidateUserQuery()
@@ -72,7 +74,7 @@ export function useSetPassword() {
       if (code === SET_PASSWORD_ERROR_CODES.ALREADY_HAS_PASSWORD) {
         toast.error(getErrorMessage(error))
       } else {
-        toast.error('Failed to set password', {
+        toast.error(t('settings.toasts.passwordSetFailed'), {
           description: getErrorMessage(error),
         })
       }
@@ -87,14 +89,14 @@ export function useSetPassword() {
   const changePasswordMutation = useMutation({
     mutationFn: (data: { currentPassword: string; newPassword: string }) => changePassword(data),
     onSuccess: () => {
-      toast.success('Password changed successfully', {
-        description: 'Your password has been updated.',
+      toast.success(t('settings.toasts.passwordChanged'), {
+        description: t('settings.toasts.passwordChangedBody'),
       })
       isDialogOpen.value = false
       invalidateUserQuery()
     },
     onError: (error: unknown) => {
-      toast.error('Failed to change password', {
+      toast.error(t('settings.toasts.passwordChangeFailed'), {
         description: getErrorMessage(error),
       })
     },

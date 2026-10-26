@@ -5,6 +5,7 @@
  */
 import { computed, onMounted, ref } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
+import { useI18n } from 'vue-i18n'
 import { useMutation, useQuery } from '@tanstack/vue-query'
 import { toast } from 'vue-sonner'
 import { getGitHubAuthorizeUrl, fetchLinkedOAuthAccounts, unbindOAuthAccount } from '@/lib/api'
@@ -31,6 +32,7 @@ import { useEmailStatus } from '@/features/settings/composables/useEmailStatus'
 
 const route = useRoute()
 const router = useRouter()
+const { t } = useI18n()
 
 const { isDialogOpen } = useEmailChange()
 const { data: emailStatus } = useEmailStatus()
@@ -54,7 +56,7 @@ const githubMutation = useMutation({
     const code = extractErrorCode(error)
     if (code === 'AUTH_001') return
 
-    toast.error('GitHub linking failed', { description: 'Unable to start GitHub authorization. Please try again.' })
+    toast.error(t('settings.profile.linkFailedTitle'), { description: t('settings.profile.linkFailedBody') })
   },
 })
 
@@ -63,7 +65,7 @@ const unbindMutation = useMutation({
   // Future providers will be handled by a per-provider dialog dispatch.
   mutationFn: (_action: 'unbind') => unbindOAuthAccount('github'),
   onSuccess: () => {
-    toast.success('GitHub account disconnected')
+    toast.success(t('settings.profile.disconnected'))
     void refetchOAuthAccounts()
     isUnbindDialogOpen.value = false
   },
@@ -75,7 +77,7 @@ const unbindMutation = useMutation({
     if (code === 'AUTH_001') return
 
     const message = getOAuthUnbindErrorMessage(code ?? '')
-    toast.error('Failed to disconnect GitHub', { description: message })
+    toast.error(t('settings.profile.unlinkFailedTitle'), { description: message })
     isUnbindDialogOpen.value = false
   },
 })
@@ -146,6 +148,8 @@ const githubBinding = computed<OAuthAccountBinding | null>(() => {
   return accounts.find((a) => a.provider === 'github') ?? null
 })
 
+const githubBindingLabel = computed(() => (githubBinding.value ? getBindingLabel(githubBinding.value) : null))
+
 /**
  * Handles the OAuth BIND callback when GitHub redirects back to
  * /settings/profile?linked=github (success) or
@@ -168,9 +172,9 @@ onMounted(() => {
   // the truthy check and silently toast success on a failed bind.
   if (typeof errorParam === 'string' && errorParam.length > 0) {
     const message = getOAuthBindErrorMessage(errorParam)
-    toast.error('GitHub linking failed', { description: message })
+    toast.error(t('settings.profile.linkFailedTitle'), { description: message })
   } else {
-    toast.success('GitHub account linked successfully')
+    toast.success(t('settings.profile.linked'))
     void refetchOAuthAccounts()
   }
 
@@ -186,15 +190,19 @@ onMounted(() => {
     <EmailVerificationBanner />
 
     <div class="flex flex-col gap-2">
-      <h1 class="text-2xl font-semibold text-foreground dark:text-foreground">Profile Settings</h1>
-      <p class="text-sm text-muted-foreground dark:text-muted-foreground">Manage your account information</p>
+      <h1 class="text-2xl font-semibold text-foreground dark:text-foreground">{{ t('settings.profile.title') }}</h1>
+      <p class="text-sm text-muted-foreground dark:text-muted-foreground">
+        {{ t('settings.profile.subtitle') }}
+      </p>
     </div>
 
     <AccountSection />
 
     <!-- Connected Accounts Section -->
     <div data-surface="card" class="rounded-lg border border-border dark:border-white/8 bg-muted dark:bg-card p-6">
-      <h2 class="text-lg font-medium text-foreground dark:text-foreground mb-4">Connected Accounts</h2>
+      <h2 class="text-lg font-medium text-foreground dark:text-foreground mb-4">
+        {{ t('settings.profile.connectedAccounts') }}
+      </h2>
       <div class="flex items-center justify-between">
         <div class="flex items-center gap-3">
           <!-- Provider icon: GitHub SVG today; future providers should
@@ -224,21 +232,21 @@ onMounted(() => {
               class="text-sm text-muted-foreground dark:text-muted-foreground"
               data-testid="github-status-loading"
             >
-              Checking connection…
+              {{ t('settings.profile.checkingConnection') }}
             </p>
             <p
               v-else-if="isAccountsError"
               class="text-sm text-destructive dark:text-destructive"
               data-testid="github-status-error"
             >
-              Failed to load connection status
+              {{ t('settings.profile.connectionFailed') }}
               <button
                 type="button"
                 class="ml-1 underline underline-offset-2 hover:text-destructive dark:hover:text-destructive"
                 data-testid="github-status-retry"
                 @click="handleRetryLoad"
               >
-                Retry
+                {{ t('settings.common.retry') }}
               </button>
             </p>
             <p
@@ -246,20 +254,20 @@ onMounted(() => {
               class="text-sm text-muted-foreground dark:text-muted-foreground"
               data-testid="github-status-connected"
             >
-              <span class="text-success dark:text-success">Connected</span>
-              <template v-if="getBindingLabel(githubBinding)">
-                <span> as </span>
-                <span class="font-medium text-foreground dark:text-foreground">{{
-                  getBindingLabel(githubBinding)
-                }}</span>
-              </template>
+              <span class="text-success dark:text-success">
+                {{
+                  githubBindingLabel
+                    ? t('settings.profile.connectedAs', { account: githubBindingLabel })
+                    : t('settings.profile.connected')
+                }}
+              </span>
             </p>
             <p
               v-else
               class="text-sm text-muted-foreground dark:text-muted-foreground"
               data-testid="github-status-disconnected"
             >
-              Not connected
+              {{ t('settings.profile.notConnected') }}
             </p>
           </div>
         </div>
@@ -279,7 +287,7 @@ onMounted(() => {
           :disabled="githubMutation.isPending.value"
           @click="handleBindGitHub"
         >
-          {{ githubMutation.isPending.value ? 'Connecting...' : 'Connect GitHub' }}
+          {{ githubMutation.isPending.value ? t('settings.profile.connecting') : t('settings.profile.connectGithub') }}
         </Button>
         <Dialog v-else :open="isUnbindDialogOpen" @update:open="isUnbindDialogOpen = $event">
           <DialogTrigger as-child>
@@ -297,27 +305,34 @@ onMounted(() => {
               "
               :disabled="unbindMutation.isPending.value"
             >
-              {{ unbindMutation.isPending.value ? 'Disconnecting...' : 'Disconnect GitHub' }}
+              {{
+                unbindMutation.isPending.value
+                  ? t('settings.profile.disconnecting')
+                  : t('settings.profile.disconnectGithub')
+              }}
             </Button>
           </DialogTrigger>
           <DialogContent class="sm:max-w-md">
             <DialogHeader>
-              <DialogTitle>Disconnect GitHub account?</DialogTitle>
+              <DialogTitle>{{ t('settings.profile.disconnectTitle') }}</DialogTitle>
               <DialogDescription>
-                This will unlink your GitHub account
-                <span v-if="getBindingLabel(githubBinding)">
-                  (<strong>{{ getBindingLabel(githubBinding) }}</strong
-                  >)
-                </span>
-                from your CTT account. You can reconnect at any time.
+                {{
+                  githubBindingLabel
+                    ? t('settings.profile.disconnectDescriptionWithAccount', { account: githubBindingLabel })
+                    : t('settings.profile.disconnectDescription')
+                }}
               </DialogDescription>
             </DialogHeader>
             <DialogFooter class="gap-2">
               <Button variant="ghost" :disabled="unbindMutation.isPending.value" @click="handleCancelUnbind">
-                Cancel
+                {{ t('settings.common.cancel') }}
               </Button>
               <Button variant="destructive" :disabled="unbindMutation.isPending.value" @click="handleConfirmUnbind">
-                {{ unbindMutation.isPending.value ? 'Disconnecting...' : 'Disconnect' }}
+                {{
+                  unbindMutation.isPending.value
+                    ? t('settings.profile.disconnecting')
+                    : t('settings.profile.disconnect')
+                }}
               </Button>
             </DialogFooter>
           </DialogContent>

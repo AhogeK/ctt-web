@@ -90,6 +90,7 @@ vi.mock('@/components/ui/badge', () => ({
 
 vi.mock('@/lib/utils', () => ({
   cn: (...inputs: unknown[]) => inputs.filter(Boolean).join(' '),
+  formatDateTime: (value: string) => new Date(value).toLocaleString('en-US'),
 }))
 
 // ==========================================

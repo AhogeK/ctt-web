@@ -1,4 +1,7 @@
 import { z } from 'zod'
+import { i18n } from '@/i18n'
+
+const t = (key: string) => i18n.global.t(key)
 
 /**
  * Email change form schema.
@@ -10,7 +13,9 @@ import { z } from 'zod'
  * Backend endpoint: POST /api/v1/users/me/email-change
  */
 export const EmailChangeSchema = z.object({
-  email: z.email('Invalid email format').min(1, 'Email is required'),
+  email: z.email({ error: () => t('settings.emailChange.invalidEmail') }).min(1, {
+    error: () => t('settings.emailChange.emailRequired'),
+  }),
   password: z.string().optional(),
 })
 

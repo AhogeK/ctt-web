@@ -27,6 +27,7 @@
  * Anything else is toasted, since it is not something this form can fix.
  */
 import { computed, ref, watch } from 'vue'
+import { useI18n } from 'vue-i18n'
 import { toTypedSchema } from '@vee-validate/zod'
 import { useForm } from 'vee-validate'
 import { z } from 'zod'
@@ -61,6 +62,7 @@ const emit = defineEmits<{
   'update:open': [value: boolean]
 }>()
 
+const { t } = useI18n()
 const { mutation } = useDeleteAccount()
 
 /** Shared input treatment, matching the other password fields in this feature. */
@@ -86,15 +88,15 @@ interface DeleteAccountFormValues {
 const DeleteAccountFormSchema = computed(() =>
   z.object(
     props.hasPassword
-      ? { password: z.string().min(1, 'Enter your password to confirm') }
+      ? { password: z.string().min(1, { error: () => t('settings.deleteAccount.passwordRequired') }) }
       : {
           confirmEmail: z
             .string()
-            .min(1, 'Type your email to confirm')
+            .min(1, { error: () => t('settings.deleteAccount.emailRequired') })
             // Compared case-insensitively and trimmed: the server normalises emails to lowercase,
             // and demanding exact capitalisation would only punish a correct answer.
             .refine((value) => value.trim().toLowerCase() === props.email.trim().toLowerCase(), {
-              message: 'That does not match the email on this account',
+              error: () => t('settings.deleteAccount.emailMismatch'),
             }),
         },
   ),
@@ -115,13 +117,13 @@ const onSubmit = form.handleSubmit((values) => {
     onError: (error: unknown) => {
       const code = extractErrorCode(error)
       if (code === PASSWORD_MISMATCH_CODE) {
-        form.setFieldError('password', 'That password is incorrect.')
+        form.setFieldError('password', t('settings.deleteAccount.wrongPassword'))
         return
       }
       // `mapApiErrorCode('')` yields an empty string, so a failure that carries no server code at
       // all — timeout, offline, aborted — used to arrive as a toast with a blank description. Those
       // are exactly the failures where the reader cannot tell whether the deletion happened.
-      toast.error('Could not delete your account', {
+      toast.error(t('settings.deleteAccount.failed'), {
         description: getErrorMessage(error),
       })
     },
@@ -157,12 +159,11 @@ watch(
       <DialogHeader class="text-left">
         <div class="flex items-center gap-2">
           <TriangleAlert class="h-5 w-5 shrink-0 text-destructive" aria-hidden="true" />
-          <DialogTitle>Delete your account?</DialogTitle>
+          <DialogTitle>{{ t('settings.deleteAccount.title') }}</DialogTitle>
         </div>
         <DialogDescription class="pt-1">
-          This deletes your account and everything the server holds for it: sessions, statistics, achievements, devices
-          and API keys.
-          <span class="font-medium text-foreground">It cannot be undone.</span>
+          {{ t('settings.deleteAccount.description') }}
+          <span class="font-medium text-foreground">{{ t('settings.deleteAccount.irreversible') }}</span>
         </DialogDescription>
       </DialogHeader>
 
@@ -173,14 +174,14 @@ watch(
         <FormField v-if="props.hasPassword" v-slot="{ componentField }" name="password">
           <FormItem>
             <FormLabel class="text-sm font-emphasis text-muted-foreground [font-feature-settings:'cv01'_'ss03']">
-              Confirm your password
+              {{ t('settings.deleteAccount.passwordLabel') }}
             </FormLabel>
             <FormControl>
               <div class="relative">
                 <Input
                   id="delete-account-password"
                   :type="showPassword ? 'text' : 'password'"
-                  placeholder="Enter your current password"
+                  :placeholder="t('settings.deleteAccount.passwordPlaceholder')"
                   autocomplete="current-password"
                   :class="inputClass"
                   data-testid="delete-account-password"
@@ -190,7 +191,9 @@ watch(
                   type="button"
                   tabindex="-1"
                   class="absolute right-2.5 top-1/2 -translate-y-1/2 cursor-pointer text-muted-foreground transition-colors hover:text-primary"
-                  :aria-label="showPassword ? 'Hide password' : 'Show password'"
+                  :aria-label="
+                    showPassword ? t('settings.deleteAccount.hidePassword') : t('settings.deleteAccount.showPassword')
+                  "
                   @click="showPassword = !showPassword"
                 >
                   <EyeOff v-if="!showPassword" class="h-4 w-4" />
@@ -205,7 +208,7 @@ watch(
         <FormField v-else v-slot="{ componentField }" name="confirmEmail">
           <FormItem>
             <FormLabel class="text-sm font-emphasis text-muted-foreground [font-feature-settings:'cv01'_'ss03']">
-              Type your email to confirm
+              {{ t('settings.deleteAccount.emailLabel') }}
             </FormLabel>
             <FormControl>
               <Input
@@ -222,9 +225,7 @@ watch(
           </FormItem>
         </FormField>
 
-        <p class="text-xs text-muted-foreground">
-          Your plugin keeps its own copy of your history, so registering again and syncing restores it.
-        </p>
+        <p class="text-xs text-muted-foreground">{{ t('settings.deleteAccount.note') }}</p>
 
         <DialogFooter class="gap-2">
           <Button
@@ -234,7 +235,7 @@ watch(
             data-testid="delete-account-cancel"
             @click="handleClose"
           >
-            Cancel
+            {{ t('settings.common.cancel') }}
           </Button>
           <Button
             type="submit"
@@ -253,7 +254,7 @@ watch(
               <circle cx="12" cy="12" r="10" stroke-opacity="0.25" />
               <path d="M12 2a10 10 0 0 1 10 10" stroke-linecap="round" />
             </svg>
-            {{ mutation.isPending.value ? 'Deleting…' : 'Delete my account' }}
+            {{ mutation.isPending.value ? t('settings.deleteAccount.deleting') : t('settings.deleteAccount.confirm') }}
           </Button>
         </DialogFooter>
       </form>

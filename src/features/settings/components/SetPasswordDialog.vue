@@ -15,6 +15,7 @@
  * - COMMON_003: Invalid password format
  */
 import { computed, ref, watch } from 'vue'
+import { useI18n } from 'vue-i18n'
 import { toTypedSchema } from '@vee-validate/zod'
 import { useForm } from 'vee-validate'
 import { z } from 'zod'
@@ -50,6 +51,7 @@ const emit = defineEmits<{
   success: []
 }>()
 
+const { t } = useI18n()
 const { mutation, changePasswordMutation, SET_PASSWORD_ERROR_CODES } = useSetPassword()
 
 /** Dialog mode: 'set' for first password, 'change' for existing password */
@@ -76,11 +78,15 @@ const SetPasswordFormSchema = computed(() =>
   z
     .object({
       newPassword: StrongPasswordSchema,
-      confirmPassword: z.string().min(1, 'Please confirm your password'),
-      ...(props.hasPassword ? { currentPassword: z.string().min(1, 'Current password is required') } : {}),
+      confirmPassword: z.string().min(1, { error: () => t('settings.password.confirmRequired') }),
+      ...(props.hasPassword
+        ? {
+            currentPassword: z.string().min(1, { error: () => t('settings.password.currentRequired') }),
+          }
+        : {}),
     })
     .refine((data) => data.newPassword === data.confirmPassword, {
-      message: 'Passwords do not match',
+      error: () => t('settings.password.mismatch'),
       path: ['confirmPassword'],
     }),
 )
@@ -107,11 +113,11 @@ const onSubmit = form.handleSubmit((values) => {
           // they render in the same FormMessage slot as validation errors —
           // no separate error banner (avoids layout jump + inconsistent style).
           if (code === 'USER_014') {
-            form.setFieldError('currentPassword', 'Current password is incorrect.')
+            form.setFieldError('currentPassword', t('settings.password.currentIncorrect'))
           } else if (code === 'PASSWORD_SAME_AS_OLD') {
-            form.setFieldError('newPassword', 'New password cannot be the same as your current password.')
+            form.setFieldError('newPassword', t('settings.password.sameAsOld'))
           } else if (code === SET_PASSWORD_ERROR_CODES.INVALID_FORMAT) {
-            form.setFieldError('newPassword', 'Password does not meet requirements. Please check and try again.')
+            form.setFieldError('newPassword', t('settings.password.requirements'))
           }
         },
         onSuccess: () => {
@@ -124,12 +130,9 @@ const onSubmit = form.handleSubmit((values) => {
       onError: (error: unknown) => {
         const code = extractErrorCode(error)
         if (code === SET_PASSWORD_ERROR_CODES.ALREADY_HAS_PASSWORD) {
-          form.setFieldError(
-            'newPassword',
-            'You already have a password set. Please use the change password option instead.',
-          )
+          form.setFieldError('newPassword', t('settings.password.alreadySet'))
         } else if (code === SET_PASSWORD_ERROR_CODES.INVALID_FORMAT) {
-          form.setFieldError('newPassword', 'Password does not meet requirements. Please check and try again.')
+          form.setFieldError('newPassword', t('settings.password.requirements'))
         }
       },
       onSuccess: () => {
@@ -159,13 +162,15 @@ watch(
   <Dialog :open="props.open" @update:open="handleClose">
     <DialogContent class="sm:max-w-md">
       <DialogHeader>
-        <DialogTitle>{{ mode === 'change' ? 'Change Password' : 'Set Password' }}</DialogTitle>
+        <DialogTitle>{{
+          mode === 'change' ? t('settings.password.changeTitle') : t('settings.password.setTitle')
+        }}</DialogTitle>
         <DialogDescription>
           <template v-if="mode === 'change'">
-            Enter your current password and a new password to update your account credentials.
+            {{ t('settings.password.changeDescription') }}
           </template>
           <template v-else>
-            Create a password for your account so you can sign in with your email and password.
+            {{ t('settings.password.setDescription') }}
           </template>
         </DialogDescription>
       </DialogHeader>
@@ -175,14 +180,14 @@ watch(
         <FormField v-if="mode === 'change'" v-slot="{ componentField }" name="currentPassword">
           <FormItem>
             <FormLabel class="text-sm font-emphasis text-muted-foreground [font-feature-settings:'cv01'_'ss03']">
-              Current Password
+              {{ t('settings.password.currentPassword') }}
             </FormLabel>
             <FormControl>
               <div class="relative">
                 <Input
                   id="current-password"
                   :type="showCurrentPassword ? 'text' : 'password'"
-                  placeholder="Enter your current password"
+                  :placeholder="t('settings.password.currentPlaceholder')"
                   autocomplete="current-password"
                   :class="
                     cn(
@@ -200,7 +205,9 @@ watch(
                   type="button"
                   tabindex="-1"
                   class="absolute right-2.5 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-primary transition-colors cursor-pointer"
-                  :aria-label="showCurrentPassword ? 'Hide current password' : 'Show current password'"
+                  :aria-label="
+                    showCurrentPassword ? t('settings.password.hideCurrent') : t('settings.password.showCurrent')
+                  "
                   @click="showCurrentPassword = !showCurrentPassword"
                 >
                   <EyeOff v-if="!showCurrentPassword" class="h-4 w-4" />
@@ -215,7 +222,7 @@ watch(
         <FormField v-slot="{ componentField }" name="newPassword">
           <FormItem>
             <FormLabel class="text-sm font-emphasis text-muted-foreground [font-feature-settings:'cv01'_'ss03']">
-              New Password
+              {{ t('settings.password.newPassword') }}
             </FormLabel>
             <FormControl>
               <div class="space-y-2">
@@ -223,7 +230,7 @@ watch(
                   <Input
                     id="new-password"
                     :type="showNewPassword ? 'text' : 'password'"
-                    placeholder="8-64 characters, printable ASCII only"
+                    :placeholder="t('settings.password.newPlaceholder')"
                     autocomplete="new-password"
                     :class="
                       cn(
@@ -241,7 +248,7 @@ watch(
                     type="button"
                     tabindex="-1"
                     class="absolute right-2.5 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-primary transition-colors cursor-pointer"
-                    :aria-label="showNewPassword ? 'Hide new password' : 'Show new password'"
+                    :aria-label="showNewPassword ? t('settings.password.hideNew') : t('settings.password.showNew')"
                     @click="showNewPassword = !showNewPassword"
                   >
                     <EyeOff v-if="!showNewPassword" class="h-4 w-4" />
@@ -258,14 +265,14 @@ watch(
         <FormField v-slot="{ componentField }" name="confirmPassword">
           <FormItem>
             <FormLabel class="text-sm font-emphasis text-muted-foreground [font-feature-settings:'cv01'_'ss03']">
-              Confirm Password
+              {{ t('settings.password.confirmPassword') }}
             </FormLabel>
             <FormControl>
               <div class="relative">
                 <Input
                   id="confirm-password"
                   :type="showConfirmPassword ? 'text' : 'password'"
-                  placeholder="Re-enter your password"
+                  :placeholder="t('settings.password.confirmPlaceholder')"
                   autocomplete="new-password"
                   :class="
                     cn(
@@ -283,7 +290,11 @@ watch(
                   type="button"
                   tabindex="-1"
                   class="absolute right-2.5 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-primary transition-colors cursor-pointer"
-                  :aria-label="showConfirmPassword ? 'Hide confirmation' : 'Show confirmation'"
+                  :aria-label="
+                    showConfirmPassword
+                      ? t('settings.password.hideConfirmation')
+                      : t('settings.password.showConfirmation')
+                  "
                   @click="showConfirmPassword = !showConfirmPassword"
                 >
                   <EyeOff v-if="!showConfirmPassword" class="h-4 w-4" />
@@ -302,7 +313,7 @@ watch(
             :disabled="mutation.isPending.value || changePasswordMutation.isPending.value"
             @click="handleClose"
           >
-            Cancel
+            {{ t('settings.common.cancel') }}
           </Button>
           <Button
             type="submit"
@@ -327,9 +338,13 @@ watch(
               <circle cx="12" cy="12" r="10" stroke-opacity="0.25" />
               <path d="M12 2a10 10 0 0 1 10 10" stroke-linecap="round" />
             </svg>
-            <template v-if="mutation.isPending.value">Setting Password...</template>
-            <template v-else-if="changePasswordMutation.isPending.value">Changing Password...</template>
-            <template v-else>{{ mode === 'change' ? 'Change Password' : 'Set Password' }}</template>
+            <template v-if="mutation.isPending.value">{{ t('settings.password.setting') }}</template>
+            <template v-else-if="changePasswordMutation.isPending.value">{{
+              t('settings.password.changing')
+            }}</template>
+            <template v-else>{{
+              mode === 'change' ? t('settings.password.changeTitle') : t('settings.password.setTitle')
+            }}</template>
           </Button>
         </DialogFooter>
       </form>

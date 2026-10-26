@@ -1,6 +1,7 @@
 import { useMutation } from '@tanstack/vue-query'
 import { useRouter } from 'vue-router'
 import { toast } from 'vue-sonner'
+import { i18n } from '@/i18n'
 import { deleteAccount } from '@/lib/api/user'
 import { useAuthStore } from '@/stores/auth'
 import { RouteNames } from '@/router/route-names'
@@ -28,6 +29,7 @@ export const PASSWORD_MISMATCH_CODE = 'USER_014'
  */
 export function useDeleteAccount() {
   const router = useRouter()
+  const t = i18n.global.t
   const authStore = useAuthStore()
 
   const mutation = useMutation({
@@ -39,10 +41,10 @@ export function useDeleteAccount() {
       // query caches — everything that belonged to the account that no longer exists.
       authStore.clearAuth()
       await router.replace({ name: RouteNames.LOGIN })
-      toast.success('Your account has been deleted', {
+      toast.success(t('settings.toasts.accountDeleted'), {
         // Said plainly because it is the one reassuring thing that is still true: the server's copy
         // is gone, and the plugin's local history is the authority it can push again from.
-        description: 'The plugin still holds your local history, and can sync it again if you register anew.',
+        description: t('settings.toasts.accountDeletedBody'),
       })
     },
   })

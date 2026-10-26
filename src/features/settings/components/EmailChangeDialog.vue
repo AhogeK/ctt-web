@@ -7,6 +7,7 @@
  * (password verification required for email change).
  */
 import { ref, watch } from 'vue'
+import { useI18n } from 'vue-i18n'
 import { toTypedSchema } from '@vee-validate/zod'
 import { useForm } from 'vee-validate'
 import { Button } from '@/components/ui/button'
@@ -39,6 +40,7 @@ const emit = defineEmits<{
   success: []
 }>()
 
+const { t } = useI18n()
 const { requestMutation } = useEmailChange()
 
 const form = useForm<EmailChangeForm>({
@@ -67,7 +69,7 @@ const onSubmit = form.handleSubmit((values) => {
           const code = extractErrorCode(error)
           if (code === 'USER_013') {
             showPasswordField.value = true
-            errorMessage.value = 'Password verification required. Please enter your current password.'
+            errorMessage.value = t('settings.emailChange.passwordRequired')
           }
         },
       },
@@ -104,14 +106,13 @@ watch(
   <Dialog :open="props.open" @update:open="handleClose">
     <DialogContent class="sm:max-w-md">
       <DialogHeader>
-        <DialogTitle>Change Email</DialogTitle>
+        <DialogTitle>{{ t('settings.emailChange.title') }}</DialogTitle>
         <DialogDescription>
-          Enter your new email address
-          <template v-if="props.currentEmail">
-            (currently: <strong>{{ props.currentEmail }}</strong
-            >)
-          </template>
-          . A verification link will be sent to confirm the change.
+          {{
+            props.currentEmail
+              ? t('settings.emailChange.descriptionWithCurrent', { email: props.currentEmail })
+              : t('settings.emailChange.description')
+          }}
         </DialogDescription>
       </DialogHeader>
 
@@ -121,13 +122,13 @@ watch(
             <FormLabel
               class="text-sm font-emphasis text-foreground/80 [font-feature-settings:'cv01'_'ss03'] dark:text-muted-foreground"
             >
-              New Email
+              {{ t('settings.emailChange.newEmail') }}
             </FormLabel>
             <FormControl>
               <Input
                 id="new-email"
                 type="email"
-                placeholder="you@example.com"
+                :placeholder="t('settings.emailChange.emailPlaceholder')"
                 autocomplete="email"
                 :class="
                   cn(
@@ -150,13 +151,13 @@ watch(
             <FormLabel
               class="text-sm font-emphasis text-foreground/80 [font-feature-settings:'cv01'_'ss03'] dark:text-muted-foreground"
             >
-              Current Password
+              {{ t('settings.emailChange.currentPassword') }}
             </FormLabel>
             <FormControl>
               <Input
                 id="current-password"
                 type="password"
-                placeholder="Enter your current password"
+                :placeholder="t('settings.emailChange.passwordPlaceholder')"
                 autocomplete="current-password"
                 :class="
                   cn(
@@ -180,7 +181,7 @@ watch(
 
         <DialogFooter class="gap-2">
           <Button type="button" variant="ghost" :disabled="requestMutation.isPending.value" @click="handleClose">
-            Cancel
+            {{ t('settings.common.cancel') }}
           </Button>
           <Button
             type="submit"
@@ -205,7 +206,7 @@ watch(
               <circle cx="12" cy="12" r="10" stroke-opacity="0.25" />
               <path d="M12 2a10 10 0 0 1 10 10" stroke-linecap="round" />
             </svg>
-            {{ requestMutation.isPending.value ? 'Sending...' : 'Change Email' }}
+            {{ requestMutation.isPending.value ? t('settings.emailChange.sending') : t('settings.emailChange.submit') }}
           </Button>
         </DialogFooter>
       </form>

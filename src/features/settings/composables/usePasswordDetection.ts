@@ -1,4 +1,5 @@
 import { ref } from 'vue'
+import { i18n } from '@/i18n'
 import { setPassword } from '@/lib/api/user'
 import { extractErrorCode, isApiError } from '@/lib/utils/api-error'
 
@@ -24,6 +25,7 @@ import { extractErrorCode, isApiError } from '@/lib/utils/api-error'
  * @returns Object with hasPassword ref, loading state, error state, and recheck function
  */
 export function usePasswordDetection() {
+  const t = i18n.global.t
   const hasPassword = ref<boolean | null>(null)
   const isChecking = ref(false)
   const checkError = ref<string | null>(null)
@@ -48,7 +50,7 @@ export function usePasswordDetection() {
         hasPassword.value = false
       } else {
         // Network error or unknown error — cannot determine password status
-        checkError.value = 'Unable to check password status. Please try again.'
+        checkError.value = t('settings.errors.passwordStatus')
       }
     } finally {
       isChecking.value = false
