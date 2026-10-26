@@ -32,7 +32,7 @@ src/
 │   ├── devices/        # Device management (DeviceListView)
 │   ├── landing/        # Public landing page (LandingView: staged hero + one arriving beat)
 │   ├── leaderboard/    # Leaderboard rankings (LeaderboardView)
-│   └── settings/       # User settings (ProfileView, ApiKeysView)
+│   └── settings/       # User settings (ProfileView, PreferencesView, ApiKeysView)
 ├── layouts/            # Layout components
 │   ├── AuthLayout.vue  # Login/Register layout (minimal, centered)
 │   ├── AppLayout.vue   # Main app layout (sidebar, responsive)
@@ -59,7 +59,7 @@ src/
 │       ├── devices.ts  # /devices → redirects into the settings group
 │       ├── landing.ts  # / (public landing + MarketingLayout)
 │       ├── leaderboard.ts # /leaderboard
-│       └── settings.ts # /settings/{profile,devices,preferences,api-keys}; /settings → profile
+│       └── settings.ts # /settings/{profile,devices,preferences,api-keys} listed in the sidebar; /settings → profile
 └── views/              # Top-level views (exception pages only;
     └── Exception/      # feature views live under features/)
                         #   404View
