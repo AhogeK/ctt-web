@@ -24,7 +24,7 @@ test.describe('Device list', () => {
     await expect(cards.nth(0)).toContainText('macOS')
     await expect(cards.nth(0)).toContainText('Last seen: Just now')
     await expect(cards.nth(0)).toContainText('Active')
-    await expect(cards.nth(0)).toContainText('IntelliJ IDEA 2026.1')
+    await expect(cards.nth(0)).toContainText('Last used IDE: IntelliJ IDEA 2026.1')
 
     // 30 days idle → Inactive badge + "1mo ago".
     await expect(cards.nth(1)).toContainText(TEST_WINDOWS_DEVICE.deviceName!)
@@ -42,5 +42,32 @@ test.describe('Device list', () => {
 
     await expect(page.getByRole('button', { name: `Revoke ${TEST_MAC_DEVICE.deviceName}` })).toBeVisible()
     await expect(page.getByRole('button', { name: `Revoke ${TEST_WINDOWS_DEVICE.deviceName}` })).toBeVisible()
+  })
+
+  test('renders the page in Chinese after switching in Preferences', async ({ page }) => {
+    await setupDevicesPage(page, TEST_DEVICES)
+
+    await page.goto('/settings/preferences')
+    await page.getByText('简体中文', { exact: true }).click()
+    await page.getByRole('heading', { name: '偏好设置' }).waitFor()
+
+    await page.goto('/settings/devices')
+    await expect(page.getByRole('heading', { name: '设备管理' })).toBeVisible()
+
+    const macCard = page.getByTestId('device-card').filter({ hasText: TEST_MAC_DEVICE.deviceName! })
+    await expect(macCard).toContainText('上次活跃：')
+    await expect(macCard).toContainText('最近使用 IDE：IntelliJ IDEA 2026.1')
+    await expect(macCard).toContainText('活跃')
+
+    await page.getByRole('button', { name: `撤销 ${TEST_MAC_DEVICE.deviceName}` }).click()
+    const dialog = page.getByRole('dialog')
+    await expect(dialog).toContainText('撤销设备访问')
+    await expect(dialog).toContainText(TEST_MAC_DEVICE.deviceName!)
+    await expect(dialog.getByRole('button', { name: '撤销设备' })).toBeVisible()
+    await dialog.getByRole('button', { name: '取消' }).click()
+
+    await page.goto('/settings/preferences')
+    await page.getByText('English', { exact: true }).click()
+    await page.getByRole('heading', { name: 'Preferences' }).waitFor()
   })
 })

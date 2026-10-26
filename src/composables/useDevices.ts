@@ -1,7 +1,8 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/vue-query'
 import { listDevices, revokeDevice } from '@/lib/api/devices'
 import { toast } from 'vue-sonner'
-import { getErrorMessage } from '@/lib/utils/api-error'
+import { i18n } from '@/i18n'
+import { extractErrorCode, getErrorMessage } from '@/lib/utils/api-error'
 
 const DEVICES_QUERY_KEY = ['devices'] as const
 
@@ -33,10 +34,10 @@ export function useRevokeDevice() {
     mutationFn: ({ deviceId }: { deviceId: string }) => revokeDevice(deviceId),
     onSuccess: () => {
       void queryClient.invalidateQueries({ queryKey: DEVICES_QUERY_KEY })
-      toast.success('Device revoked successfully')
+      toast.success(i18n.global.t('settings.devices.revokeSuccess'))
     },
     onError: (error: unknown) => {
-      toast.error(getErrorMessage(error))
+      toast.error(extractErrorCode(error) ? getErrorMessage(error) : i18n.global.t('settings.devices.revokeFailed'))
     },
   })
 
