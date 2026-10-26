@@ -778,10 +778,12 @@ const zhCN: Messages = {
       title: '偏好设置',
       subtitle: '应用于当前浏览器的外观与行为。',
       appearance: '外观',
+      appearanceDescription: '选择主题，或跟随系统。',
       current: '当前：{value}',
       theme: '主题',
       language: '语言',
       languageDescription: '界面语言，切换后立即生效。',
+      storageNote: '保存在此浏览器中，切换后立即生效；其他设备会保留各自的设置。',
     },
     common: {
       cancel: '取消',

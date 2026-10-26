@@ -10,6 +10,10 @@
 interface ChoiceOption {
   value: string
   label: string
+  /** Short code for a bespoke option surface, e.g. EN / 中. */
+  code?: string
+  /** Specimen kind for a theme option. */
+  preview?: 'system' | 'light' | 'dark'
 }
 
 const props = defineProps<{
@@ -39,8 +43,13 @@ function handleChange(value: string): void {
 <template>
   <fieldset class="min-w-0">
     <legend class="sr-only">{{ props.legend }}</legend>
-    <div class="grid gap-2" :class="columnsClass">
-      <label v-for="option in props.options" :key="option.value" class="cursor-pointer">
+    <div class="grid gap-2 sm:gap-3" :class="columnsClass">
+      <label
+        v-for="option in props.options"
+        :key="option.value"
+        class="group min-w-0 cursor-pointer"
+        :data-state="props.modelValue === option.value ? 'checked' : 'unchecked'"
+      >
         <input
           :checked="props.modelValue === option.value"
           class="peer sr-only"
@@ -49,11 +58,13 @@ function handleChange(value: string): void {
           :value="option.value"
           @change="handleChange(option.value)"
         />
-        <span
-          class="flex items-center justify-center rounded-md border px-3 py-2 text-sm transition-colors peer-checked:border-primary peer-checked:bg-accent peer-checked:font-medium peer-checked:text-accent-foreground peer-focus-visible:ring-2 peer-focus-visible:ring-ring hover:bg-accent/50"
-        >
-          {{ option.label }}
-        </span>
+        <slot name="option" :option="option" :checked="props.modelValue === option.value">
+          <span
+            class="flex items-center justify-center rounded-md border px-3 py-2 text-sm transition-colors peer-checked:border-primary peer-checked:bg-accent peer-checked:font-medium peer-checked:text-accent-foreground peer-focus-visible:ring-2 peer-focus-visible:ring-ring hover:bg-accent/50"
+          >
+            {{ option.label }}
+          </span>
+        </slot>
       </label>
     </div>
   </fieldset>

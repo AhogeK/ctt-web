@@ -49,6 +49,19 @@ describe('PreferencesView', () => {
     wrapper.unmount()
   })
 
+  it('marks the selected theme and language surfaces, not only the inputs', async () => {
+    const { wrapper } = mountView()
+    const states = () => wrapper.findAll('label').map((label) => label.attributes('data-state'))
+
+    expect(states()).toEqual(['checked', 'unchecked', 'unchecked', 'checked', 'unchecked'])
+
+    await themeRadios(wrapper)[2]!.setValue(true)
+
+    expect(states()).toEqual(['unchecked', 'unchecked', 'checked', 'checked', 'unchecked'])
+
+    wrapper.unmount()
+  })
+
   it('checks the stored mode and reports the resolved system theme', () => {
     const { wrapper } = mountView()
 
