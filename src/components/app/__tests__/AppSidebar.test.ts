@@ -56,9 +56,12 @@ vi.mock('@/components/ui/sidebar', () => ({
 
 vi.mock('@lucide/vue', () => ({
   LayoutDashboard: { name: 'LayoutDashboard', template: '<span data-icon="layout-dashboard" />' },
-  Settings: { name: 'Settings', template: '<span data-icon="settings" />' },
   Trophy: { name: 'Trophy', template: '<span data-icon="trophy" />' },
   ListOrdered: { name: 'ListOrdered', template: '<span data-icon="list-ordered" />' },
+  User: { name: 'User', template: '<span data-icon="user" />' },
+  Monitor: { name: 'Monitor', template: '<span data-icon="monitor" />' },
+  SlidersHorizontal: { name: 'SlidersHorizontal', template: '<span data-icon="sliders" />' },
+  KeyRound: { name: 'KeyRound', template: '<span data-icon="key-round" />' },
 }))
 
 const createTestRouter = () => {
@@ -128,35 +131,46 @@ describe('AppSidebar', () => {
       expect(leaderboardLink.exists()).toBe(true)
       expect(leaderboardLink.text()).toContain('Leaderboard')
 
-      // One Settings entry owns every section; the sub-navigation lives inside the group.
-      const settingsLink = wrapper.find('a[href="/settings"]')
-      expect(settingsLink.exists()).toBe(true)
-      expect(settingsLink.text()).toContain('Settings')
-      expect(wrapper.find('a[href="/settings/profile"]').exists()).toBe(false)
-      expect(wrapper.find('a[href="/settings/api-keys"]').exists()).toBe(false)
+      // The settings group lists its sections directly: a heading plus one link
+      // per section, and no parent entry that would repeat the heading.
+      const settingsLinks = [
+        ['/settings/profile', 'Profile'],
+        ['/settings/devices', 'Devices'],
+        ['/settings/preferences', 'Preferences'],
+        ['/settings/api-keys', 'API Keys'],
+      ] as const
+      for (const [href, label] of settingsLinks) {
+        const link = wrapper.find(`a[href="${href}"]`)
+        expect(link.exists()).toBe(true)
+        expect(link.text()).toContain(label)
+      }
+      expect(wrapper.find('a[href="/settings"]').exists()).toBe(false)
 
       wrapper.unmount()
     })
 
-    it('keeps the settings item highlighted for every section inside the group', async () => {
+    it('highlights exactly the active settings section', async () => {
       const { wrapper, router } = createWrapper()
       const menuButtonFor = (href: string) =>
         wrapper.findAll('[data-slot="sidebar-menu-button"]').find((li) => li.find(`a[href="${href}"]`).exists())!
 
       await router.push('/settings/api-keys')
       await nextTick()
-      expect(menuButtonFor('/settings').attributes('data-active')).toBeDefined()
+      expect(menuButtonFor('/settings/api-keys').attributes('data-active')).toBeDefined()
+      expect(menuButtonFor('/settings/profile').attributes('data-active')).toBeUndefined()
       expect(menuButtonFor('/dashboard').attributes('data-active')).toBeUndefined()
 
       await router.push('/settings/profile')
       await nextTick()
-      expect(menuButtonFor('/settings').attributes('data-active')).toBeDefined()
+      expect(menuButtonFor('/settings/profile').attributes('data-active')).toBeDefined()
+      expect(menuButtonFor('/settings/api-keys').attributes('data-active')).toBeUndefined()
 
       wrapper.unmount()
     })
 
-    it('does not treat a lookalike path as the settings group', async () => {
-      // isSectionActive matches /settings and /settings/<x> — /settings-archive is neither.
+    it('does not treat a lookalike path as a settings section', async () => {
+      // Active state is an exact path match, so a sibling whose path merely
+      // starts with the same string highlights nothing in the settings group.
       const { wrapper, router } = createWrapper()
       await router.push('/settings-archive')
       await nextTick()
@@ -164,7 +178,8 @@ describe('AppSidebar', () => {
       const menuButtonFor = (href: string) =>
         wrapper.findAll('[data-slot="sidebar-menu-button"]').find((li) => li.find(`a[href="${href}"]`).exists())!
 
-      expect(menuButtonFor('/settings').attributes('data-active')).toBeUndefined()
+      expect(menuButtonFor('/settings/profile').attributes('data-active')).toBeUndefined()
+      expect(menuButtonFor('/settings/api-keys').attributes('data-active')).toBeUndefined()
 
       wrapper.unmount()
     })

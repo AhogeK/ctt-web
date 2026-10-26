@@ -24,7 +24,10 @@ test.describe('Interface language', () => {
     await page.getByText('简体中文', { exact: true }).click()
 
     await expect(page.getByRole('heading', { name: '偏好设置' })).toBeVisible()
-    await expect(page.getByRole('navigation', { name: '设置分区' })).toBeVisible()
+    // The settings group heading no longer repeats itself: the sidebar lists the
+    // sections themselves, so there is no parent entry carrying the same name.
+    await expect(page.locator('[data-slot="sidebar"] [data-sidebar="group-label"]', { hasText: '设置' })).toBeVisible()
+    await expect(page.locator('[data-slot="sidebar"] a[href="/settings"]')).toHaveCount(0)
     await expect(page.locator('html')).toHaveAttribute('lang', 'zh-CN')
     // The sidebar follows without a reload — the switcher publishes to the
     // i18n instance, not to storage alone.

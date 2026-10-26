@@ -105,7 +105,7 @@ describe('locale switching', () => {
 
     expect(currentLocale.value).toBe('zh-CN')
     expect(document.documentElement.lang).toBe('zh-CN')
-    expect(i18n.global.t('nav.settings')).toBe('设置')
+    expect(i18n.global.t('nav.profile')).toBe('个人资料')
   })
 
   it('follows a language chosen in another tab', async () => {

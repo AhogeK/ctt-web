@@ -13,7 +13,10 @@ const en = {
     dashboard: 'Dashboard',
     achievements: 'Achievements',
     leaderboard: 'Leaderboard',
-    settings: 'Settings',
+    profile: 'Profile',
+    devices: 'Devices',
+    preferences: 'Preferences',
+    apiKeys: 'API Keys',
   },
   header: {
     openUserMenu: 'Open user menu',
@@ -779,17 +782,6 @@ const en = {
     },
   },
   settings: {
-    sections: {
-      navLabel: 'Settings sections',
-      profile: 'Profile',
-      profileDescription: 'Account, email and sign-in methods',
-      devices: 'Devices',
-      devicesDescription: 'Machines syncing your coding time',
-      preferences: 'Preferences',
-      preferencesDescription: 'Appearance and language',
-      apiKeys: 'API Keys',
-      apiKeysDescription: 'Credentials for the plugin and API',
-    },
     preferences: {
       title: 'Preferences',
       subtitle: 'Appearance and behaviour that apply to this browser.',
