@@ -191,8 +191,8 @@
 - 侧栏设置分组直列四分区，删页内分区栏与 `SettingsShell`；`/settings` 落资料、旧 `/devices` 保留；E2E 10/10、桌面/375px 抽屉目视 ✓。
 - **偏好设置页重设计（v0.66.1 · 已提交）**：主题三瓦片 + 语言双卡；1120px 7/5 分栏；焦点 2px；375 无溢出；单测 1584、设置 E2E 10/10。
 ## 工具链
-- [x] **依赖更新（两轮）** `vp update -L`：TS7 两轮均回退 6.0.3 精确（理由与回退法见 techContext 快照）；二轮 vite-plus/vite **1.1.0 出 rc**、
-  vitest 5.0.3、Playwright 1.64（chromium 1248）；五道验证 + e2e 26/26 ✓、`a722184`（master `8dccf39`）；两轮均未改版本号（用户指令）。
+- [x] **依赖更新（三轮）** `vp update -L`：TS7 每轮回退 6.0.3；vite-plus 1.3.0→1.4.0（vitest pin 仍 5.0.5）·
+  新 peers 警告 = `@opentelemetry/api`（上游声明滞后）⇒ workspace 有界规则 · 未改版本号 · 详见 techContext · `53fd376`。
 - [x] **session-discipline 1.1.0→1.1.5**：汇报形状两处漏网 + 拒绝后完整重发；词表补「评审/看什么/算错」；批准含命令的计划=授权（R6 ✓）；停机句全量重发 ⇒ 契约 **60**。
 - [x] **v0.36.1 (2026-09-11)** 阻止 pnpm 隐式安装污染受控配置 — `pnpm-workspace.yaml` 设 `verifyDepsBeforeRun: warn`（v11 默认
   `install` 会让 `pnpm run` 隐式安装，遇未决策的构建脚本时把非布尔占位符写入该受控文件；`warn` 只报告不写入，且不像 `error` 那样被版本号变更误触发）。1266/1266。

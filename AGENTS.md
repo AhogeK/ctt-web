@@ -91,6 +91,12 @@
 
 **依赖是授权制**：先给分析（目的/选型/影响/替代/体积）→ 用户同意即可加；未经同意不得自加，但**别读成"不能加"**。
 **红线**：禁冗余/重复功能包，优先复用。命令用 **`vp`**（不是 `pnpm`）→ 命令表见 [`techContext.md`](memory-bank/techContext.md)。
+**更新到最新（`vp update -L`）边界（2026-10-27）**：① `-L` 每次把 TypeScript 升 7.x ⇒ 立刻回滚
+  `pnpm add -D typescript@6.0.3 --save-exact`，提交前 `git diff` 里 `typescript` 行不得出现；
+② 新 `peers check` 警告先查根因（**装起来跑**，别信 peer range）——若只是 dev-tooling 传递链
+  + 全量验证绿 ⇒ 在 `pnpm-workspace.yaml` 加**有界** `allowedVersions` 规则并写明撤除条件
+  （`zod` · `@opentelemetry/api` 先例）；**禁**为消警告而降级/回退工具链或删改既有规则；
+③ 门：peers clean · type-check · build · test:unit · 两 lint 引擎 · check:i18n 全绿才提交。
 
 ### R13: API 对接规范（强制）
 

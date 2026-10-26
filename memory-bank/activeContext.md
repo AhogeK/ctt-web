@@ -6,8 +6,9 @@
 - **peers 新告警 = 上游声明滞后（非 zod 类）**：`@opentelemetry/api@1.10.0`（最新）经
   lighthouse→Sentry 链传入，其自身 `core@2.x` peer 仍 `<1.10.0`；dev-only、源码零引用、全绿
   ⇒ `pnpm-workspace.yaml` `allowedVersions` 加有界规则 `'>=1.0.0 <1.11.0'`（不删旧规则）。
-- 验证：peers clean · type-check · build · **1588/1588** · check:i18n 856 keys · 两 lint 引擎 exit 0
-  （聚合 wrapper JSON-parse 是既有 bug）；docs commit 含 `pnpm-workspace.yaml`（非 AI）进 master。
+- 验证：peers clean · type-check · build · 1588/1588 · check:i18n · 两 lint 引擎 exit 0（聚合
+  wrapper JSON-parse 是既有 bug）。deps 笔 `53fd376` 含 workspace 有界规则（非 AI）；另 docs
+  笔修版本格（Vue 3.6 / Pinia 4 / Vitest 5，非 AI）；两非 AI 笔逐个 cherry-pick 进 master，memory 笔留 develop。
 
 ### README 文档轮（2026-10-27 · docs-only · v0.67.0）
 - README：居中式首屏 + dashboard WebP（1600×1000, 76K）+ 能力矩阵/Mermaid；Support/License 居中。
