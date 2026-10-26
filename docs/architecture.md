@@ -4,11 +4,11 @@
 
 | Layer        | Technology                                      |
 | ------------ | ----------------------------------------------- |
-| Framework    | Vue 3.5 + TypeScript 6.0 (Strict mode)          |
+| Framework    | Vue 3.6 (beta) + TypeScript 6.0 (Strict mode)   |
 | Build        | Vite 8 (Rolldown engine)                        |
 | Routing      | Vue Router 5 (feature-based modules)            |
 | Server State | TanStack Query v5                               |
-| Global State | Pinia 3 (auth store with JWT management)        |
+| Global State | Pinia 4 (auth store with JWT management)        |
 | UI           | Radix Vue + shadcn-vue + Tailwind CSS v4        |
 | HTTP         | ofetch (centralized instance with interceptors) |
 | Validation   | Vee-Validate + Zod                              |
