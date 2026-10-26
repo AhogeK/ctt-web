@@ -17,12 +17,14 @@
  * is the only version of this guard that cannot be satisfied by accident.
  */
 import { computed, ref } from 'vue'
+import { useI18n } from 'vue-i18n'
 import { useAuthStore } from '@/stores/auth'
 import { useEmailStatus } from '@/features/settings/composables/useEmailStatus'
 import { Button } from '@/components/ui/button'
 import DeleteAccountDialog from './DeleteAccountDialog.vue'
 
 const authStore = useAuthStore()
+const { t } = useI18n()
 const { data: emailStatus } = useEmailStatus()
 
 /** The address the reader must type back; null until the profile or status query has answered. */
@@ -51,13 +53,12 @@ const isDeleteDialogOpen = ref(false)
     new colour, so it reads as the same kind of warning as every other one.
   -->
   <div class="rounded-lg border border-destructive/30 bg-destructive/5 p-6" data-testid="danger-zone">
-    <h2 class="mb-4 text-lg font-medium text-destructive">Danger zone</h2>
+    <h2 class="mb-4 text-lg font-medium text-destructive">{{ t('settings.dangerZone.title') }}</h2>
     <div class="flex flex-wrap items-start justify-between gap-4">
       <div class="flex flex-col gap-1">
-        <span class="text-sm text-foreground dark:text-foreground">Delete account</span>
+        <span class="text-sm text-foreground dark:text-foreground">{{ t('settings.dangerZone.deleteAccount') }}</span>
         <span class="max-w-prose text-sm text-muted-foreground">
-          Permanently delete your account and everything the server stores for it: sessions, statistics, achievements,
-          devices and API keys. This cannot be undone.
+          {{ t('settings.dangerZone.description') }}
         </span>
       </div>
       <Button
@@ -66,7 +67,7 @@ const isDeleteDialogOpen = ref(false)
         data-testid="delete-account-button"
         @click="isDeleteDialogOpen = true"
       >
-        Delete account
+        {{ t('settings.dangerZone.button') }}
       </Button>
       <!-- A disabled button with no reason is its own defect: the reader cannot tell whether the
            page is broken or the action is withheld. Say which details are missing. -->
@@ -75,7 +76,7 @@ const isDeleteDialogOpen = ref(false)
         class="w-full text-sm text-muted-foreground"
         data-testid="delete-account-unavailable"
       >
-        Deletion is unavailable until your account details finish loading. Reload the page if this persists.
+        {{ t('settings.dangerZone.unavailable') }}
       </p>
     </div>
   </div>

@@ -40,6 +40,24 @@ test.describe('Interface language', () => {
     await expect(page.getByRole('heading', { name: 'Preferences' })).toBeVisible()
   })
 
+  test('settings profile follows the Chinese interface', async ({ page }) => {
+    await page.goto('/settings/preferences')
+    await page.getByText('简体中文', { exact: true }).click()
+    await expect(page.getByRole('heading', { name: '偏好设置' })).toBeVisible()
+
+    await page.goto('/settings/profile')
+    await expect(page.getByRole('heading', { name: '个人资料设置' })).toBeVisible()
+    await expect(page.getByText('账号', { exact: true })).toBeVisible()
+    await expect(page.getByText('关联账号', { exact: true })).toBeVisible()
+    await expect(page.getByText('显示名称', { exact: true })).toBeVisible()
+    await expect(page.getByText('注册时间', { exact: true })).toBeVisible()
+
+    await page.getByRole('button', { name: '变更邮箱' }).click()
+    await expect(page.getByRole('dialog')).toContainText('变更邮箱')
+    await expect(page.getByText('新邮箱', { exact: true })).toBeVisible()
+    await page.getByRole('button', { name: '取消' }).click()
+  })
+
   test('the avatar menu offers the same languages', async ({ page }) => {
     await page.goto('/settings/preferences')
 

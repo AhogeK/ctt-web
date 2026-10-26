@@ -7,6 +7,7 @@
  * to prevent abuse (backend rate limit: 3 requests/minute).
  */
 import { computed } from 'vue'
+import { useI18n } from 'vue-i18n'
 import { AlertTriangle, Mail, Loader2 } from '@lucide/vue'
 import { storeToRefs } from 'pinia'
 import { Button } from '@/components/ui/button'
@@ -15,6 +16,7 @@ import { useResendVerification } from '@/features/auth/composables/useResendVeri
 import { cn } from '@/lib/utils'
 
 const authStore = useAuthStore()
+const { t } = useI18n()
 const { emailVerified, email } = storeToRefs(authStore)
 
 const { resend, countdown, isPending } = useResendVerification()
@@ -22,8 +24,8 @@ const { resend, countdown, isPending } = useResendVerification()
 const isVisible = computed(() => !emailVerified.value)
 
 const buttonLabel = computed(() => {
-  if (countdown.value > 0) return `Resend in ${countdown.value}s`
-  return 'Resend verification email'
+  if (countdown.value > 0) return t('settings.verification.resendIn', { seconds: countdown.value })
+  return t('settings.verification.resend')
 })
 
 function handleResend() {
@@ -48,9 +50,9 @@ function handleResend() {
     <AlertTriangle class="mt-0.5 h-5 w-5 shrink-0 text-warning dark:text-warning" />
     <div class="flex flex-1 flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
       <div class="space-y-1">
-        <p class="text-sm font-medium">Email not verified</p>
+        <p class="text-sm font-medium">{{ t('settings.verification.title') }}</p>
         <p class="text-sm text-warning dark:text-warning/80">
-          Please verify your email address to access all features.
+          {{ t('settings.verification.description') }}
         </p>
       </div>
       <Button
