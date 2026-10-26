@@ -58,12 +58,15 @@
   It is **drift reporting, not a broken install**; `vp install` re-records the state and clears it (output
   `Lockfile is up to date · Already up to date`, so it adds nothing), and the tree stays clean. Measured: warning 1
   → 0, `node_modules/.modules.yaml` Sep 18 → Sep 20, `git status` 0 items.
-- Snapshot (2026-10-18, after `vp update -L`): **vite-plus + vite `1.3.0`**, typescript 6.0.3 (exact),
-  vitest + @vitest/coverage-v8 5.0.5, vue-tsc 3.3.13, @lucide/vue 1.59.0, @tanstack/vue-query 5.104.3,
-  reka-ui 2.11.0, zod 4.6.7, @types/node 26.6.5, eslint-plugin-oxlint 1.88.0, eslint-plugin-vue 10.11.1,
-  jsdom 30.1.3, lint-staged 17.6.0, @playwright/test 1.64.1, @vueuse/core 15.0.0.
-  (Verified 2026-10-18: peers check clean · type-check · build · **1556/1556** unit · lint exit 0.)
-  Four notes survive every `vp update -L`:
+- Snapshot (2026-10-27, after `vp update -L`): **vite-plus + vite `1.4.0`** (bundled vite 8.3.5 /
+  rolldown 1.2.15 / oxc 0.155.0), typescript 6.0.3 (exact), vitest + @vitest/coverage-v8 5.0.5,
+  vue-tsc 3.3.13, @lucide/vue 1.61.0, @tanstack/vue-query 5.104.5, vue-i18n 11.4.16, reka-ui 2.11.0,
+  zod 4.6.7, @types/node 26.6.5, eslint-plugin-oxlint 1.89.0, eslint-plugin-vue 10.11.1, jsdom 30.1.3,
+  lint-staged 17.6.0, @playwright/test 1.64.1, @vueuse/core 15.0.0.
+  (Verified 2026-10-27: `peers check` clean · type-check · build · **1588/1588** unit · `check:i18n`
+  856 keys aligned · both lint engines exit 0 — the aggregate `pnpm lint` wrapper's ESLint JSON-parse
+  bug is pre-existing, not a lint failure.)
+  Notes that survive every `vp update -L` (numbers move with the toolchain, the rules do not):
   - **`vite-plus` / `vite` left its prerelease** (`1.0.0-rc.0` → **`1.1.0`**, 2026-10-09): `-L` takes this
     package's latest even across prerelease boundaries, so once the RC period ended the stable line is what
     installs. Evidence at 1.1.0: `peers check` clean · `type-check` · `build` · **1481/1481** unit · `lint` all
@@ -73,24 +76,38 @@
     countdown in `AchievementsView.vue` now passes `scheduler: (cb) => useIntervalFn(cb, 60_000)`. Grep for
     `interval:` on the next VueUse bump; type-check is what surfaced it, tests could not (the view's spec mocks
     `useNow` wholesale, so a dead clock would still pass).
-  - **typescript 6.0.3 exact** — `-L` bumps it to 7.x (re-confirmed 2026-09-25, 2026-10-09 and again
-    2026-10-18: it installed 7.0.2 each time ⇒ roll back with `pnpm add -D typescript@6.0.3 --save-exact`), and 7
-    is not *forbidden*, it is **not yet supported by the current toolchain** (measured 2026-09-20 with typescript
-    7.0.2 installed): ① `@typescript-eslint/*` (latest 8.70.0) declares peer `>=4.8.4 <6.1.0`, so `peers check`
-    fails outright; ② `vue-tsc@3.3.11` **cannot even start** — `ERR_PACKAGE_PATH_NOT_EXPORTED` at `index.js:44` (TS
-    7 stopped exporting the programmatic API it imports). ② is why the peer ranges alone are not enough:
-    `vue-tsc`'s own peer is only `>=5.0.0`, so it *looks* compatible — **install 7 and run `vp run type-check` to
-    test it**, never the range. Upgrade only when vue-tsc/typescript-eslint ship support **and** type-check + build
-    + the full suite are green. Re-pin: `pnpm add -D typescript@6.0.3 --save-exact`.
-  - **vitest + @vitest/coverage-v8 follow vite-plus's hard pin** — the number changes with the toolchain, the rule
-    does not. At `vite-plus 0.3.x` the pin was `4.1.11` (and `-L`'s 5.0.1 caused a dual-instance peer conflict);
-    at `1.0.0-rc.0` it was 5.0.1; at `1.1.0` it was `5.0.3`; at **`1.3.0` it is `5.0.5`** (verified 2026-10-18 from
-    `node_modules/vite-plus/package.json`), so 5.0.5 is the *matching* pairing — `-L` alone gets it
-    right. Re-check this pin from that file after every toolchain bump; `peers check` is what catches a mismatch.
-  - Playwright bumps need `pnpm exec playwright install chromium` — verified again 2026-10-09 (1.63 → 1.64: the
-    old browser build is not reused; e2e cannot launch until the new chromium 1248 is installed).
-    **2026-10-18: 1.64.0 → 1.64.1 keeps chromium 1248 — the install is a no-op then** (verified against
-    `playwright-core/browsers.json`).
+  - **typescript 6.0.3 exact** — `-L` bumps it to 7.x every time (re-confirmed 2026-09-25, 10-09,
+    10-18 and 2026-10-27: it installs 7.0.2 each run ⇒ roll back `pnpm add -D typescript@6.0.3
+    --save-exact`). 7 is not forbidden — it is still **not runnable by the current toolchain**.
+    Owner directive 2026-10-27: upgrade to 7 **the moment Vue actually supports it**, do not stay
+    on 6.0.3 out of conservatism — so re-run this test on every update. Test by *running*, never by
+    the peer range (`vue-tsc`'s own peer is only `>=5.0.0`, so it *looks* compatible): install 7 and
+    run `vp run type-check`. Measured 2026-09-20 (ts 7.0.2) and again 2026-10-27 with **vue-tsc@latest
+    3.3.13**: it **cannot even start** — `ERR_PACKAGE_PATH_NOT_EXPORTED` for `./lib/tsc` at
+    `resolveTscPath` (TS 7 stopped exporting that programmatic API); `@typescript-eslint/*` (latest
+    8.72.1) still caps its peer at `<6.1.0`. ⇒ 6.0.3 retained. Upgrade only once type-check + build +
+    the full suite are green under 7. Re-pin: `pnpm add -D typescript@6.0.3 --save-exact`.
+  - **vitest + @vitest/coverage-v8 follow vite-plus's hard pin** — the number changes with the
+    toolchain, the rule does not. `0.3.x`→4.1.11 (and `-L`'s 5.0.1 caused a dual-instance peer
+    conflict); `1.0.0-rc.0`→5.0.1; `1.1.0`→5.0.3; **`1.3.0` and `1.4.0`→5.0.5** (verified 2026-10-27
+    from `node_modules/vite-plus/package.json`), so 5.0.5 is the *matching* pairing — `-L` alone
+    gets it right. Re-check this pin from that file after every toolchain bump; `peers check`
+    catches a mismatch.
+  - **a `peers check` warning can be upstream declaration lag, not a real conflict** — when the
+    only consumer is dev tooling, app source never imports it, and the full gate suite runs green
+    at the "unmet" version, add a **bounded** entry to `pnpm-workspace.yaml`
+    `peerDependencyRules.allowedVersions` instead of downgrading or reverting the toolchain. Two
+    precedents so far: `zod` (see the file's own comment) and `@opentelemetry/api: '>=1.0.0 <1.11.0'`
+    (2026-10-27 — `@opentelemetry/api@1.10.0` is the latest, reaching the tree only through
+    `lighthouse→@sentry/node`, whose own `^1.9.1` pulls it up while the `@opentelemetry/core@2.x`
+    Sentry pins still cap it at `<1.10.0`; the first core accepting 1.10.0 is 3.x, outside Sentry's
+    `^2.9.0`. Dev-only, api stays at latest, drop the rule once Sentry moves to core 3.x). Never
+    delete or rewrite an existing rule to dodge a new one.
+  - Playwright bumps need `pnpm exec playwright install chromium` — verified again 2026-10-09
+    (1.63 → 1.64: the old browser build is not reused; e2e cannot launch until chromium 1248 is
+    installed). 1.64.0 → 1.64.1 keeps chromium 1248, so that install is a no-op (verified against
+    `playwright-core/browsers.json`). **2026-10-27: `vp update -L` left @playwright/test at 1.64.1**
+    — no browser reinstall needed.
 
 ## API Authentication
 

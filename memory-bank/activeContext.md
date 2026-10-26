@@ -1,3 +1,14 @@
+### 依赖更新（2026-10-27 · chore(deps) 53fd376 · 未改版本号）
+- `vp update -L`：12 包升级（vite-plus/vite 1.3.0→1.4.0 等）；TS 又被 `-L` 升 7.0.2 → 回滚 6.0.3 精确；vitest pin 1.4.0 仍 5.0.5（回源核对 ✓）。
+- **TS7 经验性复测（owner 指令：vue 支持即升，勿保守）**：装 7.0.2 跑 type-check →
+  `vue-tsc@latest 3.3.13` 启动即崩 `ERR_PACKAGE_PATH_NOT_EXPORTED`（`./lib/tsc`）·
+  `@typescript-eslint 8.72.1` peer `<6.1.0` ⇒ 条件未满足，留 6.0.3；每次 `-L` 复测。
+- **peers 新告警 = 上游声明滞后（非 zod 类）**：`@opentelemetry/api@1.10.0`（最新）经
+  lighthouse→Sentry 链传入，其自身 `core@2.x` peer 仍 `<1.10.0`；dev-only、源码零引用、全绿
+  ⇒ `pnpm-workspace.yaml` `allowedVersions` 加有界规则 `'>=1.0.0 <1.11.0'`（不删旧规则）。
+- 验证：peers clean · type-check · build · **1588/1588** · check:i18n 856 keys · 两 lint 引擎 exit 0
+  （聚合 wrapper JSON-parse 是既有 bug）；docs commit 含 `pnpm-workspace.yaml`（非 AI）进 master。
+
 ### README 文档轮（2026-10-27 · docs-only · v0.67.0）
 - README：居中式首屏 + dashboard WebP（1600×1000, 76K）+ 能力矩阵/Mermaid；Support/License 居中。
 - 校验：README audit ✓ · `git diff --check` ✓ · 本地链接 ✓；docs commit `5a19822`；计划已完成。
@@ -168,24 +179,8 @@
   **用户授权全部计划决策点由 AI 决策** ⇒ 台账全落定：**IA 四段**（含 `/devices` 重定向）· **i18n 六批** · **默认跟随浏览器**；
   **后端 R1–R3 已实现 v0.83.0**（终版：导出 = 单一 JSON + `timezoneOffset` 必填；被踢 → `AUTH_003`）· 等部署通知再接入；R4–R5 缓提；
   **S1 ✅ · S2 ✅**（i18n 基建：`ctt.locale` · 外壳+偏好页已迁移 · `check:i18n` · 1585 单测 · 全量 E2E 150/150 · v0.60.0）；**下一步 = S3**。
-- **落地页滚动编排（v0.55.1–v0.55.7，逐轮全档 → `memory-bank/archives/2026-10-08-scroll-rounds-trim.md`）**：全空段双向（flush 门槛 +
-  退场触发重做）· 上行回看渐入恢复（删瞬时恢复章）· 高视口退场锚定首块版块（`leaveOnBand`）· 上行对向交叉 · 滚动速率重做（轨道 **230svh** + `beat-arc` 单段线性，位移比无零速）·
-  双块同屏禁令三处共钟（hero↔beat 同 60svh · 带进场同 60% 线 · 删对向簿记）—— 各轮 landing E2E / 单测 1478 / lint 全绿；
-  README 230svh 同步 ✓；均为 PATCH，后已全部提交 ✓。版本 **0.55.7**（PATCH）。**交接时机修正（用户反馈
-  "Ranks 太晚入场，年历块快移出才有渐出、下面才渐入" ✓ · v0.55.8）**：根因是**布局**不是时钟 ——
-  带的盒子排在钉住轨道尾 431px 死区之后，60% 交棒线因此落在年历块只剩 169px 在屏处，且带盒自 1397svh 起就压屏但透明。修：① 带 `margin-block-start: -30svh`（仅舞台门控
-  media 内，纯布局，轨道/释放线/动画数值不动）⇒ 线 1797→**1497**、线处年历块 **469px（65%）**、两盒间隙 431→**91px**；② `useScrollFade` 增
-  `enterOnBand`（与 `leaveOnBand` 同式读带顶 60% 线的 rect 现算）替掉 `enterSvh: 180` ⇒ 交棒双端同一表达式、跨视口不脱钩；顺带修 `firstBand` 的 latent
-  类型错（component ref 声明成 HTMLElement 却取 `.el`，0.55.3 起 vue-tsc 未跑未暴露）。E2E 补钉线（1.4 屏盒在屏仍 0 → 1.7 屏 >0.95）。验证：交叉实帧 =
-  **0.36（469px）× 0.85（434px）** ✓ · crisp 4 腿 clean · 空白 6/6 · **停稳探针**（交接窗逐站停 1500ms、可见 ≥300px）2/2 clean · landing
-  24/24 · 单测 1478 · lint 0 · type 0 · build 0。版本 **0.55.8**（PATCH）。**顶栏透字（v0.55.9）**：sticky 毛玻璃在重绘压力下整帧丢「底色+模糊」
-  ⇒ 正文透顶栏（证据帧 frame339 ✓）；**实心顶栏方案被你否决** ✗ → 由 v0.55.10 改 fixed 取代 ✓。版本 **0.55.9**（PATCH）。**毛玻璃保留裁定 → fixed
-  防透（2026-10-08 · v0.55.10）**：放大器（跨线振荡+来回扫）把发作变必发 ⇒ sticky 各变体（α90/92、translateZ、will-change、底色·模糊拆层）**全败**（p99
-  62–74k 不降 ⇒ 底色+模糊同帧被丢，配方内无解）；真屏幕截帧实锤（`glitch-live-screen-frame053.png` ✓，并识破外部终端遮挡造成的 209 帧假阳性）；**解 = header
-  sticky→fixed**（毛玻璃样式原样、观感零变化）⇒ 同放大器 4 腿零锐利发作 + sticky 对照同日复打 4 簇/64k（A/B/A/B ✓）。外壳补
-  `pt-[calc(var(--marketing-header-height)_+_1px)]`（旧在流 57 = 56 内容+1px 边线；首版漏 1px 致 panel 构图基线恒定 −1.258 报警 ✓ 补回后
-  111.742 vs 基线 112 ✓ 复位）。结构回归 E2E 钉 fixed + 模糊 + 57px。验证：landing 25/25 · 单测 1478 · lint 0 · type 0 · build 0。版本
-  **0.55.10**（PATCH）。
+- **落地页滚动编排（v0.55.1–0.55.10）**：全空段双向 · 交接时机 · fixed 防透等七轮 →
+  逐轮全档 `memory-bank/archives/2026-10-08-scroll-rounds-trim.md`；各轮全绿 · 均 PATCH · 已全部提交 ✓。
 ## Archived History
 
 - `memory-bank/archives/2026-09-24-activeContext-trim.md` — 2026-09-19 → 2026-09-21 的逐轮细节（P1 · 账号删除 · Leaderboard ·
