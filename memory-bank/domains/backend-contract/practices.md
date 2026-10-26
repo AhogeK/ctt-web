@@ -93,3 +93,9 @@ const RESOURCE_401 = new Set(['AUTH_010', 'USER_014'])   // BOLA + business chec
 - Mutations invalidate their family on success; queries keep `retry: 1` (fail fast, surface errors).
 - Long-lived data (e.g. the list of years that have data) may use a longer `staleTime`; live
   aggregates stay short (~30s).
+
+## 设备与 IDE（2026-10-26 Accepted）
+
+- `deviceId` 是安装级身份；禁止按 IDE 拆分设备，禁止建 `device_ides` 子表。
+- IDE 属于会话：会话带 `ideName`/`ideVersion`；设备字段只作旧数据回退/最近值投影。
+- 统计按会话 IDE 筛选；设备页只显示最近 IDE；`DeviceResponse` 字段名不变。

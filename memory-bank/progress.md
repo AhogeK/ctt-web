@@ -22,7 +22,7 @@
 | Landing Page (P1–P4 交付：基元 / hero / 演示 / 收口三区) | ✅ Complete (P1–P4) · P5–P6 待做 | 0.54.0 |
 | AuthLayout 展示面板 (指针光/3D)   | ✅ Complete | 0.51.0         |
 | Settings                          | 🚧 In progress (shell + 4 sections) | 1.0.0     |
-| Interface Language (zh/en)        | 🚧 In progress (0.62.0: shell, landing, auth pages, shared error copy) | 1.0.0 |
+| Interface Language (zh/en)        | 🚧 In progress (devices 0.66.3; API Keys pending) | 1.0.0 |
 | E2E Test Coverage                 | 🚧 Partial  | 1.0.0          |
 | Production Deploy                 | ⏳ Pending  | 1.0.0          |
 

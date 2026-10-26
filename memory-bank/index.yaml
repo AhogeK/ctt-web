@@ -56,7 +56,7 @@ domains:
     memory-bank/domains/theme-system/scenarios.md: 36
   backend-contract:
     memory-bank/domains/backend-contract/meta.md: 95
-    memory-bank/domains/backend-contract/practices.md: 95
+    memory-bank/domains/backend-contract/practices.md: 101
     memory-bank/domains/backend-contract/principles.md: 69
     memory-bank/domains/backend-contract/references.md: 200
     memory-bank/domains/backend-contract/scenarios.md: 73
@@ -76,7 +76,7 @@ domains:
     memory-bank/domains/landing-page/scenarios.md: 68
   i18n:
     memory-bank/domains/i18n/meta.md: 31
-    memory-bank/domains/i18n/practices.md: 118
+    memory-bank/domains/i18n/practices.md: 121
     memory-bank/domains/i18n/principles.md: 37
     memory-bank/domains/i18n/references.md: 45
     memory-bank/domains/i18n/scenarios.md: 37

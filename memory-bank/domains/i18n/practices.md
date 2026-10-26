@@ -111,6 +111,9 @@ z.string().min(1, { error: () => t('auth.validation.passwordRequired') })
 `Date`；图表（ECharts）的 tooltip/axisLabel 里同样走它们。**不要**在图表里写
 `toLocaleString('en-US', …)`：`check:i18n` 会拦，且它正是本次迁移中真实存在的残留。
 
+- `formatRelativeTime` 同样走词条（`time.*`）：设备最后活跃、API Keys 的时间列在中文下
+  显示「2 小时前 / 1 个月前」；英文输出保持不变。
+
 ## 文案里的数字与单位
 
 时长仍走 `formatDuration`（`1h 30m` 这类紧凑写法与语言无关）；只有**自然语言**部分
