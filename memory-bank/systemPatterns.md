@@ -76,12 +76,12 @@ src/router/ index.ts (core) + guard.ts (auth + NProgress) + modules/
 - Auto-import modules via `import.meta.glob('./modules/*.ts', { eager: true })`
 - Lazy loading all views; `manualChunks`: vendor/feature-auth/feature-dashboard/feature-settings
 - Stale chunk auto-reload: `router.onError` + `?retried=1` query guard against reload loops
-- The settings group is a **nested shell**: `/settings` → `SettingsShell.vue` (a pathless record that renders the
-  section rail and the active section) → `profile | devices | preferences | api-keys`; the `devices` module is now
-  a **redirect-only** record (`/devices` → `/settings/devices`) so old links keep working without a second page
-- Sidebar active state has two helpers: `isPathActive(path)` (exact) for leaf entries, `isSectionActive(prefix)`
-  for the single Settings entry. Exact alone left the group unhighlighted on every section; prefix alone would
-  highlight on lookalikes (`/settings-archive`) — both behaviours are unit-tested
+- The settings group is **flat**: `/settings` redirects to `profile`, and `profile` / `devices` / `preferences` /
+  `api-keys` are direct children. The app sidebar lists those four sections, so there is no `SettingsShell`
+  and no page-level rail. The `devices` module remains a **redirect-only** record (`/devices` →
+  `/settings/devices`) so old links keep working without a second page.
+- Sidebar active state is one exact-path helper (`isPathActive`) for every leaf; `/settings-archive` therefore
+  cannot highlight a settings section. Exact matching and the four section links are unit-tested.
 
 ## Internationalization
 
