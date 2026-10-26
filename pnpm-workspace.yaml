@@ -50,3 +50,12 @@ peerDependencyRules:
     # (v3 API preserved) and the real-form integration tests exercise the
     # toTypedSchema chain against zod 4 — declaration lag, not a conflict.
     zod: '^4.4.3'
+    # @opentelemetry/api 1.10.0 (latest) arrives via lighthouse's transitive Sentry
+    # chain: @sentry/node@10.76.2 depends on the api as ^1.9.1, so the semver range
+    # resolves up to 1.10.0, yet the same Sentry pins @opentelemetry/core@2.x whose
+    # peer still caps the api at <1.10.0 — a self-contradictory upstream declaration
+    # (first core that accepts 1.10.0 is 3.x, outside Sentry's ^2.9.0 pin). Dev
+    # tooling only: OTel is not a direct dependency and app source never imports it;
+    # type-check / build / the full unit suite run green with 1.10.0 installed.
+    # Drop this once Sentry moves its OTel core pin to 3.x.
+    '@opentelemetry/api': '>=1.0.0 <1.11.0'
