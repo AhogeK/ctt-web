@@ -12,6 +12,7 @@
  * the shared `currentLocale` ref, so a language switch re-renders them.
  */
 import { currentLocale } from '@/i18n/locale'
+import { i18n } from '@/i18n'
 
 type DatePart = 'weekdayShort' | 'monthShort' | 'monthDay'
 
@@ -75,7 +76,7 @@ export function formatMonthDay(date: Date): string {
  * @returns Human-readable relative time string
  */
 export function formatRelativeTime(dateStr: string | null): string {
-  if (!dateStr) return 'Never'
+  if (!dateStr) return i18n.global.t('time.never')
 
   const date = new Date(dateStr)
   const now = new Date()
@@ -86,18 +87,22 @@ export function formatRelativeTime(dateStr: string | null): string {
 
   if (diffMs < 0) {
     // Past date — relative past
-    if (diffMins < 1) return 'Just now'
-    if (diffMins < 60) return `${diffMins}m ago`
-    if (diffHours < 24) return `${diffHours}h ago`
-    if (diffDays < 30) return `${diffDays}d ago`
-    if (diffDays < 365) return `${Math.floor(diffDays / 30)}mo ago`
+    if (diffMins < 1) return i18n.global.t('time.justNow')
+    if (diffMins < 60) return i18n.global.t('time.minutesAgo', { count: diffMins })
+    if (diffHours < 24) return i18n.global.t('time.hoursAgo', { count: diffHours })
+    if (diffDays < 30) return i18n.global.t('time.daysAgo', { count: diffDays })
+    if (diffDays < 365) {
+      return i18n.global.t('time.monthsAgo', { count: Math.floor(diffDays / 30) })
+    }
     return date.toLocaleDateString(currentLocale.value)
   }
 
   // Future date — relative future
-  if (diffDays === 0) return 'Today'
-  if (diffDays < 30) return `in ${diffDays}d`
-  if (diffDays < 365) return `in ${Math.floor(diffDays / 30)}mo`
+  if (diffDays === 0) return i18n.global.t('time.today')
+  if (diffDays < 30) return i18n.global.t('time.inDays', { count: diffDays })
+  if (diffDays < 365) {
+    return i18n.global.t('time.inMonths', { count: Math.floor(diffDays / 30) })
+  }
   return date.toLocaleDateString(currentLocale.value)
 }
 

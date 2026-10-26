@@ -7,6 +7,8 @@
 import { describe, it, expect } from 'vite-plus/test'
 import { formatRelativeTime, formatDateTime, formatDuration, formatMonthShort, formatWeekdayShort } from '@/lib/utils'
 import { currentLocale } from '@/i18n/locale'
+import { i18n } from '@/i18n'
+import zhCN from '@/i18n/locales/zh-CN'
 
 const minutesAgo = (m: number) => new Date(Date.now() - m * 60000).toISOString()
 const hoursAgo = (h: number) => new Date(Date.now() - h * 3600000).toISOString()
@@ -61,6 +63,20 @@ describe('formatRelativeTime', () => {
   it('falls back to locale date for distant future dates', () => {
     const far = daysFromNow(400)
     expect(formatRelativeTime(far)).toBe(new Date(far).toLocaleDateString())
+  })
+
+  it('localises relative-time words in Chinese', () => {
+    i18n.global.setLocaleMessage('zh-CN', zhCN)
+    i18n.global.locale.value = 'zh-CN'
+    currentLocale.value = 'zh-CN'
+
+    expect(formatRelativeTime(null)).toBe('从未')
+    expect(formatRelativeTime(minutesAgo(5))).toBe('5 分钟前')
+    expect(formatRelativeTime(hoursAgo(2))).toBe('2 小时前')
+    expect(formatRelativeTime(daysFromNow(5))).toBe('5 天后')
+
+    i18n.global.locale.value = 'en'
+    currentLocale.value = 'en'
   })
 })
 

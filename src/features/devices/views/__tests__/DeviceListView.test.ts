@@ -3,6 +3,7 @@ import { mount } from '@vue/test-utils'
 import { ref, type Ref } from 'vue'
 import DeviceListView from '../DeviceListView.vue'
 import type { Device } from '@/lib/schemas/device.schema'
+import { setLocale } from '@/i18n'
 
 // ==========================================
 // Hoisted Mock Variables
@@ -137,7 +138,7 @@ describe('DeviceListView states', () => {
     expect(wrapper.text()).toContain('MacBook Pro')
     expect(wrapper.text()).toContain('macOS')
     expect(wrapper.text()).toContain('Last seen: 2h ago')
-    expect(wrapper.text()).toContain('IntelliJ IDEA 2026.1')
+    expect(wrapper.text()).toContain('Last used IDE: IntelliJ IDEA 2026.1')
     expect(wrapper.text()).toContain('Active')
 
     expect(wrapper.text()).toContain('Old Workstation')
@@ -168,6 +169,20 @@ describe('DeviceListView states', () => {
     expect(wrapper.text()).toContain('Revoked Laptop')
     expect(wrapper.text()).toContain('Revoked')
     expect(wrapper.find('button[aria-label="Revoke Revoked Laptop"]').exists()).toBe(false)
+  })
+
+  it('renders the page in Chinese after the locale switches', async () => {
+    queryData.value = [macDevice]
+    await setLocale('zh-CN')
+    const wrapper = mount(DeviceListView)
+
+    expect(wrapper.text()).toContain('设备管理')
+    expect(wrapper.text()).toContain('上次活跃：2 小时前')
+    expect(wrapper.text()).toContain('最近使用 IDE：IntelliJ IDEA 2026.1')
+    expect(wrapper.text()).toContain('活跃')
+    expect(wrapper.find('button[aria-label="撤销 MacBook Pro"]').exists()).toBe(true)
+
+    await setLocale('en')
   })
 })
 
