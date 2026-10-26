@@ -15,42 +15,31 @@ const settingsRoutes: RouteRecordRaw[] = [
     meta: { title: 'Settings', requiresAuth: true, layout: 'app' },
     children: [
       {
-        // Section shell: owns the sub-navigation shared by every settings page
-        // and renders the active section through its own <router-view>. The
-        // pathless record keeps one URL per section (/settings/profile, …)
-        // while the navigation is declared once instead of per view.
-        path: '',
-        component: () => import('@/features/settings/views/SettingsShell.vue'),
-        redirect: { name: RouteNames.SETTINGS_PROFILE },
-        children: [
-          {
-            path: 'profile',
-            name: RouteNames.SETTINGS_PROFILE,
-            component: () => import('@/features/settings/views/ProfileView.vue'),
-            meta: { title: 'Profile', requiresAuth: true },
-          },
-          {
-            // Devices (the tracker's sync subjects) live under settings: they
-            // are an account-scoped resource, not a top-level destination.
-            // The legacy /devices URL redirects here (modules/devices.ts).
-            path: 'devices',
-            name: RouteNames.SETTINGS_DEVICES,
-            component: () => import('@/features/devices/views/DeviceListView.vue'),
-            meta: { title: 'Devices', requiresAuth: true },
-          },
-          {
-            path: 'preferences',
-            name: RouteNames.SETTINGS_PREFERENCES,
-            component: () => import('@/features/settings/views/PreferencesView.vue'),
-            meta: { title: 'Preferences', requiresAuth: true },
-          },
-          {
-            path: 'api-keys',
-            name: RouteNames.SETTINGS_API_KEYS,
-            component: () => import('@/features/settings/views/ApiKeysView.vue'),
-            meta: { title: 'API Keys', requiresAuth: true },
-          },
-        ],
+        path: 'profile',
+        name: RouteNames.SETTINGS_PROFILE,
+        component: () => import('@/features/settings/views/ProfileView.vue'),
+        meta: { title: 'Profile', requiresAuth: true },
+      },
+      {
+        // Devices (the tracker's sync subjects) live under settings: they
+        // are an account-scoped resource, not a top-level destination.
+        // The legacy /devices URL redirects here (modules/devices.ts).
+        path: 'devices',
+        name: RouteNames.SETTINGS_DEVICES,
+        component: () => import('@/features/devices/views/DeviceListView.vue'),
+        meta: { title: 'Devices', requiresAuth: true },
+      },
+      {
+        path: 'preferences',
+        name: RouteNames.SETTINGS_PREFERENCES,
+        component: () => import('@/features/settings/views/PreferencesView.vue'),
+        meta: { title: 'Preferences', requiresAuth: true },
+      },
+      {
+        path: 'api-keys',
+        name: RouteNames.SETTINGS_API_KEYS,
+        component: () => import('@/features/settings/views/ApiKeysView.vue'),
+        meta: { title: 'API Keys', requiresAuth: true },
       },
     ],
   },

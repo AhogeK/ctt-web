@@ -13,7 +13,10 @@ const zhCN: Messages = {
     dashboard: '统计看板',
     achievements: '成就',
     leaderboard: '排行榜',
-    settings: '设置',
+    profile: '个人资料',
+    devices: '设备',
+    preferences: '偏好设置',
+    apiKeys: 'API 密钥',
   },
   header: {
     openUserMenu: '打开用户菜单',
@@ -771,17 +774,6 @@ const zhCN: Messages = {
     },
   },
   settings: {
-    sections: {
-      navLabel: '设置分区',
-      profile: '个人资料',
-      profileDescription: '账号、邮箱与登录方式',
-      devices: '设备',
-      devicesDescription: '同步编码时长的设备',
-      preferences: '偏好设置',
-      preferencesDescription: '外观与语言',
-      apiKeys: 'API 密钥',
-      apiKeysDescription: '插件与 API 的凭据',
-    },
     preferences: {
       title: '偏好设置',
       subtitle: '应用于当前浏览器的外观与行为。',

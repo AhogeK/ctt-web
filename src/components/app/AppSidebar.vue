@@ -16,7 +16,7 @@ import {
   useSidebar,
 } from '@/components/ui/sidebar'
 import { RouterLink, useRoute } from 'vue-router'
-import { LayoutDashboard, Trophy, ListOrdered, Settings } from '@lucide/vue'
+import { LayoutDashboard, Trophy, ListOrdered, User, Monitor, SlidersHorizontal, KeyRound } from '@lucide/vue'
 import PluginIcon from './PluginIcon.vue'
 
 /**
@@ -30,6 +30,10 @@ import PluginIcon from './PluginIcon.vue'
  *
  * Active state: the current route highlights its menu item via the shared
  * sidebar data-active styles (brand violet background).
+ *
+ * Settings sections are leaves here, not a separate page-level rail: one
+ * navigation surface lists every destination, and each settings page shows only
+ * its own content beside it.
  */
 const route = useRoute()
 const { state, isMobile, setOpenMobile } = useSidebar()
@@ -48,22 +52,11 @@ const activePath = computed(() => route.path)
 
 /**
  * Whether the given menu path matches the current route exactly.
- * Exact match (not prefix): all sidebar targets are leaf pages, so a prefix
- * rule would wrongly highlight Profile when API Keys is active (/settings/*).
+ * Every sidebar target is a leaf page, so a prefix rule would wrongly highlight
+ * Profile while API Keys is active (/settings/*).
  */
 function isPathActive(path: string): boolean {
   return activePath.value === path
-}
-
-/**
- * Whether the current route is inside a section (prefix match).
- *
- * The settings item navigates to the settings group, whose pages all share the
- * /settings prefix — an exact match would leave it unhighlighted on every
- * section. Leaf pages above keep the exact rule.
- */
-function isSectionActive(prefix: string): boolean {
-  return activePath.value === prefix || activePath.value.startsWith(`${prefix}/`)
 }
 
 /**
@@ -174,14 +167,56 @@ function handleNavigate() {
             <SidebarMenuItem>
               <SidebarMenuButton
                 as-child
-                :tooltip="t('nav.settings')"
+                :tooltip="t('nav.profile')"
                 class="h-9 text-[15px] [&>svg]:size-[18px] [&>svg]:mr-0.5"
                 @click="handleNavigate"
-                :is-active="isSectionActive('/settings')"
+                :is-active="isPathActive('/settings/profile')"
               >
-                <RouterLink to="/settings">
-                  <Settings />
-                  <span>{{ t('nav.settings') }}</span>
+                <RouterLink to="/settings/profile">
+                  <User />
+                  <span>{{ t('nav.profile') }}</span>
+                </RouterLink>
+              </SidebarMenuButton>
+            </SidebarMenuItem>
+            <SidebarMenuItem>
+              <SidebarMenuButton
+                as-child
+                :tooltip="t('nav.devices')"
+                class="h-9 text-[15px] [&>svg]:size-[18px] [&>svg]:mr-0.5"
+                @click="handleNavigate"
+                :is-active="isPathActive('/settings/devices')"
+              >
+                <RouterLink to="/settings/devices">
+                  <Monitor />
+                  <span>{{ t('nav.devices') }}</span>
+                </RouterLink>
+              </SidebarMenuButton>
+            </SidebarMenuItem>
+            <SidebarMenuItem>
+              <SidebarMenuButton
+                as-child
+                :tooltip="t('nav.preferences')"
+                class="h-9 text-[15px] [&>svg]:size-[18px] [&>svg]:mr-0.5"
+                @click="handleNavigate"
+                :is-active="isPathActive('/settings/preferences')"
+              >
+                <RouterLink to="/settings/preferences">
+                  <SlidersHorizontal />
+                  <span>{{ t('nav.preferences') }}</span>
+                </RouterLink>
+              </SidebarMenuButton>
+            </SidebarMenuItem>
+            <SidebarMenuItem>
+              <SidebarMenuButton
+                as-child
+                :tooltip="t('nav.apiKeys')"
+                class="h-9 text-[15px] [&>svg]:size-[18px] [&>svg]:mr-0.5"
+                @click="handleNavigate"
+                :is-active="isPathActive('/settings/api-keys')"
+              >
+                <RouterLink to="/settings/api-keys">
+                  <KeyRound />
+                  <span>{{ t('nav.apiKeys') }}</span>
                 </RouterLink>
               </SidebarMenuButton>
             </SidebarMenuItem>

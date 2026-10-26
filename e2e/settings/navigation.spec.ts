@@ -6,22 +6,23 @@ import { mockAuthApis, loginViaForm, okEnvelope } from '../utils/auth-helpers.js
  *
  *  1. /settings lands on its default section (Profile) — the parent record
  *     redirects, so the content region never renders blank.
- *  2. The section rail reaches every settings page and marks the active one.
+ *  2. The sidebar lists every settings section, and the page itself carries no
+ *     second navigation for them.
  *  3. The legacy /devices URL redirects into the group.
  *  4. The avatar menu opens the group on its default section (it used to point
  *     at API Keys; this is the reported mismatch).
  */
+
+/** The app sidebar is the only surface that navigates between settings sections. */
+const sidebar = (page: import('@playwright/test').Page) => page.locator('[data-slot="sidebar"]')
+
 test.describe('Settings navigation', () => {
   test.beforeEach(async ({ page }) => {
     await mockAuthApis(page)
     // The Devices section fetches the registry; an empty list is enough for
-    // the heading and the rail assertions.
+    // the heading and the sidebar assertions.
     await page.route('**/api/v1/devices', async (route) => {
-      if (route.request().method() === 'GET') {
-        await route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify(okEnvelope([])) })
-      } else {
-        await route.fallback()
-      }
+      await route.fulfill({ json: okEnvelope([]) })
     })
     await loginViaForm(page)
   })
@@ -31,26 +32,27 @@ test.describe('Settings navigation', () => {
 
     await expect(page).toHaveURL(/\/settings\/profile$/)
     await expect(page.getByRole('heading', { name: 'Profile Settings' })).toBeVisible()
-    await expect(page.getByRole('navigation', { name: 'Settings sections' })).toBeVisible()
+    // One navigation surface: the sections are sidebar leaves, not a page rail.
+    await expect(page.locator('nav[aria-label="Settings sections"]')).toHaveCount(0)
   })
 
-  test('the section rail reaches every settings page', async ({ page }) => {
+  test('the sidebar reaches every settings page', async ({ page }) => {
     await page.goto('/settings/profile')
-    const rail = page.getByRole('navigation', { name: 'Settings sections' })
+    const nav = sidebar(page)
 
-    await rail.getByRole('link', { name: /Devices/ }).click()
+    await nav.getByRole('link', { name: /Devices/ }).click()
     await expect(page).toHaveURL(/\/settings\/devices$/)
     await expect(page.getByRole('heading', { name: 'Device Management' })).toBeVisible()
 
-    await rail.getByRole('link', { name: /Preferences/ }).click()
+    await nav.getByRole('link', { name: /Preferences/ }).click()
     await expect(page).toHaveURL(/\/settings\/preferences$/)
     await expect(page.getByRole('heading', { name: 'Preferences' })).toBeVisible()
 
-    await rail.getByRole('link', { name: /API Keys/ }).click()
+    await nav.getByRole('link', { name: /API Keys/ }).click()
     await expect(page).toHaveURL(/\/settings\/api-keys$/)
     await expect(page.getByRole('heading', { name: 'API Keys' })).toBeVisible()
 
-    await rail.getByRole('link', { name: /Profile/ }).click()
+    await nav.getByRole('link', { name: /Profile/ }).click()
     await expect(page).toHaveURL(/\/settings\/profile$/)
   })
 
@@ -59,6 +61,19 @@ test.describe('Settings navigation', () => {
 
     await expect(page).toHaveURL(/\/settings\/devices$/)
     await expect(page.getByRole('heading', { name: 'Device Management' })).toBeVisible()
+  })
+
+  test('the phone drawer reaches a section and closes', async ({ page }) => {
+    await page.setViewportSize({ width: 375, height: 812 })
+    await page.goto('/settings/profile')
+
+    await page.getByRole('button', { name: 'Toggle Sidebar' }).click()
+    const drawer = page.getByRole('dialog')
+    await drawer.getByRole('link', { name: 'Devices' }).click()
+
+    await expect(page).toHaveURL(/\/settings\/devices$/)
+    await expect(page.getByRole('heading', { name: 'Device Management' })).toBeVisible()
+    await expect(page.getByRole('dialog')).toBeHidden()
   })
 
   test('keeps sidebar text above AA contrast in the light theme', async ({ page }) => {
@@ -121,25 +136,14 @@ test.describe('Settings navigation', () => {
         }
       }
 
-      const rail = document.querySelector('nav[aria-label="Settings sections"]')
-      if (!rail) throw new Error('settings rail missing')
-      const links = [...rail.querySelectorAll('a')]
-      const selected = links.find((link) => link.getAttribute('aria-current') === 'page')
-      const unselected = links.find((link) => link.getAttribute('aria-current') !== 'page')
-      const selectedSpans = selected ? [...selected.querySelectorAll('span')] : []
-      const unselectedSpans = unselected ? [...unselected.querySelectorAll('span')] : []
+      const active = document.querySelector('[data-slot="sidebar"] a[href="/settings/profile"] span')
+      const inactive = document.querySelector('[data-slot="sidebar"] a[href="/dashboard"] span')
 
       return [
-        sample('settings selected label', selectedSpans[0] ?? null),
-        sample('settings selected description', selectedSpans[1] ?? null),
-        sample('settings unselected label', unselectedSpans[0] ?? null),
-        sample('settings unselected description', unselectedSpans[1] ?? null),
+        sample('sidebar active section label', active),
+        sample('sidebar inactive section label', inactive),
         ...[...document.querySelectorAll('[data-sidebar="group-label"]')].map((label) =>
           sample(`sidebar group label: ${label.textContent?.trim() ?? ''}`, label),
-        ),
-        sample(
-          'sidebar active settings label',
-          document.querySelector('[data-slot="sidebar"] a[href="/settings"] span'),
         ),
       ]
     })
@@ -150,11 +154,11 @@ test.describe('Settings navigation', () => {
     expect(failures).toEqual([])
   })
 
-  test('swaps the settings rail fill without a lingering highlight', async ({ page }) => {
+  test('moves the sidebar highlight without a lingering fill', async ({ page }) => {
     await page.goto('/settings/profile')
-    const rail = page.getByRole('navigation', { name: 'Settings sections' })
-    const profile = rail.getByRole('link', { name: /Profile/ })
-    const devices = rail.getByRole('link', { name: /Devices/ })
+    const nav = sidebar(page)
+    const profile = nav.getByRole('link', { name: /Profile/ })
+    const devices = nav.getByRole('link', { name: /Devices/ })
 
     const read = (locator: typeof profile) =>
       locator.evaluate((element) => {
@@ -162,21 +166,21 @@ test.describe('Settings navigation', () => {
         const rect = element.getBoundingClientRect()
         return {
           transition: style.transitionProperty,
-          duration: style.transitionDuration,
           width: rect.width,
           height: rect.height,
         }
       })
 
     const before = { profile: await read(profile), devices: await read(devices) }
-    expect(before.profile.transition).toBe('none')
-    expect(before.devices.transition).toBe('none')
-    expect(Number.parseFloat(before.profile.duration)).toBe(0)
+    // A background that fades out is what reads as a flicker when the selection
+    // moves, so the fill must never be animated.
+    expect(before.profile.transition).not.toContain('background-color')
+    expect(before.devices.transition).not.toContain('background-color')
 
     await devices.click()
     await expect(page).toHaveURL(/\/settings\/devices$/)
-    await expect(profile).not.toHaveAttribute('aria-current', 'page')
-    await expect(devices).toHaveAttribute('aria-current', 'page')
+    await expect(profile).toHaveAttribute('data-active', 'false')
+    await expect(devices).toHaveAttribute('data-active', 'true')
 
     const after = { profile: await read(profile), devices: await read(devices) }
     expect(Math.abs(after.profile.width - before.profile.width)).toBeLessThan(0.5)
