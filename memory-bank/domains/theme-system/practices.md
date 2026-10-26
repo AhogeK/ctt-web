@@ -155,3 +155,10 @@ dialog stack. Selector:
 (plane 306/567/735×629, panel 112/834/363×322); overflow 0; 0 `<img>`, 0 `<canvas>`. After the revert the
 first-visit default is `auto` again — the store test asserts that the system preference is adopted and
 `matchMedia` is consulted.
+
+## Theme specimens are fixed, not live tokens
+
+A theme picker must show Light while the page is Dark, so its miniature frames cannot use `--background` /
+`--card` — those follow the active theme. They use fixed `#f7f8f8` / `#0b0c10` specimens and brand indigo;
+the radio label carries the name and the frame is `aria-hidden`. Selected state = border, 5% accent wash and
+a check, never a full accent fill. Measured 2026-10-26: focus outline 2px `--ring`, 375 no overflow.

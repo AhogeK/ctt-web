@@ -50,7 +50,7 @@ domains:
     memory-bank/domains/ai-workflow/scenarios.md: 199
   theme-system:
     memory-bank/domains/theme-system/meta.md: 12
-    memory-bank/domains/theme-system/practices.md: 157
+    memory-bank/domains/theme-system/practices.md: 164
     memory-bank/domains/theme-system/principles.md: 31
     memory-bank/domains/theme-system/references.md: 14
     memory-bank/domains/theme-system/scenarios.md: 36
