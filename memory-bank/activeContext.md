@@ -1,3 +1,8 @@
+### README 文档轮（2026-10-27 · docs-only · v0.67.0）
+- README：居中式首屏 + dashboard WebP（1600×1000, 76K）+ 能力矩阵/Mermaid；Support/License 居中。
+- 校验：README audit ✓ · `git diff --check` ✓ · 本地链接 ✓；docs commit `5a19822`；计划已完成。
+- 非 AI 变更仅 README + `docs/assets/readme/`；未改版本号；master pick 待补；旧工具条目已归档。
+
 ### 偏好设置页重设计（2026-10-26 · v0.66.1 · 已提交 1cd4a38 / b17c21d）
 - 主题三瓦片（System 分屏 / Light / Dark 固定色）+ 语言双卡（EN/中）；1120px 7/5 分栏；样片固定色（不能读主题变量，否则深色页选 Light 会变黑）；焦点 2px、375 无溢出。
 ### 界面语言（2026-10-21）
@@ -181,11 +186,6 @@
   `pt-[calc(var(--marketing-header-height)_+_1px)]`（旧在流 57 = 56 内容+1px 边线；首版漏 1px 致 panel 构图基线恒定 −1.258 报警 ✓ 补回后
   111.742 vs 基线 112 ✓ 复位）。结构回归 E2E 钉 fixed + 模糊 + 57px。验证：landing 25/25 · 单测 1478 · lint 0 · type 0 · build 0。版本
   **0.55.10**（PATCH）。
-- **session-discipline 1.1.0（2026-10-07 · 工具修复轮）**：用户指出汇报仍贴收尾检查的原始输出、仍用内部叫法 ⇒ 三修：① 第四条判据按**真实输出签名**重写（原「名字+结果词同行」
-  漏真输出 ✗ ⇒ `RAW_OUTPUT` 段头/发现行族 ✓）；② 第七条 **≥4 → 出现即拦**、词表补全 README 承诺全量（缺 分幕/守卫/不变量/探针 ✗）；③ **规则对账**：R10「输出不进汇报」与
-  R18「在汇报里贴输出」互相矛盾 ⇒ R18 改「结果一句散文」✓。测试 49→**54**（结构 +2 行为 +3），三份 54/54 · 39/39 · 63/63 ✓；`omp plugin list` 已注册
-  **1.1.0** ✓；**钩子新会话才生效**（本会话仍加载旧模块）✓。
-
 ## Archived History
 
 - `memory-bank/archives/2026-09-24-activeContext-trim.md` — 2026-09-19 → 2026-09-21 的逐轮细节（P1 · 账号删除 · Leaderboard ·

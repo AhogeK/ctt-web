@@ -1,5 +1,4 @@
 # Progress: ctt-web
-
 ## Milestone Overview
 
 | Milestone                         | Status      | Target Version |
@@ -20,6 +19,7 @@
 | Achievements (奖杯系统)           | ✅ Complete | 0.42.0         |
 | Leaderboard                       | ✅ Complete | 0.41.0         |
 | Landing Page (P1–P4 交付：基元 / hero / 演示 / 收口三区) | ✅ Complete (P1–P4) · P5–P6 待做 | 0.54.0 |
+| README / docs refresh | ✅ Complete (2026-10-27 · `5a19822`) | 0.67.0 |
 | AuthLayout 展示面板 (指针光/3D)   | ✅ Complete | 0.51.0         |
 | Settings                          | 🚧 In progress (shell + 4 sections) | 1.0.0     |
 | Interface Language (zh/en)        | 🚧 In progress (settings complete 0.67.0; shell/schema pending) | 1.0.0 |
