@@ -1,225 +1,195 @@
-# ctt-web
+<h1 align="center">ctt-web</h1>
 
-[![License](https://img.shields.io/badge/license-MIT-green.svg)](LICENSE)
-[![Vue](https://img.shields.io/badge/Vue-3.5-42b883.svg)](https://vuejs.org/)
-[![Vite](https://img.shields.io/badge/Vite-8-646cff.svg)](https://vitejs.dev/)
-[![pnpm](https://img.shields.io/badge/pnpm-12.x-f69220.svg)](https://pnpm.io/)
+<p align="center">
+  <strong>Know where your coding time actually goes.</strong><br>
+  A self-hostable analytics dashboard for Code Time Tracker.
+</p>
 
-Web dashboard frontend for [CTT Server](https://github.com/AhogeK/ctt-server) — the cloud sync backend of
-the [Code Time Tracker](https://github.com/AhogeK/code-time-tracker) JetBrains plugin.
+<p align="center">
+  <a href="#quick-start"><strong>Quick start</strong></a> ·
+  <a href="docs/architecture.md">Architecture</a> ·
+  <a href="https://github.com/AhogeK/ctt-server">Server</a> ·
+  <a href="https://github.com/AhogeK/code-time-tracker">Plugin</a>
+</p>
 
-Provides a personal analytics dashboard, device management, API key management, leaderboard, and multi-device sync
-visualization.
+<p align="center">
+  <a href="LICENSE"><img src="https://img.shields.io/badge/license-MIT-green.svg" alt="MIT license"></a>
+  <img src="https://img.shields.io/badge/Vue-3-42b883.svg" alt="Vue 3">
+  <img src="https://img.shields.io/badge/TypeScript-6-3178c6.svg" alt="TypeScript 6">
+  <img src="https://img.shields.io/badge/Vite-8-646cff.svg" alt="Vite 8">
+  <img src="https://img.shields.io/badge/tested%20with-Playwright-2f855a.svg" alt="Tested with Playwright">
+</p>
 
-## ✨ Tech Stack
+<p align="center">
+  <a href="docs/assets/readme/dashboard.webp">
+    <img src="docs/assets/readme/dashboard.webp" width="100%" alt="ctt-web dashboard with summary cards, language and project distributions, and a coding heatmap">
+  </a>
+</p>
 
-| Layer          | Technology                                                  |
-| -------------- | ----------------------------------------------------------- |
-| Framework      | Vue 3.5 + TypeScript 6.0 (Strict, modern module resolution) |
-| Build          | Vite 8 (Rolldown engine)                                    |
-| Routing        | Vue Router 5 (feature-based routing, type-safe meta)        |
-| Server State   | TanStack Query v5                                           |
-| Global State   | Pinia 3 (auth + theme stores with VueUse persistence)       |
-| UI             | Radix Vue + shadcn-vue + Tailwind CSS v4                    |
-| Charts         | Apache ECharts + vue-echarts                                |
-| HTTP           | ofetch                                                      |
-| Validation     | Vee-Validate + Zod                                          |
-| Captcha        | hCaptcha (bot protection via @hcaptcha/vue3-hcaptcha)       |
-| Icons          | Iconify Vue                                                 |
-| i18n           | Vue I18n v11                                                |
-| Package Manager | pnpm 12 (standalone install)                                    |
-| Lint           | Oxlint v1 (primary) + ESLint                                |
-| Format         | Oxfmt (100% Prettier compatible)                            |
-| Git Hooks      | simple-git-hooks + lint-staged                              |
-| Unit Test      | Vitest 4 + Testing Library Vue                              |
-| E2E Test       | Playwright                                                  |
-| Mock           | Playwright `page.route()` (E2E API mocking)                 |
-| Type Check     | vue-tsc (standalone script)                                 |
+<p align="center"><sub>Dashboard with sample data. Light and dark themes are available.</sub></p>
 
-## ✅ Implemented Features
+ctt-web is the frontend of the Code Time Tracker ecosystem. The
+[JetBrains plugin](https://github.com/AhogeK/code-time-tracker) captures your coding sessions,
+[ctt-server](https://github.com/AhogeK/ctt-server) stores and aggregates them, and this dashboard
+turns them into a view you can read in seconds.
 
-| Feature                 | Description                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                             |
-| ----------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Authentication          | JWT login, logout, token management, router guards, startup token validation, CSRF protection                                                                                                                                                                                                                                                                                                                                                                                                                                                                                           |
-| CSRF Protection         | XSRF-TOKEN cookie reading, header injection for state-changing requests, 403 handling with toast + reload                                                                                                                                                                                                                                                                                                                                                                                                                                                                               |
-| CSP Hardening           | Defense-in-depth Content-Security-Policy meta tag (same-origin + hCaptcha + clickjacking protection)                                                                                                                                                                                                                                                                                                                                                                                                                                                                                    |
-| Auth Initialization     | Startup token validation via refresh endpoint, redirects expired sessions to login                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                      |
-| Guest Guard             | Redirects authenticated users away from auth pages (login, register, forgot-password)                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                   |
-| Password Reset          | Forgot password + reset password flows with error mapping, rate limit cooldown, anti-enumeration                                                                                                                                                                                                                                                                                                                                                                                                                                                                                        |
-| Set Password            | Set password for OAuth users; Account section integration with Email Change flow                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                        |
-| Auth Showcase           | Login page's three stacked panels: pointer-tracked 3D tilt with one kinematic clock, an SVG-stroke spotlight that lights only the arc nearest the pointer, and a card-anchored underglow in a scene-level layer below every card — so any card occludes it, light appears in the gaps and travels behind a panel instead of washing its face; every knob measured (isotropic tilt radius, 136px glow box margin against a 110px/80% gradient, blur budget) and asserted in the unit suite; the cards' own labels (dashboard stats, live metrics, terminal lines) follow the interface language, while the product name, the sample URL and language names stay as written |
-| Layout System           | AuthLayout + AppLayout + MarketingLayout (public shell), mobile responsive sidebar                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                       |
-| Routing                 | Feature-based modules, type-safe meta, NProgress, **route name constants**, **relative child paths**; the settings group lists its four sections directly in the app sidebar (`/settings/{profile,devices,preferences,api-keys}`), so there is no second section rail, and the legacy `/devices` URL redirects into it; post-auth redirects honour only in-app (`requiresAuth`) targets — a stray `redirect=/` or `/auth/*` lands on the dashboard instead of stranding the new session on a public page |
-| Form Validation         | Vee-Validate + Zod, real-time feedback                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                  |
-| Lazy Loading            | Route-level code splitting, dynamic imports                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                             |
-| Chunk Optimization      | Feature-based manual chunks (auth, dashboard, settings)                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                 |
-| **Exception Handling**  | Hierarchical ErrorBoundary (App.vue → AppLayout.vue), global handlers, 404View, Sonner toast                                                                                                                                                                                                                                                                                                                                                                                                                                                                                            |
-| Token Refresh           | JWT refresh with concurrency control, Promise deduping, Thundering Herd prevention                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                      |
-| Server State Management | TanStack Query v5 with 30s staleTime, SWR pattern, automatic caching                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                    |
-| Device Management       | Device list view at `/settings/devices` (name/platform/last-used IDE/last-active, Active-Inactive badge), revoke with confirmation dialog, empty-state "Install the JetBrains plugin" guide, error mapping (DEVICE_001 / COMMON_002 / RATE_LIMIT_001), first-load skeleton anti-flicker, shared relative-time formatting |
-| Leaderboard             | `/leaderboard` rankings over six of the backend's seven **dimensions** — Total time, Streak, Night owl, Early bird, Active days and Language (Growth stays API-only: its absolute period-over-period delta ranks prior volume rather than improvement) — each filterable by the periods it actually supports (Total time, Night owl, Early bird and Language: all six windows; Active days: all time, month, quarter, half-year and year, defaulting to the month because it measures current frequency while all time is a lifetime count, with the week withheld because a weekly board saturates at 7/7; Streak: all time, month, quarter, half-year and year, defaulting to all time, with the week withheld for the same 7/7 saturation; mirroring the server's `COMMON_003` for unsupported pairs, so the selectors can never send one; the server's periods are all/week/month/quarter/half-year/year — windows since ctt-server v0.84.0 and Streak's windowed score since v0.85.0); `limit`/`offset` paging with Previous/Next (the response carries no total, so a full page is the only end signal, and the empty page past a full last page offers a way back); the caller's own rank read from the same response rather than a second endpoint; the caller's own row marked by `userId` (not by rank — ties share one) and a "Find me" control that moves straight to the page holding their rank rather than walking the pages between; scores formatted per dimension (duration or streak days); ties share the server's rank so a position is never derived from the row index; a deleted account renders as "Deleted account" rather than an empty cell (its `displayName` key is absent, not null — a required-but-nullable field failed to parse the whole page) |
-| Landing Page            | Public `/` (no session required) rendering `LandingView` under `MarketingLayout` — top bar + content + footer, no sidebar and no user menu; the top-bar CTA follows auth state (register when signed out, dashboard when signed in); own `feature-landing` build chunk; `/` is deliberately **not** `guestOnly`, so a signed-in visitor stays on the marketing page instead of being bounced to the dashboard; section primitives live in `LandingSection` with one spacing/type scale — the display/heading ladder is `@theme` tokens taken verbatim from the product's type scale, `--marketing-header-height` is the single header-height token, and a global `prefers-reduced-motion` rule covers every animation — the hero's product face renders the dashboard's own components (the summary grid, the language ranking and the session log) over labelled example data, and the page below it is a **staged** scene rather than a stack of bands: a pinned full-height stage holds a hero that hands off as you scroll — the hero dissolves upward while the next beat rises from below through the centre without stopping, every fade on this stretch (the hero's exit and the beat's entrance and exit) playing on a fixed clock (600 ms / 900 ms) rather than scrubbed by the scroll, so every visitor sees the same hand-off, and the beat leaves the way the hero does — both beats' motion is one linear scrub across the release window (roughly 0.6–0.8 of the scroll speed, no frozen hold) and stops at the release line, so the stage's own slide carries it out at 1:1 — carrying the dashboard's own year grid (364 DOM cells on the product's six-step colour ladder, no chart library) together with three trophy ladders from the achievements cabinet, each beat a real component plus one line of explanation and its own `Example data` label; every count on the page is derived from one example-data module, so two surfaces can never disagree; on phones (below `1024px`, which also covers a narrow desktop window) the pinned stage is deliberately **not** used — every block stays in normal flow and each region (intro, each demo window, the year-and-ladders block) fades on a fixed **600 ms** clock as it enters or leaves the viewport, so nothing can be clipped, no piece pops in or out, and a fast scroll cannot outrun the fade — an entry observed while the scroll is fast is held back and revealed once the scroll settles (a fade ranged over scroll *distance* can be crossed before a single frame of it is seen, which is also why the desktop track is sized in gestures: 230svh, more than one wheel flick delivers) — the hero's secondary action and the top bar's GitHub mark open a dialog that names the ecosystem's three repositories, while the open-source section at the page's end stays their no-JavaScript destination; below the stage the page closes with four ordinary bands — a capability list whose figures are the product's own (24 leaderboards, 67 badges across 14 ladders, converging sync, device and key management), the three-step pipeline (plugin → self-hosted server → this dashboard) that stacks into one column on narrow screens, a free band stating the price model plainly (every part is free and open source — self-hosting runs the whole system, and the project plans its own hosted instance, equally free and best effort; nothing is ever for sale, so no entry carries a price) with the project's support channels (Ko-fi / Afdian / Solana) beneath it and repeated in the footer, and an open-source block listing the three repositories with their licences beside a copyable `docker compose` deploy command; and the shell keeps one width recipe — the top bar, the hero, the content bands and the footer all sit in the same 1440px box with the same rail, so every content edge starts on one line |
-| Theme System            | Light/dark mode toggle, Pinia theme store with VueUse persistence; **zero-flash first paint** via an external `public/theme.js` bootstrap placed in `<head>` before the app module (the CSP is `script-src 'self'`, so it cannot be inlined) — it reads the `vueuse-color-scheme` store and syncs `style.colorScheme` so native scrollbars and form controls follow the theme |                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                       |
-| Interface Language      | English / 简体中文, switchable from Preferences **and** the avatar menu, plus a language menu in the public shells (marketing top bar, auth card) — a 32px square showing the active language's code (`EN` / `中`) that opens a list of every supported locale, so a visitor can read the page in either language before signing in; the choice persists under `ctt.locale` and resolves as stored preference > browser language > English, mirrored onto `<html lang>` and followed across tabs; the Chinese catalogue is its own chunk (loaded before first paint when it is the resolved locale) with English bundled as the fallback; weekday/month names and absolute timestamps format through the shared locale-aware formatters instead of hard-coded `en-US`; `pnpm check:i18n` guards Chinese literals in app source, catalogue drift and direct `en-US` formatting; every auth surface (login, register, forgot/reset, verify, email change, OAuth callback/error) the statistics dashboard (header, filters, panel titles, chart tooltips and screen-reader summaries) the achievements page (including every tier title, mapped from its server code) and the leaderboard (dimensions, periods, paging, language picker, score units) are localised too, the hCaptcha widget follows the interface language (`hl` = `en` / `zh-CN`), and raw backend error codes never reach the reader — only their mapped sentence |
-| Terms Acceptance        | Terms version tracking on registration, expiration handling on login, 403 interception with request replay                                                                                                                                                                                                                                                                                                                                                                                                                                                                              |
-| Bot Protection          | hCaptcha integration on auth forms with graceful degradation (captchaSiteKey=null disables)                                                                                                                                                                                                                                                                                                                                                                                                                                                                                             |
-| GitHub OAuth            | OAuth login + account BIND/UNBIND flow from ProfileView with Dialog confirmation; 8-code BIND + 2-code UNBIND error mapping; TanStack Query status                                                                                                                                                                                                                                                                                                                                                                                                                                      |
-| User Profile            | `GET /api/v1/users/me` — displayName/email resolution; AppHeader dropdown shows user identity; avatar hash seeded from displayName; Account section integration                                                                                                                                                                                                                                                                                                                                                                                                                         |
-| Email Change            | Email change flow with verification; Account section displays email/verification status/display name/registration time; EmailVerificationBanner for unverified users; integrated with Set Password for OAuth users                                                                                                                                                                                                                                                                                                                                                                      |
-| API Key Management      | API Keys list view at `/settings/api-keys` with GitHub PAT-style table, status badges, scope chips, relative time; create flow with one-time raw key display (copy-gated close, hard-to-dismiss dialog); revoke flow with AlertDialog confirmation, idempotent DELETE + BOLA-safe AUTH_010 handling; permanent delete for REVOKED and EXPIRED keys (row removed entirely; ACTIVE keys require revoke first — 409 AUTH_023 guard); error mapping (key-limit banner, rate-limit countdown, generic BOLA message), first-load skeleton anti-flicker, table a11y, header shortcut, responsive mobile card view (<768px) |
-| Achievements            | `/achievements` trophy cabinet — one card per **(family, window)** ladder (v0.71.0 returns 67 badges across 14 ladders — 7 lifetime families of 5–9 tiers plus 7 resetting ones of 2–3; the measured value is per ladder, so one card per badge would repeat it many times over); grouping and tier order are **data-driven** from the server's `type`/`tier` (the codes are not parseable — `DAILY_BURST` is tier 3 while `DAILY_BURST_4` is tier 1, so no client code table is needed or possible); the page is split into **Lifetime** (never resets) and **Current period** (Day/Week/Month/Year, each card labelled with its window) since a permanent record and an expiring goal must not read as the same kind of thing; each card shows inline SVG artwork whose paint rises through the existing indigo ladder (`#3d49ad` → `#8290f0` → `#b9c1ff`, plus a ring when maxed) with no second palette and no image assets, the next rung's name (the earned tiers stay in the header count and the rung strip's tooltips), a rung strip for the ladder's shape, and progress toward the next rung's target — the printed fraction and the bar are the same number (4 / 5 draws 80%), so the row cannot contradict itself; header totals count tiers (`19 / 67 · 28%`); cards ordered nearest-to-next-rung first with completed ladders last, compared as a unit-free fraction so unlike units never compete; an unrecognised family still renders (generic medallion) rather than being dropped; each resetting card also reports **how many periods the ladder has been reached in** and its current **run of consecutive periods**, both computed server-side from session history — counting unlock rows would measure how often the page was opened, since those rows are written only on a visit; the values are per rung, so the card reports its base rung, which is monotone and still defined when the current period is unmet |
-| Stats Dashboard         | `/dashboard` with All-time default and date-range presets + device/IDE origin filters (mutually exclusive, URL-state `?start&end&deviceId&ideName` shareable/refresh-preserving); 6-field summary cards (Today/Daily avg/week/month/year/Total, each with a "vs previous period" change caption once the server provides a baseline — ctt-server v0.78.0+); plugin-parity panel set (heatmap, 30-day trend, language/project/weekday/IDE distributions, time-of-day capsule, hourly stats) with per-panel loading/error/empty states; GitHub-style heatmap year selector (`?year=`, "Last 12 months" default, years from backend v0.61.0 `heatmap-years`); coding trend chart live (smooth line + indigo gradient area, filter-independent like the plugin panel; defaults to the plugin's Last 30 Days and accepts a calendar-month window via the card's own picker — `?trendMonth=yyyy-MM`, options limited to months that actually have data via backend v0.67.0 `heatmap-months`); long-term trend live (full-width row: rolling 12-month daily dots, a centered 7-day average line and the window mean as the one dashed reference level, with the recent-30-day-vs-window change as DOM text above the chart and a layer legend + seconds-precision baseline value (two-digit seconds, dropped at :00) captioned below; has a year picker like the heatmap (`Last 12 months` rolling default plus years with data from the same `heatmap-years` feed; the current year clamps to today so future zero days cannot enter the averages, and both panels share one cache entry while their windows match) — no backend change; the dots drop at phone widths); weekly activity by hour live (7×24 heatmap, filter-range driven via backend v0.63.0 `week-hour`, dynamic color scale + calculable scroll bar — quiet tiles read `No coding` in both legend and tooltip, measured cells read as averages with their divisor (`avg 1m 58s across 4 Mondays`), and the scale's labels stay in hours); average hourly duration live (indigo line + gradient area over the active-day average, with faint raw curves for the last five active days — today's curve stops at the current hour, and a dashed marker marks the current hour when today is in range (day curves from backend v0.79.0 `hourly-days`); phone-narrow panels keep only the average line; active-day note, tooltip reads `avg 1h 30m`, filter-range driven via backend v0.64.0 `hourly` start/end); time of day distribution live (4-bucket capsule strip Night/Morning/Daytime/Evening, indigo daylight ramp, fixed clock order — via `distribution?type=TIME_OF_DAY`, full-history until backend ships window params); language distribution live (ranked horizontal bars, indigo luminance ramp decaying with rank, % · duration end labels, 0.1% Others folding — via `distribution?type=LANGUAGES`); project distribution live (same ranked-bar treatment via a shared `RankedDistributionList` — ranking, folding floor, gradient and percent precision have one implementation across both categorical panels — via `distribution?type=PROJECTS`); recent sessions live (local-day grouped session log — newest first, `HH:mm` + project + language + duration per row, 40-char names truncate with the full name on hover, no day total because parallel sessions overlap in real time; grouped list region extracted to a shared `ScrollFadeList` with the distribution list; endpoint `/stats/recent` takes no date window so this panel follows the origin filters only, not the period — via `limit=20`); single panel grid driven by container queries — cards pair two-across only when each keeps ≥830px (row ≥1684px), otherwise full-width rows (the long-term trend card spans the full row once two columns are active; heatmap included — phone-narrow panels open the calendar as a horizontal strip pinned to its newest end; no placeholder cards, streak stats live in the heatmap footer); summary cards go 6-across only at ≥1430px row width, else 3-across; summary cards durations capped at hours with seconds precision; route-level Suspense skeleton + chunk-failure toast (no blank view); filter changes re-key every stats query (backend v0.60.0 `ideName` + `ide-filters`) |
+Everything is open source and free to self-host.
 
-## 🗺 Project Structure
+## What you get
 
-```text
-src/
-├── features/       # Feature modules (achievements/, auth/, dashboard/, devices/, landing/, leaderboard/, settings/)
-├── layouts/        # Layout components (AuthLayout, AppLayout, MarketingLayout)
-├── components/     # Shared components (ui/, app/)
-├── lib/            # Core utilities (api/, schemas/)
-├── stores/         # Pinia stores (auth)
-├── router/         # Vue Router + guards
-└── views/          # Top-level views
+| **The dashboard** | **The workspace** |
+| :--- | :--- |
+| **See your time** — summary cards, daily and long-term trends, heatmaps, language/project/IDE distributions, time-of-day views, and recent sessions. | **Filter with context** — inspect a date range, one device, or one IDE; the active view stays in the URL. |
+| **Spot patterns** — compare periods, follow your streak, and see when and where your best work happens. | **Manage devices and keys** — check last activity and last-used IDE, revoke devices, and create scoped API keys with optional expiry. |
+| **Keep momentum** — browse achievement ladders and compare on the multi-dimension leaderboard. | **Sign in securely** — email/password or GitHub OAuth, password reset, email verification, and profile controls. |
+| **Make it yours** — English and 简体中文, with light, dark, and system themes. | **Own your data** — run the whole stack yourself; no paid tiers or feature locks. |
+
+## How it fits together
+
+```mermaid
+flowchart LR
+  P["JetBrains plugin<br/>captures sessions"] --> S["ctt-server<br/>sync + statistics"]
+  S --> W["ctt-web<br/>the dashboard"]
 ```
 
-## 🔗 Related Projects
+The server is the source of truth for sync and statistics. This repository contains the web UI only.
 
-- [ctt-server](https://github.com/AhogeK/ctt-server) — Spring Boot 4 backend (JWT + API Key auth, sync engine,
-  leaderboard)
-- [code-time-tracker](https://github.com/AhogeK/code-time-tracker) — JetBrains IDE plugin
+## Quick start
 
-## 🛠 Recommended IDE Setup
-
-[VS Code](https://code.visualstudio.com/) + [Vue - Official](https://marketplace.visualstudio.com/items?itemName=Vue.volar)
-
-> Disable **Vetur** if previously installed — it conflicts with the official Vue extension.
-
-**Browser DevTools:**
-
-- Chromium (Chrome / Edge /
-  Brave): [Vue.js devtools](https://chromewebstore.google.com/detail/vuejs-devtools/nhdogjmejiglipccpnnnanhbledajbpd) · [Enable Custom Object Formatter](http://bit.ly/object-formatters)
-- Firefox: [Vue.js devtools](https://addons.mozilla.org/en-US/firefox/addon/vue-js-devtools/) · [Enable Custom Object Formatter](https://fxdx.dev/firefox-devtools-custom-object-formatters/)
-
-## 🚀 Getting Started
-
-### Prerequisites
+### Requirements
 
 - **Node.js** `^20.19.0 || >=22.12.0`
-- **pnpm** `12.10.1` (pinned via `packageManager`) — install standalone via `npm i -g pnpm` or
-  `corepack enable && corepack prepare pnpm@latest --activate`
+- **pnpm** `12.11.2` (pinned in `packageManager`)
 
-### Install
+### Run locally
 
 ```sh
+git clone https://github.com/AhogeK/ctt-web.git
+cd ctt-web
 pnpm install
-```
-
-### Development
-
-```sh
 pnpm dev
 ```
 
-### Type Check + Production Build
+The app expects a running ctt-server. The Vite dev server proxies `/api` to
+`http://localhost:8080/ctt-server`; start the server first, or point the app at another API origin.
+
+| Variable | Default | Purpose |
+| --- | --- | --- |
+| `VITE_API_BASE_URL` | `/api` | API base URL used by the browser client |
+
+```sh
+# .env
+VITE_API_BASE_URL=/api
+```
+
+### Production build
 
 ```sh
 pnpm build
-```
-
-### Preview Production Build
-
-```sh
 pnpm preview
 ```
 
-## 🧪 Testing
+`pnpm build` runs the type checker and the production build. Deploy the generated `dist/` directory
+behind the same origin (or the configured API base) as ctt-server.
 
-### Unit Tests (Vitest)
+## Development
 
-### Test Infrastructure
+| Command | What it does |
+| --- | --- |
+| `pnpm dev` | Start the Vite development server |
+| `pnpm build` | Type-check and create a production build |
+| `pnpm preview` | Preview the production build locally |
+| `pnpm test:unit` | Run Vitest unit tests |
+| `pnpm test:e2e` | Run Playwright end-to-end tests |
+| `pnpm type-check` | Run `vue-tsc` only |
+| `pnpm lint` | Run the configured lint passes |
+| `pnpm format` | Format source files |
+| `pnpm check:i18n` | Check locale coverage and hard-coded strings |
 
-- **Setup**: `src/test/setup.ts` auto-cleanup + browser API mocks
-- **Environment**: jsdom with matchMedia + ResizeObserver mocks for Radix UI / shadcn-vue
-- **Globals**: Vitest globals enabled (no import needed for describe/it/expect)
-- **Assertions**: @testing-library/jest-dom provides semantic matchers (toBeInTheDocument, etc.)
-
-```sh
-pnpm test:unit
-```
-
-### E2E Tests (Playwright)
-
-```sh
-# First run — install browsers
-pnpm exec playwright install
-
-# Run all E2E tests
-pnpm test:e2e
-
-# Chromium only
-pnpm test:e2e --project=chromium
-
-# Specific file
-pnpm test:e2e e2e/example.spec.ts
-
-# Debug mode
-pnpm test:e2e --debug
-
-# Against a production build
-pnpm build && pnpm test:e2e
-```
-
-**Coverage.** Each feature folder under `e2e/` mocks its own endpoints with `page.route()` and
-drives the real router, so a spec exercises the page the way a user reaches it. Fixtures declare
-the **wire** shape locally (never imported from `src/`), which is what lets them reproduce the
-server's omitted-key cases — a LIFETIME badge with no `windowStart`, a deleted leaderboard account
-with no `displayName`.
-
-Two assertions are worth knowing about before editing them, because they are the only place the
-claim can be checked: the trophy artwork's fit inside its completion ring is measured from the
-rendered geometry (jsdom reports every `getBBox()` as zero, so the unit tests cannot), and the
-leaderboard's period selector is asserted against the requests actually put on the wire — an
-unsupported dimension/period pair is a `400 COMMON_003` rather than a fallback, so the selector
-must never be able to build one.
-
-The suite runs on **chromium only** — the engine `playwright install` provisions. The scaffold's `firefox`/`webkit` projects were removed because no assertion was ever
-written against them and `pnpm test:e2e` therefore failed at launch for everyone; a project that
-is never run is a failing step, not coverage. Re-enable one only after installing its engine and
-running its suite.
-
-## 🔍 Lint & Format
+For Playwright on a fresh machine, install its Chromium engine once:
 
 ```sh
-# Lint (Oxlint primary, ESLint supplemental)
-pnpm lint
-
-# Format with Oxfmt
-pnpm format
-
-# Type check only
-pnpm type-check
+pnpm exec playwright install chromium
 ```
 
-Pre-commit hooks run automatically via `simple-git-hooks` + `lint-staged` on staged `*.ts`, `*.vue`, `*.js` files.
+VS Code with the **Vue - Official** extension is recommended; disable Vetur if it is installed.
 
-## ❤️ Support
+## Tech stack
 
-Everything here is free — the plugin, the server and this dashboard, with no feature gates.
-If it is useful to you, you can support its development through the same channels the
-plugin lists:
+| Layer | Technology |
+| --- | --- |
+| Framework | Vue 3 + TypeScript |
+| Build | Vite+ (Vite 8 toolchain) |
+| Routing | Vue Router |
+| Server state | TanStack Query |
+| App state | Pinia |
+| UI | Tailwind CSS 4 + Reka UI + shadcn-vue |
+| Charts | Apache ECharts |
+| Forms | Vee-Validate + Zod |
+| i18n | Vue I18n |
+| Tests | Vitest + Playwright |
+| Package manager | pnpm 12 |
 
-- ☕ [Ko-fi](https://ko-fi.com/ahogek) — buy me a coffee
-- ⚡ [Afdian (爱发电)](https://afdian.com/a/AhogeK) — sponsor via Afdian
-- 💎 [Solana](https://solscan.io/account/55XnqvGKwH6LamJB7tSwUbrmJikEU2zwP3k1FjsdyEys) — donate SOL
+## Project structure
 
-Donations are voluntary and carry no rewards or privileges; supporters who would like
-their name listed can say so in the donation message (opt-in).
+```text
+src/
+├── features/     feature modules: dashboard, devices, settings, auth, landing, leaderboard, achievements
+├── layouts/      app, auth and marketing shells
+├── components/   shared app components and UI primitives
+├── lib/          API clients, schemas and utilities
+├── stores/       Pinia stores
+└── router/       route modules and guards
+```
 
-## 📄 License
+More detail is available in [docs/architecture.md](docs/architecture.md) and
+[docs/dev-handbook.md](docs/dev-handbook.md).
 
-MIT License — see [LICENSE](LICENSE) for details.
+## Testing
 
----
+- Unit tests use Vitest and Testing Library.
+- End-to-end tests use Playwright against the real router with mocked API routes; no live backend is
+  required for the E2E suite.
+- The E2E suite runs on Chromium only. Install the browser with the command above before the first run.
 
-Built with ☕ by [AhogeK](https://github.com/AhogeK)
+## Related projects
+
+- [ctt-server](https://github.com/AhogeK/ctt-server) — Spring Boot API, sync engine, and leaderboard
+- [code-time-tracker](https://github.com/AhogeK/code-time-tracker) — JetBrains IDE plugin
+- [ctt-web](https://github.com/AhogeK/ctt-web) — this dashboard
+
+## Contributing
+
+Issues and pull requests are welcome. Keep changes focused, explain the user-facing effect, and add
+or update tests when behavior changes. For larger changes, open an issue first so the approach can
+be discussed.
+
+<div align="center">
+
+<h2>💖 Support</h2>
+
+<p><strong>Free and open source. No paid tiers.</strong></p>
+
+<p>If ctt-web helps you see where your time goes, you can support its development:</p>
+
+<p>
+<a href="https://ko-fi.com/ahogek"><img src="https://img.shields.io/badge/Ko--fi-FF5E5B?style=flat-square&logo=ko-fi&logoColor=white" alt="Ko-fi"></a>
+&nbsp;
+<a href="https://afdian.com/a/AhogeK"><img src="https://img.shields.io/badge/Afdian-946ce6?style=flat-square&logo=github-sponsors&logoColor=white" alt="Afdian"></a>
+&nbsp;
+<a href="https://solscan.io/account/55XnqvGKwH6LamJB7tSwUbrmJikEU2zwP3k1FjsdyEys"><img src="https://img.shields.io/badge/Solana-14F195?style=flat-square&logo=solana&logoColor=white" alt="Solana"></a>
+</p>
+
+<p><sub>Donations are optional and carry no rewards or privileges.</sub></p>
+
+<p>Made with ❤️ for developers who care where their time goes.</p>
+
+</div>
+
+<div align="center">
+
+<h2>License</h2>
+
+<p><a href="LICENSE">MIT</a></p>
+
+</div>
