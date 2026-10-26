@@ -70,7 +70,7 @@ const activeName = computed(() => route.name)
           <RouterLink
             :to="{ name: section.name }"
             :aria-current="activeName === section.name ? 'page' : undefined"
-            class="block rounded-md px-3 py-2 text-sm transition-colors focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none"
+            class="block rounded-md px-3 py-2 text-sm transition-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none"
             :class="
               activeName === section.name
                 ? 'bg-primary font-medium text-primary-foreground'

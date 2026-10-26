@@ -150,6 +150,41 @@ test.describe('Settings navigation', () => {
     expect(failures).toEqual([])
   })
 
+  test('swaps the settings rail fill without a lingering highlight', async ({ page }) => {
+    await page.goto('/settings/profile')
+    const rail = page.getByRole('navigation', { name: 'Settings sections' })
+    const profile = rail.getByRole('link', { name: /Profile/ })
+    const devices = rail.getByRole('link', { name: /Devices/ })
+
+    const read = (locator: typeof profile) =>
+      locator.evaluate((element) => {
+        const style = getComputedStyle(element)
+        const rect = element.getBoundingClientRect()
+        return {
+          transition: style.transitionProperty,
+          duration: style.transitionDuration,
+          width: rect.width,
+          height: rect.height,
+        }
+      })
+
+    const before = { profile: await read(profile), devices: await read(devices) }
+    expect(before.profile.transition).toBe('none')
+    expect(before.devices.transition).toBe('none')
+    expect(Number.parseFloat(before.profile.duration)).toBe(0)
+
+    await devices.click()
+    await expect(page).toHaveURL(/\/settings\/devices$/)
+    await expect(profile).not.toHaveAttribute('aria-current', 'page')
+    await expect(devices).toHaveAttribute('aria-current', 'page')
+
+    const after = { profile: await read(profile), devices: await read(devices) }
+    expect(Math.abs(after.profile.width - before.profile.width)).toBeLessThan(0.5)
+    expect(Math.abs(after.profile.height - before.profile.height)).toBeLessThan(0.5)
+    expect(Math.abs(after.devices.width - before.devices.width)).toBeLessThan(0.5)
+    expect(Math.abs(after.devices.height - before.devices.height)).toBeLessThan(0.5)
+  })
+
   test('the avatar menu opens the settings group on its default section', async ({ page }) => {
     // Start on a different section so the assertion proves the target rather
     // than an already-correct URL.
