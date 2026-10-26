@@ -786,10 +786,12 @@ const en = {
       title: 'Preferences',
       subtitle: 'Appearance and behaviour that apply to this browser.',
       appearance: 'Appearance',
+      appearanceDescription: 'Choose a theme, or follow your system.',
       current: 'Current: {value}',
       theme: 'Theme',
       language: 'Language',
       languageDescription: 'Interface language. Changes apply immediately.',
+      storageNote: 'Saved in this browser. Changes apply immediately; other devices keep their own settings.',
     },
     common: {
       cancel: 'Cancel',
