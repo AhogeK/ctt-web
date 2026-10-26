@@ -328,12 +328,12 @@ const UsersPagedSchema = createPagedResponseSchema(UserSchema)
 
 | 工具                      | 版本 | 用途                               |
 | ------------------------- | ---- | ---------------------------------- |
-| Vitest                    | 4    | 测试运行器                         |
+| Vitest                    | 5    | 测试运行器                         |
 | @vue/test-utils           | 2    | Vue 组件挂载                       |
 | @testing-library/vue      | 8    | 语义化断言                         |
-| @testing-library/jest-dom | 6    | 额外匹配器（toBeInTheDocument 等） |
-| @faker-js/faker           | 9    | 测试数据生成                       |
-| jsdom                     | 29   | 浏览器环境模拟                     |
+| @testing-library/jest-dom | 7    | 额外匹配器（toBeInTheDocument 等） |
+| @faker-js/faker           | 10   | 测试数据生成                       |
+| jsdom                     | 30   | 浏览器环境模拟                     |
 
 **关键配置**（`vitest.config.ts`）：
 
