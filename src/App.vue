@@ -13,6 +13,7 @@ import { toast } from 'vue-sonner'
 import ErrorBoundary from '@/components/app/ErrorBoundary.vue'
 import { Toaster } from '@/components/ui/sonner'
 import { useThemeStore } from '@/stores/theme'
+import { useMotionStore } from '@/stores/motion'
 import { useAuthStore } from '@/stores/auth'
 import { TERMS_EXPIRED_EVENT, resolveTermsQueue, rejectTermsQueue } from '@/lib/api/instance'
 import TermsDialog from '@/features/auth/components/TermsDialog.vue'
@@ -59,6 +60,10 @@ function handleTermsRejected() {
 onMounted(() => {
   // Adopts the system preference only when no theme has been chosen yet — see `initTheme`.
   useThemeStore().initTheme()
+  // Instantiates the motion store early so its watcher keeps <html> in step for
+  // the whole session — including a change made in another tab, which the store
+  // never sees through its own setter.
+  useMotionStore()
   globalThis.addEventListener(TERMS_EXPIRED_EVENT, handleTermsExpired)
   globalThis.addEventListener('chunk-load-failed', handleChunkLoadFailed)
 })

@@ -26,6 +26,7 @@ import { Moon, Sun, Sunrise, Sunset, type LucideIcon } from '@lucide/vue'
 import { useStatsDistribution } from '@/composables/useStats'
 import { formatDuration, formatPercent } from '@/lib/utils'
 import { useThemeStore } from '@/stores/theme'
+import { useMotionStore } from '@/stores/motion'
 import '@/components/charts/echarts-setup'
 
 const { t } = useI18n()
@@ -38,6 +39,7 @@ const props = defineProps<{
 }>()
 
 const theme = useThemeStore()
+const motion = useMotionStore()
 
 const distribution = useStatsDistribution(
   'TIME_OF_DAY',
@@ -257,8 +259,10 @@ function onDocPointerDown(event: PointerEvent): void {
 function buildOption(): Record<string, unknown> {
   return {
     backgroundColor: 'transparent',
-    // Honor the OS reduce-motion preference (lieflat hard rule).
-    animation: !window.matchMedia('(prefers-reduced-motion: reduce)').matches,
+    // Canvas animation is outside the CSS cascade, so it needs the resolved
+    // decision rather than a media query: the visitor's own preference has to
+    // reach it too, not only the operating system's.
+    animation: !motion.isReduced,
     animationDuration: 500,
     animationEasing: 'cubicOut',
     grid: { left: 0, right: 0, top: 0, bottom: 0 },
@@ -323,7 +327,7 @@ onBeforeUnmount(() => {
   chart = null
 })
 
-watch([buckets, () => theme.isDark], render)
+watch([buckets, () => theme.isDark, () => motion.isReduced], render)
 </script>
 
 <template>

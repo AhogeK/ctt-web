@@ -228,7 +228,7 @@ function foldedBreakdown(row: RankedRow): { shown: { name: string; percent: numb
                       aria-hidden="true"
                     />
                     <span
-                      class="dist-bar absolute inset-y-0 left-0 rounded-full transition-[width] duration-700 ease-out motion-reduce:transition-none"
+                      class="dist-bar absolute inset-y-0 left-0 rounded-full transition-[width] duration-700 ease-out"
                       :style="{
                         width: revealed ? `${row.barPercent}%` : '0%',
                         backgroundImage: barRamp,

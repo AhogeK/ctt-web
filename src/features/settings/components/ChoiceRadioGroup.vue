@@ -14,6 +14,8 @@ interface ChoiceOption {
   code?: string
   /** Specimen kind for a theme option. */
   preview?: 'system' | 'light' | 'dark'
+  /** Second line explaining what the option resolves to. */
+  hint?: string
 }
 
 const props = defineProps<{

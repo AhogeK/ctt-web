@@ -192,7 +192,7 @@ const streakAriaLabel = computed(() => {
            finished trophy is decoration, not information. -->
       <div v-if="!trophy.maxed" class="h-1.5 overflow-hidden rounded-full bg-muted">
         <div
-          class="h-full rounded-full bg-primary transition-[width] duration-700 ease-out motion-reduce:transition-none"
+          class="h-full rounded-full bg-primary transition-[width] duration-700 ease-out"
           :style="{ width: `${Math.round(progress * 100)}%` }"
           data-testid="trophy-progress-bar"
         />
