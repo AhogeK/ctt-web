@@ -267,11 +267,14 @@ function daysInYear(year: number): { date: string; seconds: number }[] {
 }
 
 test('a year view anchors at its newest non-future day', async ({ page }) => {
-  // Two dropdown round-trips plus scroll-metric polls; under a fully parallel
-  // local run the shared dev server can push this past the default 30s budget
-  // (reproduced 2026-10-20: 30s timeout, passes in isolation and serialized).
-  // The assertions below are unchanged — only this heavier flow's ceiling is.
-  test.setTimeout(45_000)
+  // Two dropdown round-trips plus scroll-metric polls. A local run points every
+  // spec at the same dev server (the local port, not the CI preview), so this
+  // heavier flow is the one that runs out of time when the rest of the suite
+  // loads it in parallel (reproduced 2026-10-20 and again 2026-10-27: a
+  // 45s ceiling expired under a full local run, while the spec passes in
+  // isolation and serialized). The assertions below are unchanged — only this
+  // heavier flow's ceiling is.
+  test.setTimeout(60_000)
   await page.setViewportSize({ width: 390, height: 1080 })
   await mockAuthApis(page)
   const seen: string[] = []

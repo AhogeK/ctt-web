@@ -49,15 +49,34 @@ describe('PreferencesView', () => {
     wrapper.unmount()
   })
 
-  it('marks the selected theme and language surfaces, not only the inputs', async () => {
+  it('marks the selected surface of every group, not only the inputs', async () => {
     const { wrapper } = mountView()
+    // Each group contributes one label per option: theme (3), language (2), motion (3).
     const states = () => wrapper.findAll('label').map((label) => label.attributes('data-state'))
 
-    expect(states()).toEqual(['checked', 'unchecked', 'unchecked', 'checked', 'unchecked'])
+    expect(states()).toEqual([
+      'checked',
+      'unchecked',
+      'unchecked',
+      'checked',
+      'unchecked',
+      'checked',
+      'unchecked',
+      'unchecked',
+    ])
 
     await themeRadios(wrapper)[2]!.setValue(true)
 
-    expect(states()).toEqual(['unchecked', 'unchecked', 'checked', 'checked', 'unchecked'])
+    expect(states()).toEqual([
+      'unchecked',
+      'unchecked',
+      'checked',
+      'checked',
+      'unchecked',
+      'checked',
+      'unchecked',
+      'unchecked',
+    ])
 
     wrapper.unmount()
   })
@@ -96,14 +115,33 @@ describe('PreferencesView', () => {
     wrapper.unmount()
   })
 
-  it('renders the language section as its own labelled group', () => {
+  it('renders each preference as its own labelled group', () => {
     const { wrapper } = mountView()
 
     const fieldsets = wrapper.findAll('fieldset')
-    expect(fieldsets).toHaveLength(2)
-    expect(fieldsets[1]!.find('legend').text()).toBe('Language')
+    expect(fieldsets.map((fieldset) => fieldset.find('legend').text())).toEqual(['Theme', 'Language', 'Motion'])
     expect(wrapper.findAll('input[name="language"]')).toHaveLength(2)
+    expect(wrapper.findAll('input[name="motion"]')).toHaveLength(3)
 
+    wrapper.unmount()
+  })
+
+  it('writes the motion choice through the motion store and reports what it resolves to', async () => {
+    const { wrapper } = mountView()
+    const { useMotionStore } = await import('@/stores/motion')
+    const motion = useMotionStore()
+
+    // Default is "Follow system"; the mocked media query reports no reduce request.
+    expect(motion.preference).toBe('system')
+    expect(wrapper.text()).toContain('Current: Full motion')
+
+    await wrapper.findAll('input[name="motion"]')[1]!.setValue(true)
+
+    expect(motion.preference).toBe('reduce')
+    expect(document.documentElement.getAttribute('data-motion')).toBe('reduce')
+    expect(wrapper.text()).toContain('Current: Reduce motion')
+
+    document.documentElement.removeAttribute('data-motion')
     wrapper.unmount()
   })
 
