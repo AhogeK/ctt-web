@@ -21,13 +21,13 @@ const landingRoutes: RouteRecordRaw[] = [
     // <router-view> has no matched child and the content region renders blank —
     // with no error and a correct URL. See the same note in dashboard.ts.
     redirect: { name: RouteNames.LANDING },
-    meta: { title: 'Open-source coding analytics', requiresAuth: false },
+    meta: { title: 'Open-source coding analytics', titleKey: 'pageTitles.landing', requiresAuth: false },
     children: [
       {
         path: '',
         name: RouteNames.LANDING,
         component: () => import('@/features/landing/views/LandingView.vue'),
-        meta: { title: 'Open-source coding analytics', requiresAuth: false },
+        meta: { title: 'Open-source coding analytics', titleKey: 'pageTitles.landing', requiresAuth: false },
       },
     ],
   },

@@ -2,6 +2,7 @@ import { describe, it, expect, beforeEach, afterEach, vi } from 'vite-plus/test'
 import { createRouter, createWebHistory, type RouteRecordRaw } from 'vue-router'
 import { setActivePinia, createPinia } from 'pinia'
 import { setupRouterGuards } from '../guard'
+import { setLocale } from '@/i18n'
 import { RouteNames } from '../route-names'
 import { STORAGE_KEYS } from '@/stores/auth'
 
@@ -108,6 +109,38 @@ describe('Router Guards', () => {
       await router.isReady()
 
       expect(document.title).toBe(initialTitle)
+    })
+
+    it('resolves titleKey through the catalogue and prefers it over title', async () => {
+      router.addRoute({
+        path: '/keyed',
+        name: 'Keyed',
+        component: { template: '<div>Keyed</div>' },
+        meta: { title: 'Fallback title', titleKey: 'nav.dashboard' },
+      })
+
+      await router.push('/keyed')
+      await router.isReady()
+
+      expect(document.title).toBe('Dashboard - Code Time Tracker')
+    })
+
+    it('rewrites the current title when the locale changes without navigating', async () => {
+      router.addRoute({
+        path: '/keyed-locale',
+        name: 'KeyedLocale',
+        component: { template: '<div>Keyed</div>' },
+        meta: { title: 'Fallback title', titleKey: 'nav.dashboard' },
+      })
+      await router.push('/keyed-locale')
+      await router.isReady()
+      expect(document.title).toBe('Dashboard - Code Time Tracker')
+
+      await setLocale('zh-CN')
+      expect(document.title).toBe('统计看板 - Code Time Tracker')
+
+      await setLocale('en')
+      expect(document.title).toBe('Dashboard - Code Time Tracker')
     })
   })
 

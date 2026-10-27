@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import type { SidebarProps } from './props'
+import { useI18n } from 'vue-i18n'
 import { Sheet, SheetContent } from '@/components/ui/sheet'
 import SheetDescription from '@/components/ui/sheet/SheetDescription.vue'
 import SheetHeader from '@/components/ui/sheet/SheetHeader.vue'
@@ -18,6 +19,7 @@ const props = withDefaults(defineProps<SidebarProps>(), {
 })
 
 const { isMobile, state, openMobile, setOpenMobile } = useSidebar()
+const { t } = useI18n()
 </script>
 
 <template>
@@ -42,8 +44,8 @@ const { isMobile, state, openMobile, setOpenMobile } = useSidebar()
       }"
     >
       <SheetHeader class="sr-only">
-        <SheetTitle>Sidebar</SheetTitle>
-        <SheetDescription>Displays the mobile sidebar.</SheetDescription>
+        <SheetTitle>{{ t('ui.sidebarTitle') }}</SheetTitle>
+        <SheetDescription>{{ t('ui.sidebarDescription') }}</SheetDescription>
       </SheetHeader>
       <div class="flex h-full w-full flex-col">
         <slot />

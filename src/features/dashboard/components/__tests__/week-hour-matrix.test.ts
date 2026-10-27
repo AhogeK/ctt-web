@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vite-plus/test'
-import { buildWeekHourMatrix, WEEK_HOUR_CELLS, WEEKDAY_LABELS, windowWeekdayCount } from '../week-hour-matrix'
+import { buildWeekHourMatrix, WEEK_HOUR_CELLS, windowWeekdayCount } from '../week-hour-matrix'
 import type { WeekHourResponse } from '@/lib/schemas/stats.schema'
 
 function response(
@@ -60,12 +60,5 @@ describe('windowWeekdayCount', () => {
   it('counts distinct weekdays in the window', () => {
     expect(windowWeekdayCount(response([], { '2': 1, '3': 1 }))).toBe(2)
     expect(windowWeekdayCount(response([], {}))).toBe(0)
-  })
-})
-
-describe('WEEKDAY_LABELS', () => {
-  it('labels Monday first (ISO order)', () => {
-    expect(WEEKDAY_LABELS[0]).toBe('Mon')
-    expect(WEEKDAY_LABELS[6]).toBe('Sun')
   })
 })

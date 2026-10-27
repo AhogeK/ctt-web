@@ -23,13 +23,13 @@ const leaderboardRoutes: RouteRecordRaw[] = [
     // <router-view> has no matched child and the content region renders blank —
     // with no error and a correct URL. See the same note in dashboard.ts.
     redirect: { name: RouteNames.LEADERBOARD_GLOBAL },
-    meta: { title: 'Leaderboard', requiresAuth: true, layout: 'app' },
+    meta: { title: 'Leaderboard', titleKey: 'nav.leaderboard', requiresAuth: true, layout: 'app' },
     children: [
       {
         path: '',
         name: RouteNames.LEADERBOARD_GLOBAL,
         component: () => import('@/features/leaderboard/views/LeaderboardView.vue'),
-        meta: { title: 'Leaderboard', requiresAuth: true },
+        meta: { title: 'Leaderboard', titleKey: 'nav.leaderboard', requiresAuth: true },
       },
     ],
   },

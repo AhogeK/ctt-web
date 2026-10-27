@@ -12,13 +12,13 @@ const achievementsRoutes: RouteRecordRaw[] = [
     // <router-view> has no matched child and the content region renders blank —
     // with no error and a correct URL. See the same note in dashboard.ts.
     redirect: { name: RouteNames.ACHIEVEMENTS_CABINET },
-    meta: { title: 'Achievements', requiresAuth: true, layout: 'app' },
+    meta: { title: 'Achievements', titleKey: 'nav.achievements', requiresAuth: true, layout: 'app' },
     children: [
       {
         path: '',
         name: RouteNames.ACHIEVEMENTS_CABINET,
         component: () => import('@/features/achievements/views/AchievementsView.vue'),
-        meta: { title: 'Achievements', requiresAuth: true },
+        meta: { title: 'Achievements', titleKey: 'nav.achievements', requiresAuth: true },
       },
     ],
   },

@@ -96,6 +96,21 @@ export async function initI18n(): Promise<void> {
 }
 
 /**
+ * Side effects that must follow every locale change, registered by the layer that
+ * owns them (the router owns the tab title). Keeping them out of this module
+ * avoids an i18n → router import cycle, and one list means every switch path —
+ * header menu, preferences, cross-tab storage — refreshes them identically.
+ */
+type LocaleChangeListener = (locale: AppLocale) => void
+const localeChangeListeners = new Set<LocaleChangeListener>()
+
+/** Register a side effect to run after a locale switch. Returns an unsubscribe. */
+export function onLocaleChange(listener: LocaleChangeListener): () => void {
+  localeChangeListeners.add(listener)
+  return () => localeChangeListeners.delete(listener)
+}
+
+/**
  * Switch the interface language: load the catalogue, publish the locale to the
  * instance, the formatters and `<html lang>`, then persist the choice.
  *
@@ -109,6 +124,7 @@ export async function setLocale(locale: string): Promise<void> {
   currentLocale.value = normalized
   applyDocumentLang(normalized)
   persistLocale(normalized)
+  for (const listener of localeChangeListeners) listener(normalized)
 }
 
 /**

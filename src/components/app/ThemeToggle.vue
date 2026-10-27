@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { computed } from 'vue'
+import { useI18n } from 'vue-i18n'
 import { useThemeStore, type ThemeMode } from '@/stores/theme'
 import { Icon } from '@iconify/vue'
 
@@ -23,6 +24,19 @@ import { Icon } from '@iconify/vue'
  * the worst case is 5.74:1.
  */
 const themeStore = useThemeStore()
+const { t } = useI18n()
+
+/** Localized name of the active mode, for the accessible label. */
+const currentModeLabel = computed(() => {
+  switch (themeStore.mode) {
+    case 'dark':
+      return t('theme.dark')
+    case 'light':
+      return t('theme.light')
+    default:
+      return t('theme.system')
+  }
+})
 
 /** Icon name to display based on current theme mode */
 const currentIcon = computed(() => {
@@ -51,8 +65,9 @@ function cycleTheme(): void {
 <template>
   <button
     type="button"
+    data-testid="theme-toggle"
     class="inline-flex size-8 shrink-0 cursor-pointer items-center justify-center rounded-sm border border-border bg-transparent text-muted-foreground transition-colors hover:bg-secondary hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
-    :aria-label="`Current theme: ${themeStore.mode}. Click to change.`"
+    :aria-label="t('theme.currentAria', { mode: currentModeLabel })"
     @click="cycleTheme"
   >
     <Icon :icon="currentIcon" class="size-4.5 shrink-0" />

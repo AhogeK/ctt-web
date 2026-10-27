@@ -12,10 +12,12 @@
  * for screen readers.
  */
 import { computed } from 'vue'
+import { useI18n } from 'vue-i18n'
 import { stringToAvatarColor, getInitials } from '@/lib/utils/avatar'
 import { useAuthStore } from '@/stores/auth'
 
 const authStore = useAuthStore()
+const { t } = useI18n()
 
 /**
  * Seed for hash AND initials source.
@@ -50,7 +52,7 @@ const initials = computed(() => getInitials(seed.value))
   <span
     :style="{ background }"
     class="inline-flex h-9 w-9 items-center justify-center rounded-full font-semibold text-white select-none shrink-0 leading-none"
-    :aria-label="`User avatar for ${seed}`"
+    :aria-label="t('avatar.aria', { seed })"
     role="img"
   >
     {{ initials }}

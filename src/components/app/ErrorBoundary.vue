@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import type { ComponentPublicInstance } from 'vue'
 import { onErrorCaptured, ref, shallowRef } from 'vue'
+import { useI18n } from 'vue-i18n'
 import { TriangleAlert } from '@lucide/vue'
 import { Button } from '@/components/ui/button'
 
@@ -28,6 +29,8 @@ interface Props {
 const props = withDefaults(defineProps<Props>(), {
   stopPropagation: true,
 })
+
+const { t } = useI18n()
 
 /**
  * Tracks whether an error has been captured
@@ -100,32 +103,32 @@ function handleReset() {
     <div class="flex items-start gap-4">
       <TriangleAlert class="h-6 w-6 text-destructive shrink-0 mt-0.5" />
       <div class="flex-1 min-w-0">
-        <h3 class="text-lg font-semibold text-destructive mb-2">Component Render Error</h3>
-        <p class="text-sm text-muted-foreground mb-4">Please refresh the page or contact administrator</p>
+        <h3 class="text-lg font-semibold text-destructive mb-2">{{ t('app.errorTitle') }}</h3>
+        <p class="text-sm text-muted-foreground mb-4">{{ t('app.errorBody') }}</p>
 
         <!-- Error details in development mode -->
         <details v-if="isDev && errorInfo" class="mb-4 text-xs bg-muted/50 rounded p-3">
           <summary class="cursor-pointer font-medium text-muted-foreground mb-2">
-            Error Details (Development Mode Only)
+            {{ t('app.errorDetails') }}
           </summary>
           <div class="space-y-2 overflow-auto">
             <div>
-              <span class="font-medium">Message:</span>
+              <span class="font-medium">{{ t('app.errorMessage') }}</span>
               <pre class="whitespace-pre-wrap text-destructive">{{ errorInfo.message }}</pre>
             </div>
             <div v-if="errorInfo.stack">
-              <span class="font-medium">Stack:</span>
+              <span class="font-medium">{{ t('app.errorStack') }}</span>
               <pre class="whitespace-pre-wrap text-muted-foreground">{{ errorInfo.stack }}</pre>
             </div>
             <div v-if="componentInstance?.$options?.name">
-              <span class="font-medium">Component:</span>
+              <span class="font-medium">{{ t('app.errorComponent') }}</span>
               <span class="text-muted-foreground">{{ componentInstance.$options.name }}</span>
             </div>
           </div>
         </details>
 
         <!-- Retry button -->
-        <Button variant="outline" size="sm" @click="handleReset"> Try Again </Button>
+        <Button variant="outline" size="sm" @click="handleReset"> {{ t('app.tryAgain') }} </Button>
       </div>
     </div>
   </div>
