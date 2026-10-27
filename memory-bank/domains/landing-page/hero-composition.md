@@ -25,7 +25,7 @@
 **入场层次（用户："两张卡是一起出来的…先底部的大卡再顶部的小卡"）** ✓：大卡经平面包装层 `hero-fade-rise` + `[animation-delay:210ms]`（210→530ms ✓）；浮板加自身入场
 `.hero-panel { animation: hero-fade-rise 320ms ease-out both }` + `[animation-delay:440ms]` ✓ —— 延迟期间 `both` 把它钉在
 `from` 帧（透明 ✓）⇒ 两层不同时出现 ✓。**LCP 红线**：`h1` 是 `.hero-rise`（只位移、不透明 ✓），入场延迟不得加在它身上 ✓；全部动画在
-`prefers-reduced-motion: no-preference` 门控内 ✓。
+`html:not([data-motion='reduce'])` 门控内 ✓（动效偏好的结论属性，见 `domains/theme-system/motion.md` ✓）。
 **量具事实（2026-09-29 连犯三次后立规 ✓）**：① 探针若注入 `position: static` 的卡片，其 `offsetParent` 是 `.hero-plane` ✗ ⇒ 未加 inset 时两者重合、
 **一加负 inset 口径就落到平面上** ✓ ⇒ 要量卡片外框须先给卡片 `position: relative` ✓。② 探针公式是 `-off - border` ⇒ `off=0` 时已在边框外 ✓（标签易反 ✗）。③
 跨档数据不可并列 ✗（48% 档 `670×527` vs 54% 档 `752` ✗）⇒ 每次采集带档位与元素标识 ✓。
@@ -179,9 +179,9 @@ shadows」的手法 ✓）。
 参照物按用户指定改用 **Apple 产品页**（不是首页 ✗）：`animation-timeline` 3 · `position:sticky` 12 条 · `prefers-reduced-motion` **27**
 块 · 媒体层由滚动进度驱动 `translateY 180px → 0`，而 **h1 全程不动** ✗ → 挂在滚动上的是**媒体层**，不是文字 ✓。
 
-- **入口构造** ✓：入场只在 `@media (prefers-reduced-motion: no-preference)` 里**声明** ✓，不靠"时长归零" ✗ —— `main.css` 的全局规则只归零
-  `duration` ✓，`animation-delay` 照常兑现 ✓ → "从隐藏出发"的入场会在延迟期一直不可见 ✗（技能点名的陷阱 ✓）。实测 reduce 下 `getAnimations() = []` ✓、
-  `opacity: 1 / translate: none` ✓。
+- **入口构造** ✓：入场只在**减弱动效时不存在**的门控里**声明** ✓（现为 `html:not([data-motion='reduce'])`，见 `domains/theme-system/motion.md` ✓），
+  不靠"时长归零" ✗ —— 全局规则只归零 `duration` ✓，`animation-delay` 照常兑现 ✓ → "从隐藏出发"的入场会在延迟期一直不可见 ✗（技能点名的陷阱 ✓）。
+  实测 reduce 下 `getAnimations() = []` ✓、`opacity: 1 / translate: none` ✓。
 - **LCP 元素不做透明** ✓：h1 只位移不淡入 → 首帧即有像素 ✓。三次对照：无减动效 **252/256/252** vs reduce **256/260/256** ✓（入场不拖首绘 ✓）。
 - **顶部 hero 没有"进入"滚动段** ✗（加载时已在视口内 ✓）→ 滚动叙事只能是**离场交棒** ✓（`animation-timeline: view()` + `animation-range: exit` ✓）。
 - **交棒必须分级** ✗✓：exit 区间 = 一屏高，而本页可滚动量只有 **281px（37%）** → 未分级的淡出会让"滚到底"停在 `opacity 0.63` = 发灰 ✗ → 改为**位移全程 +
