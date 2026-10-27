@@ -55,6 +55,23 @@ const Host = defineComponent({
   },
 })
 
+/**
+ * The hand-off pair: the band the stage hands over to, and the band right below it, which waits for
+ * that hand-off and for nothing else. The plain host above carries no band attributes, so it can
+ * never reach the waiting path.
+ */
+const BandHost = defineComponent({
+  setup() {
+    const root = ref<HTMLElement | null>(null)
+    useRevealOnScroll(root, ['[data-reveal-band]'])
+    return () =>
+      h('div', { ref: root }, [
+        h('div', { 'data-reveal-band': '', 'data-band-anchor': '', 'data-testid': 'anchor' }),
+        h('div', { 'data-reveal-band': '', 'data-testid': 'after' }),
+      ])
+  },
+})
+
 describe('useRevealOnScroll', () => {
   beforeEach(() => {
     FakeObserver.instances = []
@@ -92,59 +109,53 @@ describe('useRevealOnScroll', () => {
     expect(view.getByTestId('a').getAttribute('data-reveal-state')).toBe('in')
   })
 
-  it('leaves a piece that scrolled past as "above" and one still below as "below"', () => {
+  it('shows a piece that was scrolled past without ever appearing, and leaves one still below waiting', () => {
     const view = render(Host)
     const observer = FakeObserver.instances[0]!
     observer.fire([
       { target: view.getByTestId('a'), isIntersecting: false, top: -50 },
       { target: view.getByTestId('b'), isIntersecting: false, top: 900 },
     ])
-    expect(view.getByTestId('a').getAttribute('data-reveal-state')).toBe('above')
+    // A piece that was carried past the viewport before it ever appeared has nothing to fade out
+    // of, so it is shown. Marking it `above` would hide it for the rest of the visit, while the
+    // pieces below it show normally — the page reads as if the skipped one came after them.
+    expect(view.getByTestId('a').getAttribute('data-reveal-state')).toBe('in')
+    // A piece still below the fold has not been passed: it keeps waiting.
     expect(view.getByTestId('b').getAttribute('data-reveal-state')).toBe('below')
   })
 
-  it('holds a piece back while the scroll is fast, then reveals it once the scroll settles', () => {
-    vi.useFakeTimers({ toFake: ['setTimeout', 'clearTimeout', 'performance'] })
-    try {
-      const view = render(Host)
-      const observer = FakeObserver.instances[0]!
-      // jsdom rects are all zeros, which the flush reads as "not properly on screen yet"; stand in for a
-      // piece sitting in the middle of the viewport.
-      const piece = view.getByTestId('a')
-      piece.getBoundingClientRect = () => ({ top: 100, bottom: 300 }) as DOMRect
-      // Two events 16ms apart carrying 200px read as ~12500px/s, so the entry goes into the pending set
-      // instead of fading mid-flight.
-      Object.defineProperty(window, 'scrollY', { value: 0, configurable: true })
-      window.dispatchEvent(new Event('scroll'))
-      vi.advanceTimersByTime(16)
-      Object.defineProperty(window, 'scrollY', { value: 200, configurable: true })
-      window.dispatchEvent(new Event('scroll'))
-      observer.fire([{ target: piece, isIntersecting: true, top: 100 }])
-      expect(piece.getAttribute('data-reveal-state')).toBeNull()
-      // The settle window (140ms) passes with no further scroll events: the held piece is revealed.
-      vi.advanceTimersByTime(200)
-      expect(piece.getAttribute('data-reveal-state')).toBe('in')
-    } finally {
-      vi.useRealTimers()
-    }
+  it('lets a piece that has been shown fade out when it leaves, instead of flashing back', () => {
+    const view = render(Host)
+    const observer = FakeObserver.instances[0]!
+    const piece = view.getByTestId('a')
+    // The piece is shown first, so it has something to fade out of.
+    observer.fire([{ target: piece, isIntersecting: true, top: 100 }])
+    expect(piece.getAttribute('data-reveal-state')).toBe('in')
+
+    observer.fire([{ target: piece, isIntersecting: false, top: -50 }])
+
+    // A piece that has been seen and then leaves fades out upward, and does not flash back.
+    expect(piece.getAttribute('data-reveal-state')).toBe('above')
   })
 
-  it('drops a held piece that leaves before the scroll settles', () => {
-    vi.useFakeTimers({ toFake: ['setTimeout', 'clearTimeout', 'performance'] })
+  it('holds the band below the hand-off back, and lets it go once the hand-off has happened', async () => {
+    // The band below the hand-off band may not appear before the hand-off line is crossed, so it
+    // waits. The wait has to end: a band that waits without being let go stays out of sight for the
+    // rest of the visit, which is a section of the page that simply never appears.
+    vi.useFakeTimers({ toFake: ['requestAnimationFrame'] })
     try {
-      const view = render(Host)
+      const view = render(BandHost)
       const observer = FakeObserver.instances[0]!
-      const piece = view.getByTestId('a')
-      Object.defineProperty(window, 'scrollY', { value: 0, configurable: true })
-      window.dispatchEvent(new Event('scroll'))
-      vi.advanceTimersByTime(16)
-      Object.defineProperty(window, 'scrollY', { value: 200, configurable: true })
-      window.dispatchEvent(new Event('scroll'))
-      observer.fire([{ target: piece, isIntersecting: true, top: 100 }])
-      observer.fire([{ target: piece, isIntersecting: false, top: -50 }])
-      vi.advanceTimersByTime(200)
-      // A band flown past must not flash back into view on the settle.
-      expect(piece.getAttribute('data-reveal-state')).toBe('above')
+      const after = view.getByTestId('after')
+      observer.fire([{ target: after, isIntersecting: true, top: 100 }])
+      await vi.advanceTimersByTimeAsync(16)
+      // The hand-off has not happened yet, so the band below waits.
+      expect(after.getAttribute('data-reveal-state')).toBe('below')
+      // The stage hands over: the anchor band records the fact on itself.
+      view.getByTestId('anchor').setAttribute('data-handoff', 'in')
+      await vi.advanceTimersByTimeAsync(16)
+      // The waiting band is let go.
+      expect(after.getAttribute('data-reveal-state')).toBe('in')
     } finally {
       vi.useRealTimers()
     }

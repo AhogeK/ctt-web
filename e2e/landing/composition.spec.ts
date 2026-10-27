@@ -146,6 +146,294 @@ test.describe('landing hero composition (desktop)', () => {
     })
     expect(names).toEqual({ unit: 'none', window1: 'none', window2: 'hero-fade-rise' })
   })
+
+  /**
+   * The bands have to arrive in the order the scroll meets them, and none of them may be skipped.
+   *
+   * Two gestures, because the two faults are only visible at different granularities:
+   *  - a **fine sweep** judges the order. A band that appears while the one above it is on screen
+   *    and dark is a fault that lasts a few hundred milliseconds, so it has to be read at the moment
+   *    of the arrival. A sweep in small steps keeps that fault inside a single frame, where a
+   *    mutation observer sees it; a jump of a few hundred pixels lands two arrivals in one frame,
+   *    and by the time the observer runs, the band above has already lit up.
+   *  - a **flick** judges the skipping. A jump bigger than the viewport carries a band out of sight
+   *    between two frames, so the observer never sees it intersect: it has to be shown anyway, or the
+   *    page would read as if the skipped band came after the ones below it.
+   *
+   * The window matters for the order: the band below the hand-off band is held back until the
+   * hand-off line is crossed, and it only needs holding in a window tall enough for that band to
+   * reach the viewport before the line is crossed. In a short window the hold never engages, so an
+   * order check there cannot tell whether it works.
+   */
+  async function expectBandsInReadingOrder(page: Page, viewport: { width: number; height: number }) {
+    await page.setViewportSize(viewport)
+
+    /** Records the bands that arrive while the band above them is on screen and dark. */
+    const watchArrivals = async () => {
+      await page.evaluate(() => {
+        const bands = [...document.querySelectorAll('[data-reveal-band]')]
+        const name = (el: Element) => (el.getAttribute('data-testid') ?? '?').replace('landing-', '')
+        const byTop = [...bands].sort(
+          (a, b) => a.getBoundingClientRect().top + window.scrollY - (b.getBoundingClientRect().top + window.scrollY),
+        )
+        const arrived = (el: Element) =>
+          el.getAttribute('data-reveal-state') === 'in' || el.getAttribute('data-scroll-fade') === 'in'
+        const seen = new Set<Element>()
+        const store = window as unknown as { __early?: string[] }
+        store.__early = []
+        const observer = new MutationObserver(() => {
+          for (const band of bands) {
+            if (seen.has(band) || !arrived(band)) continue
+            seen.add(band)
+            const above = byTop[byTop.indexOf(band) - 1]
+            if (!above) continue
+            const box = above.getBoundingClientRect()
+            // A band that has already left the viewport is not holding anything up.
+            if (box.bottom <= 0 || box.top >= window.innerHeight) continue
+            if (!arrived(above)) store.__early!.push(name(band))
+          }
+        })
+        for (const band of bands) {
+          observer.observe(band, {
+            attributes: true,
+            attributeFilter: ['data-reveal-state', 'data-scroll-fade'],
+          })
+        }
+      })
+    }
+
+    /** Everything the visitor stops looking at has to be readable, never half-lit. */
+    const expectEverythingOnScreenReadable = async () => {
+      await expect
+        .poll(
+          async () =>
+            page.evaluate(() =>
+              [...document.querySelectorAll('[data-reveal-band]')].every((el) => {
+                const box = el.getBoundingClientRect()
+                const onScreen = box.bottom > 0 && box.top < window.innerHeight
+                if (!onScreen) return true
+                return Number.parseFloat(getComputedStyle(el).opacity) > 0.95
+              }),
+            ),
+          { message: 'a band was left half-lit on screen' },
+        )
+        .toBe(true)
+    }
+
+    await page.goto('/')
+    await page.locator('h1').waitFor()
+    // The observer's first pass has to have settled before the sweep starts: a jump taken while the
+    // initial states are still being written would race them, and the reading would be about that
+    // race rather than about the order.
+    await expect
+      .poll(
+        async () =>
+          page.evaluate(() =>
+            [...document.querySelectorAll('[data-reveal-band]')].every((el) => {
+              const state = el.getAttribute('data-reveal-state')
+              const fade = el.getAttribute('data-scroll-fade')
+              // Every band has been given a state — the anchor band's lives in the hand-off
+              // attribute, the others in the reveal attribute — and none of them has arrived yet.
+              const stated = state !== null || fade === 'out'
+              return stated && state !== 'in' && fade !== 'in'
+            }),
+          ),
+        { message: 'the bands never received their first state' },
+      )
+      .toBe(true)
+
+    await watchArrivals()
+    for (let y = 0; y <= 3400; y += 40) {
+      await page.evaluate((v) => window.scrollTo(0, v), y)
+      // One frame, so each step lands as a separate step the observer can miss.
+      await page.evaluate(() => new Promise((resolve) => requestAnimationFrame(() => resolve(null))))
+    }
+    const early = await page.evaluate(() => (window as unknown as { __early?: string[] }).__early ?? [])
+    expect(early, 'a band appeared while the one above it was on screen and dark').toEqual([])
+    await expectEverythingOnScreenReadable()
+
+    // The flick, on a fresh page: a jump bigger than the viewport carries a band past the observer.
+    await page.goto('/')
+    await page.locator('h1').waitFor()
+    await expect
+      .poll(
+        async () =>
+          page.evaluate(() =>
+            [...document.querySelectorAll('[data-reveal-band]')].every((el) => {
+              const state = el.getAttribute('data-reveal-state')
+              const fade = el.getAttribute('data-scroll-fade')
+              const stated = state !== null || fade === 'out'
+              return stated && state !== 'in' && fade !== 'in'
+            }),
+          ),
+        { message: 'the bands never received their first state' },
+      )
+      .toBe(true)
+    for (let y = 0; y <= 3400; y += 1200) {
+      await page.evaluate((v) => window.scrollTo(0, v), y)
+      await page.evaluate(() => new Promise((resolve) => requestAnimationFrame(() => resolve(null))))
+    }
+    await expectEverythingOnScreenReadable()
+  }
+
+  test('shows the closing bands in reading order, even under a fast scroll', async ({ page }) => {
+    await expectBandsInReadingOrder(page, { width: 1440, height: 900 })
+  })
+
+  test('shows the closing bands in reading order in a tall window', async ({ page }) => {
+    await expectBandsInReadingOrder(page, { width: 1507, height: 1321 })
+  })
+
+  test('shows every band the visitor stops on, in a tall window', async ({ page }) => {
+    // The band below the hand-off band waits for the hand-off line, because on a tall window that
+    // band reaches the viewport before the line is crossed — and a band that waits has to be let
+    // go, or it stays empty for the rest of the visit. The window is tall on purpose: it is the
+    // size that puts the two events in that order.
+    await page.setViewportSize({ width: 1507, height: 1321 })
+    await page.goto('/')
+    await page.locator('h1').waitFor()
+
+    for (let y = 0; y <= 2600; y += 120) {
+      await page.evaluate((v) => window.scrollTo(0, v), y)
+      await page.evaluate(() => new Promise((resolve) => requestAnimationFrame(() => resolve(null))))
+    }
+    // The fades run on a 600ms clock and the band that waits for the hand-off is let go on the
+    // frame after the line is crossed, so the page is read once it has settled rather than at a
+    // fixed moment. A band that never arrives keeps its name, opacity and state in the report.
+    const emptyBands = () =>
+      page.evaluate(() =>
+        [...document.querySelectorAll('[data-reveal-band]')].flatMap((el) => {
+          const box = el.getBoundingClientRect()
+          const onScreen = box.bottom > 0 && box.top < window.innerHeight
+          if (!onScreen) return []
+          const opacity = Number.parseFloat(getComputedStyle(el).opacity)
+          if (opacity > 0.95) return []
+          return [
+            `${el.getAttribute('data-testid')} opacity=${opacity.toFixed(2)} ` +
+              `state=${el.getAttribute('data-reveal-state')} fade=${el.getAttribute('data-scroll-fade')}`,
+          ]
+        }),
+      )
+    await expect
+      .poll(emptyBands, {
+        message: 'a band stayed empty on screen after the scroll settled',
+        timeout: 5000,
+      })
+      .toEqual([])
+
+    // An arrival is a fade on a fixed clock, never a pop: the state attribute carries a 600ms
+    // opacity transition, so no gesture can outrun it and every visitor sees the same dissolve.
+    const fadeClock = await page.evaluate(() => {
+      const el = document.querySelector('[data-testid="landing-how-it-works"]') as HTMLElement
+      const style = getComputedStyle(el)
+      return {
+        duration: style.transitionDuration,
+        property: style.transitionProperty,
+        opacity: Number.parseFloat(style.opacity),
+      }
+    })
+    expect(fadeClock.duration, 'the arrival is not on the fixed fade clock').toContain('0.6s')
+    expect(fadeClock.property, 'the arrival does not fade the band').toContain('opacity')
+    expect(fadeClock.opacity, 'the band is not fully readable').toBeGreaterThan(0.95)
+  })
+
+  test('fades the closing bands in and out on the way back up', async ({ page }) => {
+    // The first closing band runs on the stage's hand-off clock, so it needs a departure trigger
+    // too: a band that stays lit slides into view fully lit beside a band that is fading in, and
+    // the page then uses two languages for the same motion.
+    await page.setViewportSize({ width: 1440, height: 900 })
+    await page.goto('/')
+    await page.locator('h1').waitFor()
+
+    // One frame per wheel notch, so each step lands as its own scroll event — the same
+    // gesture a visitor's wheel produces.
+    const wheel = async (delta: number) => {
+      await page.mouse.wheel(0, delta)
+      await page.evaluate(() => new Promise((resolve) => requestAnimationFrame(() => resolve(null))))
+    }
+
+    // Down past the bands, then back up.
+    for (let i = 0; i < 12; i++) {
+      await wheel(300)
+    }
+    await expect
+      .poll(
+        async () =>
+          page.evaluate(() => {
+            const el = document.querySelector('[data-testid="landing-free"]')
+            return el ? Number.parseFloat(getComputedStyle(el).opacity) : 0
+          }),
+        { message: 'the bands never appeared' },
+      )
+      .toBeGreaterThan(0.9)
+
+    // Scrolling up, the first band must fade in like the others rather than appear lit.
+    const samples: { first: number; second: number; firstSide: number; secondSide: number }[] = []
+    for (let i = 0; i < 14; i++) {
+      await wheel(-180)
+      const reading = await page.evaluate(() => {
+        const read = (id: string) => {
+          const el = document.querySelector(`[data-testid="${id}"]`)
+          if (!el) return { opacity: -1, side: 0 }
+          const style = getComputedStyle(el)
+          // The vertical offset carries the direction: a band that arrived from
+          // above starts above its resting place (negative) and slides down into
+          // it, one that arrived from below starts below (positive) and slides up.
+          const offset = Number.parseFloat(style.translate.split(' ')[1] ?? '0')
+          return { opacity: Number.parseFloat(style.opacity), side: Math.sign(offset) }
+        }
+        return { first: read('landing-capabilities'), second: read('landing-how-it-works') }
+      })
+      samples.push({
+        first: reading.first.opacity,
+        second: reading.second.opacity,
+        firstSide: reading.first.side,
+        secondSide: reading.second.side,
+      })
+    }
+
+    // Both bands must have faded in — each crossing the halfway mark at some point of the
+    // gesture. A fixed "within N steps" pairing would be at the mercy of how the parallel
+    // load spaces the wheel steps out, which says nothing about the page.
+    expect(
+      samples.some((sample) => sample.first >= 0.5),
+      'the first band never faded in',
+    ).toBe(true)
+    expect(
+      samples.some((sample) => sample.second >= 0.5),
+      'the second band never faded in',
+    ).toBe(true)
+
+    // The order follows the direction of travel: scrolling up, the lower band enters the
+    // viewport first, so it fades in first. The band above it is still dark while the lower
+    // one comes up — a band that is already lit beside a band that is fading in is the
+    // fault this was reported as.
+    // The gesture starts where the upper band is still dark — it has been scrolled past and
+    // comes back into view from the top, so that is the moment the two are compared.
+    const start = samples.findIndex((sample) => sample.first < 0.5)
+    expect(start, 'the first band was never dark again on the way up').toBeGreaterThanOrEqual(0)
+    const rest = samples.slice(start)
+    // When each band *started* to fade in, not when it reached half: the lower band begins
+    // earlier and is already past half by the time the one above it starts, so the halfway
+    // mark would read the order backwards.
+    const lowerStarts = rest.findIndex((sample) => sample.second > 0.05)
+    const upperStarts = rest.findIndex((sample) => sample.first > 0.05)
+    expect(lowerStarts, 'the lower band never started to fade in').toBeGreaterThanOrEqual(0)
+    expect(upperStarts, 'the upper band never started to fade in').toBeGreaterThanOrEqual(0)
+    expect(lowerStarts, 'the lower band started to fade in after the one above it, instead of before it').toBeLessThan(
+      upperStarts,
+    )
+
+    // And both fade in from the same side. The band above was handed to the page by the stage and
+    // the band below by the observer, and they have to arrive from the same side — one sliding up
+    // while the other slid down, on the same screen, reads as two languages. Each band arrives on
+    // its own beat, so the two are not mid-fade at the same time; what matters is the side each one
+    // came from, which is the sign of the vertical offset the band starts from: negative from
+    // above, positive from below.
+    expect(rest[upperStarts]!.firstSide, 'the two bands faded in from opposite sides').toBe(
+      rest[lowerStarts]!.secondSide,
+    )
+  })
 })
 
 test.describe('landing phone motion', () => {
