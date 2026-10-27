@@ -28,7 +28,7 @@ export default defineConfig({
     /* Maximum time each action such as `click()` can take. Defaults to 0 (no limit). */
     actionTimeout: 0,
     /* Base URL to use in actions like `await page.goto('/')`. */
-    baseURL: process.env.CI ? 'http://localhost:4173' : 'http://localhost:5173',
+    baseURL: 'http://localhost:4173',
     /* Desktop 1080p viewport: the app sidebar overlays content at narrower
      * widths in headless hit-testing, which breaks clicks on content rows. */
     viewport: { width: 1920, height: 1080 },
@@ -105,15 +105,24 @@ export default defineConfig({
   /* Folder for test artifacts such as screenshots, videos, traces, etc. */
   // outputDir: 'test-results/',
 
-  /* Run your local dev server before starting the tests */
+  /*
+   * Run the local preview server before starting the tests.
+   *
+   * The preview server serves the production build, on every machine, in CI and locally. The dev
+   * server was the local default for a faster feedback loop, but it translates modules on demand,
+   * so every spec in the suite queued behind the same bottleneck: a full local run took 153s and
+   * one heavy spec ran out of time under that load, while the same suite against the preview
+   * build takes 54s and passes outright. It also spares the developer's own dev server the load
+   * of the whole suite.
+   *
+   * The build lives in the `test:e2e` script rather than in this command, so it happens whether
+   * or not this server is started here: a preview server that is already running is reused, and
+   * it serves the build the script has just produced. A command that built would be skipped along
+   * with the server, and the suite would then run against a stale build without saying so.
+   */
   webServer: {
-    /**
-     * Use the dev server by default for faster feedback loop.
-     * Use the preview server on CI for more realistic testing.
-     * Playwright will re-use the local server if there is already a dev-server running.
-     */
-    command: process.env.CI ? 'pnpm run preview' : 'pnpm run dev',
-    port: process.env.CI ? 4173 : 5173,
+    command: 'pnpm run preview',
+    port: 4173,
     reuseExistingServer: !process.env.CI,
   },
 })
