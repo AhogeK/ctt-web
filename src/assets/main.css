@@ -473,6 +473,17 @@ html[data-motion='reduce'] *::after {
         opacity 600ms ease,
         translate 600ms ease;
     }
+    /*
+     * Where the band fades in from follows where it came from, so that the hand-off band and the
+     * observer-driven bands arrive in the same direction: a band that arrived from above slides
+     * down into place, one that arrived from below slides up. The base rule starts the band
+     * below, which is right for a band arriving from below and wrong for one arriving from
+     * above. Only the hand-off band carries `data-fade-from` — it is the only one whose arrival
+     * is read off a scroll position rather than off the viewport.
+     */
+    html:not([data-motion='reduce']) [data-scroll-fade='out'][data-fade-from='above'] {
+      translate: 0 -2.5rem;
+    }
     html:not([data-motion='reduce']) [data-scroll-fade='in'] {
       opacity: 1;
       translate: 0 0;

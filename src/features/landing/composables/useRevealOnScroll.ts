@@ -8,16 +8,21 @@ import { onBeforeUnmount, onMounted, type Ref } from 'vue'
  * between two frames and is never seen. Here each piece carries a state — `in`, `above` or `below` — and
  * CSS plays a fixed-duration transition between them, so no gesture can outrun it.
  *
- * **A fast gesture is held back rather than raced**: flipping a piece to `in` at its first pixel would
- * burn its 600ms fade while the piece is still mostly off screen, so a big scroll would land on fully
- * settled content. An entry observed while the scroll is faster than `FAST_PX_PER_S` goes into a pending
- * set and is revealed when the scroll slows below it (or 140ms after events stop), so whatever a
- * gesture lands on animates in front of the visitor. Slow, reading-pace scrolling is untouched: entries
- * reveal on sight.
+ * **A piece fades in when it enters the viewport, and fades out when it leaves.** That single rule gives
+ * the right order in both directions, because the order in which pieces enter the viewport depends on
+ * the direction of travel: scrolling down, the section above is entered first; scrolling up, the
+ * section below is entered first. A rule that forced one fixed order regardless of direction would
+ * make a section wait for a neighbour it has no reason to wait for — the lower one held back while
+ * the upper one sits lit — and the page would use two languages for the same motion.
  *
- * The states are directional on purpose: a piece that leaves upward leaves *upward*, and one still below
- * the fold waits *below*, so a piece re-entering from the top never animates the wrong way. A piece that
- * leaves while pending is dropped — a band flown past must not flash back into view on the next settle.
+ * The one exception is the band's hand-off: the stage's outgoing screen and the first band must
+ * dissolve and appear together, so the first band may not appear before the hand-off line has been
+ * crossed. The band right below it waits for that, and for nothing else.
+ *
+ * The states are directional on purpose: a piece that leaves the viewport leaves *that way*, and one
+ * still below the fold waits *below*, so a piece re-entering from the top never animates the wrong
+ * way. A piece that leaves before it was ever shown is not fading out of anything, so it is shown
+ * instead — it has nothing to fade back to.
  *
  * The phone branch reads these attributes for every piece, and on desktop the closing bands read them
  * too; the stage's beats keep their scroll-driven animations, and the footer deliberately stays plain —
@@ -28,8 +33,7 @@ import { onBeforeUnmount, onMounted, type Ref } from 'vue'
  */
 export function useRevealOnScroll(root: Ref<HTMLElement | null>, selectors: string[]): void {
   let observer: IntersectionObserver | undefined
-  let settleTimer: ReturnType<typeof setTimeout> | undefined
-  let onScroll: (() => void) | undefined
+  let releaseFrame = 0
 
   onMounted(() => {
     if (!root.value) return
@@ -46,57 +50,93 @@ export function useRevealOnScroll(root: Ref<HTMLElement | null>, selectors: stri
     const stageAnchored = (piece: Element) =>
       globalThis.matchMedia('(min-width: 1024px)').matches && piece.hasAttribute('data-band-anchor')
 
-    const pending = new Set<HTMLElement>()
-    const flush = () => {
-      for (const piece of pending) {
-        // The stage-anchored band never reveals through the observer's machinery on desktop — its own
-        // scroll-fade clock owns that timing — so it must not linger in the pending set either.
-        if (stageAnchored(piece)) {
-          pending.delete(piece)
-          continue
-        }
-        // Anything intersecting the viewport is revealed. The old gate (`top < 85%` of the viewport)
-        // existed so a settle would not play a fade on a bottom-edge sliver — but it also stranded a
-        // piece in the pending set while the scroll rested *above* that line, which is exactly the
-        // window where the stage's outgoing beat has finished dissolving and the incoming band is
-        // still withheld: a fully blank screen until the visitor happened to scroll further. At a
-        // settled scroll position every intersecting piece is on screen for real, so it fades in.
-        const rect = piece.getBoundingClientRect()
-        if (rect.top < globalThis.innerHeight && rect.bottom > 0) {
-          piece.dataset.revealState = 'in'
-          pending.delete(piece)
-        }
+    /**
+     * The band that follows the hand-off band, and the hand-off band itself.
+     *
+     * Only the band directly below the hand-off band waits for it: the hand-off line is the point
+     * where the stage's outgoing screen starts dissolving, and a band that appeared before that
+     * would stand crisp beside a screen that is still crisp.
+     */
+    const bands = [...pieces].filter((piece) => piece.hasAttribute('data-reveal-band')) as HTMLElement[]
+    const anchorBand = bands.find((band) => band.hasAttribute('data-band-anchor'))
+    const afterAnchor = anchorBand ? bands[bands.indexOf(anchorBand) + 1] : undefined
+
+    /**
+     * Whether the hand-off has happened.
+     *
+     * The hand-off band records it as a separate flag rather than through its fade state: its fade
+     * state also says `out` while it is off screen, which is a different fact from "the stage has
+     * handed over".
+     */
+    const handOffDone = (): boolean => anchorBand?.dataset.handoff === 'in'
+
+    /**
+     * Whether a piece has ever been shown.
+     *
+     * A piece that is scrolled past before it ever appeared must not be treated as one that faded
+     * out: the `above` state hides it, and a piece that was never shown has nothing to fade back to.
+     * The flag separates "faded out after being seen" from "never appeared".
+     */
+    const hasBeenSeen = new WeakSet<HTMLElement>()
+
+    /**
+     * Pieces waiting for the hand-off line to be crossed.
+     *
+     * A piece is put here when it is held back, and taken out when it is let go. The set is
+     * what the release loop walks, so a held-back piece that is not in it can never be let
+     * go — it would sit in its hidden state for the rest of the visit.
+     */
+    const waiting = new Set<HTMLElement>()
+
+    /**
+     * Show a piece.
+     *
+     * The only piece that may have to wait is the band below the hand-off band, and only until the
+     * hand-off line has been crossed. That wait is a scroll-position fact, not a visual one, so it
+     * holds in both directions: scrolling up, the hand-off has long since happened and the band is
+     * free to appear the moment it enters the viewport.
+     */
+    const show = (piece: HTMLElement): void => {
+      if (piece === afterAnchor && !handOffDone()) {
+        // The hand-off has not happened yet: the stage is still handing over, and a band standing
+        // at full opacity beside it would read as two sections stacked. It waits for the line.
+        piece.dataset.revealState = 'below'
+        waiting.add(piece)
+        startRelease()
+        return
       }
+      piece.dataset.revealState = 'in'
+      hasBeenSeen.add(piece)
     }
 
-    // Speed is averaged over a ~120ms window rather than measured per event: a single event's delta over
-    // its own dt is at the mercy of delivery jitter (one coalesced or delayed event reads as a stall and
-    // would flush the pending set mid-coast). The trailing timer covers the coast's last stretch, where
-    // events stop arriving altogether.
-    const FAST_PX_PER_S = 2500
-    const SETTLE_MS = 140
-    const WINDOW_MS = 120
-    const samples: Array<{ at: number; y: number }> = [{ at: performance.now(), y: globalThis.scrollY }]
-    let speed = 0
-    onScroll = () => {
-      const now = performance.now()
-      const y = globalThis.scrollY
-      samples.push({ at: now, y })
-      while (samples.length > 1 && now - samples[0]!.at > WINDOW_MS) samples.shift()
-      const oldest = samples[0]!
-      const span = now - oldest.at
-      // A burst that just restarted (fewer than two samples inside the window, or too short a span) has
-      // no speed yet — treat it as fast, so nothing is revealed in the gap between the first event and
-      // the second, which is exactly where a flick's first crossing lands.
-      speed = samples.length < 2 || span < 32 ? FAST_PX_PER_S : (Math.abs(y - oldest.y) / span) * 1000
-      if (speed < FAST_PX_PER_S) flush()
-      clearTimeout(settleTimer)
-      settleTimer = setTimeout(() => {
-        speed = 0
-        flush()
-      }, SETTLE_MS)
+    /**
+     * Release the pieces that are waiting for the hand-off.
+     *
+     * The hand-off flag is written on a scroll event, which is not an attribute change the observer
+     * would report, so the check runs on every frame while something waits, and stops as soon as
+     * nothing does.
+     */
+    const release = () => {
+      if (releaseFrame === 0) return
+      if (waiting.size === 0) {
+        cancelAnimationFrame(releaseFrame)
+        releaseFrame = 0
+        return
+      }
+      // Deleting the element being visited is safe while a Set is iterated, so the set is
+      // walked directly: copying it first would allocate on every frame of the wait.
+      for (const piece of waiting) {
+        if (!handOffDone()) continue
+        waiting.delete(piece)
+        piece.dataset.revealState = 'in'
+        hasBeenSeen.add(piece)
+      }
+      releaseFrame = requestAnimationFrame(release)
     }
-    globalThis.addEventListener('scroll', onScroll, { passive: true })
+
+    const startRelease = () => {
+      if (releaseFrame === 0) releaseFrame = requestAnimationFrame(release)
+    }
 
     observer = new IntersectionObserver(
       (entries) => {
@@ -110,10 +150,18 @@ export function useRevealOnScroll(root: Ref<HTMLElement | null>, selectors: stri
             continue
           }
           if (entry.isIntersecting) {
-            if (speed >= FAST_PX_PER_S) pending.add(piece)
-            else piece.dataset.revealState = 'in'
+            show(piece)
+          } else if (!hasBeenSeen.has(piece) && entry.boundingClientRect.top < 0) {
+            // Scrolled past without ever appearing: a flick can carry a whole band out of the
+            // viewport between two frames, so the observer never sees it intersect. Marking it `above`
+            // would hide content the visitor has not read yet and would leave it hidden for the rest
+            // of the visit, while the bands below it — which did intersect — showed normally, so the
+            // page would read as if the skipped band came after them.
+            //
+            // Only a piece that has moved *above* the viewport qualifies: a piece still waiting
+            // below has not been passed and must keep waiting.
+            show(piece)
           } else {
-            pending.delete(piece)
             piece.dataset.revealState = entry.boundingClientRect.top < 0 ? 'above' : 'below'
           }
         }
@@ -126,7 +174,6 @@ export function useRevealOnScroll(root: Ref<HTMLElement | null>, selectors: stri
 
   onBeforeUnmount(() => {
     observer?.disconnect()
-    if (onScroll) globalThis.removeEventListener('scroll', onScroll)
-    clearTimeout(settleTimer)
+    if (releaseFrame) cancelAnimationFrame(releaseFrame)
   })
 }

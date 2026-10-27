@@ -225,6 +225,18 @@ test.describe('Landing page', () => {
     // price table, and the hosted entry is not open yet — it shows its status and carries no control.
     const band = page.getByTestId('landing-free')
     await band.scrollIntoViewIfNeeded()
+    // The band fades in on its own clock, so the heading is not readable the moment the band is
+    // scrolled to. Wait for the band itself to be readable.
+    await expect
+      .poll(
+        async () =>
+          page.evaluate(() => {
+            const el = document.querySelector('[data-testid="landing-free"]')
+            return el ? Number.parseFloat(getComputedStyle(el).opacity) : 0
+          }),
+        { message: 'the free band never became readable' },
+      )
+      .toBeGreaterThan(0.9)
     await expect(band.getByRole('heading', { name: 'Free, every part of it' })).toBeVisible()
     await expect(band.getByText('no tiers, no trial, nothing to buy')).toBeVisible()
     await expect(band.locator('article')).toHaveCount(2)
