@@ -531,10 +531,10 @@ watch(entries, () => {
   animation: leaderboard-row-flash 1.6s ease-in-out;
 }
 
-/* The scroll still happens — it is how the row arrives. Only the pulse is dropped. */
-@media (prefers-reduced-motion: reduce) {
-  .leaderboard-row-flash {
-    animation: none;
-  }
+/* The scroll still happens — it is how the row arrives. Only the pulse is dropped.
+   The trigger is the document's resolved motion decision, so the visitor's own
+   preference reaches this rule too, not only the operating system's. */
+:global(html[data-motion='reduce']) .leaderboard-row-flash {
+  animation: none;
 }
 </style>

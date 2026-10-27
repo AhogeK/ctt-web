@@ -1389,39 +1389,42 @@
 
 /* ============================================
    Reduced Motion Support
+
+   The trigger is the document's resolved motion decision, not the media query: the
+   visitor's own preference has to reach this subtree too, and CSS cannot combine a
+   media query with a stored choice. `<html data-motion="reduce">` is written when
+   motion should be suppressed — by the visitor or by the operating system.
    ============================================ */
 
-@media (prefers-reduced-motion: reduce) {
-  *,
-  *::before,
-  *::after {
-    animation-duration: 0.01ms !important;
-    animation-iteration-count: 1 !important;
-    transition-duration: 0.01ms !important;
-  }
+html[data-motion='reduce'] *,
+html[data-motion='reduce'] *::before,
+html[data-motion='reduce'] *::after {
+  animation-duration: 0.01ms !important;
+  animation-iteration-count: 1 !important;
+  transition-duration: 0.01ms !important;
+}
 
-  .auth-background,
-  .auth-orb,
-  .auth-card-3d__badge-dot,
-  .auth-terminal__cursor,
-  .auth-visual__stars {
-    animation: none !important;
-    opacity: 0.6 !important;
-  }
+html[data-motion='reduce'] .auth-background,
+html[data-motion='reduce'] .auth-orb,
+html[data-motion='reduce'] .auth-card-3d__badge-dot,
+html[data-motion='reduce'] .auth-terminal__cursor,
+html[data-motion='reduce'] .auth-visual__stars {
+  animation: none !important;
+  opacity: 0.6 !important;
+}
 
-  .auth-dashboard,
-  .auth-card-3d {
-    animation: none !important;
-    opacity: 1 !important;
-  }
+html[data-motion='reduce'] .auth-dashboard,
+html[data-motion='reduce'] .auth-card-3d {
+  animation: none !important;
+  opacity: 1 !important;
+}
 
-  .auth-card::before,
-  .auth-dashboard,
-  .auth-card-3d,
-  .auth-metrics__sparkline-bar,
-  .auth-metrics__lang-bar-fill {
-    transition: none !important;
-  }
+html[data-motion='reduce'] .auth-card::before,
+html[data-motion='reduce'] .auth-dashboard,
+html[data-motion='reduce'] .auth-card-3d,
+html[data-motion='reduce'] .auth-metrics__sparkline-bar,
+html[data-motion='reduce'] .auth-metrics__lang-bar-fill {
+  transition: none !important;
 }
 
 

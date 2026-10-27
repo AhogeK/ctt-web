@@ -215,18 +215,30 @@
  * remembers; this is the same rule `AuthLayout.css` already applies to its own subtree, promoted to
  * the whole document, so coverage cannot depend on anyone's memory.
  *
+ * One trigger, one rule set: the document's resolved motion decision, written to
+ * `<html data-motion>` by the store and, before the first paint, by `public/theme.js`. The
+ * attribute carries the conclusion, not the stored choice — `reduce` when motion should be
+ * suppressed (by the visitor's choice or by the operating system), `full` when it should play
+ * even where the system asks for less, and absent when neither applies. Combining the two signals
+ * is the store's job: CSS cannot combine a media query with a stored value, and a stylesheet that
+ * asked the media query directly would ignore the visitor's choice entirely.
+ *
+ * The rule sets below are what this attribute selects — the hero entrances, the reveal states and
+ * the pinned stage are all gated on `html:not([data-motion='reduce'])`, so a reduced page has no
+ * animation to shorten. That matters because duration alone is not enough: a zeroed animation
+ * still honours `animation-delay` and holds its `from` frame, which is the entrance version of the
+ * trap this file already documents.
+ *
  * Duration alone is zeroed, not the animation: a spinner keeps its start frame (still visible, just
  * still), and `iteration-count: 1` stops an infinite loop from running forever at 0.01ms.
  */
-@media (prefers-reduced-motion: reduce) {
-  *,
-  *::before,
-  *::after {
-    animation-duration: 0.01ms !important;
-    animation-iteration-count: 1 !important;
-    transition-duration: 0.01ms !important;
-    scroll-behavior: auto !important;
-  }
+html[data-motion='reduce'] *,
+html[data-motion='reduce'] *::before,
+html[data-motion='reduce'] *::after {
+  animation-duration: 0.01ms !important;
+  animation-iteration-count: 1 !important;
+  transition-duration: 0.01ms !important;
+  scroll-behavior: auto !important;
 }
 
 @keyframes scale-in {
@@ -260,11 +272,16 @@
  *     transition measured on the reference's product page (`0.32s|opacity, transform`), not a guess;
  *     `ease-out` because it is entering and should settle.
  *
- * Everything here is declared under `prefers-reduced-motion: no-preference`, so under reduce the
- * animations do not exist and the hero renders in its final state. The document-wide reduce rule
- * above only zeroes *durations* — a zeroed animation still honours `animation-delay` and would hold
- * the `from` frame (invisible text) for that delay, which is the entrance version of the trap this
- * file already documents.
+ * The entrance is gated on the document's resolved motion decision, not on a media query.
+ * `html[data-motion='reduce']` is written when motion should be suppressed — by the visitor's own
+ * choice or by the operating system — and the animations then do not exist at all, so the hero
+ * renders in its final state. The document-wide reduce rule above only zeroes *durations*, and a
+ * zeroed animation still honours `animation-delay` and would hold the `from` frame (invisible text)
+ * for that delay, which is the entrance version of the trap this file already documents.
+ *
+ * The gate is an attribute rather than `prefers-reduced-motion` because the two signals have to be
+ * combined, and CSS cannot combine them: a visitor who asks for full motion on a machine whose
+ * system asks for less must still get the animation. The store resolves both into the attribute.
  *
  * The h1 is `.hero-rise`, not `.hero-fade-rise`, on purpose: it is the largest-contentful-paint
  * element, and an element that starts transparent is not painted until it is not — a fade would move
@@ -272,22 +289,28 @@
  * alone keeps it painted from the first frame.
  */
 @layer components {
-  @media (prefers-reduced-motion: no-preference) {
-    .hero-rise {
-      animation: hero-rise 320ms ease-out both;
-    }
-    .hero-fade-rise {
-      animation: hero-fade-rise 320ms ease-out both;
-    }
-    /*
-     * The floating panel enters after the plane it sits on. The plane's wrapper carries the 210ms delay
-     * in the markup, and the panel adds its own later one, so the big card is already in place when the
-     * panel arrives — that stagger is what makes the pair read as two layers instead of one surface.
-     * During its delay `both` holds the `from` frame, so the panel is simply not there yet.
-     */
-    .hero-panel {
-      animation: hero-fade-rise 320ms ease-out both;
-    }
+  /*
+   * The attribute guard is what makes the visitor's choice authoritative: with a media query in
+   * charge, a visitor who picks "Reduce motion" on a machine whose OS allows animation would still
+   * match `no-preference`, so these entrances would exist — and the document-wide rule above only
+   * zeroes their *duration*. A zeroed animation still honours `animation-delay`, so the copy would
+   * hold its `from` frame (opacity 0) for 70ms and the panel for 440ms: the page would open with
+   * pieces missing, which is worse than the system preference, where they do not exist at all.
+   */
+  html:not([data-motion='reduce']) .hero-rise {
+    animation: hero-rise 320ms ease-out both;
+  }
+  html:not([data-motion='reduce']) .hero-fade-rise {
+    animation: hero-fade-rise 320ms ease-out both;
+  }
+  /*
+   * The floating panel enters after the plane it sits on. The plane's wrapper carries the 210ms delay
+   * in the markup, and the panel adds its own later one, so the big card is already in place when the
+   * panel arrives — that stagger is what makes the pair read as two layers instead of one surface.
+   * During its delay `both` holds the `from` frame, so the panel is simply not there yet.
+   */
+  html:not([data-motion='reduce']) .hero-panel {
+    animation: hero-fade-rise 320ms ease-out both;
   }
 }
 
@@ -349,53 +372,61 @@
      * unfinished. What gives the first screen its whole-composition read instead is the *next* piece
      * already fading in as it peeks over the fold (see the entry keyframes below).
      */
-    @media (prefers-reduced-motion: no-preference) {
-      /*
-       * Phone motion is **timed, not scrubbed by distance**.
-       *
-       * The previous model ranged each fade over scroll distance (`view()` ranges). A distance-ranged
-       * fade is crossed by however far the visitor's gesture travels, and one strong wheel flick or
-       * trackpad coast covers about a screen — more than an element-anchored range spans — so the fade
-       * finished between two frames and was never seen (measured: one 1000px gesture took the intro
-       * from opacity 1 to 0 and left the next block fully opaque, with no intermediate frame sampled).
-       * Here each piece carries a state — `in`, `above` or `below` — written by an IntersectionObserver
-       * in `useRevealOnScroll`, and CSS plays a fixed 600ms transition between states. A gesture cannot
-       * outrun a transition, because the transition does not care how far the scroll moved.
-       *
-       * Three states rather than two: a piece that leaves upward must leave *upward*, and one still
-       * below the fold waits *below*. Collapsing that to a single "out" makes a piece re-entering from
-       * the top animate downward, which reads as an error.
-       *
-       * Nothing is hidden without JS: every rule applies only once the observer has written a state,
-       * so a page whose script never runs shows each piece at full strength.
-       */
-      /*
-       * The floating panel's entrance animation is dropped on a phone: an animation's `fill` sits above
-       * the transition cascade, so `hero-fade-rise` (fill: both) would pin the panel at opacity 1 and the
-       * reveal state could never fade it out again. Its entrance is the reveal now.
-       */
-      .hero-panel {
-        animation: none;
-      }
-      [data-reveal-state] {
-        opacity: 0;
-        translate: 0 2.5rem;
-        transition:
-          opacity 600ms ease,
-          translate 600ms ease;
-      }
-      [data-reveal-state='in'] {
-        opacity: 1;
-        translate: 0 0;
-      }
-      [data-reveal-state='above'] {
-        opacity: 0;
-        translate: 0 -2.5rem;
-      }
-      [data-reveal-state='below'] {
-        opacity: 0;
-        translate: 0 2.5rem;
-      }
+    /*
+     * Phone motion is **timed, not scrubbed by distance**.
+     *
+     * The previous model ranged each fade over scroll distance (`view()` ranges). A distance-ranged
+     * fade is crossed by however far the visitor's gesture travels, and one strong wheel flick or
+     * trackpad coast covers about a screen — more than an element-anchored range spans — so the fade
+     * finished between two frames and was never seen (measured: one 1000px gesture took the intro
+     * from opacity 1 to 0 and left the next block fully opaque, with no intermediate frame sampled).
+     * Here each piece carries a state — `in`, `above` or `below` — written by an IntersectionObserver
+     * in `useRevealOnScroll`, and CSS plays a fixed 600ms transition between states. A gesture cannot
+     * outrun a transition, because the transition does not care how far the scroll moved.
+     *
+     * Three states rather than two: a piece that leaves upward must leave *upward*, and one still
+     * below the fold waits *below*. Collapsing that to a single "out" makes a piece re-entering from
+     * the top animate downward, which reads as an error.
+     *
+     * Nothing is hidden without JS: every rule applies only once the observer has written a state,
+     * so a page whose script never runs shows each piece at full strength.
+     */
+    /*
+     * The floating panel's entrance animation is dropped on a phone: an animation's `fill` sits above
+     * the transition cascade, so `hero-fade-rise` (fill: both) would pin the panel at opacity 1 and the
+     * reveal state could never fade it out again. Its entrance is the reveal now.
+     *
+     * The attribute prefix is not decoration: the desktop rule above carries the same prefix, and a
+     * bare `.hero-panel` would lose on specificity, so the panel would keep its entrance on a phone —
+     * pinned by the fill, unable to fade out.
+     */
+    html:not([data-motion='reduce']) .hero-panel {
+      animation: none;
+    }
+    /*
+     * The reveal states are the phone's motion, so a visitor who asked for less motion must not get
+     * them: the base rule starts every piece at opacity 0 and moves it in, and the observer only
+     * reveals a piece once it reaches the viewport. With the states excluded, the pieces keep the
+     * stylesheet's own resting appearance instead of waiting to be told what to do.
+     */
+    html:not([data-motion='reduce']) [data-reveal-state] {
+      opacity: 0;
+      translate: 0 2.5rem;
+      transition:
+        opacity 600ms ease,
+        translate 600ms ease;
+    }
+    html:not([data-motion='reduce']) [data-reveal-state='in'] {
+      opacity: 1;
+      translate: 0 0;
+    }
+    html:not([data-motion='reduce']) [data-reveal-state='above'] {
+      opacity: 0;
+      translate: 0 -2.5rem;
+    }
+    html:not([data-motion='reduce']) [data-reveal-state='below'] {
+      opacity: 0;
+      translate: 0 2.5rem;
     }
   }
 
@@ -409,57 +440,55 @@
    * fade. Scoped to `data-reveal-band` so the hero and the demo windows keep their own entrances.
    */
   @media (min-width: 1024px) {
-    @media (prefers-reduced-motion: no-preference) {
-      [data-reveal-band][data-reveal-state] {
-        opacity: 0;
-        translate: 0 2.5rem;
-        transition:
-          opacity 600ms ease,
-          translate 600ms ease;
-      }
-      [data-reveal-band][data-reveal-state='in'] {
-        opacity: 1;
-        translate: 0 0;
-      }
-      [data-reveal-band][data-reveal-state='above'] {
-        opacity: 0;
-        translate: 0 -2.5rem;
-      }
-      /*
-       * The stage screens' fades — fixed clocks, and every hand-off a cross-fade (see `useScrollFade`):
-       * the hero's exit and the year screen's entrance share one trigger (60svh), the year screen's
-       * exit over 900ms is anchored to the first closing band's top crossing 60% of the viewport, and
-       * the band's own entrance reads that same line from the band's live box — so no pair of
-       * overlapping blocks can ever stand crisp and fully opaque side by side, the line holds on any
-       * screen height, and no fixed svh can dissolve the beat while a tall viewport still shows only
-       * the empty stage tail. None of the three is scrubbed, so no gesture can cross them between two
-       * frames and every visitor sees the same dissolve. The rises and the screens' motion stay with
-       * `.beat-lead` / `.beat-arc`; these wrappers only own opacity.
-       */
-      [data-scroll-fade] {
-        opacity: 0;
-        translate: 0 2.5rem;
-        transition:
-          opacity 600ms ease,
-          translate 600ms ease;
-      }
-      [data-scroll-fade='in'] {
-        opacity: 1;
-        translate: 0 0;
-        transition:
-          opacity 600ms ease,
-          translate 600ms ease;
-      }
-      [data-scroll-fade='leaving'] {
-        opacity: 0;
-        translate: 0 0;
-        transition: opacity 900ms ease;
-      }
+    html:not([data-motion='reduce']) [data-reveal-band][data-reveal-state] {
+      opacity: 0;
+      translate: 0 2.5rem;
+      transition:
+        opacity 600ms ease,
+        translate 600ms ease;
+    }
+    html:not([data-motion='reduce']) [data-reveal-band][data-reveal-state='in'] {
+      opacity: 1;
+      translate: 0 0;
+    }
+    html:not([data-motion='reduce']) [data-reveal-band][data-reveal-state='above'] {
+      opacity: 0;
+      translate: 0 -2.5rem;
+    }
+    /*
+     * The stage screens' fades — fixed clocks, and every hand-off a cross-fade (see `useScrollFade`):
+     * the hero's exit and the year screen's entrance share one trigger (60svh), the year screen's
+     * exit over 900ms is anchored to the first closing band's top crossing 60% of the viewport, and
+     * the band's own entrance reads that same line from the band's live box — so no pair of
+     * overlapping blocks can ever stand crisp and fully opaque side by side, the line holds on any
+     * screen height, and no fixed svh can dissolve the beat while a tall viewport still shows only
+     * the empty stage tail. None of the three is scrubbed, so no gesture can cross them between two
+     * frames and every visitor sees the same dissolve. The rises and the screens' motion stay with
+     * `.beat-lead` / `.beat-arc`; these wrappers only own opacity.
+     */
+    html:not([data-motion='reduce']) [data-scroll-fade] {
+      opacity: 0;
+      translate: 0 2.5rem;
+      transition:
+        opacity 600ms ease,
+        translate 600ms ease;
+    }
+    html:not([data-motion='reduce']) [data-scroll-fade='in'] {
+      opacity: 1;
+      translate: 0 0;
+      transition:
+        opacity 600ms ease,
+        translate 600ms ease;
+    }
+    html:not([data-motion='reduce']) [data-scroll-fade='leaving'] {
+      opacity: 0;
+      translate: 0 0;
+      transition: opacity 900ms ease;
     }
   }
 
   /*
-   * Whenever the stage is *not* running — a phone, `prefers-reduced-motion`, or a browser without
+   * Whenever the stage is *not* running — a phone, reduced motion, or a browser without
    * scroll timelines — the beats are ordinary sections and must read **vertically**. The shell carries
    * `flex items-center` for the stage's sake (where the children are absolutely positioned and the
    * flex axis does not matter), but in flow that same class lays the beats out in a **row**: measured
@@ -470,103 +499,101 @@
     flex-direction: column;
   }
 
-  @media (prefers-reduced-motion: no-preference) {
-    @supports (animation-timeline: scroll()) {
-      @media (min-width: 1024px) {
-        .stage {
-          /* The track ends exactly where the pin releases: release = stageTop + track - 100svh,
-             and stageTop is the 57px header offset, so the track is 130svh + 57px of scroll past
-             the first screen. Both beats' animations end at that same release line (see their
-             `animation-range`), so nothing keeps moving its own way once the stage starts sliding —
-             the slide alone carries it out at 1:1, and no segment can read as a frozen hold: the
-             whole pinned phase moves at a single scrubbed speed in the 0.55–0.8 band (position ÷
-             scroll), which is the range where the stage still feels connected to the wheel without
-             the entrance choreography snapping to full speed. */
-          min-block-size: 230svh;
-        }
-        [data-band-anchor] {
-          /* The hand-off line is the band's top crossing 60% of the viewport (the beat's dissolve
-             and the band's entrance both read it), so its position decides when the cross-fade
-             starts. The band sits a fixed block past the track's end, with the stage's dead tail in
-             between: unshifted, that line landed when the beat had ridden up to its last ~170px on
-             screen — the hand-off read as "the beat scrolls away, then the next section fades in".
-             Pulling the band up by the tail's slack closes the geometry — at the line the beat still
-             fills the top ~65% of the viewport, the 60% line guarantees the band fills the bottom
-             40%, and the empty stripe between the two boxes shrinks from ~431px to ~131px at 1000px
-             tall. Layout only: the track, the pin release and both scrubbed animations keep their
-             numbers, and the trigger follows the band's box live, so no height needs retuning. The
-             flow layout outside this gate must keep the bands in normal sequence. */
-          margin-block-start: -30svh;
-        }
-        .stage-pin {
-          position: sticky;
-          inset-block-start: 0;
-          block-size: 100svh;
-          overflow: clip;
-        }
-        .beat {
-          position: absolute;
-          inset-inline: 0;
-          inset-block-start: 50%;
-          /* Parked state: centred, which is where `100%` of the layer's own height cancels out.
-             No `will-change`: it is the classic "text looks soft" trigger here — the layer gets
-             rasterised once and then transformed, so any fractional offset blurs the glyphs, and the
-             beats are three elements, not a per-frame animation. */
-          translate: 0 -50%;
-        }
-        /* Each beat owns a window of the track: it arrives, holds centred, then leaves upward. The
-           ranges overlap on purpose — the next beat starts rising while the current one is still
-           centred, which is what makes the page feel like it has one continuous stage rather than a
-           sequence of slides. Set per beat by `--beat` (its index) so the numbers stay in one place. */
-        .beat-hero {
-          animation: beat-lead auto linear both;
-          animation-timeline: scroll(root block);
-          /* The hero is the one beat whose content (copy + the tall product plane) can outgrow the
-             screen: centred at 50% with `translate: -50%`, an over-tall box bleeds upward and the
-             headline climbs under the header. The cap stops that climb — the box may not exceed
-             100svh − 44px, so its top never rises above 22px no matter the viewport. Above ~887px
-             tall viewports the content fits under the cap and nothing moves; below it the hero
-             parks slightly lower and the overflow runs under the fold, where it is clipped like
-             everything else past the pin. (`translate: -50%` is relative to the box, so the cap
-             also parks a capped box exactly 22px lower — that is the intended, one-line effect.) */
-          max-block-size: calc(100svh - 44px);
-          /* Position only: the hero scrubs its rise across the SAME range as the arriving beat and
-             ends exactly at the release line (stageTop + track − 100svh = 130svh + the sticky
-             header) — one constant speed ≈0.65 of the scroll, no hold, no slow tail: a hold at the
-             top leaves the first half-screen of scrolling moving nothing, and a range that outlives
-             the pin would keep translating while the stage slides, which reads as being ejected.
-             Its fade is the wrapper's 900ms clock and the year beat's entrance shares the same
-             60svh trigger, so the two always cross instead of standing opaque together. */
-          animation-range: 0svh calc(130svh + var(--marketing-header-height) + 1px);
-        }
-        .beat-a {
-          animation: beat-arc auto linear both;
-          animation-timeline: scroll(root block);
-          /* Same range, same contract: the beat scrubs from below the fold (+50%) to above centre
-             (−85%) at one constant speed (≈0.55–0.8 of the scroll depending on window height) and
-             stops translating at the release line, where the stage's own slide takes over at 1:1.
-             There is no park and no quarter-speed exit tail — a frozen stretch or a second, slower
-             speed in the middle of the track is what reads as the page sticking to the wheel, and
-             both layers sharing one linear window is what keeps hero-bottom ≥ beat-top for the whole
-             ride (no background seam between them). Fades stay off the timeline: the entrance is the
-             wrapper's 600ms clock at 60svh — the same trigger as the hero's exit, so the entrance and
-             the exit play over each other rather than leaving both blocks crisp — and the exit
-             dissolve is anchored to the first closing band's
-             top crossing 60% of the viewport (see `useScrollFade`), so no screen height can outrun
-             the hand-off. This animation owns position only. */
-          animation-range: 0svh calc(130svh + var(--marketing-header-height) + 1px);
-        }
-        /*
-         * Low-height desktops only: the hero is taller than the stage, so centring it puts the h1's top
-         * under the header at 800px tall (measured: 7.59px of clearance at 1rem of margin, i.e. just
-         * short of the 8px the acceptance asks for). 1.25rem lands at ~11.6px. It is a margin — not a
-         * transform — so it cannot fight the scroll animation that owns `translate`, and the whole hero
-         * (copy + both cards) shifts together, keeping their relative composition.
-         */
-        @media (max-height: 840px) {
-          .beat-hero {
-            margin-block-start: 1.25rem;
-          }
+  @supports (animation-timeline: scroll()) {
+    @media (min-width: 1024px) {
+      html:not([data-motion='reduce']) .stage {
+        /* The track ends exactly where the pin releases: release = stageTop + track - 100svh,
+           and stageTop is the 57px header offset, so the track is 130svh + 57px of scroll past
+           the first screen. Both beats' animations end at that same release line (see their
+           `animation-range`), so nothing keeps moving its own way once the stage starts sliding —
+           the slide alone carries it out at 1:1, and no segment can read as a frozen hold: the
+           whole pinned phase moves at a single scrubbed speed in the 0.55–0.8 band (position ÷
+           scroll), which is the range where the stage still feels connected to the wheel without
+           the entrance choreography snapping to full speed. */
+        min-block-size: 230svh;
+      }
+      html:not([data-motion='reduce']) [data-band-anchor] {
+        /* The hand-off line is the band's top crossing 60% of the viewport (the beat's dissolve
+           and the band's entrance both read it), so its position decides when the cross-fade
+           starts. The band sits a fixed block past the track's end, with the stage's dead tail in
+           between: unshifted, that line landed when the beat had ridden up to its last ~170px on
+           screen — the hand-off read as "the beat scrolls away, then the next section fades in".
+           Pulling the band up by the tail's slack closes the geometry — at the line the beat still
+           fills the top ~65% of the viewport, the 60% line guarantees the band fills the bottom
+           40%, and the empty stripe between the two boxes shrinks from ~431px to ~131px at 1000px
+           tall. Layout only: the track, the pin release and both scrubbed animations keep their
+           numbers, and the trigger follows the band's box live, so no height needs retuning. The
+           flow layout outside this gate must keep the bands in normal sequence. */
+        margin-block-start: -30svh;
+      }
+      html:not([data-motion='reduce']) .stage-pin {
+        position: sticky;
+        inset-block-start: 0;
+        block-size: 100svh;
+        overflow: clip;
+      }
+      html:not([data-motion='reduce']) .beat {
+        position: absolute;
+        inset-inline: 0;
+        inset-block-start: 50%;
+        /* Parked state: centred, which is where `100%` of the layer's own height cancels out.
+           No `will-change`: it is the classic "text looks soft" trigger here — the layer gets
+           rasterised once and then transformed, so any fractional offset blurs the glyphs, and the
+           beats are three elements, not a per-frame animation. */
+        translate: 0 -50%;
+      }
+      /* Each beat owns a window of the track: it arrives, holds centred, then leaves upward. The
+         ranges overlap on purpose — the next beat starts rising while the current one is still
+         centred, which is what makes the page feel like it has one continuous stage rather than a
+         sequence of slides. Set per beat by `--beat` (its index) so the numbers stay in one place. */
+      html:not([data-motion='reduce']) .beat-hero {
+        animation: beat-lead auto linear both;
+        animation-timeline: scroll(root block);
+        /* The hero is the one beat whose content (copy + the tall product plane) can outgrow the
+           screen: centred at 50% with `translate: -50%`, an over-tall box bleeds upward and the
+           headline climbs under the header. The cap stops that climb — the box may not exceed
+           100svh − 44px, so its top never rises above 22px no matter the viewport. Above ~887px
+           tall viewports the content fits under the cap and nothing moves; below it the hero
+           parks slightly lower and the overflow runs under the fold, where it is clipped like
+           everything else past the pin. (`translate: -50%` is relative to the box, so the cap
+           also parks a capped box exactly 22px lower — that is the intended, one-line effect.) */
+        max-block-size: calc(100svh - 44px);
+        /* Position only: the hero scrubs its rise across the SAME range as the arriving beat and
+           ends exactly at the release line (stageTop + track − 100svh = 130svh + the sticky
+           header) — one constant speed ≈0.65 of the scroll, no hold, no slow tail: a hold at the
+           top leaves the first half-screen of scrolling moving nothing, and a range that outlives
+           the pin would keep translating while the stage slides, which reads as being ejected.
+           Its fade is the wrapper's 900ms clock and the year beat's entrance shares the same
+           60svh trigger, so the two always cross instead of standing opaque together. */
+        animation-range: 0svh calc(130svh + var(--marketing-header-height) + 1px);
+      }
+      html:not([data-motion='reduce']) .beat-a {
+        animation: beat-arc auto linear both;
+        animation-timeline: scroll(root block);
+        /* Same range, same contract: the beat scrubs from below the fold (+50%) to above centre
+           (−85%) at one constant speed (≈0.55–0.8 of the scroll depending on window height) and
+           stops translating at the release line, where the stage's own slide takes over at 1:1.
+           There is no park and no quarter-speed exit tail — a frozen stretch or a second, slower
+           speed in the middle of the track is what reads as the page sticking to the wheel, and
+           both layers sharing one linear window is what keeps hero-bottom ≥ beat-top for the whole
+           ride (no background seam between them). Fades stay off the timeline: the entrance is the
+           wrapper's 600ms clock at 60svh — the same trigger as the hero's exit, so the entrance and
+           the exit play over each other rather than leaving both blocks crisp — and the exit
+           dissolve is anchored to the first closing band's
+           top crossing 60% of the viewport (see `useScrollFade`), so no screen height can outrun
+           the hand-off. This animation owns position only. */
+        animation-range: 0svh calc(130svh + var(--marketing-header-height) + 1px);
+      }
+      /*
+       * Low-height desktops only: the hero is taller than the stage, so centring it puts the h1's top
+       * under the header at 800px tall (measured: 7.59px of clearance at 1rem of margin, i.e. just
+       * short of the 8px the acceptance asks for). 1.25rem lands at ~11.6px. It is a margin — not a
+       * transform — so it cannot fight the scroll animation that owns `translate`, and the whole hero
+       * (copy + both cards) shifts together, keeping their relative composition.
+       */
+      @media (max-height: 840px) {
+        html:not([data-motion='reduce']) .beat-hero {
+          margin-block-start: 1.25rem;
         }
       }
     }
@@ -736,10 +763,8 @@
   mask-composite: exclude;
 }
 
-@media (prefers-reduced-motion: reduce) {
-  [data-slot='button'][data-variant='default'] {
-    transition: none;
-  }
+html[data-motion='reduce'] [data-slot='button'][data-variant='default'] {
+  transition: none;
 }
 
 /*

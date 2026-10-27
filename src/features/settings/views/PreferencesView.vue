@@ -2,28 +2,30 @@
 /**
  * Preferences settings view.
  *
- * Two sections today: Appearance (the same three modes the header's Appearance
- * menu writes) and Language (the switcher that owns the interface locale).
- * Motion preferences join this page when their stage lands; nothing is mocked
- * in the meantime.
+ * Three sections today: Appearance (the same three modes the header's Appearance
+ * menu writes), Language (the switcher that owns the interface locale) and Motion
+ * (animation on/off, either following the operating system or overriding it).
+ * Each has exactly one owner — the theme store, the locale module, the motion
+ * store — and this view never writes storage or the DOM directly.
  *
- * Both sections are the same shape — a labelled radio group whose change writes
- * through the single owner of that state (the theme store, the locale module),
- * never storage or the DOM directly. The option surfaces are presentation: a
- * theme tile previews its own frame, and a language row carries its endonym and
- * code, while the native radio remains the control.
+ * All sections are the same shape: a labelled radio group whose change writes
+ * through that owner. The option surfaces are presentation — a theme tile
+ * previews its own frame, a language row carries its endonym and code, a motion
+ * row states what it resolves to — while the native radio remains the control.
  */
 import { computed, type Component } from 'vue'
 import { useI18n } from 'vue-i18n'
-import { Check, Info, Languages, Monitor, Moon, Sun, SunMoon } from '@lucide/vue'
+import { Check, Info, Languages, Monitor, Moon, Sun, SunMoon, Zap, ZapOff } from '@lucide/vue'
 import { currentLocale, LANGUAGE_CODES, setLocale } from '@/i18n'
 import { useThemeStore, type ThemeMode } from '@/stores/theme'
+import { useMotionStore, type MotionPreference } from '@/stores/motion'
 import type { AppLocale } from '@/i18n/locale'
 import ChoiceRadioGroup from '../components/ChoiceRadioGroup.vue'
 import ThemePreview from '../components/ThemePreview.vue'
 
 const { t } = useI18n()
 const themeStore = useThemeStore()
+const motionStore = useMotionStore()
 
 /** The resolved label for the active mode — "System" reports which theme it resolves to. */
 const currentThemeLabel = computed(() => {
@@ -57,6 +59,43 @@ const languageOptions = computed(() => [
 
 function handleThemeChange(value: string): void {
   themeStore.setTheme(value as ThemeMode)
+}
+
+/**
+ * Icons restate the choice, they do not decorate it: the same `Monitor` marks
+ * "follow the system" here as in the theme group, so the two groups read as the
+ * same kind of choice, and the on/off pair is Zap / ZapOff.
+ */
+const MOTION_ICONS: Record<MotionPreference, Component> = {
+  system: Monitor,
+  reduce: ZapOff,
+  full: Zap,
+}
+
+function motionIconFor(value: string): Component {
+  return MOTION_ICONS[value as MotionPreference] ?? Monitor
+}
+
+/**
+ * Options carry their hint as a second line: "Reduce" and "Follow system" would
+ * otherwise read as the same choice to someone whose system already asks for less.
+ */
+const motionOptions = computed(() => [
+  { value: 'system', label: t('settings.preferences.motionSystem'), hint: t('settings.preferences.motionSystemHint') },
+  { value: 'reduce', label: t('settings.preferences.motionReduce'), hint: t('settings.preferences.motionReduceHint') },
+  { value: 'full', label: t('settings.preferences.motionFull'), hint: t('settings.preferences.motionFullHint') },
+])
+
+/**
+ * Report what the current choice resolves to right now, so "Follow system" is not
+ * a black box: the store already resolves the choice against the system signal.
+ */
+const currentMotionLabel = computed(() =>
+  motionStore.isReduced ? t('settings.preferences.motionReduce') : t('settings.preferences.motionFull'),
+)
+
+function handleMotionChange(value: string): void {
+  motionStore.setPreference(value as MotionPreference)
 }
 
 function handleLanguageChange(value: string): void {
@@ -112,7 +151,7 @@ function handleLanguageChange(value: string): void {
         >
           <template #option="{ option, checked }">
             <span
-              class="block overflow-hidden rounded-lg border bg-background/40 transition-[border-color,background-color,box-shadow] duration-150 motion-reduce:transition-none peer-focus-visible:outline-2 peer-focus-visible:outline-offset-2 peer-focus-visible:outline-ring"
+              class="block overflow-hidden rounded-lg border bg-background/40 transition-[border-color,background-color,box-shadow] duration-150 peer-focus-visible:outline-2 peer-focus-visible:outline-offset-2 peer-focus-visible:outline-ring"
               :class="
                 checked
                   ? 'border-primary/70 bg-primary/5 ring-1 ring-primary/20'
@@ -176,7 +215,7 @@ function handleLanguageChange(value: string): void {
         >
           <template #option="{ option, checked }">
             <span
-              class="flex h-full items-center gap-3 rounded-lg border bg-background/40 p-3 transition-[border-color,background-color,box-shadow] duration-150 motion-reduce:transition-none peer-focus-visible:outline-2 peer-focus-visible:outline-offset-2 peer-focus-visible:outline-ring"
+              class="flex h-full items-center gap-3 rounded-lg border bg-background/40 p-3 transition-[border-color,background-color,box-shadow] duration-150 peer-focus-visible:outline-2 peer-focus-visible:outline-offset-2 peer-focus-visible:outline-ring"
               :class="
                 checked
                   ? 'border-primary/70 bg-primary/5 ring-1 ring-primary/20'
@@ -209,5 +248,72 @@ function handleLanguageChange(value: string): void {
         </p>
       </section>
     </div>
+
+    <section
+      aria-labelledby="preferences-motion-heading"
+      class="flex flex-col rounded-xl border border-border bg-card p-5 sm:p-6"
+      data-surface="card"
+    >
+      <div class="flex flex-wrap items-start justify-between gap-3">
+        <div class="flex min-w-0 items-start gap-3">
+          <span
+            class="grid size-8 shrink-0 place-items-center rounded-md border border-border bg-secondary/50 text-muted-foreground"
+          >
+            <Zap class="size-4" aria-hidden="true" />
+          </span>
+          <div class="min-w-0">
+            <h2 id="preferences-motion-heading" class="text-heading-3 text-foreground">
+              {{ t('settings.preferences.motion') }}
+            </h2>
+            <p class="mt-1 text-sm leading-6 text-muted-foreground">
+              {{ t('settings.preferences.motionDescription') }}
+            </p>
+          </div>
+        </div>
+        <span
+          class="whitespace-nowrap rounded-full border border-border bg-secondary/40 px-2.5 py-1 text-[11px] font-emphasis text-muted-foreground"
+        >
+          {{ t('settings.preferences.current', { value: currentMotionLabel }) }}
+        </span>
+      </div>
+
+      <ChoiceRadioGroup
+        name="motion"
+        :legend="t('settings.preferences.motion')"
+        :model-value="motionStore.preference"
+        :options="motionOptions"
+        class="mt-5"
+        @update:model-value="handleMotionChange"
+      >
+        <template #option="{ option, checked }">
+          <span
+            class="flex h-full items-start gap-3 rounded-lg border bg-background/40 p-3 transition-[border-color,background-color,box-shadow] duration-150 peer-focus-visible:outline-2 peer-focus-visible:outline-offset-2 peer-focus-visible:outline-ring"
+            :class="
+              checked
+                ? 'border-primary/70 bg-primary/5 ring-1 ring-primary/20'
+                : 'border-border hover:border-foreground/25'
+            "
+          >
+            <component
+              :is="motionIconFor(option.value)"
+              class="mt-0.5 size-4 shrink-0 text-muted-foreground"
+              aria-hidden="true"
+            />
+            <span class="min-w-0 flex-1">
+              <span class="block text-sm font-emphasis text-foreground">{{ option.label }}</span>
+              <span v-if="option.hint" class="mt-1 block text-xs leading-5 text-muted-foreground">
+                {{ option.hint }}
+              </span>
+            </span>
+            <span
+              class="mt-0.5 grid size-4 shrink-0 place-items-center rounded-full border"
+              :class="checked ? 'border-primary bg-primary text-primary-foreground' : 'border-border text-transparent'"
+            >
+              <Check class="size-2.5" aria-hidden="true" />
+            </span>
+          </span>
+        </template>
+      </ChoiceRadioGroup>
+    </section>
   </div>
 </template>
