@@ -815,14 +815,20 @@ Playwright E2E 测试使用 `page.route()` 进行 API mock（Playwright 官方�
 - 现状（2026-09-20 全仓审计 ✓）：`src/` 手写 `:hover` 共 **16 条 / 4 文件**，全部已包 ✓；**新增的必须同批包上** ✗。
 - 判据：`@media (hover: hover)` 下生效 ✓、`hover: none` 下**不生效** ✓（真机用 `page.emulate({ hasTouch: true, isMobile: true })` 验 ✓，`emulateMediaFeatures({name:'hover'})` **不受支持** ✗）。
 
-### 6.2 动效：全局 reduce 兜底 + 需要细控时用 `motion-reduce:`
+### 6.2 动效：全局 reduce 兜底 + 动效偏好在设置里
 
-- `src/assets/main.css` 有一条**全局** `@media (prefers-reduced-motion: reduce)`：`animation-duration` / `transition-duration`
+- `src/assets/main.css` 有一条**全局** `html[data-motion='reduce']` 规则：`animation-duration` / `transition-duration`
   → `0.01ms !important`、`animation-iteration-count: 1`、`scroll-behavior: auto` ✓ ⇒ 任何动效**自动**被减掉 ✓，
   不依赖作者记得写 ✓。
-- 需要更细的控制（`duration-0` / `animate-none` / `transition-none`）用 Tailwind 的 `motion-reduce:` 变体 ✓。
+- **触发条件是文档属性，不是媒体查询** ✓：`<html data-motion>` 由 `src/stores/motion.ts` 写入，值是**结论**
+  （`reduce` 该减弱 · `full` 该播放 · 无属性 = 无要求）✓ —— CSS 无法把媒体查询与存储值合并 ⇒ 合并只能在 store 里做 ✓。
+  ⇒ 用户在设置里选「完整动效」**能压过**系统要求；选「减少动效」也**能压过**系统允许 ✓（两个方向都要成立 ✗ 单向不算）。
+- **不要用 Tailwind 的 `motion-reduce:` 变体做覆盖** ✗：那个变体只认媒体查询，认不到用户的显式选择 ⇒ 用户选了「减少动效」而系统允许时，
+  带变体的元素**照旧动** ✗。要覆盖就靠全局规则（自动生效）✓，或按需要自己加 `html:not([data-motion='reduce'])` 守卫 ✓。
 - 动效**按需做** ✓（不是"默认不做" ✗）：要做就过设计规范的七字段 + 4 条可失败判据 ✓。
 - 判据：reduce 下 `document.getAnimations().length === 0` ✓，且位移/缩放归零 ✓（拿对照组证明探针能看见动效 ✗ 否则结论无效 ✓）。
+  **注意**：只断言"时长≈0"不够 ✗ —— 时长归零的动画**仍然遵守 `animation-delay`** ⇒ 会把首帧（不可见）钉住一段时间 ✗
+  ⇒ 断言要落在"`animation-name` 不存在"或"运行中的动画数为 0"上 ✓。
 
 ### 6.3 主题：首帧由 `public/theme.js` 决定，不由 Vue 决定
 

@@ -48,6 +48,7 @@ src/
 ├── stores/             # Pinia stores
 │   ├── auth.ts         # Auth store (JWT token management)
 │   ├── theme.ts        # Theme store (light/dark/auto, VueUse persistence)
+│   ├── motion.ts       # Motion preference (system/reduce/full)
 │   └── publicConfig.ts # Public runtime config from the backend
 ├── router/             # Vue Router configuration
 │   ├── index.ts        # Main router setup + auto-import
@@ -250,7 +251,7 @@ build: {
 | State Type       | Tool           | Use Case                                          |
 | ---------------- | -------------- | ------------------------------------------------- |
 | **Server State** | TanStack Query | API data, caching, refetching, optimistic updates |
-| **Global State** | Pinia          | Auth session, theme, UI state                     |
+| **Global State** | Pinia          | Auth session, theme, motion preference, UI state |
 | **URL State**    | Vue Router     | Filters, pagination, search params                |
 
 ### Auth Store (Pinia)
@@ -311,6 +312,37 @@ export const useAuthStore = defineStore('auth', () => {
   }
 })
 ```
+
+### Motion Store (Pinia)
+
+The reduce-motion preference is a third store, separate from the theme store: dark colours and animation are
+independent answers, so they get independent storage keys (`ctt.motion` vs the theme's keys) and independent
+semantics.
+
+The store owns one decision — **should motion be suppressed right now** — and publishes it to the document as
+`<html data-motion="reduce" | "full">`. The attribute carries the *resolved conclusion*, not the stored
+choice, because CSS cannot combine a media query with a stored value: the stylesheet reads this one attribute
+and asks nothing else. That is what lets an explicit "Full motion" override a system that asks for less, and
+an explicit "Reduce motion" apply on a machine whose system allows animation.
+
+```typescript
+// src/stores/motion.ts
+const isReduced = computed(() =>
+  preference.value === 'system' ? prefersReducedMotion.value : preference.value === 'reduce',
+)
+
+watch([preference, prefersReducedMotion], applyMotionAttribute, { immediate: true, flush: 'sync' })
+```
+
+The watcher — rather than the setter — is what writes the attribute, so a change in another tab and a change of
+the operating-system setting take the same path. `public/theme.js` resolves the same decision before the first
+paint, for the same reason the theme class is written there: the bundle runs too late to stop the first frame
+from animating.
+
+The stylesheet gates every motion rule set on `html:not([data-motion='reduce'])` — the marketing entrances, the
+scroll reveals and the pinned stage all disappear rather than merely shortening, because a zeroed animation
+still honours its `animation-delay` and would hold its first frame. Canvas animation sits outside the cascade
+and reads the store's `isReduced` directly.
 
 ### When to Use Each
 

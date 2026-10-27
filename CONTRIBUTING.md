@@ -171,7 +171,7 @@ src/
 ├── lib/
 │   ├── api/        # ofetch instance + typed API calls
 │   └── schemas/    # Zod schemas (aligned with backend DTOs)
-├── stores/         # Pinia stores (auth session, theme only)
+├── stores/         # Pinia stores (auth session, theme, motion preference)
 ├── router/         # Vue Router + guards
 ├── i18n/           # zh-CN / en-US locale files
 └── views/          # Top-level views
