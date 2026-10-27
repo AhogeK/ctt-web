@@ -31,6 +31,10 @@ vi.mock('@/stores/theme', () => ({
   useThemeStore: vi.fn<() => { isDark: boolean }>(() => ({ isDark: false })),
 }))
 
+vi.mock('@/stores/motion', () => ({
+  useMotionStore: vi.fn<() => { isReduced: boolean }>(() => ({ isReduced: false })),
+}))
+
 vi.mock('@/components/charts/echarts-setup', () => ({}))
 
 // The composable resolves through TanStack Query — stub it to feed data.
