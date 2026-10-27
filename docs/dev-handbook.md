@@ -570,11 +570,14 @@ E2E 测试（Playwright）：
 
 ```bash
 pnpm exec playwright install      # 首次运行 — 安装浏览器
-pnpm test:e2e                     # 所有 E2E 测试
+pnpm test:e2e                     # 所有 E2E 测试（自动构建并起本地 preview）
 pnpm test:e2e --project=chromium  # 仅 Chromium
 pnpm test:e2e --debug             # 调试模式
-pnpm build && pnpm test:e2e       # CI — 必须先构建
 ```
+
+**E2E 跑的是生产构建**（`pnpm build` + `pnpm preview`，端口 4173）✓，本地与 CI 一致 ✓。
+原先本地打 dev server（5173）——dev 按需转译模块 ⇒ 全套排在同一个瓶颈后面：全量 **153s** 且重用例在并行下超时 ✗；
+打生产构建则是 **54s** 且无 flaky ✓。**顺带不再占用你自己的 dev server** ✓。
 
 ---
 
@@ -679,7 +682,7 @@ export default {
 **关键配置**（`playwright.config.ts`）：
 
 - `projects: [chromium]`：**只跑 Chromium**。脚手架默认带 firefox/webkit 但从未有人为其写断言，而 `playwright install` 只装 chromium，导致 `pnpm test:e2e` 对任何人都启动即失败。**未运行的项目不是覆盖率，是一个失败步骤**——要启用某引擎，先装该引擎并跑通它的用例。
-- `webServer`: 自动启动 dev server（CI 用 `pnpm preview` + 4173，本地用 `pnpm dev` + 5173）
+- `webServer`: 自动启动 **preview server**（生产构建 + 4173，本地与 CI 一致）；构建由 `pnpm test:e2e` 负责，所以复用的旧进程也只会提供刚构建出来的产物 ✓
 
 ### 5.2 文件组织
 

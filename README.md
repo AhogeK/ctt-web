@@ -100,7 +100,7 @@ behind the same origin (or the configured API base) as ctt-server.
 | `pnpm build` | Type-check and create a production build |
 | `pnpm preview` | Preview the production build locally |
 | `pnpm test:unit` | Run Vitest unit tests |
-| `pnpm test:e2e` | Run Playwright end-to-end tests |
+| `pnpm test:e2e` | Run Playwright end-to-end tests (builds the production bundle first) |
 | `pnpm type-check` | Run `vue-tsc` only |
 | `pnpm lint` | Run the configured lint passes |
 | `pnpm format` | Format source files |
@@ -150,6 +150,7 @@ More detail is available in [docs/architecture.md](docs/architecture.md) and
 - Unit tests use Vitest and Testing Library.
 - End-to-end tests use Playwright against the real router with mocked API routes; no live backend is
   required for the E2E suite.
+- The suite runs against a production build, so a local run matches CI.
 - The E2E suite runs on Chromium only. Install the browser with the command above before the first run.
 
 ## Related projects
