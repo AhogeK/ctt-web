@@ -109,6 +109,16 @@
     `playwright-core/browsers.json`). **2026-10-27: `vp update -L` left @playwright/test at 1.64.1**
     — no browser reinstall needed.
 
+- **The E2E suite runs against the production build, locally and in CI** (2026-10-27 · v0.68.1).
+  The dev server translates modules on demand, so a local run queued every spec behind the same
+  bottleneck: a full run took **153s** and the heavy heatmap spec timed out under that load
+  (165/166). Against a preview of the production build the same suite takes **52s** and passes
+  outright, and the developer's own dev server stays free.
+  **The build lives in the `test:e2e` script, not in the Playwright `webServer` command** — a reused
+  server skips the command, so a build inside it would leave the suite testing a stale bundle
+  without saying so.
+
+
 ## API Authentication
 
 - Web users: JWT Bearer from `/api/v1/auth/login`; GitHub OAuth via ctt-server flow
