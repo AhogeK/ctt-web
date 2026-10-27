@@ -267,14 +267,11 @@ function daysInYear(year: number): { date: string; seconds: number }[] {
 }
 
 test('a year view anchors at its newest non-future day', async ({ page }) => {
-  // Two dropdown round-trips plus scroll-metric polls. A local run points every
-  // spec at the same dev server (the local port, not the CI preview), so this
-  // heavier flow is the one that runs out of time when the rest of the suite
-  // loads it in parallel (reproduced 2026-10-20 and again 2026-10-27: a
-  // 45s ceiling expired under a full local run, while the spec passes in
-  // isolation and serialized). The assertions below are unchanged — only this
-  // heavier flow's ceiling is.
-  test.setTimeout(60_000)
+  // Two dropdown round-trips plus scroll-metric polls, so this is one of the heavier flows in the
+  // suite. It used to need a raised ceiling: a local run pointed every spec at one dev server,
+  // which translated modules on demand and became the bottleneck, and this spec was the one that
+  // ran out of time under that load. The suite now runs against the production build (see
+  // `playwright.config.ts`), so the default ceiling is enough again.
   await page.setViewportSize({ width: 390, height: 1080 })
   await mockAuthApis(page)
   const seen: string[] = []

@@ -8,7 +8,7 @@
     "build": "run-p type-check \"build-only {@}\" --",
     "preview": "vp preview",
     "test:unit": "vp test",
-    "test:e2e": "playwright test",
+    "test:e2e": "pnpm run build-only && playwright test",
     "build-only": "vp build",
     "type-check": "vue-tsc --build",
     "lint": "run-s lint:*",
