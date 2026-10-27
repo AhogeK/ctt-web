@@ -13,15 +13,17 @@
  * same update — but they are deliberately kept separate to allow independent evolution.
  */
 
+import { i18n } from '@/i18n'
+
 export const OAUTH_BIND_ERROR_MESSAGES: Record<string, string> = {
-  AUTH_006: 'Your account is not active. Please verify your email.',
-  AUTH_013: 'Authorization request expired. Please try again.',
-  AUTH_016: 'This GitHub account is already linked to another user.',
-  USER_004: 'User not found.',
-  OAUTH_PROVIDER_ERROR: 'GitHub authorization failed.',
-  OAUTH_INTERNAL_ERROR: 'Service error. Please try again later.',
-  MISSING_OAUTH_PARAMS: 'Invalid authorization response.',
-  INVALID_STATE_ACTION: 'Authorization request invalid.',
+  AUTH_006: 'oauth.bind.auth006',
+  AUTH_013: 'oauth.bind.auth013',
+  AUTH_016: 'oauth.bind.auth016',
+  USER_004: 'oauth.bind.user004',
+  OAUTH_PROVIDER_ERROR: 'oauth.bind.providerError',
+  OAUTH_INTERNAL_ERROR: 'oauth.bind.internalError',
+  MISSING_OAUTH_PARAMS: 'oauth.bind.missingParams',
+  INVALID_STATE_ACTION: 'oauth.bind.invalidStateAction',
 }
 
 /**
@@ -37,9 +39,9 @@ export const OAUTH_BIND_ERROR_MESSAGES: Record<string, string> = {
  */
 export const OAUTH_UNBIND_ERROR_MESSAGES: Record<string, string> = {
   // 400 — only reachable if a non-`github` provider is requested (future-proofing).
-  COMMON_001: 'OAuth provider not supported.',
-  AUTH_017: 'This GitHub account is not linked to your account.',
-  AUTH_018: 'Cannot unlink the last login method. Please set a password first.',
+  COMMON_001: 'oauth.unbind.common001',
+  AUTH_017: 'oauth.unbind.auth017',
+  AUTH_018: 'oauth.unbind.auth018',
 }
 
 /**
@@ -50,17 +52,17 @@ export const OAUTH_UNBIND_ERROR_MESSAGES: Record<string, string> = {
  * @returns User-friendly message suitable for display in a toast notification
  */
 export function getOAuthBindErrorMessage(code: string): string {
-  const message = OAUTH_BIND_ERROR_MESSAGES[code]
-  if (!message) {
+  const key = OAUTH_BIND_ERROR_MESSAGES[code]
+  if (!key) {
     // Dev breadcrumb: surfaces unmapped codes so future-proofing the mapping
     // table is auditable. The user-facing fallback message is preserved —
     // this console.warn never leaks to the UI.
     if (typeof console !== 'undefined') {
       console.warn(`[oauth-bind] unmapped error code: ${code}`)
     }
-    return 'Failed to connect GitHub. Please try again.'
+    return i18n.global.t('oauth.bind.fallback')
   }
-  return message
+  return i18n.global.t(key)
 }
 
 /**
@@ -72,12 +74,12 @@ export function getOAuthBindErrorMessage(code: string): string {
  * @returns User-friendly message suitable for display in a toast notification
  */
 export function getOAuthUnbindErrorMessage(code: string): string {
-  const message = OAUTH_UNBIND_ERROR_MESSAGES[code]
-  if (!message) {
+  const key = OAUTH_UNBIND_ERROR_MESSAGES[code]
+  if (!key) {
     if (typeof console !== 'undefined') {
       console.warn(`[oauth-unbind] unmapped error code: ${code}`)
     }
-    return 'Failed to disconnect GitHub. Please try again.'
+    return i18n.global.t('oauth.unbind.fallback')
   }
-  return message
+  return i18n.global.t(key)
 }

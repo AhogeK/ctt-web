@@ -154,7 +154,7 @@ export function getErrorMessage(error: unknown): string {
     return error
   }
 
-  return 'An unexpected error occurred. Please try again later.'
+  return i18n.global.t('api.errors.internalerror')
 }
 
 /**

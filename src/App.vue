@@ -8,6 +8,7 @@
  */
 import { ref, onMounted, onUnmounted } from 'vue'
 import { RouterView, useRouter } from 'vue-router'
+import { useI18n } from 'vue-i18n'
 import { toast } from 'vue-sonner'
 import ErrorBoundary from '@/components/app/ErrorBoundary.vue'
 import { Toaster } from '@/components/ui/sonner'
@@ -19,6 +20,7 @@ import { RouteNames } from '@/router/route-names'
 import { resolvePostAuthTarget } from '@/router/post-auth-redirect'
 
 const router = useRouter()
+const { t } = useI18n()
 const authStore = useAuthStore()
 const isTermsDialogOpen = ref(false)
 const isLoginTimeTermsExpired = ref(false)
@@ -50,7 +52,7 @@ function handleTermsRejected() {
   // Clear auth state and redirect to login
   authStore.clearAuth()
   router.push({ name: RouteNames.LOGIN })
-  toast.error('You must accept the Terms of Service to continue')
+  toast.error(t('app.termsRequired'))
 }
 
 // Initialize theme to follow system preference
@@ -72,9 +74,9 @@ onUnmounted(() => {
  * action so the user can recover without guessing.
  */
 function handleChunkLoadFailed() {
-  toast.error('Failed to load the page. Please try again.', {
+  toast.error(t('app.chunkLoadFailed'), {
     action: {
-      label: 'Retry',
+      label: t('app.retry'),
       onClick: () => globalThis.location.reload(),
     },
     duration: Number.POSITIVE_INFINITY,
@@ -93,7 +95,7 @@ function handleChunkLoadFailed() {
           <template #fallback>
             <div class="flex min-h-[50vh] flex-col items-center justify-center gap-3" data-testid="route-loading">
               <div class="h-8 w-8 animate-spin rounded-full border-2 border-muted border-t-primary" />
-              <p class="text-sm text-muted-foreground">Loading…</p>
+              <p class="text-sm text-muted-foreground">{{ t('app.loading') }}</p>
             </div>
           </template>
         </Suspense>

@@ -2,6 +2,7 @@ import { ofetch, type FetchOptions } from 'ofetch'
 import { STORAGE_KEYS, useAuthStore } from '@/stores/auth'
 import { injectCsrfHeader } from '@/lib/utils/csrf'
 import { toast } from 'vue-sonner'
+import { i18n } from '@/i18n'
 import router from '@/router'
 import { RouteNames } from '@/router/route-names'
 
@@ -34,18 +35,20 @@ let isTerminalAuthHandling = false
  * - AUTH_006: Email not verified → verification flow required
  * - AUTH_004/AUTH_005: Account locked/suspended → support contact required
  *
- * Maps each code to a target route and user-friendly toast message for graceful degradation.
+ * `messageKey` is separate from `api.errors.*`: the same code means different things per
+ * endpoint (AUTH_003 is a dead reset link there, a dead session here), so reusing the
+ * generic table would tell the user the wrong story.
  *
  * @see ctt-server ErrorCode enum for server-side definitions
  */
-const TERMINAL_AUTH_CODES: Record<string, { route: string; message: string }> = {
-  AUTH_003: { route: RouteNames.LOGIN, message: 'Session expired. Please log in again.' },
-  AUTH_007: { route: RouteNames.LOGIN, message: 'Session expired. Please log in again.' },
-  AUTH_008: { route: RouteNames.LOGIN, message: 'Session revoked. Please log in again.' },
-  AUTH_006: { route: RouteNames.VERIFY_EMAIL, message: 'Please verify your email address to continue.' },
-  AUTH_004: { route: RouteNames.LOGIN, message: 'Account is locked. Please contact support.' },
-  AUTH_005: { route: RouteNames.LOGIN, message: 'Account is disabled. Please contact support.' },
-  AUTH_009: { route: RouteNames.LOGIN, message: 'Security alert: Suspicious activity detected. Please log in again.' },
+const TERMINAL_AUTH_CODES: Record<string, { route: string; messageKey: string }> = {
+  AUTH_003: { route: RouteNames.LOGIN, messageKey: 'app.sessionExpired' },
+  AUTH_007: { route: RouteNames.LOGIN, messageKey: 'app.sessionExpired' },
+  AUTH_008: { route: RouteNames.LOGIN, messageKey: 'app.sessionRevoked' },
+  AUTH_006: { route: RouteNames.VERIFY_EMAIL, messageKey: 'app.verifyEmailToContinue' },
+  AUTH_004: { route: RouteNames.LOGIN, messageKey: 'app.accountLocked' },
+  AUTH_005: { route: RouteNames.LOGIN, messageKey: 'app.accountSuspended' },
+  AUTH_009: { route: RouteNames.LOGIN, messageKey: 'app.sessionSuspicious' },
 }
 
 /**
@@ -110,7 +113,7 @@ function handleTerminalAuthError(errorCode: string): void {
   isTerminalAuthHandling = true
 
   useAuthStore().clearAuth()
-  toast.error(config.message)
+  toast.error(i18n.global.t(config.messageKey))
 
   const currentPath = router.currentRoute.value.fullPath
   const redirectPath =
@@ -245,7 +248,7 @@ export const apiFetch = ofetch.create({
       }
 
       if (errorCode && CSRF_ERROR_CODES.has(errorCode)) {
-        toast.error('Your session has expired. Refreshing...')
+        toast.error(i18n.global.t('app.sessionRefreshing'))
         window.location.reload()
         return
       }

@@ -53,14 +53,14 @@ const mutation = useMutation({
     if (error.statusCode === 429) {
       start()
       toast.error(mapApiErrorCode('rate_limit_exceeded'), {
-        description: `Try again in ${countdown.value}s`,
+        description: t('auth.reset.retryIn', { seconds: countdown.value }),
       })
     } else if (data?.code === 'COMMON_003') {
       toast.error(mapApiErrorCode('COMMON_003'))
     } else if (data?.code === 'SECURITY_006' || data?.code === 'SECURITY_007') {
       toast.error(mapApiErrorCode(data.code))
     } else {
-      toast.error('Request failed', { description: t('auth.errors.tryAgainLater') })
+      toast.error(t('auth.errors.requestFailed'), { description: t('auth.errors.tryAgainLater') })
     }
   },
 })

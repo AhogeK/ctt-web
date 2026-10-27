@@ -17,7 +17,7 @@ const fallbackRoutes: RouteRecordRaw[] = [
     path: '/:pathMatch(.*)*',
     name: RouteNames.NOT_FOUND,
     component: () => import('@/views/Exception/404View.vue'),
-    meta: { title: 'Not Found', hideInMenu: true },
+    meta: { title: 'Not Found', titleKey: 'pageTitles.notFound', hideInMenu: true },
   },
 ]
 

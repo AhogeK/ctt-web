@@ -34,8 +34,9 @@ import { computed, onBeforeUnmount, onMounted, ref, watch } from 'vue'
 import { init, type EChartsType } from 'echarts/core'
 import { useStatsWeekHour } from '@/composables/useStats'
 import { formatDuration } from '@/lib/utils'
+import { currentLocale } from '@/i18n'
 import { useThemeStore } from '@/stores/theme'
-import { buildWeekHourMatrix, WEEKDAY_LABELS } from './week-hour-matrix'
+import { buildWeekHourMatrix } from './week-hour-matrix'
 import { tooltipSurface } from './chart-tooltip'
 import '@/components/charts/echarts-setup'
 
@@ -154,18 +155,28 @@ const maxSeconds = computed(() => Math.max(...cells.value.map((c) => c.averageSe
 
 /** Adaptive hour precision — a sub-0.1h peak must not read as "0.0 h". */
 function formatHoursLabel(hours: number): string {
-  if (hours === 0) return '0 h'
+  if (hours === 0) return t('dashboard.weekHour.zeroHours')
   // Adaptive precision: whole hours 1 decimal, down to tenths 2, below that 3.
   let precision = 1
   if (hours < 1) precision = 2
   if (hours < 0.1) precision = 3
-  return `${Number(hours.toFixed(precision))} h`
+  return t('dashboard.weekHour.hourValue', { value: Number(hours.toFixed(precision)) })
 }
 
 /** Localized weekday name the divisor phrase counts, pluralized per language. */
 const WEEKDAY_KEYS = ['mon', 'tue', 'wed', 'thu', 'fri', 'sat', 'sun'] as const
+
+/** Short weekday for the axis and cell tooltip; the grid keeps ISO row order. */
+function shortWeekday(row: number): string {
+  const key = WEEKDAY_KEYS[row]
+  // An out-of-range row is a data error: render nothing rather than a plausible "Mon".
+  return key === undefined ? '' : t(`dashboard.weekdays.${key}`)
+}
+
 function weekdayName(row: number, count: number): string {
-  const name = t(`dashboard.weekdaysLong.${WEEKDAY_KEYS[row] ?? 'mon'}`)
+  const key = WEEKDAY_KEYS[row]
+  if (key === undefined) return ''
+  const name = t(`dashboard.weekdaysLong.${key}`)
   return count === 1 ? name : t('dashboard.weekHour.weekdayPlural', { name })
 }
 
@@ -209,7 +220,7 @@ function buildOption(cellsForOption: ReturnType<typeof buildWeekHourMatrix>, pal
       formatter: (params: { data?: CellData }) => {
         const d = params.data
         if (!d) return ''
-        const day = WEEKDAY_LABELS[d.row] ?? ''
+        const day = shortWeekday(d.row)
         // Silent cells use the legend's state name: "0s coded" claims a
         // measured zero where the grid shows the quiet "No coding" tile.
         // Measured cells state that the value is an AVERAGE and name the
@@ -293,7 +304,7 @@ function buildOption(cellsForOption: ReturnType<typeof buildWeekHourMatrix>, pal
           return {
             type: 'text',
             style: {
-              text: WEEKDAY_LABELS[row] ?? '',
+              text: shortWeekday(row),
               x: centering.value + LEFT_PAD + DAY_LABEL_BAND - 6,
               y,
               fill: pal.axisLabel,
@@ -303,7 +314,7 @@ function buildOption(cellsForOption: ReturnType<typeof buildWeekHourMatrix>, pal
             },
           }
         },
-        data: WEEKDAY_LABELS.map((_, row) => ({ value: [row, 0] })),
+        data: Array.from({ length: ROWS }, (_, row) => ({ value: [row, 0] })),
       },
       // Hour labels (bottom row) — every 3rd hour to stay readable.
       {
@@ -366,6 +377,9 @@ onBeforeUnmount(() => {
 
 watch(cells, render)
 watch(palette, render)
+// Weekday names are baked into the chart option; a language switch must redraw
+// them, otherwise the axis keeps the previous language's labels.
+watch(currentLocale, render)
 </script>
 
 <template>
@@ -400,7 +414,7 @@ watch(palette, render)
       class="mx-auto w-full max-w-full"
       :style="{ height: `${chartHeight}px` }"
       role="img"
-      :aria-label="t('dashboard.weekHour.aria', { cells: cells.length, weekdays: WEEKDAY_LABELS.length })"
+      :aria-label="t('dashboard.weekHour.aria', { cells: cells.length, weekdays: ROWS })"
     />
   </div>
 </template>

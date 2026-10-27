@@ -13,8 +13,6 @@ export interface EcosystemRepo {
   name: string
   /** Canonical GitHub URL */
   url: string
-  /** One-line role in the ecosystem */
-  role: string
   /** Catalogue key for that line, so the role follows the interface language. */
   roleKey: string
   /** SPDX identifier of the repository's licence */
@@ -26,21 +24,18 @@ export const ECOSYSTEM_REPOS: readonly EcosystemRepo[] = [
     name: 'code-time-tracker',
     url: 'https://github.com/AhogeK/code-time-tracker',
     roleKey: 'landing.repos.tracker',
-    role: 'JetBrains plugin — where the data comes from',
     licence: 'Apache-2.0',
   },
   {
     name: 'ctt-server',
     url: 'https://github.com/AhogeK/ctt-server',
     roleKey: 'landing.repos.server',
-    role: 'Sync backend — where it lands',
     licence: 'MIT',
   },
   {
     name: 'ctt-web',
     url: 'https://github.com/AhogeK/ctt-web',
     roleKey: 'landing.repos.web',
-    role: 'This dashboard — where it is read',
     licence: 'MIT',
   },
 ]

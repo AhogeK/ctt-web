@@ -12,13 +12,13 @@ const settingsRoutes: RouteRecordRaw[] = [
     // <router-view> has no matched child and the content region renders blank —
     // with no error and a correct URL. See the same note in dashboard.ts.
     redirect: { name: RouteNames.SETTINGS_PROFILE },
-    meta: { title: 'Settings', requiresAuth: true, layout: 'app' },
+    meta: { title: 'Settings', titleKey: 'pageTitles.settings', requiresAuth: true, layout: 'app' },
     children: [
       {
         path: 'profile',
         name: RouteNames.SETTINGS_PROFILE,
         component: () => import('@/features/settings/views/ProfileView.vue'),
-        meta: { title: 'Profile', requiresAuth: true },
+        meta: { title: 'Profile', titleKey: 'nav.profile', requiresAuth: true },
       },
       {
         // Devices (the tracker's sync subjects) live under settings: they
@@ -27,19 +27,19 @@ const settingsRoutes: RouteRecordRaw[] = [
         path: 'devices',
         name: RouteNames.SETTINGS_DEVICES,
         component: () => import('@/features/devices/views/DeviceListView.vue'),
-        meta: { title: 'Devices', requiresAuth: true },
+        meta: { title: 'Devices', titleKey: 'nav.devices', requiresAuth: true },
       },
       {
         path: 'preferences',
         name: RouteNames.SETTINGS_PREFERENCES,
         component: () => import('@/features/settings/views/PreferencesView.vue'),
-        meta: { title: 'Preferences', requiresAuth: true },
+        meta: { title: 'Preferences', titleKey: 'nav.preferences', requiresAuth: true },
       },
       {
         path: 'api-keys',
         name: RouteNames.SETTINGS_API_KEYS,
         component: () => import('@/features/settings/views/ApiKeysView.vue'),
-        meta: { title: 'API Keys', requiresAuth: true },
+        meta: { title: 'API Keys', titleKey: 'nav.apiKeys', requiresAuth: true },
       },
     ],
   },

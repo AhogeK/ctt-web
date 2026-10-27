@@ -55,7 +55,7 @@ test.describe('Interface language — public surfaces', () => {
         }
         return {
           language: rect('[data-testid="language-menu"]'),
-          theme: rect('header button[aria-label^="Current theme"]'),
+          theme: rect('header [data-testid="theme-toggle"]'),
           cta: rect('[data-testid="marketing-cta"]'),
           card: rect('.auth-card'),
         }
@@ -88,7 +88,7 @@ test.describe('Interface language — public surfaces', () => {
         }
         return {
           language: rect('[data-testid="language-menu"]'),
-          theme: rect('.auth-form__header button[aria-label^="Current theme"]'),
+          theme: rect('.auth-form__header [data-testid="theme-toggle"]'),
           email: rect('input[type="email"]'),
           submit: rect('form button[type="submit"]'),
         }
@@ -111,5 +111,29 @@ test.describe('Interface language — public surfaces', () => {
     expect(size(enForm.theme)).toEqual(size(zhForm.theme))
     expect(size(enForm.email)).toEqual(size(zhForm.email))
     expect(size(enForm.submit)).toEqual(size(zhForm.submit))
+  })
+
+  test('the tab title and the 404 page follow the interface language', async ({ page }) => {
+    await page.addInitScript(() => localStorage.setItem('ctt.locale', 'zh-CN'))
+
+    // A route title resolved through the catalogue, read from the tab itself.
+    await page.goto('/auth/login')
+    await expect(page).toHaveTitle('登录 - Code Time Tracker')
+
+    // The catch-all page is copy too, not just a status code.
+    await page.goto('/this-route-does-not-exist')
+    await expect(page).toHaveTitle('页面不存在 - Code Time Tracker')
+    await expect(page.getByRole('heading', { level: 2 })).toHaveText('页面不存在')
+    await expect(page.getByRole('button', { name: '回到首页' })).toBeVisible()
+    await expect(page.getByRole('button', { name: '返回上一页' })).toBeVisible()
+
+    // Switching language without navigating must rewrite the title already on screen.
+    // The 404 view renders outside the shells, so use a public page that owns the menu.
+    await page.goto('/auth/login')
+    await expect(page).toHaveTitle('登录 - Code Time Tracker')
+    await page.getByTestId('language-menu').click()
+    await page.getByRole('menuitemradio', { name: 'English' }).click()
+    await expect(page.locator('html')).toHaveAttribute('lang', 'en')
+    await expect(page).toHaveTitle('Login - Code Time Tracker')
   })
 })

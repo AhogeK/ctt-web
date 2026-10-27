@@ -5,6 +5,8 @@ declare module 'vue-router' {
   interface RouteMeta {
     /** Page title displayed in browser tab and navigation */
     title: string
+    /** Catalogue key for the localized title; falls back to `title` when absent */
+    titleKey?: string
     /** Whether authentication is required to access this route */
     requiresAuth?: boolean
     /** Whether this route is only accessible by unauthenticated users (guests) */

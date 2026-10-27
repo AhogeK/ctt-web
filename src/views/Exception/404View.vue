@@ -4,10 +4,12 @@
  * Provides user-friendly navigation options when a route is not found.
  */
 import { useRouter } from 'vue-router'
+import { useI18n } from 'vue-i18n'
 import { Button } from '@/components/ui/button'
 import { RouteNames } from '@/router/route-names'
 
 const router = useRouter()
+const { t } = useI18n()
 
 /**
  * Navigate to the home page using type-safe route name.
@@ -31,18 +33,17 @@ function handleGoBack() {
       <h1 class="text-8xl font-bold text-primary/20">404</h1>
 
       <!-- Page title -->
-      <h2 class="mt-4 text-3xl font-bold text-foreground">Page Not Found</h2>
+      <h2 class="mt-4 text-3xl font-bold text-foreground">{{ t('app.notFoundTitle') }}</h2>
 
       <!-- Helpful description -->
       <p class="mt-4 max-w-md text-muted-foreground">
-        The page you are looking for does not exist or has been removed. Please check the URL or use the buttons below
-        to return to a valid page.
+        {{ t('app.notFoundBody') }}
       </p>
 
       <!-- Action buttons -->
       <div class="mt-8 flex justify-center flex-col gap-3 sm:flex-row sm:gap-4">
-        <Button variant="default" @click="handleGoHome"> Go Home </Button>
-        <Button variant="outline" @click="handleGoBack"> Go Back </Button>
+        <Button variant="default" @click="handleGoHome"> {{ t('app.goHome') }} </Button>
+        <Button variant="outline" @click="handleGoBack"> {{ t('app.goBack') }} </Button>
       </div>
     </div>
   </div>
