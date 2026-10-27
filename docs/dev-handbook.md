@@ -14,7 +14,7 @@
 
 路由实例创建后自动调用 `setupRouterGuards(router)` 设置全局守卫，包含：
 
-- 文档标题自动设置：`{meta.title} - CTT`
+- 文档标题自动设置：`{meta.titleKey 按当前语言解析，缺失回退 meta.title} - Code Time Tracker`
 - NProgress 进度条
 - 认证守卫：`requiresAuth: true` 的路由未登录时重定向到登录页，并携带 `redirect` 查询参数
 
@@ -81,6 +81,7 @@ export const RouteNames = {
 | 字段           | 类型              | 必填 | 说明                                |
 | -------------- | ----------------- | ---- | ----------------------------------- |
 | `title`        | `string`          | 是   | 页面标题，用于浏览器 tab 和导航菜单 |
+| `titleKey`     | `string`          | 否   | 标题的词条键；存在时 tab 用它按当前语言解析，缺失才回退 `title` |
 | `requiresAuth` | `boolean`         | 否   | 是否需要认证，默认 `false`          |
 | `roles`        | `string[]`        | 否   | RBAC 角色权限（预留）               |
 | `layout`       | `'auth' \| 'app'` | 否   | 使用的布局模板                      |

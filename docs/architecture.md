@@ -684,9 +684,10 @@ Vue I18n v11 (`11.4.14`) with two catalogues: `en` bundled as the source languag
 // src/router/guard.ts
 export function setupRouterGuards(router: Router) {
   router.beforeEach((to, _from, next) => {
-    const title = to.meta.title
+    // titleKey is optional: routes without one fall back to the English title.
+    const title = to.meta.titleKey ? i18n.global.t(to.meta.titleKey) : to.meta.title
     if (title) {
-      document.title = `${title} - CTT`
+      document.title = `${title} - Code Time Tracker`
     }
 
     NProgress.start()
