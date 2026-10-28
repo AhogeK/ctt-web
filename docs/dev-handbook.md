@@ -531,6 +531,22 @@ const dispatchEventSpy = vi.spyOn(window, 'dispatchEvent').mockImplementation(vi
 vi.stubEnv('VITE_API_BASE_URL', 'https://api.example.com')
 ```
 
+**`mountWithQuery()` — a component that calls `useMutation`/`useQuery` itself**
+
+A component that reaches for TanStack Query in its own `setup` throws `No 'queryClient' found in Vue context`
+when it is mounted bare, because the test setup installs i18n but no query plugin. Mocking the composable
+away hides the wiring under test, so mount it through the helper instead:
+
+```typescript
+import { mountWithQuery } from '@/test/mount-with-query'
+
+const wrapper = mountWithQuery(DataExportCard)
+```
+
+The helper builds a fresh `QueryClient` per call with retries off. Retries would make a test that asserts a
+rejected mutation wait out the library's back-off, and a shared client would carry one test's cache into the
+next. Callbacks still run asynchronously, so `await flushPromises()` after the interaction.
+
 ### 3.6 Using the test factories
 
 The project provides `@/test/factories` for generating standardized test data:

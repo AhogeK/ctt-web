@@ -42,7 +42,7 @@ Everything is open source and free to self-host.
 | **See your time** — summary cards, daily and long-term trends, heatmaps, language/project/IDE distributions, time-of-day views, and recent sessions. | **Filter with context** — inspect a date range, one device, or one IDE; the active view stays in the URL. |
 | **Spot patterns** — compare periods, follow your streak, and see when and where your best work happens. | **Manage devices and keys** — check last activity and last-used IDE, revoke devices, and create scoped API keys with optional expiry. |
 | **Keep momentum** — browse achievement ladders and compare on the multi-dimension leaderboard. | **Sign in securely** — email/password or GitHub OAuth, password reset, email verification, and profile controls. |
-| **Make it yours** — English and 简体中文, with light, dark, and system themes, and a reduced-motion option. | **Own your data** — run the whole stack yourself; no paid tiers or feature locks. |
+| **Make it yours** — English and 简体中文, with light, dark, and system themes, and a reduced-motion option. | **Own your data** — see every signed-in session and revoke any of them, export everything as one JSON file, and run the whole stack yourself; no paid tiers or feature locks. |
 
 ## How it fits together
 
