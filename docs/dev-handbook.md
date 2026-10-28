@@ -1,33 +1,33 @@
-# 开发手册
+# Developer Handbook
 
-> ctt-web 项目开发指南 — 路由、API、测试与提交规范
+> ctt-web developer guide — routing, API, testing, and commit conventions
 
-## 1. 如何新增路由
+## 1. Adding a route
 
-### 1.1 路由架构概述
+### 1.1 Routing architecture overview
 
-项目使用 **基于特性的路由模块自动发现机制**：
+The project uses **feature-based automatic route module discovery**:
 
-- `src/router/index.ts` 通过 `import.meta.glob('./modules/*.ts', { eager: true })` 自动加载 `src/router/modules/` 下所有模块文件，无需手动在 `index.ts` 中注册
-- **常量路由**（`index.ts` 内联）：首页 `/`、404 `/:pathMatch(.*)*` 等顶级路由
-- **特性路由**（`modules/` 目录）：按功能模块组织（auth、dashboard、settings 等）
+- `src/router/index.ts` loads every module file under `src/router/modules/` through `import.meta.glob('./modules/*.ts', { eager: true })`, with nothing to register by hand in `index.ts`
+- **Constant routes** (inline in `index.ts`): top-level routes such as the home page `/` and the 404 `/:pathMatch(.*)*`
+- **Feature routes** (the `modules/` directory): organized per feature module (auth, dashboard, settings, ...)
 
-路由实例创建后自动调用 `setupRouterGuards(router)` 设置全局守卫，包含：
+After the router instance is created, `setupRouterGuards(router)` installs the global guards, which cover:
 
-- 文档标题自动设置：`{meta.titleKey 按当前语言解析，缺失回退 meta.title} - Code Time Tracker`
-- NProgress 进度条
-- 认证守卫：`requiresAuth: true` 的路由未登录时重定向到登录页，并携带 `redirect` 查询参数
+- Automatic document title: `{meta.titleKey resolved in the current language, falling back to meta.title when missing} - Code Time Tracker`
+- NProgress progress bar
+- Auth guard: a route with `requiresAuth: true` redirects to the login page when the user is not signed in, carrying a `redirect` query parameter
 
-### 1.2 步骤
+### 1.2 Steps
 
-1. **在 `src/router/route-names.ts` 中添加路由名称常量**
-2. **在 `src/router/modules/` 下新建或编辑模块文件**（如 `features/my-feature.ts`）
-3. **创建对应的 View 组件**（`src/features/<feature>/views/<Name>View.vue`）
-4. **验证路由可用**：运行 `pnpm dev`，访问对应路径
+1. **Add the route name constant in `src/router/route-names.ts`**
+2. **Create or edit the module file under `src/router/modules/`** (e.g. `features/my-feature.ts`)
+3. **Create the matching view component** (`src/features/<feature>/views/<Name>View.vue`)
+4. **Verify the route works**: run `pnpm dev` and visit the path
 
-### 1.3 代码示例
+### 1.3 Code example
 
-完整的路由模块文件（参考 `settings.ts` 模式）：
+A complete route module file (following the `settings.ts` pattern):
 
 ```typescript
 // src/router/modules/my-feature.ts
@@ -60,7 +60,7 @@ const myFeatureRoutes: RouteRecordRaw[] = [
 export default myFeatureRoutes
 ```
 
-对应的 `route-names.ts` 新增：
+The matching additions to `route-names.ts`:
 
 ```typescript
 // src/router/route-names.ts
@@ -74,65 +74,65 @@ export const RouteNames = {
 } as const
 ```
 
-### 1.4 RouteMeta 类型
+### 1.4 The RouteMeta type
 
-在 `src/types/vue-router.d.ts` 中定义，所有可用字段：
+Defined in `src/types/vue-router.d.ts`. Every available field:
 
-| 字段           | 类型              | 必填 | 说明                                |
-| -------------- | ----------------- | ---- | ----------------------------------- |
-| `title`        | `string`          | 是   | 页面标题，用于浏览器 tab 和导航菜单 |
-| `titleKey`     | `string`          | 否   | 标题的词条键；存在时 tab 用它按当前语言解析，缺失才回退 `title` |
-| `requiresAuth` | `boolean`         | 否   | 是否需要认证，默认 `false`          |
-| `roles`        | `string[]`        | 否   | RBAC 角色权限（预留）               |
-| `layout`       | `'auth' \| 'app'` | 否   | 使用的布局模板                      |
-| `hideInMenu`   | `boolean`         | 否   | 是否在侧边栏隐藏此路由              |
+| Field          | Type              | Required | Description                                                                                                                           |
+|----------------|-------------------|----------|---------------------------------------------------------------------------------------------------------------------------------------|
+| `title`        | `string`          | Yes      | Page title, used for the browser tab and the navigation menu                                                                          |
+| `titleKey`     | `string`          | No       | Message key for the title; when present the tab resolves it in the current language and only falls back to `title` when it is missing |
+| `requiresAuth` | `boolean`         | No       | Whether authentication is required; defaults to `false`                                                                               |
+| `roles`        | `string[]`        | No       | RBAC role permissions (reserved)                                                                                                      |
+| `layout`       | `'auth' \| 'app'` | No       | Layout template to use                                                                                                                |
+| `hideInMenu`   | `boolean`         | No       | Whether to hide this route from the sidebar                                                                                           |
 
-### 1.5 注意事项
+### 1.5 Caveats
 
-- **子路由使用相对路径**：`path: 'profile'` 而非 `path: '/settings/profile'`
-- **空路径子路由 `path: ''`** 作为默认子页面（如 dashboard 首页）
-- **路由名称必须使用 `RouteNames` 常量**，禁止魔法字符串
-- **认证路由的子路由也需设置 `requiresAuth: true`**，守卫会检查每层 meta
-- **父路由使用 Layout 组件**（`AppLayout.vue` 或 `AuthLayout.vue`），子路由使用 Feature View 组件
-- auth 模块的子路由使用绝对路径（如 `path: '/login'`），这是历史模式，新模块应使用相对路径
+- **Child routes use relative paths**: `path: 'profile'`, not `path: '/settings/profile'`
+- **An empty-path child route, `path: ''`,** serves as the default child page (e.g. the dashboard home)
+- **Route names must use the `RouteNames` constants**; magic strings are not allowed
+- **The children of auth routes must also set `requiresAuth: true`**; the guard checks the meta of every level
+- **Parent routes use a layout component** (`AppLayout.vue` or `AuthLayout.vue`); child routes use feature view components
+- The auth module's child routes use absolute paths (e.g. `path: '/login'`). That is a legacy pattern; new modules should use relative paths
 
 ---
 
-## 2. 如何新增 API 调用
+## 2. Adding an API call
 
-### 2.1 API 层架构概述
+### 2.1 API layer architecture overview
 
-采用 **三层架构**：
+The layer uses a **three-tier architecture**:
 
 ```
 HTTP Client (apiFetch) → API Functions → Schemas (Zod)
 ```
 
-- **单一 HTTP 客户端**：`src/lib/api/instance.ts` 导出的 `apiFetch`（基于 ofetch 实例）
-- **自动注入 Bearer token**：从 `localStorage` 读取 `ctt_access_token` 并设置 `Authorization` 头
-- **全局错误处理**（`onResponseError` 拦截器）：
+- **A single HTTP client**: `apiFetch`, exported from `src/lib/api/instance.ts` (an ofetch instance)
+- **Automatic Bearer token injection**: reads `ctt_access_token` from `localStorage` and sets the `Authorization` header
+- **Global error handling** (the `onResponseError` interceptor):
 
-| 状态码 | 行为                                                         |
-| ------ | ------------------------------------------------------------ |
-| 401    | 清除 token + toast 提示 + 派发 `api:unauthorized` 自定义事件 |
-| 403    | toast 提示 "Permission denied"                               |
-| 404    | `console.warn`（交由组件处理）                               |
-| 422    | 跳过（由表单验证组件处理）                                   |
-| 500+   | toast 提示 "Server error"                                    |
+| Status | Behavior                                                                  |
+|--------|---------------------------------------------------------------------------|
+| 401    | Clears the token + toast + dispatches the `api:unauthorized` custom event |
+| 403    | Toast "Permission denied"                                                 |
+| 404    | `console.warn` (left to the component)                                    |
+| 422    | Skipped (handled by the form validation component)                        |
+| 500+   | Toast "Server error"                                                      |
 
-### 2.2 步骤
+### 2.2 Steps
 
-1. **定义 Zod Schema**（`src/lib/schemas/<domain>.schema.ts`）
-2. **创建 API 函数**（`src/lib/api/<domain>.ts`）
-3. **导出到 barrel 文件**（`src/lib/api/index.ts`）
-4. **在 Store 或 Composable 中消费**
+1. **Define the Zod schema** (`src/lib/schemas/<domain>.schema.ts`)
+2. **Create the API function** (`src/lib/api/<domain>.ts`)
+3. **Export it from the barrel file** (`src/lib/api/index.ts`)
+4. **Consume it in a store or composable**
 
-### 2.3 代码示例
+### 2.3 Code example
 
-完整的三步模式：
+The complete three-step pattern:
 
 ```typescript
-// 1. Schema 定义 — src/lib/schemas/item.schema.ts
+// 1. Schema definition — src/lib/schemas/item.schema.ts
 import { z } from 'zod'
 
 export const CreateItemRequestSchema = z.object({
@@ -154,7 +154,7 @@ export type CreateItemResponse = z.infer<typeof CreateItemResponseSchema>
 ```
 
 ```typescript
-// 2. API 函数 — src/lib/api/item.ts
+// 2. API function — src/lib/api/item.ts
 import { apiFetch } from './instance'
 import {
   CreateItemRequestSchema,
@@ -176,7 +176,7 @@ export async function createItem(data: CreateItemRequest): Promise<CreateItemRes
 ```
 
 ```typescript
-// 3. 导出到 barrel — src/lib/api/index.ts
+// 3. Export from the barrel — src/lib/api/index.ts
 export { apiFetch, type ApiFetchOptions } from './instance'
 export { login, logout } from './auth'
 export { createItem } from './item'
@@ -250,25 +250,25 @@ function handleBindGitHub() {
   - Pick the shape that matches how the caller invokes `mutate`.
 - For Zod-strict unions on the action param, use `z.enum(['login', 'bind'])` if the backend guarantees the enum; use `z.string()` if future providers will add new actions.
 
-### 2.4 错误处理
+### 2.4 Error handling
 
-API 层的错误处理策略已在 `apiFetch` 实例中全局配置：
+The API layer's error handling is configured globally on the `apiFetch` instance:
 
-- **401 Unauthorized**：自动清除 `ctt_access_token`，显示 toast，派发 `api:unauthorized` 事件。监听方式：
+- **401 Unauthorized**: clears `ctt_access_token` automatically, shows a toast and dispatches the `api:unauthorized` event. To listen:
   ```typescript
   globalThis.addEventListener(UNAUTHORIZED_EVENT, () => {
     // Handle unauthorized (e.g., redirect to login)
   })
   ```
-- **403 Forbidden**：toast 提示 "Permission denied. You do not have access to this resource."
-- **422 Unprocessable Entity**：跳过处理，由 Vee-Validate 表单验证层处理
-- **500+ Server Error**：toast 提示 "Server error. Please try again later."
+- **403 Forbidden**: toast "Permission denied. You do not have access to this resource."
+- **422 Unprocessable Entity**: skipped, handled by the Vee-Validate form validation layer
+- **500+ Server Error**: toast "Server error. Please try again later."
 
-API 函数本身不捕获这些错误，交由调用方（Pinia Store / TanStack Query）处理。
+The API functions themselves do not catch these errors; that is left to the caller (Pinia store / TanStack Query).
 
-### 2.5 消费方式
+### 2.5 Consuming the API
 
-**Pinia Store** — 认证/会话相关：
+**Pinia store** — auth/session state:
 
 ```typescript
 // stores/auth.ts
@@ -287,7 +287,7 @@ export const useAuthStore = defineStore('auth', {
 })
 ```
 
-**TanStack Query** — 数据获取（useQuery / useMutation）：
+**TanStack Query** — data fetching (useQuery / useMutation):
 
 ```typescript
 // composables/useItems.ts
@@ -304,14 +304,14 @@ export function useCreateItem() {
 }
 ```
 
-配合 `query-keys.ts` 使用类型安全的缓存键进行缓存失效管理。
+Use it with `query-keys.ts` to manage cache invalidation through type-safe cache keys.
 
-### 2.6 通用 Schema 工具
+### 2.6 Shared schema helpers
 
-`src/lib/schemas/api.schema.ts` 提供通用响应包装工厂：
+`src/lib/schemas/api.schema.ts` provides the generic response wrapper factories:
 
 ```typescript
-// 标准响应包装
+// Standard response wrapper
 import { createApiResponseSchema, createPagedResponseSchema } from '@/lib/schemas/api.schema'
 
 const UserResponseSchema = createApiResponseSchema(UserSchema)
@@ -323,27 +323,27 @@ const UsersPagedSchema = createPagedResponseSchema(UserSchema)
 
 ---
 
-## 3. 如何写组件测试
+## 3. Writing component tests
 
-### 3.1 测试基础设施
+### 3.1 Test infrastructure
 
-| 工具                      | 版本 | 用途                               |
-| ------------------------- | ---- | ---------------------------------- |
-| Vitest                    | 5    | 测试运行器                         |
-| @vue/test-utils           | 2    | Vue 组件挂载                       |
-| @testing-library/vue      | 8    | 语义化断言                         |
-| @testing-library/jest-dom | 7    | 额外匹配器（toBeInTheDocument 等） |
-| @faker-js/faker           | 10   | 测试数据生成                       |
-| jsdom                     | 30   | 浏览器环境模拟                     |
+| Tool                      | Version | Purpose                                 |
+|---------------------------|---------|-----------------------------------------|
+| Vitest                    | 5       | Test runner                             |
+| @vue/test-utils           | 2       | Mounting Vue components                 |
+| @testing-library/vue      | 8       | Semantic assertions                     |
+| @testing-library/jest-dom | 7       | Extra matchers (toBeInTheDocument etc.) |
+| @faker-js/faker           | 10      | Test data generation                    |
+| jsdom                     | 30      | Browser environment simulation          |
 
-**关键配置**（`vitest.config.ts`）：
+**Key configuration** (`vitest.config.ts`):
 
 - `environment: 'jsdom'`
-- `globals: true` — `describe/it/expect` 无需 import
-- `setupFiles: ['./src/test/setup.ts']` — 自动清理 + 浏览器 API mocks
-- `exclude: [...configDefaults.exclude, 'e2e/**']` — 排除 E2E 测试
+- `globals: true` — `describe/it/expect` need no import
+- `setupFiles: ['./src/test/setup.ts']` — automatic cleanup + browser API mocks
+- `exclude: [...configDefaults.exclude, 'e2e/**']` — excludes the E2E tests
 
-**自动清理**（`src/test/setup.ts`）：
+**Automatic cleanup** (`src/test/setup.ts`):
 
 ```typescript
 import '@testing-library/jest-dom/vitest'
@@ -359,17 +359,17 @@ Object.defineProperty(window, 'matchMedia', {/* ... */})
 global.ResizeObserver = vi.fn().mockImplementation(() => ({/* ... */}))
 ```
 
-### 3.2 测试文件组织
+### 3.2 Test file layout
 
-- **组件测试** 与源码同目录：`src/components/app/__tests__/ComponentName.test.ts`
-- **Store 测试**：`src/stores/__tests__/auth.test.ts`
-- **API 测试**：`src/lib/api/__tests__/instance.test.ts`
-- **Schema 测试**：`src/lib/schemas/__tests__/api.schema.test.ts`
-- **路由守卫测试**：`src/router/__tests__/guard.test.ts`
+- **Component tests** live next to the source: `src/components/app/__tests__/ComponentName.test.ts`
+- **Store tests**: `src/stores/__tests__/auth.test.ts`
+- **API tests**: `src/lib/api/__tests__/instance.test.ts`
+- **Schema tests**: `src/lib/schemas/__tests__/api.schema.test.ts`
+- **Router guard tests**: `src/router/__tests__/guard.test.ts`
 
-### 3.3 测试组件
+### 3.3 Testing a component
 
-使用 `@vue/test-utils` 的 `mount` 模式：
+Using the `mount` style from `@vue/test-utils`:
 
 ```typescript
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest'
@@ -422,9 +422,9 @@ describe('MyComponent', () => {
 })
 ```
 
-### 3.4 测试 Pinia Store
+### 3.4 Testing a Pinia store
 
-标准模式：`setActivePinia` + `createPinia` + `vi.mock` + `localStorage.clear`：
+The standard pattern: `setActivePinia` + `createPinia` + `vi.mock` + `localStorage.clear`:
 
 ```typescript
 import { describe, it, expect, beforeEach, vi } from 'vitest'
@@ -478,9 +478,9 @@ describe('Auth Store', () => {
 })
 ```
 
-### 3.5 Mocking 模式
+### 3.5 Mocking patterns
 
-**vi.mock() — 模块级 mock**：
+**vi.mock() — a module-level mock**:
 
 ```typescript
 vi.mock('ofetch', () => ({
@@ -492,7 +492,7 @@ vi.mock('ofetch', () => ({
 }))
 ```
 
-**vi.hoisted() — 在 mock 之前共享变量**：
+**vi.hoisted() — share variables before the mock runs**:
 
 ```typescript
 const capturedConfig = vi.hoisted(() => ({
@@ -511,29 +511,29 @@ vi.mock('ofetch', () => ({
 }))
 ```
 
-**vi.mocked() — 类型安全的 mock 控制**：
+**vi.mocked() — type-safe control of a mock**:
 
 ```typescript
 vi.mocked(authApi.login).mockResolvedValue(mockResponse)
 vi.mocked(authApi.refresh).mockRejectedValue(new Error('Token expired'))
 ```
 
-**vi.spyOn() — spy 现有方法**：
+**vi.spyOn() — spy on an existing method**:
 
 ```typescript
 const consoleWarnSpy = vi.spyOn(console, 'warn').mockImplementation(vi.fn())
 const dispatchEventSpy = vi.spyOn(window, 'dispatchEvent').mockImplementation(vi.fn())
 ```
 
-**vi.stubEnv() — 环境变量 mock**：
+**vi.stubEnv() — mock an environment variable**:
 
 ```typescript
 vi.stubEnv('VITE_API_BASE_URL', 'https://api.example.com')
 ```
 
-### 3.6 使用 Test Factories
+### 3.6 Using the test factories
 
-项目提供 `@/test/factories` 用于生成标准化测试数据：
+The project provides `@/test/factories` for generating standardized test data:
 
 ```typescript
 import { buildLoginRequest, buildLoginResponse } from '@/test/factories'
@@ -555,35 +555,35 @@ const errorResponse = buildApiError('Not found', { statusCode: 404 })
 // { message: 'Not found', statusCode: 404 }
 ```
 
-Factory 位于 `src/test/factories/index.ts`，使用 `@faker-js/faker` 生成随机但有效的测试数据。
+The factories live in `src/test/factories/index.ts` and use `@faker-js/faker` to generate random but valid test data.
 
-### 3.7 运行测试
-
-```bash
-pnpm test:unit                    # 所有单元测试
-pnpm test:unit src/stores         # 指定目录
-pnpm test:unit -- --coverage      # 覆盖率报告
-pnpm test:unit -- -t "Auth Store" # 运行匹配名称的测试
-```
-
-E2E 测试（Playwright）：
+### 3.7 Running the tests
 
 ```bash
-pnpm exec playwright install      # 首次运行 — 安装浏览器
-pnpm test:e2e                     # 所有 E2E 测试（自动构建并起本地 preview）
-pnpm test:e2e --project=chromium  # 仅 Chromium
-pnpm test:e2e --debug             # 调试模式
+pnpm test:unit                    # All unit tests
+pnpm test:unit src/stores         # A specific directory
+pnpm test:unit -- --coverage      # Coverage report
+pnpm test:unit -- -t "Auth Store" # Run tests whose name matches
 ```
 
-**E2E 跑的是生产构建**（`pnpm build` + `pnpm preview`，端口 4173）✓，本地与 CI 一致 ✓。
-原先本地打 dev server（5173）——dev 按需转译模块 ⇒ 全套排在同一个瓶颈后面：全量 **153s** 且重用例在并行下超时 ✗；
-打生产构建则是 **54s** 且无 flaky ✓。**顺带不再占用你自己的 dev server** ✓。
+E2E tests (Playwright):
+
+```bash
+pnpm exec playwright install      # First run — install browsers
+pnpm test:e2e                     # All E2E tests (builds and starts a local preview automatically)
+pnpm test:e2e --project=chromium  # Chromium only
+pnpm test:e2e --debug             # Debug mode
+```
+
+**E2E runs the production build** (`pnpm build` + `pnpm preview`, port 4173) ✓, so local and CI match ✓.
+It used to hit the local dev server (5173) — a dev server transpiles modules on demand ⇒ the whole suite queued behind that one bottleneck: **153s** in total, and the heavy specs timed out under parallelism ✗;
+against the production build it is **54s** with no flakes ✓. **It also stops occupying your own dev server** ✓.
 
 ---
 
-## 4. 提交规范
+## 4. Commit conventions
 
-### 4.1 Conventional Commits 格式
+### 4.1 Conventional Commits format
 
 ```
 <type>(<scope>): <subject>
@@ -593,51 +593,51 @@ pnpm test:e2e --debug             # 调试模式
 <footer>
 ```
 
-- `type`：变更类型（必填）
-- `scope`：影响范围（可选，如 `auth`、`router`、`api`）
-- `subject`：简短描述，不超过 72 字符（必填）
-- `body`：详细说明（可选）
-- `footer`：破坏性变更或关联 issue（可选）
+- `type`: the kind of change (required)
+- `scope`: what it touches (optional, e.g. `auth`, `router`, `api`)
+- `subject`: a short description, at most 72 characters (required)
+- `body`: the detailed explanation (optional)
+- `footer`: breaking changes or related issues (optional)
 
-### 4.2 可用类型
+### 4.2 Available types
 
-| 类型       | 说明                     | 示例                                                     |
-| ---------- | ------------------------ | -------------------------------------------------------- |
-| `feat`     | 新功能                   | `feat(auth): add token refresh with concurrency control` |
-| `fix`      | Bug 修复                 | `fix(router): preserve query params in redirect`         |
-| `docs`     | 文档变更                 | `docs: add development handbook`                         |
-| `style`    | 代码格式（不影响功能）   | `style: format imports with oxfmt`                       |
-| `refactor` | 重构（非新功能、非修复） | `refactor(api): extract error handling to interceptor`   |
-| `perf`     | 性能优化                 | `perf: lazy load dashboard charts`                       |
-| `test`     | 测试相关                 | `test(auth): add concurrent refresh dedup test`          |
-| `build`    | 构建系统/外部依赖        | `build: upgrade vitest to v4`                            |
-| `ci`       | CI 配置变更              | `ci: add playwright e2e workflow`                        |
-| `chore`    | 其他不修改源码的变更     | `chore: update gitignore`                                |
-| `revert`   | 撤销之前的提交           | `revert: feat(auth): add token refresh`                  |
+| Type       | Description                                 | Example                                                  |
+|------------|---------------------------------------------|----------------------------------------------------------|
+| `feat`     | New feature                                 | `feat(auth): add token refresh with concurrency control` |
+| `fix`      | Bug fix                                     | `fix(router): preserve query params in redirect`         |
+| `docs`     | Documentation changes                       | `docs: add development handbook`                         |
+| `style`    | Code formatting (no behavior change)        | `style: format imports with oxfmt`                       |
+| `refactor` | Refactor (neither a feature nor a fix)      | `refactor(api): extract error handling to interceptor`   |
+| `perf`     | Performance improvement                     | `perf: lazy load dashboard charts`                       |
+| `test`     | Test-related changes                        | `test(auth): add concurrent refresh dedup test`          |
+| `build`    | Build system / external dependencies        | `build: upgrade vitest to v4`                            |
+| `ci`       | CI configuration changes                    | `ci: add playwright e2e workflow`                        |
+| `chore`    | Other changes that do not touch source code | `chore: update gitignore`                                |
+| `revert`   | Revert an earlier commit                    | `revert: feat(auth): add token refresh`                  |
 
-### 4.3 示例
+### 4.3 Examples
 
 ```bash
-# 简单提交
+# Simple commit
 git commit -m "feat(settings): add API keys management page"
 
-# 带 scope 和 body
+# With scope and body
 git commit -m "fix(router): handle chunk load errors with auto-retry
 
 When a new deployment deletes old chunk files, the router detects
 the dynamic import failure and automatically reloads the page with
 a retried query parameter to prevent infinite loops."
 
-# 破坏性变更
+# Breaking change
 git commit -m "feat(api)!: migrate to Zod v4 schema validation
 
 BREAKING CHANGE: All schema imports must use the new Zod v4 API.
 The createApiResponseSchema factory now returns a different shape."
 ```
 
-### 4.4 门禁（commitlint 自动校验）
+### 4.4 The gate (commitlint checks it automatically)
 
-项目通过 `simple-git-hooks` + `commitlint` 在提交时自动校验：
+The project validates commit messages automatically with `simple-git-hooks` + `commitlint`:
 
 ```javascript
 // commitlint.config.js
@@ -656,7 +656,7 @@ export default {
 }
 ```
 
-**pre-commit 钩子**（`package.json`）：
+**The git hooks** (`package.json`):
 
 ```json
 {
@@ -667,58 +667,76 @@ export default {
 }
 ```
 
-提交前自动运行 `oxfmt --write` + `oxlint --fix` 格式化暂存文件。不符合规范的提交信息将被拒绝。
+Before each commit, `oxfmt --write` + `oxlint --fix` format the staged files automatically. A commit message that breaks the rules is rejected.
+
+### 4.5 What the static checks catch — and what they cannot
+
+`pnpm lint` runs oxlint (configured in `vite.config.ts` under `lint`): the `correctness` category plus an explicit
+rule list. **It must end with zero output** — a warning is either fixed or suppressed with a stated reason, never
+left for the next person to wonder about.
+
+**SonarLint in the editor is not part of this chain.** It runs two analyzers: SonarJS (open source) and
+SonarTypeScript (**closed source**). The latter's `typescript:S…` rules have no open implementation, so:
+
+| Situation | What to do |
+| --- | --- |
+| oxlint has an equivalent rule (`S7760` ↔ `unicorn/prefer-default-parameters`) | Measure the blast radius on the existing code → prove the rule bites with a probe → add it to `lint.rules` |
+| oxlint has no equivalent | **Say so plainly** — never claim coverage; the remaining option is SonarQube Cloud (free for public repositories, needs CI) |
+| The finding is a false positive (e.g. the assertions live in a shared helper) | Configure the rule (`assertFunctionNames`), or suppress one line with `oxlint-disable-next-line` and a reason |
+
+Do not add a heavy dependency to "cover more rules": `eslint-plugin-sonarjs` brings 13 transitive dependencies
+(including a second copy of `typescript`) and does **not** include `S7760` — it cannot close the closed-source gap.
 
 ---
 
-## 5. 如何写 E2E 测试
+## 5. Writing E2E tests
 
-### 5.1 E2E 测试基础设施
+### 5.1 E2E test infrastructure
 
-| 工具       | 版本 | 用途                              |
-| ---------- | ---- | --------------------------------- |
-| Playwright | 1.x  | 端到端测试运行器（仅 Chromium）    |
+| Tool       | Version | Purpose                                |
+|------------|---------|----------------------------------------|
+| Playwright | 1.x     | End-to-end test runner (Chromium only) |
 
-**关键配置**（`playwright.config.ts`）：
+**Key configuration** (`playwright.config.ts`):
 
-- `projects: [chromium]`：**只跑 Chromium**。脚手架默认带 firefox/webkit 但从未有人为其写断言，而 `playwright install` 只装 chromium，导致 `pnpm test:e2e` 对任何人都启动即失败。**未运行的项目不是覆盖率，是一个失败步骤**——要启用某引擎，先装该引擎并跑通它的用例。
-- `webServer`: 自动启动 **preview server**（生产构建 + 4173，本地与 CI 一致）；构建由 `pnpm test:e2e` 负责，所以复用的旧进程也只会提供刚构建出来的产物 ✓
+- `projects: [chromium]`: **Chromium only**. The scaffold ships firefox/webkit by default, but nobody ever wrote assertions for them, while `playwright install` only installs chromium, so `pnpm test:e2e` failed at startup for everyone. **A project that never runs is not coverage, it is a failing step** — to enable an engine, install that engine and get its specs passing first.
+- `webServer`: starts the **preview server** automatically (production build + 4173, so local and CI match); `pnpm test:e2e` does the build, so even a reused old process only serves the freshly built output ✓
 
-### 5.2 文件组织
+### 5.2 File layout
 
 ```text
 e2e/
-├── achievements/            # 成就页 spec + 本地 fixture/helper
-│   ├── fixtures.ts          # wire 形状的响应常量（不从 src/ 导入）
-│   ├── helpers.ts           # setup + 断言助手
+├── achievements/            # Achievements page spec + local fixture/helper
+│   ├── fixtures.ts          # Response constants in wire shape (not imported from src/)
+│   ├── helpers.ts           # setup + assertion helpers
 │   └── page.spec.ts
-├── api-keys/                # API Key 各流程（list/create/revoke/delete/errors/a11y/rawkey）
+├── api-keys/                # API key flows (list/create/revoke/delete/errors/a11y/rawkey)
 ├── auth/                    # auth flow specs
 │   ├── login.spec.ts
 │   ├── logout.spec.ts
 │   ├── protected-routes.spec.ts
 │   └── guest-guard.spec.ts
-├── dashboard/               # 布局契约（heatmap-layout.spec.ts · summary-comparison.spec.ts）
-├── devices/                 # 设备管理与撤销
-├── leaderboard/             # 排行榜 spec + 本地 fixture/helper
-├── fixtures/                # 共享测试数据（跨 feature）
-│   └── auth.ts              # 规范化的 credentials + response shapes
+├── dashboard/               # Layout contract (heatmap-layout.spec.ts · summary-comparison.spec.ts)
+├── devices/                 # Device management and revocation
+├── leaderboard/             # Leaderboard spec + local fixture/helper
+├── fixtures/                # Shared test data (across features)
+│   └── auth.ts              # Standardized credentials + response shapes
 ├── mocks/                   # API contract reference
 │   └── handlers/
 │       └── auth.ts          # typed response constants for 9 auth endpoints + /users/me
-├── utils/                   # 共享 helpers
+├── utils/                   # Shared helpers
 │   └── auth-helpers.ts      # mockAuthApis, loginViaForm, clickLogout, readAuthStore
-└── vue.spec.ts              # 旧的基础 smoke test
+└── vue.spec.ts              # Legacy basic smoke test
 ```
 
-**两种 fixture 并存，用途不同**：跨 feature 共用的放 `e2e/fixtures/`；单个 feature 的放该 feature 目录下，
-并**声明 wire 形状而非 schema 解析类型**——`src/` 的 schema 用 `.default(null)` 把
-`windowStart`/`currentUserRank` 变成「必填」，而服务端是**整个键省略**，用解析类型就无法表达
-fixture 存在要复现的那种情形。
+**Two kinds of fixtures coexist, for different purposes**: fixtures shared across features live in `e2e/fixtures/`; a single feature's fixtures stay in that feature's directory,
+and they **declare the wire shape rather than the parsed schema type** — the `src/` schemas use `.default(null)` to turn
+`windowStart`/`currentUserRank` into "required" fields, while the server **omits the whole key**, so a parsed type cannot express
+the situation the fixture exists to reproduce.
 
-### 5.3 编写新的 E2E 测试
+### 5.3 Writing a new E2E test
 
-典型的 auth spec 结构：
+The typical shape of an auth spec:
 
 ```typescript
 import { test, expect, type Page } from '@playwright/test'
@@ -727,53 +745,53 @@ import { TEST_USER_CREDENTIALS } from '../fixtures/auth'
 
 test.describe('Auth flow', () => {
   test('user can log in and log out', async ({ page }) => {
-    // 1. 设置 mock API
+    // 1. Set up the mock API
     await mockAuthApis(page)
 
-    // 2. 通过表单登录
+    // 2. Sign in through the form
     await loginViaForm(page, TEST_USER_CREDENTIALS)
 
-    // 3. 验证登录状态
+    // 3. Verify the signed-in state
     expect(await readAuthStore(page, 'accessToken')).toBeTruthy()
 
-    // 4. 登出
+    // 4. Sign out
     await clickLogout(page)
 
-    // 5. 验证 token 已清除
+    // 5. Verify the token was cleared
     expect(await readAuthStore(page, 'accessToken')).toBeNull()
   })
 })
 ```
 
-**辅助函数**（`e2e/utils/auth-helpers.ts`）：
+**Helper functions** (`e2e/utils/auth-helpers.ts`):
 
-| 函数                        | 用途                               |
-| --------------------------- | ---------------------------------- |
-| `mockAuthApis(page)`        | 注册默认 auth API mock（9 个端点） |
-| `loginViaForm(page, creds)` | 通过表单提交登录                   |
-| `clickLogout(page)`         | 点击登出按钮                       |
-| `readAuthStore(page, key)`  | 读取 Pinia auth store 中的字段     |
+| Function                    | Purpose                                            |
+|-----------------------------|----------------------------------------------------|
+| `mockAuthApis(page)`        | Registers the default auth API mocks (9 endpoints) |
+| `loginViaForm(page, creds)` | Signs in by submitting the form                    |
+| `clickLogout(page)`         | Clicks the logout button                           |
+| `readAuthStore(page, key)`  | Reads a field from the Pinia auth store            |
 
-**Fixture 数据**（`e2e/fixtures/auth.ts`）：
+**Fixture data** (`e2e/fixtures/auth.ts`):
 
-| 常量                    | 用途                            |
-| ----------------------- | ------------------------------- |
-| `TEST_USER_ID`          | 规范化的测试用户 UUID           |
-| `TEST_USER_EMAIL`       | 测试邮箱                        |
-| `TEST_USER_CREDENTIALS` | 登录表单使用的 email + password |
-| `INVALID_CREDENTIALS`   | 触发 401 AUTH_001 的凭证        |
-| `TEST_LOGIN_RESPONSE`   | 登录成功响应                    |
-| `TEST_USER_PROFILE`     | `/users/me` 响应                |
+| Constant                | Purpose                                 |
+|-------------------------|-----------------------------------------|
+| `TEST_USER_ID`          | Standardized test user UUID             |
+| `TEST_USER_EMAIL`       | Test email                              |
+| `TEST_USER_CREDENTIALS` | Email + password used by the login form |
+| `INVALID_CREDENTIALS`   | Credentials that trigger a 401 AUTH_001 |
+| `TEST_LOGIN_RESPONSE`   | Successful login response               |
+| `TEST_USER_PROFILE`     | `/users/me` response                    |
 
-### 5.4 自定义 Mock 覆盖
+### 5.4 Custom mock overrides
 
-`mockAuthApis(page)` 默认注册全部 9 个端点的 happy path。如需在某个 test 中覆盖某个端点的行为，可在 `mockAuthApis` 之后追加 `page.route()`：
+`mockAuthApis(page)` registers the happy path for all 9 endpoints by default. To override one endpoint's behavior inside a single test, add a `page.route()` after `mockAuthApis`:
 
 ```typescript
 test('rate-limit toast appears on 429', async ({ page }) => {
   await mockAuthApis(page)
 
-  // 覆盖登录端点：返回 429
+  // Override the login endpoint: return 429
   await page.route('**/api/v1/auth/login', async (route) => {
     await route.fulfill({
       status: 429,
@@ -792,108 +810,108 @@ test('rate-limit toast appears on 429', async ({ page }) => {
 })
 ```
 
-**注意**：`page.route()` 的注册顺序决定优先级。后注册的 handler 优先匹配。如果只想覆盖一个端点的部分场景（例如 happy path + rate limit），用 `Promise.race` 或者先调用 `await page.unroute(...)` 再注册新的 handler。
+**Note**: the order in which `page.route()` handlers are registered decides their priority; the most recently registered handler matches first. To override only part of one endpoint's cases (for example happy path + rate limit), use `Promise.race`, or call `await page.unroute(...)` first and then register the new handler.
 
-### 5.5 E2E API Mocking 架构
+### 5.5 E2E API mocking architecture
 
-Playwright E2E 测试使用 `page.route()` 进行 API mock（Playwright 官方推荐的一等公民 API）。
+The Playwright E2E tests mock the API with `page.route()` (the first-class API Playwright recommends).
 
-**当前架构（v0.10.13）**：
+**Current architecture (v0.10.13)**:
 
-- `e2e/utils/auth-helpers.ts` — `mockAuthApis(page)` 注册 `page.route()` handlers，覆盖 9 个 auth 端点 + `/users/me`
-- `e2e/fixtures/auth.ts` — 规范化测试数据（`TEST_USER`、`TEST_TOKENS`、`STORAGE_KEYS` 等）
-- `e2e/mocks/handlers/auth.ts` — API 契约参考文档（typed response constants，无运行时依赖）
+- `e2e/utils/auth-helpers.ts` — `mockAuthApis(page)` registers the `page.route()` handlers covering 9 auth endpoints + `/users/me`
+- `e2e/fixtures/auth.ts` — standardized test data (`TEST_USER`, `TEST_TOKENS`, `STORAGE_KEYS` and friends)
+- `e2e/mocks/handlers/auth.ts` — API contract reference (typed response constants, no runtime dependency)
 
-**设计决策**：`page.route()` 是 Playwright 的原生网络拦截 API，无需额外依赖。MSW（Mock Service Worker）设计用于 vitest/jest 的单元/集成测试，与 Playwright E2E 的 Node.js test runner 架构不兼容（`setupWorker` 需要 `navigator.serviceWorker`）。
+**Design decision**: `page.route()` is Playwright's native network interception API and needs no extra dependency. MSW (Mock Service Worker) is designed for vitest/jest unit and integration tests and is incompatible with the Node.js test runner architecture of Playwright E2E (`setupWorker` needs `navigator.serviceWorker`).
 
-## 6. 动效 · 悬停 · 主题：动手前必须知道的三条横切规则
+## 6. Motion · hover · theme: three cross-cutting rules to know before you start
 
-这三条是**全站约定**，写新 UI 时不必各自发明；漏了**不会报错** —— jsdom 测不出来，只有触摸设备或首帧才暴露 ✗。
+These three are **site-wide conventions**; a new UI does not have to invent them again, and missing them **throws no error** — jsdom cannot see it, and only a touch device or the first frame exposes it ✗.
 
-### 6.1 悬停态：手写 `:hover` 必须包进 `@media (hover: hover)`
+### 6.1 Hover state: a hand-written `:hover` must be wrapped in `@media (hover: hover)`
 
-- Tailwind 的 `hover:` / `dark:hover:` 变体由 v4 自动编译进该媒体查询 ✓ **不用管**；裸露的是**手写 CSS** ✗
-  （组件 `<style>` 里的 `:hover`）。
-- 不包的后果：触摸设备上"悬停态粘连" —— 点过一次后样式一直停在按下态 ✓。
-- 现状（2026-09-20 全仓审计 ✓）：`src/` 手写 `:hover` 共 **16 条 / 4 文件**，全部已包 ✓；**新增的必须同批包上** ✗。
-- 判据：`@media (hover: hover)` 下生效 ✓、`hover: none` 下**不生效** ✓（真机用 `page.emulate({ hasTouch: true, isMobile: true })` 验 ✓，`emulateMediaFeatures({name:'hover'})` **不受支持** ✗）。
+- Tailwind's `hover:` / `dark:hover:` variants are compiled into that media query by v4 automatically ✓ **nothing to do**; what is left exposed is **hand-written CSS** ✗
+  (the `:hover` inside a component's `<style>`).
+- What happens without the wrapper: "hover stickiness" on touch devices — after a single tap the style stays stuck in its pressed state ✓.
+- Current state (full-repo audit on 2026-09-20 ✓): `src/` has **16 hand-written `:hover` rules across 4 files**, all already wrapped ✓; **a new one must be wrapped in the same change** ✗.
+- Test criterion: it applies under `@media (hover: hover)` ✓ and **does not apply** under `hover: none` ✓ (verify on a real device with `page.emulate({ hasTouch: true, isMobile: true })` ✓; `emulateMediaFeatures({name:'hover'})` is **not supported** ✗).
 
-### 6.2 动效：全局 reduce 兜底 + 动效偏好在设置里
+### 6.2 Motion: a global reduce backstop + the motion preference in settings
 
-- `src/assets/main.css` 有一条**全局** `html[data-motion='reduce']` 规则：`animation-duration` / `transition-duration`
-  → `0.01ms !important`、`animation-iteration-count: 1`、`scroll-behavior: auto` ✓ ⇒ 任何动效**自动**被减掉 ✓，
-  不依赖作者记得写 ✓。
-- **触发条件是文档属性，不是媒体查询** ✓：`<html data-motion>` 由 `src/stores/motion.ts` 写入，值是**结论**
-  （`reduce` 该减弱 · `full` 该播放 · 无属性 = 无要求）✓ —— CSS 无法把媒体查询与存储值合并 ⇒ 合并只能在 store 里做 ✓。
-  ⇒ 用户在设置里选「完整动效」**能压过**系统要求；选「减少动效」也**能压过**系统允许 ✓（两个方向都要成立 ✗ 单向不算）。
-- **不要用 Tailwind 的 `motion-reduce:` 变体做覆盖** ✗：那个变体只认媒体查询，认不到用户的显式选择 ⇒ 用户选了「减少动效」而系统允许时，
-  带变体的元素**照旧动** ✗。要覆盖就靠全局规则（自动生效）✓，或按需要自己加 `html:not([data-motion='reduce'])` 守卫 ✓。
-- 动效**按需做** ✓（不是"默认不做" ✗）：要做就过设计规范的七字段 + 4 条可失败判据 ✓。
-- 判据：reduce 下 `document.getAnimations().length === 0` ✓，且位移/缩放归零 ✓（拿对照组证明探针能看见动效 ✗ 否则结论无效 ✓）。
-  **注意**：只断言"时长≈0"不够 ✗ —— 时长归零的动画**仍然遵守 `animation-delay`** ⇒ 会把首帧（不可见）钉住一段时间 ✗
-  ⇒ 断言要落在"`animation-name` 不存在"或"运行中的动画数为 0"上 ✓。
+- `src/assets/main.css` has one **global** `html[data-motion='reduce']` rule: `animation-duration` / `transition-duration`
+  → `0.01ms !important`, `animation-iteration-count: 1`, `scroll-behavior: auto` ✓ ⇒ every animation is **automatically** removed ✓,
+  without relying on the author remembering to write it ✓.
+- **The trigger is a document attribute, not a media query** ✓: `<html data-motion>` is written by `src/stores/motion.ts`, and the value is the **conclusion**
+  (`reduce` means turn it down · `full` means play it · no attribute = no requirement) ✓ — CSS cannot combine a media query with a stored value ⇒ the combining has to happen in the store ✓.
+  ⇒ a user choosing "full motion" in settings **overrides** what the system asks for; choosing "reduced motion" likewise **overrides** what the system allows ✓ (both directions must hold ✗ one alone does not count).
+- **Do not use Tailwind's `motion-reduce:` variant as the override** ✗: that variant only reads the media query, not the user's explicit choice ⇒ when the user picked "reduced motion" while the system allows motion,
+  elements carrying the variant **still animate** ✗. To override, rely on the global rule (it applies automatically) ✓, or add your own `html:not([data-motion='reduce'])` guard where needed ✓.
+- Motion is **built when it is needed** ✓ (not "off by default" ✗): when you build it, go through the design spec's seven fields + 4 falsifiable criteria ✓.
+- Test criterion: under reduce, `document.getAnimations().length === 0` ✓, and translation/scale are zeroed ✓ (prove with a control group that the probe can see motion ✗ otherwise the conclusion is void ✓).
+  **Note**: asserting only "duration ≈ 0" is not enough ✗ — an animation with zero duration **still honors `animation-delay`** ⇒ it pins the first frame (invisible) for a while ✗
+  ⇒ the assertion must land on "`animation-name` is absent" or "the number of running animations is 0" ✓.
 
-### 6.3 主题：首帧由 `public/theme.js` 决定，不由 Vue 决定
+### 6.3 Theme: the first frame is decided by `public/theme.js`, not by Vue
 
-**已存的用户选择绝不能被挂载逻辑覆盖** ✓ —— 页面加载初始化**只能**在"用户从未选过"时采用系统偏好 ✓；OAuth 登录是**整页加载** ✓，无条件 `setTheme('auto')` 会把用户显式选的 dark 悄悄改回跟随系统 ✗（2026-09-26 修 ✓ 实现落在 store 的 `initTheme()` ✓ 回归测试在 `src/stores/__tests__/theme.test.ts` ✓）。
+**A stored user choice must never be overwritten by mount logic** ✓ — page-load initialization **may only** adopt the system preference when "the user has never chosen" ✓; OAuth login is a **full page load** ✓, and an unconditional `setTheme('auto')` silently turns a user's explicit dark choice back into following the system ✗ (fixed on 2026-09-26 ✓ the implementation lives in the store's `initTheme()` ✓ the regression test is in `src/stores/__tests__/theme.test.ts` ✓).
 
-- 首帧脚本**必须外链** ✗：`index.html` 的 CSP 是 `script-src 'self'`（无 `unsafe-inline`）⇒ 内联脚本被**静默拦截** ✗。
-- `public/theme.js` 是**经典脚本**（不是 `type=module` ✗，否则会延后到解析之后 ✓），放在 `<head>`、**CSP meta 之后、应用模块之前** ✓。
-- **读的键是 `vueuse-color-scheme`** ✗ 不是 `theme-appearance`：前者是**视觉状态**（VueUse `useDark` 的默认键，裸字符串
-  `dark|light|auto` ✓），后者只是用户的模式偏好 ✓；缺失或 `auto` 时回落 `matchMedia('(prefers-color-scheme: dark)')` ✓，
-  并同步 `documentElement.style.colorScheme` ✓（原生滚动条与表单控件跟随 ✓）。
-- 判据：**拦掉应用 bundle** 后首帧 class 仍正确 ✓ —— 不隔离就分不清是谁设的 ✓。
+- The first-frame script **must be external** ✗: the CSP in `index.html` is `script-src 'self'` (no `unsafe-inline`) ⇒ an inline script is **silently blocked** ✗.
+- `public/theme.js` is a **classic script** (not `type=module` ✗, which would defer it until after parsing ✓) and sits in `<head>`, **after the CSP meta and before the app module** ✓.
+- **The key it reads is `vueuse-color-scheme`** ✗ not `theme-appearance`: the former is **visual state** (the default key of VueUse's `useDark`, a bare string
+  `dark|light|auto` ✓), while the latter is only the user's mode preference ✓; when it is missing or `auto`, it falls back to `matchMedia('(prefers-color-scheme: dark)')` ✓,
+  and syncs `documentElement.style.colorScheme` ✓ (native scrollbars and form controls follow ✓).
+- Test criterion: with the **app bundle blocked**, the first-frame class is still correct ✓ — without that isolation you cannot tell who set it ✓.
 
 
-### 6.4 按钮的 hover：按"族"分配能量，别换身份
+### 6.4 Button hover: spend the energy by "family", not by changing identity
 
-| 族 | hover 时变什么 | 不许变什么 |
-| --- | --- | --- |
-| **实心主按钮**（`variant="default"`） | **只动 `box-shadow`**：1px 品牌外轮廓 + 沉降阴影（配方登记在设计规范 §6 / §10） | **填充与文字都不动** ✗ —— 换了填充或文字色，用户读到的就是"另一个按钮"✗ |
-| **outline 家族**（`AlertDialogCancel` · 徽章 · 选择器 · 设置页操作按钮） | **边框色 + 阴影抬一档** | **不加底色** ✗ |
-| **ghost** | 文字转强调色 + 一层柔和发光 | 不加底色 ✗ |
-| **破坏性** | **红色边框** | 不用紫填充 ✗（与红框不搭） |
+| Family                                                                             | What changes on hover                                                                                                     | What must not change                                                                                                    |
+|------------------------------------------------------------------------------------|---------------------------------------------------------------------------------------------------------------------------|-------------------------------------------------------------------------------------------------------------------------|
+| **Solid primary button** (`variant="default"`)                                     | **Only `box-shadow` moves**: a 1px brand outline + a settling shadow (the recipe is recorded in the design spec §6 / §10) | **Neither the fill nor the text moves** ✗ — change the fill or the text color and the user reads "a different button" ✗ |
+| **outline family** (`AlertDialogCancel` · badge · picker · settings action button) | **Border color + shadow one step up**                                                                                     | **No background added** ✗                                                                                               |
+| **ghost**                                                                          | Text turns the accent color + one soft glow                                                                               | No background added ✗                                                                                                   |
+| **destructive**                                                                    | **Red border**                                                                                                            | No purple fill ✗ (it clashes with the red border)                                                                       |
 
-**为什么**：`#5e6ad2` + 白字 = 4.70:1，已是 AA 的**上限**；只要把填充提亮一点，白字就跌破 4.5（混白 2% 就只剩 ≈4.53，混白 10% 只剩 3.90）⇒ "提亮 + 白字 + 达标"三者数学上不可兼得 ✓，所以能量只能给阴影/边框。
+**Why**: `#5e6ad2` + white text = 4.70:1, already the **ceiling** for AA; lighten the fill even slightly and white text drops below 4.5 (2% white mixed in leaves only ≈4.53, 10% leaves 3.90) ⇒ "lighter fill + white text + passing contrast" cannot be had together mathematically ✓, so the energy can only go to the shadow/border.
 
-### 6.5 两个会让状态样式"静默失效"的陷阱 ✗
+### 6.5 Two traps that make state styles fail "silently" ✗
 
-1. **Tailwind v4 会静默丢弃复杂的任意阴影** ✗：`hover:shadow-[0_4px_12px_rgba(0,0,0,0.35)]` 编不出来（同批的 `hover:ring-1` 却能编 ✓）。⇒ 复杂阴影写进 `src/assets/main.css` 的普通 CSS（本仓库用 `[data-slot='button'][data-variant='default']` 选择器 + `--btn-shadow-*` 变量 ✓），**改完必须查产物**（`grep` 构建后的 CSS 里有没有那条声明 ✓）。
-2. **`data-variant` 只在调用点显式传了 `variant` 时才存在** ✗：九个调用点都没传 ⇒ 属性为 `null` ⇒ 按 `[data-variant='default']` 写的 CSS **永远匹配不上** ✓。已在 `Button.vue` 修为 `:data-variant="variant ?? 'default'"`（让属性反映**生效后**的变体 ✓）—— 新增 `data-*` 规则前先确认属性在 DOM 里真的存在 ✓。
+1. **Tailwind v4 silently drops complex arbitrary shadows** ✗: `hover:shadow-[0_4px_12px_rgba(0,0,0,0.35)]` compiles to nothing (while `hover:ring-1` in the same batch does compile ✓). ⇒ Put complex shadows into plain CSS in `src/assets/main.css` (this repo uses the `[data-slot='button'][data-variant='default']` selector + `--btn-shadow-*` variables ✓), and **always check the output after the change** (`grep` the built CSS for that declaration ✓).
+2. **`data-variant` only exists when the call site passes `variant` explicitly** ✗: none of the nine call sites passed it ⇒ the attribute was `null` ⇒ CSS written against `[data-variant='default']` **never matched** ✓. `Button.vue` now sets `:data-variant="variant ?? 'default'"` (so the attribute reflects the **effective** variant ✓) — before adding any `data-*` rule, confirm the attribute really exists in the DOM ✓.
 
-### 6.6 暗色：区块靠色调、卡片靠材质、层级看边缘
+### 6.6 Dark mode: sections by tone, cards by material, hierarchy by edges
 
-- **区块之间靠"面"的明度差** ✓（导航/侧栏/面板 `#131419` 对画布 `#08090a` = **1.08:1**）—— **不要靠加粗边框** ✗（把边框令牌抬到 0.20 试过：全站读成铁丝网 ✗）。
-- **暗色卡片是近黑板**（`--card` = `#0b0c10`，对画布仅 **1.02:1**，且低于外壳 ⇒ 内容更安静）✓。它的"高级感"来自**材质与光**：极轻灰噪（内联 SVG 噪声 ≈2–3%）、**受光渐变环**（顶部亮、向下衰减）、顶部柔光与三层沉降 ✓；**不靠更亮的填充** ✗（`#191a1e` / `#32333a` 都被判"太白、磨砂" ✗）。
-- **层级判据：框架的边 ≥ 内容的边** ✓。外壳边框 0.09（1.27:1）／卡片受光环 0.095（1.25:1）—— 内容一旦比框架亮，用户读到的就是"卡片抢占了 navigation" ✗。
-- **同一类线索不要叠加** ✗：受光环之外再加两条 1px 内嵌受光线 = 过量；"色差太重"的真因就在这里，不在填充 ✓。
-- **面变暗时，边与光的 alpha 必须同步下调** ✓ —— 同一个 0.12 的边在更暗的面上**相对比更高** ✗，不动就会重新变成"边缘抢戏" ✗（0.12 → 0.09 · 光环 0.13 → 0.095 ✓）。
-- **白天与夜间是两套标定** ✓：夜间档（当前）面更低一档（1.08 / 1.02）；亮环境屏上填充会失效、只剩发丝边承重 ✗ —— 白天档同样以令牌化标定表达 ✓，切换即令牌替换 ✓。
-- **顶栏与内容同色** ✓（横贯全宽的亮带会挡在内容前 ✗）；**卡片不加 hover 光** ✓（静态容器没有"为什么动"，且品牌强调色的预算归 CTA 与激活态 ✓）。
+- **Sections separate through the lightness difference between "surfaces"** ✓ (nav/sidebar/panel `#131419` against the canvas `#08090a` = **1.08:1**) — **do not separate them with heavier borders** ✗ (raising the border token to 0.20 was tried: the whole site read as barbed wire ✗).
+- **The dark card is close to a blackboard** (`--card` = `#0b0c10`, only **1.02:1** against the canvas and below the shell ⇒ the content sits quieter) ✓. Its "premium feel" comes from **material and light**: very light gray noise (inline SVG noise ≈2–3%), a **lit gradient ring** (bright at the top, decaying downwards), a soft top light and three layers of settling ✓; **not from a brighter fill** ✗ (`#191a1e` / `#32333a` both read as "too white, frosted" ✗).
+- **Hierarchy criterion: the frame's edge ≥ the content's edge** ✓. Shell border 0.09 (1.27:1) / card lit ring 0.095 (1.25:1) — the moment the content is brighter than the frame, the user reads "the card is stealing the navigation" ✗.
+- **Do not stack cues of the same kind** ✗: the lit ring plus two more 1px inset lit lines = too much; that is the real cause of "the color contrast is too heavy", not the fill ✓.
+- **When a surface gets darker, the alpha of borders and light must come down with it** ✓ — the same 0.12 border has **higher relative contrast** on a darker surface ✗; leave it alone and "the edges steal the scene" again ✗ (0.12 → 0.09 · ring 0.13 → 0.095 ✓).
+- **Day and night are two separate calibrations** ✓: the night setting (current) keeps surfaces one step lower (1.08 / 1.02); on a bright screen in a bright room the fill collapses and only hairline borders carry the structure ✗ — the day setting is expressed as tokenized calibration too ✓, and switching is just swapping tokens ✓.
+- **The top bar shares the content's color** ✓ (a bright band across the full width sits in front of the content ✗); **cards get no hover light** ✓ (a static container has no "why it moves", and the brand accent budget belongs to CTAs and active states ✓).
 
-> **已定稿的视觉不要顺手改** ✗ —— 已接受即冻结：重新量到同样的数字、再问"要不要改"，是在重复已经拒绝过的工作 ✗。
+> **Do not casually change a settled visual** ✗ — accepted means frozen: measuring the same numbers again and asking "should we change it?" repeats work that was already rejected ✗.
 
-## 7. 国际化（i18n）
+## 7. Internationalization (i18n)
 
-### 7.1 结构
+### 7.1 Structure
 
-| 位置 | 职责 |
-|---|---|
-| `src/i18n/locales/en.ts` | **源语言**词条（英文）。结构即类型：其他语言的包按它做类型约束 |
-| `src/i18n/locales/zh-CN.ts` | 简体中文词条，类型为 `Messages`；英文新增键而这里没跟上 = **编译错误** |
-| `src/i18n/locale.ts` | 当前 locale 的响应式状态、存储键 `ctt.locale`、启动解析（存储偏好 > 浏览器语言 > 英文）、`<html lang>` 同步 |
-| `src/i18n/index.ts` | i18n 实例、词条包按需加载（英文常驻、中文单独 chunk）、`initI18n` / `setLocale`、跨标签同步 |
-| `src/lib/utils/time.ts` | 与语言相关的日期格式化入口：`formatWeekdayShort` / `formatMonthShort` / `formatDateTime` |
+| Location                    | Responsibility                                                                                                                                               |
+|-----------------------------|--------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| `src/i18n/locales/en.ts`    | The **source language** messages (English). The structure is the type: every other language pack is type-constrained by it                                   |
+| `src/i18n/locales/zh-CN.ts` | Simplified Chinese messages, typed as `Messages`; a new English key with no match here = **a compile error**                                                 |
+| `src/i18n/locale.ts`        | Reactive state for the current locale, the `ctt.locale` storage key, startup resolution (stored preference > browser language > English), `<html lang>` sync |
+| `src/i18n/index.ts`         | The i18n instance, on-demand message loading (English always loaded, Chinese in its own chunk), `initI18n` / `setLocale`, cross-tab sync                     |
+| `src/lib/utils/time.ts`     | The language-aware date formatting entry points: `formatWeekdayShort` / `formatMonthShort` / `formatDateTime`                                                |
 
-### 7.2 新增一条界面文案
+### 7.2 Adding a single UI string
 
-1. 先在 `en.ts` 加键（按页面/部位分组，如 `settings.preferences.title`）。
-2. `zh-CN.ts` 会因类型缺失报错——补上对应中文即可；键集合由类型与 `pnpm check:i18n` 双重保证。
-3. 组件里用 `const { t } = useI18n()`，模板写 `{{ t('settings.preferences.title') }}`。
-4. 不要在组件里写中文字面量；测试可以（断言用），应用源码不行。
+1. Add the key in `en.ts` first (grouped by page or area, e.g. `settings.preferences.title`).
+2. `zh-CN.ts` then fails with a missing-type error — add the matching Chinese message; the key set is guaranteed by both the types and `pnpm check:i18n`.
+3. In the component use `const { t } = useI18n()` and write `{{ t('settings.preferences.title') }}` in the template.
+4. Do not write Chinese string literals inside components; tests may (for assertions), application source may not.
 
-**校验文案（模块级 schema）**：schema 在模块加载时求值，拿不到 `useI18n` —— 用全局实例，
-且文案要**惰性解析**，否则切语言后消息停在旧语言：
+**Validation messages (module-level schema)**: a schema is evaluated when the module loads, so it cannot reach `useI18n` — use the global instance,
+and resolve the message **lazily**, otherwise the message stays in the old language after a switch:
 
 ```ts
 const t = (key: string) => i18n.global.t(key)
@@ -901,75 +919,75 @@ const t = (key: string) => i18n.global.t(key)
 z.string().min(1, { error: () => t('auth.validation.passwordRequired') })
 ```
 
-`t` 必须声明在 schema 之前；`error` 传函数（Zod 4 在每次解析时调用），不要传 `t(…)` 的结果。
-已知残留：`LoginForm` 的 schema 仍取加载时文案，迁移该视图时一并改惰性写法。
+`t` must be declared before the schema; pass a function to `error` (Zod 4 calls it on every parse), never the result of `t(…)`.
+Known leftover: the `LoginForm` schema still captures its message at load time; switch it to the lazy form when that view is migrated.
 
-**法务正文**：`src/features/auth/content/index.ts` 按当前语言返回英文或中文条款；不要直接引
-`terms-en`，否则中文用户读到整篇英文。
+**Legal copy**: `src/features/auth/content/index.ts` returns the English or Chinese terms for the current language; do not import
+`terms-en` directly, or Chinese readers get the whole thing in English.
 
-### 7.3 日期与数字
+### 7.3 Dates and numbers
 
-不要直接调用 `toLocaleString('en-US', …)`：那会把界面钉死在英文。日期走
-`formatWeekdayShort` / `formatMonthShort` / `formatDateTime`（都在 `@/lib/utils`），它们读当前 locale，
-切换语言后自动重渲染。
+Do not call `toLocaleString('en-US', …)` directly: that pins the UI to English. Dates go through
+`formatWeekdayShort` / `formatMonthShort` / `formatDateTime` (all in `@/lib/utils`), which read the current locale and
+re-render automatically after a language switch.
 
-### 7.4 切换语言与持久化
+### 7.4 Switching language and persisting it
 
-入口有三处：**偏好设置页**、**头像菜单 → 语言**，以及**公共外壳上的语言菜单**（营销顶栏与登录卡片右上角，
-32px 方形按钮显示当前语言代码 `EN`/`中`，点开列出全部支持语言）—— 未登录的访客没有头像菜单，
-公共页面必须自带入口，否则只能先登录才能换语言。
-它们都调用 `setLocale()`（唯一写入方）：
-加载词条包 → 发布到实例/格式化层/`<html lang>` → 写入 `ctt.locale`。跨标签页通过 `storage` 事件跟随。
+There are three entry points: the **preferences page**, the **avatar menu → Language**, and the **language menu on the public shell** (the marketing top bar and the top-right corner of the login card,
+a 32px square button showing the current language code (`EN` for English, a single character for Chinese) that opens a list of every supported language) — signed-out visitors have no avatar menu,
+so public pages must carry their own entry point, otherwise the only way to change language is to sign in first.
+They all call `setLocale()` (the single writer):
+load the message bundle → publish it to the instance/formatters/`<html lang>` → write `ctt.locale`. Other tabs follow through the `storage` event.
 
-### 7.5 守卫
+### 7.5 The guard
 
 ```sh
 pnpm check:i18n
 ```
 
-三条规则：① `src/` 内非词条文件禁止中文字面量（测试、`src/i18n/locales/`、中文条款内容除外）；
-② 英文与中文词条键集合必须一致；③ 禁止 `toLocale*String('en-US')` 直调。每批文案迁移后跑一次。
+Three rules: (1) no Chinese string literals in files under `src/` that are not message files (tests, `src/i18n/locales/` and the Chinese legal copy are exempt);
+(2) the English and Chinese key sets must match; (3) no direct `toLocale*String('en-US')` calls. Run it after each batch of migrated copy.
 
-### 7.6 文案里的特殊字符
+### 7.6 Special characters in copy
 
-vue-i18n 把 `@` 当作「链接消息」语法、`|` 当作复数分隔符 —— 邮箱占位符这类文案要用字面量语法：
-`you{'@'}example.com`。写错时整个词条包解析失败，组件一挂载就抛 `Invalid linked format`（不是渲染出乱码）。
+vue-i18n treats `@` as the "linked message" syntax and `|` as the plural separator — copy such as an email placeholder has to use the literal syntax:
+`you{'@'}example.com`. Get it wrong and the whole message bundle fails to parse, so the component throws `Invalid linked format` the moment it mounts (it does not render garbage).
 
-**本地化不是逐词替换**：先读懂英文表达的事实，再用中文的说话方式重写。
+**Localization is not word-by-word replacement**: understand the fact the English states first, then rewrite it the way Chinese is actually spoken.
 
-- 源文案与事实不符时**先改英文**，再写中文（示例：示例数据覆盖整年热力图和两天会话，原文
-  “from a pretend week” 是错的，已改为 “Example data — not a real account.”）。
-- 不搬英文词序：`五小时周` / `两周连续` 改成「单周编码 5 小时」「连续编码 14 天」。
-- 用词取本义：`figures` 是「数据」不是「数字」；产品口径变化（如托管服务的定位）先改源文案。
-- 判断标准：没看过英文的中文用户读这句话，会不会觉得别扭。
+- When the source copy does not match the facts, **fix the English first**, then write the Chinese (example: the example data covers a whole-year heatmap and two days of sessions, while the original
+  "from a pretend week" was wrong and is now "Example data — not a real account.").
+- Do not carry English word order across: the literal `five-hour week` / `two weeks straight` were rewritten as "5 hours coded in one week" / "14 days of continuous coding".
+- Take each word at its meaning: `figures` means "data", not "numbers"; when what the product claims changes (say, how the hosted service is positioned), change the source copy first.
+- The test: would a Chinese reader who never saw the English find this sentence awkward?
 
-### 7.7 面向用户的错误信息与第三方组件
+### 7.7 User-facing error messages and third-party components
 
-- **错误码不面向用户**：后端码（`AUTH_005` 之类）只用于排障，页面显示按码映射后的人话；原始码最多留在
-  地址栏。测试要反过来断言「页面上不出现码」。共享映射在 `lib/utils/api-error.ts`（`api.errors.*`），
-  改一处，认证页、设置页与对话框同时生效。
-- **hCaptcha 跟随界面语言**：它的默认语言来自浏览器，不是站点选择；包装组件把当前 locale 作为 `hl`
-  传给脚本（`en` / `zh-CN`）。厂商脚本只在首次加载时读语言，所以切换语言后要重新进入页面。
-- **整页长截图会吞掉跨域验证码框**：拍证据时按视口分段（上段 + 滚到底部），不要用一张 long screenshot
-  判断间距，否则空出来的 iframe 位置会被误读成布局缺陷。
+- **Error codes are not user-facing**: backend codes (such as `AUTH_005`) exist for troubleshooting only, and the page shows human wording mapped from the code; the raw code stays in the
+  address bar at most. Tests must assert the opposite: "the code never appears on the page". The shared mapping lives in `lib/utils/api-error.ts` (`api.errors.*`), so
+  one change takes effect in the auth pages, the settings page and the dialogs at once.
+- **hCaptcha follows the UI language**: its default language comes from the browser, not from the site's choice; the wrapper component passes the current locale as `hl`
+  to the script (`en` / `zh-CN`). The vendor script only reads the language on first load, so after a language switch you have to enter the page again.
+- **A full-page long screenshot swallows the cross-origin captcha frame**: capture evidence in viewport-sized pieces (top part + scrolled to the bottom) rather than judging spacing from one long screenshot,
+  otherwise the empty spot where the iframe sits is misread as a layout defect.
 
-### 7.8 图表文案也算界面文案
+### 7.8 Chart copy counts as UI copy
 
-统计页的英文常藏在三处，模板扫描抓不到：**tooltip 的 formatter**、**坐标轴/图例的生成代码**、
-**`aria-label` 摘要**。改一页图表要同时看这三处，并让它们走同一套词条：
+English on the statistics pages often hides in three places a template scan cannot reach: **the tooltip formatter**, **the code that generates axes and legends**,
+and **the `aria-label` summary**. Changing a chart page means looking at all three and routing them through the same messages:
 
-- 图表在 `computed` / 构建函数里取值，`useI18n().t` 会随语言切换重算，无需手动重绘；
-- 星期与月份用 `lib/utils` 的格式化器，英文的星期复数单独用一个词条（中文没有复数）；
-- 读屏摘要用带参数的整句词条，不要在组件里拼半句——语序因语言而异。
+- Charts read their values in a `computed` or a builder function, so `useI18n().t` recomputes on a language switch with no manual redraw;
+- weekdays and months use the formatters in `lib/utils`; the English plural of a weekday gets its own message (Chinese has no plurals);
+- screen-reader summaries use a whole-sentence message with parameters rather than half a sentence assembled in the component — word order differs between languages.
 
-服务端返回的展示名（成就阶梯名、奖杯家族名）同样是英文：按**代码**映射到词条
-（`STREAK_7` → `achievements.tiers.streak7`），把服务端字符串只当兜底，否则新语言下面临一半英文。
+Display names returned by the server (achievement tier names, trophy family names) are English too: map them to messages by **code**
+(`STREAK_7` → `achievements.tiers.streak7`), and treat the server string as a fallback only, or a new language ends up half English.
 
-### 7.9 时段与单位词
+### 7.9 Time-of-day names and unit words
 
-- 时段名必须对着后端的小时切分写：`NIGHT 00–06 / MORNING 06–12 / DAYTIME 12–18 / EVENING 18–24`
-  ⇒ 中文是**凌晨 / 上午 / 下午 / 晚上**。凭英文单词直译（夜间、傍晚）会和实际时段相反。
-- 图例与脚注里的单位词用**分钟 / 小时**，不写 `MIN`、`H` 这类大写缩写；连续天数写成「41 天」而不是 `41d`。
-- 时长数值本身仍走共享的 `formatDuration`（`1h 30m`），它与语言无关，只有自然语言部分进词条；
-  排行榜分数例外——它面向读者展示，中文用「690 小时 / 33 天」，由 `formatScore` 按语言选择单位；
-  带符号的维度（成长＝本期 − 上期）必须在页面写明算法，否则负数会被读成错误。
+- Time-of-day names must follow the backend's hour split: `NIGHT 00–06 / MORNING 06–12 / DAYTIME 12–18 / EVENING 18–24`
+  ⇒ the Chinese labels are **early morning / morning / afternoon / evening**. Translating the English words literally ("night", "dusk") lands on the opposite slot.
+- Use **minutes / hours** for units in legends and footnotes, never uppercase abbreviations such as `MIN` or `H`; write a run of days as "41 days", not `41d`.
+- The duration value itself still goes through the shared `formatDuration` (`1h 30m`), which is language-independent; only the natural-language part goes into messages;
+  leaderboard scores are the exception — they are shown to readers, so Chinese uses "690 hours / 33 days", with `formatScore` choosing the unit per language;
+  a signed metric (growth = current period − previous period) must state its arithmetic on the page, otherwise a negative number reads as an error.
