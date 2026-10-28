@@ -1110,21 +1110,39 @@ sequenceDiagram
 - 有意保留英文（不是遗漏）：品牌名 `Code Time Tracker` / `CTT`、认证展示卡的示例语言与终端行、支持渠道名、落地页示例数据、服务端返回的设备/项目/语言名、`lib/schemas` 的响应解析诊断。
 - 验收：✅ `check:i18n` 全量零告警（298 文件 / 914 键）· 单测 **1589/1589** · **全量 E2E 161/161** · type-check / build / 两个 lint 引擎 exit 0。
 
-**S4：账号与安全页整合（就绪设计已定 · 端点已可用 · 可接线）**
+**S4：账号与安全页整合（S4a 契约层 ✅ v0.70.1 · S4b 界面待做）**
 - 状态（2026-10-28 核实）：**设计已定稿，代码未接线；阻塞已解除** —— R1–R3 端点不仅在 ctt-server 源码里实现，
   **线上也已部署**（我们从 `/v3/api-docs` 直接核对到四个端点，部署版本 **0.87.1** ✓）⇒
   原先「等端点已可用通知」的前提**已过时** ✓ ⇒ 改为**直接接线** ✓。
   核对报告（现状 · 出入 · 需确认事项）→ `.omp/requirements/2026-10-28/account-security-r1-r3-report.md` ✓。
 - **核对出的三处出入（我们改记录，不改后端代码）**：会话列表返回**裸数组**（非 `{sessions:[...]}`）· 导出文件名带连字符（`<yyyy-MM-dd>`）·
   同名提交是 **no-op**（不写库不审计，仍 200 + 资料）✓。
-- 目标：已交付的账号面（邮箱/密码/OAuth/条款/删号）在设置里**读起来是一个整体**；R1–R3 的接入设计随本页落地（**等端点通知后接线** ✓）。
+- 目标：已交付的账号面（邮箱/密码/OAuth/条款/删号）在设置里**读起来是一个整体**；R1–R3 的接入设计随本页落地
+  （端点已部署 ⇒ **直接接线**，不必等通知 ✓）。
 - 交付：account 与 security 分组的页面组织（沿用现有组件，不重写逻辑 ✓）· 展示**已接受的条款版本**（`publicConfig.termsVersion` + 用户值；store 补 `termsVersion`/`emailChangePending` 字段 ✗→✓）· 凭证状态说明（与 `AUTH_018` 一致）·
   **改显示名**（R1：`PATCH` 成功后用响应体同步 auth store 与头像/初始字；同名提交也走成功路径，无需特判）·
   **登录会话卡**（R2：一次 `limit=100` 拉取不分页、**按服务端倒序直接渲染**（不重排）；行 = kind + deviceName/ideName + createdAt/lastUsedAt（**`null` = 从未刷新**）+ expiresAt + `current` 标记；**WEB 行显示 `userAgent` 派生的友好名**（新增纯函数 + 单测，覆盖主流浏览器/系统；识别不了时回退原文截断或"未知"；PLUGIN 行仍用 deviceName/ideName ✓）；删除当前会话 = 走登出流程；被踢会话刷新得 `401 AUTH_003` → 走终态路径（清令牌 + 跳登录；**通用文案表里的 AUTH_003 是重置链接语义，不借用** ✓））·
-  **数据导出卡**（R3：**独立请求按 blob 下载**——带**必填 `timezoneOffset`**（`-new Date().getTimezoneOffset()`）、保留 401 刷新拦截、**原样落盘不解析**；文件名取 `Content-Disposition`（兜底 `ctt-export-<yyyyMMdd>.json`）；单 JSON 文档，`sessions[]` 不可丢 ✓；429 复用现有重试提示）·
+  **数据导出卡**（R3：**独立请求按 blob 下载**——带**必填 `timezoneOffset`**（`-new Date().getTimezoneOffset()`）、**原样落盘不解析**；
+  文件名取 `Content-Disposition`（兜底 `ctt-export-<yyyyMMdd>.json`）；单 JSON 文档，`sessions[]` 不可丢 ✓；429 复用现有重试提示。
+  **401 不再能刷新重试**：blob 拿不到错误码 ⇒ 走登出兜底，裁决见下方 S4a）·
   三项的**接线**直接进行（端点已部署可用 ✓）· 接线时顺手补 `AUTH_020`（"API key missing required scope"，403）/
   `AUTH_022`（"Account deactivated"，403）的错误码映射（两码不在现表、会落到原始码串 ✗）✓。
 - 验收：两分组在窄屏/宽屏可读；条款版本显示与 `GET /users/me` 一致；凭证互斥规则有单测；导出下载**不触发整段 JSON 解析**（代码审查点）；删当前会话 → 本地登出且无中间态；R1 同步后无需二次拉取 ✓。
+- **S4a 契约层完成（2026-10-28 · v0.70.1）**：
+  - **Schema**：`LoginSessionSchema`（9 字段，`kind` = `WEB|PLUGIN` 枚举；可空字段 `.nullable().default(null)` ⇒「没有设备」与「不认识该字段」仍可区分）·
+    `UpdateProfileRequestSchema`（**复用注册的 `REGEX_DISPLAY_NAME`** ⇒ 前端与服务端同一条规则 ⇒ 服务端会拒的名字不出浏览器 ✓）
+  - **API**：`updateDisplayName`（PATCH，校验后发；返回体即最新投影）· `fetchLoginSessions`（一次 `limit=100`、**不重排**）·
+    `revokeLoginSession`（204，**不解析信封** —— 与 `deleteApiKey` 同一处理）· `downloadUserExport`（**blob + 不解析**，文件名取 `Content-Disposition`，兜底 `ctt-export-<yyyyMMdd>.json`）
+  - **store**：补 `termsVersion` / `emailChangePending`（此前 schema 有、store 丢弃 ✗）；两者都进 `clearAuth` 的重置（否则登出后残留上一个账号的条款版本 ✗）；
+    新增 `applyProfile(profile)` 供 `fetchUserProfile` 与 PATCH 响应共用（R1「用响应体同步、不二次拉取」✓）
+  - **纯函数** `parseUserAgent`（`lib/utils/user-agent.ts`）：返回 **key + 原始串**（不返回句子 —— 界面要翻译 ✓），
+    识别不出时回退截断原文（≤60 字符）✓
+  - **一条裁决（导出用的 blob 与 401 刷新不可兼得）**：ofetch 的 `responseType` 对**成功体与错误体一视同仁**（`ofetch.CWycOUEr.mjs:297`），
+    且**每请求的 `onResponseError` 会顶掉全局钩子**（`resolveFetchOptions` 是 `{...defaults, ...input}`）⇒ 用 blob 就拿不到错误码 ⇒
+    `handle401Error(null)` 落到「清令牌 + 登出」这条**安全兜底**上（不是刷新后重试 ✗）。
+    代价：导出遇到过期 token 时登出而非静默续期 —— 应用平时在到期前 5 分钟主动续期，且导出是手动按钮，故罕见且无数据损失 ✓。
+    **若将来要两者兼得**，需在 `instance.ts` 让 `getErrorCode` 支持 Blob（异步化）或给导出单独的 401 处理 —— 届时再动 ✓。
+  - 测试：API 三条（显示名 / 会话 / 导出）+ 纯函数一条 + store 两条断言（**均已证明能红**：撤掉实现即红 ✓）
 
 ```mermaid
 stateDiagram-v2
@@ -1275,6 +1293,10 @@ stateDiagram-v2
   通知/邮件偏好与 2FA（缓提，触发条件见台账）· 托管/运维（第七阶段）· 任何后端代码改动（只出需求文本 ✓）
 
 ### 第七阶段：工程质量与生产化 ⬜ 未开始
+- [ ] **Sonar 全量规则（可选，公开仓免费）**：SonarQube Cloud + GitHub Actions step —— 这是唯一能跑**真 SonarLint 全量**规则的路
+  （含闭源的 SonarTypeScript 分析器）。**前置 = CI 先接上**（本阶段第 2 项）· 需要 sonar 账号 + token（**token 不入库** ✗）。
+  在此之前：IDE 报的规则**能进 oxlint 的先进**（见 2026-10-28 的 `unicorn/prefer-default-parameters`），进不去的**明说** ✓
+  —— 已立为 AGENTS.md **R39** ✓；**不引入** `eslint-plugin-sonarjs`（13 个传递依赖含一份 `typescript` ✗，且它**不含** `S7760` ✓）。
 - [ ] Playwright E2E 覆盖核心链路（登录/设备管理/API Key）
 - [ ] CI：GitHub Actions PR 触发 lint + type-check + unit + E2E
 - [ ] 产物分析：`rollup-plugin-visualizer`，首屏 chunk ≤ 200KB gzip
