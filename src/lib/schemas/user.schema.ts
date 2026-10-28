@@ -1,4 +1,5 @@
 import { z } from 'zod'
+import { REGEX_DISPLAY_NAME } from './auth.schema'
 
 /**
  * User profile response schema aligned with ctt-server UserProfileResponse DTO.
@@ -33,6 +34,49 @@ export const UserProfileSchema = z.object({
 })
 
 export type UserProfile = z.infer<typeof UserProfileSchema>
+
+/**
+ * Request body for {@link updateDisplayName} — `PATCH /api/v1/users/me`.
+ *
+ * The name is validated with the **same** rule the registration form uses, because the server
+ * applies the same one: `@NotBlank` plus the shared display-name pattern (2–50 characters, CJK,
+ * ASCII letters, digits, underscore, hyphen). A name the server would reject never leaves the
+ * browser.
+ */
+export const UpdateProfileRequestSchema = z.object({
+  displayName: z
+    .string()
+    .trim()
+    .min(1, 'Display name must not be empty')
+    .regex(REGEX_DISPLAY_NAME, 'Display name has an unsupported character or length'),
+})
+
+export type UpdateProfileRequest = z.infer<typeof UpdateProfileRequestSchema>
+
+/**
+ * One login session of the current user — `GET /api/v1/users/me/sessions`.
+ *
+ * A session is one **login**, not one refresh: the server groups everything one login produced
+ * under a single session id. `kind` is `WEB` for a browser session and `PLUGIN` for the tracker.
+ * `deviceName` and `ideName` are filled in only for the device-bound kind, and `userAgent` only
+ * for a browser session — the server sends the keys either way, so a missing device and an
+ * unrecognised field stay distinguishable. `lastUsedAt` is null for a session that was never
+ * refreshed, and `current` marks the session the calling token belongs to (always false for a
+ * request made with an API key).
+ */
+export const LoginSessionSchema = z.object({
+  id: z.uuid(),
+  kind: z.enum(['WEB', 'PLUGIN']),
+  deviceName: z.string().nullable().default(null),
+  ideName: z.string().nullable().default(null),
+  userAgent: z.string().nullable().default(null),
+  createdAt: z.iso.datetime(),
+  lastUsedAt: z.iso.datetime().nullable().default(null),
+  expiresAt: z.iso.datetime().nullable().default(null),
+  current: z.boolean(),
+})
+
+export type LoginSession = z.infer<typeof LoginSessionSchema>
 
 /**
  * Request body for {@link deleteAccount} — `DELETE /api/v1/users/me`.
