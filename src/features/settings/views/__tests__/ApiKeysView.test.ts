@@ -2,6 +2,8 @@ import { beforeEach, describe, expect, it, vi } from 'vite-plus/test'
 import { mount } from '@vue/test-utils'
 import { ref, defineComponent, type Ref } from 'vue'
 import ApiKeysView from '../ApiKeysView.vue'
+import SettingsRelationNote from '@/features/settings/components/SettingsRelationNote.vue'
+import { RouteNames } from '@/router/route-names'
 import type { ApiKey } from '@/lib/schemas/api-key.schema'
 import { setLocale } from '@/i18n'
 import type * as Utils from '@/lib/utils'
@@ -50,10 +52,15 @@ vi.mock('@/composables/useApiKeys', () => ({
 }))
 
 vi.mock('@lucide/vue', () => ({
+  ArrowRight: { template: '<svg data-testid="icon-arrow-right" />' },
   KeyRound: { template: '<svg data-testid="icon-key-round" />' },
   Plus: { template: '<svg data-testid="icon-plus" />' },
   AlertTriangle: { template: '<svg data-testid="icon-alert" />' },
   Loader2: { template: '<svg data-testid="icon-loader" />' },
+}))
+
+vi.mock('vue-router', () => ({
+  RouterLink: { props: ['to'], template: '<a><slot /></a>' },
 }))
 
 vi.mock('@/components/ui/button', () => ({
@@ -596,5 +603,16 @@ describe('ApiKeysView', () => {
     expect(wrapper.text()).toContain('永不过期')
 
     await setLocale('en')
+  })
+  it('states how a key relates to a device and links to the devices', () => {
+    const wrapper = mount(ApiKeysView)
+
+    const note = wrapper.find('[data-testid="settings-relation-note"]')
+    expect(note.exists()).toBe(true)
+    expect(note.find('a').exists()).toBe(true)
+    expect(wrapper.findComponent(SettingsRelationNote).props('to')).toEqual({
+      name: RouteNames.SETTINGS_DEVICES,
+    })
+    expect(note.text()).toContain('Devices')
   })
 })

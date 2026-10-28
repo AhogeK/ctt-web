@@ -2,6 +2,8 @@ import { beforeEach, describe, expect, it, vi } from 'vite-plus/test'
 import { mount } from '@vue/test-utils'
 import { ref, type Ref } from 'vue'
 import DeviceListView from '../DeviceListView.vue'
+import SettingsRelationNote from '@/features/settings/components/SettingsRelationNote.vue'
+import { RouteNames } from '@/router/route-names'
 import type { Device } from '@/lib/schemas/device.schema'
 import { setLocale } from '@/i18n'
 
@@ -41,6 +43,7 @@ vi.mock('@/composables/useDevices', () => ({
 }))
 
 vi.mock('@lucide/vue', () => ({
+  ArrowRight: { template: '<svg data-testid="icon-arrow-right" />' },
   Monitor: { template: '<svg data-testid="icon-monitor" />' },
   Smartphone: { template: '<svg data-testid="icon-smartphone" />' },
   Laptop: { template: '<svg data-testid="icon-laptop" />' },
@@ -48,6 +51,10 @@ vi.mock('@lucide/vue', () => ({
   Trash2: { template: '<svg data-testid="icon-trash" />' },
   Loader2: { template: '<svg data-testid="icon-loader" />' },
   AlertTriangle: { template: '<svg data-testid="icon-alert" />' },
+}))
+
+vi.mock('vue-router', () => ({
+  RouterLink: { props: ['to'], template: '<a><slot /></a>' },
 }))
 
 vi.mock('@/components/ui/button', () => ({
@@ -307,5 +314,16 @@ describe('Device revoke flow', () => {
     // mockMutate implementation invokes onSuccess → dialog closes
     await wrapper.vm.$nextTick()
     expect(wrapper.find('[data-testid="dialog-root"]').exists()).toBe(false)
+  })
+  it('states how a device relates to an API key and links to the keys', () => {
+    const wrapper = mount(DeviceListView)
+
+    const note = wrapper.find('[data-testid="settings-relation-note"]')
+    expect(note.exists()).toBe(true)
+    expect(note.find('a').exists()).toBe(true)
+    expect(wrapper.findComponent(SettingsRelationNote).props('to')).toEqual({
+      name: RouteNames.SETTINGS_API_KEYS,
+    })
+    expect(note.text()).toContain('API Keys')
   })
 })

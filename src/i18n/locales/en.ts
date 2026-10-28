@@ -888,6 +888,7 @@ const en = {
     devices: {
       title: 'Device Management',
       subtitle: 'Manage your registered devices. Revoke access for devices you no longer use.',
+      relation: 'A device is one IDE running the JetBrains plugin. It signs in with an API key.',
       loadFailedTitle: 'Failed to load devices',
       loadFailedBody: 'Check your connection and try again.',
       emptyTitle: 'No devices registered',
@@ -911,6 +912,7 @@ const en = {
     apiKeys: {
       title: 'API Keys',
       subtitle: 'Manage API keys used for JetBrains plugin authentication. Keys are shown only once at creation.',
+      relation: 'A key is how the plugin signs in. The IDEs and machines it syncs from show up as devices.',
       create: 'Create API Key',
       loadFailedTitle: 'Failed to load API keys',
       loadFailedBody: 'An unexpected error occurred',
