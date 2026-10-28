@@ -102,8 +102,14 @@ test.describe('Auth showcase panels', () => {
       expect(state.tilting, `panel ${index} never entered the tilting state`).toBe(true)
       // No inline transform at all — not even an identity one, which would open a stacking context.
       // Only the dashboard runs with the tilt on; the two cards below it stay still by design.
+      //
+      // The branch reads like a conditional assertion, but both arms assert: the dashboard's lift
+      // is polled, and the still cards' empty transform is asserted outright. Nothing here can be
+      // skipped, which is what the two rules are guarding against.
+      // oxlint-disable-next-line playwright/no-conditional-in-test, playwright/no-conditional-expect
       if (state.tilting && state.inline) {
         // The lift is integrated per frame now, so a single read can catch it mid-climb (~1.025).
+        // oxlint-disable-next-line playwright/no-conditional-expect
         await expect
           .poll(
             async () => await panel.evaluate((el: Element) => (el instanceof HTMLElement ? el.style.transform : '')),
@@ -111,6 +117,7 @@ test.describe('Auth showcase panels', () => {
           )
           .toContain('scale(1.03)')
       } else {
+        // oxlint-disable-next-line playwright/no-conditional-expect
         expect(state.inline, `panel ${index} wrote a transform without the tilt`).toBe('')
       }
     }
