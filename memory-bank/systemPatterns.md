@@ -82,6 +82,10 @@ src/router/ index.ts (core) + guard.ts (auth + NProgress) + modules/
   `/settings/devices`) so old links keep working without a second page.
 - Sidebar active state is one exact-path helper (`isPathActive`) for every leaf; `/settings-archive` therefore
   cannot highlight a settings section. Exact matching and the four section links are unit-tested.
+- **A key is a credential, a device is a subject**: the plugin calls the sync API with the API key as a bearer
+  token and registers one device per IDE installation (machine, IDE, plugin version) — the device list is what
+  the plugin reports, not what the user created. The two settings pages state that relation to each other and
+  link across (`SettingsRelationNote`); the link label reuses the `nav.*` names, so sidebar and note agree.
 
 ## Internationalization
 
@@ -168,12 +172,6 @@ When auditing built CSS, `rm -rf dist` first — the build does not always purge
   triggered** — filter the recorded list by the value under test instead.
 - Assert collections, not per-item conditionals: `playwright/no-conditional-expect` is right that an
   `expect` inside `if` can skip silently. Build the filtered list, then assert on it (`toEqual([])`).
-
-## Discriminated API Endpoints
-
-`mutationFn` signature drives `TVariables`: literal discriminator → 1-arg literal form; structured payload → 1-arg
-payload form; no args → 0-arg form. Without literal annotation TS infers `undefined` and `mutate('bind')` fails
-type-check.
 
 ## Distribution Semantics
 
