@@ -90,18 +90,18 @@ Two of these carry traps worth knowing before wiring a panel:
 - `GET /devices`, `POST /devices`, `DELETE /devices/{id}` — device registry; `revokedAt` marks revocation
 - `POST /sync/push`, `POST /sync/pull` — body: `{ deviceId, sessions[] }`; device must exist first
 
-### Auth / account — 阶段六（最终契约 2026-10-19 · ctt-server **v0.83.0 已实现**，部署待通知）
+### Auth / account — 阶段六（以**线上 v0.87.1 的 `/v3/api-docs`** 为准 · 2026-10-28 复核）
 
-R1–R3 implemented and merged in ctt-server v0.83.0 (2026-10-19); **deployment pending — wire only after
-their「端点已可用」notice.** This section is the final, current wording (it supersedes every earlier
-round's export-shape / `timezoneOffset` / error-code notes).
+R1–R3 shipped in ctt-server v0.83.0 and are **live on the deployed 0.87.1** — the「wait for their notice」
+premise is obsolete (2026-10-28). This section is final and supersedes every earlier version's note.
 
 - `PATCH /users/me` — body `{ displayName }` → 200 `UserProfileResponse` (same shape as `GET /users/me`).
   Validation = registration rule (2–50; CJK/kana/hangul/latin/digit/`_`/`-`); **same name = success (no
   write)**; errors `400 COMMON_003` / `403 AUTH_022` / `403 AUTH_020` (API-key caller) / `401`; rate 10/hr;
   **no uniqueness on displayName**. Sync local state from the response — no second `GET /users/me`.
-- `GET /users/me/sessions?limit=20` (max 100, rate 60/hr) → `{ sessions: [{ id, kind, deviceName, ideName,
-  userAgent, createdAt, lastUsedAt, expiresAt, current }] }`, **sorted by `lastUsedAt` desc**; `kind` =
+- `GET /users/me/sessions?limit=20` (max 100, rate 60/hr) → **bare array** `[{ id, kind, deviceName, ideName,
+  userAgent, createdAt, lastUsedAt, expiresAt, current }]` (**no `{ sessions: […] }` wrapper**);
+  **sorted by `lastUsedAt` desc**; `kind` =
   `WEB` | `PLUGIN` (deviceName/ideName only on PLUGIN; `userAgent` is on both — ignore it for PLUGIN rows);
   `userAgent` = raw header, nullable, truncated to 512, **not parsed server-side** (the web client derives
   the display label itself), stable across refresh rotation; `createdAt` = first login of the session,
@@ -120,7 +120,7 @@ round's export-shape / `timezoneOffset` / error-code notes).
 - `GET /users/me/export?timezoneOffset=<minutes>` — **`timezoneOffset` is mandatory** (range ±720; missing
   or out of range → `400 COMMON_003`; value = `-new Date().getTimezoneOffset()`, UTC+8 → `480`), rate
   3/hr. Returns `200 application/json;charset=UTF-8` — **one JSON document** (not NDJSON, no
-  `RestApiResponse` envelope), `Content-Disposition: attachment; filename="ctt-export-<yyyyMMdd>.json"`;
+  `RestApiResponse` envelope), `Content-Disposition: attachment; filename="ctt-export-<yyyy-MM-dd>.json"`;
   **save the bytes as-is** (no `JSON.parse` → re-serialize, never drop `sessions`). Top level:
   `exportVersion` ("1.0") / `exportTime` / `totalSessions` / `sessions[]` (the plugin's import format,
   field-for-field) / `serverExport{}` (account, devices, dailyStats, achievements, achievementProgress,

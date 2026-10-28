@@ -99,3 +99,15 @@ const RESOURCE_401 = new Set(['AUTH_010', 'USER_014'])   // BOLA + business chec
 - `deviceId` 是安装级身份；禁止按 IDE 拆分设备，禁止建 `device_ides` 子表。
 - IDE 属于会话：会话带 `ideName`/`ideVersion`；设备字段只作旧数据回退/最近值投影。
 - 统计按会话 IDE 筛选；设备页只显示最近 IDE；`DeviceResponse` 字段名不变。
+
+## 账号与安全接线（2026-10-28 · v0.70.1 Accepted）
+
+- **导出的 401 拿不到错误码**：ofetch 的 `responseType` 对成功体与错误体一视同仁，且**每请求的
+  `onResponseError` 会顶掉全局钩子**（`resolveFetchOptions` = `{...defaults, ...input}`）⇒ 用 blob 下载时
+  错误体也是 blob ⇒ `getErrorCode` 读不出码 ⇒ 落到 `handle401Error(null)` 的「清令牌 + 登出」安全兜底，
+  **不是**刷新后重试。要兼得需让 `getErrorCode` 异步支持 Blob，或给导出单独的 401 处理。
+- **导出文件名有两个来源，别统一**：服务端 `Content-Disposition` 给的是**带连字符**的
+  `ctt-export-2026-07-09.json`；我们自己的兜底（响应没有该头）是紧凑的 `ctt-export-<yyyyMMdd>.json`。
+- **会话列表是裸数组**（`RestApiResponse.data` 里直接是数组），不是 `{ sessions: [...] }`。
+- 显示名校验**复用注册正则**（`REGEX_DISPLAY_NAME`，定义在 `auth.schema.ts`）—— 前后端同一条规则，
+  前端拒掉的名字服务端也会拒。`z.uuid()` 在 zod v4 **校验版本位** ⇒ 测试夹具要用合法 v4 UUID。

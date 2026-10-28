@@ -62,10 +62,10 @@ source of truth to be read, never edited. Capability gaps are raised as a requir
   (catalogue default), both recorded in `progress.md` and reflected in the code. **Everything outside the
   leaderboard has not been re-read since v0.73.0**: treat those entries as accurate to that version rather than to
   the running server.
-- Stage-six endpoints — **R1–R3** (display-name `PATCH`, login sessions, JSON export) are **implemented in
-  ctt-server v0.83.0 (2026-10-19), deployment pending**; the final contract is recorded in `references.md`
-  (it supersedes the earlier NDJSON / `AUTH_008` / parameter-less wording). Wire only after their
-  「端点已可用」notice.
+- Stage-six endpoints — **R1–R3** (display-name `PATCH`, login sessions, JSON export): implemented in
+  ctt-server v0.83.0 and **live on the deployed 0.87.1** (checked against online `/v3/api-docs` on
+  2026-10-28) — the 「wait for their notice」premise is obsolete, so they were wired directly (v0.70.1).
+  The contract is in `references.md`; the wiring rulings (export blob, bare-array list) are in `progress.md`.
 
 ### Leaderboard re-checked at v0.77.0 (2026-09-18) — no drift
 

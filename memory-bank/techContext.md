@@ -109,6 +109,10 @@
     `playwright-core/browsers.json`). **2026-10-27: `vp update -L` left @playwright/test at 1.64.1**
     — no browser reinstall needed.
 
+- **The lint gate is oxlint-first** (`vite.config.ts` → `lint`; `pnpm lint` runs `--fix` and must end with **zero
+  output** — a warning is fixed or suppressed with a stated reason). The IDE's SonarLint half that is closed source
+  (SonarTypeScript, `typescript:S…`) cannot be gated: oxlint's equivalent is enabled where one exists
+  (`unicorn/prefer-default-parameters` ← `S7760`), the rest needs SonarQube Cloud (stage 7). See AGENTS.md **R39**.
 - **The E2E suite runs against the production build, locally and in CI** (2026-10-27 · v0.68.1).
   The dev server translates modules on demand, so a local run queued every spec behind the same
   bottleneck: a full run took **153s** and the heavy heatmap spec timed out under that load

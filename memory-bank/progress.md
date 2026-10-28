@@ -128,6 +128,45 @@
 - **我们回源复核抓到他们答复里一处口径错**：三项功能的**引入版本整体差一个发布**（他们说 0.79.0 / 0.81.0 / 0.82.0，
   实际 **0.80.0 / 0.82.0 / 0.83.0** ✓）—— 结论不变（0.87.1 必含 ✓），逐项版本号要更正 ✓。
 
+## 第六阶段 S4a：账号与安全的契约层（2026-10-28 · 随 v0.70.1 发布）
+- **回源核对已完成的契约**（线上 `/v3/api-docs` + 源码 ✓）：会话列表**裸数组**、`limit` 夹取 1..100、`kind` ∈ {WEB, PLUGIN}、
+  `expiresAt`/`lastUsedAt`/`deviceName`/`ideName`/`userAgent` 可空 · 导出的 `timezoneOffset` 必填 ±720 ·
+  文件名在 `Content-Disposition` ✓。
+- **交付**：三个 schema 字段组 · 四个 API 函数 ·
+  store 的 `termsVersion` / `emailChangePending` / `applyProfile` · 纯函数 `parseUserAgent` ✓。
+- **两条实施裁决**：
+  ① **显示名校验复用注册的正则**（`REGEX_DISPLAY_NAME`）⇒ 前端与服务端同一条规则；
+     测试数据里带空格的名字因此被拒（服务端本来就不收 ✓）。
+  ② **导出用 blob + 401 走安全兜底**：ofetch 的 `responseType` 对成功体与错误体一视同仁，且每请求错误钩子会顶掉全局钩子 ⇒
+     拿不到错误码 ⇒ `handle401Error(null)` 落到「清令牌 + 登出」。代价是导出遇过期 token 会登出而非静默续期（罕见、无数据损失）✓；
+     将来要兼得需把 `getErrorCode` 异步化支持 Blob，或给导出单独处理 ✓。
+- **踩到的两个坑**：`z.uuid()` 在 zod v4 会校验版本位 ⇒ 测试里的假 UUID（`1111…`）不合法，要用合法 v4 ✓；
+  ofetch 的 `$Fetch<T, R>` **显式给了 `T` 后 `R` 退回默认 `'json'`** ⇒ 必须写 `apiFetch<Blob, 'blob'>` ✓。
+- 验证：单测 **1619**（+17）· type-check · build · `check:i18n` 924 键 · lint 0 错误 ✓；store 的两条新断言均已证明能红 ✓。
+
+## 门禁：Sonar 等价规则进门禁（2026-10-28 · v0.70.1）
+- **来源**：IDE 的 SonarLint 报 `typescript:S7760`（Prefer default parameters over reassignment）—— 我的一段 util 代码正是这个形状。
+- **核查**：SonarLint 跑两个分析器 —— SonarJS（**开源** ✓）与 SonarTypeScript（**闭源** ✗）；`S7760` 属后者 ⇒
+  开源工具链里**没有**它的实现 ✗，但 oxlint 有**行为等价**的 `unicorn/prefer-default-parameters` ✓。
+- **落地**：启用该规则（`vite.config.ts` 的 `lint.rules`）✓ —— 先在既有代码上量误伤（**零命中** ✓），
+  再用**探针**证明它真能拦（旧写法在同一行复现 ⇒ 红 ✓）。**不启用** `unicorn/no-null`（本项目 API 层刻意用 `null` ⇒ 大面积误伤 ✓）。
+- **否决的选型**：`eslint-plugin-sonarjs` ✗ —— 13 个传递依赖（含一份 `typescript`，与钉死的 6.0.3 重复 ✗）·
+  本项目无直接 eslint 依赖（peer 风险 ✗）· **且不含 `S7760`** ⇒ 补不上那条缝 ✓。
+- **留下的路**：SonarQube Cloud + CI（公开仓免费 ✓）—— 已记入第七阶段，前置是 CI 先接上 ✓。
+- **顺带清干净**：`pnpm lint` 从 4 条 warning 到**零输出** ✓（`expect-expect` 配 `assertFunctionNames` 认共享 helper 里的断言 ·
+  一条纯映射函数提到模块级 · `if/else` 双分支都断言的场景用带理由的定向 `oxlint-disable-next-line` ✓）。
+- 规则化：**AGENTS.md R39** ✓ · 工具链事实 → `techContext.md` ✓ · 面向贡献者 → `dev-handbook.md` §4.5 ✓。
+
+## docs/ 语种归位：开发手册改成英文（2026-10-28 · 纯文档轮 · 不升版本）
+- **触发**：用户指出 `docs/` 是正规开源文档，不该用中文 —— 而这正是**项目自己的约定**：计划的《与其他文档的分工》写着
+  `docs/` = 「人，**英文**」，`architecture.md` 也确实**纯英文** ✓；只有 `dev-handbook.md` 漂成了中英混排 ✗
+  （994 行里 260 行含汉字，含全角标点则 313 行，横跨约 40 节、连标题都是中文）。
+- **做法**：逐行译（子代理执行，我独立校验）· **代码块只译注释**（32 行中文注释 ✓，代码/缩进/反引号/树字符/输出文本逐字不变 ✓）。
+- **校验（我自己的脚本，不采信子代理自述）**：CJK 313 → **0** ✓ · 全角标点 200 → **0** ✓ · 行 976 → 994（+18 = 新增的 §4.5）✓ ·
+  标题 54 → 55（同层级同编号 ✓）· 表格行只增不减 ✓ · 代码块 33 个：**代码层改动 0**、仅 10 个块的注释被译 ✓ · 无死链 ✓。
+- **一处判断**：§7.x 讲的就是「怎么写中文文案」⇒ 其中的中文例句改成了**英文释义**（如 `figures` 是 "data" 不是 "numbers"、
+  时段名 "early morning / morning / afternoon / evening"）✓ —— 精确的 zh-CN 原话以 `src/i18n/locales/zh-CN.ts` 为准 ✓。
+
 ## 工具链
 - [x] **依赖更新（三轮）** `vp update -L`：TS7 每轮回退 6.0.3；vite-plus 1.3.0→1.4.0（vitest pin 仍 5.0.5）·
   新 peers 警告 = `@opentelemetry/api`（上游声明滞后）⇒ workspace 有界规则 · 未改版本号 · 详见 techContext · `53fd376`。
