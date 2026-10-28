@@ -5,8 +5,9 @@
  * Displays user email (with verification badge), display name,
  * registration time, and email change management actions.
  */
-import { computed } from 'vue'
+import { computed, ref } from 'vue'
 import { useI18n } from 'vue-i18n'
+import { usePublicConfig } from '@/composables/usePublicConfig'
 import { useAuthStore } from '@/stores/auth'
 import { useEmailStatus } from '@/features/settings/composables/useEmailStatus'
 import { useEmailChange } from '@/features/settings/composables/useEmailChange'
@@ -16,6 +17,8 @@ import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { cn, formatDateTime } from '@/lib/utils'
 import SetPasswordDialog from './SetPasswordDialog.vue'
+import { SETTINGS_ACTION_BUTTON_CLASS } from './action-button'
+import DisplayNameDialog from './DisplayNameDialog.vue'
 
 const authStore = useAuthStore()
 const { t } = useI18n()
@@ -26,21 +29,24 @@ const { resend, countdown, isPending: isResendPending } = useResendVerification(
 /** Shared dialog state from useSetPassword composable */
 const { isDialogOpen: isSetPasswordDialogOpen } = useSetPassword()
 
+/** Whether the display-name dialog is open. */
+const isDisplayNameDialogOpen = ref(false)
+
+/**
+ * The published terms version, fetched only when the profile has not supplied one.
+ *
+ * The server's copy of the account is authoritative; the public config is what a reader sees
+ * before the profile request lands, so the row is never blank on first paint.
+ */
+const { data: publicConfig } = usePublicConfig(computed(() => authStore.termsVersion === null))
+const termsVersionLabel = computed(() => authStore.termsVersion ?? publicConfig.value?.termsVersion ?? '—')
+
 /** Label for the password button based on detection state */
 const passwordButtonLabel = computed(() => {
   return authStore.hasPassword ? t('settings.account.changePassword') : t('settings.account.setPassword')
 })
 
 /** Shared action button styling for outline buttons in the account section */
-const actionButtonClass = cn(
-  'h-9 rounded-md font-emphasis text-sm',
-  'border-border bg-white text-foreground',
-  'dark:border-white/8 dark:bg-white/2 dark:text-foreground',
-  'transition-[background-color,border-color] duration-200',
-  'hover:border-primary/50',
-  'dark:hover:bg-white/5 dark:hover:border-accent/50',
-)
-
 const email = computed(() => emailStatus.value?.email ?? authStore.email)
 const emailVerified = computed(() => emailStatus.value?.emailVerified ?? authStore.emailVerified)
 const emailChangePending = computed(() => emailStatus.value?.emailChangePending ?? false)
@@ -121,26 +127,42 @@ function handleSetPasswordSuccess() {
       </div>
 
       <!-- Display name -->
-      <div class="flex flex-col gap-1">
-        <span :class="sectionLabelClass">{{ t('settings.account.displayName') }}</span>
-        <span :class="sectionValueClass">{{ displayName }}</span>
+      <div class="flex items-end justify-between gap-4">
+        <div class="flex flex-col gap-1">
+          <span :class="sectionLabelClass">{{ t('settings.account.displayName') }}</span>
+          <span :class="sectionValueClass" data-testid="account-display-name">{{ displayName }}</span>
+        </div>
+        <Button
+          variant="outline"
+          :class="SETTINGS_ACTION_BUTTON_CLASS"
+          data-testid="edit-display-name"
+          @click="isDisplayNameDialogOpen = true"
+        >
+          {{ t('settings.account.editDisplayName') }}
+        </Button>
       </div>
 
       <!-- Registration time -->
       <div class="flex flex-col gap-1">
         <span :class="sectionLabelClass">{{ t('settings.account.registered') }}</span>
-        <span :class="sectionValueClass">{{ formattedRegistrationTime }}</span>
+        <span :class="sectionValueClass" data-testid="account-registered">{{ formattedRegistrationTime }}</span>
+      </div>
+
+      <!-- Terms version on record -->
+      <div class="flex flex-col gap-1">
+        <span :class="sectionLabelClass">{{ t('settings.account.termsVersion') }}</span>
+        <span :class="sectionValueClass" data-testid="account-terms-version">{{ termsVersionLabel }}</span>
       </div>
 
       <!-- Actions -->
       <div class="flex items-center gap-3 pt-2">
-        <Button variant="outline" :class="actionButtonClass" @click="handleOpenChangeDialog">
+        <Button variant="outline" :class="SETTINGS_ACTION_BUTTON_CLASS" @click="handleOpenChangeDialog">
           {{ t('settings.account.changeEmail') }}
         </Button>
 
         <Button
           variant="outline"
-          :class="actionButtonClass"
+          :class="SETTINGS_ACTION_BUTTON_CLASS"
           data-testid="set-password-button"
           @click="handleOpenSetPasswordDialog"
         >
@@ -150,7 +172,7 @@ function handleSetPasswordSuccess() {
         <Button
           v-if="!emailVerified"
           variant="outline"
-          :class="actionButtonClass"
+          :class="SETTINGS_ACTION_BUTTON_CLASS"
           :disabled="isResendPending || countdown > 0"
           data-testid="verify-email-button"
           @click="handleResendVerification"
@@ -168,5 +190,11 @@ function handleSetPasswordSuccess() {
     :has-password="authStore.hasPassword"
     @update:open="isSetPasswordDialogOpen = $event"
     @success="handleSetPasswordSuccess"
+  />
+
+  <DisplayNameDialog
+    :open="isDisplayNameDialogOpen"
+    :current-name="authStore.displayName ?? ''"
+    @update:open="isDisplayNameDialogOpen = $event"
   />
 </template>

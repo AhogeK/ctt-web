@@ -1,5 +1,14 @@
 import { z } from 'zod'
+import { i18n } from '@/i18n'
 import { REGEX_DISPLAY_NAME } from './auth.schema'
+
+/**
+ * Message lookup bound to the live locale.
+ *
+ * The messages are read when a validation fails, not when this module loads: a schema that
+ * captured `t()`'s return value would keep the language it was first parsed in.
+ */
+const t = (key: string) => i18n.global.t(key)
 
 /**
  * User profile response schema aligned with ctt-server UserProfileResponse DTO.
@@ -38,17 +47,17 @@ export type UserProfile = z.infer<typeof UserProfileSchema>
 /**
  * Request body for {@link updateDisplayName} — `PATCH /api/v1/users/me`.
  *
- * The name is validated with the **same** rule the registration form uses, because the server
- * applies the same one: `@NotBlank` plus the shared display-name pattern (2–50 characters, CJK,
- * ASCII letters, digits, underscore, hyphen). A name the server would reject never leaves the
- * browser.
+ * The name is validated with the **same** rule the registration form uses — the same pattern
+ * constant and the same messages — because the server applies the same one: `@NotBlank` plus
+ * the shared display-name pattern (2–50 characters, CJK, ASCII letters, digits, underscore,
+ * hyphen). A name the server would reject never leaves the browser.
  */
 export const UpdateProfileRequestSchema = z.object({
   displayName: z
     .string()
     .trim()
-    .min(1, 'Display name must not be empty')
-    .regex(REGEX_DISPLAY_NAME, 'Display name has an unsupported character or length'),
+    .min(1, { error: () => t('auth.validation.displayNameRequired') })
+    .regex(REGEX_DISPLAY_NAME, { error: () => t('auth.validation.displayNameInvalid') }),
 })
 
 export type UpdateProfileRequest = z.infer<typeof UpdateProfileRequestSchema>

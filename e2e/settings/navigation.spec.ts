@@ -52,6 +52,10 @@ test.describe('Settings navigation', () => {
     await expect(page).toHaveURL(/\/settings\/api-keys$/)
     await expect(page.getByRole('heading', { name: 'API Keys' })).toBeVisible()
 
+    await nav.getByRole('link', { name: /Security/ }).click()
+    await expect(page).toHaveURL(/\/settings\/security$/)
+    await expect(page.getByRole('heading', { name: 'Security', level: 1 })).toBeVisible()
+
     await nav.getByRole('link', { name: /Profile/ }).click()
     await expect(page).toHaveURL(/\/settings\/profile$/)
   })
