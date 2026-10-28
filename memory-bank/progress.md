@@ -144,6 +144,29 @@
   ofetch 的 `$Fetch<T, R>` **显式给了 `T` 后 `R` 退回默认 `'json'`** ⇒ 必须写 `apiFetch<Blob, 'blob'>` ✓。
 - 验证：单测 **1619**（+17）· type-check · build · `check:i18n` 924 键 · lint 0 错误 ✓；store 的两条新断言均已证明能红 ✓。
 
+## 第六阶段 S4b：账号与安全的界面（2026-10-28 · 随 v0.71.0 发布）
+- **新页 `/settings/security`**（侧栏「安全」· 路由名 `settings-security`）：登录会话卡 + 数据导出卡 —— 账号范围内的资源，
+  与外观页分开 ✓。
+- **两条撤销路径**：顶栏登出走 `logoutAll`（吊销**全部**）；安全页只吊销**点的那一条**，再走共用收尾 `signOutLocally()`
+  （清令牌/资料/缓存 → 提示 → 跳登录）✓ —— 原计划写「删除当前会话 = 走登出流程」，实做更精确，已记账 ✓。
+- **列表首版被用户当场退回（同日）**：14 条会话全是同一客户端 ⇒ 三行一条 + 每行一个「撤销」占满整页 ✗。
+  **回源**：服务端只返回**未撤销且未过期**的会话（`findActiveSessionRows` · 上限 100 · 最近使用倒序）⇒ 14 条 = 14 次仍有效的登录
+  （登出再登入算新的一次；**清 Cookie 未登出**则旧登录列到 30 天到期）⇒ 数据真、呈现错 ✓。
+  **改法**：当前会话单独一行 + 其余**按客户端归组**（`kind|标题|种类` 跨位置合并）· 组行「N 次登录 · 最近 X」+ 展开/收起 ·
+  组内才逐条撤销（单条客户端直接给撤销）· **不做组级批量撤销**（`DELETE` 限速 10 次/小时）· 页内说明「为什么旧登录还在」✓。
+  实测 1440×720：14 条折叠 = **2 行 / 97px**（旧版约 810px 超整屏）；展开 786px；窄屏 390 溢出 0、标题零截断 ✓。
+- **行内信息**：WEB 标题由 UA **经词条**派生（原文只作 tooltip）；PLUGIN 用 `deviceName`，IDE 名接在种类行（同机多 IDE 是不同会话）·
+  顺序与 `current` 标记原样渲染（不重排）· 导出 blob 原样落盘、文件名取 `Content-Disposition`、429 用导出自己的额度文案 ✓。
+- **条款版本**：`GET /users/me` 优先，**只在为空时**才取 `publicConfig.termsVersion` 兜底 ✓。
+- **顺带修**：`UpdateProfileRequestSchema` 硬编码英文文案 ⇒ 词条包惰性求值 + 复用注册文案；`AUTH_020` / `AUTH_022` 补映射 ✓。
+- **测试**：单测 **1646** · `mountWithQuery` 辅助（真 QueryClient、关重试、每例新实例）· 关键断言已证能红 ·
+  E2E **174**（含「九条会话 < 260px」高度护栏 + navigation 覆盖新节）· type-check / build / lint 零输出 / `check:i18n` 982 键 ✓。
+- **两轴审查 14 条全部成立并已修**：最重的是 **blob 请求读不到错误码** ⇒ 导出 429 文案从未生效 ✗（改按 `statusCode` 分支，
+  401 交拦截器）；另有未识别 UA 合并成一组、`AUTH_020` 文案过窄、凭证互斥说明缺失、按钮样式三处重复、`architecture.md` 清单陈旧；
+  自查出撤销失败后列表不重算 ⇒ `onSettled` ✓。
+- **工具链陷阱（复发一次）**：`playwright.config` 的 `webServer` 只跑 `preview`、**不重建** ⇒ 直接 `playwright test` 拿旧 `dist` ✗
+  ⇒ 一律走 `pnpm test:e2e`（内含 build-only）✓。
+
 ## 门禁：Sonar 等价规则进门禁（2026-10-28 · v0.70.1）
 - **来源**：IDE 的 SonarLint 报 `typescript:S7760`（Prefer default parameters over reassignment）—— 我的一段 util 代码正是这个形状。
 - **核查**：SonarLint 跑两个分析器 —— SonarJS（**开源** ✓）与 SonarTypeScript（**闭源** ✗）；`S7760` 属后者 ⇒

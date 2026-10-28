@@ -106,6 +106,9 @@ const RESOURCE_401 = new Set(['AUTH_010', 'USER_014'])   // BOLA + business chec
   `onResponseError` 会顶掉全局钩子**（`resolveFetchOptions` = `{...defaults, ...input}`）⇒ 用 blob 下载时
   错误体也是 blob ⇒ `getErrorCode` 读不出码 ⇒ 落到 `handle401Error(null)` 的「清令牌 + 登出」安全兜底，
   **不是**刷新后重试。要兼得需让 `getErrorCode` 异步支持 Blob，或给导出单独的 401 处理。
+- **blob 请求只能按 status 分支，不能按错误码**：错误体也是 blob ⇒ `提取的 code` 永远是 undefined
+  （实例：导出把 429 写成 `code === 'RATE_LIMIT_001'` ⇒ 该分支**不可达**，用户只看到通用失败文案 ✗）。
+  `401` 交给拦截器（清会话 + 跳登录），其余按 `statusCode` 决定文案 ✓。
 - **导出文件名有两个来源，别统一**：服务端 `Content-Disposition` 给的是**带连字符**的
   `ctt-export-2026-07-09.json`；我们自己的兜底（响应没有该头）是紧凑的 `ctt-export-<yyyyMMdd>.json`。
 - **会话列表是裸数组**（`RestApiResponse.data` 里直接是数组），不是 `{ sessions: [...] }`。

@@ -76,12 +76,14 @@ src/router/ index.ts (core) + guard.ts (auth + NProgress) + modules/
 - Auto-import modules via `import.meta.glob('./modules/*.ts', { eager: true })`
 - Lazy loading all views; `manualChunks`: vendor/feature-auth/feature-dashboard/feature-settings
 - Stale chunk auto-reload: `router.onError` + `?retried=1` query guard against reload loops
-- The settings group is **flat**: `/settings` redirects to `profile`, and `profile` / `devices` / `preferences` /
-  `api-keys` are direct children. The app sidebar lists those four sections, so there is no `SettingsShell`
-  and no page-level rail. The `devices` module remains a **redirect-only** record (`/devices` →
+- The settings group is **flat**: `/settings` redirects to `profile`, and `profile` / `security` / `devices` /
+  `preferences` / `api-keys` are direct children. The app sidebar lists those five sections, so there is no
+  `SettingsShell` and no page-level rail. The `devices` module remains a **redirect-only** record (`/devices` →
   `/settings/devices`) so old links keep working without a second page.
 - Sidebar active state is one exact-path helper (`isPathActive`) for every leaf; `/settings-archive` therefore
-  cannot highlight a settings section. Exact matching and the four section links are unit-tested.
+  cannot highlight a settings section. Exact matching and the five section links are unit-tested.
+- `security` holds the account-scoped resources that are not preferences: the sign-in list (one server row per
+  login, folded by client) and the JSON export. Header sign-out revokes every session; a row revokes that one.
 - **A key is a credential, a device is a subject**: the plugin calls the sync API with the API key as a bearer
   token and registers one device per IDE installation (machine, IDE, plugin version) — the device list is what
   the plugin reports, not what the user created. The two settings pages state that relation to each other and
