@@ -879,6 +879,7 @@ const zhCN: Messages = {
     devices: {
       title: '设备管理',
       subtitle: '管理已注册的设备。撤销不再使用设备的访问权限。',
+      relation: '一个设备就是运行着 JetBrains 插件的一个 IDE，它用 API 密钥登录。',
       loadFailedTitle: '无法加载设备',
       loadFailedBody: '请检查网络连接后重试。',
       emptyTitle: '还没有注册设备',
@@ -901,6 +902,7 @@ const zhCN: Messages = {
     apiKeys: {
       title: 'API 密钥',
       subtitle: '管理用于 JetBrains 插件认证的 API 密钥。密钥只在创建时显示一次。',
+      relation: 'API 密钥是插件的鉴权凭据。它同步数据的 IDE 与机器会显示为设备。',
       create: '创建 API 密钥',
       loadFailedTitle: '无法加载 API 密钥',
       loadFailedBody: '发生了意外错误',

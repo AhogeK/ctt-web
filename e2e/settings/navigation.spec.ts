@@ -56,6 +56,22 @@ test.describe('Settings navigation', () => {
     await expect(page).toHaveURL(/\/settings\/profile$/)
   })
 
+  test('the devices page and the API keys page link to each other', async ({ page }) => {
+    // The two pages only make sense together — a key is what the tracker signs
+    // in with, a device is the tracker that signs in — so each states the
+    // relation and points at the other.
+    await page.goto('/settings/devices')
+    const devicesNote = page.getByTestId('settings-relation-note')
+    await expect(devicesNote.getByRole('link', { name: 'API Keys' })).toBeVisible()
+    await devicesNote.getByRole('link', { name: 'API Keys' }).click()
+    await expect(page).toHaveURL(/\/settings\/api-keys$/)
+
+    const keysNote = page.getByTestId('settings-relation-note')
+    await expect(keysNote.getByRole('link', { name: 'Devices' })).toBeVisible()
+    await keysNote.getByRole('link', { name: 'Devices' }).click()
+    await expect(page).toHaveURL(/\/settings\/devices$/)
+  })
+
   test('the legacy /devices URL redirects into the settings group', async ({ page }) => {
     await page.goto('/devices')
 

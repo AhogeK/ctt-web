@@ -23,6 +23,8 @@ import {
   DialogTitle,
 } from '@/components/ui/dialog'
 import { useDevices, useRevokeDevice } from '@/composables/useDevices'
+import SettingsRelationNote from '@/features/settings/components/SettingsRelationNote.vue'
+import { RouteNames } from '@/router/route-names'
 import { formatRelativeTime, formatDateTime } from '@/lib/utils'
 import { extractErrorCode, getErrorMessage } from '@/lib/utils/api-error'
 import type { Device } from '@/lib/schemas/device.schema'
@@ -160,6 +162,10 @@ function getDeviceIdeLabel(device: Device): string {
         {{ t('settings.devices.subtitle') }}
       </p>
     </div>
+
+    <SettingsRelationNote :to="{ name: RouteNames.SETTINGS_API_KEYS }" :label="t('nav.apiKeys')">
+      {{ t('settings.devices.relation') }}
+    </SettingsRelationNote>
 
     <!-- Loading State -->
     <div v-if="showSkeleton" class="flex flex-col gap-4">

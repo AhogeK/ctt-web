@@ -24,6 +24,8 @@ import type { ApiKey, ApiKeyScope, ApiKeyStatus, CreateApiKeyResponse } from '@/
 import CreateApiKeyDialog from '@/features/settings/components/CreateApiKeyDialog.vue'
 import RawKeyDialog from '@/features/settings/components/RawKeyDialog.vue'
 import ConfirmApiKeyActionDialog from '@/features/settings/components/ConfirmApiKeyActionDialog.vue'
+import SettingsRelationNote from '@/features/settings/components/SettingsRelationNote.vue'
+import { RouteNames } from '@/router/route-names'
 import { formatRelativeTime, formatDateTime } from '@/lib/utils'
 import { extractErrorCode, getErrorMessage } from '@/lib/utils/api-error'
 
@@ -227,6 +229,10 @@ function statusClass(status: ApiKeyStatus): string {
         {{ t('settings.apiKeys.create') }}
       </Button>
     </div>
+
+    <SettingsRelationNote :to="{ name: RouteNames.SETTINGS_DEVICES }" :label="t('nav.devices')">
+      {{ t('settings.apiKeys.relation') }}
+    </SettingsRelationNote>
 
     <!-- Loading State -->
     <div v-if="showSkeleton" class="flex flex-col gap-4">
