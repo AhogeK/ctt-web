@@ -32,7 +32,7 @@ src/
 │   ├── devices/        # Device management (DeviceListView)
 │   ├── landing/        # Public landing page (LandingView: staged hero + one arriving beat)
 │   ├── leaderboard/    # Leaderboard rankings (LeaderboardView)
-│   └── settings/       # User settings (ProfileView, PreferencesView, ApiKeysView)
+│   └── settings/       # User settings (ProfileView, SecurityView, PreferencesView, ApiKeysView)
 ├── layouts/            # Layout components
 │   ├── AuthLayout.vue  # Login/Register layout (minimal, centered)
 │   ├── AppLayout.vue   # Main app layout (sidebar, responsive)
@@ -60,7 +60,7 @@ src/
 │       ├── devices.ts  # /devices → redirects into the settings group
 │       ├── landing.ts  # / (public landing + MarketingLayout)
 │       ├── leaderboard.ts # /leaderboard
-│       └── settings.ts # /settings/{profile,devices,preferences,api-keys} listed in the sidebar; /settings → profile
+│       └── settings.ts # /settings/{profile,security,devices,preferences,api-keys} in the sidebar; /settings → profile
 └── views/              # Top-level views (exception pages only;
     └── Exception/      # feature views live under features/)
                         #   404View
@@ -634,6 +634,64 @@ Error code mapping lives in `src/lib/utils/api-error.ts`.
 - **Rate limiting**: Backend enforces rate limits on `change-request` and `resend-verification` endpoints
 - **Token-based confirmation**: Email change requires clicking a verification link sent to the new address
 - **Pending state visibility**: `GET /email/status` returns `emailChangePending` and `pendingNewEmail` so the UI can show pending state and allow cancellation
+
+### Account & Security Feature
+
+Two halves of one surface: the profile card edits the account, and the security page reports where the
+account is signed in and how to take its data elsewhere.
+
+#### API Endpoints
+
+| Method   | Endpoint                                      | Auth       | Purpose                                                       |
+| -------- | --------------------------------------------- | ---------- | ------------------------------------------------------------- |
+| `PATCH`  | `/api/v1/users/me`                            | Bearer JWT | Change the display name; answers with the stored profile      |
+| `GET`    | `/api/v1/users/me/sessions?limit=`            | Bearer JWT | Active sign-ins, most recently used first (a bare array)      |
+| `DELETE` | `/api/v1/users/me/sessions/{id}`              | Bearer JWT | Revoke one sign-in; `204`, no body                            |
+| `GET`    | `/api/v1/users/me/export?timezoneOffset=`     | Bearer JWT | The account's data as one JSON attachment                     |
+
+The session list contains **active** sign-ins only — a revoked or expired one is not reported — and
+the server sorts it and decides which row is the caller's own. The client renders both as they
+arrive: re-sorting would replace the server's notion of "most recent", and deriving `current` here
+would mean sending a credential the server does not need.
+
+#### Frontend Component Structure
+
+```text
+features/settings/
+├── components/
+│   ├── AccountSection.vue      # Email, display name (with its rename dialog), accepted terms version
+│   ├── DisplayNameDialog.vue   # PATCH /users/me; the response replaces the store's profile
+│   ├── LoginSessionsCard.vue   # Sign-ins, folded by client; per-sign-in revoke
+│   └── DataExportCard.vue      # Saves the export blob as it arrived
+├── composables/
+│   └── useLoginSessions.ts     # TanStack Query for the list + the revoke mutation
+└── views/
+    └── SecurityView.vue        # Composes the two cards
+```
+
+#### Two sign-out paths
+
+`logout()` in the auth store revokes **every** session (`POST /auth/logout-all`). Revoking the
+session the reader is using — from the security page — calls `DELETE` for that one id and then runs
+the same local teardown. Both paths end in `signOutLocally()`: tokens, profile and cached server
+data cleared, one confirmation toast, redirect to sign-in.
+
+#### Folding repeated sign-ins
+
+One server row is one login, so an account that signs in repeatedly — or clears its cookies without
+signing out — accumulates rows that all read the same client name. The card therefore renders the
+current sign-in on its own row and folds the rest into one row per client with a count; the
+individual sign-ins appear when that client is expanded, and each is revocable there. A client-level
+bulk revoke is deliberately absent: `DELETE` is rate-limited to ten an hour, so a button that fired a
+dozen of them would fail.
+
+#### Export
+
+The document is written to disk byte for byte and never parsed: re-serialising it would reorder keys
+and drop whatever this client does not model, while the plugin imports the file back field for
+field. The file name comes from `Content-Disposition`; the client invents one only when the header
+named no file. A blob download cannot read an error code, so an expired token on this request takes
+the sign-out path instead of a silent refresh.
 
 ### API Error Utility
 
