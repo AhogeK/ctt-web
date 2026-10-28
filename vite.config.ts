@@ -38,6 +38,10 @@ export default defineConfig({
       // Length assertions read better and fail with a clearer diff as
       // `expect(x).toHaveLength(n)` than `expect(x.length).toBe(n)`.
       'vitest/prefer-to-have-length': 'error',
+      // The IDE's SonarLint reports normalising a parameter into a local (`const x = p ?? y`)
+      // as `typescript:S7760`. The equivalent lives here, so the same finding fails the lint
+      // pass instead of waiting for someone to read the editor gutter.
+      'unicorn/prefer-default-parameters': 'error',
     },
     overrides: [
       {
@@ -71,7 +75,9 @@ export default defineConfig({
         rules: {
           'no-empty-pattern': 'off',
           'playwright/consistent-spacing-between-blocks': 'warn',
-          'playwright/expect-expect': 'warn',
+          // The reading-order specs delegate their assertions to one shared helper, so the rule is
+          // told that a call to it counts as an assertion.
+          'playwright/expect-expect': ['warn', { assertFunctionNames: ['expect', 'expectBandsInReadingOrder'] }],
           'playwright/max-nested-describe': 'warn',
           'playwright/missing-playwright-await': 'error',
           'playwright/no-conditional-expect': 'warn',

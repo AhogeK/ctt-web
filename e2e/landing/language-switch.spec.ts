@@ -11,6 +11,9 @@ import { test, expect, type Page } from '@playwright/test'
  * the language changes, while text-driven widths (the CTA label) only change where the
  * design allows it.
  */
+/** The part of a box that must not move when the language changes. */
+const sizeOf = (r: { w: number; h: number; top: number } | null) => (r ? { w: r.w, h: r.h } : null)
+
 test.describe('Interface language — public surfaces', () => {
   test('the landing page and the login page carry their own language menu', async ({ page }) => {
     await page.goto('/')
@@ -106,11 +109,10 @@ test.describe('Interface language — public surfaces', () => {
     // height is still content-driven (the English copy wraps one block taller), so the
     // vertical position of the header controls is tracked separately and not asserted
     // here — see the open item on the auth card height.
-    const size = (r: { w: number; h: number; top: number } | null) => (r ? { w: r.w, h: r.h } : null)
-    expect(size(enForm.language)).toEqual(size(zhForm.language))
-    expect(size(enForm.theme)).toEqual(size(zhForm.theme))
-    expect(size(enForm.email)).toEqual(size(zhForm.email))
-    expect(size(enForm.submit)).toEqual(size(zhForm.submit))
+    expect(sizeOf(enForm.language)).toEqual(sizeOf(zhForm.language))
+    expect(sizeOf(enForm.theme)).toEqual(sizeOf(zhForm.theme))
+    expect(sizeOf(enForm.email)).toEqual(sizeOf(zhForm.email))
+    expect(sizeOf(enForm.submit)).toEqual(sizeOf(zhForm.submit))
   })
 
   test('the tab title and the 404 page follow the interface language', async ({ page }) => {
