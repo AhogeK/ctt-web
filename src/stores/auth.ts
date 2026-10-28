@@ -412,6 +412,21 @@ export const useAuthStore = defineStore('auth', () => {
   }
 
   /**
+   * Ends the session locally and sends the user to the sign-in page.
+   *
+   * This is the tail every sign-out path shares: `logout()` reaches it after revoking every
+   * session on the server, and the security page reaches it after revoking only the session the
+   * user pointed at. Clears the tokens, the profile and the cached server data, then confirms
+   * the outcome — without the confirmation the page simply changes and the user cannot tell a
+   * deliberate sign-out from a dropped session.
+   */
+  function signOutLocally(): void {
+    clearAuth()
+    toast.success(i18n.global.t('app.signedOut'))
+    void router.push({ name: RouteNames.LOGIN })
+  }
+
+  /**
    * Performs logout by invalidating all refresh tokens on server and clearing local state.
    *
    * Flow:
@@ -432,13 +447,9 @@ export const useAuthStore = defineStore('auth', () => {
       // Fail-safe: ignore API errors, still clear local state
       // User can always log out locally even if server is unreachable
     } finally {
-      clearAuth()
-      // Confirm the outcome: without it the page simply changes and the user
-      // cannot tell a deliberate sign-out from a dropped session. Shown even
-      // when logoutAll failed — the fail-safe contract is that they ARE signed
-      // out locally, and reporting the server error here would only add noise.
-      toast.success(i18n.global.t('app.signedOut'))
-      void router.push({ name: RouteNames.LOGIN })
+      // Shown even when logoutAll failed — the fail-safe contract is that they ARE signed out
+      // locally, and reporting the server error here would only add noise.
+      signOutLocally()
     }
   }
 
@@ -467,6 +478,7 @@ export const useAuthStore = defineStore('auth', () => {
     initializeAuth,
     scheduleSilentRefresh,
     logout,
+    signOutLocally,
     fetchUserProfile,
     /**
      * Test-only helper to reset module-scoped timer state.

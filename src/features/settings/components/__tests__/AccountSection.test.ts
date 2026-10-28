@@ -25,6 +25,8 @@ let isEmailStatusPendingValue = false
 let isDialogOpenValue = false
 let authStoreHasPassword = false
 const akSetPasswordDialogOpen = ref(false)
+let publicConfigValue: { termsVersion: string } | undefined = undefined
+let authStoreTermsVersion: string | null = null
 
 // ==========================================
 // Mocks
@@ -61,6 +63,19 @@ vi.mock('@/features/settings/composables/useSetPassword', () => ({
     SET_PASSWORD_ERROR_CODES: { ALREADY_HAS_PASSWORD: 'USER_015', INVALID_FORMAT: 'COMMON_003' },
   })),
 }))
+vi.mock('@/composables/usePublicConfig', () => ({
+  usePublicConfig: vi.fn<() => unknown>(() => ({
+    data: ref(publicConfigValue),
+  })),
+}))
+
+vi.mock('../DisplayNameDialog.vue', () => ({
+  default: {
+    props: ['open', 'currentName'],
+    emits: ['update:open'],
+    template: '<div v-if="open" data-testid="display-name-dialog" />',
+  },
+}))
 
 vi.mock('../SetPasswordDialog.vue', () => ({
   default: {
@@ -77,6 +92,7 @@ vi.mock('@/stores/auth', () => ({
     displayName: 'Fallback User',
     createdAt: '2025-01-15T10:30:00Z',
     hasPassword: authStoreHasPassword,
+    termsVersion: authStoreTermsVersion,
   })),
 }))
 
@@ -90,7 +106,9 @@ vi.mock('@/components/ui/badge', () => ({
 
 vi.mock('@/lib/utils', () => ({
   cn: (...inputs: unknown[]) => inputs.filter(Boolean).join(' '),
-  formatDateTime: (value: string) => new Date(value).toLocaleString('en-US'),
+  // A sentinel rather than a locale format: the assertion then checks which value reaches the
+  // formatter, not how this machine happens to render a date.
+  formatDateTime: (value: string) => `dt:${value}`,
 }))
 
 // ==========================================
@@ -106,6 +124,8 @@ function resetMocks(): void {
   isDialogOpenValue = false
   authStoreHasPassword = false
   akSetPasswordDialogOpen.value = false
+  publicConfigValue = undefined
+  authStoreTermsVersion = null
 }
 
 function setEmailStatus(
@@ -215,7 +235,7 @@ describe('AccountSection', () => {
     it('formats registration time from auth store createdAt', () => {
       const wrapper = mount(AccountSection)
 
-      expect(wrapper.text()).not.toContain('—')
+      expect(wrapper.find('[data-testid="account-registered"]').text()).toBe('dt:2025-01-15T10:30:00Z')
     })
 
     it('shows dash when createdAt is null', () => {
@@ -229,7 +249,7 @@ describe('AccountSection', () => {
       const wrapper = mount(AccountSection)
 
       expect(wrapper.text()).toContain('Registered')
-      expect(wrapper.findAll('span').some((s) => s.text() === '—')).toBe(true)
+      expect(wrapper.find('[data-testid="account-registered"]').text()).toBe('—')
     })
   })
 
@@ -403,6 +423,41 @@ describe('AccountSection', () => {
 
       const dialogAfter = wrapper.find('[data-testid="set-password-dialog"]')
       expect(dialogAfter.exists()).toBe(false)
+    })
+  })
+
+  describe('terms version', () => {
+    it('shows the version the account accepted', () => {
+      authStoreTermsVersion = '1.4.0'
+      publicConfigValue = { termsVersion: '9.9.9' }
+      const wrapper = mount(AccountSection)
+
+      expect(wrapper.find('[data-testid="account-terms-version"]').text()).toBe('1.4.0')
+    })
+
+    it('falls back to the published version until the profile lands', () => {
+      authStoreTermsVersion = null
+      publicConfigValue = { termsVersion: '2.0.0' }
+      const wrapper = mount(AccountSection)
+
+      expect(wrapper.find('[data-testid="account-terms-version"]').text()).toBe('2.0.0')
+    })
+  })
+
+  describe('display name', () => {
+    it('shows the name the store holds', () => {
+      const wrapper = mount(AccountSection)
+
+      expect(wrapper.find('[data-testid="account-display-name"]').text()).toBe('Fallback User')
+    })
+
+    it('opens the rename dialog from the edit button', async () => {
+      const wrapper = mount(AccountSection)
+      expect(wrapper.find('[data-testid="display-name-dialog"]').exists()).toBe(false)
+
+      await wrapper.find('[data-testid="edit-display-name"]').trigger('click')
+
+      expect(wrapper.find('[data-testid="display-name-dialog"]').exists()).toBe(true)
     })
   })
 })

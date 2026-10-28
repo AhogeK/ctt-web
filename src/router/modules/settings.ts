@@ -21,6 +21,15 @@ const settingsRoutes: RouteRecordRaw[] = [
         meta: { title: 'Profile', titleKey: 'nav.profile', requiresAuth: true },
       },
       {
+        // Sign-ins and the data export. Account-scoped resources rather than preferences, and
+        // deliberately apart from the profile form: "where am I signed in" is a security
+        // question, and a reader looks for it under that name.
+        path: 'security',
+        name: RouteNames.SETTINGS_SECURITY,
+        component: () => import('@/features/settings/views/SecurityView.vue'),
+        meta: { title: 'Security', titleKey: 'nav.security', requiresAuth: true },
+      },
+      {
         // Devices (the tracker's sync subjects) live under settings: they
         // are an account-scoped resource, not a top-level destination.
         // The legacy /devices URL redirects here (modules/devices.ts).

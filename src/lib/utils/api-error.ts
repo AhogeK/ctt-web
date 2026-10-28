@@ -86,6 +86,8 @@ export function mapApiErrorCode(code: string): string {
     AUTH_009: 'api.errors.auth009',
     AUTH_010: 'api.errors.auth010',
     AUTH_019: 'api.errors.auth019',
+    AUTH_020: 'api.errors.auth020',
+    AUTH_022: 'api.errors.auth022',
     AUTH_024: 'api.errors.auth024',
     AUTH_023: 'api.errors.auth023',
     CSRF_001: 'api.errors.csrf001',

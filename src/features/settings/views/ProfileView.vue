@@ -200,9 +200,12 @@ onMounted(() => {
 
     <!-- Connected Accounts Section -->
     <div data-surface="card" class="rounded-lg border border-border dark:border-white/8 bg-muted dark:bg-card p-6">
-      <h2 class="text-lg font-medium text-foreground dark:text-foreground mb-4">
+      <h2 class="text-lg font-medium text-foreground dark:text-foreground mb-1">
         {{ t('settings.profile.connectedAccounts') }}
       </h2>
+      <p class="mb-4 text-sm text-muted-foreground dark:text-muted-foreground">
+        {{ t('settings.profile.credentialRule') }}
+      </p>
       <div class="flex items-center justify-between">
         <div class="flex items-center gap-3">
           <!-- Provider icon: GitHub SVG today; future providers should

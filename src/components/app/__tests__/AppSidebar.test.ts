@@ -59,6 +59,7 @@ vi.mock('@lucide/vue', () => ({
   Trophy: { name: 'Trophy', template: '<span data-icon="trophy" />' },
   ListOrdered: { name: 'ListOrdered', template: '<span data-icon="list-ordered" />' },
   User: { name: 'User', template: '<span data-icon="user" />' },
+  ShieldCheck: { name: 'ShieldCheck', template: '<span data-icon="shield-check" />' },
   Monitor: { name: 'Monitor', template: '<span data-icon="monitor" />' },
   SlidersHorizontal: { name: 'SlidersHorizontal', template: '<span data-icon="sliders" />' },
   KeyRound: { name: 'KeyRound', template: '<span data-icon="key-round" />' },
@@ -135,6 +136,7 @@ describe('AppSidebar', () => {
       // per section, and no parent entry that would repeat the heading.
       const settingsLinks = [
         ['/settings/profile', 'Profile'],
+        ['/settings/security', 'Security'],
         ['/settings/devices', 'Devices'],
         ['/settings/preferences', 'Preferences'],
         ['/settings/api-keys', 'API Keys'],

@@ -16,7 +16,16 @@ import {
   useSidebar,
 } from '@/components/ui/sidebar'
 import { RouterLink, useRoute } from 'vue-router'
-import { LayoutDashboard, Trophy, ListOrdered, User, Monitor, SlidersHorizontal, KeyRound } from '@lucide/vue'
+import {
+  LayoutDashboard,
+  Trophy,
+  ListOrdered,
+  User,
+  ShieldCheck,
+  Monitor,
+  SlidersHorizontal,
+  KeyRound,
+} from '@lucide/vue'
 import PluginIcon from './PluginIcon.vue'
 
 /**
@@ -175,6 +184,20 @@ function handleNavigate() {
                 <RouterLink to="/settings/profile">
                   <User />
                   <span>{{ t('nav.profile') }}</span>
+                </RouterLink>
+              </SidebarMenuButton>
+            </SidebarMenuItem>
+            <SidebarMenuItem>
+              <SidebarMenuButton
+                as-child
+                :tooltip="t('nav.security')"
+                class="h-9 text-[15px] [&>svg]:size-[18px] [&>svg]:mr-0.5"
+                @click="handleNavigate"
+                :is-active="isPathActive('/settings/security')"
+              >
+                <RouterLink to="/settings/security">
+                  <ShieldCheck />
+                  <span>{{ t('nav.security') }}</span>
                 </RouterLink>
               </SidebarMenuButton>
             </SidebarMenuItem>

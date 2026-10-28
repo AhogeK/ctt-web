@@ -27,6 +27,7 @@ export const RouteNames = {
   // Settings
   SETTINGS: 'settings',
   SETTINGS_PROFILE: 'settings-profile',
+  SETTINGS_SECURITY: 'settings-security',
   SETTINGS_DEVICES: 'settings-devices',
   SETTINGS_PREFERENCES: 'settings-preferences',
   SETTINGS_API_KEYS: 'settings-api-keys',
