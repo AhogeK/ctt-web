@@ -134,6 +134,25 @@ describe('Auth Store', () => {
    * Tests for clearAuth action behavior.
    */
   describe('clearAuth', () => {
+    it('forgets the terms version and the pending email change', () => {
+      store.applyProfile({
+        id: '550e8400-e29b-41d4-a716-446655440000',
+        email: 'alice@example.com',
+        displayName: 'Alice',
+        emailVerified: true,
+        createdAt: '2026-01-15T10:30:00Z',
+        lastLoginAt: null,
+        termsVersion: '1.0.0',
+        emailChangePending: true,
+        hasPassword: true,
+      })
+
+      store.clearAuth()
+
+      expect(store.termsVersion).toBeNull()
+      expect(store.emailChangePending).toBe(false)
+    })
+
     it('clears all auth state', () => {
       store.setAuth({
         accessToken: 'token',
@@ -375,6 +394,10 @@ describe('Auth Store', () => {
       expect(store.emailVerified).toBe(true)
       expect(store.lastLoginAt).toBe('2026-07-01T09:15:00Z')
       expect(store.hasPassword).toBe(true)
+      // The settings page shows the accepted terms version and whether an email change is
+      // pending; both come from this response and nowhere else.
+      expect(store.termsVersion).toBe('1.0.0')
+      expect(store.emailChangePending).toBe(false)
     })
 
     it('stores hasPassword from profile response', async () => {

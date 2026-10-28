@@ -112,14 +112,18 @@ export const useAuthStore = defineStore('auth', () => {
    * Avatar is derived client-side from displayName via `src/lib/utils/avatar.ts`
    * (stringToAvatarColor + getInitials) — backend never returns it.
    *
-   * Fields: displayName, email, emailVerified, hasPassword, createdAt, lastLoginAt.
+   * Fields: displayName, email, emailVerified, emailChangePending, hasPassword, createdAt,
+   * lastLoginAt, termsVersion.
    */
   const displayName = ref<string | null>(null)
   const email = ref<string | null>(null)
   const emailVerified = ref(false)
+  const emailChangePending = ref(false)
   const hasPassword = ref(false)
   const createdAt = ref<string | null>(null)
   const lastLoginAt = ref<string | null>(null)
+  /** The terms version the account accepted; null until the profile is fetched. */
+  const termsVersion = ref<string | null>(null)
 
   /**
    * Device identifier for login requests and server-side device binding.
@@ -178,9 +182,11 @@ export const useAuthStore = defineStore('auth', () => {
     displayName.value = null
     email.value = null
     emailVerified.value = false
+    emailChangePending.value = false
     hasPassword.value = false
     createdAt.value = null
     lastLoginAt.value = null
+    termsVersion.value = null
     // Cached server data belongs to the session that fetched it, and the next sign-in on this
     // tab may be somebody else: without this, a different account is served the previous one's
     // panels until the entries go stale. Every teardown path runs through here — sign-out, a
@@ -212,12 +218,7 @@ export const useAuthStore = defineStore('auth', () => {
     activeProfileFetchPromise = (async () => {
       try {
         const profile = await fetchCurrentUser()
-        displayName.value = profile.displayName
-        email.value = profile.email
-        emailVerified.value = profile.emailVerified
-        hasPassword.value = profile.hasPassword
-        createdAt.value = profile.createdAt
-        lastLoginAt.value = profile.lastLoginAt
+        applyProfile(profile)
         return profile
       } catch (error) {
         console.warn('[auth] Failed to fetch user profile:', error)
@@ -228,6 +229,26 @@ export const useAuthStore = defineStore('auth', () => {
     })()
 
     return activeProfileFetchPromise
+  }
+
+  /**
+   * Copies a profile into the store.
+   *
+   * The profile is the server's own view of the account, so every field it carries is copied
+   * rather than re-derived — the display name in particular, which the header shows and the
+   * avatar initials are derived from.
+   *
+   * @param profile - the profile as the server returned it
+   */
+  function applyProfile(profile: UserProfile): void {
+    displayName.value = profile.displayName
+    email.value = profile.email
+    emailVerified.value = profile.emailVerified
+    emailChangePending.value = profile.emailChangePending
+    hasPassword.value = profile.hasPassword
+    createdAt.value = profile.createdAt
+    lastLoginAt.value = profile.lastLoginAt
+    termsVersion.value = profile.termsVersion
   }
 
   /**
@@ -430,10 +451,13 @@ export const useAuthStore = defineStore('auth', () => {
     displayName,
     email,
     emailVerified,
+    emailChangePending,
     hasPassword,
     createdAt,
     lastLoginAt,
+    termsVersion,
     isAuthenticated,
+    applyProfile,
     setAuth,
     setAuthFromTermsAcceptance,
     clearAuth,
