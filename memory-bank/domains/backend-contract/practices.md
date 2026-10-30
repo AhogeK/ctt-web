@@ -109,6 +109,9 @@ const RESOURCE_401 = new Set(['AUTH_010', 'USER_014'])   // BOLA + business chec
 - **blob 请求只能按 status 分支，不能按错误码**：错误体也是 blob ⇒ `提取的 code` 永远是 undefined
   （实例：导出把 429 写成 `code === 'RATE_LIMIT_001'` ⇒ 该分支**不可达**，用户只看到通用失败文案 ✗）。
   `401` 交给拦截器（清会话 + 跳登录），其余按 `statusCode` 决定文案 ✓。
+- **429 一律读服务端给的 `Retry-After`，不要自己猜窗口**：限流是**固定窗口**，响应头里就是剩余秒数；
+  首版批量撤销硬等一小时 ⇒ 把人挡了最久的一小时 ✗。`getRetryAfterSeconds()`（`lib/utils/api-error.ts`）
+  已同时读头与响应体的 `retryAfter`；只有拿不到时才回退到窗口长度，并把截止时间持久化 ✓。
 - **导出文件名有两个来源，别统一**：服务端 `Content-Disposition` 给的是**带连字符**的
   `ctt-export-2026-07-09.json`；我们自己的兜底（响应没有该头）是紧凑的 `ctt-export-<yyyyMMdd>.json`。
 - **会话列表是裸数组**（`RestApiResponse.data` 里直接是数组），不是 `{ sessions: [...] }`。

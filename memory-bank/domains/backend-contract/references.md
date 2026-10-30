@@ -103,20 +103,20 @@ premise is obsolete (2026-10-28). This section is final and supersedes every ear
   userAgent, createdAt, lastUsedAt, expiresAt, current }]` (**no `{ sessions: […] }` wrapper**);
   **sorted by `lastUsedAt` desc**; `kind` =
   `WEB` | `PLUGIN` (deviceName/ideName only on PLUGIN; `userAgent` is on both — ignore it for PLUGIN rows);
-  `userAgent` = raw header, nullable, truncated to 512, **not parsed server-side** (the web client derives
-  the display label itself), stable across refresh rotation; `createdAt` = first login of the session,
-  `lastUsedAt` = last refresh, **nullable (`null` = never refreshed)**; nullable keys are **always present**
-  (value `null`) — that distinguishes "no device" from "unknown field"; **`current` is server-decided** —
-  never send a refresh token to compare, and it is always `false` for an API-key caller; one login = one
-  row (refresh/rotation does not add rows); rows carry **no `deviceId`** (a future session→device link
-  would add it, no migration).
+  `userAgent` = raw header, nullable, truncated to 512, **not parsed server-side**; `createdAt` = first
+  login of the session, `lastUsedAt` = last refresh (**`null` = never refreshed**); nullable keys are
+  **always present** (`null`) — "no device" ≠ "unknown field"; **`current` is server-decided** — never
+  send a refresh token to compare, always `false` for an API key; one login = one row (rotation does not
+  add rows); rows carry **no `deviceId`** (a session→device link would add it, no migration).
 - `DELETE /users/me/sessions/{id}` (rate 10/hr) → 204; `404 COMMON_002` when not yours/absent (does not
-  reveal whether someone else's session exists). Deleting the current session = logout (clear tokens, go
-  to login). A kicked client gets **`401 AUTH_003`** on its next refresh (the earlier `AUTH_008` wording
-  is void), other sessions of the account stay unaffected; already-issued access tokens keep a
-  ≤15-minute window (same tradeoff as logout). **Wording trap:** the general message map uses `AUTH_003`
-  for "reset link invalid" — the session flow must go through the terminal path (clear + redirect), never
-  that map's copy.
+  reveal existence). Deleting the current session = logout. A kicked client gets **`401 AUTH_003`** on
+  its next refresh (the `AUTH_008` wording is void); other sessions are unaffected; issued access tokens
+  keep a ≤15-minute window. **Wording trap:** the general map's `AUTH_003` means "reset link invalid" —
+  the session flow takes the terminal path (clear + redirect), never that copy.
+- `POST /users/me/sessions/revoke` body `{ sessionIds: [uuid] }` (rate **10/hr per account**, 2026-10-30
+  v0.88.0) → `200 { revoked, skipped }`; `@NotEmpty`, no `null` elements, **de-duplicated then ≤100**
+  (`400 COMMON_003`, nothing executed); `skipped` = unknown / already revoked / foreign, **sorted and
+  reason-free by design**; locks taken in that order (no deadlock); each revocation audits `SESSION_REVOKED`.
 - `GET /users/me/export?timezoneOffset=<minutes>` — **`timezoneOffset` is mandatory** (range ±720; missing
   or out of range → `400 COMMON_003`; value = `-new Date().getTimezoneOffset()`, UTC+8 → `480`), rate
   3/hr. Returns `200 application/json;charset=UTF-8` — **one JSON document** (not NDJSON, no

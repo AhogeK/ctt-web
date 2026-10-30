@@ -63,9 +63,9 @@ source of truth to be read, never edited. Capability gaps are raised as a requir
   leaderboard has not been re-read since v0.73.0**: treat those entries as accurate to that version rather than to
   the running server.
 - Stage-six endpoints — **R1–R3** (display-name `PATCH`, login sessions, JSON export): implemented in
-  ctt-server v0.83.0 and **live on the deployed 0.87.1** (checked against online `/v3/api-docs` on
-  2026-10-28) — the 「wait for their notice」premise is obsolete, so they were wired directly (v0.70.1).
-  The contract is in `references.md`; the wiring rulings (export blob, bare-array list) are in `progress.md`.
+  ctt-server v0.83.0, **live** (0.87.1 checked online 2026-10-28). **Batch revocation** arrived in
+  **v0.88.0** (2026-10-30) and was verified on the running instance's `/v3/api-docs` — wired in v0.72.0.
+  The contract is in `references.md`; the wiring rulings are in `progress.md` and `practices.md`.
 
 ### Leaderboard re-checked at v0.77.0 (2026-09-18) — no drift
 
