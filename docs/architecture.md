@@ -647,6 +647,7 @@ account is signed in and how to take its data elsewhere.
 | `PATCH`  | `/api/v1/users/me`                            | Bearer JWT | Change the display name; answers with the stored profile      |
 | `GET`    | `/api/v1/users/me/sessions?limit=`            | Bearer JWT | Active sign-ins, most recently used first (a bare array)      |
 | `DELETE` | `/api/v1/users/me/sessions/{id}`              | Bearer JWT | Revoke one sign-in; `204`, no body                            |
+| `POST`   | `/api/v1/users/me/sessions/revoke`            | Bearer JWT | End several at once; `200` with `{revoked, skipped}`           |
 | `GET`    | `/api/v1/users/me/export?timezoneOffset=`     | Bearer JWT | The account's data as one JSON attachment                     |
 
 The session list contains **active** sign-ins only — a revoked or expired one is not reported — and
@@ -681,9 +682,18 @@ data cleared, one confirmation toast, redirect to sign-in.
 One server row is one login, so an account that signs in repeatedly — or clears its cookies without
 signing out — accumulates rows that all read the same client name. The card therefore renders the
 current sign-in on its own row and folds the rest into one row per client with a count; the
-individual sign-ins appear when that client is expanded, and each is revocable there. A client-level
-bulk revoke is deliberately absent: `DELETE` is rate-limited to ten an hour, so a button that fired a
-dozen of them would fail.
+individual sign-ins appear when that client is expanded, and each is revocable there.
+
+A whole client ends in one call (`POST …/sessions/revoke`, at most 100 distinct ids per call, ten
+calls an hour). The call is partial-success by design: ids that are unknown, already revoked or
+someone else's come back in `skipped` instead of failing the batch, which is what makes a retry
+after a timeout converge. `skipped` carries no reasons — turning "not revoked" into "exists but is
+not yours" is the leak the server avoids, so the client reports only the count.
+
+A refusal carries `Retry-After`: the limiter is a fixed window and the header is the counter's
+remaining lifetime, so the batch action disables itself for exactly that long. An hour is only the
+fallback when no hint arrives, and the deadline is remembered for the tab so a reload does not
+re-offer an action the server will refuse.
 
 #### Export
 
