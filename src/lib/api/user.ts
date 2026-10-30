@@ -2,16 +2,19 @@ import { z } from 'zod'
 import { apiFetch } from './instance'
 import { RestApiResponseSchema } from '@/lib/schemas/api.schema'
 import {
+  BatchRevokeSessionsRequestSchema,
+  BatchRevokeSessionsResponseSchema,
   DeleteAccountRequestSchema,
   LoginSessionSchema,
   UpdateProfileRequestSchema,
   UserProfileSchema,
+  type BatchRevokeSessionsResult,
   type LoginSession,
   type UserProfile,
 } from '@/lib/schemas/user.schema'
 import { encodeBase64 } from '@/lib/utils'
 
-export type { LoginSession, UserProfile } from '@/lib/schemas/user.schema'
+export type { BatchRevokeSessionsResult, LoginSession, UserProfile } from '@/lib/schemas/user.schema'
 
 /**
  * Fetch the current authenticated user's profile.
@@ -229,4 +232,32 @@ function fallbackExportFileName(): string {
     String(now.getDate()).padStart(2, '0'),
   ].join('')
   return `ctt-export-${stamp}.json`
+}
+
+/**
+ * Revokes several login sessions in one call.
+ *
+ * Endpoint: POST /api/v1/users/me/sessions/revoke
+ * Auth: Bearer JWT (auto-injected by apiFetch interceptor)
+ *
+ * Answers `200` with the outcome even when it could only revoke part of the batch: an id that is
+ * unknown, already revoked, or owned by another account comes back in `skipped` rather than
+ * failing the call. That makes a retry after a timeout safe — the sessions the first attempt
+ * already ended are simply skipped.
+ *
+ * @param sessionIds - ids as returned by {@link fetchLoginSessions}; must be distinct
+ * @returns how many sessions this call revoked, and which ids it did not
+ * @throws Zod validation error if the list is empty or longer than the server accepts
+ * @throws 400 with COMMON_003 if the server de-duplicates to more than 100 ids
+ * @throws 429 with RATE_LIMIT_001 after ten calls in an hour (no per-session limit applies)
+ */
+export async function revokeLoginSessions(sessionIds: string[]): Promise<BatchRevokeSessionsResult> {
+  const body = BatchRevokeSessionsRequestSchema.parse({ sessionIds })
+  const response = await apiFetch<unknown>('/api/v1/users/me/sessions/revoke', {
+    method: 'POST',
+    body,
+  })
+
+  const wrapped = RestApiResponseSchema.parse(response)
+  return BatchRevokeSessionsResponseSchema.parse(wrapped.data)
 }

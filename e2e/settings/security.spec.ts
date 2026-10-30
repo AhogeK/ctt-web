@@ -61,12 +61,14 @@ const sessionFixtures = (): SessionFixture[] => [
  * The list is mutable on purpose: the page refetches after a successful revocation, and a mock
  * that kept returning the deleted row would make the client look broken.
  */
-async function mockSessions(page: Page): Promise<{ list: SessionFixture[]; deletes: string[] }> {
+async function mockSessions(page: Page): Promise<{ list: SessionFixture[]; deletes: string[]; batches: string[][] }> {
   const list = sessionFixtures()
   const deletes: string[] = []
+  const batches: string[][] = []
 
   await page.route('**/api/v1/users/me/sessions**', async (route) => {
     const request = route.request()
+
     if (request.method() === 'DELETE') {
       const id = new URL(request.url()).pathname.split('/').pop() ?? ''
       deletes.push(id)
@@ -75,10 +77,25 @@ async function mockSessions(page: Page): Promise<{ list: SessionFixture[]; delet
       await route.fulfill({ status: 204, body: '' })
       return
     }
+
+    if (request.method() === 'POST') {
+      const body = request.postDataJSON() as { sessionIds: string[] }
+      batches.push(body.sessionIds)
+      let revoked = 0
+      for (const id of body.sessionIds) {
+        const index = list.findIndex((row) => row.id === id)
+        if (index === -1) continue
+        list.splice(index, 1)
+        revoked += 1
+      }
+      await route.fulfill({ json: okEnvelope({ revoked, skipped: [] }) })
+      return
+    }
+
     await route.fulfill({ json: okEnvelope(list) })
   })
 
-  return { list, deletes }
+  return { list, deletes, batches }
 }
 
 const sessionsList = (page: Page) => page.getByTestId('login-sessions')
@@ -143,6 +160,21 @@ test.describe('Security page', () => {
     // server's answer no longer contains it.
     await expect(page.getByTestId('login-session-group')).toHaveCount(2)
     await expect(page).toHaveURL(/\/settings\/security$/)
+  })
+
+  test("ends a folded client's sign-ins in one call", async ({ page }) => {
+    const { batches } = await mockSessions(page)
+    await page.goto('/settings/security')
+
+    const chrome = page.getByTestId('login-session-group').nth(0)
+    await chrome.getByTestId('login-session-bulk').click()
+    await page.getByTestId('login-session-bulk-confirm').click()
+
+    // One request for the whole client, not one per sign-in.
+    await expect.poll(() => batches).toHaveLength(1)
+    expect(batches[0]).toHaveLength(6)
+    await expect(page.getByTestId('login-session-group')).toHaveCount(2)
+    await expect(page.getByText('Sign-ins revoked: 6')).toBeVisible()
   })
 
   test('saves the export under the filename the server chose', async ({ page }) => {
