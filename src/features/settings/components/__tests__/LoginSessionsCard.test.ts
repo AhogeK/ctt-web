@@ -15,6 +15,7 @@ const CHROME_MAC =
 const FIREFOX_LINUX = 'Mozilla/5.0 (X11; Linux x86_64; rv:121.0) Gecko/20100101 Firefox/121.0'
 
 const mockRevoke = vi.hoisted(() => vi.fn<(id: string) => Promise<void>>())
+const mockRevokeMany = vi.hoisted(() => vi.fn<(ids: string[]) => Promise<unknown>>())
 const mockSignOutLocally = vi.hoisted(() => vi.fn<() => void>())
 const mockToastSuccess = vi.hoisted(() => vi.fn<(...args: unknown[]) => void>())
 const mockToastError = vi.hoisted(() => vi.fn<(...args: unknown[]) => void>())
@@ -23,6 +24,7 @@ let sessionsValue: LoginSession[] = []
 let isPendingValue = false
 let isErrorValue = false
 const revokePendingValue = ref(false)
+const bulkPendingValue = ref(false)
 
 vi.mock('../../composables/useLoginSessions', () => ({
   useLoginSessions: vi.fn<() => unknown>(() => ({
@@ -30,7 +32,12 @@ vi.mock('../../composables/useLoginSessions', () => ({
     isPending: ref(isPendingValue),
     isError: ref(isErrorValue),
     refetch: vi.fn<() => void>(),
-    revokeMutation: { mutateAsync: mockRevoke, isPending: revokePendingValue },
+  })),
+  useRevokeLoginSession: vi.fn<() => unknown>(() => ({
+    mutation: { mutateAsync: mockRevoke, isPending: revokePendingValue },
+  })),
+  useRevokeLoginSessions: vi.fn<() => unknown>(() => ({
+    mutation: { mutateAsync: mockRevokeMany, isPending: bulkPendingValue },
   })),
 }))
 
@@ -50,10 +57,13 @@ vi.mock('@/lib/utils', () => ({
   formatRelativeTime: (value: string) => `ago ${value}`,
 }))
 
+const mockGetRetryAfterSeconds = vi.hoisted(() => vi.fn<(error: unknown) => number | null>(() => null))
+
 vi.mock('@/lib/utils/api-error', () => ({
   extractErrorCode: vi.fn<(error: unknown) => string | null>(() => null),
   mapApiErrorCode: vi.fn<(code: string) => string>(() => 'mapped'),
   isApiError: (error: unknown) => typeof (error as { statusCode?: unknown } | null)?.statusCode === 'number',
+  getRetryAfterSeconds: mockGetRetryAfterSeconds,
 }))
 
 vi.mock('@/components/ui/button', () => ({
@@ -99,11 +109,17 @@ const rowsOf = (wrapper: ReturnType<typeof mount>, testid: string) => wrapper.fi
 describe('LoginSessionsCard', () => {
   beforeEach(() => {
     vi.clearAllMocks()
+    // The cooldown outlives a mount on purpose, so a case that trips the limit would otherwise
+    // leave the next one with a disabled action.
+    sessionStorage.clear()
     sessionSeq = 0
     mockRevoke.mockResolvedValue(undefined)
+    mockRevokeMany.mockResolvedValue({ revoked: 0, skipped: [] })
+    mockGetRetryAfterSeconds.mockReturnValue(null)
     isPendingValue = false
     isErrorValue = false
     revokePendingValue.value = false
+    bulkPendingValue.value = false
     sessionsValue = []
   })
 
@@ -255,6 +271,92 @@ describe('LoginSessionsCard', () => {
       // Its message table belongs to the reset-link flow; a toast here would show that copy on
       // top of a redirect that is already under way.
       expect(mockToastError).not.toHaveBeenCalled()
+      wrapper.unmount()
+    })
+  })
+
+  describe("ending a client's sign-ins at once", () => {
+    it('offers the batch action only where there is more than one sign-in', () => {
+      sessionsValue = [session(), session(), session({ kind: 'PLUGIN', deviceName: 'workstation', userAgent: null })]
+      const wrapper = mount(LoginSessionsCard)
+
+      const groups = rowsOf(wrapper, 'login-session-group')
+      expect(groups[0]!.find('[data-testid="login-session-bulk"]').exists()).toBe(true)
+      expect(groups[1]!.find('[data-testid="login-session-bulk"]').exists()).toBe(false)
+    })
+
+    it('ends them in one call and says what was left alone', async () => {
+      const first = session({ id: 'a' })
+      const second = session({ id: 'b' })
+      sessionsValue = [first, second]
+      mockRevokeMany.mockResolvedValue({ revoked: 1, skipped: ['b'] })
+      const wrapper = mount(LoginSessionsCard)
+
+      await wrapper.find('[data-testid="login-session-bulk"]').trigger('click')
+      expect(wrapper.find('[data-testid="login-session-bulk-confirm"]').exists()).toBe(true)
+
+      await wrapper.find('[data-testid="login-session-bulk-confirm"]').trigger('click')
+      await flushPromises()
+
+      expect(mockRevokeMany).toHaveBeenCalledTimes(1)
+      expect(mockRevokeMany).toHaveBeenCalledWith(['a', 'b'])
+      // The skipped id is not called out by name or reason — only the count, which is all the
+      // server is willing to say.
+      expect(mockToastSuccess).toHaveBeenCalledWith('Sign-ins revoked: 1', {
+        description: '1 already inactive',
+      })
+      wrapper.unmount()
+    })
+
+    it('keeps the dialog open while the call is running, so it can say so', async () => {
+      sessionsValue = [session(), session()]
+      // A call that never settles: the dialog must not vanish and leave the reader with no sign
+      // that anything is happening.
+      mockRevokeMany.mockReturnValue(new Promise(() => {}))
+      const wrapper = mount(LoginSessionsCard)
+
+      await wrapper.find('[data-testid="login-session-bulk"]').trigger('click')
+      // What vue-query does the moment the mutation starts; the mock carries that flag itself.
+      bulkPendingValue.value = true
+      await wrapper.find('[data-testid="login-session-bulk-confirm"]').trigger('click')
+      await flushPromises()
+
+      const confirm = wrapper.find('[data-testid="login-session-bulk-confirm"]')
+      expect(confirm.exists()).toBe(true)
+      expect(confirm.text()).toContain('Revoking…')
+      wrapper.unmount()
+    })
+
+    it('disables the batch action for exactly as long as the server says', async () => {
+      sessionsValue = [session(), session()]
+      // A fixed-window limiter reports the counter's remaining lifetime, so the wait is 30s here,
+      // not the whole window.
+      mockGetRetryAfterSeconds.mockReturnValue(30)
+      mockRevokeMany.mockRejectedValue({ statusCode: 429, data: { code: 'RATE_LIMIT_001' } })
+      const wrapper = mount(LoginSessionsCard)
+
+      await wrapper.find('[data-testid="login-session-bulk"]').trigger('click')
+      await wrapper.find('[data-testid="login-session-bulk-confirm"]').trigger('click')
+      await flushPromises()
+
+      expect(mockToastError).toHaveBeenCalledTimes(1)
+      const bulk = wrapper.find('[data-testid="login-session-bulk"]')
+      expect(bulk.attributes('disabled')).toBeDefined()
+      expect(bulk.text()).toContain('Retry in 1 min')
+      wrapper.unmount()
+    })
+
+    it('falls back to the window length when the refusal carries no hint', async () => {
+      sessionsValue = [session(), session()]
+      mockGetRetryAfterSeconds.mockReturnValue(null)
+      mockRevokeMany.mockRejectedValue({ statusCode: 429, data: { code: 'RATE_LIMIT_001' } })
+      const wrapper = mount(LoginSessionsCard)
+
+      await wrapper.find('[data-testid="login-session-bulk"]').trigger('click')
+      await wrapper.find('[data-testid="login-session-bulk-confirm"]').trigger('click')
+      await flushPromises()
+
+      expect(wrapper.find('[data-testid="login-session-bulk"]').text()).toContain('Retry in 60 min')
       wrapper.unmount()
     })
   })

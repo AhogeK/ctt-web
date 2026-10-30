@@ -16,7 +16,7 @@
  * A browser session carries no device name, only a user agent string, so its title is derived
  * through the catalogue. A plugin session is a device, and shows the names the plugin registered.
  */
-import { computed, ref } from 'vue'
+import { computed, onBeforeUnmount, ref, watch } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { ChevronDown, ChevronRight, Globe, Monitor } from '@lucide/vue'
 import { toast } from 'vue-sonner'
@@ -32,15 +32,17 @@ import {
   DialogTitle,
 } from '@/components/ui/dialog'
 import { cn, formatDateTime, formatRelativeTime } from '@/lib/utils'
-import { extractErrorCode, isApiError, mapApiErrorCode } from '@/lib/utils/api-error'
+import { extractErrorCode, getRetryAfterSeconds, isApiError, mapApiErrorCode } from '@/lib/utils/api-error'
 import { parseUserAgent } from '@/lib/utils/user-agent'
 import { useAuthStore } from '@/stores/auth'
 import type { LoginSession } from '@/lib/api'
-import { useLoginSessions } from '../composables/useLoginSessions'
+import { useLoginSessions, useRevokeLoginSession, useRevokeLoginSessions } from '../composables/useLoginSessions'
 
 const { t } = useI18n()
 const authStore = useAuthStore()
-const { sessions, isPending, isError, refetch, revokeMutation } = useLoginSessions()
+const { sessions, isPending, isError, refetch } = useLoginSessions()
+const { mutation: revokeMutation } = useRevokeLoginSession()
+const { mutation: revokeManyMutation } = useRevokeLoginSessions()
 
 /** The session the confirmation dialog is asking about, or null when it is closed. */
 const target = ref<LoginSession | null>(null)
@@ -180,10 +182,10 @@ function askToRevoke(session: LoginSession): void {
 async function confirmRevoke(): Promise<void> {
   const session = target.value
   if (!session) return
-  target.value = null
 
   try {
     await revokeMutation.mutateAsync(session.id)
+    target.value = null
     if (session.current) {
       // The session the user is standing on is gone, so the local teardown is the one every
       // other sign-out path performs.
@@ -192,6 +194,7 @@ async function confirmRevoke(): Promise<void> {
     }
     toast.success(t('settings.security.sessions.revoked'))
   } catch (error) {
+    target.value = null
     // A 401 means the session behind this request is gone — the interceptor has already cleared
     // it and redirected. Its message table belongs to the reset-link flow, so mapping the code
     // here would show the wrong copy on top of a redirect that is already under way.
@@ -204,8 +207,145 @@ async function confirmRevoke(): Promise<void> {
   }
 }
 
-/** Whether any revocation is in flight — the actions stay disabled while one is. */
+/** The client whose sign-ins the batch dialog is about, or null when it is closed. */
+const bulkTarget = ref<SessionGroup | null>(null)
+
+/** Reads a still-running cooldown left by an earlier visit to this tab. */
+function readCooldown(): number | null {
+  try {
+    const raw = sessionStorage.getItem(BULK_COOLDOWN_KEY)
+    const until = raw === null ? Number.NaN : Number(raw)
+    return Number.isFinite(until) && until > Date.now() ? until : null
+  } catch {
+    return null
+  }
+}
+
+/**
+ * Remembers the deadline so a reload does not re-offer an action the server will refuse.
+ *
+ * @param until - the deadline, or null to forget it
+ */
+function writeCooldown(until: number | null): void {
+  try {
+    if (until === null) {
+      sessionStorage.removeItem(BULK_COOLDOWN_KEY)
+    } else {
+      sessionStorage.setItem(BULK_COOLDOWN_KEY, String(until))
+    }
+  } catch {
+    // Storage can be unavailable (private mode); the deadline then lives for this page only.
+  }
+}
+
+/**
+ * Where the batch cooldown deadline is remembered.
+ *
+ * Per tab on purpose: another tab has its own view of the list, and the server remains the real
+ * guard. This only spares the reader a button that is known to fail.
+ */
+const BULK_COOLDOWN_KEY = 'ctt.settings.sessions.bulk-cooldown'
+
+/**
+ * When the batch allowance comes back, or null while it is available.
+ *
+ * The server puts the wait in `Retry-After` — its limiter is a fixed window and the refusal
+ * carries the counter's remaining lifetime — so the deadline normally comes from there. The
+ * fallback is the window's own length, used only when no hint arrived.
+ */
+const bulkBlockedUntil = ref<number | null>(readCooldown())
+const clock = ref(Date.now())
+let blockTimer: number | undefined
+
+watch(bulkBlockedUntil, (until) => {
+  if (blockTimer !== undefined) {
+    window.clearInterval(blockTimer)
+    blockTimer = undefined
+  }
+  writeCooldown(until)
+  if (until === null) return
+  clock.value = Date.now()
+  blockTimer = window.setInterval(() => {
+    clock.value = Date.now()
+    if (clock.value >= until) {
+      // The window has certainly moved past every request that counted, so the action comes back
+      // and the ticker stops with it.
+      bulkBlockedUntil.value = null
+    }
+  }, 30_000)
+})
+
+onBeforeUnmount(() => {
+  if (blockTimer !== undefined) window.clearInterval(blockTimer)
+})
+
+/** Minutes left until the batch allowance is back; 0 when it is available. */
+const bulkBlockedMinutes = computed(() => {
+  const until = bulkBlockedUntil.value
+  if (until === null) return 0
+  const left = until - clock.value
+  return left > 0 ? Math.ceil(left / 60_000) : 0
+})
+
+const isBulkBlocked = computed(() => bulkBlockedMinutes.value > 0)
+
+function askToRevokeClient(group: SessionGroup): void {
+  bulkTarget.value = group
+}
+
+async function confirmBulkRevoke(): Promise<void> {
+  const group = bulkTarget.value
+  if (!group) return
+
+  try {
+    const result = await revokeManyMutation.mutateAsync(group.sessions.map((session) => session.id))
+    bulkTarget.value = null
+    // The skipped ids are unknown, already revoked, or someone else's — the server does not say
+    // which, and neither does this message: they are simply not signed in any more.
+    toast.success(t('settings.security.sessions.revokedMany', { revoked: result.revoked }), {
+      description:
+        result.skipped.length > 0
+          ? t('settings.security.sessions.skippedNote', { count: result.skipped.length })
+          : undefined,
+    })
+  } catch (error) {
+    bulkTarget.value = null
+    // A 401 is the interceptor's; its message table belongs to the reset-link flow.
+    if (isApiError(error) && error.statusCode === 401) return
+
+    if (isApiError(error) && error.statusCode === 429) {
+      // The refusal carries Retry-After, which is the exact time left in the limiter's fixed
+      // window. An hour is only the fallback — the window's own length, never shorter than the
+      // wait can be.
+      const waitSeconds = getRetryAfterSeconds(error) ?? 60 * 60
+      clock.value = Date.now()
+      bulkBlockedUntil.value = Date.now() + waitSeconds * 1000
+      toast.error(t('settings.security.sessions.revokeFailed'), {
+        description: t('settings.security.sessions.bulkRateLimited', {
+          minutes: bulkBlockedMinutes.value,
+        }),
+      })
+      return
+    }
+
+    const code = extractErrorCode(error)
+    const description =
+      code === 'COMMON_003' ? t('settings.security.sessions.bulkTooMany') : code ? mapApiErrorCode(code) : undefined
+    toast.error(t('settings.security.sessions.revokeFailed'), { description })
+  }
+}
+
+/** Whether a single-session revocation is in flight. */
 const isRevoking = computed(() => revokeMutation.isPending.value)
+/** Whether the batch revocation is in flight. */
+const isBulkRevoking = computed(() => revokeManyMutation.isPending.value)
+/**
+ * Whether any revocation is in flight.
+ *
+ * Every revoke control reads this, not one of the halves: while one mutation is changing the
+ * list, a second one would decide against rows the first has already removed.
+ */
+const isBusy = computed(() => isRevoking.value || isBulkRevoking.value)
 </script>
 
 <template>
@@ -265,7 +405,7 @@ const isRevoking = computed(() => revokeMutation.isPending.value)
         <Button
           variant="outline"
           :class="cn(SETTINGS_ACTION_BUTTON_CLASS, 'shrink-0 self-start sm:self-auto')"
-          :disabled="isRevoking"
+          :disabled="isBusy"
           data-testid="login-session-revoke"
           @click="askToRevoke(currentSession)"
         >
@@ -303,14 +443,28 @@ const isRevoking = computed(() => revokeMutation.isPending.value)
               v-if="group.sessions.length === 1"
               variant="outline"
               :class="SETTINGS_ACTION_BUTTON_CLASS"
-              :disabled="isRevoking"
+              :disabled="isBusy"
               data-testid="login-session-revoke"
               @click="askToRevoke(group.sessions[0]!)"
             >
               {{ t('settings.security.sessions.revoke') }}
             </Button>
             <Button
-              v-else
+              v-if="group.sessions.length > 1"
+              variant="outline"
+              :class="SETTINGS_ACTION_BUTTON_CLASS"
+              :disabled="isBusy || isBulkBlocked"
+              data-testid="login-session-bulk"
+              @click="askToRevokeClient(group)"
+            >
+              {{
+                isBulkBlocked
+                  ? t('settings.security.sessions.bulkRetryIn', { minutes: bulkBlockedMinutes })
+                  : t('settings.security.sessions.revokeGroup')
+              }}
+            </Button>
+            <Button
+              v-if="group.sessions.length > 1"
               variant="outline"
               :class="SETTINGS_ACTION_BUTTON_CLASS"
               :aria-expanded="isExpanded(group.key)"
@@ -338,7 +492,7 @@ const isRevoking = computed(() => revokeMutation.isPending.value)
             <Button
               variant="outline"
               :class="SETTINGS_ACTION_BUTTON_CLASS"
-              :disabled="isRevoking"
+              :disabled="isBusy"
               data-testid="login-session-revoke"
               @click="askToRevoke(session)"
             >
@@ -366,16 +520,39 @@ const isRevoking = computed(() => revokeMutation.isPending.value)
           </DialogDescription>
         </DialogHeader>
         <DialogFooter class="gap-2">
-          <Button variant="ghost" :disabled="isRevoking" @click="target = null">
+          <Button variant="ghost" :disabled="isBusy" @click="target = null">
+            {{ t('settings.common.cancel') }}
+          </Button>
+          <Button variant="destructive" :disabled="isBusy" data-testid="login-session-confirm" @click="confirmRevoke">
+            {{ isRevoking ? t('settings.security.sessions.revoking') : t('settings.security.sessions.revokeConfirm') }}
+          </Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
+
+    <Dialog :open="bulkTarget !== null" @update:open="(open) => !open && (bulkTarget = null)">
+      <DialogContent class="sm:max-w-md">
+        <DialogHeader>
+          <DialogTitle>
+            {{ t('settings.security.sessions.revokeGroupTitle', { count: bulkTarget?.sessions.length ?? 0 }) }}
+          </DialogTitle>
+          <DialogDescription>{{ t('settings.security.sessions.revokeGroupDescription') }}</DialogDescription>
+        </DialogHeader>
+        <DialogFooter class="gap-2">
+          <Button variant="ghost" :disabled="isBulkRevoking" @click="bulkTarget = null">
             {{ t('settings.common.cancel') }}
           </Button>
           <Button
             variant="destructive"
-            :disabled="isRevoking"
-            data-testid="login-session-confirm"
-            @click="confirmRevoke"
+            :disabled="isBulkRevoking"
+            data-testid="login-session-bulk-confirm"
+            @click="confirmBulkRevoke"
           >
-            {{ isRevoking ? t('settings.security.sessions.revoking') : t('settings.security.sessions.revokeConfirm') }}
+            {{
+              isBulkRevoking
+                ? t('settings.security.sessions.revoking')
+                : t('settings.security.sessions.revokeGroupConfirm')
+            }}
           </Button>
         </DialogFooter>
       </DialogContent>

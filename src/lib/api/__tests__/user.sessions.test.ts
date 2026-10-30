@@ -68,4 +68,43 @@ describe('login sessions API', () => {
       })
     })
   })
+
+  describe('revokeLoginSessions', () => {
+    const ids = ['11111111-1111-4111-8111-111111111111', '33333333-3333-4333-8333-333333333333']
+
+    it('posts every id in one call and reports both counts', async () => {
+      vi.mocked(apiFetch).mockResolvedValue({
+        success: true,
+        message: 'OK',
+        timestamp: '2026-07-09T10:30:00Z',
+        data: { revoked: 1, skipped: [ids[1]] },
+      })
+
+      const result = await userApi.revokeLoginSessions(ids)
+
+      expect(apiFetch).toHaveBeenCalledWith('/api/v1/users/me/sessions/revoke', {
+        method: 'POST',
+        body: { sessionIds: ids },
+      })
+      expect(result).toEqual({ revoked: 1, skipped: [ids[1]] })
+    })
+
+    it('answers with an empty skip list when the server omits it', async () => {
+      vi.mocked(apiFetch).mockResolvedValue({
+        success: true,
+        message: 'OK',
+        timestamp: '2026-07-09T10:30:00Z',
+        data: { revoked: 2 },
+      })
+
+      await expect(userApi.revokeLoginSessions(ids)).resolves.toEqual({ revoked: 2, skipped: [] })
+    })
+
+    it('refuses an empty batch before it reaches the network', async () => {
+      const failure = await userApi.revokeLoginSessions([]).catch((error: unknown) => error)
+
+      expect(failure).toBeInstanceOf(Error)
+      expect(apiFetch).not.toHaveBeenCalled()
+    })
+  })
 })

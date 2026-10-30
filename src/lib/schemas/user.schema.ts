@@ -88,6 +88,36 @@ export const LoginSessionSchema = z.object({
 export type LoginSession = z.infer<typeof LoginSessionSchema>
 
 /**
+ * Request body for {@link revokeLoginSessions} — `POST /api/v1/users/me/sessions/revoke`.
+ *
+ * The server de-duplicates before applying its limit of 100, so it accepts a longer list than this
+ * schema does. The client is stricter on purpose: it only ever sends the ids of one folded client,
+ * which are distinct by construction, and rejecting them here is cheaper than a round trip that
+ * ends in `400 COMMON_003`.
+ */
+export const BatchRevokeSessionsRequestSchema = z.object({
+  sessionIds: z.array(z.uuid()).min(1).max(100),
+})
+
+export type BatchRevokeSessionsRequest = z.infer<typeof BatchRevokeSessionsRequestSchema>
+
+/**
+ * Outcome of a batch revocation — `POST /api/v1/users/me/sessions/revoke`.
+ *
+ * The call is deliberately partial-success: ids that are unknown, already revoked, or owned by
+ * another account are reported in `skipped` instead of failing the batch, so a retry after a
+ * timeout converges. `skipped` carries no reasons on purpose — turning "not revoked" into
+ * "exists but is not yours" is the information leak the server avoids, and a client must not
+ * reconstruct it either.
+ */
+export const BatchRevokeSessionsResponseSchema = z.object({
+  revoked: z.number().int().nonnegative(),
+  skipped: z.array(z.uuid()).default([]),
+})
+
+export type BatchRevokeSessionsResult = z.infer<typeof BatchRevokeSessionsResponseSchema>
+
+/**
  * Request body for {@link deleteAccount} — `DELETE /api/v1/users/me`.
  *
  * The body is **required**: the controller declares `@Valid @RequestBody`, so omitting it fails

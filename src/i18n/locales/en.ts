@@ -1119,8 +1119,17 @@ const en = {
       subtitle: 'See where you are signed in, and take your data with you',
       sessions: {
         title: 'Login sessions',
-        description: 'Every sign-in leaves a record. Revoking one ends that client on its next request.',
+        description: 'Every sign-in leaves a record; revoking one signs that client out within 15 minutes.',
         count: '{count} sign-ins',
+        revokeGroup: 'Revoke all',
+        revokeGroupTitle: 'Revoke all {count} sign-ins?',
+        revokeGroupDescription: 'They are signed out within 15 minutes. The sign-in you are using stays signed in.',
+        revokeGroupConfirm: 'Revoke all',
+        revokedMany: 'Sign-ins revoked: {revoked}',
+        skippedNote: '{count} already inactive',
+        bulkRateLimited: 'Ten revocation requests an hour — about {minutes} min left.',
+        bulkRetryIn: 'Retry in {minutes} min',
+        bulkTooMany: 'At most 100 sign-ins can be ended in one request.',
         expand: 'Show sign-ins',
         collapse: 'Hide sign-ins',
         footnote:

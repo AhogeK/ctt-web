@@ -16,7 +16,9 @@ export {
   updateDisplayName,
   fetchLoginSessions,
   revokeLoginSession,
+  revokeLoginSessions,
   downloadUserExport,
+  type BatchRevokeSessionsResult,
   type LoginSession,
   type UserProfile,
 } from './user'
