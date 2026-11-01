@@ -154,7 +154,7 @@ function getDeviceIdeLabel(device: Device): string {
 </script>
 
 <template>
-  <div class="flex flex-col gap-6 p-6">
+  <div class="mx-auto flex w-full max-w-[1120px] flex-col gap-6 p-6 lg:p-8">
     <!-- Page Header -->
     <div class="flex flex-col gap-2">
       <h1 class="text-2xl font-semibold">{{ t('settings.devices.title') }}</h1>

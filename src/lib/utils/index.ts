@@ -24,6 +24,7 @@ export {
   formatMonthDay,
   formatMonthShort,
   formatWeekdayShort,
+  formatDate,
 } from './time'
 export { formatPercent } from './percent'
 export { formatScore } from './score'

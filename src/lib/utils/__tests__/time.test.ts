@@ -5,7 +5,14 @@
  * deterministic without fake timers.
  */
 import { describe, it, expect } from 'vite-plus/test'
-import { formatRelativeTime, formatDateTime, formatDuration, formatMonthShort, formatWeekdayShort } from '@/lib/utils'
+import {
+  formatDate,
+  formatRelativeTime,
+  formatDateTime,
+  formatDuration,
+  formatMonthShort,
+  formatWeekdayShort,
+} from '@/lib/utils'
 import { currentLocale } from '@/i18n/locale'
 import { i18n } from '@/i18n'
 import zhCN from '@/i18n/locales/zh-CN'
@@ -126,6 +133,18 @@ describe('locale-aware date parts', () => {
     currentLocale.value = 'zh-CN'
     expect(formatWeekdayShort(monday)).toBe('周一')
     expect(formatMonthShort(monday)).toBe('1月')
+
+    currentLocale.value = 'en'
+  })
+
+  it('formatDate drops the time of day but keeps the locale', () => {
+    const iso = '2026-01-05T12:34:56'
+
+    currentLocale.value = 'en'
+    expect(formatDate(iso)).toBe(new Date(iso).toLocaleDateString('en'))
+
+    currentLocale.value = 'zh-CN'
+    expect(formatDate(iso)).toBe(new Date(iso).toLocaleDateString('zh-CN'))
 
     currentLocale.value = 'en'
   })

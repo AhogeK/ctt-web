@@ -120,6 +120,19 @@ export function formatDateTime(dateStr: string): string {
 }
 
 /**
+ * Render a date string as a calendar date, without a time of day.
+ *
+ * For facts that happened on a day rather than at a moment — "on since" a date, a birthday of a
+ * record — the seconds of `formatDateTime` are noise, and the reader still gets the same locale.
+ *
+ * @param dateStr - ISO-8601 timestamp
+ * @returns Locale-formatted date
+ */
+export function formatDate(dateStr: string): string {
+  return new Date(dateStr).toLocaleDateString(currentLocale.value)
+}
+
+/**
  * Format a duration in seconds as a compact human-readable string.
  *
  * Used by the dashboard overview cards:

@@ -15,7 +15,7 @@ import { useResendVerification } from '@/features/auth/composables/useResendVeri
 import { useSetPassword } from '@/features/settings/composables/useSetPassword'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
-import { cn, formatDateTime } from '@/lib/utils'
+import { cn, formatDate } from '@/lib/utils'
 import SetPasswordDialog from './SetPasswordDialog.vue'
 import { SETTINGS_ACTION_BUTTON_CLASS } from './action-button'
 import DisplayNameDialog from './DisplayNameDialog.vue'
@@ -53,7 +53,8 @@ const emailChangePending = computed(() => emailStatus.value?.emailChangePending 
 const pendingNewEmail = computed(() => emailStatus.value?.pendingNewEmail ?? null)
 const displayName = computed(() => authStore.displayName ?? '—')
 
-const formattedRegistrationTime = computed(() => (authStore.createdAt ? formatDateTime(authStore.createdAt) : '—'))
+// A registration is a date, not a moment: the seconds of `formatDateTime` are noise here.
+const formattedRegistrationTime = computed(() => (authStore.createdAt ? formatDate(authStore.createdAt) : '—'))
 
 const sectionLabelClass = 'text-sm font-medium text-muted-foreground dark:text-muted-foreground'
 const sectionValueClass = 'text-sm text-foreground dark:text-foreground'
@@ -85,31 +86,50 @@ function handleSetPasswordSuccess() {
   <div data-surface="card" class="rounded-lg border border-border dark:border-white/8 bg-muted dark:bg-card p-6">
     <h2 class="text-lg font-medium text-foreground dark:text-foreground mb-4">{{ t('settings.account.title') }}</h2>
 
-    <div class="flex flex-col gap-4">
+    <!-- A definition table: one label column, one value column, and the row's action in a column
+         of its own, so every action lands on the same vertical line. -->
+    <div class="flex flex-col divide-y divide-border dark:divide-white/8">
       <!-- Email -->
-      <div class="flex items-center justify-between">
-        <div class="flex flex-col gap-1">
-          <span :class="sectionLabelClass">{{ t('settings.account.email') }}</span>
-          <div class="flex items-center gap-2">
-            <span v-if="isEmailStatusPending" :class="cn(sectionValueClass, 'animate-pulse')">
-              {{ t('settings.account.loading') }}
-            </span>
-            <span v-else :class="sectionValueClass">{{ email }}</span>
-            <Badge
-              v-if="!isEmailStatusPending && emailVerified"
-              variant="default"
-              class="bg-success text-white dark:bg-success"
-            >
-              {{ t('settings.account.verified') }}
-            </Badge>
-            <Badge
-              v-else-if="!isEmailStatusPending && !emailVerified"
-              variant="secondary"
-              class="bg-warning-surface text-warning dark:bg-warning-surface dark:text-warning"
-            >
-              {{ t('settings.account.unverified') }}
-            </Badge>
-          </div>
+      <div
+        class="flex flex-col gap-1.5 py-3.5 first:pt-0 sm:grid sm:grid-cols-[150px_minmax(0,1fr)_auto] sm:items-center sm:gap-4"
+      >
+        <span :class="sectionLabelClass">{{ t('settings.account.email') }}</span>
+        <div class="flex flex-wrap items-center gap-2">
+          <span v-if="isEmailStatusPending" :class="cn(sectionValueClass, 'animate-pulse')">
+            {{ t('settings.account.loading') }}
+          </span>
+          <span v-else :class="sectionValueClass">{{ email }}</span>
+          <Badge
+            v-if="!isEmailStatusPending && emailVerified"
+            variant="default"
+            class="bg-success text-white dark:bg-success"
+          >
+            {{ t('settings.account.verified') }}
+          </Badge>
+          <Badge
+            v-else-if="!isEmailStatusPending && !emailVerified"
+            variant="secondary"
+            class="bg-warning-surface text-warning dark:bg-warning-surface dark:text-warning"
+          >
+            {{ t('settings.account.unverified') }}
+          </Badge>
+        </div>
+        <div class="flex flex-wrap items-center gap-2 sm:justify-end">
+          <Button variant="outline" :class="SETTINGS_ACTION_BUTTON_CLASS" @click="handleOpenChangeDialog">
+            {{ t('settings.account.changeEmail') }}
+          </Button>
+          <Button
+            v-if="!emailVerified"
+            variant="outline"
+            :class="SETTINGS_ACTION_BUTTON_CLASS"
+            :disabled="isResendPending || countdown > 0"
+            data-testid="verify-email-button"
+            @click="handleResendVerification"
+          >
+            <template v-if="isResendPending">{{ t('settings.account.sending') }}</template>
+            <template v-else-if="countdown > 0">{{ t('settings.account.resendIn', { seconds: countdown }) }}</template>
+            <template v-else>{{ t('settings.account.verifyEmail') }}</template>
+          </Button>
         </div>
       </div>
 
@@ -127,60 +147,59 @@ function handleSetPasswordSuccess() {
       </div>
 
       <!-- Display name -->
-      <div class="flex items-end justify-between gap-4">
-        <div class="flex flex-col gap-1">
-          <span :class="sectionLabelClass">{{ t('settings.account.displayName') }}</span>
-          <span :class="sectionValueClass" data-testid="account-display-name">{{ displayName }}</span>
+      <div
+        class="flex flex-col gap-1.5 py-3.5 sm:grid sm:grid-cols-[150px_minmax(0,1fr)_auto] sm:items-center sm:gap-4"
+      >
+        <span :class="sectionLabelClass">{{ t('settings.account.displayName') }}</span>
+        <span :class="sectionValueClass" data-testid="account-display-name">{{ displayName }}</span>
+        <div class="flex items-center sm:justify-end">
+          <Button
+            variant="outline"
+            :class="SETTINGS_ACTION_BUTTON_CLASS"
+            data-testid="edit-display-name"
+            @click="isDisplayNameDialogOpen = true"
+          >
+            {{ t('settings.account.editDisplayName') }}
+          </Button>
         </div>
-        <Button
-          variant="outline"
-          :class="SETTINGS_ACTION_BUTTON_CLASS"
-          data-testid="edit-display-name"
-          @click="isDisplayNameDialogOpen = true"
-        >
-          {{ t('settings.account.editDisplayName') }}
-        </Button>
+      </div>
+
+      <!-- Password -->
+      <div
+        class="flex flex-col gap-1.5 py-3.5 sm:grid sm:grid-cols-[150px_minmax(0,1fr)_auto] sm:items-center sm:gap-4"
+      >
+        <span :class="sectionLabelClass">{{ t('settings.account.password') }}</span>
+        <span :class="sectionValueClass" data-testid="account-password-state">
+          {{ authStore.hasPassword ? t('settings.account.passwordSet') : t('settings.account.passwordNotSet') }}
+        </span>
+        <div class="flex items-center sm:justify-end">
+          <Button
+            variant="outline"
+            :class="SETTINGS_ACTION_BUTTON_CLASS"
+            data-testid="set-password-button"
+            @click="handleOpenSetPasswordDialog"
+          >
+            {{ passwordButtonLabel }}
+          </Button>
+        </div>
       </div>
 
       <!-- Registration time -->
-      <div class="flex flex-col gap-1">
+      <div
+        class="flex flex-col gap-1.5 py-3.5 sm:grid sm:grid-cols-[150px_minmax(0,1fr)_auto] sm:items-center sm:gap-4"
+      >
         <span :class="sectionLabelClass">{{ t('settings.account.registered') }}</span>
         <span :class="sectionValueClass" data-testid="account-registered">{{ formattedRegistrationTime }}</span>
+        <span aria-hidden="true" />
       </div>
 
       <!-- Terms version on record -->
-      <div class="flex flex-col gap-1">
+      <div
+        class="flex flex-col gap-1.5 py-3.5 last:pb-0 sm:grid sm:grid-cols-[150px_minmax(0,1fr)_auto] sm:items-center sm:gap-4"
+      >
         <span :class="sectionLabelClass">{{ t('settings.account.termsVersion') }}</span>
         <span :class="sectionValueClass" data-testid="account-terms-version">{{ termsVersionLabel }}</span>
-      </div>
-
-      <!-- Actions -->
-      <div class="flex items-center gap-3 pt-2">
-        <Button variant="outline" :class="SETTINGS_ACTION_BUTTON_CLASS" @click="handleOpenChangeDialog">
-          {{ t('settings.account.changeEmail') }}
-        </Button>
-
-        <Button
-          variant="outline"
-          :class="SETTINGS_ACTION_BUTTON_CLASS"
-          data-testid="set-password-button"
-          @click="handleOpenSetPasswordDialog"
-        >
-          {{ passwordButtonLabel }}
-        </Button>
-
-        <Button
-          v-if="!emailVerified"
-          variant="outline"
-          :class="SETTINGS_ACTION_BUTTON_CLASS"
-          :disabled="isResendPending || countdown > 0"
-          data-testid="verify-email-button"
-          @click="handleResendVerification"
-        >
-          <template v-if="isResendPending">{{ t('settings.account.sending') }}</template>
-          <template v-else-if="countdown > 0">{{ t('settings.account.resendIn', { seconds: countdown }) }}</template>
-          <template v-else>{{ t('settings.account.verifyEmail') }}</template>
-        </Button>
+        <span aria-hidden="true" />
       </div>
     </div>
   </div>

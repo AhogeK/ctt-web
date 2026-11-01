@@ -215,7 +215,7 @@ function statusClass(status: ApiKeyStatus): string {
 </script>
 
 <template>
-  <div class="flex flex-col gap-6 p-6">
+  <div class="mx-auto flex w-full max-w-[1120px] flex-col gap-6 p-6 lg:p-8">
     <!-- Page Header -->
     <div class="flex items-center justify-between">
       <div class="flex flex-col gap-1">
