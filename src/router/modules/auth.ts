@@ -23,7 +23,7 @@ const authRoutes: RouteRecordRaw[] = [
         name: RouteNames.LOGIN_TWO_FACTOR,
         component: () => import('@/features/auth/views/LoginTwoFactorView.vue'),
         meta: {
-          title: 'Two-step verification',
+          title: 'Two-factor authentication',
           titleKey: 'pageTitles.loginTwoFactor',
           requiresAuth: false,
           guestOnly: true,

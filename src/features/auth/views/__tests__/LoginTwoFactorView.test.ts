@@ -196,7 +196,7 @@ describe('LoginTwoFactorView', () => {
     await vi.waitFor(() => {
       expect(mockMutate).toHaveBeenCalledWith('123456')
     })
-    expect(wrapper.text()).toContain('Two-step verification')
+    expect(wrapper.text()).toContain('Two-factor authentication')
   })
 
   it('keeps the reader on the step when only the code was wrong', async () => {

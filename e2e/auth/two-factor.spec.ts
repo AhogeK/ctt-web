@@ -78,12 +78,12 @@ async function submitPassword(page: Page): Promise<void> {
   await page.waitForURL(TWO_FACTOR_PATH)
 }
 
-test.describe('Two-step login', () => {
+test.describe('Two-factor login', () => {
   test('moves to the second step without signing anyone in', async ({ page }) => {
     await installTwoFactorOverrides(page)
     await submitPassword(page)
 
-    await expect(page.getByRole('heading', { name: 'Two-step verification' })).toBeVisible()
+    await expect(page.getByRole('heading', { name: 'Two-factor authentication' })).toBeVisible()
     await expect(page.getByPlaceholder('123456 or a recovery code')).toBeVisible()
 
     // A challenge is not a session: nothing may be stored before the code is accepted.
