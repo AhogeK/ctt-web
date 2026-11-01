@@ -28,6 +28,15 @@
   （导出 429 文案从未生效 ✗）⇒ 改按 `statusCode` 分支 · 401 短路不再借重置链接文案 · 未识别 UA 不再折成一组 ✓。
 - **批量撤销接线（2026-10-30 · 随 v0.72.0 发布）**：后端 0.88.0 的 `POST /users/me/sessions/revoke` 已接：
   折叠行「全部撤销」→ 确认 → 只报计数（`skipped` 不解释）；429 后按钮禁用一小时；重算列表走 `onSettled` ✓。
+- **第六阶段收口复核（2026-10-30）**：计划自身五处失真已纠正（总览配色、章节标题、键数与部署版本、功能地图、依赖图）✓。
+  **R4 通知偏好：否决（不做）** —— 用户指出周报会吃免费额度；评估后同意且理由更硬：后端只有三个身份类发信入口、
+  **无全局配额保护** ⇒ 超额即「账号找不回」。连带关闭偏好域/时区/语言偏好与退订入口；重开前提 = 先做配额保护与分级。
+  **R5 两步验证：契约已对齐（2026-10-30）** —— 对方接受方向、五项决策已定，并纠正我方 4 处（① 插件**只有 API key**，我方写成
+  deviceId + refresh 是事实错误 ② 202 必须走统一信封 ③ `AUTH_026` = 挑战/setup 失效 ④ **`AUTH_025` 不会自动生效**：
+  `getActiveUserRequired()` 接受 API key，全仓仅 `DELETE /users/me` 显式判 `authType`）。已回源逐条核实并改写文档；
+  另提三条补充建议（`DELETE` 带 body → 改 POST disable · 启用/关闭时吊销其他会话 ·
+  **启用时必须再验证身份**，否则攻击者用被劫会话绑自己的验证器后**重置密码也解不开**）⇒ 回函
+  `.omp/requirements/2026-10-30/two-factor-auth-reply.md`，**未采纳则是一条挂着的安全缺口** ✓。
 - **门禁补一条 Sonar 等价规则（2026-10-28 · v0.70.1）**：IDE 的 SonarLint 报 `typescript:S7760`（参数规整成中间变量）⇒
   查得 **oxlint 已内置** `unicorn/prefer-default-parameters`（同一行同一句建议 ✓）⇒ 既有代码**零命中**、探针复现被拦 ⇒ 启用 ✓。
   **不引入** `eslint-plugin-sonarjs`（13 个传递依赖含一份 `typescript`，且**不含** `S7760` —— 它属**闭源**的 SonarTypeScript ✓）；
@@ -37,7 +46,27 @@
 - **两条新边界（AGENTS.md R37 / R38）**：**断言必须能红**（破坏实现看它是否变红；断言不得指向代码从不写出的东西）·
   **故障的时长决定断言的粒度**（采样粒度要细于故障范围 · 观察器回调在帧末跑 ⇒ 手势要细到故障留在单帧内 ·
   探测器的视口必须覆盖会改变事件先后顺序的那些）✓。
-- 验证（当前基线）：单测 **1654** · E2E **175** · type-check · build · `check:i18n` **991 键** · `pnpm lint` **零输出** ✓。
+- **两步验证（TOTP）登录（2026-11-01 · v0.73.0 · 未提交）**：契约取自 `ctt-server` 源码 —— 密码步骤 `202` +
+  `LoginChallengeResponse(twoFactorRequired, challengeToken, expiresIn)`，第二步 `POST /auth/login/2fa`；
+  OAuth 带 TOTP 时重定向 `/oauth/callback?twoFactorRequired=true#challengeToken=…&expiresIn=…`。
+  `login()` 改**判别联合** `LoginResult`（`authenticated | two-factor`）⇒ "2xx 即已登录"这个假设交给编译器拦 ✓；
+  store 遇 202 **不写 token、不拉 profile**，challenge 只存内存（单次有效五分钟，落盘只会给旧标签页一个可重放凭证）。
+  新页 `/auth/login/2fa`：码与恢复码同一输入框、倒计时到点禁用；`AUTH_027` 就地报错**保留挑战**，
+  `AUTH_026`/`429` 清挑战回登录，无挑战直访回登录，成功沿用 `resolvePostAuthTarget` ✓。
+  **真正的坑（E2E 才暴露）**：`AUTH_026/027` 原被当成会话级 401 ⇒ 清令牌 + `UNAUTHORIZED_EVENT` ⇒ 第二步被踢回登录 ✗；
+  与 `AUTH_010`/`USER_014` 同类，已归入 `RESOURCE_LEVEL_401_CODES` ✓。文档 → `docs/architecture.md`「Two-Step Login (TOTP)」✓。
+- **两轴审查后的收口（同日）**：两个审查各一份上下文，独立跑 —— 都指向同一处 OAuth 守卫缺陷：片段缺 `expiresIn`
+  时 `Number(null)` 得 0、`isFinite(0)` 为真 ⇒ 挑战被塞进 schema 后抛错、回调页转圈不跳 ✓。另修：`oauth_redirect`
+  既没转发也没清理（受保护页的目的地丢失 + 残留会误导下一次登录）· 一步登录与登出不清残留挑战（直访第二步会看到死表单）·
+  `redirectQuery` 去重成 `redirectQueryOf()` · 错误码改用 `extractErrorCode` · 删 6 处冗余内联 `font-feature-settings`
+  （`.auth-root` 已继承同值，改后截图像素一致 ✓）。文档同轮：`dev-handbook` 的 `login` 返回类型、`architecture` 片段、
+  mocks 的第二步骤契约常量 ✓。
+- **真机联调通过（2026-11-01）**：后端在 `localhost:8080` 开着，我按自己的口径建了一个一次性账号（浏览器过 hCaptcha 注册 →
+  mailpit 取验证链接 → 校验），再用密钥本地算 TOTP 打开 2FA（**该账号随后已删**：`DELETE /users/me` 200，旧 token → 404）⇒ 实测：
+  密码登录 **202** + `challengeToken` → 前端落 `/auth/login/2fa` → 正确码 **200** 进看板、错码**就地报错不跳页**、**恢复码**同样能进 ✓。
+  **新踩到的契约事实**：`/users/me/2fa/totp/start` 的 `currentPassword` 要 **base64**（明文得 `USER_014`），带口令账号缺它得 `USER_013`；
+  注册/登录都强制 hCaptcha（`SECURITY_006`）。**未验**：OAuth 回跳带着 2FA 的那一段（需要你的 GitHub 账号，我不动）。
+- 验证（当前基线）：单测 **1677** · E2E **178** · type-check · build · `check:i18n` **1004 键** · `pnpm lint` **零输出** ✓。
 
 ## Archived History
 

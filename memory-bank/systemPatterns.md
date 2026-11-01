@@ -18,6 +18,8 @@ Global Store → Pinia (auth: JWT/user/expiry; theme: dark/light persisted)
 ```
 
 - Never store API responses in Pinia; single HTTP boundary is `lib/api/` ofetch instance
+- The TOTP challenge lives in Pinia **memory only** (single use, five minutes): persisting it would hand a
+  stale tab a replayable credential, and the server answers `AUTH_026` once it is gone
 
 ## API Layer Pattern
 
@@ -34,6 +36,9 @@ export const fetchStats = (params: StatsParams) =>
 
 ## Error Handling
 
+- 401s split by meaning: a session-level code clears the token and dispatches `UNAUTHORIZED_EVENT`, while a
+  resource-level one (`AUTH_010`, `USER_014`, `AUTH_026`, `AUTH_027`) must reach its caller untouched — the
+  two-step codes in particular would otherwise eject the reader mid-flow
 - ErrorBoundary: `onErrorCaptured` → fallback UI + retry, dev-only details, no white-screen
 - Query views: `<ErrorState v-if="isError"> <LoadingState v-else-if="isPending"> <template v-else>`; first-load
   skeleton ≥300ms anti-flicker (ApiKeysView precedent)
@@ -117,13 +122,10 @@ component that did not exist; it was `RegisterForm.terms.test.ts`).
 A test file with no corresponding subject is a smell: either the subject moved (rename the file)
 or the test is a placeholder (delete it).
 
-A directory that holds both components and helper modules therefore shows **both cases** — e.g.
-`features/dashboard/components/__tests__/` has `TimeOfDayPanel.test.ts` next to
-`heatmap-window.test.ts`. That is the rule working, not drift: the case tells you what kind of
-subject the test covers. Repo-wide the split tracks file kinds (≈39 `.vue` → Pascal, ≈43 `.ts` →
-lowercase). Do not "unify" it by renaming — that breaks find-by-source-name for ~39 files.
-If a folder's mixed appearance is the real complaint, the fix is to relocate a misplaced file
-(see Value Formatters above), not to restyle the names.
+A directory holding both kinds shows **both cases** — e.g. `features/dashboard/components/__tests__/`
+has `TimeOfDayPanel.test.ts` beside `heatmap-window.test.ts`. That is the rule working, not drift.
+Do not "unify" the casing by renaming (it breaks find-by-source-name for ~39 files); relocate a
+misplaced file instead (see Value Formatters above).
 
 ## Tailwind scans comments (class-like tokens become real CSS)
 
@@ -152,8 +154,7 @@ When auditing built CSS, `rm -rf dist` first — the build does not always purge
 
 ## E2E API Mocking (page.route)
 
-- Playwright `page.route()` (MSW browser worker is architecturally incompatible with Playwright's Node runner —
-  removed v0.10.13)
+- Playwright `page.route()` — MSW's browser worker cannot drive Playwright's Node runner (dropped v0.10.13)
 - All mocks use `RestApiResponse<T>` envelope matching `RestApiResponseSchema`; canonical fixtures in
   `e2e/fixtures/auth.ts`; contract reference in `e2e/mocks/handlers/auth.ts`
 - `e2e/tsconfig.json`: `"dom"` lib (page.evaluate), `nodenext` resolution (explicit `.js` imports)
@@ -177,8 +178,7 @@ When auditing built CSS, `rm -rf dist` first — the build does not always purge
 
 ## Distribution Semantics
 
-One owner: the conservation-vs-accumulation ruling →
-[`domains/backend-contract/principles.md`](./domains/backend-contract/principles.md) P2.
+Conservation-vs-accumulation: [`backend-contract/principles.md`](./domains/backend-contract/principles.md) P2.
 
 ## Interaction And Motion Conventions
 

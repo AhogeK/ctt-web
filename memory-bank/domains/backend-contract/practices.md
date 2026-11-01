@@ -109,6 +109,14 @@ const RESOURCE_401 = new Set(['AUTH_010', 'USER_014'])   // BOLA + business chec
 - **blob 请求只能按 status 分支，不能按错误码**：错误体也是 blob ⇒ `提取的 code` 永远是 undefined
   （实例：导出把 429 写成 `code === 'RATE_LIMIT_001'` ⇒ 该分支**不可达**，用户只看到通用失败文案 ✗）。
   `401` 交给拦截器（清会话 + 跳登录），其余按 `statusCode` 决定文案 ✓。
+- **口令字段一律 base64**：`/auth/register`、`/auth/login`、`/users/me/2fa/totp/start` 的 `currentPassword` 都是先
+  base64 再上送的字符串，服务端直接 `passwordEncoder.matches` 比对 ⇒ 传明文得 `USER_014`「Invalid password」（2026-11-01 实测）。
+  新增加密类端点前先看前端有没有 `encodeBase64` 那一层。
+- **开启两步验证要先验身份**：带口令的账号必须传 `currentPassword`（缺 ⇒ `USER_013`），OAuth-only 账号才走「近期认证」判定；
+  没有这一步，被劫会话可以绑上攻击者自己的验证器。恢复码固定 **10 串**、形如 `A1B2-C3D4-E5F6-G7H8`，只在确认时返回一次 ✓
+- **`getActiveUserRequired()` 接受 API key**：`getCurrentUser()` 会把 `ApiKeyPrincipal` 换成它所属的用户 ⇒
+  「只限登录会话」的端点必须**显式**判 `CurrentUser.AuthenticationType.WEB_SESSION`（现状只有 `DELETE /users/me` 这么做，
+  `AUTH_025` 全仓仅此一处抛出）⇒ 别以为带 `@RequiresApiKeyScope` 就挡住了 API key ✗。
 - **429 一律读服务端给的 `Retry-After`，不要自己猜窗口**：限流是**固定窗口**，响应头里就是剩余秒数；
   首版批量撤销硬等一小时 ⇒ 把人挡了最久的一小时 ✗。`getRetryAfterSeconds()`（`lib/utils/api-error.ts`）
   已同时读头与响应体的 `retryAfter`；只有拿不到时才回退到窗口长度，并把截止时间持久化 ✓。
