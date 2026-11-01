@@ -105,8 +105,8 @@ describe('EmailChangeDialog (real form integration)', () => {
     await submitViaSetupState(wrapper)
 
     expect(mockMutate).not.toHaveBeenCalled()
-    // z.email rejects empty strings with the format message before min(1).
-    expect(wrapper.text()).toContain('Invalid email format')
+    // An empty field has no format to complain about: the required rule answers first.
+    expect(wrapper.text()).toContain('Email is required')
     wrapper.unmount()
   })
 

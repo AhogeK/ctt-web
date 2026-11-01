@@ -23,7 +23,9 @@ const t = (key: string) => i18n.global.t(key)
  * Reused by LoginRequestSchema, RegisterRequestSchema, and password reset schemas.
  */
 export const StrongPasswordSchema = z
-  .string()
+  // The base type carries the message too: an untouched field is `undefined`, which fails here
+  // before `.min()` runs and would otherwise surface Zod's own "expected string" wording.
+  .string({ error: () => t('auth.validation.passwordRequired') })
   .min(1, { error: () => t('auth.validation.passwordRequired') })
   .refine((val) => /^[!-~]+$/.test(val), { error: () => t('auth.validation.passwordInvalidChars') })
   .refine((val) => val.length >= 8, { error: () => t('auth.validation.passwordMinLength') })
@@ -119,13 +121,15 @@ export const REGEX_DISPLAY_NAME = /^[\u4e00-\u9fa5\u3040-\u309f\u30a0-\u30ff\uac
  * - password: @StrongPassword (8-64 chars, printable ASCII only, no complexity requirements)
  */
 export const RegisterRequestSchema = z.object({
-  // Email validated as proper format, server normalizes to lowercase
+  // Email validated as proper format, server normalizes to lowercase. The required rule runs
+  // first: an empty field has no format to complain about.
   email: z
-    .email({ error: () => t('auth.validation.invalidEmail') })
-    .min(1, { error: () => t('auth.validation.emailRequired') }),
+    .string({ error: () => t('auth.validation.emailRequired') })
+    .min(1, { error: () => t('auth.validation.emailRequired') })
+    .pipe(z.email({ error: () => t('auth.validation.invalidEmail') })),
   // Display name matching server @Pattern regex exactly
   displayName: z
-    .string()
+    .string({ error: () => t('auth.validation.displayNameRequired') })
     .trim()
     .min(1, { error: () => t('auth.validation.displayNameRequired') })
     .regex(REGEX_DISPLAY_NAME, { error: () => t('auth.validation.displayNameInvalid') }),
@@ -151,8 +155,10 @@ export const RegisterRequestSchema = z.object({
 export const RegisterFormSchema = RegisterRequestSchema.omit({ termsVersion: true })
   .extend({
     // Confirm password for frontend UX — not sent to API
-    confirmPassword: z.string().min(1, { error: () => t('auth.validation.confirmPasswordRequired') }),
-    agreedToTerms: z.boolean().refine((val) => val === true, {
+    confirmPassword: z
+      .string({ error: () => t('auth.validation.confirmPasswordRequired') })
+      .min(1, { error: () => t('auth.validation.confirmPasswordRequired') }),
+    agreedToTerms: z.boolean({ error: () => t('auth.validation.termsRequired') }).refine((val) => val === true, {
       error: () => t('auth.validation.termsRequired'),
     }),
   })
@@ -226,8 +232,9 @@ export type ResendVerificationRequest = z.infer<typeof ResendVerificationRequest
 export const ForgotPasswordRequestSchema = z.object({
   // Email address to send reset link to, server normalizes to lowercase
   email: z
-    .email({ error: () => t('auth.validation.invalidEmail') })
-    .min(1, { error: () => t('auth.validation.emailRequired') }),
+    .string({ error: () => t('auth.validation.emailRequired') })
+    .min(1, { error: () => t('auth.validation.emailRequired') })
+    .pipe(z.email({ error: () => t('auth.validation.invalidEmail') })),
   // hCaptcha token — optional because captcha may be disabled server-side
   captchaToken: z.string().optional(),
 })
@@ -275,7 +282,9 @@ export const ResetPasswordFormSchema = z
   .object({
     newPassword: StrongPasswordSchema,
     // Confirm password for frontend UX — not sent to API
-    confirmPassword: z.string().min(1, { error: () => t('auth.validation.confirmPasswordRequired') }),
+    confirmPassword: z
+      .string({ error: () => t('auth.validation.confirmPasswordRequired') })
+      .min(1, { error: () => t('auth.validation.confirmPasswordRequired') }),
   })
   .refine((data) => data.newPassword === data.confirmPassword, {
     error: () => t('auth.validation.passwordMismatch'),

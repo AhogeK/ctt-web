@@ -189,6 +189,18 @@ describe('LoginTwoFactorView', () => {
     expect(wrapper.find('form').exists()).toBe(false)
   })
 
+  it('asks for the code in the current language when the field was never touched', async () => {
+    const wrapper = mount(LoginTwoFactorView)
+
+    await wrapper.find('form').trigger('submit')
+    // Submit validation settles on its own schedule; wait for the message instead of a tick count.
+    await vi.waitFor(() => {
+      expect(wrapper.text()).toContain('Enter your verification code')
+    })
+    // Zod's own wording names the runtime type, which says nothing to the person reading it.
+    expect(wrapper.text()).not.toContain('Invalid input')
+  })
+
   it('submits the code the reader typed', async () => {
     const wrapper = await mountAndSubmit('123456')
 

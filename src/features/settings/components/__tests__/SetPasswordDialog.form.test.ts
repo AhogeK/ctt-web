@@ -117,9 +117,9 @@ describe('SetPasswordDialog (real form integration)', () => {
     await submitViaSetupState(wrapper)
 
     expect(mockSetPassword).not.toHaveBeenCalled()
-    // StrongPasswordSchema rejects empty/undefined with the Zod default
-    // "Invalid input" message (no custom required message is set).
-    expect(wrapper.text()).toContain('Invalid input')
+    // The reader gets the catalogue's sentence, never Zod's own wording about the runtime type.
+    expect(wrapper.text()).toContain('Password is required')
+    expect(wrapper.text()).not.toContain('Invalid input')
     wrapper.unmount()
   })
 

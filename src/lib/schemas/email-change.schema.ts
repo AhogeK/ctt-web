@@ -13,9 +13,10 @@ const t = (key: string) => i18n.global.t(key)
  * Backend endpoint: POST /api/v1/users/me/email-change
  */
 export const EmailChangeSchema = z.object({
-  email: z.email({ error: () => t('settings.emailChange.invalidEmail') }).min(1, {
-    error: () => t('settings.emailChange.emailRequired'),
-  }),
+  email: z
+    .string({ error: () => t('settings.emailChange.emailRequired') })
+    .min(1, { error: () => t('settings.emailChange.emailRequired') })
+    .pipe(z.email({ error: () => t('settings.emailChange.invalidEmail') })),
   password: z.string().optional(),
 })
 

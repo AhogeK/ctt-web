@@ -88,10 +88,14 @@ interface DeleteAccountFormValues {
 const DeleteAccountFormSchema = computed(() =>
   z.object(
     props.hasPassword
-      ? { password: z.string().min(1, { error: () => t('settings.deleteAccount.passwordRequired') }) }
+      ? {
+          password: z
+            .string({ error: () => t('settings.deleteAccount.passwordRequired') })
+            .min(1, { error: () => t('settings.deleteAccount.passwordRequired') }),
+        }
       : {
           confirmEmail: z
-            .string()
+            .string({ error: () => t('settings.deleteAccount.emailRequired') })
             .min(1, { error: () => t('settings.deleteAccount.emailRequired') })
             // Compared case-insensitively and trimmed: the server normalises emails to lowercase,
             // and demanding exact capitalisation would only punish a correct answer.

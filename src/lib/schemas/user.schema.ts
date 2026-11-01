@@ -54,7 +54,7 @@ export type UserProfile = z.infer<typeof UserProfileSchema>
  */
 export const UpdateProfileRequestSchema = z.object({
   displayName: z
-    .string()
+    .string({ error: () => t('auth.validation.displayNameRequired') })
     .trim()
     .min(1, { error: () => t('auth.validation.displayNameRequired') })
     .regex(REGEX_DISPLAY_NAME, { error: () => t('auth.validation.displayNameInvalid') }),

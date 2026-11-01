@@ -53,6 +53,33 @@ import LoginForm from '../LoginForm.vue'
 // Tests
 // ==========================================
 
+describe('LoginForm - validation copy', () => {
+  it('resolves the required message again after the language changes', async () => {
+    // A message captured at module load would stay in the first language forever; comparing two
+    // submits on one instance shows whether the copy follows the switch.
+    const { setLocale } = await import('@/i18n')
+    const wrapper = mount(LoginForm)
+    const onSubmit = (wrapper.vm as unknown as { $: { setupState: { onSubmit: () => Promise<void> } } }).$.setupState
+      .onSubmit
+
+    try {
+      await onSubmit()
+      await flushPromises()
+      expect(wrapper.text()).toContain('Email is required')
+
+      await setLocale('zh-CN')
+      await onSubmit()
+      await flushPromises()
+
+      // An empty address has no format to complain about, so the required sentence is the one due.
+      expect(wrapper.text()).toContain('请输入邮箱')
+      expect(wrapper.text()).not.toContain('Email is required')
+    } finally {
+      await setLocale('en')
+    }
+  })
+})
+
 describe('LoginForm - hCaptcha integration', () => {
   const SITEKEY = '10000000-ffff-ffff-ffff-000000000001'
 
