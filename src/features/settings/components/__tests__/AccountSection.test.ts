@@ -108,7 +108,7 @@ vi.mock('@/lib/utils', () => ({
   cn: (...inputs: unknown[]) => inputs.filter(Boolean).join(' '),
   // A sentinel rather than a locale format: the assertion then checks which value reaches the
   // formatter, not how this machine happens to render a date.
-  formatDateTime: (value: string) => `dt:${value}`,
+  formatDate: (value: string) => `d:${value}`,
 }))
 
 // ==========================================
@@ -235,7 +235,7 @@ describe('AccountSection', () => {
     it('formats registration time from auth store createdAt', () => {
       const wrapper = mount(AccountSection)
 
-      expect(wrapper.find('[data-testid="account-registered"]').text()).toBe('dt:2025-01-15T10:30:00Z')
+      expect(wrapper.find('[data-testid="account-registered"]').text()).toBe('d:2025-01-15T10:30:00Z')
     })
 
     it('shows dash when createdAt is null', () => {
