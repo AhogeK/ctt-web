@@ -704,14 +704,33 @@ would mean sending a credential the server does not need.
 ```text
 features/settings/
 ├── components/
-│   ├── AccountSection.vue      # Email, display name (with its rename dialog), accepted terms version
-│   ├── DisplayNameDialog.vue   # PATCH /users/me; the response replaces the store's profile
-│   ├── LoginSessionsCard.vue   # Sign-ins, folded by client; per-sign-in revoke
-│   └── DataExportCard.vue      # Saves the export blob as it arrived
+│   ├── AccountSection.vue          # Email, display name (with its rename dialog), accepted terms version
+│   ├── DisplayNameDialog.vue       # PATCH /users/me; the response replaces the store's profile
+│   ├── TwoFactorCard.vue           # Second factor: state, setup / re-setup / disable / regenerate entries
+│   ├── TwoFactorSetupDialog.vue    # Password → QR + key → confirm code → recovery codes
+│   ├── TwoFactorConfirmDialog.vue  # Disable / regenerate, one field for a code or a recovery code
+│   ├── RecoveryCodesPanel.vue      # The one-time batch: copy, download, "I stored these codes"
+│   ├── LoginSessionsCard.vue       # Sign-ins, folded by client; per-sign-in revoke
+│   └── DataExportCard.vue          # Saves the export blob as it arrived
 ├── composables/
-│   └── useLoginSessions.ts     # TanStack Query for the list + the revoke mutation
+│   ├── useTwoFactor.ts             # Status query + setup / confirm / disable / regenerate
+│   └── useLoginSessions.ts         # TanStack Query for the list + the revoke mutation
 └── views/
-    └── SecurityView.vue        # Composes the two cards
+    └── SecurityView.vue            # Composes the three cards, strongest identity control first
+```
+
+#### Two-factor endpoints
+
+| Method | Path | Notes |
+| --- | --- | --- |
+| `GET` | `/api/v1/users/me/2fa` | `enabled`, `confirmedAt`, `recoveryCodesRemaining`, `hasPassword`, `recentAuthentication` |
+| `POST` | `/api/v1/users/me/2fa/totp/start` | Body carries `currentPassword` (base64) for password accounts; answers with the secret and its `otpauth://` URI |
+| `POST` | `/api/v1/users/me/2fa/totp/confirm` | Six-digit code; answers with the ten recovery codes, once |
+| `POST` | `/api/v1/users/me/2fa/disable` | `{ code }` or `{ recoveryCode }`; answers **204 with no body** |
+| `POST` | `/api/v1/users/me/2fa/recovery-codes/regenerate` | Same credential shape; answers with a fresh batch |
+
+The recovery codes are hashed on the server and returned exactly once, so the client shows them in
+a panel that refuses every dismissal route until the reader confirms they stored them.
 ```
 
 #### Two sign-out paths
