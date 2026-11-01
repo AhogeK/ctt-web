@@ -431,10 +431,13 @@ import { describe, it, expect, beforeEach, vi } from 'vitest'
 import { setActivePinia, createPinia } from 'pinia'
 import { useAuthStore, STORAGE_KEYS } from '../auth'
 import * as authApi from '@/lib/api/auth'
+import type { LoginResult } from '@/lib/api/auth'
 import type { LoginResponse } from '@/lib/schemas/auth.schema'
 
 vi.mock('@/lib/api/auth', () => ({
-  login: vi.fn<() => Promise<LoginResponse>>(),
+  // `login` resolves to a discriminated union: `{ status: 'authenticated', response }` for the
+  // usual case, or `{ status: 'two-factor', challenge }` when the server answered 202.
+  login: vi.fn<() => Promise<LoginResult>>(),
   refresh: vi.fn<() => Promise<LoginResponse>>(),
 }))
 
