@@ -62,10 +62,12 @@ export const ApiKeysPayloadSchema = z.object({
 const t = (key: string) => i18n.global.t(key)
 export const CreateApiKeyRequestSchema = z.object({
   name: z
-    .string()
+    .string({ error: () => t('settings.apiKeys.validation.nameRequired') })
     .min(1, { error: () => t('settings.apiKeys.validation.nameRequired') })
     .max(100, { error: () => t('settings.apiKeys.validation.nameMax') }),
-  scopes: z.array(ApiKeyScopeEnum).min(1, { error: () => t('settings.apiKeys.validation.scopeRequired') }),
+  scopes: z
+    .array(ApiKeyScopeEnum, { error: () => t('settings.apiKeys.validation.scopeRequired') })
+    .min(1, { error: () => t('settings.apiKeys.validation.scopeRequired') }),
   expiresAt: z.iso
     .datetime({ error: () => t('settings.apiKeys.validation.expiresInvalid') })
     .refine((value) => new Date(value).getTime() > Date.now(), {

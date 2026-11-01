@@ -188,6 +188,23 @@ test.describe('Login flow', () => {
     expect(getLoginCalls()).toBe(0)
   })
 
+  test('speaks the language chosen after the first failed submit', async ({ page }) => {
+    await installLoginOverrides(page)
+    await page.goto(LOGIN_PATH)
+
+    const message = page.locator('[data-slot="form-message"]').first()
+    await page.getByRole('button', { name: 'Sign in' }).click()
+    await expect(message).toHaveText('Email is required')
+
+    // Switching language must reach the message the next submit produces, not only a fresh mount.
+    await page.getByTestId('language-menu').click()
+    await page.getByRole('menuitemradio', { name: '简体中文' }).click()
+    await expect(page.locator('html')).toHaveAttribute('lang', 'zh-CN')
+
+    await page.getByRole('button', { name: '登录', exact: true }).click()
+    await expect(message).toHaveText('请输入邮箱')
+  })
+
   test('shows toast error and stays on login when API returns 429 rate limit', async ({ page }) => {
     const { getLoginCalls } = await installLoginOverrides(page)
 

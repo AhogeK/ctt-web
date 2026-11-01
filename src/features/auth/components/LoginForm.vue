@@ -40,7 +40,10 @@ const props = defineProps<{
  * is applied at the API layer.
  */
 const LoginFormSchema = z.object({
-  email: z.email(t('auth.validation.invalidEmail')).min(1, t('auth.validation.emailRequired')),
+  email: z
+    .string({ error: () => t('auth.validation.emailRequired') })
+    .min(1, { error: () => t('auth.validation.emailRequired') })
+    .pipe(z.email({ error: () => t('auth.validation.invalidEmail') })),
   password: StrongPasswordSchema,
 })
 

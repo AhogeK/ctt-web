@@ -78,10 +78,14 @@ const SetPasswordFormSchema = computed(() =>
   z
     .object({
       newPassword: StrongPasswordSchema,
-      confirmPassword: z.string().min(1, { error: () => t('settings.password.confirmRequired') }),
+      confirmPassword: z
+        .string({ error: () => t('settings.password.confirmRequired') })
+        .min(1, { error: () => t('settings.password.confirmRequired') }),
       ...(props.hasPassword
         ? {
-            currentPassword: z.string().min(1, { error: () => t('settings.password.currentRequired') }),
+            currentPassword: z
+              .string({ error: () => t('settings.password.currentRequired') })
+              .min(1, { error: () => t('settings.password.currentRequired') }),
           }
         : {}),
     })

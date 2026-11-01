@@ -112,6 +112,33 @@ test.describe('Two-factor login', () => {
     expect(storedToken).not.toBeNull()
   })
 
+  test('asks for the code in the interface language when nothing was typed', async ({ page }) => {
+    await installTwoFactorOverrides(page)
+    await submitPassword(page)
+
+    // Submit untouched: the field is empty, and the reason has to be a sentence, not Zod's
+    // description of the value it received.
+    await page.getByRole('button', { name: 'Verify' }).click()
+    const message = page.locator('[data-slot="form-message"]').first()
+    await expect(message).toHaveText('Enter your verification code')
+  })
+
+  test('says the same thing in Chinese', async ({ page }) => {
+    await installTwoFactorOverrides(page)
+    await submitPassword(page)
+
+    // Switch language on the step itself: the message is resolved when it is shown, not when the
+    // form was built.
+    await page.getByTestId('language-menu').click()
+    await page.getByRole('menuitemradio', { name: '简体中文' }).click()
+    await expect(page.locator('html')).toHaveAttribute('lang', 'zh-CN')
+
+    await page.getByRole('button', { name: '验证' }).click()
+    const message = page.locator('[data-slot="form-message"]').first()
+    await expect(message).toHaveText('请输入验证码')
+    await expect(message).not.toContainText('Invalid input')
+  })
+
   test('sends a direct visitor back to sign-in', async ({ page }) => {
     await installTwoFactorOverrides(page)
 

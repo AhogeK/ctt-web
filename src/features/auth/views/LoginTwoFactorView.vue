@@ -26,7 +26,9 @@ const authStore = useAuthStore()
 /** Lazy message: the copy must follow a language switch instead of freezing at setup time. */
 const TwoFactorFormSchema = z.object({
   code: z
-    .string()
+    // The base type carries the message as well: an untouched field is `undefined`, which fails
+    // here before `.min()` runs and would otherwise show Zod's own wording.
+    .string({ error: () => t('auth.twoFactor.codeRequired') })
     .trim()
     .min(1, { error: () => t('auth.twoFactor.codeRequired') }),
 })
