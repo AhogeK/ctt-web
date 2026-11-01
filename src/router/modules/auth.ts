@@ -18,6 +18,18 @@ const authRoutes: RouteRecordRaw[] = [
         meta: { title: 'Login', titleKey: 'pageTitles.login', requiresAuth: false, guestOnly: true },
       },
       {
+        // Nested path on purpose: the URL reads as a step of the same sign-in flow.
+        path: 'login/2fa',
+        name: RouteNames.LOGIN_TWO_FACTOR,
+        component: () => import('@/features/auth/views/LoginTwoFactorView.vue'),
+        meta: {
+          title: 'Two-step verification',
+          titleKey: 'pageTitles.loginTwoFactor',
+          requiresAuth: false,
+          guestOnly: true,
+        },
+      },
+      {
         path: 'register',
         name: RouteNames.REGISTER,
         component: () => import('@/features/auth/views/RegisterView.vue'),

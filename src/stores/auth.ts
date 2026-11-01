@@ -3,7 +3,15 @@ import { defineStore } from 'pinia'
 import { useStorage } from '@vueuse/core'
 import { toast } from 'vue-sonner'
 import { i18n } from '@/i18n'
-import { login as loginApi, refresh as refreshApi, logoutAll } from '@/lib/api/auth'
+import {
+  login as loginApi,
+  loginWithTwoFactorCode,
+  refresh as refreshApi,
+  logoutAll,
+  type LoginResult,
+} from '@/lib/api/auth'
+import { LoginChallengeSchema, type LoginChallenge } from '@/lib/schemas/two-factor.schema'
+import { extractErrorCode } from '@/lib/utils/api-error'
 import { fetchCurrentUser, type UserProfile } from '@/lib/api/user'
 import { TERMS_EXPIRED_EVENT } from '@/lib/api/instance'
 import type { LoginRequest, LoginResponse, AuthResponse } from '@/lib/schemas/auth.schema'
@@ -132,6 +140,15 @@ export const useAuthStore = defineStore('auth', () => {
    */
   const deviceId = ref<string>(getOrCreateDeviceId())
 
+  /**
+   * The second-step challenge a password login is waiting on, or null.
+   *
+   * Memory-only on purpose: the token is single-use and lives five minutes, none of which a
+   * reload can honour — persisting it would put a credential in storage where a stale tab could
+   * replay it, and the server tells the client to start over once it is gone.
+   */
+  const pendingTwoFactor = ref<LoginChallenge | null>(null)
+
   const isAuthenticated = computed(() => {
     if (!accessToken.value) return false
     if (!tokenExpiry.value) return true // No expiry info means assume valid
@@ -174,6 +191,7 @@ export const useAuthStore = defineStore('auth', () => {
    */
   function clearAuth(): void {
     clearRefreshTimer()
+    pendingTwoFactor.value = null
     accessToken.value = null
     refreshToken.value = null
     userId.value = null
@@ -256,12 +274,33 @@ export const useAuthStore = defineStore('auth', () => {
    * DeviceId is transparently injected from store state — caller only provides email + password.
    * Throws original error for caller to handle (e.g., toast notification).
    */
-  async function login(credentials: Omit<LoginRequest, 'deviceId'>): Promise<LoginResponse> {
+  async function login(credentials: Omit<LoginRequest, 'deviceId'>): Promise<LoginResult> {
     const payload: LoginRequest = {
       ...credentials,
       deviceId: deviceId.value,
     }
-    const response = await loginApi(payload)
+    const result = await loginApi(payload)
+    if (result.status === 'two-factor') {
+      pendingTwoFactor.value = result.challenge
+      return result
+    }
+    await completeSignIn(result.response)
+    return result
+  }
+
+  /**
+   * Stores the tokens a finished sign-in produced and syncs the profile.
+   *
+   * Shared by the one-step and the two-step path, so both end in exactly the same state — a
+   * second sign-in route that forgot the silent refresh or the profile fetch would be a bug that
+   * only shows up on one of them.
+   *
+   * @param response - the login response carrying the tokens
+   */
+  async function completeSignIn(response: LoginResponse): Promise<void> {
+    // A finished sign-in has nothing left to verify: drop the challenge here rather than in the
+    // second-step caller, so a one-step login can never leave a dead one behind.
+    pendingTwoFactor.value = null
     // Store tokens even when termsExpired is true so user is authenticated.
     // This allows navigation to dashboard while showing terms dialog.
     setAuth(response)
@@ -272,7 +311,52 @@ export const useAuthStore = defineStore('auth', () => {
     // Wait one tick so the token is in localStorage before fetching the profile.
     await nextTick()
     void fetchUserProfile()
-    return response
+  }
+
+  /**
+   * Redeems the pending second-step challenge and signs in.
+   *
+   * AUTH_026 means the challenge itself is gone — expired, or already redeemed — so no code the
+   * reader types can succeed; it is dropped here and the page sends them back to the password
+   * form. A wrong code (AUTH_027) leaves the challenge in place: that one is retryable.
+   *
+   * @param code - the TOTP code, or an unused recovery code
+   * @returns the login response of the completed sign-in
+   */
+  async function completeTwoFactorLogin(code: string): Promise<LoginResponse> {
+    const challenge = pendingTwoFactor.value
+    if (!challenge) {
+      throw new Error('No two-factor challenge is pending')
+    }
+
+    try {
+      const response = await loginWithTwoFactorCode({
+        challengeToken: challenge.challengeToken,
+        code,
+      })
+      await completeSignIn(response)
+      return response
+    } catch (error) {
+      if (extractErrorCode(error) === 'AUTH_026') {
+        pendingTwoFactor.value = null
+      }
+      throw error
+    }
+  }
+
+  /**
+   * Starts the second step from a challenge that arrived without a password login.
+   *
+   * The OAuth callback hands the challenge over in the URL fragment, so the page parses and
+   * validates it, then parks it here before navigating - the same place the password flow keeps it.
+   */
+  function setTwoFactorChallenge(challenge: LoginChallenge): void {
+    pendingTwoFactor.value = LoginChallengeSchema.parse(challenge)
+  }
+
+  /** Drops the pending challenge — used when the reader abandons the second step. */
+  function clearTwoFactorChallenge(): void {
+    pendingTwoFactor.value = null
   }
 
   /**
@@ -479,6 +563,10 @@ export const useAuthStore = defineStore('auth', () => {
     scheduleSilentRefresh,
     logout,
     signOutLocally,
+    pendingTwoFactor,
+    completeTwoFactorLogin,
+    setTwoFactorChallenge,
+    clearTwoFactorChallenge,
     fetchUserProfile,
     /**
      * Test-only helper to reset module-scoped timer state.

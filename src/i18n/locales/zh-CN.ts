@@ -101,6 +101,7 @@ const zhCN: Messages = {
   pageTitles: {
     authentication: '身份验证',
     login: '登录',
+    loginTwoFactor: '两步验证',
     register: '注册',
     checkEmail: '查收邮件',
     verifyEmail: '验证邮箱',
@@ -174,6 +175,20 @@ const zhCN: Messages = {
     },
   },
   auth: {
+    twoFactor: {
+      title: '两步验证',
+      subtitle: '输入验证器应用里的 6 位验证码，或使用一个恢复码。',
+      codeLabel: '验证码',
+      codePlaceholder: '123456 或恢复码',
+      codeRequired: '请输入验证码',
+      submit: '验证',
+      verifying: '验证中...',
+      invalidCode: '验证码不正确，请检查后重试。',
+      expired: '这一步已超时，请重新登录获取新的验证。',
+      rateLimited: '尝试次数过多，请重新登录。',
+      backToSignIn: '返回登录',
+      expiresIn: '{time} 后失效',
+    },
     forgotDone: {
       title: '请查收邮件',
       sent: '我们已向你的邮箱发送了密码重置链接。',

@@ -14,6 +14,46 @@ const route = useRoute()
 const authStore = useAuthStore()
 
 onMounted(() => {
+  // An account with TOTP enabled comes back without a session: the server redirects with a
+  // flag in the query and the challenge in the fragment, so nothing secret reaches the server
+  // or a referrer. Read it, wipe it, and hand the reader to the same step the password flow uses.
+  if (route.query.twoFactorRequired === 'true') {
+    const fragment = new URLSearchParams(globalThis.location.hash.replace(/^#/, ''))
+    const challengeToken = fragment.get('challengeToken')
+    const expiresIn = Number(fragment.get('expiresIn'))
+
+    // Clean the URL before anything else runs: the hash is a credential and history keeps it.
+    history.replaceState(null, '', route.path)
+
+    // Take the destination before the guard below: a failed challenge still has to leave no key
+    // behind for a later sign-in to obey.
+    const storedRedirect = sessionStorage.getItem('oauth_redirect')
+    if (storedRedirect) {
+      sessionStorage.removeItem('oauth_redirect')
+    }
+
+    // `Number(null)` is 0 and 0 is finite, so a missing lifetime would slip past a bare
+    // finiteness check and blow up later inside the challenge schema.
+    if (!challengeToken || !Number.isInteger(expiresIn) || expiresIn <= 0) {
+      toast.error(t('auth.errors.oauthLoginFailed'), { description: t('auth.twoFactor.expired') })
+      void router.replace({ name: RouteNames.LOGIN })
+      return
+    }
+
+    authStore.setTwoFactorChallenge({
+      twoFactorRequired: true,
+      challengeToken,
+      expiresIn,
+    })
+
+    const redirect = resolvePostAuthTarget(router, storedRedirect)
+    void router.replace({
+      name: RouteNames.LOGIN_TWO_FACTOR,
+      query: redirect ? { redirect } : undefined,
+    })
+    return
+  }
+
   const accessToken = route.query.accessToken as string | undefined
   const refreshToken = route.query.refreshToken as string | undefined
   const termsExpired = route.query.termsExpired === 'true'

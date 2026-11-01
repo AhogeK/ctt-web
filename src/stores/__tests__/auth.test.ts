@@ -13,6 +13,7 @@ import { queryClient } from '@/lib/query'
  */
 vi.mock('@/lib/api/auth', () => ({
   login: vi.fn<() => Promise<LoginResponse>>(),
+  loginWithTwoFactorCode: vi.fn<() => Promise<LoginResponse>>(),
   refresh: vi.fn<() => Promise<LoginResponse>>(),
   logoutAll: vi.fn<() => Promise<void>>(),
   refreshAccessToken: vi.fn<() => Promise<string>>(),
@@ -467,12 +468,15 @@ describe('Auth Store', () => {
   describe('login', () => {
     it('calls login API with credentials and deviceId', async () => {
       vi.mocked(authApi.login).mockResolvedValue({
-        accessToken: 'test-access-token',
-        refreshToken: 'test-refresh-token',
-        userId: 'user-id',
-        expiresIn: 3600,
-        tokenType: 'Bearer',
-        termsExpired: false,
+        status: 'authenticated',
+        response: {
+          accessToken: 'test-access-token',
+          refreshToken: 'test-refresh-token',
+          userId: 'user-id',
+          expiresIn: 3600,
+          tokenType: 'Bearer',
+          termsExpired: false,
+        },
       })
 
       const result = await store.login({
@@ -485,18 +489,21 @@ describe('Auth Store', () => {
         password: 'SecurePass1!',
         deviceId: store.deviceId,
       })
-      expect(result.accessToken).toBe('test-access-token')
+      expect(result).toMatchObject({ status: 'authenticated' })
       expect(store.accessToken).toBe('test-access-token')
     })
 
     it('sets auth state on successful login', async () => {
       vi.mocked(authApi.login).mockResolvedValue({
-        accessToken: 'new-access-token',
-        refreshToken: 'new-refresh-token',
-        userId: 'new-user-id',
-        expiresIn: 7200,
-        tokenType: 'Bearer',
-        termsExpired: false,
+        status: 'authenticated',
+        response: {
+          accessToken: 'new-access-token',
+          refreshToken: 'new-refresh-token',
+          userId: 'new-user-id',
+          expiresIn: 7200,
+          tokenType: 'Bearer',
+          termsExpired: false,
+        },
       })
 
       await store.login({
@@ -514,12 +521,15 @@ describe('Auth Store', () => {
       const dispatchEventSpy = vi.spyOn(globalThis, 'dispatchEvent').mockImplementation(vi.fn())
 
       vi.mocked(authApi.login).mockResolvedValue({
-        accessToken: 'test-access-token',
-        refreshToken: 'test-refresh-token',
-        userId: 'user-id',
-        expiresIn: 3600,
-        tokenType: 'Bearer',
-        termsExpired: true,
+        status: 'authenticated',
+        response: {
+          accessToken: 'test-access-token',
+          refreshToken: 'test-refresh-token',
+          userId: 'user-id',
+          expiresIn: 3600,
+          tokenType: 'Bearer',
+          termsExpired: true,
+        },
       })
 
       const result = await store.login({
@@ -531,7 +541,7 @@ describe('Auth Store', () => {
       const dispatchedEvent = dispatchEventSpy.mock.calls[0]![0] as CustomEvent
       expect(dispatchedEvent.type).toBe('api:terms-expired')
 
-      expect(result.termsExpired).toBe(true)
+      expect(result).toMatchObject({ status: 'authenticated', response: { termsExpired: true } })
       expect(store.accessToken).toBe('test-access-token')
 
       dispatchEventSpy.mockRestore()
@@ -539,12 +549,15 @@ describe('Auth Store', () => {
 
     it('sets auth state even when termsExpired is true (user is authenticated)', async () => {
       vi.mocked(authApi.login).mockResolvedValue({
-        accessToken: 'test-access-token',
-        refreshToken: 'test-refresh-token',
-        userId: 'user-id',
-        expiresIn: 3600,
-        tokenType: 'Bearer',
-        termsExpired: true,
+        status: 'authenticated',
+        response: {
+          accessToken: 'test-access-token',
+          refreshToken: 'test-refresh-token',
+          userId: 'user-id',
+          expiresIn: 3600,
+          tokenType: 'Bearer',
+          termsExpired: true,
+        },
       })
 
       await store.login({
@@ -560,12 +573,15 @@ describe('Auth Store', () => {
 
     it('returns response with termsExpired flag', async () => {
       vi.mocked(authApi.login).mockResolvedValue({
-        accessToken: 'test-access-token',
-        refreshToken: 'test-refresh-token',
-        userId: 'user-id',
-        expiresIn: 3600,
-        tokenType: 'Bearer',
-        termsExpired: true,
+        status: 'authenticated',
+        response: {
+          accessToken: 'test-access-token',
+          refreshToken: 'test-refresh-token',
+          userId: 'user-id',
+          expiresIn: 3600,
+          tokenType: 'Bearer',
+          termsExpired: true,
+        },
       })
 
       const result = await store.login({
@@ -573,7 +589,7 @@ describe('Auth Store', () => {
         password: 'SecurePass1!',
       })
 
-      expect(result.termsExpired).toBe(true)
+      expect(result).toMatchObject({ status: 'authenticated', response: { termsExpired: true } })
     })
 
     it('propagates login API error', async () => {
@@ -598,6 +614,103 @@ describe('Auth Store', () => {
           password: 'SecurePass1!',
         }),
       ).rejects.toThrow('Failed to fetch')
+    })
+  })
+
+  describe('two-factor login', () => {
+    const challenge = {
+      twoFactorRequired: true as const,
+      challengeToken: 'challenge-token',
+      expiresIn: 300,
+    }
+
+    it('parks the challenge without signing anyone in', async () => {
+      vi.mocked(userApi.fetchCurrentUser).mockClear()
+      vi.mocked(authApi.login).mockResolvedValue({ status: 'two-factor', challenge })
+
+      const result = await store.login({
+        email: 'user@example.com',
+        password: 'SecurePass1!',
+      })
+
+      expect(result).toEqual({ status: 'two-factor', challenge })
+      expect(store.pendingTwoFactor).toEqual(challenge)
+      expect(store.accessToken).toBeNull()
+      // A challenge is not a session: nothing may be written and no profile may be asked for.
+      expect(userApi.fetchCurrentUser).not.toHaveBeenCalled()
+    })
+
+    it('stores the session once the second step is accepted', async () => {
+      vi.mocked(authApi.loginWithTwoFactorCode).mockResolvedValue({
+        accessToken: 'second-step-access',
+        refreshToken: 'second-step-refresh',
+        userId: 'user-id',
+        expiresIn: 3600,
+        tokenType: 'Bearer',
+        termsExpired: false,
+      })
+      store.setTwoFactorChallenge(challenge)
+
+      await store.completeTwoFactorLogin('123456')
+
+      expect(authApi.loginWithTwoFactorCode).toHaveBeenCalledWith({
+        challengeToken: 'challenge-token',
+        code: '123456',
+      })
+      expect(store.accessToken).toBe('second-step-access')
+      expect(store.pendingTwoFactor).toBeNull()
+    })
+
+    it('keeps the challenge when only the code was wrong', async () => {
+      vi.mocked(authApi.loginWithTwoFactorCode).mockRejectedValue(
+        Object.assign(new Error('bad code'), { data: { code: 'AUTH_027' } }),
+      )
+      store.setTwoFactorChallenge(challenge)
+
+      await expect(store.completeTwoFactorLogin('000000')).rejects.toThrow('bad code')
+
+      expect(store.pendingTwoFactor).toEqual(challenge)
+      expect(store.accessToken).toBeNull()
+    })
+
+    it('drops a stale challenge once a one-step sign-in replaces it', async () => {
+      vi.mocked(authApi.login).mockResolvedValue({
+        status: 'authenticated',
+        response: {
+          accessToken: 'plain-access',
+          refreshToken: 'plain-refresh',
+          userId: 'user-id',
+          expiresIn: 3600,
+          tokenType: 'Bearer',
+          termsExpired: false,
+        },
+      })
+      store.setTwoFactorChallenge(challenge)
+
+      await store.login({ email: 'user@example.com', password: 'SecurePass1!' })
+
+      // Nothing is left to verify: a later visit to the second-step page must find no challenge.
+      expect(store.pendingTwoFactor).toBeNull()
+      expect(store.accessToken).toBe('plain-access')
+    })
+
+    it('drops the challenge on sign-out', () => {
+      store.setTwoFactorChallenge(challenge)
+
+      store.signOutLocally()
+
+      expect(store.pendingTwoFactor).toBeNull()
+    })
+
+    it('drops a dead challenge so the page can no longer offer another attempt', async () => {
+      vi.mocked(authApi.loginWithTwoFactorCode).mockRejectedValue(
+        Object.assign(new Error('expired'), { data: { code: 'AUTH_026' } }),
+      )
+      store.setTwoFactorChallenge(challenge)
+
+      await expect(store.completeTwoFactorLogin('123456')).rejects.toThrow('expired')
+
+      expect(store.pendingTwoFactor).toBeNull()
     })
   })
 })

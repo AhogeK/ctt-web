@@ -16,6 +16,7 @@ const mockResolve = vi.hoisted(() =>
 )
 const mockToastError = vi.hoisted(() => vi.fn<(...args: unknown[]) => unknown>())
 const mockLoginWithOAuth = vi.hoisted(() => vi.fn<(...args: unknown[]) => unknown>())
+const mockSetTwoFactorChallenge = vi.hoisted(() => vi.fn<(...args: unknown[]) => unknown>())
 const mockHistoryReplaceState = vi.hoisted(() =>
   vi.fn<(state: unknown, title: string, url?: string | URL | null) => void>(),
 )
@@ -59,8 +60,14 @@ vi.mock('vue-sonner', () => ({
 }))
 
 vi.mock('@/stores/auth', () => ({
-  useAuthStore: vi.fn<() => { loginWithOAuth: (...args: unknown[]) => unknown }>(() => ({
+  useAuthStore: vi.fn<
+    () => {
+      loginWithOAuth: (...args: unknown[]) => unknown
+      setTwoFactorChallenge: (...args: unknown[]) => unknown
+    }
+  >(() => ({
     loginWithOAuth: mockLoginWithOAuth,
+    setTwoFactorChallenge: mockSetTwoFactorChallenge,
   })),
 }))
 
@@ -70,6 +77,7 @@ vi.mock('@/router/route-names', () => ({
     NOT_FOUND: 'not-found',
     AUTH_LAYOUT: 'auth-layout',
     LOGIN: 'login',
+    LOGIN_TWO_FACTOR: 'login-two-factor',
     REGISTER: 'register',
     OAUTH_CALLBACK: 'oauth-callback',
     DASHBOARD: 'dashboard',
@@ -91,6 +99,7 @@ function resetMocks(): void {
   vi.clearAllMocks()
   routeQueryState.value = {}
   routePathState.value = '/oauth/callback'
+  sessionStorage.clear()
 }
 
 // ==========================================
@@ -122,6 +131,75 @@ describe('OAuthCallbackView', () => {
       expect(mockReplace).toHaveBeenCalledWith({ name: 'dashboard' })
       expect(mockHistoryReplaceState).toHaveBeenCalledTimes(1)
       expect(mockHistoryReplaceState).toHaveBeenCalledWith(null, '', '/oauth/callback')
+    })
+  })
+
+  describe('Two-factor challenge', () => {
+    it('parks the challenge from the fragment and forwards to the second step', async () => {
+      setQuery({ twoFactorRequired: 'true' })
+      window.location.hash = '#challengeToken=challenge-token&expiresIn=300'
+
+      const wrapper = mount(OAuthCallbackView)
+      await wrapper.vm.$nextTick()
+
+      expect(mockSetTwoFactorChallenge).toHaveBeenCalledWith({
+        twoFactorRequired: true,
+        challengeToken: 'challenge-token',
+        expiresIn: 300,
+      })
+      expect(mockLoginWithOAuth).not.toHaveBeenCalled()
+      expect(mockReplace).toHaveBeenCalledWith({ name: 'login-two-factor' })
+      // A fragment is a credential: it must leave the address bar before the page navigates.
+      expect(mockHistoryReplaceState).toHaveBeenCalledWith(null, '', '/oauth/callback')
+
+      window.location.hash = ''
+    })
+
+    it('treats a fragment without a lifetime as an unusable challenge', async () => {
+      setQuery({ twoFactorRequired: 'true' })
+      window.location.hash = '#challengeToken=challenge-token'
+
+      const wrapper = mount(OAuthCallbackView)
+      await wrapper.vm.$nextTick()
+
+      // A missing lifetime parses to 0; the page must not hand that to the schema and throw.
+      expect(mockSetTwoFactorChallenge).not.toHaveBeenCalled()
+      expect(mockToastError).toHaveBeenCalledTimes(1)
+      expect(mockReplace).toHaveBeenCalledWith({ name: 'login' })
+
+      window.location.hash = ''
+    })
+
+    it('carries the destination of the original sign-in into the second step', async () => {
+      sessionStorage.setItem('oauth_redirect', '/settings/api-keys')
+      setQuery({ twoFactorRequired: 'true' })
+      window.location.hash = '#challengeToken=challenge-token&expiresIn=300'
+
+      const wrapper = mount(OAuthCallbackView)
+      await wrapper.vm.$nextTick()
+
+      expect(mockReplace).toHaveBeenCalledWith({
+        name: 'login-two-factor',
+        query: { redirect: '/settings/api-keys' },
+      })
+      // The key is single-use: leaving it behind would steer a later sign-in elsewhere.
+      expect(sessionStorage.getItem('oauth_redirect')).toBeNull()
+
+      window.location.hash = ''
+    })
+
+    it('sends the reader back to sign-in when the fragment carries no challenge', async () => {
+      setQuery({ twoFactorRequired: 'true' })
+      window.location.hash = '#expiresIn=300'
+
+      const wrapper = mount(OAuthCallbackView)
+      await wrapper.vm.$nextTick()
+
+      expect(mockSetTwoFactorChallenge).not.toHaveBeenCalled()
+      expect(mockToastError).toHaveBeenCalledTimes(1)
+      expect(mockReplace).toHaveBeenCalledWith({ name: 'login' })
+
+      window.location.hash = ''
     })
   })
 

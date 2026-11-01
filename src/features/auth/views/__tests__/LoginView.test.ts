@@ -33,7 +33,7 @@ const publicConfigData = vi.hoisted(() => ({
 const mutations = vi.hoisted(
   () =>
     [] as Array<{
-      onSuccess?: () => void
+      onSuccess?: (result?: unknown) => void
       onError?: (error: unknown) => void
       mutate: (...args: unknown[]) => unknown
       isPending: { value: boolean }
@@ -78,7 +78,7 @@ vi.mock('vue-sonner', () => ({
 vi.mock('@tanstack/vue-query', () => ({
   QueryClient: vi.fn<() => void>(),
   useMutation: vi.fn<
-    (options: { onSuccess?: () => void; onError?: (error: unknown) => void }) => {
+    (options: { onSuccess?: (result?: unknown) => void; onError?: (error: unknown) => void }) => {
       mutate: (...args: unknown[]) => unknown
       isPending: { value: boolean }
     }
@@ -136,6 +136,7 @@ vi.mock('@/router/route-names', () => ({
     NOT_FOUND: 'not-found',
     AUTH_LAYOUT: 'auth-layout',
     LOGIN: 'login',
+    LOGIN_TWO_FACTOR: 'login-two-factor',
     REGISTER: 'register',
     REGISTER_SUCCESS: 'register-success',
     VERIFY_EMAIL: 'verify-email',
@@ -188,6 +189,9 @@ vi.mock('@/components/ui/button', () => ({
 // ==========================================
 // Helper Functions
 // ==========================================
+
+/** What the store hands back once the password alone is enough. */
+const signedIn = { status: 'authenticated' as const, response: {} }
 
 function createApiError(statusCode: number, code?: string): unknown {
   return {
@@ -256,7 +260,7 @@ describe('LoginView - hCaptcha integration', () => {
       const loginMutation = mutations[0]!
       expect(loginMutation.onSuccess).toBeDefined()
 
-      loginMutation.onSuccess!()
+      loginMutation.onSuccess!(signedIn)
 
       expect(mockCaptchaReset).toHaveBeenCalledOnce()
     })
@@ -283,8 +287,25 @@ describe('LoginView - hCaptcha integration', () => {
       mount(LoginView, {
         global: { stubs: { LoginForm: createLoginFormStub() } },
       })
-      mutations[0]!.onSuccess!()
+      mutations[0]!.onSuccess!(signedIn)
       expect(mockPush).toHaveBeenCalledWith({ name: 'dashboard' })
+    })
+
+    it('hands a second-step challenge to the two-factor page instead of signing in', () => {
+      routeQueryState.value = { redirect: '/settings/profile' }
+      mount(LoginView, {
+        global: { stubs: { LoginForm: createLoginFormStub() } },
+      })
+
+      mutations[0]!.onSuccess!({
+        status: 'two-factor',
+        challenge: { twoFactorRequired: true, challengeToken: 'challenge-token', expiresIn: 300 },
+      })
+
+      expect(mockPush).toHaveBeenCalledWith({
+        name: 'login-two-factor',
+        query: { redirect: '/settings/profile' },
+      })
     })
 
     it('honours a redirect that points at an in-app page', () => {
@@ -292,7 +313,7 @@ describe('LoginView - hCaptcha integration', () => {
       mount(LoginView, {
         global: { stubs: { LoginForm: createLoginFormStub() } },
       })
-      mutations[0]!.onSuccess!()
+      mutations[0]!.onSuccess!(signedIn)
       expect(mockPush).toHaveBeenCalledWith('/settings/profile')
     })
 
@@ -301,7 +322,7 @@ describe('LoginView - hCaptcha integration', () => {
       mount(LoginView, {
         global: { stubs: { LoginForm: createLoginFormStub() } },
       })
-      mutations[0]!.onSuccess!()
+      mutations[0]!.onSuccess!(signedIn)
       expect(mockPush).toHaveBeenCalledWith({ name: 'dashboard' })
       expect(mockPush).not.toHaveBeenCalledWith('/')
     })

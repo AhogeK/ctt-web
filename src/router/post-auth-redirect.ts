@@ -1,4 +1,4 @@
-import type { Router } from 'vue-router'
+import type { LocationQuery, Router } from 'vue-router'
 
 /**
  * Resolves where a freshly authenticated session should land.
@@ -17,4 +17,19 @@ import type { Router } from 'vue-router'
 export function resolvePostAuthTarget(router: Router, raw: unknown): string | undefined {
   if (typeof raw !== 'string' || !raw.startsWith('/') || raw.startsWith('//')) return undefined
   return router.resolve(raw).meta.requiresAuth ? raw : undefined
+}
+
+/**
+ * Reads the `redirect` query parameter in the shape a router navigation expects.
+ *
+ * Both sign-in steps pass the same destination along, and the value has to be forwarded as a
+ * query object rather than as a bare string: an absent or empty value becomes `undefined` so the
+ * navigation keeps a clean URL instead of carrying an empty parameter.
+ *
+ * @param query - the route's query object (`route.query`)
+ * @returns `{ redirect }` when the value is a non-empty string, otherwise undefined
+ */
+export function redirectQueryOf(query: LocationQuery): Record<string, string> | undefined {
+  const target = query.redirect
+  return typeof target === 'string' && target.length > 0 ? { redirect: target } : undefined
 }
