@@ -1,4 +1,8 @@
 import { z } from 'zod'
+import { i18n } from '@/i18n'
+
+/** Validation copy resolves through the global instance: this module runs outside a component. */
+const t = i18n.global.t
 
 /**
  * The second-step challenge a password login answers with when TOTP is enabled.
@@ -29,3 +33,62 @@ export const LoginTwoFactorRequestSchema = z.object({
 })
 
 export type LoginTwoFactorRequest = z.infer<typeof LoginTwoFactorRequestSchema>
+
+/**
+ * Whether the account currently needs a second factor, and how it would prove itself.
+ *
+ * `hasPassword` decides which reauthentication the setup asks for: a password account proves the
+ * password, an OAuth-only account relies on how recently the session was created.
+ */
+export const TwoFactorStatusSchema = z.object({
+  enabled: z.boolean(),
+  confirmedAt: z.string().nullable().default(null),
+  recoveryCodesRemaining: z.number().int().nonnegative(),
+  hasPassword: z.boolean(),
+  recentAuthentication: z.boolean(),
+})
+
+export type TwoFactorStatus = z.infer<typeof TwoFactorStatusSchema>
+
+/**
+ * Unconfirmed setup material.
+ *
+ * The secret is shown only until it is confirmed, so it travels in this response and nowhere else.
+ */
+export const StartTotpSetupResponseSchema = z.object({
+  secret: z.string().min(1),
+  otpauthUri: z.string().min(1),
+  digits: z.number().int().positive(),
+  period: z.number().int().positive(),
+  issuer: z.string().min(1),
+  expiresAt: z.string(),
+})
+
+export type StartTotpSetupResponse = z.infer<typeof StartTotpSetupResponseSchema>
+
+/** Ten single-use codes, returned exactly once: on confirmation and on regeneration. */
+export const RecoveryCodesSchema = z.object({
+  recoveryCodes: z.array(z.string().min(1)).length(10),
+})
+
+export type RecoveryCodes = z.infer<typeof RecoveryCodesSchema>
+
+/**
+ * One second-factor credential, never both.
+ *
+ * The server treats `code` and `recoveryCode` as mutually exclusive, so the form does too: a
+ * request carrying both would be ambiguous about which one is being spent.
+ */
+export const TwoFactorCredentialSchema = z
+  .object({
+    code: z.string().trim().min(1).optional(),
+    recoveryCode: z.string().trim().min(1).optional(),
+  })
+  .refine((value) => Boolean(value.code) || Boolean(value.recoveryCode), {
+    error: () => t('settings.twoFactor.credentialRequired'),
+  })
+  .refine((value) => !(value.code && value.recoveryCode), {
+    error: () => t('settings.twoFactor.oneCredentialOnly'),
+  })
+
+export type TwoFactorCredential = z.infer<typeof TwoFactorCredentialSchema>
