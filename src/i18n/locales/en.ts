@@ -102,6 +102,7 @@ const en = {
   pageTitles: {
     authentication: 'Authentication',
     login: 'Login',
+    loginTwoFactor: 'Two-step verification',
     register: 'Register',
     checkEmail: 'Check Your Email',
     verifyEmail: 'Verify Email',
@@ -175,6 +176,20 @@ const en = {
     },
   },
   auth: {
+    twoFactor: {
+      title: 'Two-step verification',
+      subtitle: 'Enter the 6-digit code from your authenticator app, or one of your recovery codes.',
+      codeLabel: 'Verification code',
+      codePlaceholder: '123456 or a recovery code',
+      codeRequired: 'Enter your verification code',
+      submit: 'Verify',
+      verifying: 'Verifying...',
+      invalidCode: 'That code is not right. Check it and try again.',
+      expired: 'This step took too long. Sign in again to get a new prompt.',
+      rateLimited: 'Too many failed attempts. Sign in again.',
+      backToSignIn: 'Back to sign in',
+      expiresIn: 'Expires in {time}',
+    },
     forgotDone: {
       title: 'Check your email',
       sent: "We've sent a password reset link to your email address.",

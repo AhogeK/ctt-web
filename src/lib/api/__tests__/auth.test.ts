@@ -41,11 +41,16 @@ describe('auth API', () => {
           deviceId: 'device-001',
         },
       })
-      expect(result.userId).toBe('a1b2c3d4-e5f6-7890-abcd-ef1234567890')
-      expect(result.accessToken).toBe('mock-access-token-xyz')
-      expect(result.refreshToken).toBe('mock-refresh-token-xyz')
-      expect(result.expiresIn).toBe(3600)
-      expect(result.tokenType).toBe('Bearer')
+      expect(result).toMatchObject({
+        status: 'authenticated',
+        response: {
+          userId: 'a1b2c3d4-e5f6-7890-abcd-ef1234567890',
+          accessToken: 'mock-access-token-xyz',
+          refreshToken: 'mock-refresh-token-xyz',
+          expiresIn: 3600,
+          tokenType: 'Bearer',
+        },
+      })
     })
 
     it('defaults tokenType to Bearer when not provided', async () => {
@@ -67,7 +72,31 @@ describe('auth API', () => {
         deviceId: 'device-001',
       })
 
-      expect(result.tokenType).toBe('Bearer')
+      expect(result).toMatchObject({ status: 'authenticated', response: { tokenType: 'Bearer' } })
+    })
+
+    it('reports the second-step challenge instead of pretending to be signed in', async () => {
+      vi.mocked(apiFetch).mockResolvedValue({
+        success: true,
+        message: 'Operation successful',
+        timestamp: '2026-10-31T12:00:00Z',
+        data: {
+          twoFactorRequired: true,
+          challengeToken: 'challenge-token',
+          expiresIn: 300,
+        },
+      })
+
+      const result = await authApi.login({
+        email: 'user@example.com',
+        password: 'SecurePass1!',
+        deviceId: 'device-001',
+      })
+
+      expect(result).toEqual({
+        status: 'two-factor',
+        challenge: { twoFactorRequired: true, challengeToken: 'challenge-token', expiresIn: 300 },
+      })
     })
 
     it('rejects invalid email format', async () => {
@@ -776,6 +805,42 @@ describe('auth API', () => {
       await expect(authApi.getGitHubAuthorizeUrl('bind')).resolves.toEqual({
         authUrl: 'https://github.com/login/oauth/authorize?client_id=test',
       })
+    })
+  })
+
+  describe('loginWithTwoFactorCode', () => {
+    it('posts the challenge and the code, and returns the session', async () => {
+      vi.mocked(apiFetch).mockResolvedValue({
+        success: true,
+        message: 'Login successful',
+        timestamp: '2026-10-31T12:00:00Z',
+        data: {
+          userId: 'a1b2c3d4-e5f6-7890-abcd-ef1234567890',
+          accessToken: 'access',
+          refreshToken: 'refresh',
+          expiresIn: 3600,
+        },
+      })
+
+      const result = await authApi.loginWithTwoFactorCode({
+        challengeToken: 'challenge-token',
+        code: '  123456  ',
+      })
+
+      expect(apiFetch).toHaveBeenCalledWith('/api/v1/auth/login/2fa', {
+        method: 'POST',
+        body: { challengeToken: 'challenge-token', code: '123456' },
+      })
+      expect(result.accessToken).toBe('access')
+    })
+
+    it('refuses a blank code before it reaches the network', async () => {
+      const failure = await authApi
+        .loginWithTwoFactorCode({ challengeToken: 'challenge-token', code: '   ' })
+        .catch((error: unknown) => error)
+
+      expect(failure).toBeInstanceOf(Error)
+      expect(apiFetch).not.toHaveBeenCalled()
     })
   })
 })

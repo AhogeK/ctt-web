@@ -11,6 +11,7 @@ export const RouteNames = {
   // Auth
   AUTH_LAYOUT: 'auth-layout',
   LOGIN: 'login',
+  LOGIN_TWO_FACTOR: 'login-two-factor',
   REGISTER: 'register',
   REGISTER_SUCCESS: 'register-success',
   VERIFY_EMAIL: 'verify-email',

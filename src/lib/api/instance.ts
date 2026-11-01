@@ -126,6 +126,13 @@ function handleTerminalAuthError(errorCode: string): void {
   })
 }
 
+/**
+ * 401 codes that reject this one request rather than the session behind it.
+ *
+ * @see handle401Error for why each of them must reach its caller untouched
+ */
+const RESOURCE_LEVEL_401_CODES = new Set(['AUTH_010', 'USER_014', 'AUTH_026', 'AUTH_027'])
+
 async function handle401Error(
   errorCode: string | null,
   request: RequestInfo,
@@ -143,14 +150,15 @@ async function handle401Error(
     return undefined
   }
 
-  // AUTH_010 and USER_014 are resource-level 401s: the user IS authenticated,
-  // but the requested operation failed a business check (AUTH_010: API key does
-  // not exist / belongs to another user; USER_014: current password is
-  // incorrect on password change). Unlike a session-level 401, these must NOT
-  // clear the access token or dispatch UNAUTHORIZED_EVENT (which would log the
-  // user out). Return undefined so ofetch throws the original error to the
-  // caller, which surfaces the mapped message via getErrorMessage.
-  if (errorCode === 'AUTH_010' || errorCode === 'USER_014') {
+  // Resource-level 401s: the request's own credentials were rejected while the
+  // session — if there is one — remains valid. AUTH_010 is API key BOLA
+  // protection, USER_014 is a wrong current password during a password change,
+  // and AUTH_026/027 belong to the second login step (dead challenge / wrong
+  // code). None may clear the access token or dispatch UNAUTHORIZED_EVENT:
+  // doing so would eject the reader mid-flow, and for the login step it would
+  // also bounce them off the page that is meant to show the error. Return
+  // undefined so ofetch throws the original error to the caller instead.
+  if (RESOURCE_LEVEL_401_CODES.has(errorCode ?? '')) {
     return undefined
   }
 

@@ -5,7 +5,7 @@ import { toast } from 'vue-sonner'
 import { useMutation } from '@tanstack/vue-query'
 import { useAuthStore } from '@/stores/auth'
 import { RouteNames } from '@/router/route-names'
-import { resolvePostAuthTarget } from '@/router/post-auth-redirect'
+import { redirectQueryOf, resolvePostAuthTarget } from '@/router/post-auth-redirect'
 import { isApiError, mapApiErrorCode } from '@/lib/utils/api-error'
 import { useCooldown } from '@/composables/useCooldown'
 import { useResendVerification } from '../composables/useResendVerification'
@@ -47,10 +47,21 @@ const showVerificationDialog = ref(false)
 const pendingEmail = ref('')
 const lockCountdown = ref(0)
 
+const redirectQuery = computed(() => redirectQueryOf(route.query))
+
 const mutation = useMutation({
   mutationFn: authStore.login,
-  onSuccess: () => {
+  onSuccess: (result) => {
     loginFormRef.value?.captchaRef?.reset()
+
+    // A challenge means the password was right and the account still owes a second step: the
+    // store holds the challenge, no token yet, so this page only hands the reader over. `push`
+    // keeps the password form one Back press away, unlike a replace.
+    if (result.status === 'two-factor') {
+      void router.push({ name: RouteNames.LOGIN_TWO_FACTOR, query: redirectQuery.value })
+      return
+    }
+
     router.push(resolvePostAuthTarget(router, route.query.redirect) ?? { name: RouteNames.DASHBOARD })
   },
   onError: (error: unknown) => {

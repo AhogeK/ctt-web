@@ -87,6 +87,34 @@ export const LOGIN_FAILURE_RESPONSE = {
 }
 
 /**
+ * `POST /api/v1/auth/login` for an account with TOTP enabled.
+ *
+ * Response: 202 `RestApiResponse<LoginChallengeResponse>` — no token, no refresh cookie. A client
+ * that treats every 2xx as "signed in" ends up authenticated with nothing to show for it.
+ */
+export const LOGIN_CHALLENGE_RESPONSE = restOk(
+  { twoFactorRequired: true, challengeToken: 'mock-challenge-token', expiresIn: 300 },
+  'Two-factor verification required',
+)
+
+/**
+ * `POST /api/v1/auth/login/2fa`
+ *
+ * Request: `{ challengeToken: string, code: string }` (a TOTP code or an unused recovery code)
+ * Response: `RestApiResponse<LoginResponse>` — the same session a one-step login returns
+ */
+export const LOGIN_TWO_FACTOR_SUCCESS_RESPONSE = LOGIN_SUCCESS_RESPONSE
+
+/** `POST /api/v1/auth/login/2fa` with a wrong, replayed or spent code → 401 AUTH_027. */
+export const LOGIN_TWO_FACTOR_INVALID_CODE_RESPONSE = {
+  success: false,
+  message: 'Invalid two-factor code',
+  data: null,
+  timestamp: MOCK_TIMESTAMP,
+  code: 'AUTH_027',
+}
+
+/**
  * `POST /api/v1/auth/refresh`
  *
  * Response: `RestApiResponse<LoginResponse>` (same shape as login)

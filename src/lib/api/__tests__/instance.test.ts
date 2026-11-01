@@ -351,6 +351,25 @@ describe('API Instance', () => {
       expect(toast.error).not.toHaveBeenCalled()
     })
 
+    it.each(['AUTH_026', 'AUTH_027'])('should keep the session for a second-step 401 with %s', async (code) => {
+      const mockResponse = {
+        status: 401,
+        _data: { code, message: 'Second step rejected' },
+        url: 'https://api.example.com/auth/login/2fa',
+      }
+      const mockContext = {
+        response: mockResponse,
+        request: 'https://api.example.com/auth/login/2fa',
+        options: { method: 'POST' },
+      }
+
+      await capturedConfig.onResponseError!(mockContext)
+
+      // A wrong code must reach the two-step page, not bounce the reader to sign in.
+      expect(removeItemSpy).not.toHaveBeenCalled()
+      expect(dispatchEventSpy).not.toHaveBeenCalled()
+    })
+
     it('should NOT clear token or dispatch event on 401 with USER_014 in wrapped format', async () => {
       const mockResponse = {
         status: 401,

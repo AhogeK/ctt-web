@@ -14,7 +14,24 @@ import {
   type ResetPasswordRequest,
   type GitHubAuthorizeResponse,
 } from '@/lib/schemas/auth.schema'
+import {
+  LoginChallengeSchema,
+  LoginTwoFactorRequestSchema,
+  type LoginChallenge,
+  type LoginTwoFactorRequest,
+} from '@/lib/schemas/two-factor.schema'
 import { encodeBase64 } from '@/lib/utils'
+
+/**
+ * Outcome of a password login.
+ *
+ * The server answers `200` with the tokens, or `202` with a challenge when the account has TOTP
+ * enabled. Both are successes, so the result is a union rather than a response with empty tokens:
+ * the caller has to say which branch it is in, and the compiler will not let it forget.
+ */
+export type LoginResult =
+  | { status: 'authenticated'; response: LoginResponse }
+  | { status: 'two-factor'; challenge: LoginChallenge }
 
 /**
  * Authenticates user with email, password, and device ID.
@@ -22,10 +39,10 @@ import { encodeBase64 } from '@/lib/utils'
  * Endpoint: POST /api/v1/auth/login
  *
  * @param credentials - Login credentials containing email, password, and deviceId
- * @returns Parsed login response with accessToken, refreshToken, userId, and expiresIn
+ * @returns the tokens, or the second-step challenge when the account has TOTP enabled
  * @throws Zod validation error if response doesn't match expected schema
  */
-export async function login(credentials: LoginRequest): Promise<LoginResponse> {
+export async function login(credentials: LoginRequest): Promise<LoginResult> {
   // Validate request payload before sending
   const validatedRequest = LoginRequestSchema.parse(credentials)
   const encodedRequest = { ...validatedRequest, password: encodeBase64(validatedRequest.password) }
@@ -33,6 +50,36 @@ export async function login(credentials: LoginRequest): Promise<LoginResponse> {
   const response = await apiFetch<unknown>('/api/v1/auth/login', {
     method: 'POST',
     body: encodedRequest,
+  })
+
+  const wrapped = RestApiResponseSchema.parse(response)
+  // The challenge is tested first because it is the narrower shape: a token response has no
+  // `twoFactorRequired`, so the two never overlap.
+  const challenge = LoginChallengeSchema.safeParse(wrapped.data)
+  if (challenge.success) {
+    return { status: 'two-factor', challenge: challenge.data }
+  }
+  return { status: 'authenticated', response: LoginResponseSchema.parse(wrapped.data) }
+}
+
+/**
+ * Redeems the second-step challenge for a session.
+ *
+ * Endpoint: POST /api/v1/auth/login/2fa
+ *
+ * @param payload - the challenge token from the first step, and the code the reader entered
+ *   (a TOTP code, or an unused recovery code)
+ * @returns the same login response a one-step sign-in returns
+ * @throws 401 with AUTH_026 when the challenge expired or was already redeemed — no code can fix
+ *   that, so the caller has to start over from the password form
+ * @throws 401 with AUTH_027 when the code itself is wrong, replayed, or already spent
+ * @throws 429 with RATE_LIMIT_001 after five failures; the challenge is ended by then
+ */
+export async function loginWithTwoFactorCode(payload: LoginTwoFactorRequest): Promise<LoginResponse> {
+  const body = LoginTwoFactorRequestSchema.parse(payload)
+  const response = await apiFetch<unknown>('/api/v1/auth/login/2fa', {
+    method: 'POST',
+    body,
   })
 
   const wrapped = RestApiResponseSchema.parse(response)
