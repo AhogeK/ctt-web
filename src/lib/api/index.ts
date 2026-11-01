@@ -11,6 +11,14 @@ export {
   type LoginResult,
 } from './auth'
 export { getPublicConfig, type PublicConfig } from './config'
+export {
+  fetchTwoFactorStatus,
+  startTotpSetup,
+  confirmTotpSetup,
+  disableTwoFactor,
+  regenerateRecoveryCodes,
+} from './two-factor'
+export type { TwoFactorStatus, StartTotpSetupResponse } from '@/lib/schemas/two-factor.schema'
 export { fetchLinkedOAuthAccounts, unbindOAuthAccount } from './oauth-account'
 export type { OAuthAccountsResponseData } from './oauth-account'
 export {
