@@ -1,4 +1,5 @@
 import { expect, test, type Page } from '@playwright/test'
+import * as jsQrModule from 'jsqr'
 import { mockAuthApis, loginViaForm, okEnvelope } from '../utils/auth-helpers.js'
 
 /**
@@ -9,6 +10,11 @@ import { mockAuthApis, loginViaForm, okEnvelope } from '../utils/auth-helpers.js
  * answers: it folds repeated clients instead of repeating them, it addresses a revocation to the
  * sign-in the reader pointed at, and it saves the export under the name the server chose.
  */
+
+type QrDecoder = (data: Uint8ClampedArray, width: number, height: number) => { data: string } | null
+
+/** `jsqr` ships CommonJS: the callable arrives either as the namespace or as its `default`. */
+const decodeQr = (jsQrModule as unknown as { default?: QrDecoder }).default ?? (jsQrModule as unknown as QrDecoder)
 
 const CHROME_MAC =
   'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36'
@@ -96,6 +102,79 @@ async function mockSessions(page: Page): Promise<{ list: SessionFixture[]; delet
   })
 
   return { list, deletes, batches }
+}
+
+/**
+ * Serve the second-factor state from a mutable object.
+ *
+ * The page refetches the status after every change, so the mock has to move with it: a fixed
+ * `enabled: false` would make a successful enable look like a failure.
+ */
+async function mockTwoFactor(
+  page: Page,
+  initial: { enabled?: boolean; remaining?: number } = {},
+): Promise<{ state: { enabled: boolean; remaining: number } }> {
+  const state = { enabled: initial.enabled ?? false, remaining: initial.remaining ?? 0 }
+  const codes = Array.from({ length: 10 }, (_, index) => `KYQV-BATK-MZVK-MMX${index}`)
+
+  await page.route('**/api/v1/users/me/2fa**', async (route) => {
+    const request = route.request()
+    const path = new URL(request.url()).pathname
+
+    if (request.method() === 'GET') {
+      await route.fulfill({
+        json: okEnvelope({
+          enabled: state.enabled,
+          confirmedAt: state.enabled ? '2026-11-01T10:00:00Z' : null,
+          recoveryCodesRemaining: state.remaining,
+          hasPassword: true,
+          recentAuthentication: true,
+        }),
+      })
+      return
+    }
+
+    if (path.endsWith('/totp/start')) {
+      await route.fulfill({
+        json: okEnvelope({
+          // What the server now returns: 20 random bytes, encoded once — 32 characters, no padding.
+          secret: 'JBSWY3DPEHPK3PXPJBSWY3DPEHPK3PXP',
+          otpauthUri:
+            'otpauth://totp/Code%20Time%20Tracker:test@example.com?secret=JBSWY3DPEHPK3PXPJBSWY3DPEHPK3PXP&issuer=Code%20Time%20Tracker',
+          digits: 6,
+          period: 30,
+          issuer: 'Code Time Tracker',
+          expiresAt: '2026-11-01T10:40:00Z',
+        }),
+      })
+      return
+    }
+
+    if (path.endsWith('/totp/confirm')) {
+      state.enabled = true
+      state.remaining = 10
+      await route.fulfill({ json: okEnvelope({ recoveryCodes: codes }) })
+      return
+    }
+
+    if (path.endsWith('/recovery-codes/regenerate')) {
+      state.remaining = 10
+      await route.fulfill({ json: okEnvelope({ recoveryCodes: codes }) })
+      return
+    }
+
+    if (path.endsWith('/disable')) {
+      state.enabled = false
+      state.remaining = 0
+      // The endpoint answers 204 with no body; a 200 envelope here would hide a client that parses one.
+      await route.fulfill({ status: 204, body: '' })
+      return
+    }
+
+    await route.fulfill({ status: 404, json: { message: 'not mocked' } })
+  })
+
+  return { state }
 }
 
 const sessionsList = (page: Page) => page.getByTestId('login-sessions')
@@ -197,5 +276,104 @@ test.describe('Security page', () => {
 
     expect(download.suggestedFilename()).toBe('ctt-export-2026-07-09.json')
     await expect(page.getByText('Download started')).toBeVisible()
+  })
+
+  test('turns the second factor on, keeps the codes, and turns it off again', async ({ page }) => {
+    const { state } = await mockTwoFactor(page)
+    await page.goto('/settings/security')
+
+    const card = page.locator('section[aria-labelledby="two-factor-heading"]')
+    await expect(card.getByTestId('two-factor-state')).toHaveText('Off')
+
+    await card.getByTestId('two-factor-enable').click()
+    await page.getByTestId('two-factor-password').fill('SecurePass1!')
+    await page.getByTestId('two-factor-password-submit').click()
+
+    // The key the authenticator needs, shown before anything is confirmed.
+    await expect(page.getByTestId('two-factor-secret')).toHaveText('JBSWY3DPEHPK3PXPJBSWY3DPEHPK3PXP')
+    await page.getByTestId('two-factor-secret-next').click()
+    await page.getByTestId('two-factor-setup-code').fill('123456')
+    await page.getByTestId('two-factor-code-submit').click()
+
+    // Ten codes, and the dialog refuses to close until the reader says they are stored.
+    await expect(page.getByTestId('recovery-code')).toHaveCount(10)
+    await expect(page.getByTestId('recovery-done')).toBeDisabled()
+    await page.getByTestId('recovery-acknowledge').click()
+    await page.getByTestId('recovery-done').click()
+
+    await expect(card.getByTestId('two-factor-state')).toHaveText('On')
+    await expect(card).toContainText('10 recovery codes left')
+    expect(state.enabled).toBe(true)
+
+    await card.getByTestId('two-factor-disable').click()
+    await page.getByTestId('two-factor-credential').fill('123456')
+    await page.getByTestId('two-factor-confirm-submit').click()
+
+    await expect(card.getByTestId('two-factor-state')).toHaveText('Off')
+    expect(state.enabled).toBe(false)
+  })
+
+  test('re-sets the factor: the confirm dialog hands over to the wizard', async ({ page }) => {
+    const { state } = await mockTwoFactor(page, { enabled: true, remaining: 4 })
+    await page.goto('/settings/security')
+
+    const card = page.locator('section[aria-labelledby="two-factor-heading"]')
+    await card.getByTestId('two-factor-reset').click()
+    await page.getByTestId('two-factor-credential').fill('123456')
+    await page.getByTestId('two-factor-confirm-submit').click()
+
+    // The factor is off, so the wizard opens at its first step instead of the card going quiet.
+    await expect(page.getByTestId('two-factor-password')).toBeVisible()
+    await page.getByTestId('two-factor-password').fill('SecurePass1!')
+    await page.getByTestId('two-factor-password-submit').click()
+    await expect(page.getByTestId('two-factor-secret')).toHaveText('JBSWY3DPEHPK3PXPJBSWY3DPEHPK3PXP')
+    expect(state.enabled).toBe(false)
+  })
+
+  test('replaces the recovery codes and keeps the new batch behind the same gate', async ({ page }) => {
+    await mockTwoFactor(page, { enabled: true, remaining: 3 })
+    await page.goto('/settings/security')
+
+    const card = page.locator('section[aria-labelledby="two-factor-heading"]')
+    await expect(card).toContainText('3 recovery codes left')
+
+    await card.getByTestId('two-factor-regenerate').click()
+    await page.getByTestId('two-factor-credential').fill('123456')
+    await page.getByTestId('two-factor-confirm-submit').click()
+
+    await expect(page.getByTestId('recovery-code')).toHaveCount(10)
+    await expect(page.getByTestId('recovery-done')).toBeDisabled()
+    await page.getByTestId('recovery-acknowledge').click()
+    await page.getByTestId('recovery-done').click()
+
+    // The list refetches from the server, which now reports the new batch.
+    await expect(card).toContainText('10 recovery codes left')
+  })
+
+  test('renders a QR an authenticator app can actually read', async ({ page }) => {
+    await mockTwoFactor(page)
+    await page.goto('/settings/security')
+
+    await page.getByTestId('two-factor-enable').click()
+    await page.getByTestId('two-factor-password').fill('SecurePass1!')
+    await page.getByTestId('two-factor-password-submit').click()
+    await page.getByTestId('two-factor-qr').waitFor()
+
+    // Read the pixels the page actually painted, then decode them the way a scanner would.
+    const pixels = await page.evaluate(() => {
+      const canvas = document.querySelector('[data-testid="two-factor-qr"]') as HTMLCanvasElement | null
+      if (!canvas) throw new Error('no QR on the page')
+      const context = canvas.getContext('2d')
+      if (!context) throw new Error('no 2d context')
+      const data = context.getImageData(0, 0, canvas.width, canvas.height)
+      return { data: Array.from(data.data), width: data.width, height: data.height }
+    })
+
+    const decoded = decodeQr(new Uint8ClampedArray(pixels.data), pixels.width, pixels.height)
+    expect(decoded?.data).toBe(
+      'otpauth://totp/Code%20Time%20Tracker:test@example.com?secret=JBSWY3DPEHPK3PXPJBSWY3DPEHPK3PXP&issuer=Code%20Time%20Tracker',
+    )
+    // The key shown for manual entry carries no padding either.
+    await expect(page.getByTestId('two-factor-secret')).toHaveText('JBSWY3DPEHPK3PXPJBSWY3DPEHPK3PXP')
   })
 })

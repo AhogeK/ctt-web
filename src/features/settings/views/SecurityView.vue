@@ -9,6 +9,7 @@
 import { useI18n } from 'vue-i18n'
 import DataExportCard from '../components/DataExportCard.vue'
 import LoginSessionsCard from '../components/LoginSessionsCard.vue'
+import TwoFactorCard from '../components/TwoFactorCard.vue'
 
 const { t } = useI18n()
 </script>
@@ -22,6 +23,7 @@ const { t } = useI18n()
       </p>
     </div>
 
+    <TwoFactorCard />
     <LoginSessionsCard />
     <DataExportCard />
   </div>

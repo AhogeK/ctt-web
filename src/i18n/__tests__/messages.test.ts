@@ -36,7 +36,9 @@ describe('i18n catalogues', () => {
   })
 
   it('keeps interpolation placeholders identical across languages', () => {
-    const placeholders = (value: string) => (value.match(/\{[a-zA-Z0-9_]+\}/g) ?? []).sort()
+    // A plural message repeats its placeholder once per branch ("one | many"), so the comparison
+    // is over the set of names a message can interpolate, not over their occurrences.
+    const placeholders = (value: string) => [...new Set(value.match(/\{[a-zA-Z0-9_]+\}/g) ?? [])].sort()
     const zhByPath = new Map(zhLeaves.map((leaf) => [leaf.path, leaf.value]))
     for (const leaf of enLeaves) {
       expect(placeholders(zhByPath.get(leaf.path) ?? '')).toEqual(placeholders(leaf.value))

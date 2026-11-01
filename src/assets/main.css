@@ -82,6 +82,9 @@
   --color-success: #10b981;
   /* Success as TEXT ink — light mode needs a darker green for AA (see --success-ink in :root). */
   --color-success-ink: var(--success-ink);
+  /* Security lavender (#7a7fad) — the palette's muted indigo for security-related surfaces, so a
+   * security control does not borrow the brand accent and read as a call to action. */
+  --color-security: #7a7fad;
   /* The status palette defines green and emerald but no warning colour — the amber scale
    * (amber-50…900) had been typed by hand in 40 places across the auth/settings surfaces. These
    * three roles are the shades already in use, so adopting them is visually near-identical. */
