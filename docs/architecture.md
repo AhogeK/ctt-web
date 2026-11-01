@@ -292,11 +292,18 @@ export const useAuthStore = defineStore('auth', () => {
   }
 
   // Caller provides email + password only; deviceId injected transparently
-  async function login(credentials: Omit<LoginRequest, 'deviceId'>): Promise<LoginResponse> {
+  async function login(credentials: Omit<LoginRequest, 'deviceId'>): Promise<LoginResult> {
     const payload: LoginRequest = { ...credentials, deviceId: deviceId.value }
-    const response = await loginApi(payload)
-    setAuth(response)
-    return response
+    const result = await loginApi(payload)
+    // A challenge is not a session: only the authenticated branch receives tokens.
+    if (result.status === 'two-factor') {
+      pendingTwoFactor.value = result.challenge
+      return result
+    }
+    // completeSignIn stores the tokens, raises TERMS_EXPIRED_EVENT when the terms changed, and
+    // fetches the profile once storage has settled.
+    await completeSignIn(result.response)
+    return result
   }
 
   return {
@@ -429,6 +436,43 @@ captchaSiteKey: z.string().nullable() // null = captcha disabled
 | -------------- | --------------------------- |
 | `SECURITY_006` | Captcha verification failed |
 | `SECURITY_007` | Captcha token missing       |
+
+### Two-Step Login (TOTP)
+
+An account with TOTP enabled cannot be signed in by a password alone. The server answers the
+password step with `202` and a one-time challenge instead of tokens, and only the second step
+returns the session.
+
+| Step | Endpoint                       | Success                    | Failure                                                        |
+| ---- | ------------------------------ | -------------------------- | -------------------------------------------------------------- |
+| 1    | `POST /api/v1/auth/login`      | `200` tokens, or `202` challenge | `401 AUTH_001` invalid credentials, `401 AUTH_004` locked |
+| 2    | `POST /api/v1/auth/login/2fa`  | `200` tokens               | `401 AUTH_026` challenge expired/used, `401 AUTH_027` wrong code, `429` |
+
+**Why a discriminated union, not a nullable result.** `login()` in `src/lib/api/auth.ts` returns
+`LoginResult` — `{ status: 'authenticated' }` or `{ status: 'two-factor' }`. A client that treated
+every 2xx as "signed in" would sail on with no tokens at all; the union makes the compiler force
+the branch instead of leaving it to discipline.
+
+**Challenge lifetime.** The challenge is single-use and lives five minutes. The store keeps it in
+memory only (`pendingTwoFactor`): persisting it would put a credential in storage that a stale tab
+could replay, and a reload cannot honour it anyway — the server answers `AUTH_026`, so the page
+sends the reader back to the password form.
+
+**Second step page.** `/auth/login/2fa` (`LoginTwoFactorView`) accepts a 6-digit TOTP code or a
+recovery code, since both are redeemed through the same field. `AUTH_027` is shown beside the
+field and keeps the challenge alive for another attempt; `AUTH_026` and `429` clear it and return
+to `/auth/login`. A visitor who opens the page without a challenge is redirected there on mount.
+
+**OAuth with TOTP.** The provider callback cannot answer `202` (it is a browser redirect), so the
+server redirects to `{frontend}/oauth/callback?twoFactorRequired=true#challengeToken=…&expiresIn=…`.
+The fragment is parsed and wiped with `history.replaceState` before navigation, then parked in the
+same store field the password flow uses, so both entries share one second-step page.
+
+See also:
+
+- `src/features/auth/views/LoginTwoFactorView.vue` — second-step form, countdown, error branches
+- `src/lib/schemas/two-factor.schema.ts` — `LoginChallenge` + `LoginTwoFactorRequest`
+- `src/router/modules/auth.ts` — route record for `/auth/login/2fa`
 
 ### OAuth Discriminator Pattern
 
