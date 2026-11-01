@@ -39,18 +39,23 @@
 ```ts
 const t = (key: string) => i18n.global.t(key)   // declared above the schemas
 
-z.string().min(1, { error: () => t('auth.validation.passwordRequired') })
+z
+  .string({ error: () => t('auth.validation.passwordRequired') })
+  .min(1, { error: () => t('auth.validation.passwordRequired') })
 ```
 
-两条要求：
+四条要求：
 
 1. `const t = …` **声明在 schema 之前**（`const` 不提升，反过来 TS2448 且运行期抛错）。
 2. 校验文案用 **`error: () => t(…)` 惰性求值**，不要直接写成 `t(…)` 的返回值 —— 后者在模块加载时
    就固定成当时的语言，切换语言后校验消息仍是旧语言。Zod 4 在每次解析时调用该函数，所以惰性写法的
    消息（以及随后重新校验产生的消息）都跟随当前语言。
-
-已知残留：`LoginForm` 的 schema 仍取模块加载时的文案，切换语言后不会更新；迁移该视图时一并改成
-惰性写法。
+3. **基类型也要带消息**：用户没碰过字段时值是 `undefined`，`z.string()` / `z.boolean()` / `z.array()`
+   这些基类型先于 `.min()` 执行 ⇒ 界面露出 Zod 自己的英文原文（`Invalid input: expected string,
+   received undefined`），与界面语言无关。所以 `z.string({ error: () => t(…) })` 与 `.min(1, { error: … })`
+   各写一次；**别只靠 `initialValues` 兜**。`src/lib/schemas/__tests__/form-messages.test.ts` 守着这条。
+4. **格式检查不得替空值回答**：`z.email({ error: 格式 })` 在 `.min(1)` 之前执行 ⇒ 空邮箱会说"格式不对" ✗。
+   写成 `.string({ error: 必填 }).min(1, { error: 必填 }).pipe(z.email({ error: 格式 }))`，空值得到必填、非空才谈格式 ✓。
 
 ## 条款正文随语言切换
 

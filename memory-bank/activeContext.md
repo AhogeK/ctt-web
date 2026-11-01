@@ -98,6 +98,17 @@
   与去填充 secret ⇒ 违背后端契约，且服务端已不填充 ⇒ 死分支删除；⑤ 重置入口未按能力门控 ⇒ OAuth-only 会话会停在一个空密钥步。
   另修：卡片改用 `SETTINGS_ACTION_BUTTON_CLASS`、去掉未登记的柔光晕、英文恢复码单复数、路由标题残留 "Two-step"、注释变更叙事。
   测试：新增 pending/关闭后不交接/剪贴板降级/守卫/重置 E2E 各一条，均先证明"破坏实现会变红" ✓。
+- **校验文案漏出 Zod 原文（2026-11-02 · v0.74.1）**：登录第二步空提交显示 `Invalid input: expected string, received undefined`。
+  根因是 `z.string()` **基类型**先于 `.min()` 执行：未触碰的字段是 `undefined` ⇒ 基类型失败 ⇒ 英文原文直出。
+  修法：**基类型也带惰性消息**（密码、2FA 码、确认密码、显示名、作用域、同意条款、API Key 名称、删除账号的密码与确认邮箱），
+  并新增类级测试 `schemas/__tests__/form-messages.test.ts`（已证明破坏实现会红）；顺带删掉 `SetPasswordDialog.form.test`
+  里把 Zod 原文当预期的那条断言 ✓。
+- **两轴审查补齐的三处（2026-11-02 同日）**：① `LoginForm` 的邮箱文案仍是**模块加载时求值** ⇒ 切语言后消息不跟随（现改惰性，
+  并加"同一次挂载里两次提交跨语言"的单测 + 登录页 E2E）；② 删除账号的**确认邮箱**仍只靠 `initialValues` 兜基类型（现补消息）；
+  ③ 规范示例本身在教旧写法（`docs/dev-handbook.md` 与 `domains/i18n/practices.md` 已改成"基类型 + 规则各写一次"）✓。
+- **邮箱文案顺序（2026-11-02 同日）**：`z.email(…)` 的格式检查排在 `.min(1)` 之前 ⇒ 空邮箱得到「格式不对」而不是「必填」✗。
+  全站四个邮箱字段（注册 / 找回密码 / 登录 / 改邮箱）改成 `.string({ error: 必填 }).min(1, { error: 必填 }).pipe(z.email({ error: 格式 }))` ✓；
+  两条把旧行为当预期的断言（`EmailChangeDialog.form.test`、登录页 E2E）一并改真；删除账号对话框补了空提交单测（两个分支）✓。
 - 验证（当前基线）：单测 **1717** · E2E **181** · type-check · build · `check:i18n` **1068 键** · `pnpm lint` **零输出** ✓。
 
 ## Archived History
