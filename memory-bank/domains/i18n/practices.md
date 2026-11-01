@@ -119,3 +119,21 @@ z.string().min(1, { error: () => t('auth.validation.passwordRequired') })
 时长仍走 `formatDuration`（`1h 30m` 这类紧凑写法与语言无关）；只有**自然语言**部分
 （"coded"、星期、月份）进词条。不要为了翻译把时长格式也改成随语言变化 —— 图例宽度已按
 现格式布局。
+
+## 安全类术语：各平台实际怎么写（2026-11-02 查证）
+
+**先查再定名，不自己按英文硬译。** 各家官方简体中文用词并不统一，分成两类：
+
+| 平台 | 简体中文用词 | 出处 |
+| --- | --- | --- |
+| Google 账号 | **两步验证** | `support.google.com/accounts/answer/185839?hl=zh-Hans`「开启两步验证」 |
+| Microsoft 账户 | **双重验证** | `support.microsoft.com/zh-cn/…how-to-use-two-step-verification…`（另一旧页写「两步身份验证」） |
+| Apple 账户 | **双重认证** | `support.apple.com/zh-hans/guide/mac-help/mchl8bd4e9c2/mac`「为你的 Apple 账户打开双重认证」 |
+| GitHub | **双因素身份验证（2FA）** | `docs.github.com/zh/authentication/…/about-two-factor-authentication`（同站也混用「双重身份验证」） |
+| Bitwarden（自建向） | 两步登录（英文 two-step login） | `bitwarden.com/help/setup-two-step-login/` 及社区中译 |
+
+**结论**：消费级平台（Google / Microsoft / Apple）都不说「因素」，说「两步 / 双重」；**开发者平台（GitHub）说「双因素身份验证」**。
+本项目受众是自托管的开发者，英文界面已经用 `Two-factor authentication`（正是 GitHub 的措辞）⇒ 中文取 **双因素认证**，
+与英文一一对应；**不采用「二因验证」**（不是任何平台的用法）✗。
+
+**要改的话**：想贴近大众说法就换 **两步验证**（Google 用词），改动只在 `zh-CN.ts`，一次提交可完成。

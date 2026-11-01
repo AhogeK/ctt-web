@@ -180,21 +180,20 @@ When auditing built CSS, `rm -rf dist` first — the build does not always purge
 
 Conservation-vs-accumulation: [`backend-contract/principles.md`](./domains/backend-contract/principles.md) P2.
 
+## Settings surfaces
+
+Views cap content at `mx-auto w-full max-w-[1120px]`; without it an ultrawide window stretches a card to 1568px and the
+text-to-action gap becomes the loudest thing on screen. A card row is `sm:grid-cols-[150px_minmax(0,1fr)_auto]` — label,
+value, action — with hairline dividers; read-only rows keep an empty third cell so the columns stay aligned.
+
 ## Interaction And Motion Conventions
 
-- **Hover is gated on capability**: Tailwind's `hover:` variant compiles into `@media (hover: hover)` by itself
-  (verified in the served CSS) — the case that needed work was **hand-written** `:hover`, and as of **2026-09-20
-  all 16 of them in `src/` are wrapped** ✓ (proof: real browser — `hover: hover` changes the style, `hover: none`
-  does not). New hand-written `:hover` must be wrapped in the same release it is added: it is invisible in jsdom
-  and only reproduces on a touch device.
+- **Hover is gated on capability**: Tailwind's `hover:` compiles into `@media (hover: hover)`; the work was hand-written
+  `:hover`, all 16 in `src/` wrapped. New ones must be wrapped when added — only a touch device reproduces it.
 - **Motion carries its counterpart**: `motion-reduce:transition-none` / `duration-0` / `animate-none`.
-- **Hover must not move the box, and a disabled control still needs a cursor** ✗: (a) `hover:scale`/`translate`
-  moves the *hit* box with the hover state, so near an edge the pointer alternates inside/outside and the cursor
-  and the scale flicker together — measurable as a **changing `getBoundingClientRect`** while the mouse moves 1px
-  (measured, then reverted — the fix moved the flicker elsewhere); (b) `pointer-events: none` makes a disabled
-  control invisible to the pointer, so a neighbouring `disabled:cursor-not-allowed` is dead code and the cursor
-  falls through to the card — keep hit testing and gate hover with `enabled:` (v0.51.1). A rounded corner still
-  shows the parent cursor; that is static, not a flicker.
-- **State as attribute**: reka-ui emits `data-state`/`data-side`/`data-orientation` — style `data-[state=open]:`
-  rather than a class combination. Design values:
-  [`domains/landing-page/practices.md`](./domains/landing-page/practices.md).
+- **Hover must not move the box, and a disabled control still needs a cursor** ✗: `hover:scale` moves the *hit* box, so
+  the pointer alternates near an edge and the cursor flickers (a changing `getBoundingClientRect` while the mouse moves
+  1px); `pointer-events: none` hides a disabled control from the pointer, making `disabled:cursor-not-allowed` dead
+  code — keep hit testing, gate hover with `enabled:`.
+- **State as attribute**: reka-ui emits `data-state`/`data-side`/`data-orientation` — style `data-[state=open]:` rather
+  than a class combination. Design values → [`domains/landing-page/practices.md`](./domains/landing-page/practices.md).

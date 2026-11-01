@@ -18,6 +18,7 @@
 | Icons         | @iconify/vue (migrated from lucide-vue-next v0.10.5) | ^5 |
 | i18n          | Vue I18n                               | ^11          |
 | Captcha       | @hcaptcha/vue3-hcaptcha (`hl` follows UI) | ^1        |
+| QR codes      | qrcode.vue (canvas, white plate, 4-module quiet zone); jsqr decodes it in E2E | ^3.11 / ^1.4 |
 | Package Mgr   | pnpm (standalone `~/Library/pnpm`)     | 12.11.2      |
 | Design System | DESIGN.md                              | Linear-style |
 
@@ -149,8 +150,7 @@
 
 ### Pinia
 
-- `auth.ts` (JWT tokens, userId, expiry, hasPassword) + `theme.ts` (dark/light/auto via VueUse `useStorage` +
-  `useDark`); `counter.ts` reference-only
+- `auth.ts` (JWT tokens, userId, expiry, hasPassword) + `theme.ts` (dark/light/auto via `useStorage` + `useDark`)
 - Cross-tab sync via storage events; derived computed (isAuthenticated)
 
 ### OAuth Provider Enumeration (v0.8.39)

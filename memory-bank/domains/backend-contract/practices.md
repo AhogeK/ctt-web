@@ -112,6 +112,17 @@ const RESOURCE_401 = new Set(['AUTH_010', 'USER_014'])   // BOLA + business chec
 - **口令字段一律 base64**：`/auth/register`、`/auth/login`、`/users/me/2fa/totp/start` 的 `currentPassword` 都是先
   base64 再上送的字符串，服务端直接 `passwordEncoder.matches` 比对 ⇒ 传明文得 `USER_014`「Invalid password」（2026-11-01 实测）。
   新增加密类端点前先看前端有没有 `encodeBase64` 那一层。
+- **`otpauth://` 只有验证器 App 认**：相机、相册、微信「识别二维码」扫出来会报「无法扫描此二维码」——
+  它们只处理 http(s) 链接。同一台手机上也无法扫自己的屏幕 ⇒ 界面必须同时给「复制密钥」与「在验证器应用中打开」，
+  文案要写明用验证器里的扫描功能 ✓（2026-11-02 用户真机踩到）。
+- **TOTP 密钥：服务端已修（v0.89.1）⇒ 32 字符、无填充**（2026-11-02）：根因**不是部署漂移**，而是 `SecretGenerator.generate(160)`
+  返回的已是 Base32 字节，`TotpService` 又编码了一次 ⇒ 20 字节 → 52 字符 + `====`；改成「20 个随机字节 + 编码一次」后固定 32 字符。
+  前端因此**不应假设** 52 字符、也**不必**去填充（保留去填充作防御即可）；二维码直接用 `otpauthUri`，**不改 issuer / secret**
+  （`issuer` 在 Key URI Format 里是 strongly recommended）。旧账号需 `disable → start → confirm` 重新绑定，恢复码全部换新。
+- **2FA 状态自带分支依据**：`GET /users/me/2fa` 返回 `hasPassword` / `recentAuthentication` ⇒ 界面据此决定开启向导要不要密码框、
+  以及按钮是否可用（OAuth-only 且会话不新时会得 `AUTH_031`）—— 不要在客户端自己推断账号有没有口令 ✓。
+- **近期认证的窗口是 10 分钟**（`ctt.security.two-factor.recent-authentication-window`，默认 `10m`）：OAuth-only 账号超过这个
+  时间就**开不了** 2FA（`AUTH_031`）⇒ 界面必须给出「重新登录」的出路，只把按钮置灰等于把人卡死 ✗。
 - **开启两步验证要先验身份**：带口令的账号必须传 `currentPassword`（缺 ⇒ `USER_013`），OAuth-only 账号才走「近期认证」判定；
   没有这一步，被劫会话可以绑上攻击者自己的验证器。恢复码固定 **10 串**、形如 `A1B2-C3D4-E5F6-G7H8`，只在确认时返回一次 ✓
 - **`getActiveUserRequired()` 接受 API key**：`getCurrentUser()` 会把 `ApiKeyPrincipal` 换成它所属的用户 ⇒
