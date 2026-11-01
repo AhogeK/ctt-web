@@ -935,11 +935,27 @@ and resolve the message **lazily**, otherwise the message stays in the old langu
 ```ts
 const t = (key: string) => i18n.global.t(key)
 
-z.string().min(1, { error: () => t('auth.validation.passwordRequired') })
+z
+  .string({ error: () => t('auth.validation.passwordRequired') })
+  .min(1, { error: () => t('auth.validation.passwordRequired') })
 ```
 
 `t` must be declared before the schema; pass a function to `error` (Zod 4 calls it on every parse), never the result of `t(…)`.
-Known leftover: the `LoginForm` schema still captures its message at load time; switch it to the lazy form when that view is migrated.
+
+The message belongs on the **base type** as well as on the rule: an untouched field is `undefined`, so `z.string()` fails
+before `.min()` ever runs and the reader would see Zod's own "expected string" wording instead. Every base type in a form
+schema carries the same lazy message — `z.string({ error })`, `z.boolean({ error })`, `z.array(…, { error })` — and
+`src/lib/schemas/__tests__/form-messages.test.ts` fails if one drifts back.
+
+A format rule must not answer for an empty field: `z.email(…)` runs before `.min(1)`, so an empty address would be told
+its format is wrong. Chain the required rule first and pipe the format check after it:
+
+```ts
+z
+  .string({ error: () => t('auth.validation.emailRequired') })
+  .min(1, { error: () => t('auth.validation.emailRequired') })
+  .pipe(z.email({ error: () => t('auth.validation.invalidEmail') }))
+```
 
 **Legal copy**: `src/features/auth/content/index.ts` returns the English or Chinese terms for the current language; do not import
 `terms-en` directly, or Chinese readers get the whole thing in English.
