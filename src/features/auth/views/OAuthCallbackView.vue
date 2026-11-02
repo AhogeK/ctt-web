@@ -83,7 +83,7 @@ onMounted(() => {
 </script>
 
 <template>
-  <div class="flex min-h-screen items-center justify-center">
+  <div class="flex min-h-56 items-center justify-center">
     <div class="flex flex-col items-center gap-3">
       <div
         class="h-8 w-8 animate-spin rounded-full border-2 border-border border-t-primary dark:border-white/20 dark:border-t-accent"

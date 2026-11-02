@@ -63,11 +63,8 @@ onMounted(() => {
 </script>
 
 <template>
-  <div class="flex min-h-screen items-center justify-center">
-    <div
-      :class="cn('w-full max-w-md rounded-lg border p-8', 'border-border bg-white', 'dark:border-white/8 dark:bg-card')"
-      data-surface="card"
-    >
+  <div class="flex min-h-56 items-center justify-center">
+    <div class="w-full max-w-md">
       <!-- Loading state -->
       <div v-if="status === 'loading'" class="flex flex-col items-center gap-4">
         <svg

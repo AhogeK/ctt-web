@@ -41,7 +41,7 @@ function handleGoHome() {
 </script>
 
 <template>
-  <div class="flex min-h-screen items-center justify-center">
+  <div class="flex min-h-56 items-center justify-center">
     <div class="mx-auto w-full max-w-sm space-y-6 text-center">
       <div class="space-y-2">
         <h1
