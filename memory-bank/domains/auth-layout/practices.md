@@ -1,5 +1,27 @@
 # auth-layout — practices
 
+## Step changes (2026-11-02)
+
+The sign-in steps are separate routes under the same layout, and they are **not the same height**:
+the password step measures 676px at 1280×720 / 1440×900 and the code step 564px, so the centred card
+used to shrink 112px and drop 55px in a single frame. Nothing reloaded — the card element and the
+visual panel survive the navigation, and the route chunk is resolved by the router before the swap,
+so the Suspense fallback never appears. The jump was the whole of the "flash".
+
+**The shell is what the routes hang from.** `/oauth/callback` and `/oauth/error` used to be top-level
+routes, so the provider's return rendered a full-screen spinner on a bare background and the card only
+appeared afterwards — which reads as a page reload. Both now live under an `/oauth` parent whose
+component is `AuthLayout`; the URLs stay exactly where the provider sends them. Any auth page added
+later belongs under the layout for the same reason, and none of them may carry `min-h-screen` (a
+viewport-tall block inside the card makes the card viewport-tall).
+
+`AuthLayout.vue` measures the **surface** (`.auth-card__inner`, which carries the background, the
+shadow and the contents) before the swap and eases its height across it (220ms), then clears the
+inline height so the surface keeps sizing itself to its content. Pinning the outer `.auth-card`
+instead is not enough: it only frames the surface, which would still snap inside an animated box.
+The document rule that suppresses transitions when motion is reduced makes the same code finish
+instantly — verified frame by frame: 13 distinct heights with motion, 2 without.
+
 ## Measured values (2026-09-21)
 
 **Surface sheen** (pointer-following, card-local, clipped to the card):
