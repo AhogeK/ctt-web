@@ -59,6 +59,7 @@ src/
 │       ├── dashboard.ts # /dashboard
 │       ├── devices.ts  # /devices → redirects into the settings group
 │       ├── landing.ts  # / (public landing + MarketingLayout)
+│       ├── oauth.ts    # /oauth/callback, /oauth/error (rendered inside AuthLayout)
 │       ├── leaderboard.ts # /leaderboard
 │       └── settings.ts # /settings/{profile,security,devices,preferences,api-keys} in the sidebar; /settings → profile
 └── views/              # Top-level views (exception pages only;
@@ -99,13 +100,13 @@ const authRoutes: RouteRecordRaw[] = [
     meta: { title: 'Authentication', hideInMenu: true },
     children: [
       {
-        path: '/login',
+        path: 'login',
         name: RouteNames.LOGIN,
         component: () => import('@/features/auth/views/LoginView.vue'),
         meta: { title: 'Login', requiresAuth: false, layout: 'auth' },
       },
       {
-        path: '/register',
+        path: 'register',
         name: RouteNames.REGISTER,
         component: () => import('@/features/auth/views/RegisterView.vue'),
         meta: { title: 'Register', requiresAuth: false, layout: 'auth' },
@@ -117,34 +118,31 @@ const authRoutes: RouteRecordRaw[] = [
 export default authRoutes
 ```
 
-### Absolute Child Paths Pattern
+### Child Paths Stay Relative to Their Shell
 
-When defining child routes, use **absolute paths** (starting with `/`) instead of relative paths:
+A child path is written without a leading `/`, so the parent's segment stays in the URL and the
+render hierarchy and the address agree:
 
 ```typescript
-// ✅ Correct: Absolute child path
+// ✅ The page lives at /auth/login and renders inside AuthLayout
 {
-  path: '/login',  // Resolves to /login (clean URL)
+  path: 'login',
   component: () => import('@/features/auth/views/LoginView.vue'),
 }
 
-// ❌ Avoid: Relative child path
+// ❌ A leading slash detaches the URL from the shell it renders in
 {
-  path: 'login',  // Resolves to /auth/login (nested URL)
+  path: '/login',  // URL becomes /login while the page still renders in AuthLayout
   component: () => import('@/features/auth/views/LoginView.vue'),
 }
 ```
 
-**Benefits:**
-
-- Cleaner URLs (`/login` instead of `/auth/login`)
-- Independent navigation (URL doesn't expose internal module structure)
-- Product-friendly (matches industry-standard URL patterns)
-- Backward compatible (still renders in parent AuthLayout)
-
-**How it works:**
-
-In Vue Router, child routes with paths starting with `/` are treated as **root paths**, bypassing parent path concatenation. The child still renders in the parent's `<router-view>`, maintaining layout hierarchy while exposing clean URLs.
+The rule matters beyond tidiness: a page rendered in the shell is a *step* of that shell, and the
+address should say so. The OAuth pages are the one case where the path is not ours to choose — the
+provider returns the reader to `/oauth/callback` — so they keep that exact URL as children of an
+`/oauth` record that mounts the same `AuthLayout`. Anything they render has to fit the panel: a
+`min-h-screen` block inside the card makes the card viewport-tall and pushes the whole shell around
+between steps.
 
 ### Route Meta Fields
 
