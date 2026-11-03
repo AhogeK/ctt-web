@@ -1,5 +1,5 @@
 import { beforeEach, describe, expect, it, vi } from 'vite-plus/test'
-import { mount } from '@vue/test-utils'
+import { flushPromises, mount } from '@vue/test-utils'
 import { defineComponent } from 'vue'
 import LoginView from '../LoginView.vue'
 
@@ -161,7 +161,7 @@ function createLoginFormStub() {
       loading: { type: [Boolean, Object], default: false },
       captchaSiteKey: { type: [String, null], default: null },
     },
-    emits: ['submit'],
+    emits: ['submit', 'passkey-success', 'passkey-error'],
     setup(_: unknown, { expose }: { expose: (exposed: Record<string, unknown>) => void }) {
       expose({
         form: { setFieldError: vi.fn<() => void>() },
@@ -329,6 +329,28 @@ describe('LoginView - hCaptcha integration', () => {
   })
 
   describe('SECURITY error messages', () => {
+    it('shows the mapped sentence for a refused passkey attempt, not the code', async () => {
+      mockMapApiErrorCode.mockReturnValue('That did not work. Try again.')
+      const wrapper = mount(LoginView, {
+        global: { stubs: { LoginForm: createLoginFormStub() } },
+      })
+      wrapper.findComponent({ name: 'LoginForm' }).vm.$emit('passkey-error', 'AUTH_033')
+      await flushPromises()
+
+      expect(mockToastError).toHaveBeenCalledWith('That did not work. Try again.')
+    })
+
+    it('says to try again when the browser itself refused the ceremony', async () => {
+      const wrapper = mount(LoginView, {
+        global: { stubs: { LoginForm: createLoginFormStub() } },
+      })
+      wrapper.findComponent({ name: 'LoginForm' }).vm.$emit('passkey-error', 'PASSKEY_CEREMONY_FAILED')
+      await flushPromises()
+
+      expect(mockToastError).toHaveBeenCalledTimes(1)
+      expect(mockToastError.mock.calls[0]?.[0]).not.toBe('PASSKEY_CEREMONY_FAILED')
+    })
+
     it('displays error message for SECURITY_006 (captcha verification failed)', () => {
       mockIsApiError.mockReturnValue(true)
       mockMapApiErrorCode.mockReturnValue('Captcha verification failed. Please try again.')

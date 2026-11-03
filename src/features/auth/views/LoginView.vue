@@ -7,6 +7,7 @@ import { useAuthStore } from '@/stores/auth'
 import { RouteNames } from '@/router/route-names'
 import { redirectQueryOf, resolvePostAuthTarget } from '@/router/post-auth-redirect'
 import { isApiError, mapApiErrorCode } from '@/lib/utils/api-error'
+import type { LoginResponse } from '@/lib/schemas/auth.schema'
 import { useCooldown } from '@/composables/useCooldown'
 import { useResendVerification } from '../composables/useResendVerification'
 import { usePublicConfig } from '@/composables/usePublicConfig'
@@ -132,6 +133,29 @@ const mutation = useMutation({
   },
 })
 
+/**
+ * Finishes a passkey sign-in.
+ *
+ * The ceremony already proved possession and a local verification, so no second step follows: the
+ * response is the same one the password path produces, and the store treats it identically.
+ *
+ * @param response - the sign-in response the passkey endpoint returned
+ */
+async function handlePasskeySignIn(response: LoginResponse): Promise<void> {
+  await authStore.completeSignIn(response)
+  router.push(resolvePostAuthTarget(router, route.query.redirect) ?? { name: RouteNames.DASHBOARD })
+}
+
+/**
+ * Turns a failed ceremony into one readable sentence.
+ *
+ * @param code - the server code, or the local marker for a ceremony the browser refused
+ */
+function handlePasskeyError(code: string): void {
+  const message = code === 'PASSKEY_CEREMONY_FAILED' ? t('auth.errors.tryAgainLater') : mapApiErrorCode(code)
+  toast.error(message)
+}
+
 const handleSubmit = (data: { email: string; password: string; captchaToken?: string }) => {
   // Store email for potential resend verification dialog
   pendingEmail.value = data.email
@@ -216,6 +240,8 @@ const handleResendVerification = async () => {
       :captcha-site-key="captchaSiteKey"
       @submit="handleSubmit"
       @github-login="handleGitHubLogin"
+      @passkey="handlePasskeySignIn"
+      @passkey-error="handlePasskeyError"
     />
 
     <!-- Create Account Link -->

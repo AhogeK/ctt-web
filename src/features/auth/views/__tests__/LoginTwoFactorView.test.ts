@@ -147,7 +147,7 @@ function createApiError(statusCode: number, code?: string): unknown {
   }
 }
 
-const CHALLENGE = { twoFactorRequired: true, challengeToken: 'challenge-token', expiresIn: 300 }
+const CHALLENGE = { twoFactorRequired: true, challengeToken: 'challenge-token', expiresIn: 300, passkeyCount: 0 }
 
 function resetMocks() {
   vi.clearAllMocks()
@@ -199,6 +199,26 @@ describe('LoginTwoFactorView', () => {
     })
     // Zod's own wording names the runtime type, which says nothing to the person reading it.
     expect(wrapper.text()).not.toContain('Invalid input')
+  })
+
+  it('hides the passkey alternative when the account has none', async () => {
+    // The browser can run the ceremony, so the absence has to come from the count in the challenge.
+    Object.defineProperty(globalThis, 'PublicKeyCredential', { configurable: true, writable: true, value: class {} })
+    pendingTwoFactorState.value = { ...CHALLENGE, passkeyCount: 0 }
+
+    const wrapper = mount(LoginTwoFactorView)
+
+    expect(wrapper.find('[data-testid="two-factor-passkey"]').exists()).toBe(false)
+  })
+
+  it('offers the passkey alternative when the challenge says one is registered', async () => {
+    pendingTwoFactorState.value = { ...CHALLENGE, passkeyCount: 2 }
+    // jsdom has no Web Authentication API; the entry only exists when the browser can run it.
+    Object.defineProperty(globalThis, 'PublicKeyCredential', { configurable: true, writable: true, value: class {} })
+
+    const wrapper = mount(LoginTwoFactorView)
+
+    expect(wrapper.find('[data-testid="two-factor-passkey"]').exists()).toBe(true)
   })
 
   it('submits the code the reader typed', async () => {
