@@ -92,10 +92,9 @@ describe('TwoFactorCard', () => {
     setStatus({ ...DISABLED, hasPassword: false, recentAuthentication: false })
     const wrapper = mount(TwoFactorCard)
 
+    // The page says why and offers the way out; repeating it here would describe one condition twice.
     expect(wrapper.get('[data-testid="two-factor-enable"]').attributes('disabled')).toBeDefined()
-    expect(wrapper.text()).toContain('recent sign-in')
-    // A dead end is not an answer: the card offers the one action that unblocks it.
-    expect(wrapper.find('[data-testid="two-factor-sign-in-again"]').exists()).toBe(true)
+    expect(wrapper.find('[data-testid="two-factor-sign-in-again"]').exists()).toBe(false)
   })
 
   it('says "code" when a single recovery code is left', async () => {
@@ -114,16 +113,6 @@ describe('TwoFactorCard', () => {
     const dialog = wrapper.findComponent({ name: 'TwoFactorConfirmDialog' })
     expect(dialog.props('mode')).toBe('reset')
     expect(dialog.props('open')).toBe(true)
-  })
-
-  it('signs the reader out so the next session is recent enough to set the factor up', async () => {
-    setStatus({ ...DISABLED, hasPassword: false, recentAuthentication: false })
-    const wrapper = mount(TwoFactorCard)
-
-    await wrapper.get('[data-testid="two-factor-sign-in-again"]').trigger('click')
-
-    expect(mockSignOutLocally).toHaveBeenCalledTimes(1)
-    expect(mockReplace).toHaveBeenCalledWith({ name: 'login', query: { redirect: '/settings/security' } })
   })
 
   it('offers a retry instead of an empty card when the status could not be read', async () => {
