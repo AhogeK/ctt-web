@@ -9,20 +9,15 @@
  */
 import { computed, ref } from 'vue'
 import { useI18n } from 'vue-i18n'
-import { useRouter } from 'vue-router'
 import { Info, KeyRound, ShieldCheck } from '@lucide/vue'
 import { Button } from '@/components/ui/button'
 import { cn, formatDate } from '@/lib/utils'
-import { RouteNames } from '@/router/route-names'
-import { useAuthStore } from '@/stores/auth'
 import { useTwoFactorStatus } from '../composables/useTwoFactor'
 import { SETTINGS_ACTION_BUTTON_CLASS } from './action-button'
 import TwoFactorConfirmDialog from './TwoFactorConfirmDialog.vue'
 import TwoFactorSetupDialog from './TwoFactorSetupDialog.vue'
 
 const { t } = useI18n()
-const router = useRouter()
-const authStore = useAuthStore()
 const { data: status, isPending, isError, refetch } = useTwoFactorStatus()
 
 const setupOpen = ref(false)
@@ -34,20 +29,6 @@ const canSetUp = computed(() => {
   if (!status.value) return false
   return status.value.hasPassword || status.value.recentAuthentication
 })
-
-/** The server would refuse a setup from this session: the card says why and offers the way out. */
-const blocked = computed(() => Boolean(status.value && !canSetUp.value))
-
-/**
- * Drops this session so the next sign-in is recent enough for the server to accept a setup.
- *
- * Only the local session is cleared: revoking every session from a settings card would be a
- * bigger action than the one the reader asked for.
- */
-function signInAgain(): void {
-  authStore.signOutLocally()
-  void router.replace({ name: RouteNames.LOGIN, query: { redirect: '/settings/security' } })
-}
 
 function openSetup(): void {
   setupOpen.value = true
@@ -171,18 +152,17 @@ function openConfirm(mode: 'disable' | 'regenerate' | 'reset'): void {
     <div v-if="isPending" class="h-9 w-full animate-pulse rounded-md bg-secondary" data-testid="two-factor-loading" />
     <!-- One row like every other row on the page: the sentence takes the room it needs, its action
          closes the line. The page is width-capped, so that edge is never far away. -->
+    <!-- The page says once when this session is too old to change anything; a card that repeated
+         it would describe the same condition a second time. -->
     <div
-      v-else-if="isError || blocked"
+      v-else-if="isError"
       class="flex flex-col gap-2.5 rounded-md border border-border bg-background/60 px-3 py-2.5 dark:border-white/8 dark:bg-white/3 sm:flex-row sm:items-center sm:gap-3"
     >
       <div class="flex min-w-0 items-start gap-2 sm:flex-1">
         <Info class="mt-0.5 h-4 w-4 shrink-0 text-muted-foreground" aria-hidden="true" />
-        <p class="text-xs text-muted-foreground">
-          {{ isError ? t('settings.twoFactor.errors.generic') : t('settings.twoFactor.needsRecentSignIn') }}
-        </p>
+        <p class="text-xs text-muted-foreground">{{ t('settings.twoFactor.errors.generic') }}</p>
       </div>
       <Button
-        v-if="isError"
         type="button"
         variant="outline"
         size="sm"
@@ -191,17 +171,6 @@ function openConfirm(mode: 'disable' | 'regenerate' | 'reset'): void {
         @click="refetch"
       >
         {{ t('settings.twoFactor.retry') }}
-      </Button>
-      <Button
-        v-else
-        type="button"
-        variant="outline"
-        size="sm"
-        class="self-start sm:self-auto"
-        data-testid="two-factor-sign-in-again"
-        @click="signInAgain"
-      >
-        {{ t('settings.twoFactor.signInAgain') }}
       </Button>
     </div>
 
