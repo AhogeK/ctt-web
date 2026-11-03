@@ -732,9 +732,12 @@ features/settings/
 | `POST` | `/api/v1/auth/login/2fa/passkey/assert` | Anonymous + `challengeToken`; answers the step, returns the same sign-in response |
 
 The anonymous sign-in challenge is rate limited per address, so a page load spends one only for a
-reader who has used a passkey in this browser before — the flag `src/lib/utils/passkey-preference.ts`
-keeps, cleared when the last credential is removed. Everyone else asks for one when they act: the
-button, or the first focus of the username field. The second-step pair differs from the sign-in pair in one way that matters: the
+reader who set up or used a passkey in this browser before — the flag
+`src/lib/utils/passkey-preference.ts` keeps, cleared when the last credential is removed. Everyone
+else asks for one when they act: the button, or the first focus of the username field. The flag is
+scoped to the browser, not the account: the login page has no account to ask about before an address
+is typed, and looking one up by email would tell an unauthenticated visitor that an address holds a
+passkey. The second-step pair differs from the sign-in pair in one way that matters: the
 challenge already belongs to one account, so `allowCredentials` names that account's credentials and a
 foreign one must not answer it. `src/lib/utils/webauthn.ts` converts between the browser's buffers and the
 base64url strings on the wire; `usePasskeySignIn` runs the sign-in assertion, `useSecondFactorPasskey`
