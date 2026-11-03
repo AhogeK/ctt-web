@@ -714,8 +714,32 @@ features/settings/
 │   ├── useTwoFactor.ts             # Status query + setup / confirm / disable / regenerate
 │   └── useLoginSessions.ts         # TanStack Query for the list + the revoke mutation
 └── views/
-    └── SecurityView.vue            # Composes the three cards, strongest identity control first
+    └── SecurityView.vue            # Composes the cards and the one freshness notice, strongest control first
 ```
+
+#### Passkey endpoints
+
+| Method | Path | Notes |
+| --- | --- | --- |
+| `POST` | `/api/v1/auth/passkey/options` | Anonymous; returns assertion options with no `allowCredentials` (discoverable) |
+| `POST` | `/api/v1/auth/passkey/assert` | Anonymous; returns the ordinary sign-in response, no second step |
+| `POST` | `/api/v1/users/me/passkey/options` | Session + recent authentication; creation options with the account's existing ids excluded |
+| `POST` | `/api/v1/users/me/passkey` | Session + recent authentication; `201` with the stored credential |
+| `GET` | `/api/v1/users/me/passkey` | Session; metadata only, never credential material |
+| `PATCH` | `/api/v1/users/me/passkey/{id}` | Session; renames one entry |
+| `DELETE` | `/api/v1/users/me/passkey/{id}` | Session + recent authentication; `204` |
+| `POST` | `/api/v1/auth/login/2fa/passkey/options` | Anonymous + `challengeToken`; names only that account's credentials |
+| `POST` | `/api/v1/auth/login/2fa/passkey/assert` | Anonymous + `challengeToken`; answers the step, returns the same sign-in response |
+
+The anonymous sign-in challenge is rate limited per address, so a page load spends one only for a
+reader who has used a passkey in this browser before — the flag `src/lib/utils/passkey-preference.ts`
+keeps, cleared when the last credential is removed. Everyone else asks for one when they act: the
+button, or the first focus of the username field. The second-step pair differs from the sign-in pair in one way that matters: the
+challenge already belongs to one account, so `allowCredentials` names that account's credentials and a
+foreign one must not answer it. `src/lib/utils/webauthn.ts` converts between the browser's buffers and the
+base64url strings on the wire; `usePasskeySignIn` runs the sign-in assertion, `useSecondFactorPasskey`
+the second-step one, and `usePasskeys` the registration, rename and removal. `PasskeyCard.vue` and
+`PasskeyNameDialog.vue` are the card and its label dialog inside `SecurityView.vue`.
 
 #### Two-factor endpoints
 

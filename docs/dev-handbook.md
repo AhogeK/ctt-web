@@ -710,6 +710,20 @@ Do not add a heavy dependency to "cover more rules": `eslint-plugin-sonarjs` bri
 
 ## 5. Writing E2E tests
 
+### WebAuthn / passkey tests
+
+Chromium's WebAuthn domain supplies an authenticator that really signs, which is the only way to test
+a ceremony: a mocked `credentials.get()` would prove nothing about the conversion code. Two facts cost
+a debugging round each and are worth remembering:
+
+- A fresh virtual authenticator holds nothing, and a discoverable sign-in names no credential to look
+  for, so the browser waits forever. Seed one with `WebAuthn.addCredential` (an EC P-256 key exported
+  as PKCS#8, `isResidentCredential: true`, the page's RP ID).
+- Once a credential exists, focusing the username field completes a sign-in on its own — that is what
+  conditional autofill does. A test that wants the password path must therefore not touch that field,
+  and a test that registers a passkey should sign in with the passkey button first.
+
+
 ### 5.1 E2E test infrastructure
 
 | Tool       | Version | Purpose                                |
