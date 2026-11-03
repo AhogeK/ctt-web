@@ -19,6 +19,18 @@ export {
   regenerateRecoveryCodes,
 } from './two-factor'
 export type { TwoFactorStatus, StartTotpSetupResponse } from '@/lib/schemas/two-factor.schema'
+export {
+  fetchPasskeyAssertionOptions,
+  assertPasskey,
+  fetchSecondFactorPasskeyOptions,
+  assertSecondFactorPasskey,
+  fetchPasskeyRegistrationOptions,
+  registerPasskey,
+  fetchPasskeys,
+  renamePasskey,
+  deletePasskey,
+} from './passkey'
+export type { Passkey, PasskeyAssertionOptions, PasskeyRegistrationOptions } from '@/lib/schemas/passkey.schema'
 export { fetchLinkedOAuthAccounts, unbindOAuthAccount } from './oauth-account'
 export type { OAuthAccountsResponseData } from './oauth-account'
 export {
