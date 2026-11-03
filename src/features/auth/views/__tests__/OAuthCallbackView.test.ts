@@ -135,6 +135,19 @@ describe('OAuthCallbackView', () => {
   })
 
   describe('Two-factor challenge', () => {
+    it('carries how many passkeys could answer the step', async () => {
+      setQuery({ twoFactorRequired: 'true' })
+      window.location.hash = '#challengeToken=challenge-token&expiresIn=300&passkeyCount=2'
+
+      const wrapper = mount(OAuthCallbackView)
+      await wrapper.vm.$nextTick()
+
+      // The count decides whether the second step offers the passkey alternative at all.
+      expect(mockSetTwoFactorChallenge).toHaveBeenCalledWith(expect.objectContaining({ passkeyCount: 2 }))
+
+      window.location.hash = ''
+    })
+
     it('parks the challenge from the fragment and forwards to the second step', async () => {
       setQuery({ twoFactorRequired: 'true' })
       window.location.hash = '#challengeToken=challenge-token&expiresIn=300'
@@ -146,6 +159,8 @@ describe('OAuthCallbackView', () => {
         twoFactorRequired: true,
         challengeToken: 'challenge-token',
         expiresIn: 300,
+        // Absent from this fragment, so the step offers no passkey alternative.
+        passkeyCount: 0,
       })
       expect(mockLoginWithOAuth).not.toHaveBeenCalled()
       expect(mockReplace).toHaveBeenCalledWith({ name: 'login-two-factor' })

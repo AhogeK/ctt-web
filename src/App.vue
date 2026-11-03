@@ -17,6 +17,7 @@ import { useMotionStore } from '@/stores/motion'
 import { useAuthStore } from '@/stores/auth'
 import { TERMS_EXPIRED_EVENT, resolveTermsQueue, rejectTermsQueue } from '@/lib/api/instance'
 import TermsDialog from '@/features/auth/components/TermsDialog.vue'
+import { useRememberPasskeyAvailability } from '@/features/auth/composables/useRememberPasskeyAvailability'
 import { RouteNames } from '@/router/route-names'
 import { resolvePostAuthTarget } from '@/router/post-auth-redirect'
 
@@ -55,6 +56,9 @@ function handleTermsRejected() {
   router.push({ name: RouteNames.LOGIN })
   toast.error(t('app.termsRequired'))
 }
+
+// A signed-in session teaches the login page whether this browser could offer a passkey.
+useRememberPasskeyAvailability()
 
 // Initialize theme to follow system preference
 onMounted(() => {

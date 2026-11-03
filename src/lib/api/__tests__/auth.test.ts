@@ -95,7 +95,13 @@ describe('auth API', () => {
 
       expect(result).toEqual({
         status: 'two-factor',
-        challenge: { twoFactorRequired: true, challengeToken: 'challenge-token', expiresIn: 300 },
+        challenge: {
+          twoFactorRequired: true,
+          challengeToken: 'challenge-token',
+          expiresIn: 300,
+          // The server always reports the count; absent means no passkey could answer.
+          passkeyCount: 0,
+        },
       })
     })
 

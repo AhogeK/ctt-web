@@ -622,6 +622,7 @@ describe('Auth Store', () => {
       twoFactorRequired: true as const,
       challengeToken: 'challenge-token',
       expiresIn: 300,
+      passkeyCount: 0,
     }
 
     it('parks the challenge without signing anyone in', async () => {

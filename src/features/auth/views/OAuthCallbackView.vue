@@ -21,6 +21,8 @@ onMounted(() => {
     const fragment = new URLSearchParams(globalThis.location.hash.replace(/^#/, ''))
     const challengeToken = fragment.get('challengeToken')
     const expiresIn = Number(fragment.get('expiresIn'))
+    // Present on every challenge; zero means the second step can only be answered with a code.
+    const passkeyCount = Number(fragment.get('passkeyCount') ?? 0)
 
     // Clean the URL before anything else runs: the hash is a credential and history keeps it.
     history.replaceState(null, '', route.path)
@@ -44,6 +46,7 @@ onMounted(() => {
       twoFactorRequired: true,
       challengeToken,
       expiresIn,
+      passkeyCount: Number.isInteger(passkeyCount) && passkeyCount > 0 ? passkeyCount : 0,
     })
 
     const redirect = resolvePostAuthTarget(router, storedRedirect)

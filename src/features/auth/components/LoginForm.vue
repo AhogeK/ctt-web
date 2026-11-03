@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, shallowRef, computed } from 'vue'
+import { computed, onMounted, ref, shallowRef, watch } from 'vue'
 import { toTypedSchema } from '@vee-validate/zod'
 import { useForm } from 'vee-validate'
 import { z } from 'zod'
@@ -10,19 +10,26 @@ import { FormField, FormItem, FormLabel, FormControl, FormMessage } from '@/comp
 import { Input } from '@/components/ui/input'
 import { Button } from '@/components/ui/button'
 import { cn } from '@/lib/utils'
-import { Eye, EyeOff } from '@lucide/vue'
+import { Eye, EyeOff, KeyRound } from '@lucide/vue'
 import { useThemeStore } from '@/stores/theme'
 import { i18n } from '@/i18n'
 
 /** The Zod schema below runs outside setup, so validation copy resolves through the global instance. */
 const t = i18n.global.t
 import CaptchaWidget from '@/components/CaptchaWidget.vue'
+import type { LoginResponse } from '@/lib/schemas/auth.schema'
+import { usePasskeySignIn } from '../composables/usePasskeySignIn'
+import { hasUsedPasskey } from '@/lib/utils/passkey-preference'
 
 const emit = defineEmits<{
   /** Emitted when form validation passes with user login credentials */
   submit: [data: { email: string; password: string; captchaToken?: string }]
   /** Emitted when user clicks GitHub OAuth login button */
   'github-login': []
+  /** Emitted when a passkey finished the ceremony and the server returned a session */
+  passkey: [response: LoginResponse]
+  /** Emitted when the ceremony failed; carries the server code, or `PASSKEY_CEREMONY_FAILED` */
+  'passkey-error': [code: string]
 }>()
 
 const props = defineProps<{
@@ -56,6 +63,9 @@ const themeStore = useThemeStore()
 const captchaTheme = computed(() => (themeStore.isDark ? 'dark' : 'light'))
 const captchaLanguage = computed(() => (i18n.global.locale.value === 'zh-CN' ? 'zh-CN' : 'en'))
 const captchaRef = ref<InstanceType<typeof CaptchaWidget> | null>(null)
+const passkey = usePasskeySignIn()
+/** Whether a passkey attempt is still waiting for the reader; one at a time, but not one ever. */
+let passkeyPending = false
 const captchaToken = ref<string | null>(null)
 const captchaError = ref(false)
 const isGithubLoading = ref(false)
@@ -78,6 +88,61 @@ function handleGithubLogin() {
   isGithubLoading.value = true
   emit('github-login')
 }
+
+/**
+ * Starts the passkey ceremony.
+ *
+ * @param mediation - the field's autofill (`conditional`) or the explicit button (`optional`)
+ */
+async function startPasskey(mediation: 'conditional' | 'optional'): Promise<void> {
+  const response = await passkey.signIn(mediation)
+  if (response) emit('passkey', response)
+}
+
+/**
+ * Runs one passkey attempt at a time.
+ *
+ * The browser keeps a request suspended while the reader types, and stacking another would spend a
+ * challenge from an endpoint limited per address for nothing. A settled attempt — picked, dismissed
+ * or refused — releases the latch, so the reader can try again without reloading the page.
+ *
+ * @param mediation - the field's autofill, or the direct picker
+ */
+async function runPasskey(mediation: 'conditional' | 'optional'): Promise<void> {
+  if (passkeyPending) return
+  passkeyPending = true
+  try {
+    await startPasskey(mediation)
+  } finally {
+    passkeyPending = false
+  }
+}
+
+/** Arms the field-driven ceremony when the reader reaches the username field. */
+function armConditionalPasskey(): void {
+  if (!passkey.conditionalSupported.value) return
+  void runPasskey('conditional')
+}
+
+/**
+ * Offers the passkey straight away to a reader who has used one here before.
+ *
+ * Asking the authenticator on every visit would open a system picker for people who hold no
+ * passkey, which is worse than one extra click for the people who do. Remembering a successful use
+ * separates the two, and the button below stays as the way in for anyone the guess misses.
+ */
+onMounted(() => {
+  if (passkey.supported && hasUsedPasskey()) void runPasskey('optional')
+})
+
+// Both entry points stay: the field's autofill serves readers who start typing, and the button
+// serves everyone else — including browsers that offer autofill but never mention it.
+const passkeyButtonVisible = computed(() => passkey.supported)
+
+// The view owns the wording: this component only reports which failure the ceremony hit.
+watch(passkey.errorCode, (code) => {
+  if (code) emit('passkey-error', code)
+})
 
 const onSubmit = form.handleSubmit((values) => {
   // Block submission if captcha is required but not completed
@@ -112,7 +177,8 @@ defineExpose({
           <Input
             type="email"
             :placeholder="t('auth.common.emailPlaceholder')"
-            autocomplete="email"
+            autocomplete="username webauthn"
+            @focus="armConditionalPasskey"
             :class="
               cn(
                 'h-10 rounded-md border border-border bg-secondary text-foreground',
@@ -268,6 +334,28 @@ defineExpose({
         />
       </svg>
       {{ isGithubLoading ? t('auth.login.connectingToGithub') : t('auth.login.continueWithGithub') }}
+    </Button>
+
+    <Button
+      v-if="passkeyButtonVisible"
+      type="button"
+      variant="outline"
+      :disabled="passkey.pending.value"
+      :class="
+        cn(
+          'w-full h-10 rounded-md font-emphasis text-sm',
+          'border-border bg-white text-foreground!',
+          'dark:border-white/8 dark:bg-white/2 dark:text-foreground!',
+          'transition-[background-color,border-color] duration-200',
+          'hover:bg-white! hover:border-primary!',
+          'dark:hover:bg-white/5! dark:hover:border-accent/50!',
+        )
+      "
+      data-testid="passkey-sign-in"
+      @click="runPasskey('optional')"
+    >
+      <KeyRound class="mr-2 h-4 w-4" aria-hidden="true" />
+      {{ passkey.pending.value ? t('auth.login.passkeyWaiting') : t('auth.login.passkeyButton') }}
     </Button>
   </form>
 </template>

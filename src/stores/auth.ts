@@ -10,7 +10,7 @@ import {
   logoutAll,
   type LoginResult,
 } from '@/lib/api/auth'
-import { LoginChallengeSchema, type LoginChallenge } from '@/lib/schemas/two-factor.schema'
+import { LoginChallengeSchema, type LoginChallenge, type LoginChallengeInput } from '@/lib/schemas/two-factor.schema'
 import { extractErrorCode } from '@/lib/utils/api-error'
 import { fetchCurrentUser, type UserProfile } from '@/lib/api/user'
 import { TERMS_EXPIRED_EVENT } from '@/lib/api/instance'
@@ -350,7 +350,7 @@ export const useAuthStore = defineStore('auth', () => {
    * The OAuth callback hands the challenge over in the URL fragment, so the page parses and
    * validates it, then parks it here before navigating - the same place the password flow keeps it.
    */
-  function setTwoFactorChallenge(challenge: LoginChallenge): void {
+  function setTwoFactorChallenge(challenge: LoginChallengeInput): void {
     pendingTwoFactor.value = LoginChallengeSchema.parse(challenge)
   }
 
@@ -557,6 +557,7 @@ export const useAuthStore = defineStore('auth', () => {
     setAuthFromTermsAcceptance,
     clearAuth,
     login,
+    completeSignIn,
     loginWithOAuth,
     refreshAccessToken,
     initializeAuth,

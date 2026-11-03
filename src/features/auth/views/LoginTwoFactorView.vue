@@ -7,7 +7,7 @@ import { toTypedSchema } from '@vee-validate/zod'
 import { useForm } from 'vee-validate'
 import { z } from 'zod'
 import { useIntervalFn } from '@vueuse/core'
-import { ShieldCheck } from '@lucide/vue'
+import { KeyRound, ShieldCheck } from '@lucide/vue'
 import { toast } from 'vue-sonner'
 import { RouteNames } from '@/router/route-names'
 import { redirectQueryOf, resolvePostAuthTarget } from '@/router/post-auth-redirect'
@@ -17,6 +17,8 @@ import { FormField, FormItem, FormLabel, FormControl, FormMessage } from '@/comp
 import { Input } from '@/components/ui/input'
 import { Button } from '@/components/ui/button'
 import { cn } from '@/lib/utils'
+import { isPasskeySupported } from '@/lib/utils/webauthn'
+import { useSecondFactorPasskey } from '../composables/useSecondFactorPasskey'
 
 const { t } = useI18n()
 const router = useRouter()
@@ -38,6 +40,46 @@ const form = useForm({
 })
 
 const challenge = computed(() => authStore.pendingTwoFactor)
+
+const passkey = useSecondFactorPasskey()
+/** The server says how many credentials could answer; zero keeps the alternative out of sight. */
+const passkeyAvailable = computed(() => isPasskeySupported() && (challenge.value?.passkeyCount ?? 0) > 0)
+/**
+ * A failure of the alternative is stated where the reader acted, and the code form stays.
+ *
+ * Every non-null code is shown, the retried one included: the reader has to know the attempt ended,
+ * and the sentence below the button points them at the field that still works.
+ */
+const passkeyFailed = computed(() => passkey.errorCode.value !== null)
+
+/**
+ * Runs the alternative for this step.
+ *
+ * `AUTH_032` means the WebAuthn challenge was already spent — the reader pressed twice, or the
+ * device answered late. The step itself is untouched, so one fresh attempt is offered rather than a
+ * message: asking again for options is exactly what the server expects.
+ */
+async function signInWithPasskey(attempt = 0): Promise<void> {
+  const token = challenge.value?.challengeToken
+  if (!token) return
+
+  const response = await passkey.signIn(token)
+  if (response) {
+    await authStore.completeSignIn(response)
+    router.replace(resolvePostAuthTarget(router, route.query.redirect) ?? { name: RouteNames.DASHBOARD })
+    return
+  }
+  if (passkey.errorCode.value === 'AUTH_032' && attempt === 0) {
+    await signInWithPasskey(1)
+    return
+  }
+  // The step itself is gone: no code and no passkey can answer it, so the only way is back.
+  if (passkey.errorCode.value === 'AUTH_026') {
+    authStore.clearTwoFactorChallenge()
+    toast.error(t('auth.twoFactor.expired'))
+    void router.replace({ name: RouteNames.LOGIN, query: redirectQuery.value })
+  }
+}
 
 /** Where the sign-in was headed before it asked for a second step. */
 const redirectQuery = computed(() => redirectQueryOf(route.query))
@@ -176,6 +218,31 @@ onMounted(() => {
         data-testid="two-factor-countdown"
       >
         {{ expired ? t('auth.twoFactor.expired') : t('auth.twoFactor.expiresIn', { time: remainingLabel }) }}
+      </p>
+
+      <Button
+        v-if="passkeyAvailable"
+        type="button"
+        variant="outline"
+        :disabled="passkey.pending.value || expired"
+        :class="
+          cn(
+            'h-10 w-full rounded-md font-emphasis',
+            'border-border bg-white text-foreground',
+            'dark:border-white/8 dark:bg-white/2 dark:text-foreground',
+            'transition-[background-color,border-color] duration-200',
+            'hover:border-primary/50 dark:hover:border-accent/50',
+          )
+        "
+        data-testid="two-factor-passkey"
+        @click="signInWithPasskey()"
+      >
+        <KeyRound class="mr-1.5 h-4 w-4" aria-hidden="true" />
+        {{ passkey.pending.value ? t('auth.twoFactor.passkeyWaiting') : t('auth.twoFactor.usePasskey') }}
+      </Button>
+
+      <p v-if="passkeyFailed" class="text-sm text-destructive dark:text-destructive" role="alert">
+        {{ t('auth.twoFactor.passkeyFailed') }}
       </p>
 
       <Button

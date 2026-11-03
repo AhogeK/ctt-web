@@ -17,9 +17,24 @@ export const LoginChallengeSchema = z.object({
   challengeToken: z.string().min(1),
   /** How long the challenge may still be redeemed, in seconds. */
   expiresIn: z.number().int().positive(),
+  /**
+   * How many passkeys could answer this step.
+   *
+   * Always present; zero means the page must not offer the alternative, because the account has
+   * nothing to answer with and the only way on is the code.
+   */
+  passkeyCount: z.number().int().nonnegative().default(0),
 })
 
 export type LoginChallenge = z.infer<typeof LoginChallengeSchema>
+
+/**
+ * What a caller may hand in.
+ *
+ * `passkeyCount` has a default, so a caller that only knows the token can omit it; the parsed value
+ * always carries a number, which is what the page reads.
+ */
+export type LoginChallengeInput = z.input<typeof LoginChallengeSchema>
 
 /**
  * Request body for the second step — `POST /api/v1/auth/login/2fa`.
