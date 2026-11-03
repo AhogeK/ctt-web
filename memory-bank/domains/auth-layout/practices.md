@@ -1,5 +1,23 @@
 # auth-layout — practices
 
+## Passkey entries (2026-11-03)
+
+Three places offer a passkey, and each has a reason to exist:
+
+- **The login page opens the picker by itself** when this browser has completed a passkey sign-in
+  before (a `localStorage` flag). Asks the authenticator on every visit would open a system picker
+  for everyone who holds no passkey, so the flag separates the two; the button stays for the rest.
+- **The username field arms conditional autofill on focus**, one attempt at a time. A settled
+  attempt (picked, dismissed, refused) releases the latch, so a reader who pressed Escape does not
+  have to reload to be offered it again.
+- **The second-factor step keeps its "use a passkey instead" button**, even though the reader has
+  already been through the login page. The step's purpose is to prove the same account again, and a
+  passkey proves it at least as strongly as six digits, in one touch instead of a phone. It stays
+  hidden unless the account actually holds a credential (`passkeyCount > 0`).
+
+The passkey endpoints carry **no captcha**: the server protects them with per-address rate limits
+(30/5 min for options, 20/5 min for assertions) instead.
+
 ## Step changes (2026-11-02)
 
 The sign-in steps are separate routes under the same layout, and they are **not the same height**:

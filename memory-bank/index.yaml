@@ -12,8 +12,8 @@ maintenance:
   - '每轮收尾校验：files/domains 的键是相对路径、值是 wc -l 语义的行数；与实际不符即索引漂移'
   - '索引只做定位，不写结论 —— 结论属于被指向的文件（避免两处重复，P6）'
 files:
-  AGENTS.md: 385
-  memory-bank/activeContext.md: 139
+  AGENTS.md: 396
+  memory-bank/activeContext.md: 162
   memory-bank/progress.md: 200
   memory-bank/systemPatterns.md: 199
   memory-bank/techContext.md: 200
@@ -29,6 +29,7 @@ files:
   memory-bank/archives/2026-10-27-activeContext-trim.md: 9
   memory-bank/archives/2026-10-28-activeContext-trim.md: 178
   memory-bank/archives/2026-11-02-progress-trim.md: 20
+  memory-bank/archives/2026-11-03-progress-trim.md: 14
   memory-bank/archives/2026-10-08-line-width-cleanup.md: 623
   memory-bank/archives/2026-10-27-landing-p2-trim.md: 131
   memory-bank/archives/2026-10-27-scroll-and-dashboard-trim.md: 99
@@ -43,7 +44,7 @@ domains:
     memory-bank/domains/achievements/trophy-geometry.md: 52
   auth-layout:
     memory-bank/domains/auth-layout/meta.md: 17
-    memory-bank/domains/auth-layout/practices.md: 105
+    memory-bank/domains/auth-layout/practices.md: 123
     memory-bank/domains/auth-layout/principles.md: 28
     memory-bank/domains/auth-layout/references.md: 22
     memory-bank/domains/auth-layout/scenarios.md: 23
@@ -62,7 +63,7 @@ domains:
     memory-bank/domains/theme-system/scenarios.md: 36
   backend-contract:
     memory-bank/domains/backend-contract/meta.md: 95
-    memory-bank/domains/backend-contract/practices.md: 138
+    memory-bank/domains/backend-contract/practices.md: 149
     memory-bank/domains/backend-contract/principles.md: 69
     memory-bank/domains/backend-contract/references.md: 200
     memory-bank/domains/backend-contract/scenarios.md: 73

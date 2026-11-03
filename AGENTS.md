@@ -361,6 +361,17 @@ IDE（SonarLint 等）报的问题**不是门禁** ✗ —— 但**也不该只�
 （两个对话框共用一份实现，别各写一遍）✓。同类问题：**别手搓仓库已有的能力** —— 复制一律走 `useCopyToClipboard`
 （自托管 http 是不安全上下文，`navigator.clipboard` 直接不存在）✓。
 
+### R41: WebAuthn 仪式的硬事实（强制）
+
+- **`navigator.credentials.get` / `create` 失败是 reject，不是返回 null**：取消弹窗 = `NotAllowedError`（或 `AbortError`）⇒
+  判 `=== null` 的分支永远走不到，用户主动取消会被当成失败报错 ✗。
+- **条件式请求（`mediation: 'conditional'`）长期不落地**：它等到读者选一把或离开页面才 settle ⇒ **不得**与显式按钮
+  共用「进行中」标志（按钮会被永久禁用 ✗）；按按钮前先 `abort()`，一次只留一个仪式 ✓。
+- **发现型登录不带 `allowCredentials`**（认证器选账户）；第二步相反（挑战已绑定账号）⇒ 必须原样透传，自己筛 = 改规则 ✗。
+- **E2E 的虚拟认证器要先预种一把 resident 凭据**（`WebAuthn.addCredential`）：空认证器下可发现登录永不回应；
+  有凭据时聚焦邮箱框会直接登录 ⇒ 注册用例先走按钮 ✓。
+- **挑战会过期**：`AUTH_032` 重取 options 重试**一次**（两条登录路径都要），其余码不重试 ✓。
+
 ## 执行流程
 
 读 `index.yaml` 定位 → 读命中文件 → 建 todo（3 步以上）→ 处理 → 收尾双向检查（`sweep.sh` + `check-knowledge.sh`，R18）→ 同轮更新记忆（R2）。

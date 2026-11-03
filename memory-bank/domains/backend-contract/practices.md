@@ -136,3 +136,14 @@ const RESOURCE_401 = new Set(['AUTH_010', 'USER_014'])   // BOLA + business chec
 - **会话列表是裸数组**（`RestApiResponse.data` 里直接是数组），不是 `{ sessions: [...] }`。
 - 显示名校验**复用注册正则**（`REGEX_DISPLAY_NAME`，定义在 `auth.schema.ts`）—— 前后端同一条规则，
   前端拒掉的名字服务端也会拒。`z.uuid()` 在 zod v4 **校验版本位** ⇒ 测试夹具要用合法 v4 UUID。
+
+## 通行密钥（2026-11-03 · v0.75.0 Accepted）
+
+- 端点与限流：`POST /auth/passkey/{options,assert}` 匿名（取挑战 30 / 断言 20 次每 5 分钟每 IP）；
+  管理面 `POST|GET /users/me/passkey`、`POST /users/me/passkey/options`、`PATCH|DELETE /users/me/passkey/{id}`。
+- 断言成功返回**与密码登录相同**的响应，**不进入第二步**（通行密钥本身就是两因素）。
+- 第二步来源两处：登录 `202` 的 `data.passkeyCount`（恒在，`0` = 隐藏入口）、OAuth fragment 的 `passkeyCount=`；
+  `/auth/login/2fa/passkey/{options,assert}` 带 `challengeToken`，断言**原样**带 `allowCredentials`（挑战已绑定账号）。
+- 失败语义：`AUTH_032` 只消费浏览器挑战（`challengeToken` 仍可换用验证码），成功后 `challengeToken` 作废（`AUTH_026` 整步过期）。
+- 管理面需要近期认证（`AUTH_031`，10 分钟窗口）；`AUTH_018` = 不能删最后一条登录路径；两个登录端点**不带验证码**。
+- 删除最后一把后必须清本地「用过通行密钥」标记，否则登录页每次开一个空选择器。
