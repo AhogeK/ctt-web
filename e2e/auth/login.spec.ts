@@ -98,7 +98,8 @@ async function installLoginOverrides(page: Page): Promise<{
   const onRequest = (request: Request) => {
     if (request.url().includes('/api/v1/auth/login')) {
       loginCalls += 1
-    } else if (request.url().includes('/api/v1/users/me')) {
+    } else if (new URL(request.url()).pathname.endsWith('/api/v1/users/me')) {
+      // Exact endpoint: other `/users/me/…` calls (the passkey list, for one) are not the profile.
       userProfileCalls += 1
     }
   }
