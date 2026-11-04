@@ -132,7 +132,9 @@ export function mapApiErrorCode(code: string): string {
   }
 
   const key = messages[code]
-  return key ? i18n.global.t(key) : code
+  // A code is an identifier for us, never copy for a reader: an unmapped one falls back to the
+  // generic sentence instead of being printed.
+  return key ? i18n.global.t(key) : i18n.global.t('api.errors.internalerror')
 }
 
 /**
