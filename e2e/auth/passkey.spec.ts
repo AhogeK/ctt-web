@@ -80,7 +80,7 @@ async function installPasskeySecondStepApi(page: Page): Promise<void> {
       }),
     }),
   )
-  await page.route('**/api/v1/auth/login/2fa/passkey/options', (route) =>
+  await page.route('**/api/v1/auth/2fa/passkey/options', (route) =>
     route.fulfill({
       json: okEnvelope({
         publicKey: {
@@ -93,9 +93,7 @@ async function installPasskeySecondStepApi(page: Page): Promise<void> {
       }),
     }),
   )
-  await page.route('**/api/v1/auth/login/2fa/passkey/assert', (route) =>
-    route.fulfill({ json: LOGIN_SUCCESS_RESPONSE }),
-  )
+  await page.route('**/api/v1/auth/2fa/passkey/assert', (route) => route.fulfill({ json: LOGIN_SUCCESS_RESPONSE }))
 }
 
 /** Mocks the passkey endpoints on top of the shared auth mocks. */
@@ -163,6 +161,46 @@ async function installPasskeyApi(page: Page): Promise<void> {
 }
 
 test.describe('Passkey as the second step', () => {
+  test('still signs in when the server’s list of credentials is stale', async ({ page }) => {
+    await installVirtualAuthenticator(page)
+    await installPasskeySecondStepApi(page)
+
+    // The record disagrees with the device: a different id, and a transport this reader does not
+    // have. Naming that list would leave the browser waiting for a key that never arrives.
+    await page.unroute('**/api/v1/auth/2fa/passkey/options')
+    await page.route('**/api/v1/auth/2fa/passkey/options', (route) =>
+      route.fulfill({
+        json: okEnvelope({
+          publicKey: {
+            challenge: 'bW9jay1jaGFsbGVuZ2U',
+            rpId: 'localhost',
+            timeout: 60000,
+            userVerification: 'required',
+            allowCredentials: [
+              {
+                type: 'public-key',
+                id: Buffer.from('a-different-credential').toString('base64url'),
+                transports: ['usb'],
+              },
+            ],
+          },
+        }),
+      }),
+    )
+
+    await page.goto(LOGIN_PATH)
+    await page.getByPlaceholder('you@example.com').fill('test@example.com')
+    await page.getByPlaceholder('Enter your password').fill('SecurePass1!')
+    await page.getByRole('button', { name: 'Sign in', exact: true }).click()
+    await page.waitForURL('**/auth/login/2fa')
+
+    await page.getByTestId('two-factor-passkey').click()
+
+    // The authenticator offers what it holds; the server decides whether it belongs to the account.
+    await page.waitForURL(/\/dashboard$/)
+    await expect(page).toHaveURL(/\/dashboard$/)
+  })
+
   test('answers the challenge with a passkey and skips the code', async ({ page }) => {
     await installVirtualAuthenticator(page)
     await installPasskeySecondStepApi(page)

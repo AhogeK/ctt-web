@@ -125,4 +125,28 @@ describe('passkey api', () => {
     await expect(passkeyApi.deletePasskey('row-1')).resolves.toBeUndefined()
     expect(apiFetch).toHaveBeenCalledWith('/api/v1/users/me/passkey/row-1', { method: 'DELETE' })
   })
+
+  it('talks to the second-step endpoints the server actually exposes', async () => {
+    vi.mocked(apiFetch).mockResolvedValue(envelope(ASSERTION_OPTIONS))
+    await passkeyApi.fetchSecondFactorPasskeyOptions('challenge-1')
+
+    vi.mocked(apiFetch).mockResolvedValue(
+      envelope({
+        userId: '9b2b0f9e-6d55-4f3f-9a5a-2f1f6a7c0d11',
+        accessToken: 'token',
+        refreshToken: 'refresh',
+        expiresIn: 900,
+      }),
+    )
+    await passkeyApi.assertSecondFactorPasskey('challenge-1', CREDENTIAL)
+
+    // A second-step path that does not exist fails as a bare network error and no browser prompt
+    // ever opens, which reads as a dead button rather than a wrong URL.
+    expect(vi.mocked(apiFetch).mock.calls[0]![0]).toBe('/api/v1/auth/2fa/passkey/options')
+    expect(vi.mocked(apiFetch).mock.calls[1]![0]).toBe('/api/v1/auth/2fa/passkey/assert')
+    expect(vi.mocked(apiFetch).mock.calls[1]![1]).toEqual({
+      method: 'POST',
+      body: { challengeToken: 'challenge-1', credential: CREDENTIAL },
+    })
+  })
 })

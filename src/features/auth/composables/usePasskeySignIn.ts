@@ -27,7 +27,15 @@ export function usePasskeySignIn() {
   /** True only while an explicit attempt is in flight; the button reads it. */
   const pending = ref(false)
   const errorCode = ref<string | null>(null)
-  let controller: AbortController | null = null
+  /**
+   * Every ceremony that has not settled yet.
+   *
+   * A conditional request waits inside the username field for as long as the tab lives, so a single
+   * controller slot would drop it the moment another attempt starts — and a request left pending in
+   * an SPA makes the browser refuse the *next* one instantly, with no prompt at all. That is a dead
+   * button with no message, on any page, until the tab is reloaded.
+   */
+  const controllers = new Set<AbortController>()
   /**
    * Whether a conditional request is waiting inside the username field. Tracked apart from
    * `pending` because that request settles only when the reader picks an entry or navigates away,
@@ -58,7 +66,7 @@ export function usePasskeySignIn() {
     }
 
     const attempt = new AbortController()
-    controller = attempt
+    controllers.add(attempt)
 
     /** One ceremony: fresh options, the reader's authenticator, and the server's verdict. */
     const runCeremony = async (): Promise<LoginResponse | null> => {
@@ -110,7 +118,7 @@ export function usePasskeySignIn() {
       if (mediation === 'optional') pending.value = false
       else conditionalArmed = false
       // An attempt that already handed the slot to a newer one must not clear its controller.
-      if (controller === attempt) controller = null
+      controllers.delete(attempt)
     }
   }
 
@@ -125,9 +133,11 @@ export function usePasskeySignIn() {
     conditionalSupported.value = available
   })
 
-  /** Stops a ceremony that is still waiting for the reader. */
+  /** Stops every ceremony still waiting for the reader. */
   function cancel(): void {
-    controller?.abort()
+    for (const controller of controllers) controller.abort()
+    controllers.clear()
+    conditionalArmed = false
   }
 
   onUnmounted(cancel)

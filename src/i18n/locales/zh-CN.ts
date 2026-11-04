@@ -208,6 +208,7 @@ const zhCN: Messages = {
       submit: '验证',
       usePasskey: '改用通行密钥',
       passkeyWaiting: '等待设备验证…',
+      passkeyNotCompleted: '没有完成通行密钥验证。你可以再试一次，或直接输入验证码。',
       passkeyFailed: '这把通行密钥没有通过。可以在下方输入验证码，或重试。',
       verifying: '验证中...',
       invalidCode: '验证码不正确，请检查后重试。',

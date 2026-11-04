@@ -7,7 +7,7 @@ import { toTypedSchema } from '@vee-validate/zod'
 import { useForm } from 'vee-validate'
 import { z } from 'zod'
 import { useIntervalFn } from '@vueuse/core'
-import { KeyRound, ShieldCheck } from '@lucide/vue'
+
 import { toast } from 'vue-sonner'
 import { RouteNames } from '@/router/route-names'
 import { redirectQueryOf, resolvePostAuthTarget } from '@/router/post-auth-redirect'
@@ -16,6 +16,7 @@ import { extractErrorCode, isApiError, mapApiErrorCode } from '@/lib/utils/api-e
 import { FormField, FormItem, FormLabel, FormControl, FormMessage } from '@/components/ui/form'
 import { Input } from '@/components/ui/input'
 import { Button } from '@/components/ui/button'
+import { KeyRound, ShieldCheck } from '@lucide/vue'
 import { cn } from '@/lib/utils'
 import { isPasskeySupported } from '@/lib/utils/webauthn'
 import { useSecondFactorPasskey } from '../composables/useSecondFactorPasskey'
@@ -51,6 +52,17 @@ const passkeyAvailable = computed(() => isPasskeySupported() && (challenge.value
  * and the sentence below the button points them at the field that still works.
  */
 const passkeyFailed = computed(() => passkey.errorCode.value !== null)
+/**
+ * Whether the reader pressed the passkey button in this visit.
+ *
+ * A ceremony that ends without a session and without an error — the prompt was dismissed, or this
+ * device holds nothing that could answer — leaves nothing to report, and a button that appears to do
+ * nothing is indistinguishable from a broken one. The attempt itself is the reason to say something.
+ */
+const passkeyAttempted = ref(false)
+const passkeyUnanswered = computed(
+  () => passkeyAttempted.value && !passkey.pending.value && passkey.errorCode.value === null,
+)
 
 /**
  * Runs the alternative for this step.
@@ -62,6 +74,10 @@ const passkeyFailed = computed(() => passkey.errorCode.value !== null)
 async function signInWithPasskey(attempt = 0): Promise<void> {
   const token = challenge.value?.challengeToken
   if (!token) return
+
+  // A message left over from a code attempt has nothing to do with the method now in use.
+  form.setFieldError('code', undefined)
+  passkeyAttempted.value = true
 
   const response = await passkey.signIn(token)
   if (response) {
@@ -185,7 +201,7 @@ onMounted(() => {
     </div>
 
     <form v-if="challenge" @submit="onSubmit" class="flex flex-col gap-3 pt-4">
-      <FormField v-slot="{ componentField }" name="code">
+      <FormField v-slot="{ componentField }" name="code" :validate-on-blur="false">
         <FormItem>
           <FormLabel class="text-sm font-emphasis text-foreground/80 dark:text-muted-foreground">{{
             t('auth.twoFactor.codeLabel')
@@ -244,7 +260,14 @@ onMounted(() => {
       <p v-if="passkeyFailed" class="text-sm text-destructive dark:text-destructive" role="alert">
         {{ t('auth.twoFactor.passkeyFailed') }}
       </p>
-
+      <p
+        v-else-if="passkeyUnanswered"
+        class="text-sm text-muted-foreground"
+        role="status"
+        data-testid="two-factor-passkey-note"
+      >
+        {{ t('auth.twoFactor.passkeyNotCompleted') }}
+      </p>
       <Button
         type="submit"
         :disabled="isSubmitting || expired"

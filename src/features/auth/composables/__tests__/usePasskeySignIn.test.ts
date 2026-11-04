@@ -151,6 +151,60 @@ describe('usePasskeySignIn', () => {
     expect(api.errorCode.value).toBe('AUTH_033')
   })
 
+  it('leaves no waiting ceremony behind when another attempt starts', async () => {
+    // The conditional request parks until aborted; the explicit one dismisses immediately.
+    const get = pendingUntilAborted()
+    get.mockImplementationOnce(
+      (options: unknown) =>
+        new Promise((_resolve, reject) => {
+          const { signal } = options as { signal?: AbortSignal }
+          signal?.addEventListener('abort', () => {
+            reject(new DOMException('aborted', 'AbortError'))
+          })
+        }),
+    )
+    get.mockResolvedValueOnce(null)
+    vi.stubGlobal('navigator', { credentials: { get } })
+    const api = useInComponent()
+
+    void api.signIn('conditional')
+    await flushPromises()
+    const conditionalSignal = callOptions(get, 0).signal
+
+    await api.signIn('optional')
+    await flushPromises()
+
+    // Two ceremonies in one browser is not allowed: the browser refuses the second with no prompt,
+    // and a request left behind by a page the reader already left does exactly that to the next page.
+    expect(conditionalSignal.aborted).toBe(true)
+  })
+
+  it('aborts everything still waiting when the page goes away', async () => {
+    const get = pendingUntilAborted()
+    vi.stubGlobal('navigator', { credentials: { get } })
+
+    let composer: ReturnType<typeof usePasskeySignIn> | undefined
+    const wrapper = mount(
+      defineComponent({
+        setup() {
+          composer = usePasskeySignIn()
+          return () => null
+        },
+      }),
+    )
+    if (!composer) throw new Error('the composable did not run')
+
+    void composer.signIn('conditional')
+    await flushPromises()
+    const signal = callOptions(get, 0).signal
+
+    wrapper.unmount()
+    await flushPromises()
+
+    // A request outliving its page would block the ceremony on the page the reader moved to.
+    expect(signal.aborted).toBe(true)
+  })
+
   it('arms the field-driven request once, however often the field is focused', async () => {
     const get = pendingUntilAborted()
     vi.stubGlobal('navigator', { credentials: { get } })
