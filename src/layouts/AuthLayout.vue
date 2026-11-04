@@ -1,14 +1,18 @@
 <script setup lang="ts">
 import { nextTick, onUnmounted, ref, watch } from 'vue'
 import type { HTMLAttributes } from 'vue'
-import { RouterView, useRoute } from 'vue-router'
+import { RouterLink, RouterView, useRoute } from 'vue-router'
 import { cn } from '@/lib/utils'
 import ThemeToggle from '@/components/app/ThemeToggle.vue'
 import LanguageMenu from '@/components/app/LanguageMenu.vue'
 import AuthBackground from './components/AuthBackground.vue'
 import AuthDashboard from './components/AuthDashboard.vue'
 import AuthMetricsCard from './components/AuthMetricsCard.vue'
+import { RouteNames } from '@/router/route-names'
 import AuthTerminalCard from './components/AuthTerminalCard.vue'
+import { useI18n } from 'vue-i18n'
+
+const { t } = useI18n()
 
 const props = defineProps<{
   class?: HTMLAttributes['class']
@@ -107,6 +111,11 @@ onUnmounted(() => {
             <ThemeToggle />
           </div>
           <RouterView />
+          <p class="auth-form__legal">
+            <RouterLink :to="{ name: RouteNames.PRIVACY }" data-testid="auth-privacy-link">
+              {{ t('legal.privacy.link') }}
+            </RouterLink>
+          </p>
         </div>
       </div>
     </div>

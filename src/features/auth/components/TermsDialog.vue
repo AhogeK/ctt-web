@@ -10,13 +10,19 @@ import {
   DialogTitle,
 } from '@/components/ui/dialog'
 import { Button } from '@/components/ui/button'
+import { useRouter } from 'vue-router'
+import { RouteNames } from '@/router/route-names'
 import { acceptTerms } from '@/lib/api/auth'
-import { termsContent, type TermsSection } from '@/features/auth/content'
+import { termsContent, type TermsSection } from '@/features/legal/content'
 import { useAuthStore } from '@/stores/auth'
 import { usePublicConfig } from '@/composables/usePublicConfig'
 import { useI18n } from 'vue-i18n'
 
 const { t } = useI18n()
+const router = useRouter()
+
+// Resolved up front: an anchor needs a real href, and the dialog may sit outside the router view.
+const privacyHref = router.resolve({ name: RouteNames.PRIVACY }).href
 
 const props = withDefaults(
   defineProps<{
@@ -82,6 +88,17 @@ function handleClose() {
     <DialogContent class="sm:max-w-3xl max-h-[80vh] flex flex-col">
       <DialogHeader class="shrink-0">
         <DialogTitle>{{ t('auth.terms.title') }}</DialogTitle>
+        <p class="text-sm text-muted-foreground">
+          <a
+            :href="privacyHref"
+            target="_blank"
+            rel="noopener noreferrer"
+            class="underline"
+            data-testid="terms-privacy-link"
+          >
+            {{ t('legal.privacy.link') }}
+          </a>
+        </p>
         <DialogDescription>
           {{
             t('auth.terms.lastUpdated', {

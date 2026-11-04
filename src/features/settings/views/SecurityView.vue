@@ -16,6 +16,7 @@ import { useAuthStore } from '@/stores/auth'
 import { useLoginSessions } from '../composables/useLoginSessions'
 import { useRecentAuthentication } from '../composables/useRecentAuthentication'
 import { revokeLoginSession } from '@/lib/api'
+import { RouterLink } from 'vue-router'
 import DataExportCard from '../components/DataExportCard.vue'
 import LoginSessionsCard from '../components/LoginSessionsCard.vue'
 import TwoFactorCard from '../components/TwoFactorCard.vue'
@@ -94,5 +95,11 @@ async function signInAgain(): Promise<void> {
     <PasskeyCard />
     <LoginSessionsCard />
     <DataExportCard />
+
+    <p class="text-sm text-muted-foreground">
+      <RouterLink :to="{ name: RouteNames.PRIVACY }" class="underline" data-testid="security-privacy-link">
+        {{ t('legal.privacy.link') }}
+      </RouterLink>
+    </p>
   </div>
 </template>

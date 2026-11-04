@@ -173,7 +173,12 @@ vi.mock('@/components/ui/dialog', () => ({
   ),
 }))
 
-vi.mock('@/features/auth/content', () => ({
+vi.mock('vue-router', () => ({
+  // The dialog resolves the privacy link's href; navigation is not part of this suite.
+  useRouter: () => ({ resolve: () => ({ href: '/privacy' }) }),
+}))
+
+vi.mock('@/features/legal/content', () => ({
   termsContent: {
     language: 'en',
     lastUpdated: '2026-05-02',
@@ -373,7 +378,11 @@ describe('TermsDialog', () => {
       const queryClient = new QueryClient({ defaultOptions: { queries: { retry: false } } })
       const wrapper = mount(RealTermsDialog, {
         props: { open: true },
-        global: { plugins: [[VueQueryPlugin, { queryClient }]] },
+        global: {
+          plugins: [[VueQueryPlugin, { queryClient }]],
+          // The dialog links to the privacy notice; this test is about the terms themselves.
+          stubs: { RouterLink: { template: '<a><slot /></a>' } },
+        },
       })
       expect(wrapper.text()).toContain('1. Acceptance of Terms')
       expect(wrapper.text()).toContain('2. Description of Service')
@@ -385,7 +394,11 @@ describe('TermsDialog', () => {
       const queryClient = new QueryClient({ defaultOptions: { queries: { retry: false } } })
       const wrapper = mount(RealTermsDialog, {
         props: { open: true },
-        global: { plugins: [[VueQueryPlugin, { queryClient }]] },
+        global: {
+          plugins: [[VueQueryPlugin, { queryClient }]],
+          // The dialog links to the privacy notice; this test is about the terms themselves.
+          stubs: { RouterLink: { template: '<a><slot /></a>' } },
+        },
       })
       const closeButton = wrapper.findAll('button').find((b) => b.text().includes('Decline'))
       expect(closeButton).toBeDefined()

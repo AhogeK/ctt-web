@@ -22,7 +22,10 @@ const SRC = join(root, 'src')
 const LOCALES = join(SRC, 'i18n', 'locales')
 
 /** Files that legitimately contain Chinese: legal content, not interface copy. */
-const ALLOWLIST = new Set([join(SRC, 'features', 'auth', 'content', 'terms-zh.ts')])
+const ALLOWLIST = new Set([
+  join(SRC, 'features', 'legal', 'content', 'terms-zh.ts'),
+  join(SRC, 'features', 'legal', 'content', 'privacy-zh.ts'),
+])
 
 const CJK = /[\u4e00-\u9fff]/
 const DIRECT_EN_US = /\.toLocale(?:Date|Time)?String\(\s*['"`]en-US['"`]/

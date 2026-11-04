@@ -16,9 +16,11 @@ const mockReplace = vi.hoisted(() => vi.fn<() => void>())
 vi.mock('vue-router', async (importOriginal) => ({
   ...(await importOriginal<typeof import('vue-router')>()),
   useRouter: () => ({ replace: mockReplace }),
+  // The page links to the privacy notice; the target is declared so the test can read it back.
+  RouterLink: { name: 'RouterLink', props: ['to'], template: '<a :data-to="to && to.name"><slot /></a>' },
 }))
 vi.mock('@/stores/auth', () => ({ useAuthStore: () => ({ signOutLocally: mockSignOutLocally }) }))
-vi.mock('@/router/route-names', () => ({ RouteNames: { LOGIN: 'login' } }))
+vi.mock('@/router/route-names', () => ({ RouteNames: { LOGIN: 'login', PRIVACY: 'privacy' } }))
 vi.mock('@/lib/api', async (importOriginal) => ({
   ...(await importOriginal<typeof import('@/lib/api')>()),
   revokeLoginSession: mockRevokeSession,
@@ -90,6 +92,14 @@ describe('SecurityView', () => {
 
     expect(mockSignOutLocally).toHaveBeenCalledTimes(1)
     expect(mockReplace).toHaveBeenCalledWith({ name: 'login', query: { redirect: '/settings/security' } })
+  })
+
+  it('links to the privacy notice with a resolved route name', () => {
+    const wrapper = mountView()
+
+    // The link is the way a reader reaches the storage inventory from inside the app.
+    const link = wrapper.get('[data-testid="security-privacy-link"]')
+    expect(link.attributes('data-to')).toBe('privacy')
   })
 
   it('waits for the answer instead of guessing while the status is unknown', () => {

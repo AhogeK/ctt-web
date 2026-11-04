@@ -6,6 +6,7 @@ export const RouteNames = {
   // Root & Exception
   MARKETING_LAYOUT: 'marketing-layout',
   LANDING: 'landing',
+  PRIVACY: 'privacy',
   NOT_FOUND: 'not-found',
 
   // Auth

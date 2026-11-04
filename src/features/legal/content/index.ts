@@ -10,11 +10,20 @@ import { computed } from 'vue'
 
 import { currentLocale } from '@/i18n'
 
+import { privacyContent as privacyEn } from './privacy-en'
+import { privacyContent as privacyZh } from './privacy-zh'
 import { termsContent as termsEn } from './terms-en'
 import { termsContent as termsZh } from './terms-zh'
 
 export type { TermsContent, TermsSection } from './terms-en'
+export type { PrivacyContent } from './privacy-en'
 
-export const termsContent = computed(() => (currentLocale.value === 'zh-CN' ? termsZh : termsEn))
+const isChinese = () => currentLocale.value === 'zh-CN'
+
+/** The terms of service, in the language the reader is using. */
+export const termsContent = computed(() => (isChinese() ? termsZh : termsEn))
+
+/** The privacy and cookie notice, in the language the reader is using. */
+export const privacyContent = computed(() => (isChinese() ? privacyZh : privacyEn))
 
 export default termsContent
