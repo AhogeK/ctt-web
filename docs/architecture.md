@@ -317,6 +317,26 @@ export const useAuthStore = defineStore('auth', () => {
 })
 ```
 
+### Legal pages
+
+`/privacy` (public, no account needed) carries the privacy and cookie notice: a table listing every
+cookie and storage key the build writes, with its purpose, lifetime and whether consent is needed,
+followed by the sections that explain what is not collected, who the controller is, and how to export
+or delete what exists. It is a route rather than a dialog so it can be linked, quoted and read by
+someone who has not signed in.
+
+Its content lives in `src/features/legal/content/privacy-{en,zh}.ts` and follows the interface
+language; `privacy-parity.test.ts` fails when the two languages disagree on an entry, and when a key
+the source can write is missing from the table. That second check scans every source file through the
+bundler: literals inside storage calls, `ctt`-prefixed literals in files that touch storage, and key
+constants declared in helpers (`SIDEBAR_COOKIE_NAME`, `CSRF_COOKIE_NAME`). It errs towards reporting
+too much — a spurious name is one line in `NOT_STORAGE` — so adding storage without adding a row is a
+red test, not a silent omission.
+
+The notice publishes an operator contact when the deployment sets `VITE_OPERATOR_CONTACT`; without it
+the page says plainly that no address has been published, because the operator — not the software —
+is the controller. The terms of service sit in the same folder and link to it.
+
 ### Token lifecycle
 
 The access token is a short-lived JWT kept in `localStorage`; the refresh token is not in the page at

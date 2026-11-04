@@ -42,7 +42,7 @@ Everything is open source and free to self-host.
 | **See your time** — summary cards, daily and long-term trends, heatmaps, language/project/IDE distributions, time-of-day views, and recent sessions. | **Filter with context** — inspect a date range, one device, or one IDE; the active view stays in the URL. |
 | **Spot patterns** — compare periods, follow your streak, and see when and where your best work happens. | **Manage devices and keys** — check last activity and last-used IDE, revoke devices, and create scoped API keys with optional expiry. |
 | **Keep momentum** — browse achievement ladders and compare on the multi-dimension leaderboard. | **Sign in securely** — email/password or GitHub OAuth, two-factor verification with recovery codes, passkeys, password reset, email verification, and profile controls. |
-| **Make it yours** — English and 简体中文, with light, dark, and system themes, and a reduced-motion option. | **Own your data** — see every signed-in session and revoke one or a whole client at once, export everything as one JSON file, and run the whole stack yourself; no paid tiers or feature locks. |
+| **Make it yours** — English and 简体中文, with light, dark, and system themes, and a reduced-motion option. | **Own your data** — see every signed-in session and revoke one or a whole client at once, export everything as one JSON file, read exactly what is stored in your browser at [/privacy](docs/architecture.md#legal-pages), and run the whole stack yourself; no paid tiers or feature locks. |
 
 ## How it fits together
 
@@ -76,6 +76,7 @@ The app expects a running ctt-server. The Vite dev server proxies `/api` to
 | Variable | Default | Purpose |
 | --- | --- | --- |
 | `VITE_API_BASE_URL` | `/api` | API base URL used by the browser client |
+| `VITE_OPERATOR_CONTACT` | unset | Contact address shown in the privacy notice; whoever runs the deployment is the data controller and should set one |
 
 ```sh
 # .env
