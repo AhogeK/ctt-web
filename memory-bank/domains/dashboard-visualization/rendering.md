@@ -135,3 +135,17 @@ dropped at phone widths, a lone tall day (6h among 1h days) stretched the axis t
 7-day average hugged the bottom third (user report). On narrow panels scale to what is drawn — the
 average line and the reference mean — and keep the raw maximum for wide panels, where the dots show
 it.
+
+## Tooltip HTML is a sink
+
+ECharts renders a tooltip formatter's string as **HTML**. Every formatter in `src/features/dashboard`
+is therefore an injection sink, and the rule is that nothing from the server reaches one:
+
+- axes, weekday/month names and ISO dates are generated locally (`lib/utils` formatters or computed);
+- copy comes from the message pack through `t()`, which is authored, not received;
+- a name the server sends (language, project, device) is **never** interpolated into a formatter.
+  If one must appear, escape it or switch that chart's tooltip to `renderMode: 'richText'`, which
+  drops the HTML and with it the styling the frozen design relies on — so escaping is the fix,
+  not a new render mode, unless the chart is being redesigned anyway.
+
+The same applies to `axisLabel.formatter` and any `formatter` returning markup.

@@ -1,3 +1,24 @@
+- **全项目安全审查（2026-11-04 · v0.75.2）**：两条只读安全评审（攻击面 / 认证会话）+ 自查（`pnpm audit --prod` 干净、
+  无 `v-html`/`eval`、CSRF 双提交、重定向只放行 `requiresAuth` 的内部路径）⇒ 六项当场收口：
+  **OAuth 回调不再接受"这个标签页没发起过的"令牌**（会话固定：`?accessToken=<别人>` 会把读者静默登进发送者账号）
+  ⇒ 发起时写 tab 作用域的 `ctt.oauth-flow` 标记、回调先清 URL 再验标记 ✓；
+  **刷新不再复活已结束的会话**（会话代数 + `sub` 不一致即拒 + 刷新后更新过期时间 + base64url 解码）✓；
+  服务端错误体只在开发环境打印 ✓；导出文件名的非法百分号编码不再中断导出 ✓；通行密钥响应改走 `LoginResponseSchema` 校验 ✓；
+  删除凭据与添加读同一道新鲜度门 ✓。**CSP 真相**：`index.html` 的 meta 无法承载 `frame-ancestors` ⇒ 点击劫持
+  要靠 **HTTP 头**（手册 §8 有 nginx 片段），前端另加**帧守卫**（被嵌时不渲染，只给一句提示）✓。
+  **第二轮（同日 · v0.75.3）发现即修**：`vue` 从 beta 通道换回稳定 **3.5.44** · API Key 默认 **90 天**过期 ·
+  重发验证邮件对 `USER_007` 答成与真实发送**同一句话**（去掉账号枚举）· 通行密钥 `authenticatorSelection`
+  **原样透传**服务端 · 「重新登录」会**注销服务端当前会话**（原来只清本地）。
+  **刷新令牌已只剩 Cookie 一份（v0.76.0，后端 0.91.2 落地后当天接入）**：`/auth/refresh` 后端已允许
+  `@RequestBody(required = false)` + 优先读 httpOnly `ctt_refresh_token`（HttpOnly · Secure · SameSite=Strict ·
+  路径只到刷新端点）⇒ 前端不再存刷新令牌（登录/续期/OAuth/2FA 都不写），启动时删除历史键 `ctt_refresh_token`；
+  续期请求**不带 body**，靠 `credentials: 'include'`。跨标签必须串行：`navigator.locks('ctt-refresh')`，
+  否则同一枚单次令牌被两个标签各花一次 ⇒ 服务端判重放（`AUTH_009`）并撤销该账号全部会话；
+  `429` 只按 `Retry-After` 重排重试、不登出，`AUTH_003/007/009` 与 `COMMON_003` 才结束会话 ✓。
+  OAuth 回调因此只读 `accessToken`（刷新令牌由同一响应的 Cookie 落地），URI 不再携带任何刷新令牌 ✓。
+  **代码评审后补**：回调的 fragment（第二步挑战）必须**先读再抹** URL（先抹就会把挑战一起清掉 ⇒ OAuth+TOTP 永远"已过期"）·
+  启动遇 `429` 不再清会话 · 静默定时器不再取消限流重试 · 重试成功后重排静默刷新 · 会话列表拿不到时「重新登录」回退到 `logoutAll()` ·
+  新增非凭据的会话提示键 `ctt_session`（仅 Cookie 的访问也能抬起会话）· API Key 对话框复位与 90 天默认一致 · 删掉两条死词条。
 - **第六阶段 S6（本轮 · v0.69.0）**：设备与 API Keys **两页互链 + 关系说明**已补完 ✓。
   事实回源：插件把 **API Key 当 bearer 凭据**调同步接口（`SyncApiServiceImpl`）· **设备**是插件注册的同步主体（机器 + IDE + 插件版本）✓。
   做法：共享组件 `SettingsRelationNote.vue`（一句说明 + 指向对方页面的链接）· 路由用**路由名**定位（改名会响 ✓）·
@@ -144,7 +165,7 @@
   规则只有这一条：**在别处绑过、这台机器从没用过**的浏览器不会自动弹（跨设备同步的凭据也走不进去）。
   通行密钥两个端点都**不带验证码**（服务端只按 IP 限流）✓。
   E2E 用 CDP 虚拟认证器：**必须先按 rpId 种一把可发现凭据**，否则 `credentials.get()` 永远不回应（探针实证）✓。
-- 验证（当前基线）：单测 **1772** · E2E **190** · type-check · build · `check:i18n` **1110 键** · `pnpm lint` **零输出** ✓。
+- 验证（当前基线）：单测 **1775** · E2E **190** · type-check · build · `check:i18n` **1110 键** · `pnpm lint` **零输出** ✓。
 
 ## Archived History
 

@@ -372,6 +372,17 @@ IDE（SonarLint 等）报的问题**不是门禁** ✗ —— 但**也不该只�
   有凭据时聚焦邮箱框会直接登录 ⇒ 注册用例先走按钮 ✓。
 - **挑战会过期**：`AUTH_032` 重取 options 重试**一次**（两条登录路径都要），其余码不重试 ✓。
 
+### R42: 刷新令牌的用法（强制）
+
+- **只有 Cookie 一份**：`ctt_refresh_token` 是 httpOnly + Secure + SameSite=Strict，路径只到刷新端点 ⇒ 前端**不得**再存一份
+  （登录、续期、OAuth、通行密钥响应都算）—— 存一份就把 httpOnly 凭据变成脚本可读的；历史键在 store 创建时删除。
+- **续期请求不带 body**：靠 `credentials: 'include'` 送 Cookie；带上令牌字段等于自己复制一份凭据。
+- **单次使用，必须串行**：同一枚令牌被花两次 ⇒ 服务端判重放（`AUTH_009`）并可能撤销该账号全部会话 ⇒ 同标签共享一个 in-flight promise，
+  跨标签走 `navigator.locks('ctt-refresh')`；禁止用 `localStorage` 做锁（写入不是原子 CAS）。
+- **限流不是掉线**：`429` 按 `Retry-After` 重排重试（无提示 60 秒），启动 / 静默定时器 / 重试三条入口都**不得**清会话；
+  只有 `AUTH_003`/`AUTH_007`/`AUTH_009`/`COMMON_003` 才结束会话。
+- **`initializeAuth` 看访问令牌，不看刷新令牌**（页面看不见 Cookie）；`ctt_session` 只是非凭据提示，用于"只剩 Cookie"的访问。
+
 ## 执行流程
 
 读 `index.yaml` 定位 → 读命中文件 → 建 todo（3 步以上）→ 处理 → 收尾双向检查（`sweep.sh` + `check-knowledge.sh`，R18）→ 同轮更新记忆（R2）。

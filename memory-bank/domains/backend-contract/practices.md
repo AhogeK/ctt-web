@@ -147,3 +147,12 @@ const RESOURCE_401 = new Set(['AUTH_010', 'USER_014'])   // BOLA + business chec
 - 失败语义：`AUTH_032` 只消费浏览器挑战（`challengeToken` 仍可换用验证码），成功后 `challengeToken` 作废（`AUTH_026` 整步过期）。
 - 管理面需要近期认证（`AUTH_031`，10 分钟窗口）；`AUTH_018` = 不能删最后一条登录路径；两个登录端点**不带验证码**。
 - 删除最后一把后必须清本地「用过通行密钥」标记，否则登录页每次开一个空选择器。
+
+## 刷新令牌只在 Cookie（2026-11-04 · 后端 0.91.2）
+
+- `POST /auth/refresh` 的请求体**可为空**（`@RequestBody(required = false)`），令牌读取顺序是
+  **Cookie 优先**：`ctt_refresh_token`（HttpOnly · Secure · SameSite=Strict · Path 只到刷新端点），其次才是 body 字段。
+- 响应体仍给 `refreshToken`，但前端**不存**：存一份等于把 httpOnly 凭据复制成脚本可读的。
+- 令牌**单次使用**：两个标签各花一次 ⇒ 服务端判重放 `AUTH_009`，可能撤销该账号全部刷新令牌 ⇒ 跨标签必须串行（`navigator.locks`）。
+- 错误语义：`400 COMMON_003`（Cookie 与 body 都没有）、`401 AUTH_003/007`、`403 AUTH_009`（重放，勿自动重试）、
+  `429 RATE_LIMIT_001`（120 次/小时/IP，按 `Retry-After` 退避，**不要**当成会话失效）。
