@@ -1785,3 +1785,29 @@ html[data-motion='reduce'] .auth-metrics__lang-bar-fill {
     rgba(94, 106, 210, 0) 80%
   );
 }
+
+/* Privacy notice link under the form panel.
+ *
+ * A quiet line, not a card: the notice is a reference, and anything louder would compete with the
+ * sign-in controls right above it. The tap target stays 44px on touch even though the text is small.
+ */
+.auth-form__legal {
+  margin-top: 1.25rem;
+  text-align: center;
+  font-size: 0.75rem;
+  line-height: 1.5;
+}
+
+.auth-form__legal a {
+  display: inline-flex;
+  min-height: 2.75rem;
+  align-items: center;
+  color: var(--muted-foreground);
+  text-decoration: underline;
+  text-underline-offset: 0.2em;
+}
+
+.auth-form__legal a:hover,
+.auth-form__legal a:focus-visible {
+  color: var(--foreground);
+}

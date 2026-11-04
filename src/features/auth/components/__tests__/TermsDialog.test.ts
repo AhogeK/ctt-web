@@ -9,6 +9,11 @@ import { toast } from 'vue-sonner'
 
 const mockSetAuthFromTermsAcceptance = vi.fn<(response: unknown) => void>()
 
+vi.mock('vue-router', () => ({
+  // The dialog resolves the privacy link's href up front; navigation is not part of this test.
+  useRouter: () => ({ resolve: () => ({ href: '/privacy' }) }),
+}))
+
 vi.mock('@/lib/api/config', () => ({
   getPublicConfig: vi.fn<() => Promise<{ termsVersion: string }>>(),
 }))
@@ -74,7 +79,7 @@ vi.mock('@/components/ui/button', () => ({
   },
 }))
 
-vi.mock('@/features/auth/content', () => ({
+vi.mock('@/features/legal/content', () => ({
   termsContent: {
     language: 'en',
     lastUpdated: '2026-05-02',
@@ -102,6 +107,8 @@ function mountWithQuery(component: Parameters<typeof mount>[0], options?: Parame
     global: {
       ...options?.global,
       plugins: [...(options?.global?.plugins ?? []), [VueQueryPlugin, { queryClient }]],
+      // The dialog links to the privacy notice; a stub keeps this test about the dialog itself.
+      stubs: { RouterLink: { template: '<a><slot /></a>' } },
     },
   })
 }

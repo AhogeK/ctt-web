@@ -99,6 +99,18 @@ const zhCN: Messages = {
     sidebarTitle: '侧栏',
     sidebarDescription: '显示移动端侧栏。',
   },
+  legal: {
+    privacy: {
+      title: '隐私与 Cookie',
+      back: '返回应用',
+      link: '隐私与 Cookie',
+      lastUpdated: '最后更新：{date}',
+      storageTitle: '浏览器里存了什么，为什么',
+      contactUnset:
+        '这个部署没有公布联系地址。与账号有关的请求请发给为你提供服务的运营方；软件本身的问题在 github.com/AhogeK/ctt-web 处理。',
+      store: { cookie: 'Cookie', localStorage: '本地存储', sessionStorage: '会话存储' },
+    },
+  },
   pageTitles: {
     authentication: '身份验证',
     login: '登录',
@@ -112,6 +124,7 @@ const zhCN: Messages = {
     oauthCallback: 'GitHub 授权回调',
     oauthError: 'GitHub 授权出错',
     landing: '开源编码统计',
+    privacy: '隐私与 Cookie',
     overview: '总览',
     settings: '设置',
     notFound: '页面不存在',

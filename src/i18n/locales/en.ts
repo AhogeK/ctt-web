@@ -100,6 +100,18 @@ const en = {
     sidebarTitle: 'Sidebar',
     sidebarDescription: 'Displays the mobile sidebar.',
   },
+  legal: {
+    privacy: {
+      title: 'Privacy and cookies',
+      back: 'Back to the app',
+      link: 'Privacy and cookies',
+      lastUpdated: 'Last updated {date}',
+      storageTitle: 'What is stored in your browser, and why',
+      contactUnset:
+        'This deployment has not published a contact address. Requests about your account go to whoever operates it; the software project answers at github.com/AhogeK/ctt-web.',
+      store: { cookie: 'Cookie', localStorage: 'Local storage', sessionStorage: 'Session storage' },
+    },
+  },
   pageTitles: {
     authentication: 'Authentication',
     login: 'Login',
@@ -113,6 +125,7 @@ const en = {
     oauthCallback: 'OAuth Callback',
     oauthError: 'OAuth Error',
     landing: 'Open-source coding analytics',
+    privacy: 'Privacy and cookies',
     overview: 'Overview',
     settings: 'Settings',
     notFound: 'Not Found',
