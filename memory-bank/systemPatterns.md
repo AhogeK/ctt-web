@@ -42,6 +42,10 @@ export const fetchStats = (params: StatsParams) =>
 - ErrorBoundary: `onErrorCaptured` → fallback UI + retry, dev-only details, no white-screen
 - Query views: `<ErrorState v-if="isError"> <LoadingState v-else-if="isPending"> <template v-else>`; first-load
   skeleton ≥300ms anti-flicker (ApiKeysView precedent)
+- Failure fallback (2026-11-05): `reportOperationFailure` (`lib/utils/operation-failure.ts`) is the one entry point.
+  A `MutationCache` net speaks only when the mutation has no `onError` and nobody claimed the error ⇒ a call-site
+  handler calls `markFailureReported` (`mutate(vars, {onError})` is invisible to the net — measured), which is also
+  how it stays silent. `AUTH_001`/cancellations silent · one copy per 4 s · unmapped codes show the generic sentence.
 
 ## Composable Mutation Return Shape (v0.18.1)
 
@@ -140,7 +144,7 @@ When auditing built CSS, `rm -rf dist` first — the build does not always purge
 ## Forbidden Patterns
 
 - ❌ `v-html` without sanitization, `any`, Options API, `console.log`, hardcoded strings (i18n), direct `ofetch` in
-  components, `error.error` (use `error.data.code`), outer shadows for buttons in dark mode
+  components, outer shadows for buttons in dark mode
 - ❌ `@vue-ignore` on `defineProps<Type>()` with circular type imports — Rolldown silently drops the whole props
   declaration (v0.15.4 sidebar-on-right incident)
 
@@ -165,12 +169,10 @@ When auditing built CSS, `rm -rf dist` first — the build does not always purge
   is not the wire shape — `.default(null)` makes `windowStart`/`currentUserRank` required in the
   output while the server omits the keys — so a fixture typed from `src/` cannot express the case it exists to
   reproduce.
-- **One navigation per test** for specs whose auth harness seeds the session in memory: a fresh
-  `page.goto()` re-runs the boot sequence and bounces to `/auth/login`. Specs that log in for real via
-  `loginViaForm` *do* navigate afterwards (verified: `protected-routes.spec.ts`).
-- **TanStack caches per query key**, so returning to a page already fetched renders from cache and
-  issues **no** request. Assert the rendered result, or pick an offset that is genuinely uncached;
-  a `lastQuery`-style wire assertion will otherwise read the previous request and mislead.
+- **One navigation per test** when the harness seeds the session in memory: a fresh `page.goto()` re-runs the
+  boot sequence and bounces to `/auth/login`; specs that log in via `loginViaForm` *do* navigate afterwards.
+- **TanStack caches per query key**: returning to a fetched page issues **no** request, so assert the rendered
+  result or pick an uncached offset — a `lastQuery` wire assertion would read the previous request and mislead.
 - **`expect.poll` over recorded requests must not assume the last request is the one just
   triggered** — filter the recorded list by the value under test instead.
 - Assert collections, not per-item conditionals: `playwright/no-conditional-expect` is right that an
@@ -188,12 +190,11 @@ value, action — with hairline dividers; read-only rows keep an empty third cel
 
 ## Interaction And Motion Conventions
 
-- **Hover is gated on capability**: Tailwind's `hover:` compiles into `@media (hover: hover)`; the work was hand-written
-  `:hover`, all 16 in `src/` wrapped. New ones must be wrapped when added — only a touch device reproduces it.
+- **Hover is gated on capability**: Tailwind's `hover:` already compiles into `@media (hover: hover)`; the hand-written
+  `:hover` (16 in `src/`) were wrapped and new ones must be too — a touch device is the only place it shows.
 - **Motion carries its counterpart**: `motion-reduce:transition-none` / `duration-0` / `animate-none`.
 - **Hover must not move the box, and a disabled control still needs a cursor** ✗: `hover:scale` moves the *hit* box, so
-  the pointer alternates near an edge and the cursor flickers (a changing `getBoundingClientRect` while the mouse moves
-  1px); `pointer-events: none` hides a disabled control from the pointer, making `disabled:cursor-not-allowed` dead
-  code — keep hit testing, gate hover with `enabled:`.
+  the pointer alternates near an edge (a changing rect while the mouse moves 1px); `pointer-events: none` kills
+  `disabled:cursor-not-allowed` — keep hit testing, gate hover with `enabled:`.
 - **State as attribute**: reka-ui emits `data-state`/`data-side`/`data-orientation` — style `data-[state=open]:` rather
   than a class combination. Design values → [`domains/landing-page/practices.md`](./domains/landing-page/practices.md).

@@ -139,11 +139,16 @@ const RESOURCE_401 = new Set(['AUTH_010', 'USER_014'])   // BOLA + business chec
 
 ## 通行密钥（2026-11-03 · v0.75.0 Accepted）
 
+- **原点白名单**：服务端只认白名单里的 Origin（本地是 `localhost:5173`）⇒ 换端口起前端会得到 403 `Invalid CORS request`，
+  与"端点不存在"的 403 长得完全不同，别混为一谈（2026-11-05 实测：5199 被拒、5173 通过）。
 - 端点与限流：`POST /auth/passkey/{options,assert}` 匿名（取挑战 30 / 断言 20 次每 5 分钟每 IP）；
   管理面 `POST|GET /users/me/passkey`、`POST /users/me/passkey/options`、`PATCH|DELETE /users/me/passkey/{id}`。
 - 断言成功返回**与密码登录相同**的响应，**不进入第二步**（通行密钥本身就是两因素）。
 - 第二步来源两处：登录 `202` 的 `data.passkeyCount`（恒在，`0` = 隐藏入口）、OAuth fragment 的 `passkeyCount=`；
-  `/auth/login/2fa/passkey/{options,assert}` 带 `challengeToken`，断言**原样**带 `allowCredentials`（挑战已绑定账号）。
+  `/auth/2fa/passkey/{options,assert}` 带 `challengeToken`；第一步**丢弃** `allowCredentials` 让认证器自报，
+  被拒后第二步才按服务端名单重试，归属由服务端在 assert 时判定（名单过期会让浏览器一直等，见 R41）。
+  （2026-11-05 修正：此前记成 `/auth/login/2fa/...` —— 服务端无此路径，Spring Security 回 **403**，
+  前端只看到 `FetchError` 而浏览器从未被叫起；判定端点存在与否用 `v3/api-docs` + curl：未授权=401+业务码，不存在=403。）
 - 失败语义：`AUTH_032` 只消费浏览器挑战（`challengeToken` 仍可换用验证码），成功后 `challengeToken` 作废（`AUTH_026` 整步过期）。
 - 管理面需要近期认证（`AUTH_031`，10 分钟窗口）；`AUTH_018` = 不能删最后一条登录路径；两个登录端点**不带验证码**。
 - 删除最后一把后必须清本地「用过通行密钥」标记，否则登录页每次开一个空选择器。
