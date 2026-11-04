@@ -87,21 +87,6 @@ export async function loginWithTwoFactorCode(payload: LoginTwoFactorRequest): Pr
 }
 
 /**
- * Logs out user by invalidating the refresh token on server.
- *
- * Endpoint: POST /api/v1/auth/logout
- *
- * @param refreshToken - The refresh token to invalidate
- * @throws Error if logout request fails
- */
-export async function logout(refreshToken: string): Promise<void> {
-  await apiFetch('/api/v1/auth/logout', {
-    method: 'POST',
-    body: { refreshToken },
-  })
-}
-
-/**
  * Logs out user from all devices by invalidating all refresh tokens.
  *
  * Endpoint: POST /api/v1/auth/logout-all
@@ -120,19 +105,22 @@ export async function logoutAll(): Promise<void> {
 }
 
 /**
- * Refreshes access token using refresh token.
+ * Exchanges the browser's refresh cookie for a new access token.
  *
  * Endpoint: POST /api/v1/auth/refresh
  *
- * @param params - Object containing the refresh token to use
- * @returns Parsed response with new accessToken and optionally new refreshToken
- * @throws Zod validation error if response doesn't match expected schema
+ * The token itself never reaches this code: the server reads it from the httpOnly
+ * `ctt_refresh_token` cookie, which `credentials: 'include'` sends. Nothing in the body — a client
+ * that keeps its own copy turns one httpOnly credential into a script-readable one.
+ *
+ * @returns Parsed response with the new access token and token lifetime
+ * @throws `COMMON_003` when no cookie is present, `AUTH_003`/`AUTH_007` when it is dead,
+ * `AUTH_009` when it was replayed, `RATE_LIMIT_001` past 120 calls per hour per address
  */
-export async function refresh(params: { refreshToken: string }): Promise<LoginResponse> {
+export async function refresh(): Promise<LoginResponse> {
   // __authRetry prevents infinite refresh loops in the interceptor
   const response = await apiFetch<unknown>('/api/v1/auth/refresh', {
     method: 'POST',
-    body: params,
     __authRetry: true,
   } as Record<string, unknown>)
 

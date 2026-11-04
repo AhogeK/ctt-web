@@ -159,8 +159,8 @@ async function setupProfile(
    * about.
    *
    * `authStore.hasPassword` arrives from the bootstrap profile fetch, which only runs when
-   * `initializeAuth()` succeeds — so the refresh token `loginViaForm` leaves behind must survive
-   * the navigation. Polling for the value turns a spec that quietly lost its session into a
+   * `initializeAuth()` succeeds — so the stored access token `loginViaForm` leaves behind must
+   * survive the navigation. Polling for the value turns a spec that quietly lost its session into a
    * failure that prints the store's real contents, instead of one that asserts a branch the app
    * never took.
    */

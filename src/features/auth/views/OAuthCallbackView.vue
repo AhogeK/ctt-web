@@ -6,6 +6,7 @@ import { toast } from 'vue-sonner'
 import { useAuthStore } from '@/stores/auth'
 import { RouteNames } from '@/router/route-names'
 import { resolvePostAuthTarget } from '@/router/post-auth-redirect'
+import { consumeOAuthFlowMarker } from '@/lib/utils/oauth-flow'
 
 const { t } = useI18n()
 
@@ -14,18 +15,30 @@ const route = useRoute()
 const authStore = useAuthStore()
 
 onMounted(() => {
+  // Read the fragment first: it carries the second-step challenge, and wiping the URL below takes
+  // it with the query.
+  const fragment = new URLSearchParams(globalThis.location.hash.replace(/^#/, ''))
+
+  // Take the query off the URL before anything else reads it: it may carry tokens, and history,
+  // referrers and extensions keep what sits there.
+  history.replaceState(null, '', route.path)
+
+  // A hand-off this tab never asked for is a link, not a sign-in: accepting it would silently
+  // switch the reader into whoever sent it.
+  if (!consumeOAuthFlowMarker()) {
+    toast.error(t('auth.errors.oauthLoginFailed'), { description: t('auth.errors.oauthNotStarted') })
+    void router.replace({ name: RouteNames.LOGIN })
+    return
+  }
+
   // An account with TOTP enabled comes back without a session: the server redirects with a
   // flag in the query and the challenge in the fragment, so nothing secret reaches the server
   // or a referrer. Read it, wipe it, and hand the reader to the same step the password flow uses.
   if (route.query.twoFactorRequired === 'true') {
-    const fragment = new URLSearchParams(globalThis.location.hash.replace(/^#/, ''))
     const challengeToken = fragment.get('challengeToken')
     const expiresIn = Number(fragment.get('expiresIn'))
     // Present on every challenge; zero means the second step can only be answered with a code.
     const passkeyCount = Number(fragment.get('passkeyCount') ?? 0)
-
-    // Clean the URL before anything else runs: the hash is a credential and history keeps it.
-    history.replaceState(null, '', route.path)
 
     // Take the destination before the guard below: a failed challenge still has to leave no key
     // behind for a later sign-in to obey.
@@ -58,19 +71,17 @@ onMounted(() => {
   }
 
   const accessToken = route.query.accessToken as string | undefined
-  const refreshToken = route.query.refreshToken as string | undefined
   const termsExpired = route.query.termsExpired === 'true'
 
-  if (!accessToken || !refreshToken) {
+  // Only the access token arrives here: the refresh token is set as an httpOnly cookie by the
+  // server on this same response, so a URL that carries one is a URL leaking one.
+  if (!accessToken) {
     toast.error(t('auth.errors.oauthLoginFailed'), { description: t('auth.errors.missingTokens') })
     void router.replace({ name: RouteNames.LOGIN })
     return
   }
 
-  authStore.loginWithOAuth({ accessToken, refreshToken, termsExpired })
-
-  // Clean URL query params to prevent token leakage in browser history
-  history.replaceState(null, '', route.path)
+  authStore.loginWithOAuth({ accessToken, termsExpired })
 
   if (!termsExpired) {
     const queryRedirect = route.query.redirect as string | undefined

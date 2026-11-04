@@ -399,7 +399,7 @@ describe('auth API', () => {
   })
 
   describe('refresh', () => {
-    it('sends POST request with refreshToken and returns new tokens', async () => {
+    it('posts without a body and returns new tokens', async () => {
       vi.mocked(apiFetch).mockResolvedValue({
         success: true,
         message: 'Token refresh successful',
@@ -413,11 +413,11 @@ describe('auth API', () => {
         },
       })
 
-      const result = await authApi.refresh({ refreshToken: 'old-refresh-token' })
+      const result = await authApi.refresh()
 
+      // No body: the token rides in the httpOnly cookie, which the browser attaches itself.
       expect(apiFetch).toHaveBeenCalledWith('/api/v1/auth/refresh', {
         method: 'POST',
-        body: { refreshToken: 'old-refresh-token' },
         __authRetry: true,
       })
       expect(result.accessToken).toBe('new-access-token')
@@ -439,7 +439,7 @@ describe('auth API', () => {
         },
       })
 
-      const result = await authApi.refresh({ refreshToken: 'old-refresh-token' })
+      const result = await authApi.refresh()
 
       expect(result.tokenType).toBe('Bearer')
     })
@@ -456,14 +456,14 @@ describe('auth API', () => {
         },
       })
 
-      await expect(authApi.refresh({ refreshToken: 'old-refresh-token' })).rejects.toThrow(/refreshToken|invalid/i)
+      await expect(authApi.refresh()).rejects.toThrow(/invalid/i)
     })
 
     it('propagates API error on invalid refresh token', async () => {
       const apiError = new Error('Invalid refresh token')
       vi.mocked(apiFetch).mockRejectedValue(apiError)
 
-      await expect(authApi.refresh({ refreshToken: 'invalid-token' })).rejects.toThrow('Invalid refresh token')
+      await expect(authApi.refresh()).rejects.toThrow('Invalid refresh token')
     })
   })
 
@@ -709,7 +709,7 @@ describe('auth API', () => {
         },
       })
 
-      await expect(authApi.acceptTerms()).rejects.toThrow(/refreshToken|invalid/i)
+      await expect(authApi.acceptTerms()).rejects.toThrow(/invalid/i)
     })
 
     it('propagates API error on unauthorized (401)', async () => {

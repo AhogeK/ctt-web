@@ -329,6 +329,28 @@ describe('LoginView - hCaptcha integration', () => {
   })
 
   describe('SECURITY error messages', () => {
+    it('marks the tab before leaving for the provider', async () => {
+      // jsdom would navigate for real; the assertion is about what the click leaves behind.
+      const original = globalThis.location
+      Object.defineProperty(globalThis, 'location', {
+        configurable: true,
+        writable: true,
+        value: { href: '' },
+      })
+
+      mount(LoginView, { global: { stubs: { LoginForm: createLoginFormStub() } } })
+      sessionStorage.clear()
+      // The GitHub mutation is the one the view registers last: login and resend come first.
+      const github = mutations[mutations.length - 1]!
+      github.onSuccess!({ authUrl: 'https://github.com/login/oauth/authorize?x=1' })
+
+      // The callback refuses a hand-off this tab never started, so the marker is what makes an
+      // OAuth sign-in possible at all.
+      expect(sessionStorage.getItem('ctt.oauth-flow')).toBe('1')
+      Object.defineProperty(globalThis, 'location', { configurable: true, writable: true, value: original })
+      sessionStorage.clear()
+    })
+
     it('shows the mapped sentence for a refused passkey attempt, not the code', async () => {
       mockMapApiErrorCode.mockReturnValue('That did not work. Try again.')
       const wrapper = mount(LoginView, {
