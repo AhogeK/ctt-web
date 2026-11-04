@@ -24,6 +24,7 @@ import { extractErrorCode, isApiError, mapApiErrorCode } from '@/lib/utils/api-e
 import { useDisableTwoFactor, useRegenerateRecoveryCodes } from '../composables/useTwoFactor'
 import { useDismissalGuard } from './use-dismissal-guard'
 import RecoveryCodesPanel from './RecoveryCodesPanel.vue'
+import { markFailureReported } from '@/lib/utils/operation-failure'
 
 const props = defineProps<{
   /** Which second-factor action this dialog confirms. */
@@ -87,6 +88,7 @@ async function submit(): Promise<void> {
 
     codes.value = await regenerateMutation.mutateAsync(credentialOf(credential.value))
   } catch (error) {
+    markFailureReported(error)
     const code = extractErrorCode(error)
     if (code === 'AUTH_027') {
       errorMessage.value = t('settings.twoFactor.setup.invalidCode')

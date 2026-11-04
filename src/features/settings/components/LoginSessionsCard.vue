@@ -37,6 +37,7 @@ import { parseUserAgent } from '@/lib/utils/user-agent'
 import { useAuthStore } from '@/stores/auth'
 import type { LoginSession } from '@/lib/api'
 import { useLoginSessions, useRevokeLoginSession, useRevokeLoginSessions } from '../composables/useLoginSessions'
+import { markFailureReported } from '@/lib/utils/operation-failure'
 
 const { t } = useI18n()
 const authStore = useAuthStore()
@@ -194,6 +195,7 @@ async function confirmRevoke(): Promise<void> {
     }
     toast.success(t('settings.security.sessions.revoked'))
   } catch (error) {
+    markFailureReported(error)
     target.value = null
     // A 401 means the session behind this request is gone — the interceptor has already cleared
     // it and redirected. Its message table belongs to the reset-link flow, so mapping the code
@@ -309,6 +311,7 @@ async function confirmBulkRevoke(): Promise<void> {
           : undefined,
     })
   } catch (error) {
+    markFailureReported(error)
     bulkTarget.value = null
     // A 401 is the interceptor's; its message table belongs to the reset-link flow.
     if (isApiError(error) && error.statusCode === 401) return

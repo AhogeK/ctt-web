@@ -47,6 +47,7 @@ import { toast } from 'vue-sonner'
 import { cn } from '@/lib/utils'
 import { extractErrorCode, getErrorMessage } from '@/lib/utils/api-error'
 import { PASSWORD_MISMATCH_CODE, useDeleteAccount } from '../composables/useDeleteAccount'
+import { markFailureReported } from '@/lib/utils/operation-failure'
 
 const props = defineProps<{
   /** Whether the dialog is open */
@@ -119,6 +120,7 @@ const showPassword = ref(false)
 const onSubmit = form.handleSubmit((values) => {
   mutation.mutate(props.hasPassword ? (values.password ?? '') : null, {
     onError: (error: unknown) => {
+      markFailureReported(error)
       const code = extractErrorCode(error)
       if (code === PASSWORD_MISMATCH_CODE) {
         form.setFieldError('password', t('settings.deleteAccount.wrongPassword'))

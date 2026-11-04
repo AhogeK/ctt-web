@@ -11,6 +11,7 @@ import { i18n, initI18n, syncLocaleAcrossTabs } from './i18n'
 import { Toaster } from '@/components/ui/sonner'
 import { UNAUTHORIZED_EVENT } from '@/lib/api/instance'
 import { vueQueryOptions } from '@/lib/query'
+import { reportOperationFailure } from '@/lib/utils/operation-failure'
 import { useAuthStore } from '@/stores/auth'
 import { RouteNames } from '@/router/route-names'
 
@@ -41,6 +42,9 @@ function handleVueError(err: unknown, instance: unknown, info: string): void {
 function handleUnhandledRejection(event: PromiseRejectionEvent): void {
   // TODO: Integrate with Sentry/Datadog for production error tracking
   console.error('[Unhandled Promise Rejection]', event.reason)
+  // Last resort: a click that fired a request whose promise nobody awaited must not end in silence.
+  // The reporter itself stays quiet for cancellations and for errors some site already explained.
+  reportOperationFailure(event.reason)
   event.preventDefault()
 }
 
