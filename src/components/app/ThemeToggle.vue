@@ -1,8 +1,8 @@
 <script setup lang="ts">
 import { computed } from 'vue'
+import { Monitor, Moon, Sun } from '@lucide/vue'
 import { useI18n } from 'vue-i18n'
 import { useThemeStore, type ThemeMode } from '@/stores/theme'
-import { Icon } from '@iconify/vue'
 
 /**
  * Theme toggle, shared by the auth and marketing shells.
@@ -39,16 +39,6 @@ const currentModeLabel = computed(() => {
 })
 
 /** Icon name to display based on current theme mode */
-const currentIcon = computed(() => {
-  switch (themeStore.mode) {
-    case 'dark':
-      return 'lucide:moon'
-    case 'light':
-      return 'lucide:sun'
-    default:
-      return 'lucide:monitor'
-  }
-})
 
 /** Cycle through theme modes: auto → dark → light → auto */
 function cycleTheme(): void {
@@ -70,6 +60,8 @@ function cycleTheme(): void {
     :aria-label="t('theme.currentAria', { mode: currentModeLabel })"
     @click="cycleTheme"
   >
-    <Icon :icon="currentIcon" class="size-4.5 shrink-0" />
+    <Moon v-if="themeStore.mode === 'dark'" class="size-4.5 shrink-0" />
+    <Sun v-else-if="themeStore.mode === 'light'" class="size-4.5 shrink-0" />
+    <Monitor v-else class="size-4.5 shrink-0" />
   </button>
 </template>

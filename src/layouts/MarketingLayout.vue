@@ -26,7 +26,7 @@
 import { computed } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { RouterLink } from 'vue-router'
-import { Icon } from '@iconify/vue'
+import GithubMark from '@/components/app/GithubMark.vue'
 import { Button } from '@/components/ui/button'
 import ErrorBoundary from '@/components/app/ErrorBoundary.vue'
 import ThemeToggle from '@/components/app/ThemeToggle.vue'
@@ -99,7 +99,7 @@ const cta = computed(() =>
                   data-testid="marketing-source"
                   @click.prevent
                 >
-                  <Icon icon="mdi:github" class="size-[18px]" />
+                  <GithubMark class="size-[18px]" />
                 </a>
               </Button>
             </SourceReposDialog>
@@ -142,7 +142,7 @@ const cta = computed(() =>
               rel="noopener noreferrer"
               class="group inline-flex items-center gap-2 transition-colors hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
             >
-              <Icon icon="mdi:github" class="size-4 shrink-0" />
+              <GithubMark class="size-4 shrink-0" />
               <span class="font-medium text-foreground/90 group-hover:text-foreground">{{ repo.name }}</span>
               <span class="hidden text-muted-foreground lg:inline">— {{ t(repo.roleKey) }}</span>
             </a>
