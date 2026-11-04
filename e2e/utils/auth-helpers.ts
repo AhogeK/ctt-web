@@ -222,7 +222,8 @@ export async function clickLogout(page: Page): Promise<void> {
  * Read the live Pinia auth store from the running Vue app.
  *
  * Returns the store object so callers can inspect any of its reactive
- * properties (accessToken, refreshToken, isAuthenticated, …).
+ * properties (accessToken, userId, isAuthenticated, …). A refresh token is not among them: it
+ * lives in an httpOnly cookie the page cannot read.
  *
  * Falls back to `null` if the internal Pinia API is not reachable
  * (e.g. across Vue version changes) — callers must handle the null case.
@@ -230,7 +231,6 @@ export async function clickLogout(page: Page): Promise<void> {
 export async function readAuthStore(page: Page): Promise<{
   isAuthenticated: boolean
   accessToken: string | null
-  refreshToken: string | null
   userId: string | null
 } | null> {
   return page.evaluate(() => {
@@ -245,7 +245,6 @@ export async function readAuthStore(page: Page): Promise<{
                   {
                     isAuthenticated: boolean
                     accessToken: string | null
-                    refreshToken: string | null
                     userId: string | null
                   }
                 >
@@ -259,7 +258,6 @@ export async function readAuthStore(page: Page): Promise<{
     return {
       isAuthenticated: store.isAuthenticated,
       accessToken: store.accessToken,
-      refreshToken: store.refreshToken,
       userId: store.userId,
     }
   })

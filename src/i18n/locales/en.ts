@@ -50,6 +50,7 @@ const en = {
     chunkLoadFailed: 'Failed to load the page. Please try again.',
     retry: 'Retry',
     termsRequired: 'You must accept the Terms of Service to continue',
+    framedWarning: 'This page cannot be shown inside another site. Open it in its own tab.',
     errorTitle: 'Component Render Error',
     errorBody: 'Please refresh the page or contact administrator',
     errorDetails: 'Error Details (Development Mode Only)',
@@ -332,8 +333,6 @@ const en = {
     errors: {
       alreadySentWithin: 'Verification email already sent within 10 minutes',
       tooManyRequests: 'Too many requests',
-      alreadyVerified: 'Email already verified',
-      proceedToLogin: 'Please proceed to login',
       failedResend: 'Failed to resend verification email',
       waitSeconds: 'Please wait {seconds} seconds before trying again',
       loginFailed: 'Login failed',
@@ -342,6 +341,8 @@ const en = {
       githubLoginFailed: 'GitHub login failed',
       githubAuthorizeFailed: 'Unable to start GitHub authorization. Please try again.',
       oauthLoginFailed: 'OAuth login failed',
+      oauthNotStarted:
+        'Start the GitHub sign-in from this browser tab. A link that arrives on its own is never accepted.',
       missingTokens: 'Missing authentication tokens',
       verificationEmailSent: 'Verification email sent',
       checkInbox: 'Please check your inbox',

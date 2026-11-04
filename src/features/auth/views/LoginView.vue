@@ -6,6 +6,7 @@ import { useMutation } from '@tanstack/vue-query'
 import { useAuthStore } from '@/stores/auth'
 import { RouteNames } from '@/router/route-names'
 import { redirectQueryOf, resolvePostAuthTarget } from '@/router/post-auth-redirect'
+import { markOAuthFlowStarted } from '@/lib/utils/oauth-flow'
 import { isApiError, mapApiErrorCode } from '@/lib/utils/api-error'
 import type { LoginResponse } from '@/lib/schemas/auth.schema'
 import { useCooldown } from '@/composables/useCooldown'
@@ -173,6 +174,8 @@ const githubMutation = useMutation({
     if (typeof redirect === 'string' && redirect) {
       sessionStorage.setItem('oauth_redirect', redirect)
     }
+    // The callback refuses tokens that arrive in a tab which never left for the provider.
+    markOAuthFlowStarted()
     globalThis.location.href = data.authUrl
   },
   onError: () => {

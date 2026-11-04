@@ -100,6 +100,8 @@ function resetMocks(): void {
   routeQueryState.value = {}
   routePathState.value = '/oauth/callback'
   sessionStorage.clear()
+  // A real hand-off comes back into the tab that left for the provider; the view refuses it otherwise.
+  sessionStorage.setItem('ctt.oauth-flow', '1')
 }
 
 // ==========================================
@@ -110,13 +112,47 @@ describe('OAuthCallbackView', () => {
   beforeEach(() => {
     resetMocks()
 
-    // Restore history.replaceState default mock (vi.clearAllMocks clears it)
-    vi.spyOn(window.history, 'replaceState').mockImplementation(mockHistoryReplaceState)
+    // Restore history.replaceState default mock (vi.clearAllMocks clears it). It also clears the
+    // fragment like the real one, so a wipe that runs before the challenge is read is caught.
+    vi.spyOn(window.history, 'replaceState').mockImplementation((...args: Parameters<History['replaceState']>) => {
+      mockHistoryReplaceState(...args)
+      window.location.hash = ''
+    })
+  })
+
+  describe('A hand-off this tab never started', () => {
+    it('refuses tokens from a link and sends the reader back to the sign-in page', async () => {
+      setQuery({ accessToken: 'attacker-access', refreshToken: 'attacker-refresh' })
+      sessionStorage.clear()
+
+      const wrapper = mount(OAuthCallbackView)
+      await wrapper.vm.$nextTick()
+
+      // Accepting them would silently switch the reader into whoever sent the link.
+      expect(mockLoginWithOAuth).not.toHaveBeenCalled()
+      expect(mockReplace).toHaveBeenCalledWith({ name: 'login' })
+      // The tokens never stay in the address bar either.
+      expect(mockHistoryReplaceState).toHaveBeenCalledWith(null, '', '/oauth/callback')
+      expect(mockToastError).toHaveBeenCalledTimes(1)
+    })
+
+    it('refuses a second-step fragment that arrived without an in-app start', async () => {
+      setQuery({ twoFactorRequired: 'true' })
+      sessionStorage.clear()
+      window.location.hash = '#challengeToken=abc&expiresIn=300'
+
+      const wrapper = mount(OAuthCallbackView)
+      await wrapper.vm.$nextTick()
+
+      expect(mockSetTwoFactorChallenge).not.toHaveBeenCalled()
+      expect(mockReplace).toHaveBeenCalledWith({ name: 'login' })
+      window.location.hash = ''
+    })
   })
 
   describe('Happy path', () => {
     it('calls loginWithOAuth and redirects to dashboard when accessToken + refreshToken present', async () => {
-      setQuery({ accessToken: 'access-123', refreshToken: 'refresh-456' })
+      setQuery({ accessToken: 'access-123' })
 
       const wrapper = mount(OAuthCallbackView)
       await wrapper.vm.$nextTick()
@@ -124,7 +160,6 @@ describe('OAuthCallbackView', () => {
       expect(mockLoginWithOAuth).toHaveBeenCalledTimes(1)
       expect(mockLoginWithOAuth).toHaveBeenCalledWith({
         accessToken: 'access-123',
-        refreshToken: 'refresh-456',
         termsExpired: false,
       })
       expect(mockReplace).toHaveBeenCalledTimes(1)
@@ -232,23 +267,21 @@ describe('OAuthCallbackView', () => {
       expect(mockReplace).toHaveBeenCalledTimes(1)
       expect(mockReplace).toHaveBeenCalledWith({ name: 'login' })
       expect(mockLoginWithOAuth).not.toHaveBeenCalled()
-      expect(mockHistoryReplaceState).not.toHaveBeenCalled()
+      // The query comes off the URL before the tokens are even read.
+      expect(mockHistoryReplaceState).toHaveBeenCalledTimes(1)
     })
 
-    it('shows toast error and redirects to login when refreshToken is missing', async () => {
+    it('signs the reader in from the access token alone, the cookie carrying the rest', async () => {
       setQuery({ accessToken: 'access-123' })
 
       const wrapper = mount(OAuthCallbackView)
       await wrapper.vm.$nextTick()
 
-      expect(mockToastError).toHaveBeenCalledTimes(1)
-      expect(mockToastError).toHaveBeenCalledWith('OAuth login failed', {
-        description: 'Missing authentication tokens',
-      })
-      expect(mockReplace).toHaveBeenCalledTimes(1)
-      expect(mockReplace).toHaveBeenCalledWith({ name: 'login' })
-      expect(mockLoginWithOAuth).not.toHaveBeenCalled()
-      expect(mockHistoryReplaceState).not.toHaveBeenCalled()
+      // Nothing else is required: the refresh token arrived as an httpOnly cookie on the same
+      // response, which is why the URL of this flow never carries one.
+      expect(mockLoginWithOAuth).toHaveBeenCalledWith({ accessToken: 'access-123', termsExpired: false })
+      expect(mockToastError).not.toHaveBeenCalled()
+      expect(mockReplace).toHaveBeenCalledWith({ name: 'dashboard' })
     })
 
     it('shows toast error and redirects to login when both tokens are missing', async () => {
@@ -276,7 +309,6 @@ describe('OAuthCallbackView', () => {
 
       expect(mockLoginWithOAuth).toHaveBeenCalledWith({
         accessToken: 'access-123',
-        refreshToken: 'refresh-456',
         termsExpired: true,
       })
       expect(mockReplace).not.toHaveBeenCalled()
@@ -295,7 +327,6 @@ describe('OAuthCallbackView', () => {
 
       expect(mockLoginWithOAuth).toHaveBeenCalledWith({
         accessToken: 'access-123',
-        refreshToken: 'refresh-456',
         termsExpired: false,
       })
       expect(mockReplace).toHaveBeenCalledWith({ name: 'dashboard' })
@@ -429,13 +460,15 @@ describe('OAuthCallbackView', () => {
       expect(mockHistoryReplaceState).toHaveBeenCalledWith(null, '', '/oauth/callback')
     })
 
-    it('does NOT call history.replaceState when tokens are missing', async () => {
+    it('still wipes the query when tokens are missing', async () => {
       setQuery({ redirect: '/settings' })
 
       const wrapper = mount(OAuthCallbackView)
       await wrapper.vm.$nextTick()
 
-      expect(mockHistoryReplaceState).not.toHaveBeenCalled()
+      // Whatever the callback URL carries comes off it first: history keeps a query for later readers.
+      expect(mockHistoryReplaceState).toHaveBeenCalledTimes(1)
+      expect(mockHistoryReplaceState).toHaveBeenCalledWith(null, '', '/oauth/callback')
     })
   })
 })

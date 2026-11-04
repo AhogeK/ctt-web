@@ -70,12 +70,12 @@ describe('Auth Store', () => {
   describe('initialization', () => {
     it('initializes with null values when no stored data', () => {
       expect(store.accessToken).toBeNull()
-      expect(store.refreshToken).toBeNull()
+      expect(localStorage.getItem(STORAGE_KEYS.REFRESH_TOKEN)).toBeNull()
       expect(store.userId).toBeNull()
       expect(store.isAuthenticated).toBe(false)
     })
 
-    it('restores tokens from localStorage on initialization', () => {
+    it('restores the access token and drops a refresh token an older build stored', () => {
       localStorage.setItem(STORAGE_KEYS.ACCESS_TOKEN, 'test-token')
       localStorage.setItem(STORAGE_KEYS.REFRESH_TOKEN, 'test-refresh')
       localStorage.setItem(STORAGE_KEYS.USER_ID, 'user-123')
@@ -85,8 +85,9 @@ describe('Auth Store', () => {
       const newStore = useAuthStore()
 
       expect(newStore.accessToken).toBe('test-token')
-      expect(newStore.refreshToken).toBe('test-refresh')
       expect(newStore.userId).toBe('user-123')
+      // The refresh token belongs to an httpOnly cookie now; a leftover copy is a readable credential.
+      expect(localStorage.getItem(STORAGE_KEYS.REFRESH_TOKEN)).toBeNull()
     })
   })
 
@@ -107,7 +108,7 @@ describe('Auth Store', () => {
       store.setAuth(mockResponse)
 
       expect(store.accessToken).toBe('new-token')
-      expect(store.refreshToken).toBe('new-refresh')
+      expect(localStorage.getItem(STORAGE_KEYS.REFRESH_TOKEN)).toBeNull()
       expect(store.userId).toBe('user-456')
       expect(store.tokenExpiry).toBeDefined()
     })
@@ -128,6 +129,129 @@ describe('Auth Store', () => {
 
       expect(store.tokenExpiry).toBeGreaterThan(beforeExpiry)
       expect(store.tokenExpiry).toBeLessThanOrEqual(afterExpiry)
+    })
+  })
+
+  /**
+   * A refresh can outlive the session it belongs to; whatever it returns must not bring that
+   * session back, and a reply for another account is not a token for this one.
+   */
+  describe('refreshAccessToken', () => {
+    /** A JWT-shaped token whose payload carries the claims the store reads. */
+    function tokenFor(userId: string, expiresIn: number): string {
+      const payload = btoa(JSON.stringify({ sub: userId, exp: Math.floor(Date.now() / 1000) + expiresIn }))
+        .replace(/\+/g, '-')
+        .replace(/\//g, '_')
+        .replace(/=+$/, '')
+      return `header.${payload}.signature`
+    }
+
+    it('does not restore a session that ended while the refresh was in flight', async () => {
+      store.setAuth({
+        accessToken: tokenFor('user-1', 900),
+        refreshToken: 'refresh-1',
+        userId: 'user-1',
+        expiresIn: 900,
+        tokenType: 'Bearer',
+        termsExpired: false,
+      })
+
+      let resolveRefresh: (value: unknown) => void = () => {}
+      vi.mocked(authApi.refresh).mockReturnValue(
+        new Promise((resolve) => {
+          resolveRefresh = resolve
+        }) as never,
+      )
+
+      const inFlight = store.refreshAccessToken()
+      store.clearAuth()
+      resolveRefresh({
+        accessToken: tokenFor('user-1', 900),
+        refreshToken: 'refresh-2',
+        termsExpired: false,
+      })
+      await inFlight
+
+      // Signing out is final for this tab: the reply belongs to a session that no longer exists.
+      expect(store.accessToken).toBeNull()
+      expect(localStorage.getItem(STORAGE_KEYS.REFRESH_TOKEN)).toBeNull()
+    })
+
+    it('refuses a refresh that answers with a token for another account', async () => {
+      store.setAuth({
+        accessToken: tokenFor('user-1', 900),
+        refreshToken: 'refresh-1',
+        userId: 'user-1',
+        expiresIn: 900,
+        tokenType: 'Bearer',
+        termsExpired: false,
+      })
+      vi.mocked(authApi.refresh).mockResolvedValue({
+        accessToken: tokenFor('user-2', 900),
+        refreshToken: 'refresh-2',
+        termsExpired: false,
+      } as never)
+
+      await expect(store.refreshAccessToken()).rejects.toThrow('different account')
+
+      expect(store.accessToken).toBeNull()
+      expect(store.userId).toBeNull()
+    })
+
+    it('refreshes under the cross-tab lock, so two tabs never spend the token at once', async () => {
+      store.setAuth({
+        accessToken: tokenFor('user-1', 900),
+        refreshToken: 'unused',
+        userId: 'user-1',
+        expiresIn: 900,
+        tokenType: 'Bearer',
+        termsExpired: false,
+      })
+      vi.mocked(authApi.refresh).mockResolvedValue({
+        accessToken: tokenFor('user-1', 900),
+        refreshToken: 'unused',
+        userId: 'user-1',
+        expiresIn: 900,
+        tokenType: 'Bearer',
+        termsExpired: false,
+      })
+
+      const requested: string[] = []
+      vi.stubGlobal('navigator', {
+        locks: {
+          request: async (name: string, callback: () => Promise<unknown>) => {
+            requested.push(name)
+            return await callback()
+          },
+        },
+      })
+
+      await store.refreshAccessToken()
+      vi.unstubAllGlobals()
+
+      // The token is single use: a second tab spending it is a replay the server answers by
+      // revoking every session the account has.
+      expect(requested).toEqual(['ctt-refresh'])
+    })
+
+    it('moves the expiry forward so a refreshed token is not treated as expired', async () => {
+      store.setAuth({
+        accessToken: tokenFor('user-1', 60),
+        refreshToken: 'refresh-1',
+        userId: 'user-1',
+        expiresIn: 60,
+        tokenType: 'Bearer',
+        termsExpired: false,
+      })
+      vi.mocked(authApi.refresh).mockResolvedValue({
+        accessToken: tokenFor('user-1', 3600),
+        refreshToken: 'refresh-2',
+        termsExpired: false,
+      } as never)
+
+      await store.refreshAccessToken()
+
+      expect(store.tokenExpiry).toBeGreaterThan(Date.now() + 3000 * 1000)
     })
   })
 
@@ -167,7 +291,7 @@ describe('Auth Store', () => {
       store.clearAuth()
 
       expect(store.accessToken).toBeNull()
-      expect(store.refreshToken).toBeNull()
+      expect(localStorage.getItem(STORAGE_KEYS.REFRESH_TOKEN)).toBeNull()
       expect(store.userId).toBeNull()
       expect(store.tokenExpiry).toBeNull()
     })
@@ -185,7 +309,7 @@ describe('Auth Store', () => {
       store.clearAuth()
 
       expect(store.accessToken).toBeNull()
-      expect(store.refreshToken).toBeNull()
+      expect(localStorage.getItem(STORAGE_KEYS.REFRESH_TOKEN)).toBeNull()
       expect(store.userId).toBeNull()
     })
 
@@ -325,18 +449,19 @@ describe('Auth Store', () => {
   })
 
   describe('initializeAuth', () => {
-    it('returns false when no refresh token exists', async () => {
-      localStorage.removeItem(STORAGE_KEYS.REFRESH_TOKEN)
+    it('does not ask the server when this browser never had a session', async () => {
       setActivePinia(createPinia())
       store = useAuthStore()
 
       const result = await store.initializeAuth()
 
+      // The cookie cannot be inspected, so the stored access token is what says a session may exist.
       expect(result).toBe(false)
+      expect(authApi.refresh).not.toHaveBeenCalled()
     })
 
-    it('returns true when refresh succeeds', async () => {
-      localStorage.setItem(STORAGE_KEYS.REFRESH_TOKEN, 'valid-refresh-token')
+    it('exchanges the cookie for a new access token on a returning visit', async () => {
+      localStorage.setItem(STORAGE_KEYS.ACCESS_TOKEN, 'stale-access-token')
       setActivePinia(createPinia())
       store = useAuthStore()
 
@@ -353,11 +478,11 @@ describe('Auth Store', () => {
 
       expect(result).toBe(true)
       expect(store.accessToken).toBe('new-access-token')
-      expect(store.refreshToken).toBe('new-refresh-token')
+      expect(localStorage.getItem(STORAGE_KEYS.REFRESH_TOKEN)).toBeNull()
     })
 
-    it('returns false and clears auth when refresh fails', async () => {
-      localStorage.setItem(STORAGE_KEYS.REFRESH_TOKEN, 'invalid-refresh-token')
+    it('returns false and clears auth when the cookie is gone', async () => {
+      localStorage.setItem(STORAGE_KEYS.ACCESS_TOKEN, 'stale-access-token')
       setActivePinia(createPinia())
       store = useAuthStore()
 
@@ -367,8 +492,30 @@ describe('Auth Store', () => {
 
       expect(result).toBe(false)
       expect(store.accessToken).toBeNull()
-      expect(store.refreshToken).toBeNull()
       expect(store.userId).toBeNull()
+    })
+
+    it('keeps the session when the refresh is only rate limited', async () => {
+      localStorage.setItem(STORAGE_KEYS.ACCESS_TOKEN, 'stale-access-token')
+      setActivePinia(createPinia())
+      store = useAuthStore()
+      store.setAuth({
+        accessToken: 'stale-access-token',
+        refreshToken: 'unused',
+        userId: 'user-id',
+        expiresIn: 3600,
+        tokenType: 'Bearer',
+        termsExpired: false,
+      })
+
+      vi.mocked(authApi.refresh).mockRejectedValue({
+        statusCode: 429,
+        data: { code: 'RATE_LIMIT_001' },
+      })
+
+      // A throttled refresh is not a dead session: the store waits instead of ejecting the reader.
+      await expect(store.refreshAccessToken()).rejects.toBeDefined()
+      expect(store.accessToken).toBe('stale-access-token')
     })
   })
 
@@ -512,7 +659,7 @@ describe('Auth Store', () => {
       })
 
       expect(store.accessToken).toBe('new-access-token')
-      expect(store.refreshToken).toBe('new-refresh-token')
+      expect(localStorage.getItem(STORAGE_KEYS.REFRESH_TOKEN)).toBeNull()
       expect(store.userId).toBe('new-user-id')
       expect(store.isAuthenticated).toBe(true)
     })
@@ -566,7 +713,7 @@ describe('Auth Store', () => {
       })
 
       expect(store.accessToken).toBe('test-access-token')
-      expect(store.refreshToken).toBe('test-refresh-token')
+      expect(localStorage.getItem(STORAGE_KEYS.REFRESH_TOKEN)).toBeNull()
       expect(store.userId).toBe('user-id')
       expect(store.isAuthenticated).toBe(true)
     })

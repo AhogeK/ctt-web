@@ -11,7 +11,7 @@ import {
   type LoginResult,
 } from '@/lib/api/auth'
 import { LoginChallengeSchema, type LoginChallenge, type LoginChallengeInput } from '@/lib/schemas/two-factor.schema'
-import { extractErrorCode } from '@/lib/utils/api-error'
+import { extractErrorCode, getRetryAfterSeconds, isApiError } from '@/lib/utils/api-error'
 import { fetchCurrentUser, type UserProfile } from '@/lib/api/user'
 import { TERMS_EXPIRED_EVENT } from '@/lib/api/instance'
 import type { LoginRequest, LoginResponse, AuthResponse } from '@/lib/schemas/auth.schema'
@@ -21,18 +21,36 @@ import router from '@/router'
 import { RouteNames } from '@/router/route-names'
 
 /**
+ * Reads the payload of a JWT access token.
+ *
+ * Structure: header.payload.signature, with `exp` in seconds and `sub` carrying the account id.
+ *
+ * @param token - JWT access token
+ * @returns The decoded payload, or null when the token is not a readable JWT
+ */
+function decodeJwtPayload(token: string): Record<string, unknown> | null {
+  try {
+    const payload = token.split('.')[1]
+    if (!payload) return null
+    // JWT uses base64url: the two substituted characters make `atob` throw, and padding is stripped.
+    const normalized = payload.replace(/-/g, '+').replace(/_/g, '/')
+    const decoded: unknown = JSON.parse(atob(normalized.padEnd(Math.ceil(normalized.length / 4) * 4, '=')))
+    return typeof decoded === 'object' && decoded !== null ? (decoded as Record<string, unknown>) : null
+  } catch {
+    return null
+  }
+}
+
+/**
  * Decodes a JWT access token to extract the expiry timestamp.
- * JWT structure: header.payload.signature
- * Payload contains 'exp' field (Unix timestamp in seconds).
  *
  * @param token - JWT access token
  * @returns Expiry timestamp in milliseconds, or null if decoding fails
  */
 function decodeJwtExpiry(token: string): number | null {
   try {
-    const payload = token.split('.')[1]
-    if (!payload) return null
-    const decoded = JSON.parse(atob(payload))
+    const decoded = decodeJwtPayload(token)
+    if (!decoded) return null
     if (typeof decoded.exp !== 'number') return null
     return decoded.exp * 1000 // Convert seconds to milliseconds
   } catch {
@@ -48,25 +66,96 @@ function decodeJwtExpiry(token: string): number | null {
  * @returns User ID string, or null if decoding fails
  */
 function decodeJwtUserId(token: string): string | null {
-  try {
-    const payload = token.split('.')[1]
-    if (!payload) return null
-    const decoded = JSON.parse(atob(payload))
-    if (typeof decoded.sub !== 'string') return null
-    return decoded.sub
-  } catch {
-    return null
-  }
+  const decoded = decodeJwtPayload(token)
+  return typeof decoded?.sub === 'string' ? decoded.sub : null
 }
 
 // Promise lock to prevent concurrent refresh requests (Thundering Herd)
 let activeRefreshPromise: Promise<string> | null = null
+
+/**
+ * Bumped whenever the session is established or ended.
+ *
+ * A refresh that started under an older value must not write its tokens back: signing out while
+ * one is in flight would otherwise restore the previous account's session in the same tab.
+ */
+let sessionEpoch = 0
 
 // Promise lock to prevent concurrent profile fetch requests
 let activeProfileFetchPromise: Promise<UserProfile | null> | null = null
 
 // Timer ID for scheduled silent token refresh
 let refreshTimerId: ReturnType<typeof setTimeout> | null = null
+
+/** Lock name shared by every tab of this origin. */
+const REFRESH_LOCK = 'ctt-refresh'
+
+/**
+ * Storage key for "this browser signed in at some point".
+ *
+ * Not a credential: a single flag, so a cookie-only visit can still be recognised as a returning
+ * one after the access token was cleared or evicted. Removed with the session.
+ */
+const SESSION_HINT_KEY = 'ctt_session'
+
+/**
+ * Whether this browser may still hold a session.
+ *
+ * @returns true when a previous sign-in left its mark
+ */
+function hasSessionHint(): boolean {
+  try {
+    return globalThis.localStorage?.getItem(SESSION_HINT_KEY) === '1'
+  } catch {
+    return false
+  }
+}
+
+/** Records that this browser now holds a session, so a cookie-only load can resume it. */
+function rememberSessionHint(): void {
+  try {
+    globalThis.localStorage?.setItem(SESSION_HINT_KEY, '1')
+  } catch {
+    // Storage refused: the next load simply needs the access token instead.
+  }
+}
+
+/** Drops the hint along with the session it describes. */
+function forgetSessionHint(): void {
+  try {
+    globalThis.localStorage?.removeItem(SESSION_HINT_KEY)
+  } catch {
+    // Nothing to clean up when storage is unavailable.
+  }
+}
+
+/**
+ * Whether a refusal is the server's rate limit rather than a dead session.
+ *
+ * @param error - the rejection from the refresh call
+ * @returns true for `429`
+ */
+function isRateLimited(error: unknown): boolean {
+  return isApiError(error) && error.statusCode === 429
+}
+
+/**
+ * Runs a refresh with every tab of this origin taking turns.
+ *
+ * The refresh token is single use: if two tabs spend the same one, the server reads the second as a
+ * replay (`AUTH_009`) and revokes all of the account's sessions. `navigator.locks` serializes them,
+ * so the second tab waits and then refreshes with the cookie the first one rotated.
+ *
+ * @param work - the refresh request
+ * @returns whatever the request produced
+ */
+function withRefreshLock<T>(work: () => Promise<T>): Promise<T> {
+  const locks = globalThis.navigator?.locks
+  // Without the API this degrades to one refresh at a time per tab; the risk it leaves is a second
+  // tab spending an already-rotated token, which the server answers by ending the session.
+  if (!locks) return work()
+  return locks.request(REFRESH_LOCK, () => work())
+}
 
 /**
  * Clears the scheduled silent refresh timer if one exists.
@@ -109,8 +198,15 @@ export const SESSION_STORAGE_KEYS = {
  */
 export const useAuthStore = defineStore('auth', () => {
   const accessToken = useStorage<string | null>(STORAGE_KEYS.ACCESS_TOKEN, null)
-  const refreshToken = useStorage<string | null>(STORAGE_KEYS.REFRESH_TOKEN, null)
   const userId = useStorage<string | null>(STORAGE_KEYS.USER_ID, null)
+
+  // A copy of the refresh token used to live here. It is now only in an httpOnly cookie, so an
+  // older build's leftovers are a script-readable credential with no owner: delete on sight.
+  try {
+    globalThis.localStorage?.removeItem(STORAGE_KEYS.REFRESH_TOKEN)
+  } catch {
+    // Storage refused; there is nothing to clean up either.
+  }
 
   const tokenExpiry = ref<number | null>(null)
 
@@ -161,8 +257,9 @@ export const useAuthStore = defineStore('auth', () => {
    * Calculates expiry timestamp from expiresIn seconds.
    */
   function setAuth(response: LoginResponse): void {
+    sessionEpoch += 1
+    rememberSessionHint()
     accessToken.value = response.accessToken
-    refreshToken.value = response.refreshToken
     userId.value = response.userId
     tokenExpiry.value = Date.now() + response.expiresIn * 1000
     scheduleSilentRefresh()
@@ -175,8 +272,8 @@ export const useAuthStore = defineStore('auth', () => {
    * - Decode JWT to extract expiry, or use 1-hour default
    */
   function setAuthFromTermsAcceptance(response: AuthResponse): void {
+    rememberSessionHint()
     accessToken.value = response.accessToken
-    refreshToken.value = response.refreshToken
     // userId is already stored from initial login, keep it
     // Decode JWT to get expiry, fallback to 1 hour if decoding fails
     const expiryFromJwt = decodeJwtExpiry(response.accessToken)
@@ -190,10 +287,11 @@ export const useAuthStore = defineStore('auth', () => {
    * Resets all refs to null, effectively ending the session.
    */
   function clearAuth(): void {
+    sessionEpoch += 1
+    forgetSessionHint()
     clearRefreshTimer()
     pendingTwoFactor.value = null
     accessToken.value = null
-    refreshToken.value = null
     userId.value = null
     tokenExpiry.value = null
     // Reset profile fields so AppHeader and other consumers don't display stale data after logout
@@ -367,9 +465,10 @@ export const useAuthStore = defineStore('auth', () => {
    *
    * @param params - OAuth tokens from callback redirect URL
    */
-  function loginWithOAuth(params: { accessToken: string; refreshToken: string; termsExpired: boolean }): void {
+  function loginWithOAuth(params: { accessToken: string; termsExpired: boolean }): void {
+    sessionEpoch += 1
+    rememberSessionHint()
     accessToken.value = params.accessToken
-    refreshToken.value = params.refreshToken
     userId.value = decodeJwtUserId(params.accessToken)
     const expiryFromJwt = decodeJwtExpiry(params.accessToken)
     tokenExpiry.value = expiryFromJwt ?? Date.now() + 3600 * 1000
@@ -393,30 +492,35 @@ export const useAuthStore = defineStore('auth', () => {
    * the same new access token.
    *
    * @returns Promise resolving to the new access token
-   * @throws Error if no refresh token available or refresh API fails
+   * @throws The refresh failure itself: a dead cookie ends the session, a rate limit schedules a
+   * retry and leaves it in place
    */
   async function refreshAccessToken(): Promise<string> {
-    // Guard 1: No refresh token available, clear auth state
-    if (!refreshToken.value) {
-      clearAuth()
-      throw new Error('No refresh token available')
-    }
-
-    // Guard 2: If refresh is already in progress, wait for it to complete
-    // This prevents concurrent refresh requests (Thundering Herd)
+    // If refresh is already in progress, wait for it: one request serves every caller in this tab.
     if (activeRefreshPromise) {
       return activeRefreshPromise
     }
 
-    // Create the refresh promise and store it as a lock
     activeRefreshPromise = (async () => {
+      const epoch = sessionEpoch
       try {
-        // Safe to capture here because activeRefreshPromise lock prevents concurrent modifications
-        const currentRefreshToken = refreshToken.value!
-        const response = await refreshApi({ refreshToken: currentRefreshToken })
+        // Serialized across tabs: the token is single use, and two tabs refreshing at once make the
+        // server read the second one as a replay — which revokes every session the account has.
+        const response = await withRefreshLock(() => refreshApi())
 
-        accessToken.value = response.accessToken
-        refreshToken.value = response.refreshToken || currentRefreshToken
+        // A refresh for an account this tab is no longer signed in as is a stale reply, not a token.
+        const refreshedUserId = decodeJwtUserId(response.accessToken)
+        if (userId.value && refreshedUserId && refreshedUserId !== userId.value) {
+          clearAuth()
+          throw new Error('Refresh returned a token for a different account')
+        }
+
+        // The session ended while the request was in flight: answering it would resurrect it.
+        if (epoch === sessionEpoch) {
+          accessToken.value = response.accessToken
+          // Without this the store still reports the old expiry and bounces a valid session to login.
+          tokenExpiry.value = decodeJwtExpiry(response.accessToken) ?? tokenExpiry.value
+        }
 
         if (response.termsExpired) {
           globalThis.dispatchEvent(new CustomEvent(TERMS_EXPIRED_EVENT))
@@ -424,17 +528,40 @@ export const useAuthStore = defineStore('auth', () => {
 
         return response.accessToken
       } catch (error) {
-        // Refresh failed (token expired, blacklisted, or network error)
-        // Security: Fail fast and force re-login rather than retrying
+        // A rate limit is not a dead session: keep it and try again once the window allows. The
+        // server's wait is honoured when it sends one, and a minute is enough otherwise.
+        if (isRateLimited(error)) {
+          scheduleRefreshAfter(getRetryAfterSeconds(error) ?? 60)
+          throw error
+        }
+        // Everything else means the cookie is gone, dead, or replayed: fail closed and sign out.
         clearAuth()
         throw error
       } finally {
-        // Always release the lock after request completes
         activeRefreshPromise = null
       }
     })()
 
     return activeRefreshPromise
+  }
+
+  /**
+   * Retries a refresh after the server's rate-limit window instead of ending the session.
+   *
+   * @param seconds - the wait the server asked for
+   */
+  function scheduleRefreshAfter(seconds: number): void {
+    clearRefreshTimer()
+    refreshTimerId = setTimeout(
+      () => {
+        void refreshAccessToken()
+          .then(() => scheduleSilentRefresh())
+          .catch(() => {
+            // The next failure decides: this path only carries the rate limit forward.
+          })
+      },
+      Math.max(1, seconds) * 1000,
+    )
   }
 
   /**
@@ -450,7 +577,9 @@ export const useAuthStore = defineStore('auth', () => {
    * @returns Promise<boolean> - true if authenticated, false if should redirect to login
    */
   async function initializeAuth(): Promise<boolean> {
-    if (!refreshToken.value) {
+    // The refresh token is an httpOnly cookie, so the page cannot inspect it. A stored access token
+    // — or the hint left by a previous sign-in — is the evidence that this browser may hold one.
+    if (!accessToken.value && !hasSessionHint()) {
       return false
     }
 
@@ -458,7 +587,9 @@ export const useAuthStore = defineStore('auth', () => {
       await refreshAccessToken()
       return true
     } catch {
-      clearAuth()
+      // `refreshAccessToken` already ends the session for the dead-cookie cases. A throttled one
+      // must keep it: clearing here would spend the reader's session on a rate limit, and with the
+      // access token gone the next load would not even try.
       return false
     }
   }
@@ -476,7 +607,7 @@ export const useAuthStore = defineStore('auth', () => {
   function scheduleSilentRefresh(): void {
     clearRefreshTimer()
 
-    if (!refreshToken.value) return
+    if (!accessToken.value) return
     if (!tokenExpiry.value) return
 
     const timeToExpiry = tokenExpiry.value - Date.now()
@@ -489,8 +620,10 @@ export const useAuthStore = defineStore('auth', () => {
       try {
         await refreshAccessToken()
         scheduleSilentRefresh()
-      } catch {
-        clearRefreshTimer()
+      } catch (error) {
+        // The rate-limited path already queued its own retry; cancelling the timer here would
+        // delete it and leave the session with nothing scheduled.
+        if (!isRateLimited(error)) clearRefreshTimer()
       }
     }, delay)
   }
@@ -539,7 +672,6 @@ export const useAuthStore = defineStore('auth', () => {
 
   return {
     accessToken,
-    refreshToken,
     userId,
     tokenExpiry,
     deviceId,

@@ -66,13 +66,12 @@ test.describe('Logout flow', () => {
   test('login → click logout → clears localStorage tokens', async ({ page }) => {
     await loginViaForm(page)
 
-    // Pre-condition: tokens are present after login
+    // Pre-condition: the access token is stored, and the refresh token is not — it belongs to the
+    // httpOnly cookie, so a copy here would be a credential any script could read.
     await expect
       .poll(async () => page.evaluate((k) => localStorage.getItem(k), STORAGE_KEYS.ACCESS_TOKEN))
       .toBe(TEST_TOKENS.accessToken)
-    await expect
-      .poll(async () => page.evaluate((k) => localStorage.getItem(k), STORAGE_KEYS.REFRESH_TOKEN))
-      .toBe(TEST_TOKENS.refreshToken)
+    expect(await page.evaluate((k) => localStorage.getItem(k), STORAGE_KEYS.REFRESH_TOKEN)).toBeNull()
 
     await clickLogout(page)
     await page.waitForURL('**/auth/login', { timeout: 10_000 })
@@ -105,7 +104,6 @@ test.describe('Logout flow', () => {
     expect(storeAfter, 'auth store should still be reachable after logout').not.toBeNull()
     expect(storeAfter!.isAuthenticated, 'isAuthenticated should be false after logout').toBe(false)
     expect(storeAfter!.accessToken, 'accessToken should be cleared').toBeNull()
-    expect(storeAfter!.refreshToken, 'refreshToken should be cleared').toBeNull()
     expect(storeAfter!.userId, 'userId should be cleared').toBeNull()
 
     // And localStorage is cleared (defense in depth — the Pinia assertion

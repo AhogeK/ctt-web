@@ -2,7 +2,6 @@ export { apiFetch, type ApiFetchOptions } from './instance'
 export {
   login,
   loginWithTwoFactorCode,
-  logout,
   logoutAll,
   forgotPassword,
   confirmPasswordReset,
