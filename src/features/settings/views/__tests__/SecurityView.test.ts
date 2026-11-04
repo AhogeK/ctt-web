@@ -1,10 +1,14 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest'
-import { mount } from '@vue/test-utils'
 import { ref } from 'vue'
 import SecurityView from '../SecurityView.vue'
+import { mountWithQuery } from '@/test/mount-with-query'
 
 const freshness = vi.hoisted(() => ({ isKnown: true, isFresh: true }))
 const mockSignOutLocally = vi.hoisted(() => vi.fn<() => void>())
+const mockRevokeSession = vi.hoisted(() => vi.fn<(id: string) => Promise<void>>())
+const mockSessions = vi.hoisted(() => ({
+  value: [{ id: 'session-1', current: true }] as Array<{ id: string; current: boolean }>,
+}))
 const mockReplace = vi.hoisted(() => vi.fn<() => void>())
 
 // Keep the real exports: the stubbed cards are still imported, and some of them reach for router
@@ -15,6 +19,13 @@ vi.mock('vue-router', async (importOriginal) => ({
 }))
 vi.mock('@/stores/auth', () => ({ useAuthStore: () => ({ signOutLocally: mockSignOutLocally }) }))
 vi.mock('@/router/route-names', () => ({ RouteNames: { LOGIN: 'login' } }))
+vi.mock('@/lib/api', async (importOriginal) => ({
+  ...(await importOriginal<typeof import('@/lib/api')>()),
+  revokeLoginSession: mockRevokeSession,
+}))
+vi.mock('../../composables/useLoginSessions', () => ({
+  useLoginSessions: () => ({ sessions: ref(mockSessions.value), isPending: ref(false), isError: ref(false) }),
+}))
 vi.mock('../../composables/useRecentAuthentication', () => ({
   useRecentAuthentication: () => ({
     isKnown: ref(freshness.isKnown),
@@ -23,7 +34,7 @@ vi.mock('../../composables/useRecentAuthentication', () => ({
 }))
 
 function mountView() {
-  return mount(SecurityView, {
+  return mountWithQuery(SecurityView, {
     global: {
       stubs: {
         TwoFactorCard: true,
@@ -57,8 +68,22 @@ describe('SecurityView', () => {
     expect(wrapper.text()).toContain('recent sign-in')
   })
 
-  it('clears the session so the next sign-in is recent enough', async () => {
+  it('ends this session on the server, not only in the browser', async () => {
     freshness.isFresh = false
+    mockRevokeSession.mockResolvedValue(undefined)
+    const wrapper = mountView()
+
+    await wrapper.get('[data-testid="security-sign-in-again"]').trigger('click')
+
+    // A browser-only clear would leave a refresh token that keeps working.
+    expect(mockRevokeSession).toHaveBeenCalledWith('session-1')
+    expect(mockSignOutLocally).toHaveBeenCalledTimes(1)
+    expect(mockReplace).toHaveBeenCalledWith({ name: 'login', query: { redirect: '/settings/security' } })
+  })
+
+  it('still signs out locally when the server refuses to end the session', async () => {
+    freshness.isFresh = false
+    mockRevokeSession.mockRejectedValue(new Error('offline'))
     const wrapper = mountView()
 
     await wrapper.get('[data-testid="security-sign-in-again"]').trigger('click')

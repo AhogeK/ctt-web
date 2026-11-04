@@ -220,7 +220,13 @@ export async function downloadUserExport(): Promise<{ blob: Blob; filename: stri
 function attachmentFileName(header: string | null): string | null {
   if (!header) return null
   const match = /filename\*?=(?:UTF-8''|")?([^";]+)/i.exec(header)
-  return match ? decodeURIComponent(match[1]!.trim()) : null
+  if (!match) return null
+  try {
+    return decodeURIComponent(match[1]!.trim())
+  } catch {
+    // A header that is not valid percent-encoding must not cost the reader their export.
+    return match[1]!.trim()
+  }
 }
 
 /** The name to save an export under when the server sends none. */

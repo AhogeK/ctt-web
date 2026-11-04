@@ -265,17 +265,17 @@ export const apiFetch = ofetch.create({
         handleTerminalAuthError(errorCode)
         return
       }
-      console.warn('Permission denied:', response._data)
+      if (import.meta.env.DEV) console.warn('Permission denied:', response._data)
       return
     }
 
     if (response.status === 404) {
-      console.warn('Resource not found:', response._data)
+      if (import.meta.env.DEV) console.warn('Resource not found:', response._data)
       return
     }
 
     if (response.status >= 500) {
-      console.error('Server error:', response._data)
+      if (import.meta.env.DEV) console.error('Server error:', response._data)
     }
   },
 })

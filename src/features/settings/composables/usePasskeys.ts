@@ -76,7 +76,9 @@ export function useRegisterPasskey() {
               id: base64UrlToBytes(entry.id),
               transports: entry.transports as AuthenticatorTransport[] | undefined,
             })),
-            authenticatorSelection: {
+            // Whatever the server asked for: demanding more on the client would silently change
+            // the rule it set (and refuse authenticators it considered sufficient).
+            authenticatorSelection: options.authenticatorSelection ?? {
               residentKey: 'required',
               userVerification: 'required',
             },

@@ -13,7 +13,9 @@ import { Info } from '@lucide/vue'
 import { Button } from '@/components/ui/button'
 import { RouteNames } from '@/router/route-names'
 import { useAuthStore } from '@/stores/auth'
+import { useLoginSessions } from '../composables/useLoginSessions'
 import { useRecentAuthentication } from '../composables/useRecentAuthentication'
+import { revokeLoginSession } from '@/lib/api'
 import DataExportCard from '../components/DataExportCard.vue'
 import LoginSessionsCard from '../components/LoginSessionsCard.vue'
 import TwoFactorCard from '../components/TwoFactorCard.vue'
@@ -23,6 +25,7 @@ const { t } = useI18n()
 const router = useRouter()
 const authStore = useAuthStore()
 const { isKnown, isFresh } = useRecentAuthentication()
+const { sessions } = useLoginSessions()
 
 /**
  * Whether the page has to ask for a fresh sign-in.
@@ -32,8 +35,25 @@ const { isKnown, isFresh } = useRecentAuthentication()
  */
 const needsFreshSession = computed(() => isKnown.value && !isFresh.value)
 
-/** Drops this session so the next sign-in is recent enough for the server to accept the changes. */
-function signInAgain(): void {
+/**
+ * Ends this session — on the server as well as here — so the next sign-in is recent enough for the
+ * server to accept the changes.
+ *
+ * Clearing only the browser would leave a refresh token that keeps working: the reader would see a
+ * sign-in screen while the session behind it stayed alive.
+ */
+async function signInAgain(): Promise<void> {
+  const current = sessions.value?.find((entry) => entry.current)
+  try {
+    // Without a session id — the list is still loading, or failed — revoking every session is the
+    // only way to be sure the server side is gone; the local sign-out alone leaves the refresh
+    // cookie alive.
+    if (current) await revokeLoginSession(current.id)
+    else await authStore.logout()
+  } catch {
+    // The local sign-out below still ends the session here; a server-side failure must not trap the
+    // reader on a page whose controls all refuse.
+  }
   authStore.signOutLocally()
   void router.replace({ name: RouteNames.LOGIN, query: { redirect: '/settings/security' } })
 }

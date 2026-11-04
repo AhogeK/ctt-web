@@ -57,12 +57,17 @@ const { t } = useI18n()
 
 const API_KEY_LIMIT_REACHED = 'AUTH_024'
 
+/** The preset the dialog opens on: long enough for a plugin install, short enough to be revisited. */
+const DEFAULT_EXPIRY_DAYS = 90
+
 const form = useForm<{ name: string; scopes: ApiKeyScope[]; expiresAt?: string }>({
   validationSchema: toTypedSchema(CreateApiKeyRequestSchema),
+  // An expiry is the default: a key with none survives long after the machine that needed it, and
+  // nothing prompts anyone to look again. Ninety days matches the middle preset.
   initialValues: {
     name: '',
     scopes: ['READ', 'SYNC'],
-    expiresAt: undefined,
+    expiresAt: new Date(Date.now() + DEFAULT_EXPIRY_DAYS * 86_400_000).toISOString(),
   },
   // The scopes FormField only exists in Custom mode; switching back to
   // Recommended unmounts it, and vee-validate unregisters the field on
@@ -76,7 +81,7 @@ const scopeMode = ref<'recommended' | 'custom'>('recommended')
 /** Expiration input mode: preset durations or a custom date */
 const expiresMode = ref<'preset' | 'custom'>('preset')
 /** Currently selected preset duration in days (null when custom or never) */
-const selectedPresetDays = ref<number | null>(null)
+const selectedPresetDays = ref<number | null>(DEFAULT_EXPIRY_DAYS)
 /** Custom expiration date in YYYY-MM-DD (native date input) */
 const customExpiresDate = ref('')
 /**
@@ -127,7 +132,8 @@ function selectPresetExpiration(days: number) {
 
 function selectNeverExpires() {
   expiresMode.value = 'preset'
-  selectedPresetDays.value = null
+  // `resetForm` restores the 90-day default, so the highlight has to say the same thing.
+  selectedPresetDays.value = DEFAULT_EXPIRY_DAYS
   form.setFieldValue('expiresAt', undefined)
 }
 
@@ -278,7 +284,8 @@ function handleClose() {
   form.resetForm()
   scopeMode.value = 'recommended'
   expiresMode.value = 'preset'
-  selectedPresetDays.value = null
+  // `resetForm` restores the 90-day default, so the highlight has to say the same thing.
+  selectedPresetDays.value = DEFAULT_EXPIRY_DAYS
   customExpiresDate.value = ''
   emit('update:open', false)
 }

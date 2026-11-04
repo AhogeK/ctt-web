@@ -268,7 +268,7 @@ function transportLabel(passkey: Passkey): string {
             type="button"
             variant="outline"
             :class="SETTINGS_ACTION_BUTTON_CLASS"
-            :disabled="isBusy"
+            :disabled="isBusy || (isKnown && !isFresh)"
             data-testid="passkey-remove"
             @click="removeTarget = passkey"
           >

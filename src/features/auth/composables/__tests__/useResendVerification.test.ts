@@ -224,10 +224,13 @@ describe('useResendVerification', () => {
       const { resend, countdown } = useResendVerification()
       await resend(testEmail)
 
-      expect(toast.info).toHaveBeenCalledWith('Email already verified', {
-        description: 'Please proceed to login',
+      // The reply must not confirm whether that address is already verified: an anonymous caller
+      // would otherwise have an account oracle. It answers exactly as a real send does.
+      expect(toast.success).toHaveBeenCalledWith('Verification email sent', {
+        description: 'Please check your inbox',
       })
-      expect(countdown.value).toBe(0)
+      expect(toast.info).not.toHaveBeenCalled()
+      expect(countdown.value).toBe(60)
     })
 
     it('handles 409 non-USER_007 error as generic error', async () => {

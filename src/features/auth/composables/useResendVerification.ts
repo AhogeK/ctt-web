@@ -64,9 +64,12 @@ export function useResendVerification() {
           })
           startCountdown(retryAfter)
         } else if (error.statusCode === 409 && (error.data as { code?: string })?.code === 'USER_007') {
-          toast.info(t('auth.errors.alreadyVerified'), {
-            description: t('auth.errors.proceedToLogin'),
+          // The server knows whether that address is already verified; an unauthenticated caller
+          // must not learn it. Answer as if something was sent, so the reply is identical for both.
+          toast.success(t('auth.errors.verificationEmailSent'), {
+            description: t('auth.errors.checkInbox'),
           })
+          startCountdown(60)
         } else {
           toast.error(t('auth.errors.failedResend'), {
             description: t('auth.errors.tryAgainLater'),
