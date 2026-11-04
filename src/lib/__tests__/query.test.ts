@@ -42,53 +42,16 @@ describe('QueryClient Configuration', () => {
     })
   })
 
-  describe('Mutation Options', () => {
-    it('has mutation error handler', () => {
-      const defaultOptions = queryClient.getDefaultOptions()
-      expect(defaultOptions.mutations?.onError).toBeDefined()
+  describe('Mutation fallback', () => {
+    it('keeps the mutation defaults free of an error handler', () => {
+      // A default `onError` merges into every mutation's options, which is exactly what the
+      // fallback reads to decide whether a mutation already has its own handler. Defining one here
+      // would make every mutation look handled — and silence the fallback for all of them.
+      expect(queryClient.getDefaultOptions().mutations?.onError).toBeUndefined()
     })
 
-    it('mutation error handler logs to console', () => {
-      const consoleSpy = vi.spyOn(console, 'error').mockImplementation(vi.fn())
-
-      const defaultOptions = queryClient.getDefaultOptions()
-      const errorHandler = defaultOptions.mutations?.onError as (
-        error: Error,
-        variables: unknown,
-        context: unknown,
-        mutation: unknown,
-      ) => void
-
-      const mockError = new Error('Test mutation error')
-      const mockMutation = { state: { error: mockError } }
-
-      errorHandler(mockError, {}, undefined, mockMutation)
-
-      expect(consoleSpy).toHaveBeenCalledWith('[Mutation Error]:', mockError)
-      consoleSpy.mockRestore()
-    })
-
-    it('mutation error handler accepts various error types', () => {
-      const consoleSpy = vi.spyOn(console, 'error').mockImplementation(vi.fn())
-
-      const defaultOptions = queryClient.getDefaultOptions()
-      const errorHandler = defaultOptions.mutations?.onError as (
-        error: Error,
-        variables: unknown,
-        context: unknown,
-        mutation: unknown,
-      ) => void
-      const mockMutation = { state: {} }
-
-      const error1 = new Error('First error')
-      errorHandler(error1, {}, undefined, mockMutation)
-      expect(consoleSpy).toHaveBeenCalled()
-
-      const error2 = new Error('Second error')
-      errorHandler(error2, {}, undefined, mockMutation)
-      expect(consoleSpy).toHaveBeenCalledTimes(2)
-
-      consoleSpy.mockRestore()
+    it('installs the last-resort handler on the mutation cache', () => {
+      expect(typeof queryClient.getMutationCache().config.onError).toBe('function')
     })
   })
 

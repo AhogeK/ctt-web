@@ -48,6 +48,10 @@ const zhCN: Messages = {
   app: {
     loading: '正在加载…',
     chunkLoadFailed: '页面加载失败，请重试。',
+    failure: {
+      title: '这次操作没有完成',
+      body: '请再试一次；如果反复失败，请刷新页面。',
+    },
     retry: '重试',
     termsRequired: '你需要接受服务条款才能继续',
     framedWarning: '这个页面不能嵌在别的网站里打开，请单独在标签页中访问。',

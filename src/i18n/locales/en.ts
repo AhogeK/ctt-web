@@ -48,6 +48,10 @@ const en = {
   app: {
     loading: 'Loading…',
     chunkLoadFailed: 'Failed to load the page. Please try again.',
+    failure: {
+      title: 'That action did not go through',
+      body: 'Please try again. If it keeps failing, reload the page.',
+    },
     retry: 'Retry',
     termsRequired: 'You must accept the Terms of Service to continue',
     framedWarning: 'This page cannot be shown inside another site. Open it in its own tab.',

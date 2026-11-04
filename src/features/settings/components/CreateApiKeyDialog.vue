@@ -39,6 +39,7 @@ import {
 } from '@/lib/schemas/api-key.schema'
 import { extractErrorCode, getErrorMessage, getRetryAfterSeconds } from '@/lib/utils/api-error'
 import { useCreateApiKey } from '@/composables/useApiKeys'
+import { markFailureReported } from '@/lib/utils/operation-failure'
 
 const props = defineProps<{
   /** Whether the dialog is open */
@@ -253,6 +254,7 @@ const onSubmit = form.handleSubmit((values) => {
       emit('success', response)
     },
     onError: (error: unknown) => {
+      markFailureReported(error)
       const code = extractErrorCode(error)
       if (code === API_KEY_LIMIT_REACHED) {
         limitError.value = t('settings.apiKeys.createDialog.limitReached')

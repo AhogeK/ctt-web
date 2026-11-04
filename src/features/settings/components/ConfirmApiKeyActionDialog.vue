@@ -28,6 +28,7 @@ import {
 import type { ApiKey } from '@/lib/schemas/api-key.schema'
 import { getErrorMessage } from '@/lib/utils/api-error'
 import { toast } from 'vue-sonner'
+import { markFailureReported } from '@/lib/utils/operation-failure'
 
 const { t } = useI18n()
 /** Shape of the mutation the caller passes in (TanStack Query mutation). */
@@ -84,6 +85,7 @@ function handleConfirm() {
       })
     },
     onError: (error: unknown) => {
+      markFailureReported(error)
       toast.error(props.errorTitle, {
         description: getErrorMessage(error),
       })

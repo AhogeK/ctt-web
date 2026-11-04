@@ -130,6 +130,7 @@ function confirmRemove(): void {
       removeTarget.value = null
     },
     onError: (error) => {
+      markFailureReported(error)
       rememberFailure(error)
       removeTarget.value = null
     },

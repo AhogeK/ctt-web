@@ -28,6 +28,7 @@ import type { StartTotpSetupResponse } from '@/lib/schemas/two-factor.schema'
 import { useConfirmTwoFactorSetup, useStartTwoFactorSetup } from '../composables/useTwoFactor'
 import { useDismissalGuard } from './use-dismissal-guard'
 import RecoveryCodesPanel from './RecoveryCodesPanel.vue'
+import { markFailureReported } from '@/lib/utils/operation-failure'
 
 const props = defineProps<{
   /** Whether the account has a password to prove; OAuth-only accounts rely on session recency. */
@@ -106,6 +107,7 @@ async function requestSecret(currentPassword: string | undefined): Promise<void>
     setup.value = await startMutation.mutateAsync(currentPassword)
     step.value = 'secret'
   } catch (error) {
+    markFailureReported(error)
     describeFailure(error)
   }
 }
@@ -128,6 +130,7 @@ async function submitCode(): Promise<void> {
     codes.value = await confirmMutation.mutateAsync(code.value.trim())
     step.value = 'codes'
   } catch (error) {
+    markFailureReported(error)
     if (extractErrorCode(error) === 'AUTH_027') {
       errorMessage.value = t('settings.twoFactor.setup.invalidCode')
       return
