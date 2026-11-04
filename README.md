@@ -92,6 +92,10 @@ pnpm preview
 `pnpm build` runs the type checker and the production build. Deploy the generated `dist/` directory
 behind the same origin (or the configured API base) as ctt-server.
 
+The page also needs the security headers described in
+[docs/dev-handbook.md](docs/dev-handbook.md#8-security-headers) — in particular a CSP with
+`frame-ancestors 'none'`, which a `<meta>` tag cannot deliver.
+
 ## Development
 
 | Command | What it does |
