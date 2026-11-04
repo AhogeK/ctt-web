@@ -34,23 +34,55 @@ function credential(overrides: Partial<PublicKeyCredential> = {}) {
 }
 
 describe('useSecondFactorPasskey', () => {
+  it('asks the authenticator first and only then the account’s own list', async () => {
+    const get = vi.fn<(...args: unknown[]) => Promise<unknown>>().mockResolvedValueOnce(credential())
+    vi.stubGlobal('navigator', { credentials: { get } })
+
+    await useSecondFactorPasskey().signIn('challenge-token')
+
+    // The first call names no credentials: a stale list from the server would leave the browser
+    // waiting for a key the reader may not even have, which looks like a dead button.
+    const first = get.mock.calls[0]?.[0] as { publicKey: { allowCredentials?: unknown } }
+    expect(first.publicKey.allowCredentials).toBeUndefined()
+    vi.unstubAllGlobals()
+  })
+
+  it('falls back to the named list when nothing resident answers', async () => {
+    const get = vi
+      .fn<(...args: unknown[]) => Promise<unknown>>()
+      .mockRejectedValueOnce(new DOMException('nothing resident', 'NotAllowedError'))
+      .mockResolvedValueOnce(credential())
+    vi.stubGlobal('navigator', { credentials: { get } })
+
+    const result = await useSecondFactorPasskey().signIn('challenge-token')
+
+    expect(result).toEqual({ accessToken: 'access' })
+    const second = get.mock.calls[1]?.[0] as { publicKey: { allowCredentials?: unknown[] } }
+    expect(second.publicKey.allowCredentials).toHaveLength(1)
+    vi.unstubAllGlobals()
+  })
+
   beforeEach(() => {
     vi.clearAllMocks()
     vi.mocked(fetchSecondFactorPasskeyOptions).mockResolvedValue(OPTIONS)
     vi.mocked(assertSecondFactorPasskey).mockResolvedValue({ accessToken: 'access' } as never)
   })
 
-  it('names only the credentials the challenge belongs to', async () => {
-    const get = vi.fn<(options: unknown) => Promise<unknown>>().mockResolvedValue(credential())
+  it('names the challenge’s own credentials, byte for byte, when the fallback runs', async () => {
+    const get = vi
+      .fn<(options: unknown) => Promise<unknown>>()
+      .mockRejectedValueOnce(new DOMException('nothing resident', 'NotAllowedError'))
+      .mockResolvedValueOnce(credential())
     vi.stubGlobal('navigator', { credentials: { get } })
 
     await useSecondFactorPasskey().signIn('challenge-token')
 
-    const request = get.mock.calls[0]?.[0] as {
+    const request = get.mock.calls[1]?.[0] as {
       publicKey: { allowCredentials: Array<{ id: ArrayBuffer }> }
     }
     // 'Y3JlZA' decodes to the four bytes of the id the server named, unchanged.
     expect(Array.from(new Uint8Array(request.publicKey.allowCredentials[0]!.id))).toEqual([99, 114, 101, 100])
+    vi.unstubAllGlobals()
   })
 
   it('sends the assertion back with the challenge it answers', async () => {

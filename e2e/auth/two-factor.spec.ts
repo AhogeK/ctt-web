@@ -121,6 +121,52 @@ async function settledSurfaceHeights(page: Page): Promise<number[]> {
   return page.evaluate(() => (window as unknown as { __surfaceHeights?: number[] }).__surfaceHeights ?? [])
 }
 
+/**
+ * The same password step, but the account has a passkey that could answer the challenge.
+ *
+ * The ceremony is stubbed to reject like a dismissed prompt: the reader is choosing another method,
+ * which must not be reported as a failure — or as an empty code field.
+ */
+async function installPasskeyChallenge(page: Page): Promise<void> {
+  await installTwoFactorOverrides(page)
+  await page.route('**/api/v1/auth/login', (route) =>
+    route.fulfill({
+      status: 202,
+      contentType: 'application/json',
+      body: JSON.stringify({
+        ...LOGIN_CHALLENGE_RESPONSE,
+        data: { ...(LOGIN_CHALLENGE_RESPONSE as { data: object }).data, passkeyCount: 1 },
+      }),
+    }),
+  )
+  // A well-formed challenge, so the attempt reaches the browser rather than failing on the wire.
+  await page.route('**/api/v1/auth/2fa/passkey/options', (route) =>
+    route.fulfill({
+      status: 200,
+      contentType: 'application/json',
+      body: JSON.stringify({
+        success: true,
+        data: {
+          publicKey: {
+            challenge: 'Y2hhbGxlbmdl',
+            rpId: 'localhost',
+            timeout: 60000,
+            userVerification: 'required',
+            allowCredentials: [{ type: 'public-key', id: 'Y3JlZA', transports: ['internal'] }],
+          },
+        },
+        timestamp: nowIso(),
+      }),
+    }),
+  )
+  await page.addInitScript(() => {
+    Object.defineProperty(navigator, 'credentials', {
+      configurable: true,
+      value: { get: () => Promise.reject(new DOMException('cancelled', 'NotAllowedError')) },
+    })
+  })
+}
+
 test.describe('Two-factor login', () => {
   test('moves to the second step without signing anyone in', async ({ page }) => {
     await installTwoFactorOverrides(page)
@@ -132,6 +178,25 @@ test.describe('Two-factor login', () => {
     // A challenge is not a session: nothing may be stored before the code is accepted.
     const storedToken = await page.evaluate((key) => localStorage.getItem(key), STORAGE_KEYS.ACCESS_TOKEN)
     expect(storedToken).toBeNull()
+  })
+
+  test('does not accuse the reader of an empty code when they switch to the passkey', async ({ page }) => {
+    await installPasskeyChallenge(page)
+    await submitPassword(page)
+
+    const field = page.getByPlaceholder('123456 or a recovery code')
+    await field.click()
+    await page.getByTestId('two-factor-passkey').click()
+
+    // Wait for the attempt to settle: the accusation only appears once the ceremony has answered.
+    await expect(page.getByTestId('two-factor-passkey')).toBeEnabled()
+
+    // Choosing another method is not a failed entry: the field stays quiet, and the step stays put.
+    await expect(page.locator('[data-slot="form-message"]')).toHaveCount(0)
+    // The click still has to answer: a button that appears to do nothing reads as broken.
+    await expect(page.getByTestId('two-factor-passkey-note').or(page.getByRole('alert'))).toBeVisible()
+    await expect(page).toHaveURL(TWO_FACTOR_PATH)
+    await expect(field).toBeVisible()
   })
 
   test('rejects a wrong code in place and accepts the right one', async ({ page }) => {

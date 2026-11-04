@@ -127,6 +127,18 @@ vi.mock('@/router/route-names', () => ({
   },
 }))
 
+// The ceremony itself is exercised in its own suite; here it is scripted, so the view can be
+// checked for what it tells the reader when the attempt ends without a session.
+const passkeyState = vi.hoisted(() => ({
+  pending: { value: false },
+  errorCode: { value: null as string | null },
+  signIn: vi.fn<() => Promise<null>>(async () => null),
+}))
+
+vi.mock('../../composables/useSecondFactorPasskey', () => ({
+  useSecondFactorPasskey: () => passkeyState,
+}))
+
 vi.mock('@/components/ui/button', () => ({
   Button: {
     props: ['disabled'],
@@ -177,6 +189,8 @@ async function mountAndSubmit(code = '123456') {
 describe('LoginTwoFactorView', () => {
   beforeEach(() => {
     resetMocks()
+    passkeyState.errorCode.value = null
+    passkeyState.signIn.mockClear()
   })
 
   it('sends the reader back to the password form when no challenge is pending', async () => {
@@ -199,6 +213,39 @@ describe('LoginTwoFactorView', () => {
     })
     // Zod's own wording names the runtime type, which says nothing to the person reading it.
     expect(wrapper.text()).not.toContain('Invalid input')
+  })
+
+  it('does not ask for a code when the reader switches to the passkey', async () => {
+    pendingTwoFactorState.value = { ...CHALLENGE, passkeyCount: 1 }
+    Object.defineProperty(globalThis, 'PublicKeyCredential', { configurable: true, writable: true, value: class {} })
+
+    const wrapper = mount(LoginTwoFactorView)
+    await flushPromises()
+
+    // The reader was about to type, then changed method: moving focus must not accuse them of
+    // leaving the field empty.
+    await wrapper.get('input').trigger('focus')
+    // Clicking the button moves focus out of the field; jsdom does not do that on its own.
+    await wrapper.get('input').trigger('blur')
+    await wrapper.get('[data-testid="two-factor-passkey"]').trigger('click')
+    await flushPromises()
+
+    expect(wrapper.text()).not.toContain('Enter your verification code')
+  })
+
+  it('says something when the reader asked for the passkey and nothing came back', async () => {
+    pendingTwoFactorState.value = { ...CHALLENGE, passkeyCount: 1 }
+    Object.defineProperty(globalThis, 'PublicKeyCredential', { configurable: true, writable: true, value: class {} })
+
+    const wrapper = mount(LoginTwoFactorView)
+    await flushPromises()
+    await wrapper.get('[data-testid="two-factor-passkey"]').trigger('click')
+    await flushPromises()
+
+    // Dismissing the system prompt leaves no code and no message of its own: a button that appears
+    // to do nothing is indistinguishable from a broken one.
+    expect(passkeyState.signIn).toHaveBeenCalledTimes(1)
+    expect(wrapper.text()).toContain('No passkey answered')
   })
 
   it('hides the passkey alternative when the account has none', async () => {

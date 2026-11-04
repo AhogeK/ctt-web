@@ -209,6 +209,7 @@ const en = {
       submit: 'Verify',
       usePasskey: 'Use a passkey instead',
       passkeyWaiting: 'Waiting for your device...',
+      passkeyNotCompleted: 'No passkey answered. Try again, or enter a code below.',
       passkeyFailed: 'That passkey did not work. Enter a code below, or try again.',
       verifying: 'Verifying...',
       invalidCode: 'That code is not right. Check it and try again.',

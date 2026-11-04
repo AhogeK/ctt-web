@@ -55,7 +55,7 @@ export async function assertPasskey(credential: PasskeyCredentialPayload): Promi
 /**
  * Requests options for answering an existing second-step challenge with a passkey.
  *
- * Endpoint: POST /api/v1/auth/login/2fa/passkey/options
+ * Endpoint: POST /api/v1/auth/2fa/passkey/options
  *
  * Unlike the discoverable sign-in, the challenge already belongs to one account, so the server names
  * that account's credentials and nothing else may answer.
@@ -65,7 +65,7 @@ export async function assertPasskey(credential: PasskeyCredentialPayload): Promi
  * @throws 401 AUTH_026 when the step itself expired
  */
 export async function fetchSecondFactorPasskeyOptions(challengeToken: string): Promise<PasskeyAssertionOptions> {
-  const response = await apiFetch<unknown>('/api/v1/auth/login/2fa/passkey/options', {
+  const response = await apiFetch<unknown>('/api/v1/auth/2fa/passkey/options', {
     method: 'POST',
     body: { challengeToken },
   })
@@ -77,7 +77,7 @@ export async function fetchSecondFactorPasskeyOptions(challengeToken: string): P
 /**
  * Completes the second step with a passkey assertion.
  *
- * Endpoint: POST /api/v1/auth/login/2fa/passkey/assert
+ * Endpoint: POST /api/v1/auth/2fa/passkey/assert
  *
  * The answer is the same sign-in response the code path returns; a failure leaves the challenge
  * intact, so the reader can still type a code.
@@ -91,7 +91,7 @@ export async function assertSecondFactorPasskey(
   challengeToken: string,
   credential: PasskeyCredentialPayload,
 ): Promise<LoginResponse> {
-  const response = await apiFetch<unknown>('/api/v1/auth/login/2fa/passkey/assert', {
+  const response = await apiFetch<unknown>('/api/v1/auth/2fa/passkey/assert', {
     method: 'POST',
     body: { challengeToken, credential },
   })
