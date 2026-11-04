@@ -28,9 +28,10 @@ describe('api-error', () => {
   })
 
   describe('mapApiErrorCode', () => {
-    it('returns the code itself for unmapped codes', () => {
+    it('answers an unmapped code with the generic sentence', () => {
+      // The catalogue has no sentence for it, and an identifier is not something to show a reader.
       const message = mapApiErrorCode('UNKNOWN_CODE')
-      expect(message).toBe('UNKNOWN_CODE')
+      expect(message).toBe('An unexpected error occurred. Please try again later.')
     })
 
     it('maps DEVICE_001 to a friendly message', () => {

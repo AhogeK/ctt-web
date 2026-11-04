@@ -32,6 +32,7 @@ import { useRecentAuthentication, useRefreshRecentAuthentication } from '../comp
 import { SETTINGS_ACTION_BUTTON_CLASS } from './action-button'
 import PasskeyNameDialog from './PasskeyNameDialog.vue'
 import type { Passkey } from '@/lib/schemas/passkey.schema'
+import { markFailureReported } from '@/lib/utils/operation-failure'
 
 const { t } = useI18n()
 
@@ -67,6 +68,7 @@ const lastPathRefused = computed(() => blockedCode.value === 'AUTH_018')
  * @param error - the rejection from the mutation
  */
 function reportDialogFailure(error: unknown): void {
+  markFailureReported(error)
   rememberFailure(error)
   if (blockedCode.value === null) {
     dialogError.value = ''
@@ -143,7 +145,9 @@ const failureMessage = computed(() => {
   const code = blockedCode.value
   if (!code) return ''
   const mapped = mapApiErrorCode(code)
-  return mapped === code ? t('settings.passkey.actionFailed') : mapped
+  // A code the catalogue has no sentence for is answered with the generic one; this card has a
+  // sentence about the action it sits on, which is the more useful of the two.
+  return mapped === t('api.errors.internalerror') ? t('settings.passkey.actionFailed') : mapped
 })
 
 /**
