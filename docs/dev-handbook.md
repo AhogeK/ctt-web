@@ -252,19 +252,28 @@ function handleBindGitHub() {
 
 ### 2.4 Error handling
 
-The API layer's error handling is configured globally on the `apiFetch` instance:
+Three layers answer a failed request, in this order of authority:
 
-- **401 Unauthorized**: clears `ctt_access_token` automatically, shows a toast and dispatches the `api:unauthorized` event. To listen:
-  ```typescript
-  globalThis.addEventListener(UNAUTHORIZED_EVENT, () => {
-    // Handle unauthorized (e.g., redirect to login)
-  })
-  ```
-- **403 Forbidden**: toast "Permission denied. You do not have access to this resource."
-- **422 Unprocessable Entity**: skipped, handled by the Vee-Validate form validation layer
-- **500+ Server Error**: toast "Server error. Please try again later."
+1. **The call site.** A mutation handler (or the component awaiting `mutateAsync`) knows what the
+   reader was doing and maps the server code onto the field or sentence that fits. This is always the
+   preferred place.
+2. **The fetch layer** (`src/lib/api/instance.ts`), for failures that concern the whole session:
+   terminal auth codes clear the session and redirect, a CSRF code reloads for a fresh token, and a
+   terms-expiry code suspends the request until the dialog answers. It does **not** show a generic
+   toast for 403/404/5xx — those reach the caller untouched.
+3. **The last resort** (`src/lib/utils/operation-failure.ts`). A `MutationCache` hook in
+   `src/lib/query.ts` speaks for a mutation that has no `onError`, and the window-level
+   `unhandledrejection` handler speaks for a promise nobody awaited. It stays quiet when the error is
+   a user cancellation (`AbortError`, `NotAllowedError`) or `AUTH_001`, which the fetch layer already
+   handled, and it says one thing per error: call `markFailureReported(error)` from a call-site
+   handler (`mutate(variables, { onError })` is invisible to the cache hook) so a mapped sentence is
+   never followed by a generic one. Identical copy is collapsed for four seconds.
 
-The API functions themselves do not catch these errors; that is left to the caller (Pinia store / TanStack Query).
+A known code always resolves to a sentence from the locale catalogue; an unmapped code falls back to
+`api.errors.internalerror` rather than printing the identifier.
+
+The API functions themselves do not catch errors; that is left to the caller (Pinia store /
+TanStack Query).
 
 ### 2.5 Consuming the API
 

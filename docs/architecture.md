@@ -766,8 +766,8 @@ features/settings/
 | `GET` | `/api/v1/users/me/passkey` | Session; metadata only, never credential material |
 | `PATCH` | `/api/v1/users/me/passkey/{id}` | Session; renames one entry |
 | `DELETE` | `/api/v1/users/me/passkey/{id}` | Session + recent authentication; `204` |
-| `POST` | `/api/v1/auth/login/2fa/passkey/options` | Anonymous + `challengeToken`; names only that account's credentials |
-| `POST` | `/api/v1/auth/login/2fa/passkey/assert` | Anonymous + `challengeToken`; answers the step, returns the same sign-in response |
+| `POST` | `/api/v1/auth/2fa/passkey/options` | Anonymous + `challengeToken`; the server names the account's credentials, and the first ceremony ignores that list so the authenticator can offer what it holds |
+| `POST` | `/api/v1/auth/2fa/passkey/assert` | Anonymous + `challengeToken`; answers the step, returns the same sign-in response |
 
 The anonymous sign-in challenge is rate limited per address, so a page load spends one only for a
 reader who set up or used a passkey in this browser before — the flag
@@ -776,8 +776,11 @@ else asks for one when they act: the button, or the first focus of the username 
 scoped to the browser, not the account: the login page has no account to ask about before an address
 is typed, and looking one up by email would tell an unauthenticated visitor that an address holds a
 passkey. The second-step pair differs from the sign-in pair in one way that matters: the
-challenge already belongs to one account, so `allowCredentials` names that account's credentials and a
-foreign one must not answer it. `src/lib/utils/webauthn.ts` converts between the browser's buffers and the
+challenge already belongs to one account, so the server names that account's credentials and a foreign
+one must not answer it. The client does not filter that list: it asks the authenticator first, without
+naming anything, and only falls back to the server's list when nothing answered — a stale entry in the
+list would otherwise make the browser wait for a credential that can never arrive, which reads as a
+button that does nothing. `src/lib/utils/webauthn.ts` converts between the browser's buffers and the
 base64url strings on the wire; `usePasskeySignIn` runs the sign-in assertion, `useSecondFactorPasskey`
 the second-step one, and `usePasskeys` the registration, rename and removal. `PasskeyCard.vue` and
 `PasskeyNameDialog.vue` are the card and its label dialog inside `SecurityView.vue`.
