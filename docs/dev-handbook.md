@@ -1040,3 +1040,70 @@ Display names returned by the server (achievement tier names, trophy family name
 - The duration value itself still goes through the shared `formatDuration` (`1h 30m`), which is language-independent; only the natural-language part goes into messages;
   leaderboard scores are the exception — they are shown to readers, so Chinese uses "690 hours / 33 days", with `formatScore` choosing the unit per language;
   a signed metric (growth = current period − previous period) must state its arithmetic on the page, otherwise a negative number reads as an error.
+
+## 7.10 Refreshing a token
+
+The refresh token lives in an httpOnly cookie, so `POST /api/v1/auth/refresh` is called with no body
+and `credentials: 'include'`. Two things matter when touching that path:
+
+- **Never store the token.** The store cleans up a `ctt_refresh_token` key left by older builds; a
+  new copy turns one httpOnly credential into a readable one and cancels the reason the cookie exists.
+- **Never let two refreshes overlap.** It is a single-use token: the same one spent twice is read as
+  a replay and the server ends every session the account has. Inside a tab the calls share one
+  promise; across tabs they queue on `navigator.locks` (`ctt-refresh`).
+
+## 8. Security headers
+
+The build ships a Content-Security-Policy in `index.html` as a `<meta http-equiv>` tag. That is a
+**fallback, not the real policy**, for one structural reason: browsers ignore `frame-ancestors` in a
+meta tag, and `X-Frame-Options` has no meta form at all. A deployment that only serves the meta tag
+leaves destructive settings actions (delete account, revoke every session, revoke an API key) open to
+clickjacking.
+
+Serve these as HTTP response headers from whatever origin serves `dist/`:
+
+| Header | Value |
+| --- | --- |
+| `Content-Security-Policy` | Same directives as the meta tag, **plus** `frame-ancestors 'none'` |
+| `X-Frame-Options` | `DENY` (for clients that never learned `frame-ancestors`) |
+| `X-Content-Type-Options` | `nosniff` |
+| `Referrer-Policy` | `strict-origin-when-cross-origin` — the OAuth callback carries tokens for a moment, so never leak the full URL to a third party |
+| `Strict-Transport-Security` | `max-age=31536000; includeSubDomains` (HTTPS deployments only) |
+
+A reverse proxy that serves `dist/` should add them itself; nginx:
+
+```nginx
+add_header Content-Security-Policy "default-src 'self'; script-src 'self' https://hcaptcha.com https://*.hcaptcha.com; frame-src 'self' https://*.hcaptcha.com; connect-src 'self' https://hcaptcha.com https://*.hcaptcha.com; img-src 'self' data: https://hcaptcha.com https://*.hcaptcha.com; style-src 'self' 'unsafe-inline'; font-src 'self' data:; object-src 'none'; base-uri 'self'; form-action 'self'; frame-ancestors 'none';" always;
+add_header X-Frame-Options "DENY" always;
+add_header X-Content-Type-Options "nosniff" always;
+add_header Referrer-Policy "strict-origin-when-cross-origin" always;
+add_header Strict-Transport-Security "max-age=31536000; includeSubDomains" always;
+```
+
+`always` matters: without it nginx drops the headers on error responses, and those are exactly the
+pages a framing attempt succeeds against.
+
+The bundle also refuses to start when it finds itself inside a frame, and says so instead of
+rendering. That covers a deployment which forgot the headers above; it is not a substitute, because
+the check runs after the page has loaded.
+
+Two consequences worth knowing before changing configuration:
+
+- **A cross-origin API base needs the CSP edited.** `connect-src` is `'self'`, so setting
+  `VITE_API_BASE_URL` to an absolute URL on another origin makes every request fail with a CSP
+  violation. Add that origin to `connect-src` in both the meta tag and the header.
+- **CSP still earns its place.** The refresh token is an httpOnly cookie — unreachable from script —
+  but the access token in `localStorage` and the rendered DOM are not: an injected script can read
+  one and act as the reader until it expires, and can rewrite the page. Keep `script-src` free of
+  `'unsafe-inline'` and `'unsafe-eval'`; `style-src 'unsafe-inline'` is required by the component
+  library and is the one exception.
+
+The GitHub callback accepts a hand-off only in a tab that started the sign-in from the app: the
+sign-in page leaves a tab-scoped marker before redirecting, and the callback refuses a request that
+arrives without it. That stops a link someone sends from signing a reader into the sender's account.
+It is not the whole answer — a provider round-trip that echoes a server-issued `state` bound to a
+one-time code is. That half lives on the API, and until it exists the marker is what protects the
+callback.
+
+The callback reads only `accessToken` from the query: the refresh token is set as an httpOnly cookie
+on the same response, so a URL carrying one would be a URL leaking one.

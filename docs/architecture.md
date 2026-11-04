@@ -259,8 +259,10 @@ build: {
 import { getOrCreateDeviceId } from '@/lib/utils/device'
 
 export const useAuthStore = defineStore('auth', () => {
+  // The refresh token is not here at all: it lives only in the httpOnly `ctt_refresh_token` cookie,
+  // so no script on the page can read it. An older build kept a copy under `ctt_refresh_token` in
+  // localStorage; the store deletes that key on creation.
   const accessToken = ref<string | null>(null)
-  const refreshToken = ref<string | null>(null)
   const userId = ref<string | null>(null)
   const tokenExpiry = ref<number | null>(null)
 
@@ -276,14 +278,12 @@ export const useAuthStore = defineStore('auth', () => {
 
   function setAuth(response: LoginResponse): void {
     accessToken.value = response.accessToken
-    refreshToken.value = response.refreshToken
     userId.value = response.userId
     tokenExpiry.value = Date.now() + response.expiresIn * 1000
   }
 
   function clearAuth(): void {
     accessToken.value = null
-    refreshToken.value = null
     userId.value = null
     tokenExpiry.value = null
     // Note: deviceId is intentionally NOT cleared — represents physical device
@@ -306,7 +306,6 @@ export const useAuthStore = defineStore('auth', () => {
 
   return {
     accessToken,
-    refreshToken,
     userId,
     tokenExpiry,
     deviceId,
@@ -317,6 +316,25 @@ export const useAuthStore = defineStore('auth', () => {
   }
 })
 ```
+
+### Token lifecycle
+
+The access token is a short-lived JWT kept in `localStorage`; the refresh token is not in the page at
+all. `POST /api/v1/auth/refresh` reads it from the httpOnly `ctt_refresh_token` cookie (HttpOnly,
+Secure, `SameSite=Strict`, `Path` limited to the refresh endpoint), so the request carries no body and
+`credentials: 'include'` is what supplies the credential. A script that runs on the page can steal at
+most the access token, and only until it expires.
+
+Three rules follow from the token being single use:
+
+- **One refresh at a time per tab.** Concurrent 401s share one in-flight promise.
+- **One refresh at a time across tabs.** `navigator.locks` serializes them under `ctt-refresh`; two
+  tabs spending the same token would make the server read the second as a replay (`AUTH_009`, which
+  revokes every session the account holds). Where the API is missing, the request is unguarded and
+  the server's answer stands.
+- **A throttled refresh is not a dead session.** `429` schedules a retry after the reported wait
+  (a minute when the server sends none) instead of clearing the session; `AUTH_003`, `AUTH_007`,
+  `AUTH_009` and `COMMON_003` do end it.
 
 ### Motion Store (Pinia)
 
