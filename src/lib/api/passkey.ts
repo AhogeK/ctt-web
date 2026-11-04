@@ -9,7 +9,7 @@ import {
   type PasskeyCredentialPayload,
   type PasskeyRegistrationOptions,
 } from '@/lib/schemas/passkey.schema'
-import type { LoginResponse } from '@/lib/schemas/auth.schema'
+import { LoginResponseSchema, type LoginResponse } from '@/lib/schemas/auth.schema'
 
 /**
  * Requests options for signing in with a passkey.
@@ -49,7 +49,7 @@ export async function assertPasskey(credential: PasskeyCredentialPayload): Promi
     body: { credential },
   })
   const wrapped = RestApiResponseSchema.parse(response)
-  return wrapped.data as LoginResponse
+  return LoginResponseSchema.parse(wrapped.data)
 }
 
 /**
@@ -96,7 +96,7 @@ export async function assertSecondFactorPasskey(
     body: { challengeToken, credential },
   })
   const wrapped = RestApiResponseSchema.parse(response)
-  return wrapped.data as LoginResponse
+  return LoginResponseSchema.parse(wrapped.data)
 }
 
 /**

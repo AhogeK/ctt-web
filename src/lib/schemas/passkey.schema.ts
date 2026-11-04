@@ -73,7 +73,9 @@ export const PasskeyRegistrationOptionsSchema = z.object({
     .optional(),
   authenticatorSelection: z
     .object({
-      residentKey: z.string().optional(),
+      // Constrained to what `AuthenticatorSelectionCriteria` accepts, so the value can be handed to
+      // `credentials.create()` without a cast.
+      residentKey: z.enum(['required', 'preferred', 'discouraged']).optional(),
       userVerification: z.enum(['required', 'preferred', 'discouraged']).optional(),
       requireResidentKey: z.boolean().optional(),
     })

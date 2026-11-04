@@ -13,7 +13,9 @@
       - object-src 'none': block legacy plugin embeds (Flash, Java, etc.)
       - base-uri 'self': prevent <base> tag injection
       - form-action 'self': restrict form submission targets
-      - frame-ancestors 'none': prevent clickjacking via iframe embedding
+      Clickjacking defence cannot live here: browsers ignore `frame-ancestors` in a meta tag, and
+      `X-Frame-Options` has no meta form at all. The origin that serves this build must send both as
+      HTTP headers — see docs/dev-handbook.md, "Security headers".
     -->
     <meta
       http-equiv="Content-Security-Policy"

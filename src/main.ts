@@ -75,6 +75,29 @@ function handleUnauthorized(_event: Event): void {
   })
 }
 
+/**
+ * Refuses to run inside someone else's frame.
+ *
+ * The header that forbids framing belongs to the origin serving the build, and a deployment that
+ * forgets it would let another page place these controls — delete account, revoke every session —
+ * under a decoy. This check costs one comparison and closes that gap wherever the header is absent.
+ *
+ * @returns whether the page is framed, in which case the app must not start
+ */
+function isFramed(): boolean {
+  try {
+    return globalThis.self !== globalThis.top
+  } catch {
+    // A cross-origin parent makes `top` throw; reaching for it was already the answer.
+    return true
+  }
+}
+
+if (isFramed()) {
+  document.body.textContent = i18n.global.t('app.framedWarning')
+  throw new Error('Refusing to render inside a frame')
+}
+
 const app = createApp(App)
 
 app.config.errorHandler = handleVueError

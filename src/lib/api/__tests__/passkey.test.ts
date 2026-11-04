@@ -55,7 +55,17 @@ describe('passkey api', () => {
   })
 
   it('posts the assertion and returns the sign-in response', async () => {
-    vi.mocked(apiFetch).mockResolvedValue(envelope({ accessToken: 'access', refreshToken: 'refresh', expiresIn: 900 }))
+    // The same shape the password sign-in returns, and the client validates it as such.
+    vi.mocked(apiFetch).mockResolvedValue(
+      envelope({
+        accessToken: 'access',
+        refreshToken: 'refresh',
+        expiresIn: 900,
+        userId: '550e8400-e29b-41d4-a716-446655440000',
+        tokenType: 'Bearer',
+        termsExpired: false,
+      }),
+    )
 
     const result = await passkeyApi.assertPasskey(CREDENTIAL)
 
